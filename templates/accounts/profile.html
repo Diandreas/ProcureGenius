@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Mon profil" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>
+                    {% trans "Mon profil" %}
+                </h5>
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil"></i> {% trans "Modifier" %}
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">{% trans "Informations personnelles" %}</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Nom complet" %}:</strong></td>
+                                <td>{{ user.get_full_name|default:"—" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Email" %}:</strong></td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Téléphone" %}:</strong></td>
+                                <td>{{ user.phone|default:"—" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Langue" %}:</strong></td>
+                                <td>{{ user.get_language_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Rôle" %}:</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ user.get_role_display }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">{% trans "Préférences IA" %}</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Notifications IA" %}:</strong></td>
+                                <td>
+                                    {% if user.ai_notifications %}
+                                        <span class="badge bg-success">{% trans "Activées" %}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{% trans "Désactivées" %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Limite d'approbation auto" %}:</strong></td>
+                                <td>{{ user.ai_auto_approve_limit|default:"—" }}</td>
+                            </tr>
+                        </table>
+                        
+                        <h6 class="text-muted mt-4">{% trans "Statistiques" %}</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Membre depuis" %}:</strong></td>
+                                <td>{{ user.date_joined|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Dernière connexion" %}:</strong></td>
+                                <td>{{ user.last_login|date:"d/m/Y H:i"|default:"—" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if tenant %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-building me-2"></i>
+                    {% trans "Entreprise" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6>{{ tenant.name }}</h6>
+                <p class="text-muted small mb-2">
+                    {{ tenant.address }}<br>
+                    {{ tenant.city }}, {{ tenant.get_province_display }} {{ tenant.postal_code }}
+                </p>
+                <p class="text-muted small">
+                    <i class="bi bi-envelope me-1"></i> {{ tenant.email }}<br>
+                    <i class="bi bi-telephone me-1"></i> {{ tenant.phone }}
+                </p>
+                
+                {% if user.role == 'admin' %}
+                <a href="{% url 'accounts:tenant_settings' %}" class="btn btn-outline-primary btn-sm">
+                    {% trans "Paramètres entreprise" %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-shield-check me-2"></i>
+                    {% trans "Sécurité" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'account_change_password' %}" class="btn btn-outline-warning btn-sm d-block mb-2">
+                    <i class="bi bi-key"></i> {% trans "Changer le mot de passe" %}
+                </a>
+                <a href="{% url 'account_email' %}" class="btn btn-outline-info btn-sm d-block">
+                    <i class="bi bi-envelope-check"></i> {% trans "Gérer les emails" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
