@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - {% trans "Fournisseurs" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+{% crispy_form_tags_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .certification-tag {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 5px 10px;
+        margin: 2px;
+        border-radius: 15px;
+        font-size: 0.875rem;
+    }
+    
+    .certification-tag .remove-cert {
+        margin-left: 5px;
+        cursor: pointer;
+        color: #dc3545;
+    }
+    
+    .province-info {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>{{ title }}</h2>
+            <a href="{% if supplier %}{% url 'suppliers:detail' supplier.pk %}{% else %}{% url 'suppliers:list' %}{% endif %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                {% trans "Retour" %}
+            </a>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="supplier-form">
+            {% csrf_token %}
+            
+            <!-- Informations générales -->
+            <div class="form-section">
+                <h4 class="section-title">
+                    <i class="bi bi-building me-2"></i>
+                    {% trans "Informations générales" %}
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        {{ form.name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.legal_name|as_crispy_field }}
+                    </div>
+                </div>
+                
+                {{ form.business_number|as_crispy_field }}
+                <div class="province-info">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        {% trans "Le numéro d'entreprise canadien (15 chiffres) est optionnel mais recommandé." %}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Contact -->
+            <div class="form-section">
+                <h4 class="section-title">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    {% trans "Informations de contact" %}
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.contact_person|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.email|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.phone|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.website|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Adresse -->
+            <div class="form-section">
+                <h4 class="section-title">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    {% trans "Adresse" %}
+                </h4>
+                
+                {{ form.address|as_crispy_field }}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.city|as_crispy_field }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.province|as_crispy_field }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.postal_code|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="province-info">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        {% trans "Format du code postal canadien: A1A 1A1" %}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Termes commerciaux -->
+            <div class="form-section">
+                <h4 class="section-title">
+                    <i class="bi bi-credit-card me-2"></i>
+                    {% trans "Termes commerciaux" %}
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.payment_terms|as_crispy_field }}
+                        <div class="province-info">
+                            <small>{% trans "Exemples: NET 30, NET 15, Comptant, 2/10 NET 30" %}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.currency|as_crispy_field }}
+                    </div>
+                </div>
+                
+                {{ form.categories|as_crispy_field }}
+            </div>
+            
+            <!-- Diversité et certification -->
+            <div class="form-section">
+                <h4 class="section-title">
+                    <i class="bi bi-award me-2"></i>
+                    {% trans "Diversité et certification" %}
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check mb-3">
+                            {{ form.is_local }}
+                            <label class="form-check-label" for="{{ form.is_local.id_for_label }}">
+                                <strong>{{ form.is_local.label }}</strong>
+                                <br><small class="text-muted">{% trans "Fournisseur local ou régional" %}</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.is_minority_owned }}
+                            <label class="form-check-label" for="{{ form.is_minority_owned.id_for_label }}">
+                                <strong>{{ form.is_minority_owned.label }}</strong>
+                                <br><small class="text-muted">{% trans "Entreprise détenue par une minorité" %}</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mb-3">
+                            {{ form.is_indigenous }}
+                            <label class="form-check-label" for="{{ form.is_indigenous.id_for_label }}">
+                                <strong>{{ form.is_indigenous.label }}</strong>
+                                <br><small class="text-muted">{% trans "Entreprise autochtone" %}</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.is_woman_owned }}
+                            <label class="form-check-label" for="{{ form.is_woman_owned.id_for_label }}">
+                                <strong>{{ form.is_woman_owned.label }}</strong>
+                                <br><small class="text-muted">{% trans "Entreprise dirigée par une femme" %}</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Certifications -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <strong>{% trans "Certifications" %}</strong>
+                    </label>
+                    <div id="certifications-display" class="mb-2">
+                        <!-- Les certifications seront affichées ici -->
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="new-certification" placeholder="{% trans 'Ajouter une certification (ex: ISO 9001, CSA)' %}">
+                        <button type="button" class="btn btn-outline-primary" id="add-certification">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <div class="province-info mt-2">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            {% trans "Exemples: ISO 9001, ISO 14001, CSA, LEED, FSC, etc." %}
+                        </small>
+                    </div>
+                </div>
+                
+                {{ form.certifications }}
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div class="form-section">
+                <div class="d-flex justify-content-between">
+                    <a href="{% if supplier %}{% url 'suppliers:detail' supplier.pk %}{% else %}{% url 'suppliers:list' %}{% endif %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        {% trans "Annuler" %}
+                    </a>
+                    
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" id="save-draft">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            {% trans "Sauvegarder brouillon" %}
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>
+                            {% if supplier %}{% trans "Modifier" %}{% else %}{% trans "Créer" %}{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% crispy_form_tags_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des certifications
+    let certifications = [];
+    
+    // Charger les certifications existantes si modification
+    {% if supplier.certifications %}
+    certifications = {{ supplier.certifications|safe }};
+    {% endif %}
+    
+    function updateCertificationsDisplay() {
+        const container = document.getElementById('certifications-display');
+        container.innerHTML = '';
+        
+        certifications.forEach((cert, index) => {
+            const tag = document.createElement('span');
+            tag.className = 'certification-tag';
+            tag.innerHTML = `
+                ${cert}
+                <span class="remove-cert" onclick="removeCertification(${index})">
+                    <i class="bi bi-x"></i>
+                </span>
+            `;
+            container.appendChild(tag);
+        });
+        
+        // Mettre à jour le champ caché
+        document.getElementById('id_certifications').value = JSON.stringify(certifications);
+    }
+    
+    window.removeCertification = function(index) {
+        certifications.splice(index, 1);
+        updateCertificationsDisplay();
+    };
+    
+    document.getElementById('add-certification').addEventListener('click', function() {
+        const input = document.getElementById('new-certification');
+        const value = input.value.trim();
+        
+        if (value && !certifications.includes(value)) {
+            certifications.push(value);
+            updateCertificationsDisplay();
+            input.value = '';
+        }
+    });
+    
+    document.getElementById('new-certification').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('add-certification').click();
+        }
+    });
+    
+    // Initialiser l'affichage
+    updateCertificationsDisplay();
+    
+    // Validation du code postal canadien
+    const postalCodeInput = document.getElementById('id_postal_code');
+    if (postalCodeInput) {
+        postalCodeInput.addEventListener('input', function() {
+            let value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (value.length > 3) {
+                value = value.substring(0, 3) + ' ' + value.substring(3, 6);
+            }
+            this.value = value;
+        });
+    }
+    
+    // Validation du numéro d'entreprise
+    const businessNumberInput = document.getElementById('id_business_number');
+    if (businessNumberInput) {
+        businessNumberInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 15);
+        });
+    }
+    
+    // Formatage du téléphone
+    const phoneInput = document.getElementById('id_phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            let value = this.value.replace(/[^0-9]/g, '');
+            if (value.length >= 10) {
+                value = value.substring(0, 3) + '-' + value.substring(3, 6) + '-' + value.substring(6, 10);
+            }
+            this.value = value;
+        });
+    }
+    
+    // Sauvegarde brouillon
+    document.getElementById('save-draft').addEventListener('click', function() {
+        const form = document.getElementById('supplier-form');
+        const formData = new FormData(form);
+        formData.append('save_draft', 'true');
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', '{% trans "Brouillon sauvegardé avec succès." %}');
+            } else {
+                showAlert('danger', '{% trans "Erreur lors de la sauvegarde." %}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', '{% trans "Erreur de communication avec le serveur." %}');
+        });
+    });
+    
+    // Validation du formulaire
+    document.getElementById('supplier-form').addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'contact_person', 'email', 'address', 'city', 'province'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(`id_${fieldName}`);
+            if (field && !field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else if (field) {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Validation email
+        const emailField = document.getElementById('id_email');
+        if (emailField && emailField.value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailField.value)) {
+                emailField.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            showAlert('danger', '{% trans "Veuillez corriger les erreurs dans le formulaire." %}');
+            // Scroll vers le premier champ invalide
+            const firstInvalid = document.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+        }
+    });
+    
+    // Auto-complétion intelligente
+    const cityInput = document.getElementById('id_city');
+    const provinceInput = document.getElementById('id_province');
+    
+    if (cityInput && provinceInput) {
+        // Suggestions de villes par province (exemple simplifié)
+        const citiesByProvince = {
+            'QC': ['Montréal', 'Québec', 'Laval', 'Gatineau', 'Longueuil', 'Sherbrooke'],
+            'ON': ['Toronto', 'Ottawa', 'Mississauga', 'Brampton', 'Hamilton', 'London'],
+            'BC': ['Vancouver', 'Surrey', 'Burnaby', 'Richmond', 'Abbotsford', 'Victoria'],
+            'AB': ['Calgary', 'Edmonton', 'Red Deer', 'Lethbridge', 'Medicine Hat'],
+        };
+        
+        provinceInput.addEventListener('change', function() {
+            const cities = citiesByProvince[this.value] || [];
+            if (cities.length > 0 && !cityInput.value) {
+                // Optionnel: suggérer des villes
+                cityInput.setAttribute('placeholder', `Ex: ${cities.slice(0, 3).join(', ')}`);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

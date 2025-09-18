@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ supplier.name }} - {% trans "Fournisseurs" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .supplier-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .contact-card {
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+    }
+    
+    .document-item {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: background-color 0.2s;
+    }
+    
+    .document-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .product-card {
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+    }
+    
+    .product-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête fournisseur -->
+<div class="supplier-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <h1 class="mb-0 me-3">{{ supplier.name }}</h1>
+                {% if supplier.status == 'active' %}
+                    <span class="badge bg-success fs-6">{% trans "Actif" %}</span>
+                {% elif supplier.status == 'pending' %}
+                    <span class="badge bg-warning fs-6">{% trans "En attente" %}</span>
+                {% elif supplier.status == 'inactive' %}
+                    <span class="badge bg-secondary fs-6">{% trans "Inactif" %}</span>
+                {% else %}
+                    <span class="badge bg-danger fs-6">{% trans "Bloqué" %}</span>
+                {% endif %}
+            </div>
+            
+            {% if supplier.legal_name and supplier.legal_name != supplier.name %}
+            <p class="mb-2 opacity-75">
+                <strong>{% trans "Nom légal" %}:</strong> {{ supplier.legal_name }}
+            </p>
+            {% endif %}
+            
+            <p class="mb-2">
+                <i class="bi bi-person me-2"></i>
+                {{ supplier.contact_person }}
+            </p>
+            <p class="mb-2">
+                <i class="bi bi-envelope me-2"></i>
+                <a href="mailto:{{ supplier.email }}" class="text-white">{{ supplier.email }}</a>
+            </p>
+            <p class="mb-0">
+                <i class="bi bi-geo-alt me-2"></i>
+                {{ supplier.get_full_address }}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if supplier.rating > 0 %}
+            <div class="mb-3">
+                <div class="h3 mb-1">{{ supplier.rating|floatformat:1 }}/5</div>
+                <div class="text-warning">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= supplier.rating %}
+                            <i class="bi bi-star-fill"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if can_edit %}
+            <div class="btn-group" role="group">
+                <a href="{% url 'suppliers:edit' supplier.pk %}" class="btn btn-light">
+                    <i class="bi bi-pencil me-1"></i>
+                    {% trans "Modifier" %}
+                </a>
+                <a href="{% url 'suppliers:performance' supplier.pk %}" class="btn btn-outline-light">
+                    <i class="bi bi-graph-up me-1"></i>
+                    {% trans "Performance" %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Badges diversité -->
+    <div class="mt-3">
+        {% if supplier.is_local %}
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-house me-1"></i>{% trans "Fournisseur local" %}
+            </span>
+        {% endif %}
+        {% if supplier.is_minority_owned %}
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-people me-1"></i>{% trans "Entreprise de minorité" %}
+            </span>
+        {% endif %}
+        {% if supplier.is_woman_owned %}
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-person-hearts me-1"></i>{% trans "Dirigée par une femme" %}
+            </span>
+        {% endif %}
+        {% if supplier.is_indigenous %}
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-tree me-1"></i>{% trans "Entreprise autochtone" %}
+            </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-box-seam display-4 text-primary mb-2"></i>
+                <h4>{{ stats.total_products }}</h4>
+                <p class="text-muted mb-0">{% trans "Produits" %}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                <h4>{{ stats.active_products }}</h4>
+                <p class="text-muted mb-0">{% trans "Disponibles" %}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-cart3 display-4 text-info mb-2"></i>
+                <h4>{{ stats.total_orders }}</h4>
+                <p class="text-muted mb-0">{% trans "Commandes" %}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-clock display-4 text-warning mb-2"></i>
+                <h4>{{ stats.avg_delivery_time|floatformat:1 }}%</h4>
+                <p class="text-muted mb-0">{% trans "Ponctualité" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Colonne principale -->
+    <div class="col-lg-8">
+        <!-- Informations détaillées -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% trans "Informations détaillées" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Téléphone" %}:</strong></td>
+                                <td>
+                                    <a href="tel:{{ supplier.phone }}">{{ supplier.phone }}</a>
+                                </td>
+                            </tr>
+                            {% if supplier.website %}
+                            <tr>
+                                <td><strong>{% trans "Site web" %}:</strong></td>
+                                <td>
+                                    <a href="{{ supplier.website }}" target="_blank" rel="noopener">
+                                        {{ supplier.website }}
+                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>{% trans "Conditions de paiement" %}:</strong></td>
+                                <td>{{ supplier.payment_terms }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Devise" %}:</strong></td>
+                                <td>{{ supplier.currency }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            {% if supplier.business_number %}
+                            <tr>
+                                <td><strong>{% trans "Numéro d'entreprise" %}:</strong></td>
+                                <td>{{ supplier.business_number }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>{% trans "Créé le" %}:</strong></td>
+                                <td>{{ supplier.created_at|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% if supplier.last_order_date %}
+                            <tr>
+                                <td><strong>{% trans "Dernière commande" %}:</strong></td>
+                                <td>{{ supplier.last_order_date|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>{% trans "Score IA" %}:</strong></td>
+                                <td>
+                                    {% with badge=supplier.get_performance_badge %}
+                                    <span class="badge bg-{{ badge.class }}">
+                                        {{ supplier.ai_performance_score|floatformat:0 }}/100
+                                    </span>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Catégories -->
+                {% if supplier.categories.all %}
+                <div class="mt-3">
+                    <strong>{% trans "Catégories" %}:</strong>
+                    <div class="mt-2">
+                        {% for category in supplier.categories.all %}
+                        <span class="badge bg-primary me-1">
+                            <i class="{{ category.icon }} me-1"></i>
+                            {{ category.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Certifications -->
+                {% if supplier.certifications %}
+                <div class="mt-3">
+                    <strong>{% trans "Certifications" %}:</strong>
+                    <div class="mt-2">
+                        {% for cert in supplier.certifications %}
+                        <span class="badge bg-success me-1">{{ cert }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Produits récents -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam me-2"></i>
+                    {% trans "Produits récents" %}
+                </h5>
+                <a href="{% url 'suppliers:catalog' %}?supplier={{ supplier.id }}" class="btn btn-outline-primary btn-sm">
+                    {% trans "Voir tous les produits" %}
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_products %}
+                <div class="row">
+                    {% for product in recent_products %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card product-card">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                <i class="bi bi-image text-muted display-4"></i>
+                            </div>
+                            {% endif %}
+                            <div class="card-body p-3">
+                                <h6 class="card-title">{{ product.name }}</h6>
+                                <p class="card-text small text-muted">{{ product.sku }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-primary">${{ product.unit_price.amount|floatformat:2 }}</strong>
+                                    <a href="{% url 'suppliers:product_detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                        {% trans "Voir" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    {% trans "Aucun produit disponible pour ce fournisseur." %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Performance récente -->
+        {% if recent_performance %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    {% trans "Performance récente" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="h4 text-primary">{{ recent_performance.delivery_score|floatformat:1 }}%</div>
+                        <small class="text-muted">{% trans "Livraisons à temps" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h4 text-success">{{ recent_performance.quality_score|floatformat:1 }}%</div>
+                        <small class="text-muted">{% trans "Qualité" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h4 text-info">{{ recent_performance.responsiveness_score|floatformat:1 }}%</div>
+                        <small class="text-muted">{% trans "Réactivité" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h4 text-warning">{{ recent_performance.overall_score|floatformat:1 }}%</div>
+                        <small class="text-muted">{% trans "Score global" %}</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        {% trans "Période" %}: {{ recent_performance.period_start|date:"d/m/Y" }} - {{ recent_performance.period_end|date:"d/m/Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Colonne latérale -->
+    <div class="col-lg-4">
+        <!-- Contacts -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-people me-2"></i>
+                    {% trans "Contacts" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for contact in contacts %}
+                <div class="contact-card p-3 mb-2 rounded">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong>{{ contact.name }}</strong>
+                        {% if contact.is_primary %}
+                        <span class="badge bg-primary">{% trans "Principal" %}</span>
+                        {% endif %}
+                    </div>
+                    {% if contact.title %}
+                    <div class="small text-muted">{{ contact.title }}</div>
+                    {% endif %}
+                    <div class="small">
+                        <span class="badge bg-secondary">{{ contact.get_contact_type_display }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="small">
+                            <i class="bi bi-envelope me-1"></i>
+                            <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                        </div>
+                        {% if contact.phone %}
+                        <div class="small">
+                            <i class="bi bi-telephone me-1"></i>
+                            <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">
+                    {% trans "Aucun contact supplémentaire." %}
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Documents -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark me-2"></i>
+                    {% trans "Documents" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for document in documents %}
+                <div class="document-item">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong class="small">{{ document.name }}</strong>
+                        {% if document.is_expired %}
+                        <span class="badge bg-danger">{% trans "Expiré" %}</span>
+                        {% elif document.expiry_date %}
+                        <span class="badge bg-success">{% trans "Valide" %}</span>
+                        {% endif %}
+                    </div>
+                    <div class="small text-muted mb-2">
+                        {{ document.get_document_type_display }}
+                    </div>
+                    {% if document.expiry_date %}
+                    <div class="small text-muted mb-2">
+                        {% trans "Expire le" %}: {{ document.expiry_date|date:"d/m/Y" }}
+                    </div>
+                    {% endif %}
+                    <a href="{{ document.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-download me-1"></i>
+                        {% trans "Télécharger" %}
+                    </a>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">
+                    {% trans "Aucun document disponible." %}
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Actions rapides -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    {% trans "Actions rapides" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-primary">
+                        <i class="bi bi-cart-plus me-1"></i>
+                        {% trans "Créer un bon de commande" %}
+                    </a>
+                    <a href="mailto:{{ supplier.email }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-envelope me-1"></i>
+                        {% trans "Envoyer un email" %}
+                    </a>
+                    <a href="{% url 'suppliers:catalog' %}?supplier={{ supplier.id }}" class="btn btn-outline-info">
+                        <i class="bi bi-search me-1"></i>
+                        {% trans "Voir le catalogue" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes statistiques
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}
