@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Assistant IA" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 600px;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 20px;
+        max-width: 80%;
+    }
+    
+    .message.user {
+        margin-left: auto;
+        background: #007bff;
+        color: white;
+        padding: 15px;
+        border-radius: 20px 20px 5px 20px;
+    }
+    
+    .message.assistant {
+        background: white;
+        padding: 15px;
+        border-radius: 5px 20px 20px 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .chat-input-area {
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        background: white;
+        border-radius: 0 0 10px 10px;
+    }
+    
+    .suggestion-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid #dee2e6;
+    }
+    
+    .suggestion-card:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .notification-item {
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 10px 15px;
+        background: #e9ecef;
+        border-radius: 20px;
+        margin-bottom: 10px;
+        max-width: 80px;
+    }
+    
+    .typing-dots {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6c757d;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Chat principal -->
+    <div class="col-lg-8">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-robot fs-1 me-3"></i>
+                    <div>
+                        <h3 class="mb-1">{% trans "Assistant IA ProcureGenius" %}</h3>
+                        <p class="mb-0 opacity-75">{% trans "Propulsé par Mistral AI" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-robot fs-4 me-2 text-primary"></i>
+                        <div>
+                            <strong>{% trans "Assistant IA" %}</strong>
+                            <p class="mb-0 mt-1">
+                                {% trans "Bonjour ! Je suis votre assistant IA pour la gestion des achats et de la facturation. Comment puis-je vous aider aujourd'hui ?" %}
+                            </p>
+                            <small class="text-muted mt-2 d-block">
+                                <strong>{% trans "Exemples de commandes" %}:</strong><br>
+                                • "{% trans "Créer un BC pour 100 chaises de bureau" %}"<br>
+                                • "{% trans "Montrer les factures en retard" %}"<br>
+                                • "{% trans "Analyser les dépenses du mois" %}"<br>
+                                • "{% trans "Trouver un fournisseur d'électronique" %}"
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Indicateur de frappe -->
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <form id="chat-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               id="message-input"
+                               placeholder="{% trans 'Tapez votre demande ici...' %}" 
+                               autocomplete="off"
+                               maxlength="500">
+                        <button class="btn btn-primary" type="submit" id="send-button">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        {% trans "Appuyez sur Entrée pour envoyer" %}
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panneau latéral -->
+    <div class="col-lg-4">
+        <!-- Suggestions rapides -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {% trans "Suggestions rapides" %}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="suggestion-card p-3" onclick="sendSuggestion('Créer un bon de commande pour du matériel de bureau')">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-cart-plus text-primary me-2"></i>
+                        <div>
+                            <small class="fw-bold">{% trans "Nouveau bon de commande" %}</small>
+                            <br><small class="text-muted">{% trans "Créer un BC rapidement" %}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-card p-3" onclick="sendSuggestion('Analyser les dépenses du mois dernier')">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-graph-up text-success me-2"></i>
+                        <div>
+                            <small class="fw-bold">{% trans "Analyser les dépenses" %}</small>
+                            <br><small class="text-muted">{% trans "Insights sur vos achats" %}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-card p-3" onclick="sendSuggestion('Montrer les factures en retard')">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                        <div>
+                            <small class="fw-bold">{% trans "Factures en retard" %}</small>
+                            <br><small class="text-muted">{% trans "Vérifier les impayés" %}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-card p-3" onclick="sendSuggestion('Suggérer des fournisseurs pour de l\\'électronique')">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-building text-info me-2"></i>
+                        <div>
+                            <small class="fw-bold">{% trans "Trouver des fournisseurs" %}</small>
+                            <br><small class="text-muted">{% trans "Recherche intelligente" %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notifications IA -->
+        {% if notifications %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-bell me-2"></i>
+                    {% trans "Notifications IA" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for notification in notifications %}
+                <div class="notification-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong class="small">{{ notification.title }}</strong>
+                            <p class="mb-1 small text-muted">{{ notification.message|truncatewords:15 }}</p>
+                            <small class="text-muted">{{ notification.created_at|timesince }}</small>
+                        </div>
+                        <span class="badge bg-{{ notification.get_priority_class }}">
+                            {{ notification.get_priority_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'ai_assistant:notifications' %}" class="btn btn-outline-primary btn-sm w-100">
+                        {% trans "Voir toutes les notifications" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Actions en attente -->
+        {% if pending_actions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    {% trans "Actions en attente d'approbation" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for action in pending_actions %}
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                    <div>
+                        <strong class="small">{{ action.get_action_type_display }}</strong>
+                        <br><small class="text-muted">{{ action.executed_at|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-success" onclick="approveAction('{{ action.id }}', true)">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="approveAction('{{ action.id }}', false)">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Conversations récentes -->
+        {% if recent_conversations %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    {% trans "Conversations récentes" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for conversation in recent_conversations %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <a href="{% url 'ai_assistant:conversation_detail' conversation.id %}" class="text-decoration-none">
+                            <strong class="small">{{ conversation.title|truncatechars:30 }}</strong>
+                        </a>
+                        <br><small class="text-muted">{{ conversation.updated_at|timesince }}</small>
+                    </div>
+                    <small class="badge bg-secondary">{{ conversation.get_message_count }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentConversationId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    // Focus sur l'input
+    messageInput.focus();
+    
+    // Gestion du formulaire
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+    
+    // Envoi avec Entrée
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Ajouter le message utilisateur
+        addMessage('user', message);
+        
+        // Vider l'input
+        messageInput.value = '';
+        
+        // Désactiver l'input et montrer l'indicateur de frappe
+        setLoadingState(true);
+        
+        // Envoyer à l'IA
+        processAIMessage(message);
+    }
+    
+    function addMessage(role, content, metadata = {}) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        
+        if (role === 'user') {
+            messageDiv.innerHTML = `
+                <div class="d-flex align-items-start justify-content-end">
+                    <div>
+                        <strong>{% trans "Vous" %}</strong>
+                        <p class="mb-0 mt-1">${content}</p>
+                        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                    </div>
+                    <i class="bi bi-person-circle fs-4 ms-2"></i>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-robot fs-4 me-2 text-primary"></i>
+                    <div>
+                        <strong>{% trans "Assistant IA" %}</strong>
+                        <p class="mb-0 mt-1">${content}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                            ${metadata.tokens ? `<small class="text-muted">${metadata.tokens} tokens</small>` : ''}
+                        </div>
+                        ${metadata.action_result ? `
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <small><strong>{% trans "Action exécutée" %}:</strong> ${metadata.action_result.message || ''}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function processAIMessage(message) {
+        fetch('{% url "ai_assistant:process_message" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                message: message,
+                conversation_id: currentConversationId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            setLoadingState(false);
+            
+            if (data.status === 'success') {
+                currentConversationId = data.conversation_id;
+                
+                addMessage('assistant', data.ai_response, {
+                    tokens: data.tokens_used,
+                    action_result: data.action_result
+                });
+                
+                // Gérer les résultats d'action
+                if (data.action_result) {
+                    handleActionResult(data.action_result);
+                }
+            } else {
+                addMessage('assistant', '{% trans "Désolé, une erreur est survenue. Pouvez-vous reformuler votre demande ?" %}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            setLoadingState(false);
+            addMessage('assistant', '{% trans "Erreur de communication avec le serveur." %}');
+        });
+    }
+    
+    function setLoadingState(loading) {
+        sendButton.disabled = loading;
+        messageInput.disabled = loading;
+        
+        if (loading) {
+            typingIndicator.style.display = 'block';
+            sendButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        } else {
+            typingIndicator.style.display = 'none';
+            sendButton.innerHTML = '<i class="bi bi-send"></i>';
+        }
+    }
+    
+    function handleActionResult(result) {
+        if (result.success) {
+            showAlert('success', result.message || '{% trans "Action exécutée avec succès" %}');
+            
+            // Rediriger si nécessaire
+            if (result.url) {
+                setTimeout(() => {
+                    if (confirm('{% trans "Voulez-vous voir le résultat ?" %}')) {
+                        window.open(result.url, '_blank');
+                    }
+                }, 2000);
+            }
+        } else if (result.requires_approval) {
+            showAlert('warning', '{% trans "Cette action nécessite une approbation manuelle." %}');
+        } else {
+            showAlert('danger', result.error || '{% trans "Erreur lors de l\'exécution de l\'action" %}');
+        }
+    }
+    
+    // Fonctions globales pour les suggestions
+    window.sendSuggestion = function(suggestion) {
+        messageInput.value = suggestion;
+        sendMessage();
+    };
+    
+    window.approveAction = function(actionId, approve) {
+        fetch(`{% url 'ai_assistant:approve_action' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', actionId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `approve=${approve}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('success', data.message);
+                location.reload(); // Recharger pour mettre à jour la liste
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', '{% trans "Erreur lors de l\'approbation" %}');
+        });
+    };
+});
+</script>
+{% endblock %}

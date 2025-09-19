@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Factures" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="bi bi-receipt me-2"></i>
+            {% trans "Factures" %}
+        </h2>
+        <p class="text-muted">{% trans "Gérez votre facturation et vos paiements" %}</p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if can_create %}
+        <a href="{% url 'invoicing:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>
+            {% trans "Nouvelle facture" %}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_invoices }}</h4>
+                        <p class="mb-0">{% trans "Total factures" %}</p>
+                    </div>
+                    <i class="bi bi-receipt fs-1 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ stats.total_amount|floatformat:0 }}</h4>
+                        <p class="mb-0">{% trans "Revenus totaux" %}</p>
+                    </div>
+                    <i class="bi bi-currency-dollar fs-1 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ stats.outstanding|floatformat:0 }}</h4>
+                        <p class="mb-0">{% trans "En attente" %}</p>
+                    </div>
+                    <i class="bi bi-clock fs-1 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ stats.overdue|floatformat:0 }}</h4>
+                        <p class="mb-0">{% trans "En retard" %}</p>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des factures -->
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">{% trans "Liste des factures" %}</h5>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'invoicing:reminders' %}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-bell"></i> {% trans "Relances" %}
+                    </a>
+                    <a href="{% url 'invoicing:export' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-download"></i> {% trans "Exporter" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if invoices %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "Numéro" %}</th>
+                        <th>{% trans "Client" %}</th>
+                        <th>{% trans "Statut" %}</th>
+                        <th>{% trans "Montant" %}</th>
+                        <th>{% trans "Échéance" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr class="{% if invoice.is_overdue %}table-warning{% endif %}">
+                        <td>
+                            <a href="{% url 'invoicing:detail' invoice.pk %}" class="text-decoration-none">
+                                <strong>{{ invoice.number }}</strong>
+                            </a>
+                        </td>
+                        <td>{{ invoice.client.name }}</td>
+                        <td>
+                            <span class="badge bg-{{ invoice.get_status_display_class }}">
+                                {{ invoice.get_status_display }}
+                            </span>
+                        </td>
+                        <td>${{ invoice.total_amount.amount|floatformat:2 }}</td>
+                        <td>
+                            {{ invoice.due_date|date:"d/m/Y" }}
+                            {% if invoice.is_overdue %}
+                            <br><small class="text-danger">{% trans "En retard" %}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'invoicing:detail' invoice.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if invoice.get_balance_due.amount > 0 %}
+                                <a href="{% url 'invoicing:pay_paypal' invoice.pk %}" class="btn btn-outline-success">
+                                    <i class="bi bi-paypal"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-receipt display-1 text-muted"></i>
+            <h4 class="mt-3">{% trans "Aucune facture" %}</h4>
+            <p class="text-muted">{% trans "Commencez par créer votre première facture." %}</p>
+            {% if can_create %}
+            <a href="{% url 'invoicing:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>
+                {% trans "Créer une facture" %}
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
