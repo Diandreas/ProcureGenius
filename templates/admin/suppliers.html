@@ -1,0 +1,304 @@
+{% extends 'admin/base_admin.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Gestion des Fournisseurs" %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>{% trans "Gestion des Fournisseurs" %}</h1>
+    <div class="header-actions">
+        <a href="{% url 'suppliers:create_supplier' %}" class="btn btn-primary">
+            <i class="icon">➕</i> {% trans "Nouveau Fournisseur" %}
+        </a>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="filters-section">
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label for="active">{% trans "Statut" %}</label>
+            <select name="active" id="active">
+                <option value="all" {% if active_filter == 'all' %}selected{% endif %}>{% trans "Tous" %}</option>
+                <option value="active" {% if active_filter == 'active' %}selected{% endif %}>{% trans "Actifs" %}</option>
+                <option value="inactive" {% if active_filter == 'inactive' %}selected{% endif %}>{% trans "Inactifs" %}</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="q">{% trans "Recherche" %}</label>
+            <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="{% trans 'Nom, contact, email...' %}">
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-secondary">{% trans "Filtrer" %}</button>
+            <a href="{% url 'core:admin_suppliers' %}" class="btn btn-outline">{% trans "Réinitialiser" %}</a>
+        </div>
+    </form>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-summary">
+    <div class="summary-card">
+        <span class="summary-label">{% trans "Total" %}</span>
+        <span class="summary-value">{{ total_suppliers }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label active">{% trans "Actifs" %}</span>
+        <span class="summary-value">{{ active_suppliers }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label inactive">{% trans "Inactifs" %}</span>
+        <span class="summary-value">{{ total_suppliers|add:"-"|add:active_suppliers }}</span>
+    </div>
+</div>
+
+<!-- Table des fournisseurs -->
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{% trans "Nom" %}</th>
+                <th>{% trans "Contact" %}</th>
+                <th>{% trans "Coordonnées" %}</th>
+                <th>{% trans "Statut" %}</th>
+                <th>{% trans "Dernière activité" %}</th>
+                <th>{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for supplier in page_obj %}
+            <tr>
+                <td>
+                    <div class="supplier-name">
+                        <strong>{{ supplier.name }}</strong>
+                        {% if supplier.website %}
+                        <a href="{{ supplier.website }}" target="_blank" class="website-link" title="{{ supplier.website }}">🌐</a>
+                        {% endif %}
+                    </div>
+                    {% if supplier.description %}
+                    <div class="supplier-description">{{ supplier.description|truncatechars:60 }}</div>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if supplier.contact_person %}
+                    <div class="contact-info">
+                        <strong>{{ supplier.contact_person }}</strong>
+                        {% if supplier.contact_title %}
+                        <div class="contact-title">{{ supplier.contact_title }}</div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted">{% trans "Non défini" %}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="contact-details">
+                        {% if supplier.email %}
+                        <div class="contact-item">
+                            <span class="icon">📧</span>
+                            <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>
+                        </div>
+                        {% endif %}
+                        {% if supplier.phone %}
+                        <div class="contact-item">
+                            <span class="icon">📞</span>
+                            <a href="tel:{{ supplier.phone }}">{{ supplier.phone }}</a>
+                        </div>
+                        {% endif %}
+                        {% if supplier.address %}
+                        <div class="contact-item">
+                            <span class="icon">📍</span>
+                            <span>{{ supplier.address|truncatechars:30 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge {% if supplier.is_active %}active{% else %}inactive{% endif %}">
+                        {% if supplier.is_active %}
+                            ✅ {% trans "Actif" %}
+                        {% else %}
+                            ❌ {% trans "Inactif" %}
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="activity-info">
+                        <div class="last-updated">{{ supplier.updated_at|date:"d/m/Y" }}</div>
+                        <div class="created-date">{% trans "Créé le" %} {{ supplier.created_at|date:"d/m/Y" }}</div>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'suppliers:view_supplier' supplier.pk %}" class="btn btn-sm btn-outline" title="{% trans 'Voir' %}">👁️</a>
+                        <a href="{% url 'suppliers:edit_supplier' supplier.pk %}" class="btn btn-sm btn-secondary" title="{% trans 'Modifier' %}">✏️</a>
+                        {% if supplier.is_active %}
+                        <button onclick="toggleSupplierStatus('{{ supplier.pk }}', false)" class="btn btn-sm btn-warning" title="{% trans 'Désactiver' %}">⏸️</button>
+                        {% else %}
+                        <button onclick="toggleSupplierStatus('{{ supplier.pk }}', true)" class="btn btn-sm btn-success" title="{% trans 'Activer' %}">▶️</button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="no-data">
+                    {% trans "Aucun fournisseur trouvé." %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination-container">
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.active %}&active={{ request.GET.active }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⏮️</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.active %}&active={{ request.GET.active }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⬅️</a>
+        {% endif %}
+
+        <span class="page-info">
+            {% trans "Page" %} {{ page_obj.number }} {% trans "sur" %} {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.active %}&active={{ request.GET.active }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">➡️</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.active %}&active={{ request.GET.active }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⏭️</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.supplier-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.website-link {
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.supplier-description {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-title {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.contact-item .icon {
+    font-size: 10px;
+}
+
+.contact-item a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.contact-item a:hover {
+    text-decoration: underline;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: #e8f5e8;
+    color: #388e3c;
+}
+
+.status-badge.inactive {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+.activity-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.last-updated {
+    font-weight: 500;
+}
+
+.created-date {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.summary-label.active {
+    color: #388e3c;
+}
+
+.summary-label.inactive {
+    color: #d32f2f;
+}
+</style>
+
+<script>
+function toggleSupplierStatus(supplierId, newStatus) {
+    if (confirm('Êtes-vous sûr de vouloir modifier le statut de ce fournisseur ?')) {
+        // Implementation AJAX pour changer le statut
+        fetch(`{% url 'suppliers:toggle_status' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', supplierId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ is_active: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la modification du statut.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la modification du statut.');
+        });
+    }
+}
+</script>
+{% endblock %}

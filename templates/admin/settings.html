@@ -1,0 +1,479 @@
+{% extends 'admin/base_admin.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Paramètres" %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>{% trans "Paramètres du Système" %}</h1>
+    <p class="subtitle">{% trans "Configuration générale de l'application" %}</p>
+</div>
+
+<div class="settings-container">
+    <!-- Informations Entreprise -->
+    <div class="settings-section">
+        <h2>{% trans "Informations de l'Entreprise" %}</h2>
+        <form method="post" class="settings-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_company_info">
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="company_name">{% trans "Nom de l'entreprise" %}</label>
+                    <input type="text" id="company_name" name="company_name"
+                           value="{{ company_template.header_company_name|default:'ProcureGenius' }}"
+                           class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="company_email">{% trans "Email" %}</label>
+                    <input type="email" id="company_email" name="company_email"
+                           value="{{ company_template.header_email }}"
+                           class="form-control">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="company_address">{% trans "Adresse" %}</label>
+                    <textarea id="company_address" name="company_address"
+                              class="form-control" rows="3">{{ company_template.header_address }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="company_phone">{% trans "Téléphone" %}</label>
+                    <input type="tel" id="company_phone" name="company_phone"
+                           value="{{ company_template.header_phone }}"
+                           class="form-control">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% trans "Sauvegarder" %}</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Paramètres d'Impression -->
+    <div class="settings-section">
+        <h2>{% trans "Paramètres d'Impression" %}</h2>
+        <form method="post" class="settings-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_print_settings">
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="paper_size">{% trans "Taille du papier" %}</label>
+                    <select id="paper_size" name="paper_size" class="form-control">
+                        <option value="A4" {% if print_config.paper_size == 'A4' %}selected{% endif %}>A4 (210 × 297 mm)</option>
+                        <option value="LETTER" {% if print_config.paper_size == 'LETTER' %}selected{% endif %}>Letter (8.5 × 11 in)</option>
+                        <option value="LEGAL" {% if print_config.paper_size == 'LEGAL' %}selected{% endif %}>Legal (8.5 × 14 in)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="orientation">{% trans "Orientation" %}</label>
+                    <select id="orientation" name="orientation" class="form-control">
+                        <option value="portrait" {% if print_config.orientation == 'portrait' %}selected{% endif %}>{% trans "Portrait" %}</option>
+                        <option value="landscape" {% if print_config.orientation == 'landscape' %}selected{% endif %}>{% trans "Paysage" %}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="font_family">{% trans "Police" %}</label>
+                    <select id="font_family" name="font_family" class="form-control">
+                        <option value="Arial" {% if print_config.font_family == 'Arial' %}selected{% endif %}>Arial</option>
+                        <option value="Helvetica" {% if print_config.font_family == 'Helvetica' %}selected{% endif %}>Helvetica</option>
+                        <option value="Times New Roman" {% if print_config.font_family == 'Times New Roman' %}selected{% endif %}>Times New Roman</option>
+                        <option value="Roboto" {% if print_config.font_family == 'Roboto' %}selected{% endif %}>Roboto</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% trans "Sauvegarder" %}</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistiques Système -->
+    <div class="settings-section">
+        <h2>{% trans "Statistiques du Système" %}</h2>
+        <div class="system-stats">
+            <div class="stat-item">
+                <div class="stat-icon">📄</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.total_invoices }}</h3>
+                    <p>{% trans "Factures totales" %}</p>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-icon">📋</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.total_purchase_orders }}</h3>
+                    <p>{% trans "Bons de commande" %}</p>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.total_suppliers }}</h3>
+                    <p>{% trans "Fournisseurs" %}</p>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.total_users }}</h3>
+                    <p>{% trans "Utilisateurs" %}</p>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-icon">🖨️</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.total_print_history }}</h3>
+                    <p>{% trans "Impressions" %}</p>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-icon">💾</div>
+                <div class="stat-info">
+                    <h3>{{ system_stats.database_size }}</h3>
+                    <p>{% trans "Taille base de données" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Système -->
+    <div class="settings-section">
+        <h2>{% trans "Actions Système" %}</h2>
+        <div class="system-actions">
+            <div class="action-card">
+                <h3>{% trans "Sauvegarde" %}</h3>
+                <p>{% trans "Créer une sauvegarde complète du système" %}</p>
+                <button class="btn btn-secondary" onclick="createBackup()">
+                    <i class="icon">💾</i> {% trans "Créer une sauvegarde" %}
+                </button>
+                <div class="last-backup">
+                    {% trans "Dernière sauvegarde:" %} {{ system_stats.last_backup }}
+                </div>
+            </div>
+
+            <div class="action-card">
+                <h3>{% trans "Maintenance" %}</h3>
+                <p>{% trans "Nettoyer les fichiers temporaires et optimiser la base de données" %}</p>
+                <button class="btn btn-secondary" onclick="runMaintenance()">
+                    <i class="icon">🧹</i> {% trans "Lancer la maintenance" %}
+                </button>
+            </div>
+
+            <div class="action-card">
+                <h3>{% trans "Export des données" %}</h3>
+                <p>{% trans "Exporter toutes les données au format CSV/Excel" %}</p>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="icon">📊</i> {% trans "Exporter les données" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurations Avancées -->
+    <div class="settings-section">
+        <h2>{% trans "Configurations Avancées" %}</h2>
+        <div class="advanced-settings">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>{% trans "Mode Debug" %}</h4>
+                    <p>{% trans "Activer le mode développement (non recommandé en production)" %}</p>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>{% trans "Notifications Email" %}</h4>
+                    <p>{% trans "Envoyer des notifications par email pour les événements importants" %}</p>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>{% trans "Audit Trail" %}</h4>
+                    <p>{% trans "Enregistrer un historique détaillé de toutes les actions" %}</p>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.settings-section h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #34495e;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.system-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-icon {
+    font-size: 24px;
+}
+
+.stat-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.stat-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.system-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.action-card {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.action-card h3 {
+    margin: 0 0 8px 0;
+    color: #2c3e50;
+}
+
+.action-card p {
+    margin: 0 0 16px 0;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.last-backup {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.advanced-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.setting-info h4 {
+    margin: 0 0 4px 0;
+    color: #2c3e50;
+}
+
+.setting-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #0066cc;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+</style>
+
+<script>
+function createBackup() {
+    if (confirm('Créer une sauvegarde complète du système ?')) {
+        // Implementation AJAX pour créer la sauvegarde
+        fetch('{% url "core:create_backup" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sauvegarde créée avec succès!');
+            } else {
+                alert('Erreur lors de la création de la sauvegarde.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la création de la sauvegarde.');
+        });
+    }
+}
+
+function runMaintenance() {
+    if (confirm('Lancer la maintenance du système ? Cette opération peut prendre quelques minutes.')) {
+        // Implementation AJAX pour la maintenance
+        fetch('{% url "core:run_maintenance" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Maintenance terminée avec succès!');
+            } else {
+                alert('Erreur lors de la maintenance.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la maintenance.');
+        });
+    }
+}
+
+function exportData() {
+    if (confirm('Exporter toutes les données ? Un fichier sera téléchargé.')) {
+        window.location.href = '{% url "core:export_data" %}';
+    }
+}
+</script>
+{% endblock %}

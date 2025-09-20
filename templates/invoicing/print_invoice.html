@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture {{ invoice.invoice_number }}</title>
+    <style>
+        /* ====================================
+           🎨 STYLES D'IMPRESSION MODERNES
+           ====================================*/
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: {{ config.paper_size|default:"A4" }} {{ config.orientation|default:"portrait" }};
+            margin: {{ config.margin_top|default:20 }}mm {{ config.margin_right|default:20 }}mm {{ config.margin_bottom|default:20 }}mm {{ config.margin_left|default:20 }}mm;
+
+            @top-center {
+                content: "{{ template.header_company_name }}";
+                font-family: {{ config.font_family|default:"Arial" }}, sans-serif;
+                font-size: {{ config.font_size_small|default:8 }}pt;
+                color: #666;
+            }
+
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: {{ config.font_family|default:"Arial" }}, sans-serif;
+                font-size: {{ config.font_size_small|default:8 }}pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: {{ config.font_family|default:"Arial" }}, sans-serif;
+            font-size: {{ config.font_size_normal|default:10 }}pt;
+            color: {{ template.text_color|default:"#333" }};
+            line-height: 1.4;
+            background: white;
+        }
+
+        .invoice-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+        }
+
+        /* ====================================
+           📋 EN-TÊTE
+           ====================================*/
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            border-bottom: 3px solid {{ template.primary_color|default:"#0066cc" }};
+            padding-bottom: 20px;
+        }
+
+        .company-info {
+            flex: 1;
+        }
+
+        .company-logo {
+            max-width: 150px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-size: {{ config.font_size_large|default:14 }}pt;
+            font-weight: bold;
+            color: {{ template.primary_color|default:"#0066cc" }};
+            margin-bottom: 5px;
+        }
+
+        .company-address {
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .invoice-title-section {
+            text-align: right;
+            flex: 1;
+        }
+
+        .invoice-title {
+            font-size: 24pt;
+            font-weight: bold;
+            color: {{ template.primary_color|default:"#0066cc" }};
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .invoice-number {
+            font-size: {{ config.font_size_large|default:14 }}pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .invoice-date {
+            font-size: {{ config.font_size_normal|default:10 }}pt;
+            color: #666;
+        }
+
+        /* QR Code positioning */
+        .qr-code-container {
+            position: absolute;
+            {% if template.qr_code_position == 'top-right' %}
+                top: 20px;
+                right: 20px;
+            {% elif template.qr_code_position == 'bottom-left' %}
+                bottom: 20px;
+                left: 20px;
+            {% else %}
+                bottom: 20px;
+                right: 20px;
+            {% endif %}
+        }
+
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* ====================================
+           📊 INFORMATIONS FACTURATION
+           ====================================*/
+
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 40px;
+        }
+
+        .billing-info,
+        .invoice-info {
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: {{ config.font_size_normal|default:10 }}pt;
+            font-weight: bold;
+            color: {{ template.primary_color|default:"#0066cc" }};
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid {{ template.secondary_color|default:"#00d4ff" }};
+            padding-bottom: 3px;
+        }
+
+        .info-content {
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            line-height: 1.4;
+        }
+
+        .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .meta-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .meta-value {
+            color: #333;
+        }
+
+        /* ====================================
+           📋 TABLEAU DES ARTICLES
+           ====================================*/
+
+        .invoice-items {
+            margin-bottom: 30px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .items-table thead {
+            background: linear-gradient(135deg, {{ template.primary_color|default:"#0066cc" }}, {{ template.secondary_color|default:"#00d4ff" }});
+            color: white;
+        }
+
+        .items-table th {
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+
+        .items-table th:last-child {
+            text-align: right;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        .items-table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .items-table tbody tr:hover {
+            background: #f0f8ff;
+        }
+
+        .items-table td {
+            padding: 10px 8px;
+            border: none;
+            vertical-align: top;
+        }
+
+        .items-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .item-code {
+            font-weight: bold;
+            color: {{ template.primary_color|default:"#0066cc" }};
+        }
+
+        .item-description {
+            color: #666;
+            margin-top: 2px;
+            font-size: {{ config.font_size_small|default:8 }}pt;
+        }
+
+        .quantity-cell {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .price-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ====================================
+           💰 TOTAUX
+           ====================================*/
+
+        .invoice-totals {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .totals-table {
+            width: 300px;
+            font-size: {{ config.font_size_normal|default:10 }}pt;
+        }
+
+        .totals-table tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        .totals-table td {
+            padding: 8px 12px;
+        }
+
+        .totals-table .label {
+            text-align: left;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .totals-table .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .total-final {
+            background: linear-gradient(135deg, {{ template.primary_color|default:"#0066cc" }}, {{ template.secondary_color|default:"#00d4ff" }});
+            color: white !important;
+            font-weight: bold;
+            font-size: {{ config.font_size_large|default:14 }}pt;
+        }
+
+        .total-final td {
+            border: none;
+        }
+
+        /* ====================================
+           📝 PIED DE PAGE
+           ====================================*/
+
+        .invoice-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid {{ template.primary_color|default:"#0066cc" }};
+            page-break-inside: avoid;
+        }
+
+        .footer-text {
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            color: #666;
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .footer-conditions {
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            color: #888;
+            text-align: justify;
+            line-height: 1.4;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .conditions-title {
+            font-weight: bold;
+            color: {{ template.primary_color|default:"#0066cc" }};
+            margin-bottom: 5px;
+        }
+
+        /* ====================================
+           📱 RESPONSIVENESS
+           ====================================*/
+
+        @media screen and (max-width: 768px) {
+            .invoice-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .invoice-title-section {
+                text-align: left;
+            }
+
+            .invoice-details {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .items-table {
+                font-size: 7pt;
+            }
+
+            .items-table th,
+            .items-table td {
+                padding: 6px 4px;
+            }
+
+            .totals-table {
+                width: 100%;
+            }
+
+            .qr-code-container {
+                position: relative;
+                text-align: center;
+                margin: 20px 0;
+            }
+        }
+
+        /* ====================================
+           🖨️ PRINT SPECIFIC
+           ====================================*/
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .invoice-container {
+                box-shadow: none;
+                border: none;
+            }
+
+            .qr-code-container {
+                {% if not template.show_qr_code %}
+                    display: none;
+                {% endif %}
+            }
+
+            /* Force page breaks */
+            .invoice-footer {
+                page-break-inside: avoid;
+            }
+
+            .items-table {
+                page-break-inside: auto;
+            }
+
+            .items-table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .items-table thead {
+                display: table-header-group;
+            }
+
+            .items-table tbody {
+                display: table-row-group;
+            }
+        }
+
+        /* ====================================
+           🔍 FILIGRANE DUPLICATA
+           ====================================*/
+
+        {% if config.include_duplicate_watermark %}
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72pt;
+            color: rgba(255, 0, 0, 0.1);
+            font-weight: bold;
+            z-index: -1;
+            pointer-events: none;
+        }
+        {% endif %}
+
+        /* ====================================
+           🎨 ACCENTS COLORÉS
+           ====================================*/
+
+        .accent-line {
+            height: 3px;
+            background: linear-gradient(90deg, {{ template.primary_color|default:"#0066cc" }}, {{ template.secondary_color|default:"#00d4ff" }});
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid {{ template.primary_color|default:"#0066cc" }};
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            margin: 10px 0;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: {{ config.font_size_small|default:8 }}pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-draft {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .status-sent {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-overdue {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    {% if config.include_duplicate_watermark %}
+    <div class="watermark">DUPLICATA</div>
+    {% endif %}
+
+    <div class="invoice-container">
+        <!-- En-tête -->
+        <header class="invoice-header">
+            <div class="company-info">
+                {% if template.header_logo %}
+                <img src="{{ template.header_logo.url }}" alt="Logo" class="company-logo">
+                {% endif %}
+                <div class="company-name">{{ template.header_company_name }}</div>
+                <div class="company-address">
+                    {{ template.header_address|linebreaks }}
+                    {% if template.header_phone %}
+                    <br>Tél: {{ template.header_phone }}
+                    {% endif %}
+                    {% if template.header_email %}
+                    <br>Email: {{ template.header_email }}
+                    {% endif %}
+                    {% if template.header_website %}
+                    <br>Web: {{ template.header_website }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="invoice-title-section">
+                <div class="invoice-title">Facture</div>
+                <div class="invoice-number">{{ invoice.invoice_number }}</div>
+                <div class="invoice-date">{{ invoice.created_at|date:"d/m/Y" }}</div>
+                {% if invoice.status %}
+                <div style="margin-top: 10px;">
+                    <span class="status-badge status-{{ invoice.status }}">
+                        {{ invoice.get_status_display }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- QR Code -->
+        {% if template.show_qr_code %}
+        <div class="qr-code-container">
+            <img src="data:image/png;base64,{{ invoice.qr_code_data }}" alt="QR Code" class="qr-code">
+        </div>
+        {% endif %}
+
+        <!-- Détails de facturation -->
+        <section class="invoice-details">
+            <div class="billing-info">
+                <div class="section-title">Facturer à</div>
+                <div class="info-content">
+                    <strong>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</strong><br>
+                    {% if invoice.created_by.email %}
+                    {{ invoice.created_by.email }}<br>
+                    {% endif %}
+                    <!-- Ajouter d'autres champs client si disponibles -->
+                </div>
+            </div>
+
+            <div class="invoice-info">
+                <div class="section-title">Informations facture</div>
+                <div class="invoice-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Date de création:</span>
+                        <span class="meta-value">{{ invoice.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Date d'échéance:</span>
+                        <span class="meta-value">{{ invoice.due_date|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Statut:</span>
+                        <span class="meta-value">{{ invoice.get_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Description de la facture -->
+        {% if invoice.description %}
+        <section class="highlight-box">
+            <strong>Description:</strong> {{ invoice.description }}
+        </section>
+        {% endif %}
+
+        <div class="accent-line"></div>
+
+        <!-- Articles -->
+        <section class="invoice-items">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Code</th>
+                        <th style="width: 40%">Description</th>
+                        <th style="width: 10%">Qté</th>
+                        <th style="width: 15%">Prix unit.</th>
+                        <th style="width: 20%">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items.all %}
+                    <tr>
+                        <td>
+                            <div class="item-code">{{ item.service_code }}</div>
+                        </td>
+                        <td>
+                            <div>{{ item.description }}</div>
+                        </td>
+                        <td class="quantity-cell">{{ item.quantity }}</td>
+                        <td class="price-cell">{{ item.unit_price|floatformat:2 }} CAD</td>
+                        <td class="price-cell">{{ item.total_price|floatformat:2 }} CAD</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #666; font-style: italic;">
+                            Aucun article dans cette facture
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Totaux -->
+        <section class="invoice-totals">
+            <table class="totals-table">
+                <tr>
+                    <td class="label">Sous-total:</td>
+                    <td class="amount">{{ invoice.subtotal|floatformat:2 }} CAD</td>
+                </tr>
+                {% if invoice.tax_amount %}
+                <tr>
+                    <td class="label">Taxes:</td>
+                    <td class="amount">{{ invoice.tax_amount|floatformat:2 }} CAD</td>
+                </tr>
+                {% endif %}
+                <tr class="total-final">
+                    <td class="label">TOTAL:</td>
+                    <td class="amount">{{ invoice.total_amount|floatformat:2 }} CAD</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Pied de page -->
+        <footer class="invoice-footer">
+            {% if template.footer_text %}
+            <div class="footer-text">
+                {{ template.footer_text|linebreaks }}
+            </div>
+            {% endif %}
+
+            {% if template.footer_conditions %}
+            <div class="footer-conditions">
+                <div class="conditions-title">Conditions générales</div>
+                {{ template.footer_conditions|linebreaks }}
+            </div>
+            {% endif %}
+
+            <div class="accent-line"></div>
+
+            <div class="footer-text">
+                <strong>{{ template.header_company_name }}</strong> -
+                Facture générée le {{ "now"|date:"d/m/Y à H:i" }}
+                {% if config.include_page_numbers %}
+                <br>Document confidentiel - Reproduction interdite
+                {% endif %}
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-print si nécessaire
+        if (window.location.search.includes('auto_print=true')) {
+            window.onload = function() {
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            };
+        }
+    </script>
+</body>
+</html>

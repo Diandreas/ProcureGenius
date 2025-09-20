@@ -1,0 +1,170 @@
+{% extends 'admin/base_admin.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Dashboard" %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>{% trans "Dashboard Administrateur" %}</h1>
+    <p class="subtitle">{% trans "Vue d'ensemble de votre système" %}</p>
+</div>
+
+<!-- Statistiques principales -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-info">
+            <h3>{{ total_invoices }}</h3>
+            <p>{% trans "Factures" %}</p>
+        </div>
+        <div class="stat-trend positive">+12%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-info">
+            <h3>{{ total_purchase_orders }}</h3>
+            <p>{% trans "Bons de commande" %}</p>
+        </div>
+        <div class="stat-trend positive">+8%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-info">
+            <h3>{{ total_suppliers }}</h3>
+            <p>{% trans "Fournisseurs" %}</p>
+        </div>
+        <div class="stat-trend neutral">0%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+            <h3>{{ total_users }}</h3>
+            <p>{% trans "Utilisateurs" %}</p>
+        </div>
+        <div class="stat-trend positive">+3%</div>
+    </div>
+</div>
+
+<!-- Revenus mensuels -->
+<div class="revenue-section">
+    <div class="revenue-card">
+        <h3>{% trans "Revenus du mois" %}</h3>
+        <div class="revenue-amount">{{ monthly_invoice_total|floatformat:2 }} CAD</div>
+        <p class="revenue-subtitle">{% trans "Factures émises ce mois" %}</p>
+    </div>
+
+    <div class="revenue-card">
+        <h3>{% trans "Commandes du mois" %}</h3>
+        <div class="revenue-amount">{{ monthly_po_total|floatformat:2 }} CAD</div>
+        <p class="revenue-subtitle">{% trans "Bons de commande ce mois" %}</p>
+    </div>
+</div>
+
+<!-- Graphiques et données -->
+<div class="chart-section">
+    <div class="chart-card">
+        <h3>{% trans "Évolution des factures (30 jours)" %}</h3>
+        <canvas id="invoiceChart" width="400" height="200"></canvas>
+    </div>
+
+    <div class="chart-card">
+        <h3>{% trans "Répartition par statut" %}</h3>
+        <div class="status-breakdown">
+            {% for status, count in invoice_by_status.items %}
+            <div class="status-item">
+                <span class="status-label status-{{ status }}">{{ status|title }}</span>
+                <span class="status-count">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Activités récentes -->
+<div class="activity-section">
+    <div class="activity-card">
+        <h3>{% trans "Factures récentes" %}</h3>
+        <div class="activity-list">
+            {% for invoice in recent_invoices %}
+            <div class="activity-item">
+                <div class="activity-icon">📄</div>
+                <div class="activity-info">
+                    <h4>{{ invoice.invoice_number }}</h4>
+                    <p>{{ invoice.title }}</p>
+                    <span class="activity-date">{{ invoice.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="activity-amount">{{ invoice.total_amount|floatformat:2 }} CAD</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="activity-card">
+        <h3>{% trans "Commandes récentes" %}</h3>
+        <div class="activity-list">
+            {% for po in recent_purchase_orders %}
+            <div class="activity-item">
+                <div class="activity-icon">📋</div>
+                <div class="activity-info">
+                    <h4>{{ po.po_number }}</h4>
+                    <p>{{ po.title }}</p>
+                    <span class="activity-date">{{ po.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="activity-amount">{{ po.total_amount|floatformat:2 }} CAD</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Données pour le graphique
+const dailyStats = {{ daily_stats|safe }};
+
+// Configuration du graphique
+const ctx = document.getElementById('invoiceChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: dailyStats.map(item => new Date(item.date).toLocaleDateString()),
+        datasets: [{
+            label: 'Factures',
+            data: dailyStats.map(item => item.invoices_total),
+            borderColor: '#0066cc',
+            backgroundColor: 'rgba(0, 102, 204, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Commandes',
+            data: dailyStats.map(item => item.pos_total),
+            borderColor: '#00d4ff',
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString() + ' CAD';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

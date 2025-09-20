@@ -6,10 +6,9 @@ from crispy_forms.layout import Layout, Fieldset, Submit, Row, Column, Div, HTML
 from django.contrib.auth import get_user_model
 
 from .models import (
-    PurchaseOrder, PurchaseOrderItem, PurchaseOrderApproval,
-    PurchaseOrderReceipt, PurchaseOrderTemplate
+    PurchaseOrder, PurchaseOrderItem
 )
-from apps.suppliers.models import Supplier, Product, ProductCategory
+from apps.suppliers.models import Supplier
 
 User = get_user_model()
 
@@ -20,33 +19,24 @@ class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
         fields = [
-            'supplier', 'priority', 'order_date', 'expected_delivery',
-            'shipping_address', 'billing_address', 'payment_terms',
-            'notes', 'terms_conditions', 'external_reference'
+            'title', 'description', 'required_date', 'priority', 'notes'
         ]
         widgets = {
-            'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'required_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
-            'order_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'expected_delivery': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'shipping_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'billing_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'payment_terms': forms.TextInput(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'terms_conditions': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'external_reference': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Filtrer les fournisseurs actifs seulement
-        self.fields['supplier'].queryset = Supplier.objects.filter(status='active').order_by('name')
-        
-        # Valeur par défaut pour la date de commande
+        # Date par défaut = aujourd'hui
         if not self.instance.pk:
             from django.utils import timezone
-            self.fields['order_date'].initial = timezone.now().date()
+            self.fields['required_date'].initial = timezone.now().date()
+        
         
         self.helper = FormHelper()
         self.helper.layout = Layout(
@@ -94,7 +84,7 @@ class PurchaseOrderItemForm(forms.ModelForm):
     """Formulaire pour les lignes de bon de commande"""
     
     product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_available=True),
+        queryset=Supplier.objects.filter(is_active=True),  # Temporaire: utiliser Supplier au lieu de Product
         required=False,
         widget=forms.Select(attrs={'class': 'form-select product-select'}),
         label=_('Produit')
@@ -103,23 +93,18 @@ class PurchaseOrderItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrderItem
         fields = [
-            'product', 'sku', 'description', 'category', 'quantity', 'unit',
-            'unit_price', 'expected_date', 'notes'
+            'product_code', 'description', 'quantity', 'unit_price'
         ]
         widgets = {
-            'sku': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.TextInput(attrs={'class': 'form-control'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'unit': forms.TextInput(attrs={'class': 'form-control'}),
-            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'expected_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'notes': forms.TextInput(attrs={'class': 'form-control'}),
+            'product_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['category'].queryset = ProductCategory.objects.all().order_by('name')
+        # self.fields['category'].queryset = ProductCategory.objects.all().order_by('name')  # Temporaire: commenté
 
 
 # Formset pour les lignes de bon de commande
@@ -155,7 +140,7 @@ class PurchaseOrderSearchForm(forms.Form):
     
     supplier = forms.ModelChoiceField(
         required=False,
-        queryset=Supplier.objects.filter(status='active'),
+        queryset=Supplier.objects.filter(is_active=True),
         widget=forms.Select(attrs={'class': 'form-select'}),
         label=_('Fournisseur'),
         empty_label=_('Tous les fournisseurs')
@@ -216,97 +201,97 @@ class PurchaseOrderSearchForm(forms.Form):
         )
 
 
-class PurchaseOrderApprovalForm(forms.ModelForm):
-    """Formulaire d'approbation"""
-    
-    class Meta:
-        model = PurchaseOrderApproval
-        fields = ['comments']
-        widgets = {
-            'comments': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': _('Commentaires optionnels...')
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            'comments',
-            Div(
-                Submit('approve', _('Approuver'), css_class='btn btn-success me-2'),
-                Submit('reject', _('Rejeter'), css_class='btn btn-danger'),
-                css_class='d-flex justify-content-end mt-3'
-            )
-        )
-
-
-class PurchaseOrderReceiptForm(forms.ModelForm):
-    """Formulaire de réception de marchandises"""
-    
-    class Meta:
-        model = PurchaseOrderReceipt
-        fields = [
-            'receipt_date', 'delivery_note', 'carrier', 'tracking_number', 'notes'
-        ]
-        widgets = {
-            'receipt_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'delivery_note': forms.TextInput(attrs={'class': 'form-control'}),
-            'carrier': forms.TextInput(attrs={'class': 'form-control'}),
-            'tracking_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Date par défaut = aujourd'hui
-        if not self.instance.pk:
-            from django.utils import timezone
-            self.fields['receipt_date'].initial = timezone.now().date()
-        
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
-                _('Informations de réception'),
-                Row(
-                    Column('receipt_date', css_class='form-group col-md-6 mb-0'),
-                    Column('delivery_note', css_class='form-group col-md-6 mb-0'),
-                ),
-                Row(
-                    Column('carrier', css_class='form-group col-md-6 mb-0'),
-                    Column('tracking_number', css_class='form-group col-md-6 mb-0'),
-                ),
-                'notes',
-            ),
-        )
+# class PurchaseOrderApprovalForm(forms.ModelForm):
+#     """Formulaire d'approbation"""
+#     
+#     class Meta:
+#         model = PurchaseOrderApproval
+#         fields = ['comments']
+#         widgets = {
+#             'comments': forms.Textarea(attrs={
+#                 'class': 'form-control',
+#                 'rows': 3,
+#                 'placeholder': _('Commentaires optionnels...')
+#             }),
+#         }
+# 
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.layout = Layout(
+#             'comments',
+#             Div(
+#                 Submit('approve', _('Approuver'), css_class='btn btn-success me-2'),
+#                 Submit('reject', _('Rejeter'), css_class='btn btn-danger'),
+#                 css_class='d-flex justify-content-end mt-3'
+#             )
+#         )
 
 
-class PurchaseOrderTemplateForm(forms.ModelForm):
-    """Formulaire pour créer un template de bon de commande"""
-    
-    class Meta:
-        model = PurchaseOrderTemplate
-        fields = ['name', 'description', 'supplier']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'supplier': forms.Select(attrs={'class': 'form-select'}),
-        }
+# class PurchaseOrderReceiptForm(forms.ModelForm):
+#     """Formulaire de réception de marchandises"""
+#     
+#     class Meta:
+#         model = PurchaseOrderReceipt
+#         fields = [
+#             'receipt_date', 'delivery_note', 'carrier', 'tracking_number', 'notes'
+#         ]
+#         widgets = {
+#             'receipt_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+#             'delivery_note': forms.TextInput(attrs={'class': 'form-control'}),
+#             'carrier': forms.TextInput(attrs={'class': 'form-control'}),
+#             'tracking_number': forms.TextInput(attrs={'class': 'form-control'}),
+#             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+#         }
+# 
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         
+#         # Date par défaut = aujourd'hui
+#         if not self.instance.pk:
+#             from django.utils import timezone
+#             self.fields['receipt_date'].initial = timezone.now().date()
+#         
+#         self.helper = FormHelper()
+#         self.helper.layout = Layout(
+#             Fieldset(
+#                 _('Informations de réception'),
+#                 Row(
+#                     Column('receipt_date', css_class='form-group col-md-6 mb-0'),
+#                     Column('delivery_note', css_class='form-group col-md-6 mb-0'),
+#                 ),
+#                 Row(
+#                     Column('carrier', css_class='form-group col-md-6 mb-0'),
+#                     Column('tracking_number', css_class='form-group col-md-6 mb-0'),
+#                 ),
+#                 'notes',
+#             ),
+#         )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['supplier'].queryset = Supplier.objects.filter(status='active').order_by('name')
-        
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            'name',
-            'supplier',
-            'description',
-            Submit('submit', _('Créer le template'), css_class='btn btn-primary')
-        )
+
+# class PurchaseOrderTemplateForm(forms.ModelForm):
+#     """Formulaire pour créer un template de bon de commande"""
+#     
+#     class Meta:
+#         model = PurchaseOrderTemplate
+#         fields = ['name', 'description', 'supplier']
+#         widgets = {
+#             'name': forms.TextInput(attrs={'class': 'form-control'}),
+#             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+#             'supplier': forms.Select(attrs={'class': 'form-select'}),
+#         }
+# 
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['supplier'].queryset = Supplier.objects.filter(is_active=True).order_by('name')
+#         
+#         self.helper = FormHelper()
+#         self.helper.layout = Layout(
+#             'name',
+#             'supplier',
+#             'description',
+#             Submit('submit', _('Créer le template'), css_class='btn btn-primary')
+#         )
 
 
 class BulkPurchaseOrderActionForm(forms.Form):
@@ -350,7 +335,7 @@ class QuickPurchaseOrderForm(forms.Form):
     """Formulaire rapide pour création de BC via IA"""
     
     supplier = forms.ModelChoiceField(
-        queryset=Supplier.objects.filter(status='active'),
+        queryset=Supplier.objects.filter(is_active=True),
         widget=forms.Select(attrs={'class': 'form-select'}),
         label=_('Fournisseur')
     )

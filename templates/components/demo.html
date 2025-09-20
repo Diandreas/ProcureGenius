@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Démonstration des Composants - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .demo-section {
+        margin-bottom: 4rem;
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow);
+    }
+
+    .demo-title {
+        color: var(--primary-blue);
+        margin-bottom: 2rem;
+        font-weight: 700;
+        border-bottom: 2px solid var(--primary-cyan);
+        padding-bottom: 1rem;
+    }
+
+    .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .component-demo {
+        background: var(--gray-50);
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+    }
+
+    .demo-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .code-snippet {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1rem;
+        border-radius: var(--radius);
+        font-family: 'Fira Code', monospace;
+        font-size: 0.875rem;
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h1 class="h2 text-gradient mb-3">
+                    <i class="bi bi-palette me-2"></i>
+                    Démonstration des Composants Modernes
+                </h1>
+                <p class="text-muted lead">
+                    Découvrez tous les composants responsive et interactifs de ProcureGenius
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 1: Tables Responsives -->
+    <div class="demo-section">
+        <h2 class="demo-title">
+            <i class="bi bi-table me-2"></i>
+            Tables Responsives Avancées
+        </h2>
+
+        <div class="table-responsive-custom">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Fournisseur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Ville</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Microsoft Canada</td>
+                        <td>contact@microsoft.ca</td>
+                        <td>+1 800 642-7676</td>
+                        <td>Mississauga</td>
+                        <td><span class="badge badge-success">Actif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary">Voir</button>
+                            <button class="btn btn-sm btn-outline-secondary">Modifier</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Adobe Systems</td>
+                        <td>sales@adobe.ca</td>
+                        <td>+1 800 833-6687</td>
+                        <td>Toronto</td>
+                        <td><span class="badge badge-warning">En attente</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary">Voir</button>
+                            <button class="btn btn-sm btn-outline-secondary">Modifier</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Oracle Corporation</td>
+                        <td>info@oracle.ca</td>
+                        <td>+1 888 672-2531</td>
+                        <td>Vancouver</td>
+                        <td><span class="badge badge-success">Actif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary">Voir</button>
+                            <button class="btn btn-sm btn-outline-secondary">Modifier</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code-snippet">
+            &lt;div class="table-responsive-custom"&gt;
+            &lt;table class="table table-modern"&gt;
+            &lt;!-- Tableau avec recherche, pagination et vue mobile automatiques --&gt;
+            &lt;/table&gt;
+            &lt;/div&gt;
+        </div>
+    </div>
+
+    <!-- Section 2: Cartes Interactives -->
+    <div class="demo-section">
+        <h2 class="demo-title">
+            <i class="bi bi-card-list me-2"></i>
+            Cartes Responsive Interactives
+        </h2>
+
+        <div class="demo-grid">
+            <div class="responsive-card card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0">Carte Standard</h5>
+                    <small class="text-muted">Avec effet parallax</small>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Cette carte possède des effets de survol sophistiqués et des animations fluides.
+                    </p>
+                    <div class="card-expandable collapse">
+                        <p class="text-muted">
+                            Contenu supplémentaire qui s'affiche lors de l'expansion de la carte.
+                        </p>
+                    </div>
+                    <div class="demo-actions">
+                        <button class="btn btn-primary btn-sm">Action principale</button>
+                        <button class="btn btn-outline-secondary btn-sm">Action secondaire</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="responsive-card card hover-scale">
+                <div class="card-body text-center">
+                    <div id="demo-progress" class="mb-3"></div>
+                    <h6>Progression Circulaire</h6>
+                    <p class="text-muted small">
+                        Indicateur de progression animé et personnalisable
+                    </p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="updateProgress()">
+                        Mettre à jour
+                    </button>
+                </div>
+            </div>
+
+            <div class="component-demo">
+                <h6>Édition Inline</h6>
+                <p>
+                    <strong>Nom:</strong>
+                    <span class="inline-edit" data-field="name" data-model="demo" data-pk="1">Microsoft Canada</span>
+                </p>
+                <p>
+                    <strong>Prix:</strong>
+                    <span class="inline-edit" data-field="price" data-type="number" data-model="demo"
+                        data-pk="1">1299.99</span> $
+                </p>
+                <p>
+                    <strong>Date:</strong>
+                    <span class="inline-edit" data-field="date" data-type="date" data-model="demo"
+                        data-pk="1">2024-01-15</span>
+                </p>
+                <small class="text-muted">Double-cliquez pour modifier</small>
+            </div>
+        </div>
+
+        <div class="code-snippet">
+            &lt;div class="responsive-card card hover-lift"&gt;
+            &lt;div class="card-expandable collapse"&gt;
+            &lt;!-- Contenu extensible --&gt;
+            &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Édition inline --&gt;
+            &lt;span class="inline-edit" data-field="name"&gt;Valeur éditable&lt;/span&gt;
+        </div>
+    </div>
+
+    <!-- Section 3: Formulaires Avancés -->
+    <div class="demo-section">
+        <h2 class="demo-title">
+            <i class="bi bi-form me-2"></i>
+            Formulaires Multi-étapes
+        </h2>
+
+        <form class="multi-step-form" id="demo-form">
+            <!-- Étape 1 -->
+            <div class="form-step active" data-title="Informations de base">
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-person me-2"></i>
+                        Informations personnelles
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-group">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 2 -->
+            <div class="form-step" data-title="Préférences">
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-gear me-2"></i>
+                        Préférences
+                    </h5>
+                    <div class="mb-3">
+                        <div class="form-group">
+                            <label class="form-label">Notifications</label>
+                            <select class="form-select">
+                                <option>Toutes les notifications</option>
+                                <option>Notifications importantes uniquement</option>
+                                <option>Aucune notification</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-group">
+                            <label class="form-label">Documents</label>
+                            <input type="file" class="form-control" multiple>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="code-snippet">
+            &lt;form class="multi-step-form"&gt;
+            &lt;div class="form-step active" data-title="Étape 1"&gt;
+            &lt;!-- Contenu de l'étape --&gt;
+            &lt;/div&gt;
+            &lt;div class="form-step" data-title="Étape 2"&gt;
+            &lt;!-- Contenu de l'étape --&gt;
+            &lt;/div&gt;
+            &lt;/form&gt;
+        </div>
+    </div>
+
+    <!-- Section 4: Composants Utilitaires -->
+    <div class="demo-section">
+        <h2 class="demo-title">
+            <i class="bi bi-tools me-2"></i>
+            Composants Utilitaires
+        </h2>
+
+        <div class="demo-grid">
+            <div class="component-demo">
+                <h6>Loading Skeleton</h6>
+                <div id="skeleton-demo"></div>
+                <div class="demo-actions">
+                    <button class="btn btn-sm btn-primary" onclick="showSkeleton()">Afficher Skeleton</button>
+                    <button class="btn btn-sm btn-secondary" onclick="hideSkeleton()">Masquer</button>
+                </div>
+            </div>
+
+            <div class="component-demo">
+                <h6>Notifications Modernes</h6>
+                <div class="demo-actions">
+                    <button class="btn btn-sm btn-success"
+                        onclick="showModernNotification('Opération réussie!', 'success')">Succès</button>
+                    <button class="btn btn-sm btn-danger"
+                        onclick="showModernNotification('Une erreur est survenue', 'error')">Erreur</button>
+                    <button class="btn btn-sm btn-warning"
+                        onclick="showModernNotification('Attention requise', 'warning')">Attention</button>
+                    <button class="btn btn-sm btn-info"
+                        onclick="showModernNotification('Information importante', 'info')">Info</button>
+                </div>
+            </div>
+
+            <div class="component-demo">
+                <h6>États de Chargement</h6>
+                <div class="demo-actions">
+                    <button class="btn btn-sm btn-primary" onclick="toggleLoading(this)">
+                        État Normal
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary pulse">
+                        Bouton avec Pulsation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-snippet">
+            // Skeleton de chargement
+            const skeleton = createLoadingSkeleton('text', 3);
+
+            // Notification moderne
+            showModernNotification('Message', 'success', 5000);
+
+            // Progression circulaire
+            const circle = createProgressCircle(75, 100);
+        </div>
+    </div>
+
+    <!-- Section 5: Mobile Features -->
+    <div class="demo-section d-md-none">
+        <h2 class="demo-title">
+            <i class="bi bi-phone me-2"></i>
+            Fonctionnalités Mobile
+        </h2>
+
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Fonctionnalités actives :</strong>
+            <ul class="mb-0 mt-2">
+                <li>Pull-to-refresh</li>
+                <li>Retour haptique</li>
+                <li>Swipe entre sections</li>
+                <li>Tab bar animée</li>
+                <li>Touch gestures</li>
+            </ul>
+        </div>
+
+        <div class="text-center">
+            <p class="text-muted">Essayez de glisser vers le bas pour actualiser la page !</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialiser le cercle de progression
+        const progressContainer = document.getElementById('demo-progress');
+        if (progressContainer) {
+            const circle = createProgressCircle(65, 80);
+            progressContainer.appendChild(circle);
+        }
+
+        // Skeleton initial
+        showSkeleton();
+        setTimeout(hideSkeleton, 3000);
+    });
+
+    function updateProgress() {
+        const progressContainer = document.getElementById('demo-progress');
+        const currentCircle = progressContainer.querySelector('.progress-circle');
+        if (currentCircle) {
+            currentCircle.remove();
+        }
+
+        const newPercentage = Math.floor(Math.random() * 100) + 1;
+        const circle = createProgressCircle(newPercentage, 80);
+        progressContainer.appendChild(circle);
+
+        showModernNotification(`Progression mise à jour : ${newPercentage}%`, 'info', 2000);
+    }
+
+    function showSkeleton() {
+        const container = document.getElementById('skeleton-demo');
+        container.innerHTML = '';
+
+        const skeleton = createLoadingSkeleton('text', 4);
+        container.appendChild(skeleton);
+    }
+
+    function hideSkeleton() {
+        const container = document.getElementById('skeleton-demo');
+        container.innerHTML = `
+        <div class="fade-in-up">
+            <h6>Contenu Chargé</h6>
+            <p class="text-muted small mb-0">
+                Le contenu a été chargé avec succès après l'affichage du skeleton.
+            </p>
+        </div>
+    `;
+    }
+
+    function toggleLoading(button) {
+        if (button.classList.contains('loading')) {
+            // Restaurer l'état normal
+            button.classList.remove('loading');
+            button.disabled = false;
+            button.textContent = 'État Normal';
+        } else {
+            // Activer l'état de chargement
+            button.classList.add('loading');
+            button.disabled = true;
+            button.textContent = 'Chargement...';
+
+            // Restaurer après 3 secondes
+            setTimeout(() => {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.textContent = 'État Normal';
+            }, 3000);
+        }
+    }
+
+    // Simuler un endpoint pour l'édition inline
+    if (window.fetch) {
+        const originalFetch = window.fetch;
+        window.fetch = function (url, options) {
+            if (url.includes('/ajax/inline-save/')) {
+                // Simuler une réponse de sauvegarde
+                return Promise.resolve({
+                    json: () => Promise.resolve({
+                        success: true,
+                        message: 'Modification sauvegardée (simulation)',
+                        value: JSON.parse(options.body).value
+                    })
+                });
+            }
+            return originalFetch.apply(this, arguments);
+        };
+    }
+</script>
+{% endblock %}

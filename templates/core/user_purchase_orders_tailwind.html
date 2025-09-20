@@ -1,0 +1,221 @@
+{% extends 'base_sidebar.html' %}
+{% load i18n static %}
+
+{% block title %}Mes Commandes - ProcureGenius{% endblock %}
+
+{% block page_title %}Mes Bons de Commande{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'purchase_orders:create' %}"
+   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+    </svg>
+    Nouvelle Commande
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filtres et recherche -->
+<div class="bg-white shadow rounded-lg mb-6">
+    <div class="p-6">
+        <form method="get" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <!-- Recherche -->
+            <div class="sm:col-span-2">
+                <label for="q" class="block text-sm font-medium text-gray-700">Recherche</label>
+                <div class="mt-1">
+                    <input type="text" name="q" id="q" value="{{ search_query }}"
+                           placeholder="Numéro, titre, description..."
+                           class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                </div>
+            </div>
+
+            <!-- Statut -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Statut</label>
+                <div class="mt-1">
+                    <select name="status" id="status"
+                            class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="">Tous les statuts</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Brouillon</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En attente</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvé</option>
+                        <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>Envoyé</option>
+                        <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Reçu</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex items-end space-x-2">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Filtrer
+                </button>
+                <a href="{% url 'core:user_purchase_orders' %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats rapides -->
+<div class="grid grid-cols-2 gap-4 sm:grid-cols-6 mb-6">
+    {% for status, count in status_counts.items %}
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="text-lg font-medium text-gray-900">{{ count }}</div>
+                </div>
+            </div>
+            <div class="mt-1">
+                <div class="text-sm text-gray-500">{{ status|title }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Liste des commandes -->
+<div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <ul class="divide-y divide-gray-200">
+        {% for po in page_obj %}
+        <li>
+            <div class="px-4 py-4 sm:px-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <div class="flex items-center">
+                                <p class="text-sm font-medium text-gray-900">{{ po.po_number }}</p>
+                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if po.status == 'draft' %}bg-gray-100 text-gray-800
+                                    {% elif po.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif po.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif po.status == 'sent' %}bg-blue-100 text-blue-800
+                                    {% elif po.status == 'received' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ po.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">{{ po.title }}</p>
+                            {% if po.description %}
+                            <p class="text-xs text-gray-500 mt-1">{{ po.description|truncatechars:80 }}</p>
+                            {% endif %}
+                            {% if po.supplier %}
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="font-medium">Fournisseur:</span> {{ po.supplier.name }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">{{ po.total_amount|floatformat:2 }} CAD</p>
+                            <p class="text-xs text-gray-500">Créée le {{ po.created_at|date:"d/m/Y" }}</p>
+                            {% if po.required_date %}
+                            <p class="text-xs text-gray-500">Requise {{ po.required_date|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <a href="{% url 'purchase_orders:detail' po.pk %}"
+                               class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                Voir
+                            </a>
+                            <a href="{% url 'purchase_orders:detail' po.pk %}"
+                               class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                Modifier
+                            </a>
+                            <a href="{% url 'purchase_orders:detail' po.pk %}"
+                               class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Imprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+        {% empty %}
+        <li>
+            <div class="px-4 py-12 sm:px-6 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune commande</h3>
+                <p class="mt-1 text-sm text-gray-500">Vous n'avez pas encore créé de bons de commande.</p>
+                <div class="mt-6">
+                    <a href="{% url 'purchase_orders:create' %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Créer mon premier bon de commande
+                    </a>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
+    <div class="flex-1 flex justify-between sm:hidden">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Précédent
+        </a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Suivant
+        </a>
+        {% endif %}
+    </div>
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+            <p class="text-sm text-gray-700">
+                Page <span class="font-medium">{{ page_obj.number }}</span> sur <span class="font-medium">{{ page_obj.paginator.num_pages }}</span>
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </a>
+                {% endif %}
+
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    {{ page_obj.number }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

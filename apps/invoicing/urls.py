@@ -4,40 +4,20 @@ from . import views
 app_name = 'invoicing'
 
 urlpatterns = [
-    # Vues principales
-    path('', views.invoice_list, name='list'),
-    path('create/', views.invoice_create, name='create'),
-    path('<uuid:pk>/', views.invoice_detail, name='detail'),
-    path('<uuid:pk>/edit/', views.invoice_edit, name='edit'),
+    path('', views.invoice_list, name='invoice_list'),
+    path('create/', views.invoice_create, name='invoice_create'),
+    path('<uuid:pk>/', views.invoice_detail, name='invoice_detail'),
+    path('<uuid:pk>/edit/', views.invoice_edit, name='invoice_edit'),
+    path('<uuid:pk>/delete/', views.invoice_delete, name='invoice_delete'),
+    path('<uuid:pk>/items/add/', views.invoice_item_add, name='invoice_item_add'),
+    path('items/<uuid:pk>/edit/', views.invoice_item_edit, name='invoice_item_edit'),
+    path('items/<uuid:pk>/delete/', views.invoice_item_delete, name='invoice_item_delete'),
+    path('bulk-action/', views.invoice_bulk_action, name='invoice_bulk_action'),
+    path('api/stats/', views.api_invoice_stats, name='api_invoice_stats'),
     
-    # Actions factures
-    path('<uuid:pk>/send/', views.invoice_send, name='send'),
-    path('<uuid:pk>/cancel/', views.invoice_cancel, name='cancel'),
-    path('<uuid:pk>/duplicate/', views.invoice_duplicate, name='duplicate'),
-    
-    # Paiements
-    path('<uuid:pk>/record-payment/', views.invoice_record_payment, name='record_payment'),
-    path('<uuid:pk>/pay-paypal/', views.invoice_pay_paypal, name='pay_paypal'),
-    path('<uuid:pk>/paypal-success/', views.paypal_success, name='paypal_success'),
-    path('<uuid:pk>/paypal-cancel/', views.paypal_cancel, name='paypal_cancel'),
-    path('payments/', views.payment_list, name='payments'),
-    
-    # Webhooks
-    path('webhook/paypal/', views.paypal_webhook, name='paypal_webhook'),
-    
-    # Relances
-    path('reminders/', views.automated_reminders_view, name='reminders'),
-    path('send-bulk-reminders/', views.send_bulk_reminders, name='send_bulk_reminders'),
-    
-    # Récurrent
-    path('recurring/', views.recurring_invoices, name='recurring'),
-    path('recurring/create/', views.create_recurring_invoice, name='create_recurring'),
-    
-    # Rapports
-    path('reports/', views.invoice_reports, name='reports'),
-    path('aging-report/', views.aging_report, name='aging_report'),
-    
-    # Export/PDF
-    path('export/', views.export_invoices, name='export'),
-    path('<uuid:pk>/pdf/', views.invoice_pdf, name='pdf'),
+    # Print URLs
+    path('print/latest/', views.invoice_print_latest, name='invoice_print_latest'),
+    path('print/template/<str:template>/', views.invoice_print_template, name='invoice_print_template'),
+    path('<uuid:pk>/print/', views.invoice_print, name='invoice_print'),
+    path('<uuid:pk>/print/<str:template>/', views.invoice_print, name='invoice_print_template'),
 ]

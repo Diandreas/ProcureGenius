@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ProcureGenius{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icônes Heroicons -->
+    <script src="https://unpkg.com/@heroicons/react@2.0.16/24/outline/index.js" type="module"></script>
+
+    <style>
+        /* Personnalisations Tailwind */
+        .sidebar-link {
+            @apply flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors;
+        }
+        .sidebar-link.active {
+            @apply bg-blue-100 text-blue-700 border-r-2 border-blue-700;
+        }
+        .sidebar-link:not(.active) {
+            @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+        }
+    </style>
+</head>
+<body class="h-full">
+    <div class="flex h-full">
+        <!-- Sidebar - Desktop only -->
+        <div class="hidden lg:flex flex-shrink-0 w-64 bg-white border-r border-gray-200">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 px-4 bg-blue-600">
+                    <h1 class="text-xl font-bold text-white">ProcureGenius</h1>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+                    <!-- Dashboard -->
+                    <a href="{% url 'core:dashboard' %}"
+                       class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+
+                    <!-- Factures -->
+                    <a href="{% url 'core:user_invoices' %}"
+                       class="sidebar-link {% if request.resolver_match.url_name == 'user_invoices' %}active{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Mes Factures
+                        {% if user.is_authenticated %}
+                        <span class="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                            {{ user.created_invoices.count|default:0 }}
+                        </span>
+                        {% endif %}
+                    </a>
+
+                    <!-- Bons de commande -->
+                    <a href="{% url 'core:user_purchase_orders' %}"
+                       class="sidebar-link {% if request.resolver_match.url_name == 'user_purchase_orders' %}active{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                        Mes Commandes
+                    </a>
+
+                    <!-- Fournisseurs -->
+                    <a href="{% url 'core:user_suppliers' %}"
+                       class="sidebar-link {% if request.resolver_match.url_name == 'user_suppliers' %}active{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        Fournisseurs
+                    </a>
+
+                    <!-- Séparateur -->
+                    <div class="my-4 border-t border-gray-200"></div>
+
+                    <!-- Actions rapides -->
+                    <div class="px-2">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions rapides</p>
+                    </div>
+
+                    <a href="{% url 'invoicing:invoice_create' %}"
+                       class="sidebar-link text-green-600 hover:bg-green-50 hover:text-green-700">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Nouvelle Facture
+                    </a>
+
+                    <a href="{% url 'purchase_orders:create' %}"
+                       class="sidebar-link text-purple-600 hover:bg-purple-50 hover:text-purple-700">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Nouvelle Commande
+                    </a>
+                </nav>
+
+                <!-- User info -->
+                {% if user.is_authenticated %}
+                <div class="flex-shrink-0 p-4 border-t border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-medium text-white">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-700">
+                                {{ user.get_full_name|default:user.username }}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'accounts:logout' %}"
+                           class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Déconnexion
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:pb-0 pb-20">
+            <!-- Top bar (optionnel) -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        {% block page_title %}{% endblock %}
+                    </h2>
+
+                    <!-- Actions dans le header -->
+                    <div class="flex items-center space-x-3">
+                        {% block header_actions %}{% endblock %}
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+                <!-- Messages Django -->
+                {% if messages %}
+                <div class="mb-6">
+                    {% for message in messages %}
+                    <div class="rounded-md p-4 {% if message.tags == 'error' %}bg-red-50 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700{% elif message.tags == 'success' %}bg-green-50 text-green-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                        <div class="flex">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Contenu principal -->
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Tab Bar - Mobile only -->
+    <div class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-50">
+        <div class="grid grid-cols-4 h-16">
+            <!-- Dashboard -->
+            <a href="{% url 'core:dashboard' %}"
+               class="flex flex-col items-center justify-center space-y-1 {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'user_dashboard' %}text-blue-600 bg-blue-50{% else %}text-gray-600{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                </svg>
+                <span class="text-xs font-medium">Dashboard</span>
+            </a>
+
+            <!-- Factures -->
+            <a href="{% url 'core:user_invoices' %}"
+               class="flex flex-col items-center justify-center space-y-1 relative {% if request.resolver_match.url_name == 'user_invoices' %}text-blue-600 bg-blue-50{% else %}text-gray-600{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="text-xs font-medium">Factures</span>
+                {% if user.is_authenticated and user.created_invoices.count > 0 %}
+                <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ user.created_invoices.count }}</span>
+                {% endif %}
+            </a>
+
+            <!-- Commandes -->
+            <a href="{% url 'core:user_purchase_orders' %}"
+               class="flex flex-col items-center justify-center space-y-1 {% if request.resolver_match.url_name == 'user_purchase_orders' %}text-purple-600 bg-purple-50{% else %}text-gray-600{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <span class="text-xs font-medium">Commandes</span>
+            </a>
+
+            <!-- Fournisseurs -->
+            <a href="{% url 'core:user_suppliers' %}"
+               class="flex flex-col items-center justify-center space-y-1 {% if request.resolver_match.url_name == 'user_suppliers' %}text-orange-600 bg-orange-50{% else %}text-gray-600{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                <span class="text-xs font-medium">Fournisseurs</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Scripts pour interactions (si nécessaire)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Code JavaScript personnalisé ici
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

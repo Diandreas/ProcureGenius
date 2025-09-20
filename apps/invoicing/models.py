@@ -1,626 +1,337 @@
 from django.db import models
-from djmoney import models as money_models
-from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from django.urls import reverse
-from decimal import Decimal
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 import uuid
+import qrcode
+from io import BytesIO
+from django.core.files.base import ContentFile
+import base64
 
 User = get_user_model()
 
 
-class InvoiceStatus(models.TextChoices):
-    DRAFT = 'draft', _('Brouillon')
-    SENT = 'sent', _('Envoyée')
-    VIEWED = 'viewed', _('Consultée')
-    PARTIAL = 'partial', _('Partiellement payée')
-    PAID = 'paid', _('Payée')
-    OVERDUE = 'overdue', _('En retard')
-    CANCELLED = 'cancelled', _('Annulée')
-
-
 class Invoice(models.Model):
-    """Facture principale"""
+    """Facture"""
+    STATUS_CHOICES = [
+        ('draft', _('Brouillon')),
+        ('sent', _('Envoyée')),
+        ('paid', _('Payée')),
+        ('overdue', _('En retard')),
+        ('cancelled', _('Annulée')),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro"))
+    invoice_number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro de facture"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
     
-    # Relations
-    purchase_order = models.ForeignKey(
-        'purchase_orders.PurchaseOrder', 
-        on_delete=models.CASCADE, 
-        null=True, blank=True,
-        verbose_name=_("Bon de commande")
-    )
-    client = models.ForeignKey(
-        'suppliers.Client', 
-        on_delete=models.CASCADE,
-        verbose_name=_("Client")
-    )
-    created_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE,
-        verbose_name=_("Créé par")
-    )
-    
-    # Statut
-    status = models.CharField(
-        max_length=20, 
-        choices=InvoiceStatus.choices, 
-        default=InvoiceStatus.DRAFT,
-        verbose_name=_("Statut")
-    )
-    
-    # Montants
-    subtotal = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("Sous-total")
-    )
-    tax_gst_hst_rate = models.DecimalField(
-        max_digits=5, decimal_places=4, default=0.05,
-        verbose_name=_("Taux TPS/TVH")
-    )
-    tax_gst_hst = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("TPS/TVH")
-    )
-    tax_qst_rate = models.DecimalField(
-        max_digits=5, decimal_places=4, default=0.09975,
-        verbose_name=_("Taux TVQ")
-    )
-    tax_qst = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD', default=0,
-        verbose_name=_("TVQ")
-    )
-    total_amount = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("Montant total")
-    )
+    # Informations générales
+    title = models.CharField(max_length=200, verbose_name=_("Titre"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
     
     # Dates
-    invoice_date = models.DateField(verbose_name=_("Date de facture"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
     due_date = models.DateField(verbose_name=_("Date d'échéance"))
     
-    # Paiement
-    payment_terms = models.CharField(
-        max_length=50, default='NET 30',
-        verbose_name=_("Conditions de paiement")
-    )
-    payment_method = models.CharField(
-        max_length=50, blank=True,
-        verbose_name=_("Méthode de paiement")
-    )
+    # Montants (simplifiés)
+    subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
+    tax_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name=_("Montant des taxes"))
+    total_amount = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Montant total"))
     
-    # Adresses
-    billing_address = models.TextField(verbose_name=_("Adresse de facturation"))
-    
-    # Notes
-    notes = models.TextField(blank=True, verbose_name=_("Notes"))
-    terms_conditions = models.TextField(blank=True, verbose_name=_("Termes et conditions"))
-    
-    # IA
-    generated_by_ai = models.BooleanField(
-        default=False,
-        verbose_name=_("Générée par IA")
-    )
-    ai_analysis = models.JSONField(default=dict, verbose_name=_("Analyse IA"))
-    
-    # Facturation récurrente
-    is_recurring = models.BooleanField(default=False, verbose_name=_("Facturation récurrente"))
-    recurring_pattern = models.CharField(max_length=20, choices=[
-        ('monthly', _('Mensuel')),
-        ('quarterly', _('Trimestriel')),
-        ('annually', _('Annuel'))
-    ], blank=True, verbose_name=_("Fréquence"))
-    
-    # PayPal
-    paypal_payment_id = models.CharField(
-        max_length=100, blank=True,
-        verbose_name=_("ID de paiement PayPal")
-    )
-    paypal_status = models.CharField(
-        max_length=50, blank=True,
-        verbose_name=_("Statut PayPal")
-    )
-    
-    # Audit
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Modifié le"))
-    sent_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Envoyé le"))
+    # Relations et informations supplémentaires
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
+    client = models.ForeignKey('accounts.CustomUser', on_delete=models.PROTECT, related_name='client_invoices', null=True, blank=True, verbose_name=_("Client"))
+    purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Bon de commande associé"))
+
+    # Informations de facturation
+    billing_address = models.TextField(blank=True, verbose_name=_("Adresse de facturation"))
+    payment_terms = models.CharField(max_length=100, default="Net 30", verbose_name=_("Conditions de paiement"))
+    payment_method = models.CharField(max_length=50, blank=True, verbose_name=_("Mode de paiement"))
+    currency = models.CharField(max_length=3, default="CAD", verbose_name=_("Devise"))
 
     class Meta:
-        ordering = ['-created_at']
         verbose_name = _("Facture")
         verbose_name_plural = _("Factures")
-        indexes = [
-            models.Index(fields=['status', 'due_date']),
-            models.Index(fields=['client', 'status']),
-            models.Index(fields=['number']),
-        ]
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.number} - {self.client.name}"
+        return f"{self.invoice_number} - {self.title}"
 
-    def get_absolute_url(self):
-        return reverse('invoicing:detail', args=[str(self.id)])
+    def save(self, *args, **kwargs):
+        if not self.invoice_number:
+            self.invoice_number = self.generate_invoice_number()
+        super().save(*args, **kwargs)
+    
+    def recalculate_totals(self):
+        """Recalcule les totaux basés sur les items"""
+        items = self.items.all()
+        self.subtotal = sum(item.total_price for item in items)
+        self.total_amount = self.subtotal + self.tax_amount
+        self.save(update_fields=['subtotal', 'total_amount'])
 
-    def get_status_display_class(self):
-        """Retourne la classe CSS pour le statut"""
-        status_classes = {
-            'draft': 'secondary',
-            'sent': 'primary',
-            'viewed': 'info',
-            'partial': 'warning',
-            'paid': 'success',
-            'overdue': 'danger',
-            'cancelled': 'dark',
-        }
-        return status_classes.get(self.status, 'secondary')
+    def generate_qr_code(self):
+        """Génère un QR code pour la facture"""
+        client_name = self.client.get_full_name() if self.client else "Client"
+        qr_data = f"FACTURE-{self.invoice_number}-{self.total_amount}{self.currency}-{client_name}"
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
 
-    def is_overdue(self):
-        """Vérifie si la facture est en retard"""
-        from django.utils import timezone
-        return (
-            self.status in ['sent', 'viewed', 'partial'] and 
-            self.due_date < timezone.now().date()
-        )
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
 
-    def get_balance_due(self):
-        """Calcule le solde restant à payer"""
-        total_payments = sum(p.amount for p in self.payments.all())
-        return self.total_amount - total_payments
+        return base64.b64encode(buffer.getvalue()).decode()
 
-    def get_payment_percentage(self):
-        """Calcule le pourcentage payé"""
-        if self.total_amount.amount == 0:
-            return 0
-        
-        total_payments = sum(p.amount.amount for p in self.payments.all())
-        return (total_payments / self.total_amount.amount) * 100
+    def generate_invoice_number(self):
+        """Génère un numéro de facture unique"""
+        from datetime import datetime
+        year = datetime.now().year
+        month = datetime.now().month
 
-    def can_be_edited(self):
-        """Vérifie si la facture peut être modifiée"""
-        return self.status in ['draft']
+        # Trouve le prochain numéro disponible
+        last_invoice = Invoice.objects.filter(
+            invoice_number__startswith=f"FAC{year}{month:02d}"
+        ).order_by('-invoice_number').first()
 
-    def can_be_sent(self):
-        """Vérifie si la facture peut être envoyée"""
-        return self.status in ['draft', 'viewed']
+        if last_invoice:
+            try:
+                last_number = int(last_invoice.invoice_number[-4:])
+                next_number = last_number + 1
+            except ValueError:
+                next_number = 1
+        else:
+            next_number = 1
 
-    def can_be_cancelled(self):
-        """Vérifie si la facture peut être annulée"""
-        return self.status in ['draft', 'sent', 'viewed']
+        return f"FAC{year}{month:02d}{next_number:04d}"
 
-    def calculate_totals(self):
-        """Recalcule les totaux de la facture"""
-        subtotal = sum(item.total_price for item in self.items.all())
-        
-        self.subtotal = subtotal
-        self.tax_gst_hst = subtotal * Decimal(str(self.tax_gst_hst_rate))
-        self.tax_qst = subtotal * Decimal(str(self.tax_qst_rate))
-        self.total_amount = self.subtotal + self.tax_gst_hst + self.tax_qst
-
-    def update_status_from_payments(self):
-        """Met à jour le statut selon les paiements reçus"""
-        balance = self.get_balance_due()
-        
-        if balance.amount <= 0:
-            self.status = 'paid'
-        elif balance.amount < self.total_amount.amount:
-            self.status = 'partial'
-        elif self.is_overdue():
-            self.status = 'overdue'
-
-    def get_paypal_payment_url(self):
-        """Génère l'URL de paiement PayPal"""
-        # Cette méthode sera implémentée avec l'intégration PayPal
-        return f"/invoicing/{self.id}/pay-paypal/"
+    @property
+    def qr_code_data(self):
+        """Retourne les données QR code encodées en base64"""
+        return self.generate_qr_code()
 
 
 class InvoiceItem(models.Model):
-    """Ligne de facture"""
+    """Article d'une facture"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    invoice = models.ForeignKey(
-        Invoice, 
-        on_delete=models.CASCADE, 
-        related_name='items',
-        verbose_name=_("Facture")
-    )
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items', verbose_name=_("Facture"))
     
-    description = models.CharField(max_length=255, verbose_name=_("Description"))
-    quantity = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        verbose_name=_("Quantité")
-    )
-    unit_price = money_models.MoneyField(
-        max_digits=12, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("Prix unitaire")
-    )
-    total_price = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("Prix total")
-    )
-    
-    # Catégorie comptable
-    account_code = models.CharField(
-        max_length=20, blank=True,
-        verbose_name=_("Code comptable")
-    )
+    # Informations service/produit
+    service_code = models.CharField(max_length=100, verbose_name=_("Code service"), default="SVC-001")
+    product_reference = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Référence produit"))
+    description = models.CharField(max_length=500, verbose_name=_("Description"))
+    detailed_description = models.TextField(blank=True, default="", verbose_name=_("Description détaillée"))
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)], verbose_name=_("Quantité"))
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], verbose_name=_("Prix unitaire"))
+    total_price = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Prix total"))
 
-    class Meta:
-        ordering = ['id']
-        verbose_name = _("Ligne de facture")
-        verbose_name_plural = _("Lignes de facture")
-
-    def __str__(self):
-        return f"{self.description} - {self.quantity} x {self.unit_price}"
-
-    def save(self, *args, **kwargs):
-        # Calculer automatiquement le prix total
-        self.total_price = self.quantity * self.unit_price
-        super().save(*args, **kwargs)
-
-
-class Payment(models.Model):
-    """Paiement reçu"""
-    
-    PAYMENT_METHODS = [
-        ('interac', _('Virement Interac')),
-        ('wire', _('Virement bancaire')),
-        ('check', _('Chèque')),
-        ('cash', _('Comptant')),
-        ('card', _('Carte de crédit')),
-        ('paypal', _('PayPal')),
-        ('other', _('Autre')),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    invoice = models.ForeignKey(
-        Invoice, 
-        on_delete=models.CASCADE, 
-        related_name='payments',
-        verbose_name=_("Facture")
-    )
-    
-    amount = money_models.MoneyField(
-        max_digits=14, decimal_places=2, 
-        default_currency='CAD',
-        verbose_name=_("Montant")
-    )
-    payment_date = models.DateField(verbose_name=_("Date de paiement"))
-    payment_method = models.CharField(
-        max_length=50, 
-        choices=PAYMENT_METHODS,
-        verbose_name=_("Méthode de paiement")
-    )
-    
-    reference = models.CharField(
-        max_length=100, blank=True,
-        verbose_name=_("Référence")
-    )
-    notes = models.TextField(blank=True, verbose_name=_("Notes"))
-    
-    # PayPal specific fields
-    paypal_transaction_id = models.CharField(
-        max_length=100, blank=True,
-        verbose_name=_("ID transaction PayPal")
-    )
-    paypal_payer_email = models.EmailField(
-        blank=True,
-        verbose_name=_("Email payeur PayPal")
-    )
-    paypal_fee = money_models.MoneyField(
-        max_digits=10, decimal_places=2, 
-        default_currency='CAD', default=0,
-        verbose_name=_("Frais PayPal")
-    )
-    
-    created_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE,
-        verbose_name=_("Créé par")
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
-
-    class Meta:
-        ordering = ['-payment_date']
-        verbose_name = _("Paiement")
-        verbose_name_plural = _("Paiements")
-
-    def __str__(self):
-        return f"{self.invoice.number} - {self.amount} - {self.payment_date}"
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # Mettre à jour le statut de la facture
-        self.invoice.update_status_from_payments()
-        self.invoice.save()
-
-
-class InvoiceReminder(models.Model):
-    """Relances automatiques"""
-    
-    REMINDER_TYPES = [
-        ('first', _('Premier rappel')),
-        ('second', _('Deuxième rappel')),
-        ('final', _('Mise en demeure')),
-        ('collection', _('Recouvrement')),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    invoice = models.ForeignKey(
-        Invoice, 
-        on_delete=models.CASCADE, 
-        related_name='reminders',
-        verbose_name=_("Facture")
-    )
-    
-    reminder_type = models.CharField(
-        max_length=20, 
-        choices=REMINDER_TYPES,
-        verbose_name=_("Type de relance")
-    )
-    
-    sent_at = models.DateTimeField(verbose_name=_("Envoyé le"))
-    sent_by_ai = models.BooleanField(default=False, verbose_name=_("Envoyé par IA"))
-    email_subject = models.CharField(max_length=200, verbose_name=_("Sujet email"))
-    email_body = models.TextField(verbose_name=_("Corps email"))
-    
-    opened = models.BooleanField(default=False, verbose_name=_("Ouvert"))
-    opened_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Ouvert le"))
-
-    class Meta:
-        ordering = ['-sent_at']
-        verbose_name = _("Relance")
-        verbose_name_plural = _("Relances")
-
-    def __str__(self):
-        return f"{self.invoice.number} - {self.get_reminder_type_display()}"
-
-
-class RecurringInvoice(models.Model):
-    """Factures récurrentes"""
-    
-    FREQUENCIES = [
-        ('monthly', _('Mensuel')),
-        ('quarterly', _('Trimestriel')),
-        ('semi_annual', _('Semestriel')),
-        ('annually', _('Annuel')),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Template de facture
-    name = models.CharField(max_length=100, verbose_name=_("Nom"))
-    description = models.TextField(blank=True, verbose_name=_("Description"))
-    client = models.ForeignKey(
-        'suppliers.Client',
-        on_delete=models.CASCADE,
-        verbose_name=_("Client")
-    )
-    
-    # Configuration
-    frequency = models.CharField(
-        max_length=20, 
-        choices=FREQUENCIES,
-        verbose_name=_("Fréquence")
-    )
-    start_date = models.DateField(verbose_name=_("Date de début"))
-    end_date = models.DateField(null=True, blank=True, verbose_name=_("Date de fin"))
-    
-    # Template de données
-    template_data = models.JSONField(verbose_name=_("Données template"))
-    
-    # Statut
-    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
-    next_invoice_date = models.DateField(verbose_name=_("Prochaine facture"))
-    
-    # Statistiques
-    invoices_generated = models.IntegerField(default=0, verbose_name=_("Factures générées"))
-    last_generated = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière génération"))
-    
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("Créé par")
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Modifié le"))
-
-    class Meta:
-        ordering = ['next_invoice_date']
-        verbose_name = _("Facture récurrente")
-        verbose_name_plural = _("Factures récurrentes")
-
-    def __str__(self):
-        return f"{self.name} - {self.client.name}"
-
-    def calculate_next_date(self):
-        """Calcule la prochaine date de facturation"""
-        from dateutil.relativedelta import relativedelta
-        
-        if self.frequency == 'monthly':
-            return self.next_invoice_date + relativedelta(months=1)
-        elif self.frequency == 'quarterly':
-            return self.next_invoice_date + relativedelta(months=3)
-        elif self.frequency == 'semi_annual':
-            return self.next_invoice_date + relativedelta(months=6)
-        elif self.frequency == 'annually':
-            return self.next_invoice_date + relativedelta(years=1)
-        
-        return self.next_invoice_date
-
-    def should_generate_invoice(self):
-        """Vérifie s'il faut générer une facture"""
-        from django.utils import timezone
-        return (
-            self.is_active and 
-            self.next_invoice_date <= timezone.now().date() and
-            (not self.end_date or self.next_invoice_date <= self.end_date)
-        )
-
-
-class InvoiceTemplate(models.Model):
-    """Templates de factures pour faciliter la création"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    name = models.CharField(max_length=100, verbose_name=_("Nom"))
-    description = models.TextField(blank=True, verbose_name=_("Description"))
-    client = models.ForeignKey(
-        'suppliers.Client',
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        verbose_name=_("Client par défaut")
-    )
-    
-    # Template data
-    template_data = models.JSONField(verbose_name=_("Données du template"))
-    
-    # Métadonnées
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("Créé par")
-    )
-    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
-    usage_count = models.IntegerField(default=0, verbose_name=_("Nombre d'utilisations"))
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Modifié le"))
-
-    class Meta:
-        ordering = ['-usage_count', 'name']
-        verbose_name = _("Template de facture")
-        verbose_name_plural = _("Templates de factures")
-
-    def __str__(self):
-        return f"{self.name}"
-
-
-class InvoiceAttachment(models.Model):
-    """Pièces jointes aux factures"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    invoice = models.ForeignKey(
-        Invoice,
-        on_delete=models.CASCADE,
-        related_name='attachments',
-        verbose_name=_("Facture")
-    )
-    
-    name = models.CharField(max_length=200, verbose_name=_("Nom"))
-    file = models.FileField(
-        upload_to='invoices/attachments/',
-        verbose_name=_("Fichier")
-    )
-    description = models.TextField(blank=True, verbose_name=_("Description"))
-    
-    uploaded_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("Uploadé par")
-    )
-    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Uploadé le"))
-
-    class Meta:
-        ordering = ['-uploaded_at']
-        verbose_name = _("Pièce jointe")
-        verbose_name_plural = _("Pièces jointes")
-
-    def __str__(self):
-        return f"{self.name} - {self.invoice.number}"
-
-
-class PayPalTransaction(models.Model):
-    """Transactions PayPal détaillées"""
-    
-    TRANSACTION_TYPES = [
-        ('payment', _('Paiement')),
-        ('refund', _('Remboursement')),
-        ('dispute', _('Litige')),
-    ]
-    
-    TRANSACTION_STATUS = [
-        ('pending', _('En attente')),
-        ('completed', _('Terminé')),
-        ('failed', _('Échoué')),
-        ('cancelled', _('Annulé')),
-        ('refunded', _('Remboursé')),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Relations
-    invoice = models.ForeignKey(
-        Invoice,
-        on_delete=models.CASCADE,
-        related_name='paypal_transactions',
-        verbose_name=_("Facture")
-    )
-    payment = models.OneToOneField(
-        Payment,
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        verbose_name=_("Paiement")
-    )
-    
-    # Données PayPal
-    paypal_transaction_id = models.CharField(
-        max_length=100, unique=True,
-        verbose_name=_("ID transaction PayPal")
-    )
-    paypal_payment_id = models.CharField(
-        max_length=100, blank=True,
-        verbose_name=_("ID paiement PayPal")
-    )
-    
-    transaction_type = models.CharField(
-        max_length=20,
-        choices=TRANSACTION_TYPES,
-        verbose_name=_("Type de transaction")
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=TRANSACTION_STATUS,
-        verbose_name=_("Statut")
-    )
-    
-    # Montants
-    gross_amount = money_models.MoneyField(
-        max_digits=14, decimal_places=2,
-        default_currency='CAD',
-        verbose_name=_("Montant brut")
-    )
-    fee_amount = money_models.MoneyField(
-        max_digits=10, decimal_places=2,
-        default_currency='CAD', default=0,
-        verbose_name=_("Frais")
-    )
-    net_amount = money_models.MoneyField(
-        max_digits=14, decimal_places=2,
-        default_currency='CAD',
-        verbose_name=_("Montant net")
-    )
-    
-    # Informations du payeur
-    payer_email = models.EmailField(verbose_name=_("Email payeur"))
-    payer_name = models.CharField(max_length=100, blank=True, verbose_name=_("Nom payeur"))
-    payer_id = models.CharField(max_length=100, blank=True, verbose_name=_("ID payeur"))
-    
-    # Données brutes de PayPal
-    raw_data = models.JSONField(default=dict, verbose_name=_("Données brutes"))
+    # Informations supplémentaires
+    unit_of_measure = models.CharField(max_length=20, default="unité", verbose_name=_("Unité de mesure"))
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_("Remise (%)"))
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_("Taux de taxe (%)"))
+    notes = models.TextField(blank=True, default="", verbose_name=_("Notes"))
     
     # Dates
-    transaction_date = models.DateTimeField(verbose_name=_("Date transaction"))
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-transaction_date']
-        verbose_name = _("Transaction PayPal")
-        verbose_name_plural = _("Transactions PayPal")
+        verbose_name = _("Article de facture")
+        verbose_name_plural = _("Articles de facture")
 
     def __str__(self):
-        return f"PayPal {self.paypal_transaction_id} - {self.invoice.number}"
+        return f"{self.service_code} - {self.description}"
+
+    def save(self, *args, **kwargs):
+        from decimal import Decimal
+        # Calcul avec remise
+        base_total = self.quantity * self.unit_price
+        discount_amount = base_total * (self.discount_percent / Decimal('100'))
+        self.total_price = base_total - discount_amount
+
+        super().save(*args, **kwargs)
+        # Recalculer les totaux de la facture
+        self.invoice.recalculate_totals()
+
+    @property
+    def total_before_discount(self):
+        """Retourne le total avant remise"""
+        return self.quantity * self.unit_price
+
+    @property
+    def discount_amount(self):
+        """Retourne le montant de la remise"""
+        from decimal import Decimal
+        return self.total_before_discount * (self.discount_percent / Decimal('100'))
+
+
+# ====================================
+# MODÈLES D'IMPRESSION
+# ====================================
+
+class PrintTemplate(models.Model):
+    """Template d'impression configurable"""
+    TEMPLATE_TYPES = [
+        ('invoice', _('Facture')),
+        ('purchase_order', _('Bon de commande')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, verbose_name=_("Nom du template"))
+    template_type = models.CharField(max_length=20, choices=TEMPLATE_TYPES, verbose_name=_("Type"))
+    is_default = models.BooleanField(default=False, verbose_name=_("Template par défaut"))
+
+    # Configuration de l'en-tête
+    header_logo = models.ImageField(upload_to='print_templates/logos/', blank=True, null=True, verbose_name=_("Logo"))
+    header_company_name = models.CharField(max_length=200, default="ProcureGenius", verbose_name=_("Nom de l'entreprise"))
+    header_address = models.TextField(default="", verbose_name=_("Adresse"))
+    header_phone = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Téléphone"))
+    header_email = models.EmailField(blank=True, default="", verbose_name=_("Email"))
+    header_website = models.URLField(blank=True, default="", verbose_name=_("Site web"))
+
+    # Configuration du footer
+    footer_text = models.TextField(blank=True, default="", verbose_name=_("Texte du pied de page"))
+    footer_conditions = models.TextField(blank=True, default="", verbose_name=_("Conditions générales"))
+
+    # Configuration des couleurs
+    primary_color = models.CharField(max_length=7, default="#0066cc", verbose_name=_("Couleur principale"))
+    secondary_color = models.CharField(max_length=7, default="#00d4ff", verbose_name=_("Couleur secondaire"))
+    text_color = models.CharField(max_length=7, default="#333333", verbose_name=_("Couleur du texte"))
+
+    # Configuration de mise en page
+    show_qr_code = models.BooleanField(default=True, verbose_name=_("Afficher le QR code"))
+    qr_code_position = models.CharField(
+        max_length=20,
+        choices=[
+            ('top-right', _('En haut à droite')),
+            ('bottom-right', _('En bas à droite')),
+            ('bottom-left', _('En bas à gauche')),
+        ],
+        default='bottom-right',
+        verbose_name=_("Position du QR code")
+    )
+
+    # Dates
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Template d'impression")
+        verbose_name_plural = _("Templates d'impression")
+        ordering = ['template_type', 'name']
+
+    def __str__(self):
+        return f"{self.get_template_type_display()} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        # S'assurer qu'il n'y a qu'un seul template par défaut par type
+        if self.is_default:
+            PrintTemplate.objects.filter(
+                template_type=self.template_type,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class PrintConfiguration(models.Model):
+    """Configuration d'impression pour une organisation"""
+    PAPER_SIZES = [
+        ('A4', 'A4 (210 × 297 mm)'),
+        ('LETTER', 'Letter (8.5 × 11 in)'),
+        ('LEGAL', 'Legal (8.5 × 14 in)'),
+    ]
+
+    ORIENTATIONS = [
+        ('portrait', _('Portrait')),
+        ('landscape', _('Paysage')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, default="Configuration par défaut", verbose_name=_("Nom de la configuration"))
+
+    # Configuration papier
+    paper_size = models.CharField(max_length=10, choices=PAPER_SIZES, default='A4', verbose_name=_("Taille du papier"))
+    orientation = models.CharField(max_length=10, choices=ORIENTATIONS, default='portrait', verbose_name=_("Orientation"))
+
+    # Marges (en mm)
+    margin_top = models.PositiveIntegerField(default=20, verbose_name=_("Marge haute (mm)"))
+    margin_bottom = models.PositiveIntegerField(default=20, verbose_name=_("Marge basse (mm)"))
+    margin_left = models.PositiveIntegerField(default=20, verbose_name=_("Marge gauche (mm)"))
+    margin_right = models.PositiveIntegerField(default=20, verbose_name=_("Marge droite (mm)"))
+
+    # Configuration des polices
+    font_family = models.CharField(
+        max_length=50,
+        choices=[
+            ('Arial', 'Arial'),
+            ('Helvetica', 'Helvetica'),
+            ('Times New Roman', 'Times New Roman'),
+            ('Roboto', 'Roboto'),
+            ('Open Sans', 'Open Sans'),
+        ],
+        default='Arial',
+        verbose_name=_("Police")
+    )
+    font_size_normal = models.PositiveIntegerField(default=10, verbose_name=_("Taille police normale"))
+    font_size_small = models.PositiveIntegerField(default=8, verbose_name=_("Taille police petite"))
+    font_size_large = models.PositiveIntegerField(default=14, verbose_name=_("Taille police grande"))
+
+    # Configuration des numéros
+    invoice_number_prefix = models.CharField(max_length=10, default="FAC-", verbose_name=_("Préfixe facture"))
+    po_number_prefix = models.CharField(max_length=10, default="BC-", verbose_name=_("Préfixe bon de commande"))
+
+    # Options d'impression
+    include_duplicate_watermark = models.BooleanField(default=False, verbose_name=_("Filigrane duplicata"))
+    include_page_numbers = models.BooleanField(default=True, verbose_name=_("Numéros de page"))
+    include_total_pages = models.BooleanField(default=True, verbose_name=_("Total des pages"))
+
+    is_default = models.BooleanField(default=False, verbose_name=_("Configuration par défaut"))
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Configuration d'impression")
+        verbose_name_plural = _("Configurations d'impression")
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # S'assurer qu'il n'y a qu'une seule configuration par défaut
+        if self.is_default:
+            PrintConfiguration.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class PrintHistory(models.Model):
+    """Historique des impressions"""
+    DOCUMENT_TYPES = [
+        ('invoice', _('Facture')),
+        ('purchase_order', _('Bon de commande')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES, verbose_name=_("Type de document"))
+    document_id = models.UUIDField(verbose_name=_("ID du document"))
+    document_number = models.CharField(max_length=100, verbose_name=_("Numéro du document"))
+
+    template_used = models.ForeignKey(PrintTemplate, on_delete=models.SET_NULL, null=True, verbose_name=_("Template utilisé"))
+    configuration_used = models.ForeignKey(PrintConfiguration, on_delete=models.SET_NULL, null=True, verbose_name=_("Configuration utilisée"))
+
+    printed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Imprimé par"))
+    printed_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date d'impression"))
+
+    # Métadonnées d'impression
+    print_format = models.CharField(max_length=20, default='PDF', verbose_name=_("Format d'impression"))
+    file_size = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Taille du fichier (bytes)"))
+
+    class Meta:
+        verbose_name = _("Historique d'impression")
+        verbose_name_plural = _("Historiques d'impression")
+        ordering = ['-printed_at']
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} {self.document_number} - {self.printed_at.strftime('%d/%m/%Y %H:%M')}"

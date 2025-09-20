@@ -5,12 +5,9 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Submit, Row, Column, Div, HTML
 from django.contrib.auth import get_user_model
 
-from .models import (
-    Invoice, InvoiceItem, Payment, RecurringInvoice, 
-    InvoiceTemplate, InvoiceReminder
-)
-from apps.suppliers.models import Client
-from apps.purchase_orders.models import PurchaseOrder
+from .models import Invoice, InvoiceItem
+# from apps.suppliers.models import Client
+# from apps.purchase_orders.models import PurchaseOrder
 
 User = get_user_model()
 
@@ -21,21 +18,12 @@ class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
         fields = [
-            'client', 'purchase_order', 'invoice_date', 'due_date',
-            'billing_address', 'payment_terms', 'payment_method',
-            'notes', 'terms_conditions', 'is_recurring', 'recurring_pattern'
+            'title', 'description', 'due_date'
         ]
         widgets = {
-            'client': forms.Select(attrs={'class': 'form-select'}),
-            'purchase_order': forms.Select(attrs={'class': 'form-select'}),
-            'invoice_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'billing_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'payment_terms': forms.TextInput(attrs={'class': 'form-control'}),
-            'payment_method': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'terms_conditions': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'recurring_pattern': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):

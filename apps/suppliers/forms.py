@@ -392,7 +392,7 @@ class ProductSearchForm(forms.Form):
     
     supplier = forms.ModelChoiceField(
         required=False,
-        queryset=Supplier.objects.filter(status='active'),
+        queryset=Supplier.objects.filter(is_active=True),
         widget=forms.Select(attrs={'class': 'form-select'}),
         label=_('Fournisseur'),
         empty_label=_('Tous les fournisseurs')

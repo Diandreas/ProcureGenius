@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}Facture {{ invoice.invoice_number }} - ProcureGenius{% endblock %}
+
+{% block content %}
+<div class="user-panel">
+    <!-- Header -->
+    <div class="panel-header">
+        <div>
+            <h1>Facture {{ invoice.invoice_number }}</h1>
+            <span class="status-badge status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'core:user_invoices' %}" class="btn-back">← Retour aux factures</a>
+            <a href="{% url 'invoicing:invoice_edit' invoice.pk %}" class="btn-edit">✏️ Modifier</a>
+            <a href="{% url 'invoicing:invoice_print' invoice.pk %}" class="btn-print">🖨️ Imprimer</a>
+        </div>
+    </div>
+
+    <!-- Informations principales -->
+    <div class="invoice-details">
+        <div class="detail-section">
+            <h3>Informations générales</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Titre</label>
+                    <span>{{ invoice.title }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Statut</label>
+                    <span class="status-badge status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Date de création</label>
+                    <span>{{ invoice.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Date d'échéance</label>
+                    <span>{{ invoice.due_date|date:"d/m/Y" }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Créé par</label>
+                    <span>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Devise</label>
+                    <span>{{ invoice.currency }}</span>
+                </div>
+            </div>
+
+            {% if invoice.description %}
+            <div class="detail-item full-width">
+                <label>Description</label>
+                <p>{{ invoice.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Informations client -->
+        {% if invoice.client %}
+        <div class="detail-section">
+            <h3>Client</h3>
+            <div class="client-info">
+                <strong>{{ invoice.client.get_full_name|default:invoice.client.username }}</strong>
+                {% if invoice.client.email %}
+                <div>📧 {{ invoice.client.email }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Adresse de facturation -->
+        {% if invoice.billing_address %}
+        <div class="detail-section">
+            <h3>Adresse de facturation</h3>
+            <div class="address-box">
+                {{ invoice.billing_address|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Articles de la facture -->
+        <div class="detail-section">
+            <h3>Articles</h3>
+            <div class="items-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Quantité</th>
+                            <th>Prix unitaire</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items.all %}
+                        <tr>
+                            <td>{{ item.service_code }}</td>
+                            <td>
+                                <strong>{{ item.description }}</strong>
+                                {% if item.detailed_description %}
+                                <div class="item-detail">{{ item.detailed_description|truncatechars:100 }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.quantity }} {{ item.unit_of_measure }}</td>
+                            <td>{{ item.unit_price|floatformat:2 }} {{ invoice.currency }}</td>
+                            <td><strong>{{ item.total_price|floatformat:2 }} {{ invoice.currency }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="no-data">Aucun article dans cette facture</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Totaux -->
+        <div class="detail-section">
+            <div class="totals-box">
+                <div class="total-row">
+                    <span>Sous-total:</span>
+                    <span>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Taxes:</span>
+                    <span>{{ invoice.tax_amount|floatformat:2 }} {{ invoice.currency }}</span>
+                </div>
+                <div class="total-row final">
+                    <span><strong>Total:</strong></span>
+                    <span><strong>{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations de paiement -->
+        {% if invoice.payment_terms or invoice.payment_method %}
+        <div class="detail-section">
+            <h3>Conditions de paiement</h3>
+            <div class="detail-grid">
+                {% if invoice.payment_terms %}
+                <div class="detail-item">
+                    <label>Conditions</label>
+                    <span>{{ invoice.payment_terms }}</span>
+                </div>
+                {% endif %}
+                {% if invoice.payment_method %}
+                <div class="detail-item">
+                    <label>Mode de paiement</label>
+                    <span>{{ invoice.payment_method }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- QR Code -->
+        <div class="detail-section">
+            <h3>QR Code</h3>
+            <div class="qr-code-container">
+                <img src="data:image/png;base64,{{ invoice.qr_code_data }}" alt="QR Code" class="qr-code">
+                <p class="qr-info">Scannez ce code pour accéder aux informations de la facture</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Styles pour la page de détail de facture */
+.user-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+.panel-header h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 28px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-back, .btn-edit, .btn-print {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-back {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-print {
+    background: #3498db;
+    color: white;
+}
+
+.btn-back:hover, .btn-edit:hover, .btn-print:hover {
+    transform: translateY(-1px);
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-left: 10px;
+}
+
+.status-draft { background: #ecf0f1; color: #2c3e50; }
+.status-sent { background: #d5dbdb; color: #2c3e50; }
+.status-paid { background: #d5f4e6; color: #27ae60; }
+.status-overdue { background: #fadbd8; color: #e74c3c; }
+
+.invoice-details {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.detail-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.detail-section h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 18px;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 8px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: #7f8c8d;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.detail-item span, .detail-item p {
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.client-info, .address-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+}
+
+.items-table {
+    overflow-x: auto;
+}
+
+.items-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.items-table th,
+.items-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.items-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.item-detail {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-top: 4px;
+}
+
+.no-data {
+    text-align: center;
+    color: #bdc3c7;
+    font-style: italic;
+    padding: 20px;
+}
+
+.totals-box {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #27ae60;
+    max-width: 400px;
+    margin-left: auto;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.total-row.final {
+    border-bottom: none;
+    font-size: 18px;
+    color: #27ae60;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid #27ae60;
+}
+
+.qr-code-container {
+    text-align: center;
+}
+
+.qr-code {
+    max-width: 200px;
+    height: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background: white;
+}
+
+.qr-info {
+    margin-top: 10px;
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-panel {
+        padding: 15px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .items-table {
+        font-size: 12px;
+    }
+
+    .totals-box {
+        max-width: none;
+        margin-left: 0;
+    }
+}
+</style>
+{% endblock %}

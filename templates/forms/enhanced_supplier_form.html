@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - {% trans "Fournisseurs" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+{% crispy_form_tags_css %}
+<style>
+    .form-wizard {
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+        margin: 2rem 0;
+    }
+
+    .form-wizard-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+    }
+
+    .form-wizard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .form-step {
+        display: none;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .form-step.active {
+        display: block;
+    }
+
+    .ai-suggestion-panel {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid var(--primary-blue);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ai-suggestion-panel::before {
+        content: '🤖';
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+
+    .suggestion-item {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: var(--shadow-sm);
+        border-left: 3px solid var(--primary-cyan);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .suggestion-item:hover {
+        box-shadow: var(--shadow);
+        transform: translateX(3px);
+    }
+
+    .suggestion-title {
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 0.25rem;
+    }
+
+    .suggestion-description {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <!-- En-tête avec bouton IA -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 text-gradient mb-1">
+                        <i class="bi bi-building me-2"></i>
+                        {% if form.instance.pk %}
+                        {% trans "Modifier le fournisseur" %}
+                        {% else %}
+                        {% trans "Nouveau fournisseur" %}
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% trans "Gérez vos informations fournisseurs avec l'aide de l'IA" %}
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" id="ai-assist-btn">
+                        <i class="bi bi-robot me-1"></i>
+                        {% trans "Assistant IA" %}
+                    </button>
+                    <a href="{% url 'suppliers:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        {% trans "Retour" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Panel de suggestions IA -->
+            <div class="ai-suggestion-panel" id="ai-suggestions" style="display: none;">
+                <h5 class="mb-3">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {% trans "Suggestions de l'IA" %}
+                </h5>
+                <div id="suggestions-container">
+                    <!-- Les suggestions seront ajoutées dynamiquement -->
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="get-suggestions">
+                        <i class="bi bi-refresh me-1"></i>
+                        {% trans "Actualiser les suggestions" %}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="close-suggestions">
+                        <i class="bi bi-x"></i>
+                        {% trans "Fermer" %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulaire multi-étapes -->
+            <div class="form-wizard">
+                <div class="form-wizard-header">
+                    <h4 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        {% trans "Informations du fournisseur" %}
+                    </h4>
+                    <p class="mb-0 opacity-75">
+                        {% trans "Remplissez les informations étape par étape" %}
+                    </p>
+                </div>
+
+                <div class="p-4">
+                    <form method="post" enctype="multipart/form-data" class="multi-step-form" id="supplier-form">
+                        {% csrf_token %}
+
+                        <!-- Étape 1: Informations générales -->
+                        <div class="form-step active" data-title="{% trans 'Informations générales' %}">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    {% trans "Informations générales" %}
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                                {% trans "Nom du fournisseur" %}
+                                            </label>
+                                            {{ form.name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.legal_name.id_for_label }}" class="form-label">
+                                                {% trans "Raison sociale" %}
+                                            </label>
+                                            {{ form.legal_name }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.business_number.id_for_label }}" class="form-label">
+                                                {% trans "Numéro d'entreprise" %}
+                                            </label>
+                                            {{ form.business_number }}
+                                            <small class="form-text text-muted">
+                                                {% trans "Format: 123456789 ou 123456789RP0001" %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.contact_person.id_for_label }}" class="form-label">
+                                                {% trans "Personne contact" %}
+                                            </label>
+                                            {{ form.contact_person }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 2: Contact -->
+                        <div class="form-step" data-title="{% trans 'Informations de contact' %}">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-telephone me-2"></i>
+                                    {% trans "Informations de contact" %}
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                                {% trans "Email" %}
+                                            </label>
+                                            {{ form.email }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                                {% trans "Téléphone" %}
+                                            </label>
+                                            {{ form.phone }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.website.id_for_label }}" class="form-label">
+                                            {% trans "Site web" %}
+                                        </label>
+                                        {{ form.website }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 3: Adresse -->
+                        <div class="form-step" data-title="{% trans 'Adresse' %}">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    {% trans "Adresse" %}
+                                </h5>
+
+                                <div class="mb-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.address.id_for_label }}" class="form-label">
+                                            {% trans "Adresse complète" %}
+                                        </label>
+                                        {{ form.address }}
+                                        <small class="form-text text-muted">
+                                            {% trans "Commencez à taper pour l'autocomplétion d'adresse" %}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.city.id_for_label }}" class="form-label">
+                                                {% trans "Ville" %}
+                                            </label>
+                                            {{ form.city }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.province.id_for_label }}" class="form-label">
+                                                {% trans "Province" %}
+                                            </label>
+                                            {{ form.province }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.postal_code.id_for_label }}" class="form-label">
+                                                {% trans "Code postal" %}
+                                            </label>
+                                            {{ form.postal_code }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 4: Termes commerciaux -->
+                        <div class="form-step" data-title="{% trans 'Termes commerciaux' %}">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-currency-exchange me-2"></i>
+                                    {% trans "Termes commerciaux" %}
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.payment_terms.id_for_label }}" class="form-label">
+                                                {% trans "Conditions de paiement" %}
+                                            </label>
+                                            {{ form.payment_terms }}
+                                            <small class="form-text text-muted">
+                                                {% trans "Ex: Net 30, 2/10 Net 30" %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.currency.id_for_label }}" class="form-label">
+                                                {% trans "Devise" %}
+                                            </label>
+                                            {{ form.currency }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.categories.id_for_label }}" class="form-label">
+                                            {% trans "Catégories" %}
+                                        </label>
+                                        {{ form.categories }}
+                                        <small class="form-text text-muted">
+                                            {% trans "Maintenez Ctrl/Cmd pour sélectionner plusieurs catégories" %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 5: Diversité et certifications -->
+                        <div class="form-step" data-title="{% trans 'Diversité et certifications' %}">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-award me-2"></i>
+                                    {% trans "Diversité et certifications" %}
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.is_local }}
+                                            <label class="form-check-label" for="{{ form.is_local.id_for_label }}">
+                                                {% trans "Fournisseur local" %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            {{ form.is_minority_owned }}
+                                            <label class="form-check-label"
+                                                for="{{ form.is_minority_owned.id_for_label }}">
+                                                {% trans "Entreprise appartenant à une minorité" %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.is_indigenous }}
+                                            <label class="form-check-label" for="{{ form.is_indigenous.id_for_label }}">
+                                                {% trans "Entreprise autochtone" %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            {{ form.is_woman_owned }}
+                                            <label class="form-check-label"
+                                                for="{{ form.is_woman_owned.id_for_label }}">
+                                                {% trans "Entreprise appartenant à une femme" %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h6 class="mb-3">
+                                        <i class="bi bi-file-earmark-check me-2"></i>
+                                        {% trans "Documents et certifications" %}
+                                    </h6>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            {% trans "Télécharger des documents" %}
+                                        </label>
+                                        <input type="file" name="documents" multiple accept=".pdf,.doc,.docx,.jpg,.png"
+                                            class="form-control">
+                                        <small class="form-text text-muted">
+                                            {% trans "Formats acceptés: PDF, DOC, DOCX, JPG, PNG (max 10MB par fichier)"
+                                            %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'assistant IA -->
+<div class="modal fade" id="aiAssistModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient">
+                <h5 class="modal-title text-white">
+                    <i class="bi bi-robot me-2"></i>
+                    {% trans "Assistant IA - Fournisseurs" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-chat-container">
+                    <div class="ai-chat-messages" id="ai-chat-messages">
+                        <div class="ai-message assistant">
+                            <strong>Assistant IA:</strong><br>
+                            {% trans "Je peux vous aider à remplir les informations du fournisseur. Vous pouvez me
+                            donner le nom de l'entreprise ou son site web, et je chercherai automatiquement les
+                            informations disponibles." %}
+                        </div>
+                    </div>
+                    <div class="ai-chat-input">
+                        <form class="ai-chat-form d-flex gap-2">
+                            <input type="text" class="form-control"
+                                placeholder="{% trans 'Ex: Rechercher les infos pour Microsoft Canada' %}"
+                                id="ai-chat-input">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialiser le formulaire multi-étapes avec toutes les fonctionnalités avancées
+        const supplierForm = document.getElementById('supplier-form');
+        const modernForm = new MultiStepForm(supplierForm, {
+            realTimeValidation: true,
+            autoSave: true,
+            progressIndicator: true,
+            autocomplete: true,
+            dragDrop: true
+        });
+
+        // Assistant IA
+        const aiAssistBtn = document.getElementById('ai-assist-btn');
+        const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
+        const aiSuggestions = document.getElementById('ai-suggestions');
+        const suggestionsContainer = document.getElementById('suggestions-container');
+
+        aiAssistBtn.addEventListener('click', () => {
+            aiModal.show();
+        });
+
+        // Gestion des suggestions IA
+        document.getElementById('get-suggestions').addEventListener('click', () => {
+            getSuggestions();
+        });
+
+        document.getElementById('close-suggestions').addEventListener('click', () => {
+            aiSuggestions.style.display = 'none';
+        });
+
+        function getSuggestions() {
+            const companyName = document.querySelector('[name="name"]').value;
+            const website = document.querySelector('[name="website"]').value;
+
+            if (!companyName && !website) {
+                showErrorToast('{% trans "Veuillez saisir au moins le nom de l'entreprise ou le site web" %}');
+            return;
+            }
+
+            // Simuler des suggestions IA (remplacer par un vrai appel API)
+            const suggestions = [
+                {
+                    title: '{% trans "Informations d\'entreprise trouvées" %}',
+                    description: '{% trans "Données trouvées sur le registre des entreprises" %}',
+                    action: 'fill_company_data'
+                },
+                {
+                    title: '{% trans "Coordonnées de contact" %}',
+                    description: '{% trans "Email et téléphone principal identifiés" %}',
+                    action: 'fill_contact_data'
+                },
+                {
+                    title: '{% trans "Adresse du siège social" %}',
+                    description: '{% trans "Adresse officielle trouvée" %}',
+                    action: 'fill_address_data'
+                }
+            ];
+
+            displaySuggestions(suggestions);
+            aiSuggestions.style.display = 'block';
+        }
+
+        function displaySuggestions(suggestions) {
+            suggestionsContainer.innerHTML = suggestions.map(suggestion => `
+            <div class="suggestion-item" data-action="${suggestion.action}">
+                <div class="suggestion-title">${suggestion.title}</div>
+                <div class="suggestion-description">${suggestion.description}</div>
+            </div>
+        `).join('');
+
+            // Ajouter les événements de clic
+            suggestionsContainer.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    applySuggestion(item.dataset.action);
+                });
+            });
+        }
+
+        function applySuggestion(action) {
+            switch (action) {
+                case 'fill_company_data':
+                    // Simuler le remplissage automatique
+                    document.querySelector('[name="legal_name"]').value = 'Microsoft Canada Inc.';
+                    document.querySelector('[name="business_number"]').value = '123456789';
+                    showSuccessToast('{% trans "Informations d\'entreprise ajoutées" %}');
+                    break;
+
+                case 'fill_contact_data':
+                    document.querySelector('[name="email"]').value = 'contact@microsoft.ca';
+                    document.querySelector('[name="phone"]').value = '+1 800 642-7676';
+                    showSuccessToast('{% trans "Coordonnées de contact ajoutées" %}');
+                    break;
+
+                case 'fill_address_data':
+                    document.querySelector('[name="address"]').value = '1950 Meadowvale Blvd';
+                    document.querySelector('[name="city"]').value = 'Mississauga';
+                    document.querySelector('[name="province"]').value = 'ON';
+                    document.querySelector('[name="postal_code"]').value = 'L5N 8L9';
+                    showSuccessToast('{% trans "Adresse ajoutée" %}');
+                    break;
+            }
+
+            // Déclencher la validation des champs modifiés
+            const modifiedFields = supplierForm.querySelectorAll('input[value]:not([value=""])');
+            modifiedFields.forEach(field => {
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+
+        // Chat IA pour le modal
+        const aiChatForm = document.querySelector('.ai-chat-form');
+        const aiChatInput = document.getElementById('ai-chat-input');
+        const aiChatMessages = document.getElementById('ai-chat-messages');
+
+        aiChatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = aiChatInput.value.trim();
+            if (!message) return;
+
+            // Ajouter le message de l'utilisateur
+            addChatMessage('user', message);
+            aiChatInput.value = '';
+
+            // Simuler une réponse de l'IA
+            setTimeout(() => {
+                const response = generateAIResponse(message);
+                addChatMessage('assistant', response);
+            }, 1000);
+        });
+
+        function addChatMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${role}`;
+            messageDiv.innerHTML = role === 'user'
+                ? `<strong>{% trans "Vous" %}:</strong><br>${content}`
+                : `<strong>{% trans "Assistant IA" %}:</strong><br>${content}`;
+
+            aiChatMessages.appendChild(messageDiv);
+            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+        }
+
+        function generateAIResponse(message) {
+            // Simuler des réponses contextuelles
+            const responses = {
+                'microsoft': '{% trans "J\'ai trouvé des informations sur Microsoft Canada. Voulez-vous que je remplisse automatiquement les champs avec ces données ?" %}',
+                'adresse': '{% trans "Je peux vous aider à valider et compléter l\'adresse. Quelle est la ville ou la province ?" %}',
+                'default': '{% trans "Je peux vous aider à rechercher des informations sur cette entreprise. Pouvez-vous me donner plus de détails ?" %}'
+            };
+
+            const lowerMessage = message.toLowerCase();
+
+            if (lowerMessage.includes('microsoft')) {
+                return responses.microsoft;
+            } else if (lowerMessage.includes('adresse')) {
+                return responses.adresse;
+            } else {
+                return responses.default;
+            }
+        }
+    });
+</script>
+{% endblock %}

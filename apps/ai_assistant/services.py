@@ -407,7 +407,7 @@ Format JSON:
             from apps.suppliers.models import Supplier
             
             # Récupérer les fournisseurs actifs
-            suppliers = Supplier.objects.filter(status='active').prefetch_related('categories')
+            suppliers = Supplier.objects.filter(is_active=True).prefetch_related('categories')
             
             # Utiliser l'IA pour scorer chaque fournisseur
             suggestions = []

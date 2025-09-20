@@ -1,269 +1,545 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load i18n %}
 
-{% block title %}{% trans "Tableau de bord" %} - {{ block.super }}{% endblock %}
+{% block title %}Dashboard - ProcureGenius{% endblock %}
 
 {% block extra_css %}
 <style>
-    .widget-container {
-        min-height: 300px;
-        margin-bottom: 20px;
+    .dashboard-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding-top: 2rem;
     }
-    
-    .stats-card {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .dashboard-header {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.1);
     }
-    
-    .stats-card .stats-number {
+
+    .welcome-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .welcome-text h1 {
         font-size: 2.5rem;
-        font-weight: bold;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-text p {
+        color: #6c757d;
+        font-size: 1.1rem;
         margin: 0;
     }
-    
-    .stats-card .stats-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
-    
-    .stats-card.warning {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    }
-    
-    .stats-card.success {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    }
-    
-    .stats-card.danger {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-    
-    .quick-action-btn {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        margin-bottom: 10px;
-        text-decoration: none;
-        color: #333;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+
+    .btn-modern {
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
         transition: all 0.3s ease;
-    }
-    
-    .quick-action-btn:hover {
-        background: #f8f9fa;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
         text-decoration: none;
-        color: #333;
     }
-    
+
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-success-modern {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+
+    .btn-warning-modern {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.purchase-orders {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-icon.invoices {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-icon.suppliers {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stat-icon.revenue {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-change {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .stat-change.positive {
+        color: #28a745;
+    }
+
+    .stat-change.negative {
+        color: #dc3545;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .main-content {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .sidebar-content {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     .activity-item {
-        border-left: 3px solid #007bff;
-        padding-left: 15px;
-        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
     }
-    
-    .activity-item.success {
-        border-left-color: #28a745;
+
+    .activity-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
     }
-    
-    .activity-item.warning {
-        border-left-color: #ffc107;
+
+    .activity-item.purchase-order {
+        border-left-color: #667eea;
     }
-    
-    .activity-item.danger {
-        border-left-color: #dc3545;
+
+    .activity-item.invoice {
+        border-left-color: #11998e;
+    }
+
+    .activity-item.supplier {
+        border-left-color: #f093fb;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1rem;
+        color: white;
+    }
+
+    .activity-icon.purchase-order {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .activity-icon.invoice {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .activity-icon.supplier {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+        color: #adb5bd;
+        font-size: 0.8rem;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+
+    .quick-stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .print-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .print-section h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .print-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-print {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-print:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-print-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-print-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-print-success {
+        background: #28a745;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .welcome-section {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .quick-actions {
+            justify-content: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quick-stats {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Mode Toggle (IA vs Manuel) -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2>
-                {% if user.get_full_name %}
-                    {% blocktrans with name=user.get_full_name %}Bonjour {{ name }} !{% endblocktrans %}
-                {% else %}
-                    {% trans "Tableau de bord" %}
-                {% endif %}
-            </h2>
-            
-            {% if show_ai_mode_toggle %}
-            <div class="btn-group" role="group">
-                <input type="radio" class="btn-check" name="dashboard-mode" id="mode-ai" autocomplete="off" checked>
-                <label class="btn btn-outline-primary" for="mode-ai">
-                    <i class="bi bi-robot me-1"></i> {% trans "Mode IA" %}
-                </label>
-                
-                <input type="radio" class="btn-check" name="dashboard-mode" id="mode-manual" autocomplete="off">
-                <label class="btn btn-outline-secondary" for="mode-manual">
-                    <i class="bi bi-person me-1"></i> {% trans "Mode Manuel" %}
-                </label>
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1>Bienvenue, {{ user.first_name|default:user.username }} !</h1>
+                    <p>Voici un aperçu de votre activité ProcureGenius</p>
+                </div>
+                <div class="quick-actions">
+                    <a href="{% url 'purchase_orders:purchase_order_create' %}" class="btn-modern btn-primary-modern">
+                        <i class="bi bi-plus-circle"></i>
+                        Nouveau BC
+                    </a>
+                    <a href="{% url 'invoicing:invoice_create' %}" class="btn-modern btn-success-modern">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Nouvelle Facture
+                    </a>
+                    <a href="{% url 'suppliers:supplier_create' %}" class="btn-modern btn-warning-modern">
+                        <i class="bi bi-building"></i>
+                        Nouveau Fournisseur
+                    </a>
+                </div>
             </div>
-            {% endif %}
         </div>
-    </div>
-</div>
 
-<!-- Notifications importantes -->
-{% if unread_notifications %}
-<div class="row mb-4">
-    <div class="col-12">
-        {% for notification in unread_notifications %}
-        <div class="alert alert-{{ notification.notification_type }} alert-dismissible fade show" role="alert">
-            <strong>{{ notification.title }}</strong>
-            <p class="mb-0">{{ notification.message|truncatewords:20 }}</p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        <a href="{% url 'core:notifications' %}" class="btn btn-outline-primary btn-sm">
-            {% trans "Voir toutes les notifications" %}
-        </a>
-    </div>
-</div>
-{% endif %}
-
-<!-- Statistiques principales -->
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6">
-        <div class="stats-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_purchase_orders }}</p>
-                    <p class="stats-label">{% trans "Bons de commande" %}</p>
-                </div>
-                <i class="bi bi-cart3 fs-1 opacity-75"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6">
-        <div class="stats-card {% if stats.pending_purchase_orders > 0 %}warning{% else %}success{% endif %}">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.pending_purchase_orders }}</p>
-                    <p class="stats-label">{% trans "En attente" %}</p>
-                </div>
-                <i class="bi bi-clock fs-1 opacity-75"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6">
-        <div class="stats-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_invoices }}</p>
-                    <p class="stats-label">{% trans "Factures" %}</p>
-                </div>
-                <i class="bi bi-receipt fs-1 opacity-75"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6">
-        <div class="stats-card {% if stats.overdue_invoices > 0 %}danger{% else %}success{% endif %}">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.overdue_invoices }}</p>
-                    <p class="stats-label">{% trans "En retard" %}</p>
-                </div>
-                <i class="bi bi-exclamation-triangle fs-1 opacity-75"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Contenu principal selon le mode -->
-<div id="ai-mode-content" class="mode-content">
-    <div class="row">
-        <!-- Assistant IA -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-robot me-2"></i>
-                        {% trans "Assistant IA ProcureGenius" %}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="ai-chat-container" class="ai-chat-container">
-                        <div class="ai-chat-messages" id="ai-messages">
-                            <div class="ai-message assistant">
-                                {% trans "Bonjour ! Je suis votre assistant IA. Comment puis-je vous aider aujourd'hui ?" %}
-                                <br><small class="text-muted">
-                                    {% trans "Exemples : 'Créer un BC pour 100 chaises', 'Montrer les factures en retard', 'Analyser les dépenses du mois'" %}
-                                </small>
-                            </div>
-                        </div>
-                        <div class="ai-chat-input">
-                            <form class="ai-chat-form" onsubmit="return false;">
-                                {% csrf_token %}
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="{% trans 'Tapez votre demande...' %}" autocomplete="off">
-                                    <button class="btn btn-primary ai-chat-send" type="submit">
-                                        <i class="bi bi-send"></i>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon purchase-orders">
+                        <i class="bi bi-cart-check"></i>
                     </div>
                 </div>
+                <div class="stat-number">{{ stats.purchase_orders }}</div>
+                <div class="stat-label">Bons de Commande</div>
+                <div class="stat-change positive">+{{ stats.pos_growth }}% ce mois</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon invoices">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ stats.invoices }}</div>
+                <div class="stat-label">Factures</div>
+                <div class="stat-change positive">+{{ stats.invoices_growth }}% ce mois</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon suppliers">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ stats.active_suppliers }}</div>
+                <div class="stat-label">Fournisseurs Actifs</div>
+                <div class="stat-change positive">+{{ stats.new_suppliers }} nouveaux</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon revenue">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <div class="stat-number">${{ stats.monthly_total|floatformat:0 }}</div>
+                <div class="stat-label">Chiffre d'Affaires</div>
+                <div class="stat-change positive">+{{ stats.monthly_growth }}% ce mois</div>
             </div>
         </div>
-        
-        <!-- Suggestions IA -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        {% trans "Suggestions IA" %}
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-exclamation-circle text-warning me-2"></i>
-                                <div>
-                                    <small class="fw-bold">{% trans "Factures en retard détectées" %}</small>
-                                    <br><small class="text-muted">{% trans "3 factures nécessitent un suivi" %}</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-graph-up text-success me-2"></i>
-                                <div>
-                                    <small class="fw-bold">{% trans "Opportunité d'économies" %}</small>
-                                    <br><small class="text-muted">{% trans "Fournisseur alternatif trouvé" %}</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-clock text-info me-2"></i>
-                                <div>
-                                    <small class="fw-bold">{% trans "Commande récurrente" %}</small>
-                                    <br><small class="text-muted">{% trans "Papeterie à commander bientôt" %}</small>
-                                </div>
-                            </div>
-                        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Main Content -->
+            <div class="main-content">
+                <h2 class="section-title">
+                    <i class="bi bi-clock-history"></i>
+                    Activité Récente
+                </h2>
+
+                {% for activity in recent_activities %}
+                <div class="activity-item {{ activity.type }}">
+                    <div class="activity-icon {{ activity.type }}">
+                        {% if activity.type == 'purchase_order' %}
+                        <i class="bi bi-cart-check"></i>
+                        {% elif activity.type == 'invoice' %}
+                        <i class="bi bi-file-earmark-text"></i>
+                        {% elif activity.type == 'supplier' %}
+                        <i class="bi bi-building"></i>
+                        {% endif %}
                     </div>
-                    
-                    <div class="mt-3">
-                        <a href="{% url 'ai_assistant:chat_interface' %}" class="btn btn-primary btn-sm w-100">
-                            {% trans "Ouvrir l'assistant complet" %}
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.title }}</div>
+                        <div class="activity-description">{{ activity.description }}</div>
+                        <div class="activity-time">{{ activity.timestamp|timesince }} ago</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox display-4"></i>
+                    <p>Aucune activité récente</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar-content">
+                <h3 class="section-title">
+                    <i class="bi bi-speedometer2"></i>
+                    Vue d'Ensemble
+                </h3>
+
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="quick-stat-number">{{ stats.pending_invoices }}</div>
+                        <div class="quick-stat-label">Factures en Attente</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-number">{{ stats.overdue_invoices }}</div>
+                        <div class="quick-stat-label">Factures en Retard</div>
+                    </div>
+                </div>
+
+                <!-- Print Section -->
+                <div class="print-section">
+                    <h4><i class="bi bi-printer"></i> Impression Rapide</h4>
+                    <div class="print-buttons">
+                        <button class="btn-print btn-print-primary" onclick="printRecentPO()">
+                            <i class="bi bi-file-earmark-text"></i>
+                            Dernier BC
+                        </button>
+                        <button class="btn-print btn-print-success" onclick="printRecentInvoice()">
+                            <i class="bi bi-file-earmark-check"></i>
+                            Dernière Facture
+                        </button>
+                        <button class="btn-print btn-print-secondary" onclick="showPrintTemplates()">
+                            <i class="bi bi-layout-text-window"></i>
+                            Modèles
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="mt-4">
+                    <h5 class="mb-3">Accès Rapide</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'purchase_orders:purchase_order_list' %}"
+                            class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list-ul me-2"></i>Tous les BC
+                        </a>
+                        <a href="{% url 'invoicing:invoice_list' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-list-ul me-2"></i>Toutes les Factures
+                        </a>
+                        <a href="{% url 'suppliers:supplier_list' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-list-ul me-2"></i>Tous les Fournisseurs
                         </a>
                     </div>
                 </div>
@@ -272,185 +548,118 @@
     </div>
 </div>
 
-<div id="manual-mode-content" class="mode-content" style="display: none;">
-    <div class="row">
-        <!-- Actions rapides -->
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-lightning me-2"></i>
-                        {% trans "Actions rapides" %}
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <a href="{% url 'purchase_orders:create' %}" class="quick-action-btn">
-                        <i class="bi bi-plus-circle text-primary me-2"></i>
-                        {% trans "Nouveau BC" %}
-                    </a>
-                    <a href="{% url 'invoicing:create' %}" class="quick-action-btn">
-                        <i class="bi bi-receipt text-success me-2"></i>
-                        {% trans "Nouvelle facture" %}
-                    </a>
-                    <a href="{% url 'suppliers:create' %}" class="quick-action-btn">
-                        <i class="bi bi-building text-info me-2"></i>
-                        {% trans "Nouveau fournisseur" %}
-                    </a>
-                    
-                    {% for action in quick_actions %}
-                    <a href="{{ action.url }}" class="quick-action-btn">
-                        <i class="{{ action.icon }} me-2"></i>
-                        {{ action.title }}
-                    </a>
-                    {% endfor %}
-                    
-                    <div class="mt-2">
-                        <a href="{% url 'core:quick_actions_manage' %}" class="btn btn-outline-secondary btn-sm w-100">
-                            {% trans "Gérer les actions" %}
-                        </a>
-                    </div>
-                </div>
+<!-- Print Templates Modal -->
+<div class="modal fade" id="printTemplatesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-printer me-2"></i>Modèles d'Impression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-        </div>
-        
-        <!-- Activités récentes -->
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-clock-history me-2"></i>
-                        {% trans "Activités récentes" %}
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% for activity in recent_activities %}
-                    <div class="activity-item {{ activity.status }}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>{{ activity.title }}</strong>
-                                <p class="mb-1 text-muted">{{ activity.description }}</p>
-                                <small class="text-muted">{{ activity.date|date:"d/m/Y H:i" }}</small>
-                            </div>
-                            <a href="{{ activity.url }}" class="btn btn-outline-primary btn-sm">
-                                {% trans "Voir" %}
-                            </a>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Bons de Commande</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="printPO('standard')">
+                                <i class="bi bi-file-earmark-text me-2"></i>Modèle Standard
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="printPO('detailed')">
+                                <i class="bi bi-file-earmark-text-fill me-2"></i>Modèle Détaillé
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="printPO('minimal')">
+                                <i class="bi bi-file-earmark me-2"></i>Modèle Minimal
+                            </button>
                         </div>
                     </div>
-                    {% empty %}
-                    <p class="text-muted text-center">{% trans "Aucune activité récente" %}</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Résumé financier -->
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-graph-up me-2"></i>
-                        {% trans "Résumé financier" %}
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>{% trans "Dépenses mensuelles" %}:</span>
-                            <strong>${{ stats.monthly_spend|floatformat:2 }}</strong>
+                    <div class="col-md-6">
+                        <h6>Factures</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-success" onclick="printInvoice('standard')">
+                                <i class="bi bi-file-earmark-check me-2"></i>Modèle Standard
+                            </button>
+                            <button class="btn btn-outline-success" onclick="printInvoice('detailed')">
+                                <i class="bi bi-file-earmark-check-fill me-2"></i>Modèle Détaillé
+                            </button>
+                            <button class="btn btn-outline-success" onclick="printInvoice('minimal')">
+                                <i class="bi bi-file-earmark me-2"></i>Modèle Minimal
+                            </button>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>{% trans "Fournisseurs actifs" %}:</span>
-                            <strong>{{ stats.total_suppliers }}</strong>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <a href="{% url 'analytics:dashboard' %}" class="btn btn-outline-primary btn-sm w-100">
-                        {% trans "Analytics complet" %}
-                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Widgets personnalisés (si configurés) -->
-{% if widgets %}
-<div class="row mt-4">
-    <div class="col-12">
-        <h5>{% trans "Widgets personnalisés" %}</h5>
-    </div>
-    {% for widget in widgets %}
-    <div class="col-md-{{ widget.width }}">
-        <div class="card widget-container" data-widget-id="{{ widget.id }}">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">{{ widget.title }}</h6>
-                <button class="btn btn-sm btn-outline-danger remove-widget" data-widget-id="{{ widget.id }}">
-                    <i class="bi bi-x"></i>
-                </button>
-            </div>
-            <div class="card-body">
-                <!-- Contenu du widget selon son type -->
-                {% if widget.widget_type == 'stats' %}
-                    <p>{% trans "Widget statistiques" %}</p>
-                {% elif widget.widget_type == 'chart' %}
-                    <p>{% trans "Widget graphique" %}</p>
-                {% else %}
-                    <p>{% trans "Widget" %} {{ widget.get_widget_type_display }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Toggle entre mode IA et manuel
-    const modeRadios = document.querySelectorAll('input[name="dashboard-mode"]');
-    const aiContent = document.getElementById('ai-mode-content');
-    const manualContent = document.getElementById('manual-mode-content');
-    
-    modeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.id === 'mode-ai') {
-                aiContent.style.display = 'block';
-                manualContent.style.display = 'none';
-            } else {
-                aiContent.style.display = 'none';
-                manualContent.style.display = 'block';
-            }
+    // Print functions
+    function printRecentPO() {
+        // Get the most recent purchase order and print it
+        window.open('/purchase-orders/print/latest/', '_blank');
+    }
+
+    function printRecentInvoice() {
+        // Get the most recent invoice and print it
+        window.open('/invoicing/print/latest/', '_blank');
+    }
+
+    function showPrintTemplates() {
+        const modal = new bootstrap.Modal(document.getElementById('printTemplatesModal'));
+        modal.show();
+    }
+
+    function printPO(template) {
+        window.open(`/purchase-orders/print/template/${template}/`, '_blank');
+    }
+
+    function printInvoice(template) {
+        window.open(`/invoicing/print/template/${template}/`, '_blank');
+    }
+
+    // Auto-refresh stats every 30 seconds
+    setInterval(function () {
+        fetch('/api/dashboard/stats/')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats without page reload
+                document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = data.purchase_orders;
+                document.querySelector('.stat-card:nth-child(2) .stat-number').textContent = data.invoices;
+                document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = data.active_suppliers;
+                document.querySelector('.stat-card:nth-child(4) .stat-number').textContent = '$' + data.monthly_total;
+            })
+            .catch(error => console.log('Stats update failed:', error));
+    }, 30000);
+
+    // Add smooth animations
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animate stat cards on load
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Animate activity items
+        const activityItems = document.querySelectorAll('.activity-item');
+        activityItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                item.style.transition = 'all 0.4s ease';
+                item.style.opacity = '1';
+                item.style.transform = 'translateX(0)';
+            }, 500 + index * 100);
         });
     });
-    
-    // Suppression de widgets
-    document.querySelectorAll('.remove-widget').forEach(button => {
-        button.addEventListener('click', function() {
-            const widgetId = this.dataset.widgetId;
-            if (confirm('{% trans "Supprimer ce widget ?" %}')) {
-                fetch(`/widgets/${widgetId}/remove/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                });
-            }
-        });
-    });
-});
 </script>
 {% endblock %}

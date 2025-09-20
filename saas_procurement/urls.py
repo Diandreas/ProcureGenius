@@ -14,8 +14,8 @@ urlpatterns = [
     # APIs REST
     path('api/v1/', include('apps.api.urls')),
     
-    # Authentification
-    path('accounts/', include('allauth.urls')),
+    # Authentification (allauth désactivé pour développement)
+    # path('accounts/', include('allauth.urls')),
     path('accounts/', include('apps.accounts.urls')),
     
     # Langue
@@ -28,6 +28,7 @@ urlpatterns += i18n_patterns(
     path('', include('apps.core.urls')),  # Dashboard principal
     path('purchase-orders/', include('apps.purchase_orders.urls')),
     path('invoicing/', include('apps.invoicing.urls')),
+    path('print/', include('apps.invoicing.urls_print')),
     path('suppliers/', include('apps.suppliers.urls')),
     path('analytics/', include('apps.analytics.urls')),
     path('ai/', include('apps.ai_assistant.urls')),
@@ -42,6 +43,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# Gestion d'erreurs
-handler404 = 'apps.core.views.custom_404'
-handler500 = 'apps.core.views.custom_500'
+# Gestion d'erreurs (désactivé pour développement)
+# handler404 = 'apps.core.views.custom_404'
+# handler500 = 'apps.core.views.custom_500'

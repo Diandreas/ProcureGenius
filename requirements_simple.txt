@@ -1,0 +1,60 @@
+# Base Django
+Django==5.0.3
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+django-crispy-forms==2.0
+crispy-bootstrap5==0.7
+
+# Authentication
+django-allauth==0.57.0
+
+# Money/Finance
+django-money==3.4.1
+
+# Import/Export
+django-import-export==3.3.5
+
+# Base de données SQLite (pas besoin de psycopg2)
+# psycopg2-binary==2.9.9  # Commenté pour développement
+
+# Redis pour cache (optionnel)
+redis==5.0.1
+
+# IA Mistral
+mistralai==0.4.2
+openai==1.12.0
+python-dotenv==1.0.1
+
+# Tâches asynchrones (optionnel pour début)
+# celery==5.3.6
+# celery[redis]==5.3.6
+# django-celery-beat==2.5.0
+# django-celery-results==2.5.1
+
+# Sécurité
+cryptography==42.0.5
+PyJWT==2.8.0
+
+# PayPal (optionnel)
+# paypalrestsdk==1.13.3
+# paypal-checkout-serversdk==1.0.1
+
+# Utilitaires
+Pillow==10.2.0
+reportlab==4.1.0
+pandas==2.2.1
+requests==2.31.0
+python-dateutil==2.9.0
+
+# Internationalisation
+django-modeltranslation==0.18.11
+
+# Production
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Développement
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
