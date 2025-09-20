@@ -1,409 +1,242 @@
-{% extends 'base.html' %}
+{% extends 'base_sidebar.html' %}
 {% load i18n static %}
 
 {% block title %}Facture {{ invoice.invoice_number }} - ProcureGenius{% endblock %}
 
+{% block page_title %}Facture {{ invoice.invoice_number }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-3">
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+        {% if invoice.status == 'draft' %}bg-gray-100 text-gray-800
+        {% elif invoice.status == 'sent' %}bg-blue-100 text-blue-800
+        {% elif invoice.status == 'paid' %}bg-green-100 text-green-800
+        {% elif invoice.status == 'overdue' %}bg-red-100 text-red-800
+        {% else %}bg-gray-100 text-gray-800{% endif %}">
+        {{ invoice.get_status_display }}
+    </span>
+    <a href="{% url 'core:user_invoices' %}"
+        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+    <a href="{% url 'invoicing:invoice_edit' invoice.pk %}"
+        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+            </path>
+        </svg>
+        Modifier
+    </a>
+    <a href="{% url 'invoicing:invoice_print' invoice.pk %}"
+        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+            </path>
+        </svg>
+        Imprimer
+    </a>
+</div>
+{% endblock %}
+
 {% block content %}
-<div class="user-panel">
-    <!-- Header -->
-    <div class="panel-header">
-        <div>
-            <h1>Facture {{ invoice.invoice_number }}</h1>
-            <span class="status-badge status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+<!-- Informations principales -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Colonne principale -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Informations générales -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Informations générales</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Détails de la facture</p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                <dl class="sm:divide-y sm:divide-gray-200">
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Titre</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.title }}</dd>
+                    </div>
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Date de création</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.created_at|date:"d/m/Y
+                            H:i" }}</dd>
+                    </div>
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Date d'échéance</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.due_date|date:"d/m/Y" }}
+                        </dd>
+                    </div>
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Créé par</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            invoice.created_by.get_full_name|default:invoice.created_by.username }}</dd>
+                    </div>
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Devise</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.currency }}</dd>
+                    </div>
+                    {% if invoice.description %}
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Description</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.description }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
         </div>
-        <div class="header-actions">
-            <a href="{% url 'core:user_invoices' %}" class="btn-back">← Retour aux factures</a>
-            <a href="{% url 'invoicing:invoice_edit' invoice.pk %}" class="btn-edit">✏️ Modifier</a>
-            <a href="{% url 'invoicing:invoice_print' invoice.pk %}" class="btn-print">🖨️ Imprimer</a>
+
+        <!-- Client -->
+        {% if invoice.client %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Informations client</h3>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 font-medium">{{
+                            invoice.client.get_full_name.0|default:invoice.client.username.0 }}</span>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900">{{
+                            invoice.client.get_full_name|default:invoice.client.username }}</div>
+                        {% if invoice.client.email %}
+                        <div class="text-sm text-gray-500">{{ invoice.client.email }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Articles -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Articles de la facture</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ invoice.items.count }} article(s)</p>
+            </div>
+            <div class="border-t border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Code</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Description</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Quantité</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Prix unitaire</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in invoice.items.all %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.service_code }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">
+                                    <div class="font-medium">{{ item.description }}</div>
+                                    {% if item.detailed_description %}
+                                    <div class="text-gray-500 text-xs mt-1">{{
+                                        item.detailed_description|truncatechars:100 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.quantity }} {{
+                                    item.unit_of_measure }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
+                                    item.unit_price|floatformat:2 }} {{ invoice.currency }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{
+                                    item.total_price|floatformat:2 }} {{ invoice.currency }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Aucun article dans
+                                    cette facture</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Informations principales -->
-    <div class="invoice-details">
-        <div class="detail-section">
-            <h3>Informations générales</h3>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label>Titre</label>
-                    <span>{{ invoice.title }}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Statut</label>
-                    <span class="status-badge status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Date de création</label>
-                    <span>{{ invoice.created_at|date:"d/m/Y H:i" }}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Date d'échéance</label>
-                    <span>{{ invoice.due_date|date:"d/m/Y" }}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Créé par</label>
-                    <span>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Devise</label>
-                    <span>{{ invoice.currency }}</span>
-                </div>
-            </div>
-
-            {% if invoice.description %}
-            <div class="detail-item full-width">
-                <label>Description</label>
-                <p>{{ invoice.description }}</p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Informations client -->
-        {% if invoice.client %}
-        <div class="detail-section">
-            <h3>Client</h3>
-            <div class="client-info">
-                <strong>{{ invoice.client.get_full_name|default:invoice.client.username }}</strong>
-                {% if invoice.client.email %}
-                <div>📧 {{ invoice.client.email }}</div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Adresse de facturation -->
-        {% if invoice.billing_address %}
-        <div class="detail-section">
-            <h3>Adresse de facturation</h3>
-            <div class="address-box">
-                {{ invoice.billing_address|linebreaks }}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Articles de la facture -->
-        <div class="detail-section">
-            <h3>Articles</h3>
-            <div class="items-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Description</th>
-                            <th>Quantité</th>
-                            <th>Prix unitaire</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in invoice.items.all %}
-                        <tr>
-                            <td>{{ item.service_code }}</td>
-                            <td>
-                                <strong>{{ item.description }}</strong>
-                                {% if item.detailed_description %}
-                                <div class="item-detail">{{ item.detailed_description|truncatechars:100 }}</div>
-                                {% endif %}
-                            </td>
-                            <td>{{ item.quantity }} {{ item.unit_of_measure }}</td>
-                            <td>{{ item.unit_price|floatformat:2 }} {{ invoice.currency }}</td>
-                            <td><strong>{{ item.total_price|floatformat:2 }} {{ invoice.currency }}</strong></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="no-data">Aucun article dans cette facture</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+    <!-- Colonne latérale -->
+    <div class="space-y-6">
         <!-- Totaux -->
-        <div class="detail-section">
-            <div class="totals-box">
-                <div class="total-row">
-                    <span>Sous-total:</span>
-                    <span>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</span>
-                </div>
-                <div class="total-row">
-                    <span>Taxes:</span>
-                    <span>{{ invoice.tax_amount|floatformat:2 }} {{ invoice.currency }}</span>
-                </div>
-                <div class="total-row final">
-                    <span><strong>Total:</strong></span>
-                    <span><strong>{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</strong></span>
-                </div>
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Totaux</h3>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Sous-total</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.subtotal|floatformat:2
+                            }} {{ invoice.currency }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Taxes</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.tax_amount|floatformat:2
+                            }} {{ invoice.currency }}</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-green-600">Total</dt>
+                        <dd class="mt-1 text-lg font-semibold text-green-600 sm:mt-0 sm:col-span-2">{{
+                            invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</dd>
+                    </div>
+                </dl>
             </div>
         </div>
 
-        <!-- Informations de paiement -->
+        <!-- Conditions de paiement -->
         {% if invoice.payment_terms or invoice.payment_method %}
-        <div class="detail-section">
-            <h3>Conditions de paiement</h3>
-            <div class="detail-grid">
-                {% if invoice.payment_terms %}
-                <div class="detail-item">
-                    <label>Conditions</label>
-                    <span>{{ invoice.payment_terms }}</span>
-                </div>
-                {% endif %}
-                {% if invoice.payment_method %}
-                <div class="detail-item">
-                    <label>Mode de paiement</label>
-                    <span>{{ invoice.payment_method }}</span>
-                </div>
-                {% endif %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Paiement</h3>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    {% if invoice.payment_terms %}
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Conditions</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.payment_terms }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if invoice.payment_method %}
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Méthode</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ invoice.payment_method }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
             </div>
         </div>
         {% endif %}
 
         <!-- QR Code -->
-        <div class="detail-section">
-            <h3>QR Code</h3>
-            <div class="qr-code-container">
-                <img src="data:image/png;base64,{{ invoice.qr_code_data }}" alt="QR Code" class="qr-code">
-                <p class="qr-info">Scannez ce code pour accéder aux informations de la facture</p>
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">QR Code</h3>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6 text-center">
+                <img src="data:image/png;base64,{{ invoice.qr_code_data }}" alt="QR Code"
+                    class="mx-auto h-32 w-32 border border-gray-200 rounded">
+                <p class="mt-2 text-xs text-gray-500">Scannez pour accéder aux informations</p>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-/* Styles pour la page de détail de facture */
-.user-panel {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e1e5e9;
-}
-
-.panel-header h1 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 28px;
-}
-
-.header-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-back, .btn-edit, .btn-print {
-    padding: 8px 16px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.btn-back {
-    background: #95a5a6;
-    color: white;
-}
-
-.btn-edit {
-    background: #f39c12;
-    color: white;
-}
-
-.btn-print {
-    background: #3498db;
-    color: white;
-}
-
-.btn-back:hover, .btn-edit:hover, .btn-print:hover {
-    transform: translateY(-1px);
-}
-
-.status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    margin-left: 10px;
-}
-
-.status-draft { background: #ecf0f1; color: #2c3e50; }
-.status-sent { background: #d5dbdb; color: #2c3e50; }
-.status-paid { background: #d5f4e6; color: #27ae60; }
-.status-overdue { background: #fadbd8; color: #e74c3c; }
-
-.invoice-details {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.detail-section {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.detail-section h3 {
-    margin: 0 0 15px 0;
-    color: #2c3e50;
-    font-size: 18px;
-    border-bottom: 1px solid #ecf0f1;
-    padding-bottom: 8px;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.detail-item.full-width {
-    grid-column: 1 / -1;
-}
-
-.detail-item label {
-    font-weight: 600;
-    color: #7f8c8d;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.detail-item span, .detail-item p {
-    color: #2c3e50;
-    font-size: 14px;
-}
-
-.client-info, .address-box {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid #3498db;
-}
-
-.items-table {
-    overflow-x: auto;
-}
-
-.items-table table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.items-table th,
-.items-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.items-table th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.item-detail {
-    font-size: 12px;
-    color: #7f8c8d;
-    margin-top: 4px;
-}
-
-.no-data {
-    text-align: center;
-    color: #bdc3c7;
-    font-style: italic;
-    padding: 20px;
-}
-
-.totals-box {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 6px;
-    border-left: 4px solid #27ae60;
-    max-width: 400px;
-    margin-left: auto;
-}
-
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.total-row.final {
-    border-bottom: none;
-    font-size: 18px;
-    color: #27ae60;
-    margin-top: 10px;
-    padding-top: 15px;
-    border-top: 2px solid #27ae60;
-}
-
-.qr-code-container {
-    text-align: center;
-}
-
-.qr-code {
-    max-width: 200px;
-    height: auto;
-    border: 1px solid #ddd;
-    padding: 10px;
-    background: white;
-}
-
-.qr-info {
-    margin-top: 10px;
-    color: #7f8c8d;
-    font-size: 12px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .user-panel {
-        padding: 15px;
-    }
-
-    .panel-header {
-        flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
-    }
-
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .items-table {
-        font-size: 12px;
-    }
-
-    .totals-box {
-        max-width: none;
-        margin-left: 0;
-    }
-}
-</style>
 {% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer l'élément - {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Supprimer l'élément
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        Vous êtes sur le point de supprimer cet élément de la facture
+                        <strong>{{ invoice.invoice_number }}</strong>.
+                    </div>
+
+                    <!-- Informations de l'élément -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ item.description }}</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Code :</small><br>
+                                    <strong>{{ item.service_code }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Quantité :</small><br>
+                                    <strong>{{ item.quantity }} {{ item.unit_of_measure }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Prix unitaire :</small><br>
+                                    <strong>{{ item.unit_price }} {{ invoice.currency }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Total :</small><br>
+                                    <strong class="text-primary">{{ item.total_price }} {{ invoice.currency }}</strong>
+                                </div>
+                            </div>
+
+                            {% if item.discount_percent > 0 %}
+                            <div class="mt-2">
+                                <small class="text-muted">Remise appliquée :</small>
+                                <span class="badge bg-warning">{{ item.discount_percent }}%</span>
+                            </div>
+                            {% endif %}
+
+                            {% if item.notes %}
+                            <div class="mt-2">
+                                <small class="text-muted">Notes :</small><br>
+                                <em>{{ item.notes }}</em>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Impact sur la facture -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-calculator"></i> Impact sur la facture</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small>Total actuel :</small><br>
+                                <strong>{{ invoice.total_amount }} {{ invoice.currency }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small>Nouveau total :</small><br>
+                                <strong class="text-warning">
+                                    {% widthratio invoice.total_amount 1 1 as current_total %}
+                                    {% widthratio item.total_price 1 1 as item_total %}
+                                    {{ current_total|add:item_total|floatformat:2 }} {{ invoice.currency }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if invoice.items.count == 1 %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention :</strong> C'est le seul élément de cette facture.
+                        Après suppression, la facture sera vide et devra être supprimée ou de nouveaux éléments devront
+                        être ajoutés.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirm-delete" required>
+                            <label class="form-check-label" for="confirm-delete">
+                                Je confirme la suppression de cet élément
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'invoicing:invoice_detail' invoice.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Annuler
+                            </a>
+
+                            <button type="submit" class="btn btn-danger" id="delete-btn" disabled>
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Supprimer l'élément
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const confirmCheckbox = document.getElementById('confirm-delete');
+        const deleteBtn = document.getElementById('delete-btn');
+
+        confirmCheckbox.addEventListener('change', function () {
+            deleteBtn.disabled = !this.checked;
+        });
+    });
+</script>
+{% endblock %}

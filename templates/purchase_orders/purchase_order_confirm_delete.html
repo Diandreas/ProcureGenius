@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirmer la suppression" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .warning-card {
+        border-left: 4px solid #dc3545;
+        background: #fff5f5;
+    }
+    
+    .info-card {
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête de suppression -->
+<div class="delete-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {% trans "Confirmer la suppression" %}
+            </h1>
+            <p class="mb-0 opacity-75">
+                {% trans "Cette action est irréversible" %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'purchase_orders:detail' purchase_order.pk %}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-1"></i>
+                {% trans "Annuler" %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Avertissement -->
+        <div class="card warning-card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-3" style="font-size: 2rem;"></i>
+                    <div>
+                        <h5 class="card-title text-danger mb-2">
+                            {% trans "Attention !" %}
+                        </h5>
+                        <p class="card-text mb-0">
+                            {% trans "Vous êtes sur le point de supprimer définitivement ce bon de commande. Cette action ne peut pas être annulée." %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informations du bon de commande -->
+        <div class="card info-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% trans "Détails du bon de commande" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Numéro" %}:</strong></td>
+                                <td>{{ purchase_order.po_number }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Titre" %}:</strong></td>
+                                <td>{{ purchase_order.title }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Statut" %}:</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ purchase_order.get_status_color }}">
+                                        {{ purchase_order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>{% trans "Créé le" %}:</strong></td>
+                                <td>{{ purchase_order.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{% trans "Créé par" %}:</strong></td>
+                                <td>{{ purchase_order.created_by.get_full_name|default:purchase_order.created_by.username }}</td>
+                            </tr>
+                            {% if purchase_order.supplier %}
+                            <tr>
+                                <td><strong>{% trans "Fournisseur" %}:</strong></td>
+                                <td>{{ purchase_order.supplier.name }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                {% if purchase_order.description %}
+                <div class="mt-3">
+                    <strong>{% trans "Description" %}:</strong>
+                    <p class="mt-2">{{ purchase_order.description|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                <!-- Statistiques -->
+                <div class="row mt-3">
+                    <div class="col-md-3 text-center">
+                        <div class="h5 text-primary">{{ purchase_order.items.count }}</div>
+                        <small class="text-muted">{% trans "Articles" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h5 text-success">
+                            {% if purchase_order.total_amount %}
+                                {{ purchase_order.total_amount|floatformat:2 }} $
+                            {% else %}
+                                0,00 $
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{% trans "Total" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h5 text-info">{{ purchase_order.priority|title }}</div>
+                        <small class="text-muted">{% trans "Priorité" %}</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h5 text-warning">
+                            {% if purchase_order.required_date %}
+                                {{ purchase_order.required_date|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{% trans "Date requise" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Articles du bon de commande -->
+        {% if purchase_order.items.all %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2"></i>
+                    {% trans "Articles qui seront supprimés" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Code" %}</th>
+                                <th>{% trans "Description" %}</th>
+                                <th class="text-end">{% trans "Quantité" %}</th>
+                                <th class="text-end">{% trans "Prix unitaire" %}</th>
+                                <th class="text-end">{% trans "Total" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in purchase_order.items.all %}
+                            <tr>
+                                <td>{{ item.product_code|default:"-" }}</td>
+                                <td>{{ item.description|truncatechars:50 }}</td>
+                                <td class="text-end">{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.unit_price|floatformat:2 }} $</td>
+                                <td class="text-end">{{ item.get_total|floatformat:2 }} $</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Formulaire de confirmation -->
+        <div class="card">
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="confirmationText" class="form-label">
+                            {% trans "Pour confirmer la suppression, tapez le numéro du bon de commande" %}:
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="confirmationText" 
+                               placeholder="{{ purchase_order.po_number }}"
+                               required>
+                        <div class="invalid-feedback">
+                            {% trans "Veuillez saisir le numéro exact du bon de commande" %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'purchase_orders:detail' purchase_order.pk %}" 
+                           class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-x-circle me-1"></i>
+                            {% trans "Annuler" %}
+                        </a>
+                        <button type="submit" 
+                                class="btn btn-danger" 
+                                id="deleteButton"
+                                disabled>
+                            <i class="bi bi-trash me-1"></i>
+                            {% trans "Supprimer définitivement" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmationInput = document.getElementById('confirmationText');
+    const deleteButton = document.getElementById('deleteButton');
+    const expectedText = '{{ purchase_order.po_number }}';
+    
+    // Validation du texte de confirmation
+    confirmationInput.addEventListener('input', function() {
+        if (this.value.trim() === expectedText) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            deleteButton.disabled = false;
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            deleteButton.disabled = true;
+        }
+    });
+    
+    // Confirmation finale avant suppression
+    deleteButton.addEventListener('click', function(e) {
+        if (!confirm('{% trans "Êtes-vous absolument certain de vouloir supprimer ce bon de commande ? Cette action est irréversible." %}')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Validation du formulaire
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity() || confirmationInput.value.trim() !== expectedText) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Animation d'entrée
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

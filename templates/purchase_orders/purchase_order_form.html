@@ -1,0 +1,78 @@
+{% extends 'base_sidebar.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Bons de Commande{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'core:user_purchase_orders' %}"
+    class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+    </svg>
+    Retour aux commandes
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Messages d'erreur -->
+    {% if form.errors %}
+    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+        <div class="flex">
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Erreurs dans le formulaire</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    {{ form.errors }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Informations générales -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Informations générales</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Détails de base du bon de commande</p>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            {{ form|crispy }}
+        </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="flex justify-between items-center">
+        <div class="text-sm text-gray-500">
+            {% if purchase_order %}
+            Bon de commande: {{ purchase_order.po_number }}<br>
+            Créé le: {{ purchase_order.created_at|date:"d/m/Y H:i" }}
+            {% endif %}
+        </div>
+        <div class="flex space-x-3">
+            <button type="submit" name="action" value="save_draft"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                    </path>
+                </svg>
+                Brouillon
+            </button>
+            <button type="submit" name="action" value="save_and_send"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+                Sauvegarder et envoyer
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

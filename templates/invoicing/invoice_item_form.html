@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+{% if item %}
+Modifier l'élément - {{ invoice.invoice_number }}
+{% else %}
+Ajouter un élément - {{ invoice.invoice_number }}
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .price-calculator {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .calculation-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+    }
+
+    .calculation-row.total {
+        border-top: 1px solid #dee2e6;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .service-code-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .service-code-btn {
+        padding: 0.25rem 0.75rem;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .service-code-btn:hover {
+        background: #e9ecef;
+    }
+
+    .service-code-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="invoice-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">
+                                {% if item %}
+                                <i class="fas fa-edit me-2"></i>
+                                Modifier l'élément
+                                {% else %}
+                                <i class="fas fa-plus me-2"></i>
+                                Ajouter un élément
+                                {% endif %}
+                            </h4>
+                            <p class="mb-0 opacity-75">
+                                Facture : {{ invoice.invoice_number }} - {{ invoice.title }}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-light text-dark fs-6">
+                                {{ invoice.get_status_display }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Erreurs dans le formulaire</h6>
+                        {{ form.errors }}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="item-form">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Code de service avec sélecteur rapide -->
+                                <div class="mb-3">
+                                    <label for="{{ form.service_code.id_for_label }}" class="form-label">
+                                        Code de service
+                                    </label>
+                                    <div class="service-code-selector">
+                                        <button type="button" class="service-code-btn" data-code="WEB-DEV">
+                                            WEB-DEV
+                                        </button>
+                                        <button type="button" class="service-code-btn" data-code="DESIGN">
+                                            DESIGN
+                                        </button>
+                                        <button type="button" class="service-code-btn" data-code="CONSULT">
+                                            CONSULT
+                                        </button>
+                                        <button type="button" class="service-code-btn" data-code="MAINT">
+                                            MAINT
+                                        </button>
+                                        <button type="button" class="service-code-btn" data-code="SUPPORT">
+                                            SUPPORT
+                                        </button>
+                                    </div>
+                                    {{ form.service_code }}
+                                    <small class="form-text text-muted">
+                                        Cliquez sur un code prédéfini ou saisissez le vôtre
+                                    </small>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        Description <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.description }}
+                                    <small class="form-text text-muted">
+                                        Description courte de l'élément (visible sur la facture)
+                                    </small>
+                                </div>
+
+                                <!-- Description détaillée -->
+                                {% if form.detailed_description %}
+                                <div class="mb-3">
+                                    <label for="{{ form.detailed_description.id_for_label }}" class="form-label">
+                                        Description détaillée
+                                    </label>
+                                    {{ form.detailed_description }}
+                                    <small class="form-text text-muted">
+                                        Description complète (optionnelle, pour notes internes)
+                                    </small>
+                                </div>
+                                {% endif %}
+
+                                <!-- Quantité et prix -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                                Quantité <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.quantity }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                                Prix unitaire <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                {{ form.unit_price }}
+                                                <span class="input-group-text">{{ invoice.currency }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                                Unité
+                                            </label>
+                                            {{ form.unit_of_measure }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Options avancées -->
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="collapse" data-bs-target="#advanced-options">
+                                        <i class="fas fa-cog"></i> Options avancées
+                                    </button>
+
+                                    <div class="collapse mt-3" id="advanced-options">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.discount_percent.id_for_label }}"
+                                                        class="form-label">
+                                                        Remise (%)
+                                                    </label>
+                                                    {{ form.discount_percent }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.tax_rate.id_for_label }}" class="form-label">
+                                                        Taux de taxe (%)
+                                                    </label>
+                                                    {{ form.tax_rate }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {% if form.notes %}
+                                        <div class="mb-3">
+                                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                                Notes
+                                            </label>
+                                            {{ form.notes }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Calculatrice -->
+                            <div class="col-md-4">
+                                <div class="price-calculator">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-calculator text-primary"></i>
+                                        Calcul automatique
+                                    </h6>
+
+                                    <div class="calculation-row">
+                                        <span>Quantité :</span>
+                                        <span id="calc-quantity">1</span>
+                                    </div>
+
+                                    <div class="calculation-row">
+                                        <span>Prix unitaire :</span>
+                                        <span id="calc-unit-price">0,00 €</span>
+                                    </div>
+
+                                    <div class="calculation-row">
+                                        <span>Sous-total :</span>
+                                        <span id="calc-subtotal">0,00 €</span>
+                                    </div>
+
+                                    <div class="calculation-row">
+                                        <span>Remise :</span>
+                                        <span id="calc-discount">0,00 €</span>
+                                    </div>
+
+                                    <div class="calculation-row total">
+                                        <span>Total :</span>
+                                        <span id="calc-total" class="text-primary">0,00 €</span>
+                                    </div>
+                                </div>
+
+                                <!-- Modèles prédéfinis -->
+                                <div class="mt-4">
+                                    <h6>Modèles rapides</h6>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-info template-btn"
+                                            data-template='{"service_code": "WEB-DEV", "description": "Développement web", "quantity": 1, "unit_price": 75, "unit_of_measure": "heure"}'>
+                                            Dev Web (75€/h)
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info template-btn"
+                                            data-template='{"service_code": "DESIGN", "description": "Design UI/UX", "quantity": 1, "unit_price": 85, "unit_of_measure": "heure"}'>
+                                            Design (85€/h)
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info template-btn"
+                                            data-template='{"service_code": "CONSULT", "description": "Consultation", "quantity": 1, "unit_price": 120, "unit_of_measure": "heure"}'>
+                                            Conseil (120€/h)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'invoicing:invoice_detail' invoice.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Retour à la facture
+                            </a>
+
+                            <div>
+                                {% if item %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    Mettre à jour
+                                </button>
+                                {% else %}
+                                <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-save me-2"></i>
+                                    Sauvegarder
+                                </button>
+                                <button type="submit" name="action" value="save_and_add" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Sauvegarder et ajouter un autre
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        const priceInput = document.querySelector('input[name="unit_price"]');
+        const discountInput = document.querySelector('input[name="discount_percent"]');
+
+        // Fonction de calcul
+        function updateCalculation() {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const unitPrice = parseFloat(priceInput.value) || 0;
+            const discountPercent = parseFloat(discountInput.value) || 0;
+
+            const subtotal = quantity * unitPrice;
+            const discountAmount = subtotal * (discountPercent / 100);
+            const total = subtotal - discountAmount;
+
+            // Mettre à jour l'affichage
+            document.getElementById('calc-quantity').textContent = quantity.toString();
+            document.getElementById('calc-unit-price').textContent = unitPrice.toLocaleString('fr-FR', {
+                style: 'currency',
+                currency: 'EUR'
+            });
+            document.getElementById('calc-subtotal').textContent = subtotal.toLocaleString('fr-FR', {
+                style: 'currency',
+                currency: 'EUR'
+            });
+            document.getElementById('calc-discount').textContent = discountAmount.toLocaleString('fr-FR', {
+                style: 'currency',
+                currency: 'EUR'
+            });
+            document.getElementById('calc-total').textContent = total.toLocaleString('fr-FR', {
+                style: 'currency',
+                currency: 'EUR'
+            });
+        }
+
+        // Événements de calcul
+        quantityInput.addEventListener('input', updateCalculation);
+        priceInput.addEventListener('input', updateCalculation);
+        discountInput.addEventListener('input', updateCalculation);
+
+        // Sélecteurs de codes de service
+        document.querySelectorAll('.service-code-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const code = this.getAttribute('data-code');
+                document.querySelector('input[name="service_code"]').value = code;
+
+                // Mettre à jour l'apparence
+                document.querySelectorAll('.service-code-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Modèles prédéfinis
+        document.querySelectorAll('.template-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const template = JSON.parse(this.getAttribute('data-template'));
+
+                // Remplir les champs
+                Object.keys(template).forEach(key => {
+                    const input = document.querySelector(`input[name="${key}"]`);
+                    if (input) {
+                        input.value = template[key];
+                    }
+                });
+
+                updateCalculation();
+            });
+        });
+
+        // Calcul initial
+        updateCalculation();
+
+        // Validation du formulaire
+        document.getElementById('item-form').addEventListener('submit', function (e) {
+            const quantity = parseFloat(quantityInput.value);
+            const unitPrice = parseFloat(priceInput.value);
+
+            if (quantity <= 0) {
+                e.preventDefault();
+                alert('La quantité doit être supérieure à 0.');
+                quantityInput.focus();
+                return false;
+            }
+
+            if (unitPrice < 0) {
+                e.preventDefault();
+                alert('Le prix unitaire ne peut pas être négatif.');
+                priceInput.focus();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

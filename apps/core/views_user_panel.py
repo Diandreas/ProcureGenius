@@ -37,9 +37,9 @@ def user_dashboard(request):
         ).aggregate(total=Sum('total_amount'))['total'] or 0,
     }
 
-    # Activités récentes (5 dernières)
-    recent_invoices = user_invoices.order_by('-created_at')[:3]
-    recent_pos = user_pos.order_by('-created_at')[:3]
+    # Activités récentes (2 dernières pour mobile compact)
+    recent_invoices = user_invoices.order_by('-created_at')[:2]
+    recent_pos = user_pos.order_by('-created_at')[:2]
 
     # Factures par statut
     invoice_stats = user_invoices.values('status').annotate(count=Count('id'))

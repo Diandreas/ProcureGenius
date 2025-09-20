@@ -379,6 +379,43 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* Affichage sur une ligne pour mobile très petit */
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+            margin: 0 auto 0.5rem;
+        }
+
+        .stat-number {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+        }
+
+        .stat-change {
+            font-size: 0.6rem;
+            display: none;
+            /* Masquer les pourcentages sur mobile pour économiser l'espace */
+        }
+    }
 </style>
 {% endblock %}
 

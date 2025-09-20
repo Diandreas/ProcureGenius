@@ -11,6 +11,85 @@ import base64
 User = get_user_model()
 
 
+class Product(models.Model):
+    """Produit ou service facturable"""
+    PRODUCT_TYPES = [
+        ('physical', 'Produit physique'),
+        ('service', 'Service'),
+        ('digital', 'Produit numérique'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, verbose_name="Nom")
+    description = models.TextField(blank=True, verbose_name="Description")
+    reference = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Référence")
+    barcode = models.CharField(max_length=50, blank=True, null=True, unique=True, verbose_name="Code-barres")
+    
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='physical', verbose_name="Type")
+    
+    # Prix
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix")
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix de revient")
+    
+    # Stock (pour produits physiques)
+    stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
+    low_stock_threshold = models.IntegerField(default=5, verbose_name="Seuil de stock bas")
+    
+    # Métadonnées
+    is_active = models.BooleanField(default=True, verbose_name="Actif")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Produit"
+        verbose_name_plural = "Produits"
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            # Générer une référence automatique
+            prefix = 'PRD' if self.product_type == 'physical' else 'SVC'
+            last_product = Product.objects.filter(reference__startswith=prefix).order_by('-reference').first()
+            if last_product and last_product.reference:
+                try:
+                    last_number = int(last_product.reference[3:])
+                    self.reference = f"{prefix}{last_number + 1:04d}"
+                except:
+                    self.reference = f"{prefix}0001"
+            else:
+                self.reference = f"{prefix}0001"
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_low_stock(self):
+        """Vérifie si le stock est bas"""
+        return self.product_type == 'physical' and self.stock_quantity <= self.low_stock_threshold
+    
+    @property
+    def is_out_of_stock(self):
+        """Vérifie si le produit est en rupture"""
+        return self.product_type == 'physical' and self.stock_quantity == 0
+    
+    @property
+    def stock_status(self):
+        """Retourne le statut du stock"""
+        if self.product_type != 'physical':
+            return 'unlimited'
+        elif self.is_out_of_stock:
+            return 'out'
+        elif self.is_low_stock:
+            return 'low'
+        else:
+            return 'good'
+    
+    def format_price(self):
+        """Formate le prix"""
+        return f"{self.price:,.2f} CAD"
+
+
 class Invoice(models.Model):
     """Facture"""
     STATUS_CHOICES = [
@@ -62,6 +141,26 @@ class Invoice(models.Model):
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
         super().save(*args, **kwargs)
+
+    def clean(self):
+        """Validation de la facture"""
+        from django.core.exceptions import ValidationError
+        
+        # Vérifier qu'une facture envoyée a au moins un élément
+        if self.status in ['sent', 'paid'] and self.pk:
+            if not self.has_items():
+                raise ValidationError(
+                    "Une facture doit avoir au moins un élément avant d'être envoyée."
+                )
+        
+        # Vérifier que les montants sont cohérents
+        if self.total_amount < 0:
+            raise ValidationError("Le montant total ne peut pas être négatif.")
+        
+        # Vérifier la date d'échéance
+        if self.due_date and hasattr(self, 'created_at') and self.created_at:
+            if self.due_date < self.created_at.date():
+                raise ValidationError("La date d'échéance ne peut pas être antérieure à la date de création.")
     
     def recalculate_totals(self):
         """Recalcule les totaux basés sur les items"""
@@ -106,10 +205,176 @@ class Invoice(models.Model):
 
         return f"FAC{year}{month:02d}{next_number:04d}"
 
+    @classmethod
+    def create_with_items(cls, created_by, title, due_date, items_data, **kwargs):
+        """
+        Crée une facture avec plusieurs éléments en une seule opération
+        
+        Args:
+            created_by: Utilisateur qui crée la facture
+            title: Titre de la facture
+            due_date: Date d'échéance
+            items_data: Liste de dictionnaires avec les données des éléments
+                        [{"service_code": "SVC-001", "description": "...", "quantity": 1, "unit_price": 100.00}, ...]
+            **kwargs: Autres champs de la facture
+            
+        Returns:
+            Invoice: La facture créée avec tous ses éléments
+        """
+        # Créer la facture principale
+        invoice = cls.objects.create(
+            created_by=created_by,
+            title=title,
+            due_date=due_date,
+            subtotal=0,  # Sera recalculé
+            total_amount=0,  # Sera recalculé
+            **kwargs
+        )
+        
+        # Ajouter tous les éléments
+        for item_data in items_data:
+            invoice.add_item(**item_data)
+        
+        # Recalculer les totaux finaux
+        invoice.recalculate_totals()
+        
+        return invoice
+
+    def clone_with_items(self, created_by=None, **override_fields):
+        """
+        Clone une facture avec tous ses éléments
+        
+        Args:
+            created_by: Nouvel utilisateur créateur (optionnel)
+            **override_fields: Champs à modifier dans la nouvelle facture
+            
+        Returns:
+            Invoice: La nouvelle facture clonée
+        """
+        # Préparer les données de base
+        clone_data = {
+            'title': f"Copie de {self.title}",
+            'description': self.description,
+            'due_date': self.due_date,
+            'billing_address': self.billing_address,
+            'payment_terms': self.payment_terms,
+            'payment_method': self.payment_method,
+            'currency': self.currency,
+            'client': self.client,
+            'purchase_order': self.purchase_order,
+            'created_by': created_by or self.created_by,
+        }
+        
+        # Appliquer les surcharges
+        clone_data.update(override_fields)
+        
+        # Préparer les données des éléments
+        items_data = []
+        for item in self.items.all():
+            items_data.append({
+                'service_code': item.service_code,
+                'product_reference': item.product_reference,
+                'description': item.description,
+                'detailed_description': item.detailed_description,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'unit_of_measure': item.unit_of_measure,
+                'discount_percent': item.discount_percent,
+                'tax_rate': item.tax_rate,
+                'notes': item.notes,
+            })
+        
+        # Créer la facture clonée
+        return self.__class__.create_with_items(
+            created_by=clone_data.pop('created_by'),
+            title=clone_data.pop('title'),
+            due_date=clone_data.pop('due_date'),
+            items_data=items_data,
+            **clone_data
+        )
+
     @property
     def qr_code_data(self):
         """Retourne les données QR code encodées en base64"""
         return self.generate_qr_code()
+
+    def add_item(self, service_code, description, quantity, unit_price, 
+                 detailed_description="", unit_of_measure="unité", 
+                 discount_percent=0, tax_rate=0, notes=""):
+        """Ajoute un nouvel élément à la facture"""
+        return InvoiceItem.objects.create(
+            invoice=self,
+            service_code=service_code,
+            description=description,
+            detailed_description=detailed_description,
+            quantity=quantity,
+            unit_price=unit_price,
+            unit_of_measure=unit_of_measure,
+            discount_percent=discount_percent,
+            tax_rate=tax_rate,
+            notes=notes
+        )
+
+    def remove_item(self, item_id):
+        """Supprime un élément de la facture"""
+        try:
+            item = self.items.get(id=item_id)
+            item.delete()
+            self.recalculate_totals()
+            return True
+        except InvoiceItem.DoesNotExist:
+            return False
+
+    def clear_items(self):
+        """Supprime tous les éléments de la facture"""
+        self.items.all().delete()
+        self.recalculate_totals()
+
+    def duplicate_items_from(self, other_invoice):
+        """Copie tous les éléments d'une autre facture"""
+        for item in other_invoice.items.all():
+            self.add_item(
+                service_code=item.service_code,
+                description=item.description,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                detailed_description=item.detailed_description,
+                unit_of_measure=item.unit_of_measure,
+                discount_percent=item.discount_percent,
+                tax_rate=item.tax_rate,
+                notes=item.notes
+            )
+
+    def get_items_count(self):
+        """Retourne le nombre d'éléments dans la facture"""
+        return self.items.count()
+
+    def get_total_quantity(self):
+        """Retourne la quantité totale de tous les éléments"""
+        return sum(item.quantity for item in self.items.all())
+
+    def has_items(self):
+        """Vérifie si la facture a au moins un élément"""
+        return self.items.exists()
+
+    def get_items_by_service(self, service_code):
+        """Retourne tous les éléments pour un service donné"""
+        return self.items.filter(service_code=service_code)
+
+    def format_amount(self, amount):
+        """Formate un montant selon la devise"""
+        if self.currency == 'CAD':
+            return f"{amount:,.2f} $ CAD"
+        elif self.currency == 'USD':
+            return f"${amount:,.2f} USD"
+        elif self.currency == 'EUR':
+            return f"{amount:,.2f} € EUR"
+        else:
+            return f"{amount:,.2f} {self.currency}"
+    
+    def can_be_edited(self):
+        """Vérifie si la facture peut être modifiée"""
+        return self.status in ['draft', 'sent']
 
 
 class InvoiceItem(models.Model):
@@ -151,8 +416,9 @@ class InvoiceItem(models.Model):
         self.total_price = base_total - discount_amount
 
         super().save(*args, **kwargs)
-        # Recalculer les totaux de la facture
-        self.invoice.recalculate_totals()
+        # Recalculer les totaux de la facture seulement si elle existe déjà
+        if self.invoice_id:
+            self.invoice.recalculate_totals()
 
     @property
     def total_before_discount(self):

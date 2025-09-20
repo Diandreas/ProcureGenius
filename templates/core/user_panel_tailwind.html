@@ -3,11 +3,230 @@
 
 {% block title %}Dashboard - ProcureGenius{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Layout ultra-compact pour minimiser le scroll */
+
+    /* Réduction générale des marges et paddings */
+    .compact-container {
+        margin-bottom: 1rem !important;
+    }
+
+    .compact-section {
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Optimisation des cartes de statistiques */
+    .stats-card-mobile {
+        padding: 0.5rem !important;
+        min-height: auto !important;
+    }
+
+    .stats-card-mobile .p-5 {
+        padding: 0.5rem !important;
+    }
+
+    .stats-card-mobile .flex {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .stats-card-mobile .flex-shrink-0 {
+        margin-bottom: 0 !important;
+    }
+
+    .stats-card-mobile .w-8 {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+    }
+
+    .stats-card-mobile .w-5 {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+
+    .stats-card-mobile .ml-5 {
+        margin-left: 0 !important;
+    }
+
+    .stats-card-mobile .text-lg {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+    }
+
+    .stats-card-mobile .text-sm {
+        font-size: 0.6rem !important;
+        line-height: 1.3 !important;
+        font-weight: 500 !important;
+    }
+
+    .stats-card-mobile .bg-gray-50 {
+        padding: 0.25rem !important;
+        margin-top: 0.25rem !important;
+    }
+
+    .stats-card-mobile .bg-gray-50 .text-sm {
+        font-size: 0.5rem !important;
+        font-weight: 500 !important;
+    }
+
+    /* Masquer les liens "Voir tout" sur mobile */
+    .stats-card-mobile .bg-gray-50 a {
+        display: none !important;
+    }
+
+    /* Optimisation des sections d'activité récente */
+    .compact-activity {
+        padding: 0.75rem !important;
+    }
+
+    .compact-activity .px-6 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .compact-activity .py-4 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .compact-activity .py-8 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .compact-activity li {
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    .compact-activity .text-lg {
+        font-size: 0.875rem !important;
+    }
+
+    .compact-activity .h-12 {
+        height: 2rem !important;
+        width: 2rem !important;
+    }
+
+    /* Optimisation des actions rapides */
+    .compact-actions .px-6 {
+        padding: 0.75rem !important;
+    }
+
+    .compact-actions .py-4 {
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    .compact-actions .p-6 {
+        padding: 0.75rem !important;
+    }
+
+    .compact-actions .mt-8 {
+        margin-top: 0.5rem !important;
+    }
+
+    .compact-actions .text-lg {
+        font-size: 0.875rem !important;
+    }
+
+    .compact-actions .text-sm {
+        font-size: 0.75rem !important;
+    }
+
+    .compact-actions .h-6 {
+        height: 1rem !important;
+        width: 1rem !important;
+    }
+
+    /* Layout en grille plus compacte pour les actions */
+    .compact-actions .grid {
+        gap: 0.5rem !important;
+    }
+
+    /* Optimisation globale pour tous les écrans */
+    @media (max-width: 1024px) {
+        .compact-container {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .compact-section {
+            margin-bottom: 1rem !important;
+        }
+
+        /* Réduction des gaps dans les grilles */
+        .grid {
+            gap: 0.75rem !important;
+        }
+    }
+
+    /* Optimisation mobile spécifique */
+    @media (max-width: 640px) {
+
+        /* Grille des statistiques sur une ligne */
+        .grid-cols-4 {
+            gap: 0.25rem !important;
+        }
+
+        /* Réduction des marges globales */
+        body {
+            padding: 0.5rem !important;
+        }
+
+        /* Cartes plus plates */
+        .shadow {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Textes plus petits partout */
+        .text-base {
+            font-size: 0.875rem !important;
+        }
+
+        .text-sm {
+            font-size: 0.75rem !important;
+        }
+
+        .text-xs {
+            font-size: 0.625rem !important;
+        }
+
+        /* Padding réduit partout */
+        .p-4 {
+            padding: 0.5rem !important;
+        }
+
+        .p-6 {
+            padding: 0.75rem !important;
+        }
+
+        /* Marges réduites */
+        .mb-8 {
+            margin-bottom: 1rem !important;
+        }
+
+        .mb-6 {
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Hauteur des sections réduite */
+        .h-12 {
+            height: 2rem !important;
+        }
+
+        /* Optimisation des listes */
+        .divide-y>*+* {
+            border-top-width: 1px !important;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block page_title %}Dashboard{% endblock %}
 
 {% block header_actions %}
 <a href="{% url 'invoicing:invoice_create' %}"
-   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
     </svg>
@@ -17,15 +236,17 @@
 
 {% block content %}
 <!-- Stats cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-4 compact-container">
     <!-- Factures -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="bg-white overflow-hidden shadow rounded-lg stats-card-mobile">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
                         </svg>
                     </div>
                 </div>
@@ -47,13 +268,14 @@
     </div>
 
     <!-- Commandes -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="bg-white overflow-hidden shadow rounded-lg stats-card-mobile">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
                     </div>
                 </div>
@@ -67,7 +289,8 @@
         </div>
         <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-                <a href="{% url 'core:user_purchase_orders' %}" class="font-medium text-purple-700 hover:text-purple-900">
+                <a href="{% url 'core:user_purchase_orders' %}"
+                    class="font-medium text-purple-700 hover:text-purple-900">
                     Voir tout
                 </a>
             </div>
@@ -75,13 +298,15 @@
     </div>
 
     <!-- Fournisseurs -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="bg-white overflow-hidden shadow rounded-lg stats-card-mobile">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                            </path>
                         </svg>
                     </div>
                 </div>
@@ -103,13 +328,15 @@
     </div>
 
     <!-- Revenus du mois -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="bg-white overflow-hidden shadow rounded-lg stats-card-mobile">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                            </path>
                         </svg>
                     </div>
                 </div>
@@ -130,9 +357,9 @@
 </div>
 
 <!-- Recent activities -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 compact-section">
     <!-- Factures récentes -->
-    <div class="bg-white shadow rounded-lg">
+    <div class="bg-white shadow rounded-lg compact-activity">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Factures récentes</h3>
         </div>
@@ -143,31 +370,35 @@
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">{{ invoice.invoice_number }}</div>
-                            <div class="text-sm text-gray-500">{{ invoice.title|truncatechars:30 }}</div>
+                            <div class="text-xs font-medium text-gray-900">{{ invoice.invoice_number }}</div>
+                            <div class="text-xs text-gray-500">{{ invoice.total_amount|floatformat:0 }} CAD</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm font-medium text-gray-900">{{ invoice.total_amount|floatformat:2 }} CAD</div>
-                        <div class="text-sm text-gray-500">{{ invoice.created_at|date:"d/m/Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ invoice.created_at|date:"d/m" }}</div>
                     </div>
                 </div>
             </li>
             {% empty %}
-            <li class="px-6 py-8 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            <li class="px-4 py-4 text-center">
+                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune facture</h3>
-                <p class="mt-1 text-sm text-gray-500">Commencez par créer une nouvelle facture.</p>
-                <div class="mt-6">
-                    <a href="{% url 'invoicing:invoice_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <h3 class="mt-1 text-xs font-medium text-gray-900">Aucune facture</h3>
+                <div class="mt-2">
+                    <a href="{% url 'invoicing:invoice_create' %}"
+                        class="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700">
                         Nouvelle facture
                     </a>
                 </div>
@@ -184,7 +415,7 @@
     </div>
 
     <!-- Commandes récentes -->
-    <div class="bg-white shadow rounded-lg">
+    <div class="bg-white shadow rounded-lg compact-activity">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Commandes récentes</h3>
         </div>
@@ -195,31 +426,34 @@
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">{{ po.po_number }}</div>
-                            <div class="text-sm text-gray-500">{{ po.title|truncatechars:30 }}</div>
+                            <div class="text-xs font-medium text-gray-900">{{ po.po_number }}</div>
+                            <div class="text-xs text-gray-500">{{ po.total_amount|floatformat:0 }} CAD</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm font-medium text-gray-900">{{ po.total_amount|floatformat:2 }} CAD</div>
-                        <div class="text-sm text-gray-500">{{ po.created_at|date:"d/m/Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ po.created_at|date:"d/m" }}</div>
                     </div>
                 </div>
             </li>
             {% empty %}
             <li class="px-6 py-8 text-center">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune commande</h3>
                 <p class="mt-1 text-sm text-gray-500">Commencez par créer un nouveau bon de commande.</p>
                 <div class="mt-6">
-                    <a href="{% url 'purchase_orders:create' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                    <a href="{% url 'purchase_orders:create' %}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
                         Nouvelle commande
                     </a>
                 </div>
@@ -228,7 +462,8 @@
         </ul>
         {% if recent_purchase_orders %}
         <div class="px-6 py-3 border-t border-gray-200">
-            <a href="{% url 'core:user_purchase_orders' %}" class="text-sm font-medium text-purple-600 hover:text-purple-500">
+            <a href="{% url 'core:user_purchase_orders' %}"
+                class="text-sm font-medium text-purple-600 hover:text-purple-500">
                 Voir toutes les commandes →
             </a>
         </div>
@@ -237,19 +472,20 @@
 </div>
 
 <!-- Quick actions -->
-<div class="mt-8">
-    <div class="bg-white shadow rounded-lg">
+<div class="mt-4 compact-section">
+    <div class="bg-white shadow rounded-lg compact-actions">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Actions rapides</h3>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <a href="{% url 'invoicing:invoice_create' %}"
-                   class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
                         </span>
                     </div>
@@ -265,11 +501,12 @@
                 </a>
 
                 <a href="{% url 'purchase_orders:create' %}"
-                   class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg border border-gray-200 hover:border-purple-300 transition-colors">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg border border-gray-200 hover:border-purple-300 transition-colors">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
                         </span>
                     </div>
@@ -285,11 +522,13 @@
                 </a>
 
                 <a href="{% url 'core:user_suppliers' %}"
-                   class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 rounded-lg border border-gray-200 hover:border-orange-300 transition-colors">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 rounded-lg border border-gray-200 hover:border-orange-300 transition-colors">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-orange-50 text-orange-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                </path>
                             </svg>
                         </span>
                     </div>
@@ -305,11 +544,13 @@
                 </a>
 
                 <a href="#"
-                   class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
                             </svg>
                         </span>
                     </div>

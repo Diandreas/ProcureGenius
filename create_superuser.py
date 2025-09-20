@@ -24,3 +24,4 @@ if not User.objects.filter(username='admin').exists():
 else:
     print("✅ Superutilisateur 'admin' existe déjà")
 
+

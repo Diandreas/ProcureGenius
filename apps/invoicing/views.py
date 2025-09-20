@@ -1,14 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
-from .models import Invoice, InvoiceItem
-from .forms_simple import InvoiceForm, InvoiceItemForm, InvoiceSearchForm
+from .models import Product, Invoice, InvoiceItem
+from .forms_simple import InvoiceForm, InvoiceItemForm, InvoiceItemFormSet, InvoiceSearchForm
 import json
+
+User = get_user_model()
 
 @login_required
 def invoice_list(request):
@@ -59,40 +62,133 @@ def invoice_detail(request, pk):
 
 @login_required
 def invoice_create(request):
-    """Création d'une nouvelle facture"""
+    """Création d'une nouvelle facture avec éléments multiples"""
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
-        if form.is_valid():
+        formset = InvoiceItemFormSet(request.POST)
+        
+        if form.is_valid() and formset.is_valid():
+            # Créer la facture
             invoice = form.save(commit=False)
             invoice.created_by = request.user
+            
+            # Initialiser les totaux
+            invoice.subtotal = 0
+            invoice.total_amount = 0
             invoice.save()
-            messages.success(request, f'Facture {invoice.invoice_number} créée avec succès.')
+            
+            # Sauvegarder les éléments
+            formset.instance = invoice
+            items = formset.save()
+            
+            # Déterminer le statut selon l'action
+            action = request.POST.get('action', 'save_draft')
+            if action == 'save_and_send':
+                invoice.status = 'sent'
+            else:
+                invoice.status = 'draft'
+            
+            # Recalculer les totaux
+            invoice.recalculate_totals()
+            invoice.save()
+            
+            messages.success(request, f'Facture {invoice.invoice_number} créée avec succès avec {len(items)} élément(s).')
             return redirect('invoicing:invoice_detail', pk=invoice.pk)
+        else:
+            # Afficher les erreurs
+            if form.errors:
+                messages.error(request, 'Erreurs dans les informations de la facture.')
+            if formset.errors:
+                messages.error(request, 'Erreurs dans les éléments de la facture.')
     else:
         form = InvoiceForm()
+        formset = InvoiceItemFormSet()
+    
+    # Récupérer les produits et clients pour l'interface
+    products = Product.objects.filter(is_active=True).order_by('name')
+    clients = User.objects.filter(is_staff=False, is_active=True).order_by('first_name', 'last_name')
+    
+    # Sérialiser les données pour JavaScript
+    products_data = []
+    for product in products:
+        products_data.append({
+            'id': str(product.id),
+            'name': product.name,
+            'description': product.description,
+            'reference': product.reference,
+            'product_type': product.product_type,
+            'price': float(product.price),
+            'stock_quantity': product.stock_quantity,
+            'low_stock_threshold': product.low_stock_threshold,
+            'is_active': product.is_active,
+        })
+    
+    clients_data = []
+    for client in clients:
+        clients_data.append({
+            'id': client.id,
+            'username': client.username,
+            'first_name': client.first_name or '',
+            'last_name': client.last_name or '',
+            'email': client.email or '',
+        })
     
     context = {
         'form': form,
-        'title': 'Nouvelle Facture',
+        'formset': formset,
+        'products': products,
+        'clients': clients,
+        'products_json': json.dumps(products_data),
+        'clients_json': json.dumps(clients_data),
+        'title': 'Nouvelle Facture Intelligente',
     }
-    return render(request, 'invoicing/invoice_form.html', context)
+    return render(request, 'invoicing/invoice_form_compact.html', context)
 
 @login_required
 def invoice_edit(request, pk):
-    """Modification d'une facture"""
+    """Modification d'une facture avec ses éléments"""
     invoice = get_object_or_404(Invoice, pk=pk)
+    
+    # Vérifier si la facture peut être modifiée
+    if not invoice.can_be_edited():
+        messages.warning(request, f'La facture {invoice.invoice_number} ne peut plus être modifiée car son statut est "{invoice.get_status_display()}".')
+        return redirect('invoicing:invoice_detail', pk=invoice.pk)
     
     if request.method == 'POST':
         form = InvoiceForm(request.POST, instance=invoice)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Facture {invoice.invoice_number} modifiée avec succès.')
+        formset = InvoiceItemFormSet(request.POST, instance=invoice)
+        
+        if form.is_valid() and formset.is_valid():
+            # Sauvegarder la facture
+            invoice = form.save()
+            
+            # Sauvegarder les éléments
+            items = formset.save()
+            
+            # Déterminer le statut selon l'action
+            action = request.POST.get('action', 'save_draft')
+            if action == 'save_and_send':
+                invoice.status = 'sent'
+                invoice.save()
+            
+            # Recalculer les totaux
+            invoice.recalculate_totals()
+            
+            messages.success(request, f'Facture {invoice.invoice_number} modifiée avec succès. {len(items)} élément(s) sauvegardé(s).')
             return redirect('invoicing:invoice_detail', pk=invoice.pk)
+        else:
+            # Afficher les erreurs
+            if form.errors:
+                messages.error(request, 'Erreurs dans les informations de la facture.')
+            if formset.errors:
+                messages.error(request, 'Erreurs dans les éléments de la facture.')
     else:
         form = InvoiceForm(instance=invoice)
+        formset = InvoiceItemFormSet(instance=invoice)
     
     context = {
         'form': form,
+        'formset': formset,
         'invoice': invoice,
         'title': f'Modifier {invoice.invoice_number}',
     }
@@ -163,6 +259,11 @@ def invoice_item_add(request, invoice_pk):
     """Ajouter un item à une facture"""
     invoice = get_object_or_404(Invoice, pk=invoice_pk)
     
+    # Vérifier si la facture peut être modifiée
+    if not invoice.can_be_edited():
+        messages.warning(request, f'La facture {invoice.invoice_number} ne peut plus être modifiée car son statut est "{invoice.get_status_display()}".')
+        return redirect('invoicing:invoice_detail', pk=invoice.pk)
+    
     if request.method == 'POST':
         form = InvoiceItemForm(request.POST)
         if form.is_valid():
@@ -173,14 +274,23 @@ def invoice_item_add(request, invoice_pk):
             # Recalculer le total de la facture
             invoice.recalculate_totals()
             
-            messages.success(request, 'Service ajouté avec succès.')
-            return redirect('invoicing:invoice_detail', pk=invoice.pk)
+            # Gérer les actions
+            action = request.POST.get('action', 'save')
+            if action == 'save_and_add':
+                messages.success(request, 'Élément ajouté avec succès. Vous pouvez en ajouter un autre.')
+                return redirect('invoicing:invoice_item_add', invoice_pk=invoice.pk)
+            else:
+                messages.success(request, f'Élément "{item.description}" ajouté avec succès.')
+                return redirect('invoicing:invoice_detail', pk=invoice.pk)
+        else:
+            messages.error(request, 'Erreurs dans le formulaire. Veuillez corriger et réessayer.')
     else:
         form = InvoiceItemForm()
     
     context = {
         'form': form,
         'invoice': invoice,
+        'title': f'Ajouter un élément - {invoice.invoice_number}',
     }
     return render(request, 'invoicing/invoice_item_form.html', context)
 
@@ -188,24 +298,33 @@ def invoice_item_add(request, invoice_pk):
 def invoice_item_edit(request, pk):
     """Modifier un item de facture"""
     item = get_object_or_404(InvoiceItem, pk=pk)
+    invoice = item.invoice
+    
+    # Vérifier si la facture peut être modifiée
+    if not invoice.can_be_edited():
+        messages.warning(request, f'La facture {invoice.invoice_number} ne peut plus être modifiée car son statut est "{invoice.get_status_display()}".')
+        return redirect('invoicing:invoice_detail', pk=invoice.pk)
     
     if request.method == 'POST':
         form = InvoiceItemForm(request.POST, instance=item)
         if form.is_valid():
-            form.save()
+            updated_item = form.save()
             
             # Recalculer le total de la facture
-            item.invoice.recalculate_totals()
+            invoice.recalculate_totals()
             
-            messages.success(request, 'Service modifié avec succès.')
-            return redirect('invoicing:invoice_detail', pk=item.invoice.pk)
+            messages.success(request, f'Élément "{updated_item.description}" modifié avec succès.')
+            return redirect('invoicing:invoice_detail', pk=invoice.pk)
+        else:
+            messages.error(request, 'Erreurs dans le formulaire. Veuillez corriger et réessayer.')
     else:
         form = InvoiceItemForm(instance=item)
     
     context = {
         'form': form,
         'item': item,
-        'invoice': item.invoice,
+        'invoice': invoice,
+        'title': f'Modifier l\'élément - {invoice.invoice_number}',
     }
     return render(request, 'invoicing/invoice_item_form.html', context)
 
@@ -215,13 +334,24 @@ def invoice_item_delete(request, pk):
     item = get_object_or_404(InvoiceItem, pk=pk)
     invoice = item.invoice
     
+    # Vérifier si la facture peut être modifiée
+    if not invoice.can_be_edited():
+        messages.warning(request, f'La facture {invoice.invoice_number} ne peut plus être modifiée car son statut est "{invoice.get_status_display()}".')
+        return redirect('invoicing:invoice_detail', pk=invoice.pk)
+    
     if request.method == 'POST':
+        item_description = item.description
         item.delete()
         
         # Recalculer le total de la facture
         invoice.recalculate_totals()
         
-        messages.success(request, 'Service supprimé avec succès.')
+        # Vérifier si la facture n'a plus d'éléments
+        if not invoice.has_items():
+            messages.warning(request, f'Élément "{item_description}" supprimé. La facture n\'a plus d\'éléments. Veuillez en ajouter ou supprimer la facture.')
+        else:
+            messages.success(request, f'Élément "{item_description}" supprimé avec succès.')
+        
         return redirect('invoicing:invoice_detail', pk=invoice.pk)
     
     context = {

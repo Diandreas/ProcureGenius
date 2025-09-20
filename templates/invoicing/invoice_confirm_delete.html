@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-warning"></i> Attention !</h5>
+                        <p class="mb-0">
+                            Vous êtes sur le point de supprimer définitivement la facture
+                            <strong>{{ invoice.invoice_number }}</strong>. Cette action est irréversible.
+                        </p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Informations de la facture :</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Numéro :</strong> {{ invoice.invoice_number }}</li>
+                                <li><strong>Titre :</strong> {{ invoice.title }}</li>
+                                <li><strong>Statut :</strong>
+                                    <span class="badge bg-{{ invoice.get_status_display_class }}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </li>
+                                <li><strong>Montant :</strong> {{ invoice.total_amount }} {{ invoice.currency }}</li>
+                                <li><strong>Date de création :</strong> {{ invoice.created_at|date:"d/m/Y H:i" }}</li>
+                                {% if invoice.client %}
+                                <li><strong>Client :</strong> {{ invoice.client.get_full_name }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Éléments de la facture :</h6>
+                            {% if invoice.items.exists %}
+                            <ul class="list-group list-group-flush">
+                                {% for item in invoice.items.all %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                    <span class="text-truncate">{{ item.description }}</span>
+                                    <small class="text-muted">{{ item.quantity }} × {{ item.unit_price }}</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Total : {{ invoice.items.count }} élément{{ invoice.items.count|pluralize }}
+                                </small>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">Aucun élément dans cette facture.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if invoice.status == 'paid' %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Attention :</strong> Cette facture est marquée comme payée.
+                        Sa suppression pourrait affecter votre comptabilité.
+                    </div>
+                    {% endif %}
+
+                    {% if invoice.payments.exists %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Paiements associés :</strong>
+                        Cette facture a {{ invoice.payments.count }} paiement{{ invoice.payments.count|pluralize }}
+                        qui seront également supprimé{{ invoice.payments.count|pluralize }}.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirm-delete" required>
+                            <label class="form-check-label" for="confirm-delete">
+                                Je comprends que cette action est irréversible et je confirme la suppression
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'invoicing:invoice_detail' invoice.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Annuler
+                            </a>
+
+                            <button type="submit" class="btn btn-danger" id="delete-btn" disabled>
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Supprimer définitivement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const confirmCheckbox = document.getElementById('confirm-delete');
+        const deleteBtn = document.getElementById('delete-btn');
+
+        confirmCheckbox.addEventListener('change', function () {
+            deleteBtn.disabled = !this.checked;
+            if (this.checked) {
+                deleteBtn.classList.remove('disabled');
+            } else {
+                deleteBtn.classList.add('disabled');
+            }
+        });
+
+        // Confirmation supplémentaire au clic
+        deleteBtn.addEventListener('click', function (e) {
+            if (!confirm('Êtes-vous absolument certain de vouloir supprimer cette facture ?')) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

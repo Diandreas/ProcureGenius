@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if item %}
+        {% trans "Modifier l'article" %} - {{ block.super }}
+    {% else %}
+        {% trans "Ajouter un article" %} - {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .po-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .calculation-preview {
+        background: #e7f3ff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px solid #b3d9ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête du formulaire -->
+<div class="form-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">
+                <i class="bi bi-plus-circle me-2"></i>
+                {% if item %}
+                    {% trans "Modifier l'article" %}
+                {% else %}
+                    {% trans "Ajouter un article" %}
+                {% endif %}
+            </h1>
+            <p class="mb-0 opacity-75">
+                {% if item %}
+                    {% trans "Modifiez les informations de cet article" %}
+                {% else %}
+                    {% trans "Ajoutez un nouvel article au bon de commande" %}
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'purchase_orders:detail' purchase_order.pk %}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-1"></i>
+                {% trans "Retour au bon de commande" %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Informations du bon de commande -->
+<div class="po-info">
+    <div class="row">
+        <div class="col-md-6">
+            <strong>{% trans "Bon de commande" %}:</strong> {{ purchase_order.po_number }}
+        </div>
+        <div class="col-md-6">
+            <strong>{% trans "Titre" %}:</strong> {{ purchase_order.title }}
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire principal -->
+<form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+    
+    <!-- Section informations de l'article -->
+    <div class="form-section">
+        <h5 class="mb-3">
+            <i class="bi bi-box me-2 text-primary"></i>
+            {% trans "Informations de l'article" %}
+        </h5>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.product_code.id_for_label }}" class="form-label">
+                    {{ form.product_code.label }}
+                </label>
+                {{ form.product_code }}
+                {% if form.product_code.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.product_code.errors.0 }}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    {% trans "Code produit ou référence fournisseur" %}
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.product.id_for_label }}" class="form-label">
+                    {{ form.product.label }}
+                </label>
+                {{ form.product }}
+                {% if form.product.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.product.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label required-field">
+                {{ form.description.label }}
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ form.description.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="{{ form.quantity.id_for_label }}" class="form-label required-field">
+                    {{ form.quantity.label }}
+                </label>
+                {{ form.quantity }}
+                {% if form.quantity.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.quantity.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="{{ form.unit_price.id_for_label }}" class="form-label required-field">
+                    {{ form.unit_price.label }}
+                </label>
+                <div class="input-group">
+                    {{ form.unit_price }}
+                    <span class="input-group-text">$</span>
+                </div>
+                {% if form.unit_price.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.unit_price.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label class="form-label">{% trans "Total" %}</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="itemTotal" readonly value="0,00">
+                    <span class="input-group-text">$</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aperçu du calcul -->
+    <div class="calculation-preview">
+        <div class="row">
+            <div class="col-md-6">
+                <strong>{% trans "Calcul" %}:</strong>
+                <div id="calculationText">
+                    {% trans "Saisissez la quantité et le prix unitaire" %}
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="h5 mb-0">
+                    <strong>{% trans "Total" %}:</strong> 
+                    <span id="totalAmount" class="text-primary">0,00 $</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions du formulaire -->
+    <div class="form-section">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="addAnother" name="add_another">
+                    <label class="form-check-label" for="addAnother">
+                        {% trans "Ajouter un autre article après celui-ci" %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'purchase_orders:detail' purchase_order.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        {% trans "Annuler" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>
+                        {% if item %}
+                            {% trans "Mettre à jour" %}
+                        {% else %}
+                            {% trans "Ajouter l'article" %}
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation Bootstrap
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+    
+    // Calcul automatique du total
+    const quantityField = document.getElementById('{{ form.quantity.id_for_label }}');
+    const unitPriceField = document.getElementById('{{ form.unit_price.id_for_label }}');
+    const itemTotalField = document.getElementById('itemTotal');
+    const totalAmountSpan = document.getElementById('totalAmount');
+    const calculationText = document.getElementById('calculationText');
+    
+    function calculateTotal() {
+        const quantity = parseFloat(quantityField.value) || 0;
+        const unitPrice = parseFloat(unitPriceField.value) || 0;
+        const total = quantity * unitPrice;
+        
+        // Mettre à jour l'affichage
+        itemTotalField.value = total.toFixed(2).replace('.', ',');
+        totalAmountSpan.textContent = total.toFixed(2).replace('.', ',') + ' $';
+        
+        // Mettre à jour le texte de calcul
+        if (quantity > 0 && unitPrice > 0) {
+            calculationText.textContent = `${quantity} × ${unitPrice.toFixed(2).replace('.', ',')} $ = ${total.toFixed(2).replace('.', ',')} $`;
+        } else {
+            calculationText.textContent = '{% trans "Saisissez la quantité et le prix unitaire" %}';
+        }
+    }
+    
+    // Événements pour le calcul automatique
+    [quantityField, unitPriceField].forEach(field => {
+        field.addEventListener('input', calculateTotal);
+        field.addEventListener('blur', calculateTotal);
+    });
+    
+    // Calcul initial
+    calculateTotal();
+    
+    // Validation des champs numériques
+    [quantityField, unitPriceField].forEach(field => {
+        field.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (this.value && (isNaN(value) || value < 0)) {
+                this.setCustomValidity('{% trans "Veuillez saisir un nombre positif" %}');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    });
+    
+    // Auto-focus sur le premier champ vide
+    const requiredFields = [quantityField, unitPriceField];
+    const firstEmptyField = requiredFields.find(field => !field.value);
+    if (firstEmptyField) {
+        firstEmptyField.focus();
+    }
+    
+    // Sauvegarde automatique des données (localStorage)
+    const formData = {
+        productCode: '{{ form.product_code.value|default:"" }}',
+        description: '{{ form.description.value|default:"" }}',
+        quantity: '{{ form.quantity.value|default:"" }}',
+        unitPrice: '{{ form.unit_price.value|default:"" }}'
+    };
+    
+    // Sauvegarder les données lors des changements
+    [quantityField, unitPriceField].forEach(field => {
+        field.addEventListener('input', function() {
+            localStorage.setItem('po_item_draft', JSON.stringify({
+                ...formData,
+                [this.id]: this.value
+            }));
+        });
+    });
+    
+    // Charger les données sauvegardées
+    const savedData = localStorage.getItem('po_item_draft');
+    if (savedData && !item) { // Ne pas charger si on modifie un item existant
+        try {
+            const data = JSON.parse(savedData);
+            if (data.productCode) document.getElementById('{{ form.product_code.id_for_label }}').value = data.productCode;
+            if (data.description) document.getElementById('{{ form.description.id_for_label }}').value = data.description;
+            if (data.quantity) quantityField.value = data.quantity;
+            if (data.unitPrice) unitPriceField.value = data.unitPrice;
+            calculateTotal();
+        } catch (e) {
+            console.log('Erreur lors du chargement des données sauvegardées');
+        }
+    }
+    
+    // Nettoyer le localStorage après soumission
+    document.querySelector('form').addEventListener('submit', function() {
+        localStorage.removeItem('po_item_draft');
+    });
+    
+    // Raccourcis clavier
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + S pour sauvegarder
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.querySelector('button[type="submit"]').click();
+        }
+        
+        // Échap pour annuler
+        if (e.key === 'Escape') {
+            window.location.href = '{% url "purchase_orders:detail" purchase_order.pk %}';
+        }
+    });
+    
+    // Animation d'entrée
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            section.style.transition = 'all 0.5s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
