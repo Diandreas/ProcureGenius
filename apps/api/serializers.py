@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product
-from apps.accounts.models import Client
+# from apps.accounts.models import Client  # Modèle Client n'existe pas encore
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -66,16 +66,16 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class ClientSerializer(serializers.ModelSerializer):
-    """Serializer pour les clients"""
-    class Meta:
-        model = Client
-        fields = [
-            'id', 'name', 'email', 'phone', 'address',
-            'contact_person', 'tax_id', 'is_active',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+# class ClientSerializer(serializers.ModelSerializer):
+#     """Serializer pour les clients"""
+#     class Meta:
+#         model = Client
+#         fields = [
+#             'id', 'name', 'email', 'phone', 'address',
+#             'contact_person', 'tax_id', 'is_active',
+#             'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):

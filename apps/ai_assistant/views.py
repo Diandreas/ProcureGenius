@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.utils import timezone
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer, ChatRequestSerializer
+# from .models import Conversation, Message  # Modèles n'existent pas encore
+from .serializers import ChatRequestSerializer  # ConversationSerializer, MessageSerializer temporairement commentés
 from .services import MistralService, ActionExecutor
 from .ocr_service import DocumentProcessor
 import asyncio
