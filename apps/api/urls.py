@@ -1,20 +1,18 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from . import views
 
-# Import des ViewSets (à créer)
-# from apps.purchase_orders.viewsets import PurchaseOrderViewSet
-# from apps.invoicing.viewsets import InvoiceViewSet
-# from apps.suppliers.viewsets import SupplierViewSet, ClientViewSet
-# from apps.ai_assistant.viewsets import AIConversationViewSet
+app_name = 'api'
 
 # Router automatique pour ViewSets
 router = DefaultRouter()
-# router.register(r'purchase-orders', PurchaseOrderViewSet, basename='purchase-orders')
-# router.register(r'invoices', InvoiceViewSet, basename='invoices')
-# router.register(r'suppliers', SupplierViewSet, basename='suppliers')
-# router.register(r'clients', ClientViewSet, basename='clients')
-# router.register(r'ai-conversations', AIConversationViewSet, basename='ai-conversations')
+router.register(r'suppliers', views.SupplierViewSet)
+router.register(r'supplier-categories', views.SupplierCategoryViewSet)
+router.register(r'products', views.ProductViewSet)
+router.register(r'clients', views.ClientViewSet)
+router.register(r'purchase-orders', views.PurchaseOrderViewSet)
+router.register(r'invoices', views.InvoiceViewSet)
 
 urlpatterns = [
     # Authentication
@@ -24,6 +22,10 @@ urlpatterns = [
     path('', include(router.urls)),
     
     # Custom API endpoints
-    path('analytics/', include('apps.analytics.api_urls')),
-    path('integrations/', include('apps.integrations.api_urls')),
+    path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
+    path('dashboard/recent/', views.RecentActivityView.as_view(), name='recent-activity'),
+    
+    # Keep existing endpoints if they exist
+    # path('analytics/', include('apps.analytics.api_urls')),
+    # path('integrations/', include('apps.integrations.api_urls')),
 ]

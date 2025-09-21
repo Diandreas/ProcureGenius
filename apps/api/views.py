@@ -1,18 +1,314 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils.translation import gettext as _
+from rest_framework.views import APIView
+from django.db.models import Q, Sum, Count
+from django.utils import timezone
+from datetime import timedelta
 
-# Placeholder pour les ViewSets API
-# Les ViewSets seront créés dans chaque module selon les besoins
+from apps.suppliers.models import Supplier, SupplierCategory
+from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
+from apps.invoicing.models import Invoice, InvoiceItem, Product
+from apps.accounts.models import Client
 
-class APIHealthCheckView:
-    """Vue de vérification de l'état de l'API"""
+from .serializers import (
+    SupplierSerializer, SupplierCategorySerializer,
+    PurchaseOrderSerializer, PurchaseOrderItemSerializer,
+    InvoiceSerializer, InvoiceItemSerializer,
+    ProductSerializer, ClientSerializer,
+    DashboardStatsSerializer
+)
+
+
+class SupplierCategoryViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les catégories de fournisseurs"""
+    queryset = SupplierCategory.objects.all()
+    serializer_class = SupplierCategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class SupplierViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les fournisseurs"""
+    queryset = Supplier.objects.all()
+    serializer_class = SupplierSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['status', 'province', 'is_local', 'is_active']
+    search_fields = ['name', 'contact_person', 'email', 'city']
+    ordering_fields = ['name', 'rating', 'created_at']
+    ordering = ['name']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtre par catégorie
+        category_id = self.request.query_params.get('category')
+        if category_id:
+            queryset = queryset.filter(categories__id=category_id)
+        
+        # Filtre par note minimale
+        min_rating = self.request.query_params.get('min_rating')
+        if min_rating:
+            queryset = queryset.filter(rating__gte=min_rating)
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def toggle_status(self, request, pk=None):
+        """Active/Désactive un fournisseur"""
+        supplier = self.get_object()
+        if supplier.status == 'active':
+            supplier.status = 'inactive'
+        else:
+            supplier.status = 'active'
+        supplier.save()
+        serializer = self.get_serializer(supplier)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Export des fournisseurs en CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="suppliers.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Contact', 'Email', 'Phone', 'City', 'Status', 'Rating'])
+        
+        for supplier in self.get_queryset():
+            writer.writerow([
+                supplier.name,
+                supplier.contact_person,
+                supplier.email,
+                supplier.phone,
+                supplier.city,
+                supplier.get_status_display(),
+                supplier.rating
+            ])
+        
+        return response
+
+
+class ProductViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les produits"""
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'sku', 'description']
+    ordering_fields = ['name', 'unit_price', 'stock_quantity']
+    ordering = ['name']
+    
+    @action(detail=False, methods=['get'])
+    def low_stock(self, request):
+        """Produits avec stock faible"""
+        products = self.get_queryset().filter(
+            stock_quantity__lte=models.F('reorder_level')
+        )
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+
+class ClientViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les clients"""
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'email', 'contact_person']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+
+class PurchaseOrderViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les bons de commande"""
+    queryset = PurchaseOrder.objects.all()
+    serializer_class = PurchaseOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['status', 'supplier', 'created_by']
+    search_fields = ['po_number', 'title', 'description']
+    ordering_fields = ['created_at', 'total_amount', 'required_date']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtre par dates
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        """Ajouter un item au bon de commande"""
+        purchase_order = self.get_object()
+        serializer = PurchaseOrderItemSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save(purchase_order=purchase_order)
+            purchase_order.recalculate_totals()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """Approuver un bon de commande"""
+        purchase_order = self.get_object()
+        if purchase_order.status == 'draft':
+            purchase_order.status = 'approved'
+            purchase_order.save()
+            serializer = self.get_serializer(purchase_order)
+            return Response(serializer.data)
+        return Response(
+            {'error': 'Only draft orders can be approved'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    @action(detail=True, methods=['get'])
+    def print_pdf(self, request, pk=None):
+        """Générer PDF du bon de commande"""
+        # À implémenter avec ReportLab
+        return Response({'message': 'PDF generation not implemented yet'})
+
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les factures"""
+    queryset = Invoice.objects.all()
+    serializer_class = InvoiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['status', 'client', 'created_by']
+    search_fields = ['invoice_number', 'title', 'description']
+    ordering_fields = ['created_at', 'total_amount', 'due_date']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtre par dates
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+        
+        # Filtre pour factures en retard
+        overdue = self.request.query_params.get('overdue')
+        if overdue == 'true':
+            queryset = queryset.filter(
+                status='sent',
+                due_date__lt=timezone.now().date()
+            )
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        """Ajouter un item à la facture"""
+        invoice = self.get_object()
+        
+        if not invoice.can_be_edited():
+            return Response(
+                {'error': 'Invoice cannot be edited in current status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = InvoiceItemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(invoice=invoice)
+            invoice.recalculate_totals()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def send(self, request, pk=None):
+        """Envoyer une facture"""
+        invoice = self.get_object()
+        if invoice.status == 'draft':
+            invoice.status = 'sent'
+            invoice.save()
+            # Ici, ajouter la logique d'envoi par email
+            serializer = self.get_serializer(invoice)
+            return Response(serializer.data)
+        return Response(
+            {'error': 'Only draft invoices can be sent'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    @action(detail=True, methods=['post'])
+    def mark_paid(self, request, pk=None):
+        """Marquer une facture comme payée"""
+        invoice = self.get_object()
+        if invoice.status == 'sent':
+            invoice.status = 'paid'
+            invoice.paid_date = timezone.now().date()
+            invoice.payment_method = request.data.get('payment_method', 'other')
+            invoice.payment_reference = request.data.get('payment_reference', '')
+            invoice.save()
+            serializer = self.get_serializer(invoice)
+            return Response(serializer.data)
+        return Response(
+            {'error': 'Only sent invoices can be marked as paid'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class DashboardStatsView(APIView):
+    """Vue pour les statistiques du tableau de bord"""
+    permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
-        return Response({
-            'status': 'healthy',
-            'version': '1.0.0',
-            'message': _('API ProcureGenius fonctionnelle')
-        })
+        # Calculer les statistiques
+        stats = {
+            'total_suppliers': Supplier.objects.count(),
+            'active_suppliers': Supplier.objects.filter(status='active').count(),
+            'total_purchase_orders': PurchaseOrder.objects.count(),
+            'pending_purchase_orders': PurchaseOrder.objects.filter(
+                status__in=['draft', 'pending']
+            ).count(),
+            'total_invoices': Invoice.objects.count(),
+            'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
+            'total_revenue': Invoice.objects.filter(
+                status='paid'
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+            'total_expenses': PurchaseOrder.objects.filter(
+                status__in=['approved', 'sent', 'received']
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+        }
+        
+        serializer = DashboardStatsSerializer(stats)
+        return Response(serializer.data)
+
+
+class RecentActivityView(APIView):
+    """Vue pour l'activité récente"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # Derniers 7 jours
+        since = timezone.now() - timedelta(days=7)
+        
+        recent_data = {
+            'recent_suppliers': SupplierSerializer(
+                Supplier.objects.filter(created_at__gte=since).order_by('-created_at')[:5],
+                many=True
+            ).data,
+            'recent_purchase_orders': PurchaseOrderSerializer(
+                PurchaseOrder.objects.filter(created_at__gte=since).order_by('-created_at')[:5],
+                many=True
+            ).data,
+            'recent_invoices': InvoiceSerializer(
+                Invoice.objects.filter(created_at__gte=since).order_by('-created_at')[:5],
+                many=True
+            ).data,
+        }
+        
+        return Response(recent_data)
