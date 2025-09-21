@@ -15,6 +15,7 @@ import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
+import SupplierForm from './pages/suppliers/SupplierForm';
 import PurchaseOrders from './pages/purchase-orders/PurchaseOrders';
 import PurchaseOrderDetail from './pages/purchase-orders/PurchaseOrderDetail';
 import PurchaseOrderForm from './pages/purchase-orders/PurchaseOrderForm';
@@ -101,7 +102,9 @@ function App() {
                   
                   {/* Suppliers */}
                   <Route path="/suppliers" element={<Suppliers />} />
+                  <Route path="/suppliers/new" element={<SupplierForm />} />
                   <Route path="/suppliers/:id" element={<SupplierDetail />} />
+                  <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
                   
                   {/* Purchase Orders */}
                   <Route path="/purchase-orders" element={<PurchaseOrders />} />

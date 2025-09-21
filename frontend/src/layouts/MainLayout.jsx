@@ -32,6 +32,7 @@ import {
   ChevronLeft,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
+import MobileBottomNav from '../components/MobileBottomNav';
 
 const drawerWidth = 240;
 
@@ -188,6 +189,7 @@ function MainLayout() {
         sx={{
           flexGrow: 1,
           p: 3,
+          pb: { xs: 10, sm: 3 }, // Padding bottom pour la navigation mobile
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
           bgcolor: 'background.default',
@@ -196,6 +198,9 @@ function MainLayout() {
         <Toolbar />
         <Outlet />
       </Box>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </Box>
   );
 }

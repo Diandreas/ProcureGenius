@@ -2,14 +2,15 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, F
+from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product
-# from apps.accounts.models import Client  # Modèle Client n'existe pas encore
+from apps.accounts.models import Client
 
 from .serializers import (
     SupplierSerializer, SupplierCategorySerializer,

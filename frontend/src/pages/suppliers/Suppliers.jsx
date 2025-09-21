@@ -1,207 +1,458 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Typography,
   Box,
-  Button,
   Card,
   CardContent,
+  Typography,
+  Button,
+  TextField,
+  InputAdornment,
+  IconButton,
   Grid,
   Chip,
-  IconButton,
+  Avatar,
+  Rating,
+  Menu,
+  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Alert
+  FormControl,
+  InputLabel,
+  Select,
+  CircularProgress,
+  Alert,
+  Pagination,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon
+  Add,
+  Search,
+  FilterList,
+  MoreVert,
+  Edit,
+  Delete,
+  Business,
+  Email,
+  Phone,
+  LocationOn,
+  Download,
+  Upload,
 } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
+import { getStatusColor, getStatusLabel } from '../../utils/formatters';
 
 function Suppliers() {
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
+  
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+  }, [page, searchTerm, statusFilter]);
 
   const fetchSuppliers = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await suppliersAPI.list();
-      setSuppliers(response.data.results || response.data || []);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching suppliers:', err);
-      setError('Erreur lors du chargement des fournisseurs');
+      const params = {
+        page,
+        search: searchTerm,
+        status: statusFilter,
+      };
+      const response = await suppliersAPI.list(params);
+      setSuppliers(response.data.results || response.data);
+      const count = response.data.count || response.data.length;
+      setTotalPages(Math.ceil(count / 20));
+    } catch (error) {
+      enqueueSnackbar('Erreur lors du chargement des fournisseurs', { variant: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateSupplier = () => {
-    setSelectedSupplier(null);
-    setOpenDialog(true);
-  };
-
-  const handleEditSupplier = (supplier) => {
+  const handleMenuClick = (event, supplier) => {
+    setAnchorEl(event.currentTarget);
     setSelectedSupplier(supplier);
-    setOpenDialog(true);
   };
 
-  const handleDeleteSupplier = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce fournisseur ?')) {
-      try {
-        await suppliersAPI.delete(id);
-        fetchSuppliers();
-      } catch (err) {
-        console.error('Error deleting supplier:', err);
-        setError('Erreur lors de la suppression');
-      }
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEdit = () => {
+    navigate(`/suppliers/${selectedSupplier.id}/edit`);
+    handleMenuClose();
+  };
+
+  const handleDelete = async () => {
+    try {
+      await suppliersAPI.delete(selectedSupplier.id);
+      enqueueSnackbar('Fournisseur supprimé avec succès', { variant: 'success' });
+      fetchSuppliers();
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+    } finally {
+      setDeleteDialogOpen(false);
+      handleMenuClose();
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'pending': return 'warning';
-      case 'inactive': return 'default';
-      case 'blocked': return 'error';
-      default: return 'default';
+  const handleToggleStatus = async (supplier) => {
+    try {
+      await suppliersAPI.toggleStatus(supplier.id);
+      enqueueSnackbar('Statut modifié avec succès', { variant: 'success' });
+      fetchSuppliers();
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de la modification du statut', { variant: 'error' });
     }
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active': return 'Actif';
-      case 'pending': return 'En attente';
-      case 'inactive': return 'Inactif';
-      case 'blocked': return 'Bloqué';
-      default: return status;
+  const handleExport = async () => {
+    try {
+      const response = await suppliersAPI.exportCSV();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'fournisseurs.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      enqueueSnackbar('Export réussi', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de l\'export', { variant: 'error' });
     }
   };
 
-  if (loading) {
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      await suppliersAPI.import(formData);
+      enqueueSnackbar('Import réussi', { variant: 'success' });
+      fetchSuppliers();
+      setImportDialogOpen(false);
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de l\'import', { variant: 'error' });
+    }
+  };
+
+  if (loading && suppliers.length === 0) {
     return (
-      <Box>
-        <Typography variant="h4">Fournisseurs</Typography>
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Chargement...
-        </Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+        <CircularProgress />
       </Box>
     );
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Fournisseurs</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreateSupplier}
-        >
-          Nouveau fournisseur
-        </Button>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" fontWeight="bold">
+          Fournisseurs
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Upload />}
+            onClick={() => setImportDialogOpen(true)}
+          >
+            Importer
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Download />}
+            onClick={handleExport}
+          >
+            Exporter
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/suppliers/new')}
+          >
+            Nouveau fournisseur
+          </Button>
+        </Box>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                placeholder="Rechercher un fournisseur..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>Statut</InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  label="Statut"
+                >
+                  <MenuItem value="">Tous</MenuItem>
+                  <MenuItem value="active">Actif</MenuItem>
+                  <MenuItem value="pending">En attente</MenuItem>
+                  <MenuItem value="inactive">Inactif</MenuItem>
+                  <MenuItem value="blocked">Bloqué</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<FilterList />}
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('');
+                }}
+              >
+                Réinitialiser
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
+      {/* Suppliers Grid */}
       {suppliers.length === 0 ? (
         <Card>
-          <CardContent>
-            <Typography variant="h6" color="text.secondary" align="center">
+          <CardContent sx={{ textAlign: 'center', py: 5 }}>
+            <Business sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6" gutterBottom>
               Aucun fournisseur trouvé
             </Typography>
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
-              Cliquez sur "Nouveau fournisseur" pour commencer
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Commencez par ajouter votre premier fournisseur
             </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/suppliers/new')}
+            >
+              Ajouter un fournisseur
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={2}>
-          {suppliers.map((supplier) => (
-            <Grid item xs={12} sm={6} md={4} key={supplier.id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" component="div">
-                      {supplier.name}
-                    </Typography>
-                    <Chip
-                      label={getStatusLabel(supplier.status)}
-                      color={getStatusColor(supplier.status)}
-                      size="small"
-                    />
-                  </Box>
+        <>
+          <Grid container spacing={3}>
+            {suppliers.map((supplier) => (
+              <Grid item xs={12} md={6} lg={4} key={supplier.id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 3,
+                    },
+                  }}
+                >
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          {supplier.name.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" component="div">
+                            {supplier.name}
+                          </Typography>
+                          <Chip
+                            label={getStatusLabel(supplier.status)}
+                            color={getStatusColor(supplier.status)}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuClick(e, supplier)}
+                      >
+                        <MoreVert />
+                      </IconButton>
+                    </Box>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Contact: {supplier.contact_person || 'Non spécifié'}
-                  </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      {supplier.contact_person && (
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Contact: {supplier.contact_person}
+                        </Typography>
+                      )}
+                      
+                      {supplier.email && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Email fontSize="small" color="action" />
+                          <Typography variant="body2">{supplier.email}</Typography>
+                        </Box>
+                      )}
+                      
+                      {supplier.phone && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Phone fontSize="small" color="action" />
+                          <Typography variant="body2">{supplier.phone}</Typography>
+                        </Box>
+                      )}
+                      
+                      {supplier.city && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LocationOn fontSize="small" color="action" />
+                          <Typography variant="body2">
+                            {supplier.city}{supplier.province && `, ${supplier.province}`}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Email: {supplier.email || 'Non spécifié'}
-                  </Typography>
+                    {supplier.rating > 0 && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Rating value={supplier.rating} readOnly size="small" />
+                        <Typography variant="body2" color="text.secondary">
+                          ({supplier.rating.toFixed(1)})
+                        </Typography>
+                      </Box>
+                    )}
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Ville: {supplier.city || 'Non spécifié'}
-                  </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {supplier.is_local && (
+                        <Chip label="Local" size="small" color="success" />
+                      )}
+                      {supplier.is_minority_owned && (
+                        <Chip label="Minorité" size="small" color="info" />
+                      )}
+                      {supplier.is_woman_owned && (
+                        <Chip label="Femme" size="small" color="secondary" />
+                      )}
+                      {supplier.is_indigenous && (
+                        <Chip label="Autochtone" size="small" color="warning" />
+                      )}
+                    </Box>
+                  </CardContent>
 
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditSupplier(supplier)}
-                      color="primary"
+                  <Box sx={{ p: 2, pt: 0 }}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => navigate(`/suppliers/${supplier.id}`)}
                     >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteSupplier(supplier.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                      Voir détails
+                    </Button>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(e, value) => setPage(value)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
 
-      {/* Dialog pour créer/éditer un fournisseur */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
-        </DialogTitle>
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleEdit}>
+          <Edit fontSize="small" sx={{ mr: 1 }} />
+          Modifier
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleToggleStatus(selectedSupplier)}
+        >
+          {selectedSupplier?.status === 'active' ? 'Désactiver' : 'Activer'}
+        </MenuItem>
+        <MenuItem 
+          onClick={() => setDeleteDialogOpen(true)}
+          sx={{ color: 'error.main' }}
+        >
+          <Delete fontSize="small" sx={{ mr: 1 }} />
+          Supprimer
+        </MenuItem>
+      </Menu>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Fonctionnalité en cours de développement.
-            Utilisez l'interface d'administration Django pour gérer les fournisseurs.
-          </Alert>
+          <Typography>
+            Êtes-vous sûr de vouloir supprimer le fournisseur "{selectedSupplier?.name}" ?
+            Cette action est irréversible.
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Fermer</Button>
-          <Button
-            variant="contained"
-            onClick={() => window.open('/admin/suppliers/supplier/', '_blank')}
-          >
-            Ouvrir l'admin Django
+          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            Supprimer
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)}>
+        <DialogTitle>Importer des fournisseurs</DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Le fichier CSV doit contenir les colonnes : name, contact_person, email, phone, address, city, status
+          </Alert>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImport}
+            style={{ display: 'none' }}
+            id="import-file"
+          />
+          <label htmlFor="import-file">
+            <Button variant="contained" component="span" fullWidth>
+              Sélectionner un fichier CSV
+            </Button>
+          </label>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setImportDialogOpen(false)}>Annuler</Button>
         </DialogActions>
       </Dialog>
     </Box>

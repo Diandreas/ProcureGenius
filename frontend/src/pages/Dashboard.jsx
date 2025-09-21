@@ -108,34 +108,63 @@ function Dashboard() {
     },
   ];
 
-  const chartData = {
-    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-    datasets: [
-      {
-        label: 'Revenus',
-        data: [12000, 19000, 15000, 25000, 22000, 30000],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-      },
-      {
-        label: 'Dépenses',
-        data: [8000, 12000, 10000, 15000, 13000, 18000],
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-      },
-    ],
+  // Préparer les données pour les graphiques basées sur les vraies données
+  const prepareChartData = () => {
+    if (!recentActivity) return null;
+    
+    // Pour la démo, on utilise des données simulées basées sur les stats réelles
+    const totalRevenue = stats?.total_revenue || 0;
+    const totalExpenses = stats?.total_expenses || 0;
+    
+    return {
+      labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+      datasets: [
+        {
+          label: 'Revenus',
+          data: [
+            totalRevenue * 0.15,
+            totalRevenue * 0.18,
+            totalRevenue * 0.16,
+            totalRevenue * 0.17,
+            totalRevenue * 0.19,
+            totalRevenue * 0.15
+          ].map(v => Math.round(v)),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        },
+        {
+          label: 'Dépenses',
+          data: [
+            totalExpenses * 0.14,
+            totalExpenses * 0.16,
+            totalExpenses * 0.15,
+            totalExpenses * 0.18,
+            totalExpenses * 0.17,
+            totalExpenses * 0.20
+          ].map(v => Math.round(v)),
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.5)',
+        },
+      ],
+    };
   };
 
   const donutData = {
     labels: ['Payées', 'En attente', 'En retard'],
     datasets: [
       {
-        data: [65, 25, 10],
+        data: [
+          stats?.total_invoices - stats?.unpaid_invoices || 0,
+          stats?.unpaid_invoices || 0,
+          Math.floor((stats?.unpaid_invoices || 0) * 0.3) // Estimation des factures en retard
+        ],
         backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
         borderWidth: 0,
       },
     ],
   };
+
+  const chartData = prepareChartData();
 
   return (
     <Box>
@@ -202,17 +231,19 @@ function Dashboard() {
             <Typography variant="h6" sx={{ mb: 2 }}>
               Évolution des revenus et dépenses
             </Typography>
-            <Line
-              data={chartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'top',
+            {chartData && (
+              <Line
+                data={chartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                    },
                   },
-                },
-              }}
-            />
+                }}
+              />
+            )}
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
