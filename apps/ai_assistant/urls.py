@@ -4,6 +4,14 @@ from . import views
 app_name = 'ai_assistant'
 
 urlpatterns = [
-    path('chat/', views.ai_chat, name='chat'),
-    path('suggestions/', views.ai_suggestions, name='suggestions'),
+    # Chat endpoints
+    path('chat/', views.ChatView.as_view(), name='chat'),
+    path('conversations/', views.ConversationListView.as_view(), name='conversations'),
+    path('conversations/<uuid:conversation_id>/', views.ConversationDetailView.as_view(), name='conversation_detail'),
+    
+    # Analyse de documents
+    path('analyze-document/', views.DocumentAnalysisView.as_view(), name='analyze_document'),
+    
+    # Actions rapides
+    path('quick-actions/', views.QuickActionsView.as_view(), name='quick_actions'),
 ]

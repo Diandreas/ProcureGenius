@@ -1,0 +1,65 @@
+{
+  "short_name": "GestionApp",
+  "name": "Application de Gestion avec IA",
+  "description": "Application de gestion d'entreprise avec assistant IA intégré",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#F9FAFB",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#4F46E5",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Nouvelle facture",
+      "short_name": "Facture",
+      "description": "Créer une nouvelle facture",
+      "url": "/invoices/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Assistant IA",
+      "short_name": "IA",
+      "description": "Ouvrir l'assistant IA",
+      "url": "/ai-chat",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Scanner document",
+      "short_name": "Scanner",
+      "description": "Scanner un document",
+      "url": "/ai-chat?action=scan",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "document",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  }
+}
