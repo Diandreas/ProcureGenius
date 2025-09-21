@@ -126,7 +126,7 @@ def invoice_create(request):
     clients_data = []
     for client in clients:
         clients_data.append({
-            'id': client.id,
+            'id': str(client.id),
             'username': client.username,
             'first_name': client.first_name or '',
             'last_name': client.last_name or '',
