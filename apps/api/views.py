@@ -16,7 +16,7 @@ from .serializers import (
     SupplierSerializer, SupplierCategorySerializer,
     PurchaseOrderSerializer, PurchaseOrderItemSerializer,
     InvoiceSerializer, InvoiceItemSerializer,
-    ProductSerializer, # ClientSerializer,  # Modèle Client n'existe pas encore
+    ProductSerializer, ClientSerializer,
     DashboardStatsSerializer
 )
 
@@ -111,15 +111,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-# class ClientViewSet(viewsets.ModelViewSet):
-#     """ViewSet pour les clients"""
-#     queryset = Client.objects.all()
-#     serializer_class = ClientSerializer
-#     permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
-#     filterset_fields = ['is_active']
-#     search_fields = ['name', 'email', 'contact_person']
-#     ordering_fields = ['name', 'created_at']
-#     ordering = ['name']
+class ClientViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les clients"""
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'email', 'contact_person']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
 
 
 class PurchaseOrderViewSet(viewsets.ModelViewSet):

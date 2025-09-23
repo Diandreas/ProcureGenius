@@ -4,15 +4,19 @@ from django.utils.translation import gettext_lazy as _
 import uuid
 
 
-class User(AbstractUser):
+class CustomUser(AbstractUser):
     """Modèle utilisateur personnalisé"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=20, blank=True, verbose_name=_("Téléphone"))
     company = models.CharField(max_length=200, blank=True, verbose_name=_("Entreprise"))
-    
+
     class Meta:
         verbose_name = _("Utilisateur")
         verbose_name_plural = _("Utilisateurs")
+
+
+# Alias pour la compatibilité
+User = CustomUser
 
 
 class Client(models.Model):

@@ -10,7 +10,7 @@ router = DefaultRouter()
 router.register(r'suppliers', views.SupplierViewSet)
 router.register(r'supplier-categories', views.SupplierCategoryViewSet)
 router.register(r'products', views.ProductViewSet)
-# router.register(r'clients', views.ClientViewSet)  # ClientViewSet commenté temporairement
+router.register(r'clients', views.ClientViewSet)
 router.register(r'purchase-orders', views.PurchaseOrderViewSet)
 router.register(r'invoices', views.InvoiceViewSet)
 

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product
-# from apps.accounts.models import Client  # Modèle Client n'existe pas encore
+from apps.accounts.models import Client
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -59,23 +59,23 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'sku', 'description', 'unit_price',
-            'stock_quantity', 'reorder_level', 'is_active',
-            'created_at', 'updated_at'
+            'id', 'name', 'reference', 'description', 'price',
+            'stock_quantity', 'low_stock_threshold', 'is_active',
+            'product_type', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-# class ClientSerializer(serializers.ModelSerializer):
-#     """Serializer pour les clients"""
-#     class Meta:
-#         model = Client
-#         fields = [
-#             'id', 'name', 'email', 'phone', 'address',
-#             'contact_person', 'tax_id', 'is_active',
-#             'created_at', 'updated_at'
-#         ]
-#         read_only_fields = ['id', 'created_at', 'updated_at']
+class ClientSerializer(serializers.ModelSerializer):
+    """Serializer pour les clients"""
+    class Meta:
+        model = Client
+        fields = [
+            'id', 'name', 'email', 'phone', 'address',
+            'contact_person', 'is_active',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):
@@ -96,15 +96,14 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     items = PurchaseOrderItemSerializer(many=True, read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    
+
     class Meta:
         model = PurchaseOrder
         fields = [
             'id', 'po_number', 'title', 'description', 'supplier', 'supplier_name',
-            'status', 'currency', 'subtotal', 'tax_gst_hst', 'tax_qst',
+            'status', 'priority', 'subtotal', 'tax_gst_hst', 'tax_qst',
             'total_amount', 'required_date', 'expected_delivery_date',
-            'delivery_address', 'billing_address', 'terms_conditions',
-            'internal_notes', 'created_by', 'created_by_name',
+            'delivery_address', 'notes', 'created_by', 'created_by_name',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
@@ -119,12 +118,12 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de facture"""
-    total = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
-    
+    total = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True, source='total_price')
+
     class Meta:
         model = InvoiceItem
         fields = [
-            'id', 'product', 'description', 'quantity',
+            'id', 'product_reference', 'description', 'quantity',
             'unit_price', 'discount_percent', 'total'
         ]
         read_only_fields = ['id', 'total']
@@ -133,17 +132,17 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 class InvoiceSerializer(serializers.ModelSerializer):
     """Serializer pour les factures"""
     items = InvoiceItemSerializer(many=True, read_only=True)
-    client_name = serializers.CharField(source='client.name', read_only=True)
+    client_name = serializers.CharField(source='client.username', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    
+
     class Meta:
         model = Invoice
         fields = [
             'id', 'invoice_number', 'title', 'description', 'client', 'client_name',
-            'status', 'currency', 'subtotal', 'tax_gst_hst', 'tax_qst',
-            'total_amount', 'due_date', 'paid_date', 'payment_method',
-            'payment_reference', 'billing_address', 'shipping_address',
-            'terms_conditions', 'notes', 'created_by', 'created_by_name',
+            'status', 'currency', 'subtotal', 'tax_amount',
+            'total_amount', 'due_date', 'payment_method',
+            'billing_address', 'payment_terms',
+            'created_by', 'created_by_name',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [

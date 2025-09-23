@@ -39,7 +39,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
-import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate, getPerformanceBadgeColor, parseRating } from '../../utils/formatters';
 
 function SupplierDetail() {
   const { id } = useParams();
@@ -178,11 +178,11 @@ function SupplierDetail() {
                       color={getStatusColor(supplier.status)}
                     />
                   </Box>
-                  {supplier.rating > 0 && (
+                  {parseRating(supplier.rating) > 0 && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Rating value={supplier.rating} readOnly />
+                      <Rating value={parseRating(supplier.rating)} readOnly />
                       <Typography variant="body2" color="text.secondary">
-                        ({supplier.rating.toFixed(1)}/5)
+                        ({parseRating(supplier.rating).toFixed(1)}/5)
                       </Typography>
                     </Box>
                   )}
@@ -294,7 +294,7 @@ function SupplierDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Chip
                     label={supplier.performance_badge.text}
-                    color={supplier.performance_badge.class}
+                    color={getPerformanceBadgeColor(supplier.performance_badge.class)}
                     size="large"
                   />
                   <Typography variant="body2" color="text.secondary">

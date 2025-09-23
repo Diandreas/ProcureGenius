@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
+import { parseRating } from '../../utils/formatters';
 import { getStatusColor, getStatusLabel } from '../../utils/formatters';
 
 function Suppliers() {
@@ -337,11 +338,11 @@ function Suppliers() {
                       )}
                     </Box>
 
-                    {supplier.rating > 0 && (
+                    {parseRating(supplier.rating) > 0 && (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <Rating value={supplier.rating} readOnly size="small" />
+                        <Rating value={parseRating(supplier.rating)} readOnly size="small" />
                         <Typography variant="body2" color="text.secondary">
-                          ({supplier.rating.toFixed(1)})
+                          ({parseRating(supplier.rating).toFixed(1)})
                         </Typography>
                       </Box>
                     )}

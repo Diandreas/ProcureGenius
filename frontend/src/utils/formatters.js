@@ -61,3 +61,21 @@ export const getStatusLabel = (status) => {
   };
   return statusLabels[status] || status;
 };
+
+export const getPerformanceBadgeColor = (badgeClass) => {
+  const colorMap = {
+    success: 'success',
+    warning: 'warning',
+    danger: 'error',
+    info: 'info',
+    primary: 'primary',
+    secondary: 'secondary',
+  };
+  return colorMap[badgeClass] || 'default';
+};
+
+export const parseRating = (rating) => {
+  if (rating === null || rating === undefined) return 0;
+  const parsed = typeof rating === 'string' ? parseFloat(rating) : rating;
+  return isNaN(parsed) ? 0 : parsed;
+};
