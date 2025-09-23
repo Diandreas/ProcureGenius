@@ -20,6 +20,20 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  LinearProgress,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  Collapse,
 } from '@mui/material';
 import {
   Edit,
@@ -36,10 +50,19 @@ import {
   Warning,
   Block,
   Schedule,
+  AttachMoney,
+  ShoppingCart,
+  Receipt,
+  TrendingUp,
+  Assessment,
+  Inventory,
+  Visibility,
+  FilterList,
+  Clear,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
-import { getStatusColor, getStatusLabel, formatDate, getPerformanceBadgeColor, parseRating } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate, getPerformanceBadgeColor, parseRating, formatCurrency } from '../../utils/formatters';
 
 function SupplierDetail() {
   const { id } = useParams();
@@ -47,11 +70,17 @@ function SupplierDetail() {
   const { enqueueSnackbar } = useSnackbar();
   
   const [supplier, setSupplier] = useState(null);
+  const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [poFilterOpen, setPoFilterOpen] = useState(false);
+  const [poStatusFilter, setPoStatusFilter] = useState('');
+  const [poSearchTerm, setPoSearchTerm] = useState('');
 
   useEffect(() => {
     fetchSupplier();
+    fetchStatistics();
   }, [id]);
 
   const fetchSupplier = async () => {
@@ -64,6 +93,18 @@ function SupplierDetail() {
       navigate('/suppliers');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStatistics = async () => {
+    setStatsLoading(true);
+    try {
+      const response = await suppliersAPI.getStatistics(id);
+      setStatistics(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -101,6 +142,34 @@ function SupplierDetail() {
       blocked: <Block color="error" />,
     };
     return icons[status] || null;
+  };
+
+  const handleViewPurchaseOrder = (orderId) => {
+    navigate(`/purchase-orders/${orderId}`);
+  };
+
+  const getFilteredPurchaseOrders = () => {
+    if (!statistics?.purchase_orders?.recent) return [];
+
+    let filtered = statistics.purchase_orders.recent;
+
+    if (poStatusFilter) {
+      filtered = filtered.filter(order => order.status === poStatusFilter);
+    }
+
+    if (poSearchTerm) {
+      filtered = filtered.filter(order =>
+        order.po_number?.toLowerCase().includes(poSearchTerm.toLowerCase()) ||
+        order.title?.toLowerCase().includes(poSearchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const clearPoFilters = () => {
+    setPoStatusFilter('');
+    setPoSearchTerm('');
   };
 
   if (loading) {
@@ -304,6 +373,264 @@ function SupplierDetail() {
               </CardContent>
             </Card>
           )}
+          {/* Financial Statistics */}
+          {statsLoading ? (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              </CardContent>
+            </Card>
+          ) : statistics && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <AttachMoney color="primary" />
+                  <Typography variant="h6">
+                    Statistiques financières
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                      <Typography variant="h4" color="primary">
+                        {formatCurrency(statistics.financial_stats.total_spent)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total dépensé
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                      <Typography variant="h4" color="success.main">
+                        {statistics.financial_stats.total_orders}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Commandes
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'info.50', borderRadius: 1 }}>
+                      <Typography variant="h4" color="info.main">
+                        {formatCurrency(statistics.financial_stats.average_order_value)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Valeur moyenne
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Purchase Orders */}
+          {statistics && statistics.purchase_orders && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <ShoppingCart color="primary" />
+                    <Typography variant="h6">
+                      Bons de commande ({statistics.purchase_orders.total_count})
+                    </Typography>
+                  </Box>
+                  {statistics.purchase_orders.total_count > 10 && (
+                    <Button
+                      size="small"
+                      startIcon={<FilterList />}
+                      onClick={() => setPoFilterOpen(!poFilterOpen)}
+                    >
+                      Filtres
+                    </Button>
+                  )}
+                </Box>
+
+                {/* Filters */}
+                {statistics.purchase_orders.total_count > 10 && (
+                  <Collapse in={poFilterOpen}>
+                    <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Rechercher par N° ou titre..."
+                            value={poSearchTerm}
+                            onChange={(e) => setPoSearchTerm(e.target.value)}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <FilterList fontSize="small" />
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Statut</InputLabel>
+                            <Select
+                              value={poStatusFilter}
+                              onChange={(e) => setPoStatusFilter(e.target.value)}
+                              label="Statut"
+                            >
+                              <MenuItem value="">Tous</MenuItem>
+                              <MenuItem value="draft">Brouillon</MenuItem>
+                              <MenuItem value="pending">En attente</MenuItem>
+                              <MenuItem value="approved">Approuvé</MenuItem>
+                              <MenuItem value="sent">Envoyé</MenuItem>
+                              <MenuItem value="received">Reçu</MenuItem>
+                              <MenuItem value="cancelled">Annulé</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <Button
+                            fullWidth
+                            size="small"
+                            startIcon={<Clear />}
+                            onClick={clearPoFilters}
+                          >
+                            Effacer
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Collapse>
+                )}
+
+                {/* Recent Orders */}
+                <Typography variant="subtitle1" gutterBottom>
+                  Commandes récentes
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 3 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>N° Commande</TableCell>
+                        <TableCell>Titre</TableCell>
+                        <TableCell>Statut</TableCell>
+                        <TableCell align="right">Montant</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {getFilteredPurchaseOrders().map((order) => (
+                        <TableRow key={order.id} hover sx={{ cursor: 'pointer' }}>
+                          <TableCell onClick={() => handleViewPurchaseOrder(order.id)}>
+                            <Typography color="primary" sx={{ fontWeight: 'medium' }}>
+                              {order.po_number}
+                            </Typography>
+                          </TableCell>
+                          <TableCell onClick={() => handleViewPurchaseOrder(order.id)}>
+                            {order.title}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getStatusLabel(order.status)}
+                              color={getStatusColor(order.status)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(order.total_amount)}
+                          </TableCell>
+                          <TableCell>{formatDate(order.created_at)}</TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewPurchaseOrder(order.id)}
+                              color="primary"
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {getFilteredPurchaseOrders().length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                            <Typography color="text.secondary">
+                              Aucun bon de commande trouvé
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Orders by Status */}
+                <Typography variant="subtitle1" gutterBottom>
+                  Répartition par statut
+                </Typography>
+                <List dense>
+                  {statistics.purchase_orders.by_status.map((statusGroup) => (
+                    <ListItem key={statusGroup.status}>
+                      <ListItemIcon>
+                        <Chip
+                          label={statusGroup.count}
+                          color={getStatusColor(statusGroup.status)}
+                          size="small"
+                        />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={getStatusLabel(statusGroup.status)}
+                        secondary={`${formatCurrency(statusGroup.total_amount || 0)}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Top Products */}
+          {statistics && statistics.top_products && statistics.top_products.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Inventory color="primary" />
+                  <Typography variant="h6">
+                    Produits les plus achetés
+                  </Typography>
+                </Box>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Produit</TableCell>
+                        <TableCell align="right">Quantité</TableCell>
+                        <TableCell align="right">Valeur</TableCell>
+                        <TableCell align="right">Commandes</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {statistics.top_products.slice(0, 10).map((product, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {product.description || product.product_reference}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">{product.total_quantity}</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(product.total_value)}
+                          </TableCell>
+                          <TableCell align="right">{product.order_count}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
 
         {/* Sidebar */}
@@ -342,6 +669,82 @@ function SupplierDetail() {
               </List>
             </CardContent>
           </Card>
+
+          {/* Activity Timeline */}
+          {statistics && statistics.activity_timeline && statistics.activity_timeline.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <TrendingUp color="primary" />
+                  <Typography variant="h6">
+                    Activité récente (6 mois)
+                  </Typography>
+                </Box>
+                <List dense>
+                  {statistics.activity_timeline.map((activity, index) => (
+                    <ListItem key={index}>
+                      <ListItemText
+                        primary={`${activity.created_at__month}/${activity.created_at__year}`}
+                        secondary={
+                          <Box>
+                            <Typography variant="caption" display="block">
+                              {activity.count} commandes
+                            </Typography>
+                            <Typography variant="caption" color="primary">
+                              {formatCurrency(activity.total_amount || 0)}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Performance Metrics - Only show if at least one metric is available */}
+          {statistics && statistics.performance_metrics &&
+           (statistics.performance_metrics.avg_delivery_time ||
+            statistics.performance_metrics.on_time_delivery_rate ||
+            statistics.performance_metrics.total_suppliers_rank) && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Assessment color="primary" />
+                  <Typography variant="h6">
+                    Métriques de performance
+                  </Typography>
+                </Box>
+                <List dense>
+                  {statistics.performance_metrics.avg_delivery_time && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Temps de livraison moyen"
+                        secondary={statistics.performance_metrics.avg_delivery_time}
+                      />
+                    </ListItem>
+                  )}
+                  {statistics.performance_metrics.on_time_delivery_rate && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Taux de livraison à temps"
+                        secondary={statistics.performance_metrics.on_time_delivery_rate}
+                      />
+                    </ListItem>
+                  )}
+                  {statistics.performance_metrics.total_suppliers_rank && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Classement général"
+                        secondary={statistics.performance_metrics.total_suppliers_rank}
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Dates */}
           <Card>

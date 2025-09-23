@@ -65,6 +65,72 @@ class SupplierViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(supplier)
         return Response(serializer.data)
     
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Statistiques détaillées du fournisseur"""
+        supplier = self.get_object()
+
+        # Bons de commande du fournisseur
+        purchase_orders = PurchaseOrder.objects.filter(supplier=supplier)
+
+        # Statistiques financières
+        total_spent = purchase_orders.aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+
+        # Statistiques par statut
+        po_stats = purchase_orders.values('status').annotate(
+            count=Count('id'),
+            total_amount=Sum('total_amount')
+        )
+
+        # Produits/services les plus achetés
+        top_products = PurchaseOrderItem.objects.filter(
+            purchase_order__supplier=supplier
+        ).values('description', 'product_reference').annotate(
+            total_quantity=Sum('quantity'),
+            total_value=Sum('total_price'),
+            order_count=Count('purchase_order', distinct=True)
+        ).order_by('-total_value')[:10]
+
+        # Activité récente (6 derniers mois)
+        from datetime import datetime, timedelta
+        six_months_ago = datetime.now() - timedelta(days=180)
+        recent_orders = purchase_orders.filter(
+            created_at__gte=six_months_ago
+        ).values('created_at__month', 'created_at__year').annotate(
+            count=Count('id'),
+            total_amount=Sum('total_amount')
+        ).order_by('created_at__year', 'created_at__month')
+
+        # Performance metrics
+        avg_delivery_time = None  # À implémenter si on a des données de livraison
+        on_time_delivery_rate = None  # À implémenter
+
+        return Response({
+            'supplier_id': str(supplier.id),
+            'supplier_name': supplier.name,
+            'financial_stats': {
+                'total_spent': float(total_spent),
+                'total_orders': purchase_orders.count(),
+                'average_order_value': float(total_spent / purchase_orders.count()) if purchase_orders.count() > 0 else 0,
+            },
+            'purchase_orders': {
+                'recent': list(purchase_orders.order_by('-created_at')[:5].values(
+                    'id', 'po_number', 'title', 'status', 'total_amount', 'created_at'
+                )),
+                'by_status': list(po_stats),
+                'total_count': purchase_orders.count(),
+            },
+            'top_products': list(top_products),
+            'activity_timeline': list(recent_orders),
+            'performance_metrics': {
+                'avg_delivery_time': avg_delivery_time,
+                'on_time_delivery_rate': on_time_delivery_rate,
+                'total_suppliers_rank': None,  # À implémenter
+            }
+        })
+
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
         """Export des fournisseurs en CSV"""

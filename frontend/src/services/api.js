@@ -55,6 +55,7 @@ export const suppliersAPI = {
   update: (id, data) => api.patch(`/suppliers/${id}/`, data),
   delete: (id) => api.delete(`/suppliers/${id}/`),
   toggleStatus: (id) => api.post(`/suppliers/${id}/toggle_status/`),
+  getStatistics: (id) => api.get(`/suppliers/${id}/statistics/`),
   exportCSV: () => api.get('/suppliers/export_csv/', { responseType: 'blob' }),
 };
 
