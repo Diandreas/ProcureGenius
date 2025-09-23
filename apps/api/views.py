@@ -326,6 +326,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             {'error': 'Only sent invoices can be marked as paid'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+    @action(detail=False, methods=['post'], url_path='create')
+    def create_invoice(self, request):
+        """Create invoice endpoint for frontend compatibility"""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DashboardStatsView(APIView):

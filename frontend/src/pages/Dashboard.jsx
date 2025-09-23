@@ -111,11 +111,11 @@ function Dashboard() {
   // Préparer les données pour les graphiques basées sur les vraies données
   const prepareChartData = () => {
     if (!recentActivity) return null;
-    
+
     // Pour la démo, on utilise des données simulées basées sur les stats réelles
     const totalRevenue = stats?.total_revenue || 0;
     const totalExpenses = stats?.total_expenses || 0;
-    
+
     return {
       labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
       datasets: [
@@ -168,10 +168,6 @@ function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Tableau de bord
-      </Typography>
-
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {statsCards.map((stat, index) => (

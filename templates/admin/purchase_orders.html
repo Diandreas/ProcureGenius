@@ -5,7 +5,6 @@
 
 {% block admin_content %}
 <div class="admin-header">
-    <h1>{% trans "Gestion des Bons de Commande" %}</h1>
     <div class="header-actions">
         <a href="{% url 'purchase_orders:create_purchase_order' %}" class="btn btn-primary">
             <i class="icon">➕</i> {% trans "Nouveau Bon de Commande" %}
@@ -20,12 +19,17 @@
             <label for="status">{% trans "Statut" %}</label>
             <select name="status" id="status">
                 <option value="">{% trans "Tous les statuts" %}</option>
-                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>{% trans "Brouillon" %}</option>
-                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>{% trans "En attente" %}</option>
-                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>{% trans "Approuvé" %}</option>
-                <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>{% trans "Envoyé" %}</option>
-                <option value="received" {% if status_filter == 'received' %}selected{% endif %}>{% trans "Reçu" %}</option>
-                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>{% trans "Annulé" %}</option>
+                <option value="draft" {% if status_filter=='draft' %}selected{% endif %}>{% trans "Brouillon" %}
+                </option>
+                <option value="pending" {% if status_filter=='pending' %}selected{% endif %}>{% trans "En attente" %}
+                </option>
+                <option value="approved" {% if status_filter=='approved' %}selected{% endif %}>{% trans "Approuvé" %}
+                </option>
+                <option value="sent" {% if status_filter=='sent' %}selected{% endif %}>{% trans "Envoyé" %}</option>
+                <option value="received" {% if status_filter=='received' %}selected{% endif %}>{% trans "Reçu" %}
+                </option>
+                <option value="cancelled" {% if status_filter=='cancelled' %}selected{% endif %}>{% trans "Annulé" %}
+                </option>
             </select>
         </div>
 
@@ -34,7 +38,8 @@
             <select name="supplier" id="supplier">
                 <option value="">{% trans "Tous les fournisseurs" %}</option>
                 {% for supplier in suppliers %}
-                <option value="{{ supplier.id }}" {% if supplier_filter == supplier.id|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ supplier.id }}" {% if supplier_filter==supplier.id|stringformat:"s" %}selected{% endif
+                    %}>
                     {{ supplier.name }}
                 </option>
                 {% endfor %}
@@ -43,7 +48,8 @@
 
         <div class="filter-group">
             <label for="q">{% trans "Recherche" %}</label>
-            <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="{% trans 'Numéro, titre, description...' %}">
+            <input type="text" name="q" id="q" value="{{ search_query }}"
+                placeholder="{% trans 'Numéro, titre, description...' %}">
         </div>
 
         <div class="filter-actions">
@@ -125,9 +131,12 @@
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <a href="{% url 'purchase_orders:view_purchase_order' po.pk %}" class="btn btn-sm btn-outline" title="{% trans 'Voir' %}">👁️</a>
-                        <a href="{% url 'purchase_orders:edit_purchase_order' po.pk %}" class="btn btn-sm btn-secondary" title="{% trans 'Modifier' %}">✏️</a>
-                        <a href="{% url 'purchase_orders:print_purchase_order' po.pk %}" class="btn btn-sm btn-primary" title="{% trans 'Imprimer' %}">🖨️</a>
+                        <a href="{% url 'purchase_orders:view_purchase_order' po.pk %}" class="btn btn-sm btn-outline"
+                            title="{% trans 'Voir' %}">👁️</a>
+                        <a href="{% url 'purchase_orders:edit_purchase_order' po.pk %}" class="btn btn-sm btn-secondary"
+                            title="{% trans 'Modifier' %}">✏️</a>
+                        <a href="{% url 'purchase_orders:print_purchase_order' po.pk %}" class="btn btn-sm btn-primary"
+                            title="{% trans 'Imprimer' %}">🖨️</a>
                     </div>
                 </td>
             </tr>
@@ -147,8 +156,10 @@
 <div class="pagination-container">
     <div class="pagination">
         {% if page_obj.has_previous %}
-            <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}" class="page-link">⏮️</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}" class="page-link">⬅️</a>
+        <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}"
+            class="page-link">⏮️</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}"
+            class="page-link">⬅️</a>
         {% endif %}
 
         <span class="page-info">
@@ -156,49 +167,76 @@
         </span>
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}" class="page-link">➡️</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}" class="page-link">⏭️</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}"
+            class="page-link">➡️</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}"
+            class="page-link">⏭️</a>
         {% endif %}
     </div>
 </div>
 {% endif %}
 
 <style>
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
 
-.status-draft { background-color: #f0f0f0; color: #666; }
-.status-pending { background-color: #fff3cd; color: #856404; }
-.status-approved { background-color: #d4edda; color: #155724; }
-.status-sent { background-color: #e3f2fd; color: #1976d2; }
-.status-received { background-color: #e8f5e8; color: #388e3c; }
-.status-cancelled { background-color: #fafafa; color: #757575; }
+    .status-draft {
+        background-color: #f0f0f0;
+        color: #666;
+    }
 
-.supplier-info, .user-info {
-    display: flex;
-    flex-direction: column;
-}
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
 
-.supplier-contact, .creation-date {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
 
-.po-description {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
+    .status-sent {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
 
-.action-buttons {
-    display: flex;
-    gap: 4px;
-}
+    .status-received {
+        background-color: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .status-cancelled {
+        background-color: #fafafa;
+        color: #757575;
+    }
+
+    .supplier-info,
+    .user-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .supplier-contact,
+    .creation-date {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    .po-description {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 4px;
+    }
 </style>
 {% endblock %}

@@ -4,7 +4,7 @@ import { Typography, Box } from '@mui/material';
 function Settings() {
   return (
     <Box>
-      <Typography variant="h4">Paramètres</Typography>
+      {/* Contenu des paramètres */}
     </Box>
   );
 }

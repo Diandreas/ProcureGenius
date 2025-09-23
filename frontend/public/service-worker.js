@@ -51,10 +51,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Stratégie pour les assets statiques
-  if (request.destination === 'image' || 
-      request.destination === 'style' || 
-      request.destination === 'script' ||
-      request.destination === 'font') {
+  if (request.destination === 'image' ||
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'font') {
     event.respondWith(cacheFirstStrategy(request));
     return;
   }
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
 async function cacheFirstStrategy(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
-  
+
   if (cachedResponse) {
     return cachedResponse;
   }
@@ -89,7 +89,7 @@ async function cacheFirstStrategy(request) {
 // Stratégie Network First (pour l'API et les pages HTML)
 async function networkFirstStrategy(request) {
   const cache = await caches.open(request.url.includes('/api/') ? API_CACHE_NAME : CACHE_NAME);
-  
+
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -102,18 +102,18 @@ async function networkFirstStrategy(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Pour les requêtes API, retourner une erreur JSON
     if (request.url.includes('/api/')) {
       return new Response(
         JSON.stringify({ error: 'Offline', message: 'Vous êtes hors ligne' }),
-        { 
+        {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         }
       );
     }
-    
+
     // Pour les pages, retourner la page offline
     const offlineResponse = await cache.match('/offline.html');
     return offlineResponse || new Response('Offline', { status: 503 });
@@ -173,7 +173,7 @@ self.addEventListener('sync', (event) => {
 async function syncData() {
   // Logique de synchronisation des données hors ligne
   console.log('Synchronisation des données...');
-  
+
   // Récupérer les données en attente depuis IndexedDB
   // Envoyer les données au serveur
   // Nettoyer les données synchronisées
@@ -182,7 +182,7 @@ async function syncData() {
 // Gestion du partage de fichiers
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  
+
   if (url.pathname === '/share' && event.request.method === 'POST') {
     event.respondWith(handleShare(event.request));
   }
@@ -193,7 +193,7 @@ async function handleShare(request) {
   const file = formData.get('document');
   const title = formData.get('title');
   const text = formData.get('text');
-  
+
   // Rediriger vers l'interface de scan avec le fichier
   return Response.redirect('/ai-chat?action=scan&shared=true', 303);
 }

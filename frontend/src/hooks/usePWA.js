@@ -33,7 +33,7 @@ export function usePWA() {
       navigator.serviceWorker.register('/service-worker.js')
         .then((registration) => {
           console.log('Service Worker enregistré:', registration);
-          
+
           // Vérifier les mises à jour
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
@@ -61,12 +61,12 @@ export function usePWA() {
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
+
     if (outcome === 'accepted') {
       setIsInstalled(true);
       setIsInstallable(false);
     }
-    
+
     setDeferredPrompt(null);
     return outcome === 'accepted';
   };

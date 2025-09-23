@@ -16,14 +16,19 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  TextField,
+  InputAdornment,
+  Link,
 } from '@mui/material';
-import { Add, Visibility, Edit, Send } from '@mui/icons-material';
+import { Add, Visibility, Edit, Send, Search, Business } from '@mui/icons-material';
 import { invoicesAPI } from '../../services/api';
 
 function Invoices() {
   const [invoices, setInvoices] = useState([]);
+  const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,7 +39,9 @@ function Invoices() {
     try {
       setLoading(true);
       const response = await invoicesAPI.list();
-      setInvoices(response.data.results || response.data);
+      const invoiceList = response.data.results || response.data;
+      setInvoices(invoiceList);
+      setFilteredInvoices(invoiceList);
     } catch (err) {
       setError('Erreur lors du chargement des factures');
       console.error('Error fetching invoices:', err);
@@ -42,6 +49,19 @@ function Invoices() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredInvoices(invoices);
+    } else {
+      const filtered = invoices.filter(invoice =>
+        invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredInvoices(filtered);
+    }
+  }, [searchTerm, invoices]);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -84,14 +104,30 @@ function Invoices() {
   return (
     <Box p={3}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Factures</Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
-          onClick={() => navigate('/invoices/create')}
+          onClick={() => navigate('/invoices/new')}
         >
           Nouvelle facture
         </Button>
+      </Box>
+
+      <Box mb={3}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Rechercher par numéro, titre ou client..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+        />
       </Box>
 
       <Card>
@@ -110,11 +146,53 @@ function Invoices() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {invoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
-                    <TableCell>{invoice.invoice_number}</TableCell>
+                    <TableCell>
+                      <Link
+                        component="button"
+                        variant="body1"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        sx={{
+                          textDecoration: 'none',
+                          color: 'primary.main',
+                          fontWeight: 'medium',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          },
+                        }}
+                      >
+                        {invoice.invoice_number}
+                      </Link>
+                    </TableCell>
                     <TableCell>{invoice.title}</TableCell>
-                    <TableCell>{invoice.client_name || 'N/A'}</TableCell>
+                    <TableCell>
+                      {invoice.client ? (
+                        <Link
+                          component="button"
+                          variant="body1"
+                          onClick={() => navigate(`/clients/${invoice.client.id || invoice.client}`)}
+                          sx={{
+                            textDecoration: 'none',
+                            color: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            '&:hover': {
+                              textDecoration: 'underline',
+                            },
+                          }}
+                        >
+                          <Business fontSize="small" />
+                          {invoice.client_name || invoice.client.name || 'N/A'}
+                        </Link>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                          <Business fontSize="small" />
+                          {invoice.client_name || 'N/A'}
+                        </Box>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={getStatusLabel(invoice.status)}
@@ -159,6 +237,14 @@ function Invoices() {
             </Table>
           </TableContainer>
 
+          {filteredInvoices.length === 0 && invoices.length > 0 && (
+            <Box textAlign="center" py={4}>
+              <Typography variant="h6" color="textSecondary">
+                Aucune facture ne correspond à votre recherche
+              </Typography>
+            </Box>
+          )}
+
           {invoices.length === 0 && (
             <Box textAlign="center" py={4}>
               <Typography variant="h6" color="textSecondary">
@@ -167,7 +253,7 @@ function Invoices() {
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                onClick={() => navigate('/invoices/create')}
+                onClick={() => navigate('/invoices/new')}
                 sx={{ mt: 2 }}
               >
                 Créer la première facture

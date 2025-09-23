@@ -48,7 +48,7 @@ import { getStatusColor, getStatusLabel } from '../../utils/formatters';
 function Suppliers() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -165,9 +165,6 @@ function Suppliers() {
     <Box>
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold">
-          Fournisseurs
-        </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"
@@ -313,21 +310,21 @@ function Suppliers() {
                           Contact: {supplier.contact_person}
                         </Typography>
                       )}
-                      
+
                       {supplier.email && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <Email fontSize="small" color="action" />
                           <Typography variant="body2">{supplier.email}</Typography>
                         </Box>
                       )}
-                      
+
                       {supplier.phone && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <Phone fontSize="small" color="action" />
                           <Typography variant="body2">{supplier.phone}</Typography>
                         </Box>
                       )}
-                      
+
                       {supplier.city && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <LocationOn fontSize="small" color="action" />
@@ -401,12 +398,12 @@ function Suppliers() {
           <Edit fontSize="small" sx={{ mr: 1 }} />
           Modifier
         </MenuItem>
-        <MenuItem 
+        <MenuItem
           onClick={() => handleToggleStatus(selectedSupplier)}
         >
           {selectedSupplier?.status === 'active' ? 'Désactiver' : 'Activer'}
         </MenuItem>
-        <MenuItem 
+        <MenuItem
           onClick={() => setDeleteDialogOpen(true)}
           sx={{ color: 'error.main' }}
         >

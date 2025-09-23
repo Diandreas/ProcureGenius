@@ -23,7 +23,11 @@ import Invoices from './pages/invoices/Invoices';
 import InvoiceDetail from './pages/invoices/InvoiceDetail';
 import InvoiceForm from './pages/invoices/InvoiceForm';
 import Products from './pages/products/Products';
+import ProductDetail from './pages/products/ProductDetail';
+import ProductForm from './pages/products/ProductForm';
 import Clients from './pages/clients/Clients';
+import ClientDetail from './pages/clients/ClientDetail';
+import ClientForm from './pages/clients/ClientForm';
 import AIChat from './pages/ai-chat/AIChat';
 import Settings from './pages/settings/Settings';
 
@@ -99,34 +103,40 @@ function App() {
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
-                  
+
                   {/* Suppliers */}
                   <Route path="/suppliers" element={<Suppliers />} />
                   <Route path="/suppliers/new" element={<SupplierForm />} />
                   <Route path="/suppliers/:id" element={<SupplierDetail />} />
                   <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
-                  
+
                   {/* Purchase Orders */}
                   <Route path="/purchase-orders" element={<PurchaseOrders />} />
                   <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
                   <Route path="/purchase-orders/:id" element={<PurchaseOrderDetail />} />
                   <Route path="/purchase-orders/:id/edit" element={<PurchaseOrderForm />} />
-                  
+
                   {/* Invoices */}
                   <Route path="/invoices" element={<Invoices />} />
                   <Route path="/invoices/new" element={<InvoiceForm />} />
                   <Route path="/invoices/:id" element={<InvoiceDetail />} />
                   <Route path="/invoices/:id/edit" element={<InvoiceForm />} />
-                  
+
                   {/* Products */}
                   <Route path="/products" element={<Products />} />
-                  
+                  <Route path="/products/new" element={<ProductForm />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/products/:id/edit" element={<ProductForm />} />
+
                   {/* Clients */}
                   <Route path="/clients" element={<Clients />} />
-                  
+                  <Route path="/clients/new" element={<ClientForm />} />
+                  <Route path="/clients/:id" element={<ClientDetail />} />
+                  <Route path="/clients/:id/edit" element={<ClientForm />} />
+
                   {/* AI Chat */}
                   <Route path="/ai-chat" element={<AIChat />} />
-                  
+
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
                 </Route>
@@ -135,7 +145,7 @@ function App() {
               {/* 404 */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-            
+
             {/* PWA Install Prompt */}
             <PWAInstallPrompt />
           </Router>
