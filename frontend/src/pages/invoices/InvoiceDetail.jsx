@@ -31,6 +31,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Edit,
@@ -54,10 +57,12 @@ import {
   Send,
   Done,
   Payment,
+  PictureAsPdf,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { invoicesAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
+import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 
 function InvoiceDetail() {
   const { id } = useParams();
@@ -70,6 +75,9 @@ function InvoiceDetail() {
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [markPaidDialogOpen, setMarkPaidDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [paymentData, setPaymentData] = useState({
     payment_date: new Date().toISOString().split('T')[0],
     payment_method: '',
@@ -150,6 +158,27 @@ function InvoiceDetail() {
     }
   };
 
+  const handleGeneratePDF = async (action = 'download') => {
+    setGeneratingPdf(true);
+    try {
+      const pdfBlob = await generateInvoicePDF(invoice, selectedTemplate);
+
+      if (action === 'download') {
+        downloadPDF(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
+        enqueueSnackbar('PDF téléchargé avec succès', { variant: 'success' });
+      } else if (action === 'preview') {
+        openPDFInNewTab(pdfBlob);
+      }
+
+      setPdfDialogOpen(false);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const getStatusIcon = (status) => {
     const icons = {
       draft: <Edit color="action" />,
@@ -212,10 +241,10 @@ function InvoiceDetail() {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"
-            startIcon={<Print />}
-            onClick={() => window.print()}
+            startIcon={<PictureAsPdf />}
+            onClick={() => setPdfDialogOpen(true)}
           >
-            Imprimer PDF
+            Générer PDF
           </Button>
           <Button
             variant="outlined"
@@ -661,6 +690,51 @@ function InvoiceDetail() {
             disabled={!newItem.description || newItem.quantity <= 0}
           >
             Ajouter
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF Generation Dialog */}
+      <Dialog open={pdfDialogOpen} onClose={() => setPdfDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Générer un PDF de la facture</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Modèle de facture</InputLabel>
+              <Select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                label="Modèle de facture"
+              >
+                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>Classique</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography variant="body2" color="text.secondary">
+              Choisissez le style de votre facture. Le PDF sera généré avec un QR code de vérification.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPdfDialogOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => handleGeneratePDF('preview')}
+            variant="outlined"
+            disabled={generatingPdf}
+            startIcon={<Print />}
+          >
+            Aperçu
+          </Button>
+          <Button
+            onClick={() => handleGeneratePDF('download')}
+            variant="contained"
+            disabled={generatingPdf}
+            startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
+          >
+            {generatingPdf ? 'Génération...' : 'Télécharger'}
           </Button>
         </DialogActions>
       </Dialog>

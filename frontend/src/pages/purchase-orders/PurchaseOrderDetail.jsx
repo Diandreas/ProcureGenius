@@ -31,6 +31,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Edit,
@@ -53,10 +56,12 @@ import {
   Download,
   Send,
   Done,
+  PictureAsPdf,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
+import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 
 function PurchaseOrderDetail() {
   const { id } = useParams();
@@ -68,6 +73,9 @@ function PurchaseOrderDetail() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [newItem, setNewItem] = useState({
     description: '',
     quantity: 1,
@@ -131,12 +139,24 @@ function PurchaseOrderDetail() {
     }
   };
 
-  const handlePrintPDF = async () => {
+  const handleGeneratePDF = async (action = 'download') => {
+    setGeneratingPdf(true);
     try {
-      await purchaseOrdersAPI.printPDF(id);
-      enqueueSnackbar('PDF généré avec succès', { variant: 'success' });
+      const pdfBlob = await generatePurchaseOrderPDF(purchaseOrder, selectedTemplate);
+
+      if (action === 'download') {
+        downloadPDF(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
+        enqueueSnackbar('PDF téléchargé avec succès', { variant: 'success' });
+      } else if (action === 'preview') {
+        openPDFInNewTab(pdfBlob);
+      }
+
+      setPdfDialogOpen(false);
     } catch (error) {
+      console.error('Error generating PDF:', error);
       enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -189,10 +209,10 @@ function PurchaseOrderDetail() {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"
-            startIcon={<Print />}
-            onClick={handlePrintPDF}
+            startIcon={<PictureAsPdf />}
+            onClick={() => setPdfDialogOpen(true)}
           >
-            Imprimer PDF
+            Générer PDF
           </Button>
           <Button
             variant="outlined"
@@ -521,6 +541,51 @@ function PurchaseOrderDetail() {
             disabled={!newItem.description || newItem.quantity <= 0}
           >
             Ajouter
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF Generation Dialog */}
+      <Dialog open={pdfDialogOpen} onClose={() => setPdfDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Générer un PDF du bon de commande</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Modèle de bon de commande</InputLabel>
+              <Select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                label="Modèle de bon de commande"
+              >
+                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>Classique</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography variant="body2" color="text.secondary">
+              Choisissez le style de votre bon de commande. Le PDF sera généré avec un QR code de vérification.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPdfDialogOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => handleGeneratePDF('preview')}
+            variant="outlined"
+            disabled={generatingPdf}
+            startIcon={<Print />}
+          >
+            Aperçu
+          </Button>
+          <Button
+            onClick={() => handleGeneratePDF('download')}
+            variant="contained"
+            disabled={generatingPdf}
+            startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
+          >
+            {generatingPdf ? 'Génération...' : 'Télécharger'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -9,7 +9,13 @@
       "Bash(timeout:*)",
       "Bash(py:*)",
       "Bash(curl:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm install:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(wmic process where processid=25236 delete:*)",
+      "Bash(if exist \"node_modules\\.vite\" rd /s /q \"node_modules\\.vite\")"
     ],
     "deny": [],
     "ask": []
