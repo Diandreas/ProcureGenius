@@ -4651,3 +4651,158 @@ Not Found: /sw.js
 "GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 385
 "GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 541
 "GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 385
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/suppliers/ HTTP/1.1" 200 3304
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/suppliers/ HTTP/1.1" 200 3304
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 562
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 10713
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 10713
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 10713
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 10713
+Watching for file changes with StatReloader
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3304
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
+D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\saas_procurement\urls.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\urls.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\ocr_service.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\ocr_service.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 619
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 619
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1725
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 426
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 3057
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 3510

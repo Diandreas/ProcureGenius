@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.utils import timezone
-# from .models import Conversation, Message  # Modèles n'existent pas encore
-from .serializers import ChatRequestSerializer  # ConversationSerializer, MessageSerializer temporairement commentés
+from .models import Conversation, Message
+from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer
 from .services import MistralService, ActionExecutor
-from .ocr_service import DocumentProcessor
+from .ocr_service import OCRService
 import asyncio
 import logging
 
@@ -210,14 +210,21 @@ class DocumentAnalysisView(APIView):
             
             try:
                 # Traiter le document avec OCR
-                processor = DocumentProcessor()
-                result = processor.process_document(image_file, document_type)
-                
-                if not result['success']:
+                processor = OCRService()
+                success, text_or_error, lang = processor.extract_text_from_image(image_file)
+
+                if not success:
                     return Response(
-                        {'error': result['error']},
+                        {'error': text_or_error},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+
+                result = {
+                    'success': True,
+                    'ocr_text': text_or_error,
+                    'language': lang,
+                    'extracted_data': {}
+                }
                 
                 # Analyser avec Mistral pour une extraction plus intelligente
                 mistral_service = MistralService()
@@ -225,7 +232,7 @@ class DocumentAnalysisView(APIView):
                     result['ocr_text'],
                     document_type
                 )
-                
+
                 # Combiner les résultats
                 final_result = {
                     'success': True,

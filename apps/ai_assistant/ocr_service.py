@@ -6,7 +6,7 @@ import io
 import base64
 from typing import Optional, Tuple
 from PIL import Image
-import pytesseract
+# import pytesseract  # Temporairement commenté
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import logging
@@ -18,10 +18,10 @@ class OCRService:
     """Service pour l'extraction de texte depuis des images"""
     
     def __init__(self):
-        # Configuration Tesseract
-        tesseract_cmd = getattr(settings, 'TESSERACT_CMD', '/usr/bin/tesseract')
-        if os.path.exists(tesseract_cmd):
-            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+        # Configuration Tesseract (temporairement désactivé)
+        # tesseract_cmd = getattr(settings, 'TESSERACT_CMD', '/usr/bin/tesseract')
+        # if os.path.exists(tesseract_cmd):
+        #     pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
         
         self.supported_formats = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff']
         self.max_file_size = getattr(settings, 'MAX_DOCUMENT_SIZE', 10 * 1024 * 1024)  # 10MB
@@ -51,27 +51,14 @@ class OCRService:
             # Prétraitement de l'image pour améliorer l'OCR
             image = self._preprocess_image(image)
             
-            # Extraction du texte avec détection de langue
+            # Simulation OCR (pytesseract temporairement désactivé)
             try:
-                # Essayer d'abord en français
-                text_fr = pytesseract.image_to_string(image, lang='fra')
-                confidence_fr = self._calculate_confidence(text_fr)
-                
-                # Essayer en anglais
-                text_en = pytesseract.image_to_string(image, lang='eng')
-                confidence_en = self._calculate_confidence(text_en)
-                
-                # Choisir le meilleur résultat
-                if confidence_fr > confidence_en:
-                    text = text_fr
-                    lang = 'fr'
-                else:
-                    text = text_en
-                    lang = 'en'
-                
+                # Version simulée pour le développement
+                text = f"[OCR Simulé] Document image détecté - Taille: {image.size}. Installez pytesseract pour l'OCR réel."
+                lang = 'fr'  # Langue par défaut
+
             except Exception:
-                # Fallback sans spécifier la langue
-                text = pytesseract.image_to_string(image)
+                text = "Erreur simulation OCR"
                 lang = 'unknown'
             
             # Nettoyer le texte

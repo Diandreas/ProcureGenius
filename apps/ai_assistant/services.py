@@ -4,8 +4,7 @@ Service d'intégration avec Mistral AI
 import os
 import json
 from typing import Dict, List, Any, Optional
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
+from mistralai import Mistral
 from django.conf import settings
 from django.core.cache import cache
 import logging
@@ -21,8 +20,8 @@ class MistralService:
         if not api_key:
             raise ValueError("MISTRAL_API_KEY not configured")
         
-        self.client = MistralClient(api_key=api_key)
-        self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large')
+        self.client = Mistral(api_key=api_key)
+        self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
         
     def create_system_prompt(self) -> str:
         """Crée le prompt système pour l'assistant"""
@@ -88,24 +87,22 @@ Réponds toujours en français et sois professionnel mais amical."""
         try:
             # Construire les messages
             messages = [
-                ChatMessage(role="system", content=self.create_system_prompt())
+                {"role": "system", "content": self.create_system_prompt()}
             ]
-            
+
             # Ajouter l'historique si disponible
             if conversation_history:
                 for msg in conversation_history[-10:]:  # Garder les 10 derniers messages
-                    messages.append(
-                        ChatMessage(
-                            role=msg.get('role', 'user'),
-                            content=msg.get('content', '')
-                        )
-                    )
-            
+                    messages.append({
+                        "role": msg.get('role', 'user'),
+                        "content": msg.get('content', '')
+                    })
+
             # Ajouter le message actuel
-            messages.append(ChatMessage(role="user", content=message))
+            messages.append({"role": "user", "content": message})
             
             # Appeler Mistral
-            response = self.client.chat(
+            response = self.client.chat.complete(
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
@@ -182,14 +179,14 @@ Réponds toujours en français et sois professionnel mais amical."""
         prompt = prompts.get(document_type, prompts['invoice'])
         
         try:
-            response = self.client.chat(
+            response = self.client.chat.complete(
                 model=self.model,
                 messages=[
-                    ChatMessage(
-                        role="system", 
-                        content="Tu es un expert en extraction de données de documents. Retourne uniquement du JSON valide."
-                    ),
-                    ChatMessage(role="user", content=prompt + text)
+                    {
+                        "role": "system",
+                        "content": "Tu es un expert en extraction de données de documents. Retourne uniquement du JSON valide."
+                    },
+                    {"role": "user", "content": prompt + text}
                 ],
                 temperature=0.3,  # Plus déterministe pour l'extraction
                 max_tokens=1000

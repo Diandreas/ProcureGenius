@@ -25,9 +25,8 @@ urlpatterns = [
     path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('dashboard/recent/', views.RecentActivityView.as_view(), name='recent-activity'),
     
-    # AI endpoints temporaires
-    path('ai/conversations/', views.AIConversationsView.as_view(), name='ai-conversations'),
-    path('ai/quick-actions/', views.AIQuickActionsView.as_view(), name='ai-quick-actions'),
+    # AI Assistant endpoints
+    path('ai/', include('apps.ai_assistant.api_urls')),
     
     # Keep existing endpoints if they exist
     # path('analytics/', include('apps.analytics.api_urls')),

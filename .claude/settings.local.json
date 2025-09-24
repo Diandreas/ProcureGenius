@@ -15,7 +15,9 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(wmic process where processid=25236 delete:*)",
-      "Bash(if exist \"node_modules\\.vite\" rd /s /q \"node_modules\\.vite\")"
+      "Bash(if exist \"node_modules\\.vite\" rd /s /q \"node_modules\\.vite\")",
+      "Bash(git checkout:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
