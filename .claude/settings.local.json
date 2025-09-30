@@ -17,7 +17,8 @@
       "Bash(wmic process where processid=25236 delete:*)",
       "Bash(if exist \"node_modules\\.vite\" rd /s /q \"node_modules\\.vite\")",
       "Bash(git checkout:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(python -c \"\nwith open(r''d:\\project\\BFMa\\ProcureGenius\\apps\\ai_assistant\\services.py'', ''w'', encoding=''utf-8'') as f:\n    f.write(''''''\"\"\"\"\"\"\nService d intégration avec Mistral AI avec function calling natif\n\"\"\"\"\"\"\nimport os\nimport json\nfrom typing import Dict, List, Any, Optional\nfrom mistralai import Mistral\nfrom django.conf import settings\nfrom django.core.cache import cache\nfrom .action_manager import action_manager\nimport logging\n\nlogger = logging.getLogger(__name__)\n\n\nclass MistralService:\n    pass  # Placeholder\n\nclass ActionExecutor:\n    pass  # Placeholder\n'''''')\nprint(''File created successfully'')\n\")"
     ],
     "deny": [],
     "ask": []
