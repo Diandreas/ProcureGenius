@@ -115,7 +115,10 @@ export const aiChatAPI = {
   getConversation: (id) => api.get(`/ai/conversations/${id}/`),
   deleteConversation: (id) => api.delete(`/ai/conversations/${id}/`),
   analyzeDocument: (data) => api.post('/ai/analyze-document/', data),
-  getQuickActions: () => api.get('/ai/quick-actions/'),
+  getQuickActions: (category = null) => {
+    const params = category ? { category } : {};
+    return api.get('/ai/quick-actions/', { params });
+  },
 };
 
 export default api;

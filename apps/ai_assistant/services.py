@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 from mistralai import Mistral
 from django.conf import settings
 from django.core.cache import cache
+from .action_manager import action_manager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -235,15 +236,29 @@ class ActionExecutor:
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
         """Exécute une action avec les paramètres donnés"""
+        # Valider l'action et ses paramètres
+        is_valid, errors = action_manager.validate_action_params(action, params)
+        if not is_valid:
+            return {
+                'success': False,
+                'error': '; '.join(errors)
+            }
+
         if action not in self.actions:
             return {
                 'success': False,
                 'error': f"Action '{action}' non reconnue"
             }
-        
+
         try:
             handler = self.actions[action]
             result = await handler(params, user)
+
+            # Si l'action a réussi, générer les actions de suivi
+            if result.get('success'):
+                success_actions = action_manager.generate_success_actions(action, result.get('data', {}))
+                result['success_actions'] = success_actions
+
             return result
         except Exception as e:
             logger.error(f"Action execution error: {e}")
@@ -272,7 +287,10 @@ class ActionExecutor:
                 'message': f"Fournisseur '{supplier.name}' créé avec succès",
                 'data': {
                     'id': str(supplier.id),
-                    'name': supplier.name
+                    'name': supplier.name,
+                    'contact_person': supplier.contact_person,
+                    'email': supplier.email,
+                    'entity_type': 'supplier'
                 }
             }
         except Exception as e:
@@ -335,7 +353,9 @@ class ActionExecutor:
                 'message': f"Facture '{invoice.invoice_number}' créée avec succès",
                 'data': {
                     'id': str(invoice.id),
-                    'invoice_number': invoice.invoice_number
+                    'invoice_number': invoice.invoice_number,
+                    'client_name': client.name,
+                    'entity_type': 'invoice'
                 }
             }
         except Exception as e:

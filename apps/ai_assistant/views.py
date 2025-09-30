@@ -8,6 +8,7 @@ from .models import Conversation, Message
 from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer
 from .services import MistralService, ActionExecutor
 from .ocr_service import OCRService
+from .action_manager import action_manager
 import asyncio
 import logging
 
@@ -373,42 +374,53 @@ class DocumentAnalysisView(APIView):
 
 
 class QuickActionsView(APIView):
-    """Actions rapides prédéfinies"""
+    """Actions rapides prédéfinies depuis la configuration JSON"""
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         """Retourner les actions rapides disponibles"""
-        actions = [
-            {
-                'id': 'create_invoice',
-                'title': 'Créer une facture',
-                'icon': 'receipt',
-                'prompt': 'Je veux créer une nouvelle facture'
-            },
-            {
-                'id': 'create_po',
-                'title': 'Créer un bon de commande',
-                'icon': 'shopping_cart',
-                'prompt': 'Je veux créer un nouveau bon de commande'
-            },
-            {
-                'id': 'add_supplier',
-                'title': 'Ajouter un fournisseur',
-                'icon': 'business',
-                'prompt': 'Je veux ajouter un nouveau fournisseur'
-            },
-            {
-                'id': 'view_stats',
-                'title': 'Voir les statistiques',
-                'icon': 'analytics',
-                'prompt': 'Montre-moi les statistiques du mois'
-            },
-            {
-                'id': 'scan_document',
-                'title': 'Scanner un document',
-                'icon': 'document_scanner',
-                'prompt': 'Je veux scanner et ajouter un document'
-            }
-        ]
-        
-        return Response(actions)
+        # Récupérer la catégorie depuis les paramètres de requête
+        category = request.GET.get('category')
+
+        # Obtenir les actions configurables
+        available_actions = action_manager.get_available_actions(category)
+
+        # Convertir en format compatible avec le frontend
+        quick_actions = []
+        for action in available_actions:
+            # Créer un prompt basé sur la configuration
+            prompt = action_manager.create_ai_prompt(
+                action['id'],
+                'extract',
+                action_name=action['name']
+            )
+            if not prompt:
+                prompt = f"Je veux {action['name'].lower()}"
+
+            quick_actions.append({
+                'id': action['id'],
+                'title': action['name'],
+                'icon': action['icon'],
+                'prompt': prompt,
+                'description': action['description'],
+                'category': action['category']
+            })
+
+        # Ajouter les réponses rapides contextuelles si une catégorie est spécifiée
+        if category:
+            quick_responses = action_manager.get_quick_responses(category)
+            for response in quick_responses:
+                quick_actions.append({
+                    'id': f'quick_response_{len(quick_actions)}',
+                    'title': response,
+                    'icon': 'chat',
+                    'prompt': response,
+                    'category': category
+                })
+
+        return Response({
+            'actions': quick_actions,
+            'total': len(quick_actions),
+            'category': category,
+            'summary': action_manager.get_action_summary()
+        })

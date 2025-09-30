@@ -1,0 +1,293 @@
+{
+  "actions": {
+    "create_supplier": {
+      "name": "Créer un fournisseur",
+      "description": "Crée un nouveau fournisseur dans le système",
+      "icon": "business",
+      "category": "suppliers",
+      "required_params": ["name"],
+      "optional_params": ["contact_person", "email", "phone", "address", "city", "website", "notes"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Fournisseur '{name}' créé avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/suppliers/{id}",
+          "label": "Voir le fournisseur"
+        },
+        {
+          "type": "quick_action",
+          "label": "Modifier",
+          "action": "edit_supplier",
+          "params": {"id": "{id}"}
+        },
+        {
+          "type": "refresh_data",
+          "target": "suppliers_list"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait les informations du fournisseur : nom (obligatoire), contact, email, téléphone, adresse, site web",
+        "confirm": "Voulez-vous créer le fournisseur '{name}' avec ces informations ?"
+      }
+    },
+
+    "create_invoice": {
+      "name": "Créer une facture",
+      "description": "Crée une nouvelle facture",
+      "icon": "receipt",
+      "category": "invoices",
+      "required_params": ["client_name", "description"],
+      "optional_params": ["amount", "due_date", "items", "tax_rate"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Facture #{invoice_number} créée avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/invoices/{id}",
+          "label": "Voir la facture"
+        },
+        {
+          "type": "quick_action",
+          "label": "Ajouter des articles",
+          "action": "add_invoice_items",
+          "params": {"invoice_id": "{id}"}
+        },
+        {
+          "type": "quick_action",
+          "label": "Envoyer au client",
+          "action": "send_invoice",
+          "params": {"invoice_id": "{id}"}
+        },
+        {
+          "type": "file_action",
+          "label": "Télécharger PDF",
+          "url": "/api/v1/invoices/{id}/pdf/"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait : nom du client (obligatoire), description, montant, date d'échéance, articles si mentionnés",
+        "confirm": "Créer une facture pour '{client_name}' de {amount}€ ?"
+      }
+    },
+
+    "create_purchase_order": {
+      "name": "Créer un bon de commande",
+      "description": "Crée un nouveau bon de commande",
+      "icon": "shopping_cart",
+      "category": "purchase_orders",
+      "required_params": ["supplier_name", "description"],
+      "optional_params": ["total_amount", "delivery_date", "items", "notes"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Bon de commande #{po_number} créé avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/purchase-orders/{id}",
+          "label": "Voir le bon de commande"
+        },
+        {
+          "type": "quick_action",
+          "label": "Ajouter des articles",
+          "action": "add_po_items",
+          "params": {"po_id": "{id}"}
+        },
+        {
+          "type": "quick_action",
+          "label": "Envoyer au fournisseur",
+          "action": "send_purchase_order",
+          "params": {"po_id": "{id}"}
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait : nom du fournisseur, description, montant total, date de livraison, articles",
+        "confirm": "Créer un BC pour '{supplier_name}' de {total_amount}€ ?"
+      }
+    },
+
+    "search_supplier": {
+      "name": "Rechercher un fournisseur",
+      "description": "Recherche des fournisseurs par nom, email ou contact",
+      "icon": "search",
+      "category": "suppliers",
+      "required_params": ["query"],
+      "optional_params": ["status", "limit"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "supplier_list"
+        },
+        {
+          "type": "quick_actions_per_result",
+          "actions": ["view_supplier", "edit_supplier", "create_po_with_supplier"]
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Détermine les critères de recherche : nom, email, ou personne de contact",
+        "results": "Voici les fournisseurs trouvés correspondant à '{query}'"
+      }
+    },
+
+    "add_invoice_items": {
+      "name": "Ajouter des articles à la facture",
+      "description": "Ajoute des articles/services à une facture existante",
+      "icon": "add_shopping_cart",
+      "category": "invoices",
+      "required_params": ["invoice_id", "items"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "{count} article(s) ajouté(s) à la facture"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/invoices/{invoice_id}",
+          "label": "Voir la facture mise à jour"
+        },
+        {
+          "type": "refresh_data",
+          "target": "invoice_details"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait les articles : description, quantité, prix unitaire pour chaque article",
+        "confirm": "Ajouter {count} article(s) à la facture ?"
+      }
+    },
+
+    "send_invoice": {
+      "name": "Envoyer une facture",
+      "description": "Envoie une facture par email au client",
+      "icon": "email",
+      "category": "invoices",
+      "required_params": ["invoice_id"],
+      "optional_params": ["email_message", "send_copy"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Facture envoyée avec succès au client"
+        },
+        {
+          "type": "update_status",
+          "target": "invoice",
+          "status": "sent"
+        }
+      ]
+    },
+
+    "get_statistics": {
+      "name": "Afficher les statistiques",
+      "description": "Affiche les statistiques de l'entreprise",
+      "icon": "analytics",
+      "category": "dashboard",
+      "required_params": ["period"],
+      "optional_params": ["category", "detailed"],
+      "success_actions": [
+        {
+          "type": "display_stats",
+          "template": "dashboard_stats"
+        },
+        {
+          "type": "chart_display",
+          "charts": ["revenue_chart", "suppliers_chart"]
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Détermine la période : aujourd'hui, cette semaine, ce mois, cette année",
+        "results": "Voici les statistiques pour {period}"
+      }
+    },
+
+    "analyze_document": {
+      "name": "Analyser un document",
+      "description": "Analyse un document scanné (facture, BC, etc.)",
+      "icon": "document_scanner",
+      "category": "documents",
+      "required_params": ["document_type"],
+      "optional_params": ["auto_create"],
+      "success_actions": [
+        {
+          "type": "display_analysis",
+          "template": "document_analysis"
+        },
+        {
+          "type": "auto_create_option",
+          "label": "Créer automatiquement",
+          "depends_on": "document_type"
+        }
+      ]
+    }
+  },
+
+  "workflows": {
+    "new_client_onboarding": {
+      "name": "Intégration nouveau client",
+      "steps": [
+        {"action": "create_client", "required": true},
+        {"action": "create_invoice", "optional": true},
+        {"action": "send_invoice", "optional": true}
+      ]
+    },
+
+    "supplier_management": {
+      "name": "Gestion complète fournisseur",
+      "steps": [
+        {"action": "create_supplier", "required": true},
+        {"action": "create_purchase_order", "optional": true},
+        {"action": "send_purchase_order", "optional": true}
+      ]
+    }
+  },
+
+  "ui_animations": {
+    "thinking": {
+      "type": "typing_dots",
+      "messages": [
+        "Je réfléchis...",
+        "Analyse en cours...",
+        "Traitement de votre demande...",
+        "Recherche des informations..."
+      ]
+    },
+    "processing": {
+      "type": "progress_bar",
+      "steps": [
+        "Validation des données",
+        "Création de l'entité",
+        "Mise à jour de la base",
+        "Finalisation"
+      ]
+    },
+    "success": {
+      "type": "celebration",
+      "duration": 2000
+    }
+  },
+
+  "quick_responses": {
+    "suppliers": [
+      "Créer un nouveau fournisseur",
+      "Rechercher un fournisseur",
+      "Voir les statistiques fournisseurs",
+      "Exporter la liste des fournisseurs"
+    ],
+    "invoices": [
+      "Créer une nouvelle facture",
+      "Voir les factures impayées",
+      "Envoyer des relances",
+      "Statistiques de revenus"
+    ],
+    "purchase_orders": [
+      "Créer un bon de commande",
+      "Voir les commandes en attente",
+      "Suivre les livraisons",
+      "Statistiques d'achats"
+    ]
+  }
+}

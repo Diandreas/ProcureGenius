@@ -38,6 +38,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { aiChatAPI } from '../services/api';
 import { formatDateTime } from '../utils/formatters';
+import ChatMessage from './AI/ChatMessage';
+import ThinkingAnimation from './AI/ThinkingAnimation';
 
 /**
  * Assistant IA flottant - MODULE 3 IA Conversationnelle
@@ -58,6 +60,8 @@ function FloatingAIAssistant({
   const [loading, setLoading] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
   const [quickActions, setQuickActions] = useState([]);
+  const [thinkingType, setThinkingType] = useState('typing');
+  const [processingStep, setProcessingStep] = useState(null);
 
   // Messages d'accueil contextuels
   const getWelcomeMessage = () => {
@@ -75,7 +79,7 @@ function FloatingAIAssistant({
     if (isOpen) {
       fetchQuickActions();
     }
-  }, [isOpen]);
+  }, [isOpen, contextData?.page]);
 
   useEffect(() => {
     scrollToBottom();
@@ -87,8 +91,13 @@ function FloatingAIAssistant({
 
   const fetchQuickActions = async () => {
     try {
-      const response = await aiChatAPI.getQuickActions();
-      setQuickActions(response.data);
+      // Utiliser la catégorie selon le contexte de la page
+      const category = contextData?.page;
+      const response = await aiChatAPI.getQuickActions(category);
+
+      // Extraire les actions du nouveau format de réponse
+      const actions = response.data.actions || response.data || [];
+      setQuickActions(actions);
     } catch (error) {
       console.error('Error fetching quick actions:', error);
     }
@@ -113,25 +122,39 @@ function FloatingAIAssistant({
     setMessage('');
     setLoading(true);
     setShowQuickActions(false);
+    setThinkingType('typing');
 
     try {
+      setThinkingType('analyzing');
+      setProcessingStep('Envoi à l\'IA...');
+
       const response = await aiChatAPI.sendMessage({
         message: contextualMessage,
         context: contextData,
       });
 
       const aiMessage = response.data.message;
+
+      // Ajouter les actions de suivi si présentes
+      if (response.data.action_result && response.data.action_result.success_actions) {
+        aiMessage.success_actions = response.data.action_result.success_actions;
+      }
+
       setMessages(prev => [...prev, aiMessage]);
 
       // Exécuter callback si action réussie
       if (response.data.action_result && response.data.action_result.success) {
-        enqueueSnackbar(
-          response.data.action_result.message || 'Action exécutée avec succès',
-          { variant: 'success' }
-        );
-        if (onActionExecuted) {
-          onActionExecuted(response.data.action_result);
-        }
+        // Montrer animation de succès
+        setThinkingType('celebration');
+        setTimeout(() => {
+          enqueueSnackbar(
+            response.data.action_result.message || 'Action exécutée avec succès',
+            { variant: 'success' }
+          );
+          if (onActionExecuted) {
+            onActionExecuted(response.data.action_result);
+          }
+        }, 500);
       } else if (response.data.action_result && !response.data.action_result.success) {
         enqueueSnackbar(
           response.data.action_result.error || 'Erreur lors de l\'exécution',
@@ -147,12 +170,32 @@ function FloatingAIAssistant({
   };
 
   const handleQuickAction = (action) => {
-    setMessage(action.prompt);
+    if (typeof action === 'string') {
+      // Quick action text
+      setMessage(action);
+    } else if (action.prompt) {
+      // Action config object
+      setMessage(action.prompt);
+    } else if (action.type === 'redirect_option') {
+      // Redirect action
+      window.open(action.url, '_blank');
+      return;
+    } else if (action.type === 'file_action') {
+      // File download action
+      window.open(action.url, '_blank');
+      return;
+    }
+
     setShowQuickActions(false);
     // Auto-send for quick actions
     setTimeout(() => {
       handleSendMessage();
     }, 100);
+  };
+
+  const handleMessageFeedback = (messageId, feedback) => {
+    // TODO: Implémenter le feedback des messages
+    console.log('Message feedback:', messageId, feedback);
   };
 
   const getActionIcon = (actionId) => {
@@ -273,54 +316,26 @@ function FloatingAIAssistant({
                   )}
                 </Box>
               ) : (
-                <List dense>
+                <Box>
                   {messages.map((msg, index) => (
-                    <ListItem
+                    <ChatMessage
                       key={index}
-                      sx={{
-                        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                        alignItems: 'flex-start',
-                        py: 0.5,
-                      }}
-                    >
-                      <ListItemAvatar sx={{ minWidth: 40 }}>
-                        <Avatar sx={{
-                          bgcolor: msg.role === 'user' ? 'secondary.main' : 'primary.main',
-                          width: 32,
-                          height: 32,
-                        }}>
-                          {msg.role === 'user' ? <Person sx={{ fontSize: 18 }} /> : <SmartToy sx={{ fontSize: 18 }} />}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <Paper
-                        elevation={1}
-                        sx={{
-                          p: 1.5,
-                          maxWidth: '85%',
-                          bgcolor: msg.role === 'user' ? 'secondary.light' : 'background.paper',
-                        }}
-                      >
-                        <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-                          {msg.content}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                          {formatDateTime(msg.created_at)}
-                        </Typography>
-                      </Paper>
-                    </ListItem>
+                      message={msg}
+                      onQuickAction={handleQuickAction}
+                      onFeedback={handleMessageFeedback}
+                    />
                   ))}
+
                   {loading && (
-                    <ListItem sx={{ py: 0.5 }}>
-                      <ListItemAvatar sx={{ minWidth: 40 }}>
-                        <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                          <SmartToy sx={{ fontSize: 18 }} />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <CircularProgress size={20} />
-                    </ListItem>
+                    <ThinkingAnimation
+                      type={thinkingType}
+                      message={processingStep}
+                      duration={0}
+                    />
                   )}
+
                   <div ref={messagesEndRef} />
-                </List>
+                </Box>
               )}
             </Box>
 
