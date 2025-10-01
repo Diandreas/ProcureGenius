@@ -5075,3 +5075,81 @@ TypeError: ActionManager.create_ai_prompt() got multiple values for argument 'ac
 "OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
 "POST /api/v1/ai/chat/ HTTP/1.1" 200 873
 "GET /api/v1/ai/conversations/ HTTP/1.1" 200 1223
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1223
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1223
+Internal Server Error: /api/v1/ai/quick-actions/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py", line 392, in get
+    prompt = action_manager.create_ai_prompt(
+        action['id'],
+        'extract',
+        action_name=action['name']
+    )
+TypeError: ActionManager.create_ai_prompt() got multiple values for argument 'action_name'
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 500 107788
+Internal Server Error: /api/v1/ai/quick-actions/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py", line 392, in get
+    prompt = action_manager.create_ai_prompt(
+        action['id'],
+        'extract',
+        action_name=action['name']
+    )
+TypeError: ActionManager.create_ai_prompt() got multiple values for argument 'action_name'
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 500 107788
+"OPTIONS /api/v1/ai/conversations/4aa79c32-7d21-4430-a803-c37ff0f4ce76/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/4aa79c32-7d21-4430-a803-c37ff0f4ce76/ HTTP/1.1" 200 6407
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader

@@ -23,7 +23,6 @@ class MistralService:
         
         self.client = Mistral(api_key=api_key)
         self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
-        self.tools = self._define_tools()
         
     def create_system_prompt(self) -> str:
         """Crée le prompt système pour l'assistant"""
@@ -48,135 +47,6 @@ Format des commandes :
 
 Réponds toujours en français et sois professionnel mais amical."""
 
-    def _define_tools(self) -> List[Dict]:
-        """Définit tous les tools/functions disponibles pour Mistral"""
-        return [
-            {
-                "type": "function",
-                "function": {
-                    "name": "create_supplier",
-                    "description": "Crée un nouveau fournisseur dans le système",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "name": {"type": "string", "description": "Nom du fournisseur (obligatoire)"},
-                            "contact_person": {"type": "string", "description": "Nom de la personne de contact"},
-                            "email": {"type": "string", "description": "Adresse email du fournisseur"},
-                            "phone": {"type": "string", "description": "Numéro de téléphone"},
-                            "address": {"type": "string", "description": "Adresse complète"},
-                            "city": {"type": "string", "description": "Ville"},
-                            "website": {"type": "string", "description": "Site web"},
-                            "notes": {"type": "string", "description": "Notes additionnelles"}
-                        },
-                        "required": ["name"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_supplier",
-                    "description": "Recherche des fournisseurs par nom, contact ou email",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {"type": "string", "description": "Terme de recherche"},
-                            "status": {
-                                "type": "string",
-                                "enum": ["active", "pending", "inactive"],
-                                "description": "Filtrer par statut"
-                            },
-                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 5)"}
-                        },
-                        "required": ["query"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "create_invoice",
-                    "description": "Crée une nouvelle facture pour un client",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "client_name": {"type": "string", "description": "Nom du client"},
-                            "description": {"type": "string", "description": "Description de la facture"},
-                            "amount": {"type": "number", "description": "Montant total"},
-                            "due_date": {"type": "string", "description": "Date d'échéance (format: YYYY-MM-DD)"},
-                            "items": {
-                                "type": "array",
-                                "description": "Liste des articles/services",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "description": {"type": "string"},
-                                        "quantity": {"type": "number"},
-                                        "unit_price": {"type": "number"}
-                                    }
-                                }
-                            },
-                            "tax_rate": {"type": "number", "description": "Taux de TVA (défaut: 20)"}
-                        },
-                        "required": ["client_name", "description"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "create_purchase_order",
-                    "description": "Crée un nouveau bon de commande pour un fournisseur",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "supplier_name": {"type": "string", "description": "Nom du fournisseur"},
-                            "description": {"type": "string", "description": "Description de la commande"},
-                            "total_amount": {"type": "number", "description": "Montant total"},
-                            "delivery_date": {"type": "string", "description": "Date de livraison souhaitée (YYYY-MM-DD)"},
-                            "items": {
-                                "type": "array",
-                                "description": "Liste des articles commandés",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "description": {"type": "string"},
-                                        "quantity": {"type": "number"},
-                                        "unit_price": {"type": "number"}
-                                    }
-                                }
-                            },
-                            "notes": {"type": "string", "description": "Notes pour le fournisseur"}
-                        },
-                        "required": ["supplier_name", "description"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_statistics",
-                    "description": "Affiche les statistiques de l'entreprise",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "period": {
-                                "type": "string",
-                                "enum": ["today", "week", "month", "year"],
-                                "description": "Période des statistiques"
-                            },
-                            "category": {
-                                "type": "string",
-                                "enum": ["suppliers", "invoices", "revenue", "purchase_orders", "all"],
-                                "description": "Catégorie de statistiques"
-                            }
-                        },
-                        "required": ["period"]
-                    }
-                }
-            }
-        ]
-
     def parse_ai_response(self, response: str) -> tuple[str, Optional[Dict]]:
         """Parse la réponse de l'IA pour extraire le texte et les actions"""
         # Chercher du JSON dans la réponse
@@ -200,12 +70,20 @@ Réponds toujours en français et sois professionnel mais amical."""
         
         return response, None
 
-    async def chat(self,
-                   message: str,
+    async def chat(self, 
+                   message: str, 
                    conversation_history: List[Dict] = None,
                    user_context: Dict = None) -> Dict[str, Any]:
         """
-        Envoie un message à Mistral avec function calling et retourne la réponse
+        Envoie un message à Mistral et retourne la réponse
+        
+        Args:
+            message: Message de l'utilisateur
+            conversation_history: Historique de la conversation
+            user_context: Contexte utilisateur (entreprise, permissions, etc.)
+            
+        Returns:
+            Dict contenant la réponse et éventuellement une action à exécuter
         """
         try:
             # Construire les messages
@@ -215,55 +93,42 @@ Réponds toujours en français et sois professionnel mais amical."""
 
             # Ajouter l'historique si disponible
             if conversation_history:
-                for msg in conversation_history[-10:]:
+                for msg in conversation_history[-10:]:  # Garder les 10 derniers messages
                     messages.append({
                         "role": msg.get('role', 'user'),
-                        "content": msg.get('content', '') if msg.get('content') else None,
-                        "tool_calls": msg.get('tool_calls') if msg.get('tool_calls') else None
+                        "content": msg.get('content', '')
                     })
 
             # Ajouter le message actuel
             messages.append({"role": "user", "content": message})
-
-            # Appeler Mistral avec tools
+            
+            # Appeler Mistral
             response = self.client.chat.complete(
                 model=self.model,
                 messages=messages,
-                tools=self.tools,
-                tool_choice="auto",
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=1000
             )
-
+            
             # Extraire la réponse
-            choice = response.choices[0]
-            message_response = choice.message
-
+            ai_response = response.choices[0].message.content
+            
+            # Parser pour les actions
+            text_response, action_data = self.parse_ai_response(ai_response)
+            
             result = {
-                'success': True,
-                'response': message_response.content if message_response.content else "",
-                'tool_calls': None,
-                'finish_reason': choice.finish_reason
+                'response': text_response,
+                'action': action_data,
+                'success': True
             }
-
-            # Si l'IA a décidé d'appeler des fonctions
-            if message_response.tool_calls:
-                result['tool_calls'] = [
-                    {
-                        'id': tool_call.id,
-                        'function': tool_call.function.name,
-                        'arguments': json.loads(tool_call.function.arguments)
-                    }
-                    for tool_call in message_response.tool_calls
-                ]
-
+            
             return result
-
+            
         except Exception as e:
             logger.error(f"Mistral API error: {e}")
             return {
                 'response': "Désolé, j'ai rencontré une erreur. Veuillez réessayer.",
-                'tool_calls': None,
+                'action': None,
                 'success': False,
                 'error': str(e)
             }

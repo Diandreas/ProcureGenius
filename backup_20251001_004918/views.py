@@ -73,53 +73,16 @@ class ChatView(APIView):
             ai_msg = Message.objects.create(
                 conversation=conversation,
                 role='assistant',
-                content=result['response'],
-                tool_calls=result.get('tool_calls')
+                content=result['response']
             )
-
-            # Exécuter les tool_calls si présents
-            action_results = []
-            if result.get('tool_calls'):
-                executor = ActionExecutor()
-
-                for tool_call in result['tool_calls']:
-                    try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-
-                        action_result = loop.run_until_complete(
-                            executor.execute(
-                                action=tool_call['function'],
-                                params=tool_call['arguments'],
-                                user=request.user
-                            )
-                        )
-                        loop.close()
-
-                        action_results.append({
-                            'tool_call_id': tool_call['id'],
-                            'function': tool_call['function'],
-                            'result': action_result
-                        })
-
-                    except Exception as e:
-                        logger.error(f"Tool call execution error: {e}")
-                        action_results.append({
-                            'tool_call_id': tool_call['id'],
-                            'function': tool_call['function'],
-                            'result': {
-                                'success': False,
-                                'error': str(e)
-                            }
-                        })
-
-            # Exécuter l'action legacy si nécessaire (compatibilité)
+            
+            # Exécuter l'action si nécessaire
             action_result = None
             if result.get('action'):
                 executor = ActionExecutor()
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-
+                
                 try:
                     action_result = loop.run_until_complete(
                         executor.execute(
@@ -130,7 +93,7 @@ class ChatView(APIView):
                     )
                 finally:
                     loop.close()
-
+                
                 # Ajouter le résultat de l'action à la conversation
                 if action_result:
                     action_msg = f"\n\n[Action exécutée : {result['action']['action']}]"
@@ -138,7 +101,7 @@ class ChatView(APIView):
                         action_msg += f"\n✓ {action_result.get('message', 'Succès')}"
                     else:
                         action_msg += f"\n✗ Erreur : {action_result.get('error', 'Erreur inconnue')}"
-
+                    
                     ai_msg.content += action_msg
                     ai_msg.save()
             
@@ -149,8 +112,7 @@ class ChatView(APIView):
             response_data = {
                 'conversation_id': str(conversation.id),
                 'message': MessageSerializer(ai_msg).data,
-                'action_result': action_result,
-                'action_results': action_results if action_results else None
+                'action_result': action_result
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
@@ -429,7 +391,8 @@ class QuickActionsView(APIView):
             # Créer un prompt basé sur la configuration
             prompt = action_manager.create_ai_prompt(
                 action['id'],
-                'extract'
+                'extract',
+                action_name=action['name']
             )
             if not prompt:
                 prompt = f"Je veux {action['name'].lower()}"

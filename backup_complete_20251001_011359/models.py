@@ -44,7 +44,6 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Métadonnées optionnelles
-    tool_calls = models.JSONField(blank=True, null=True, verbose_name=_("Function Calls"))
     metadata = models.JSONField(blank=True, null=True, verbose_name=_("Métadonnées"))
 
     class Meta:
