@@ -4,10 +4,18 @@ from .models import Conversation, Message, DocumentScan
 
 class MessageSerializer(serializers.ModelSerializer):
     """Serializer pour les messages"""
+    action_results = serializers.SerializerMethodField()
+
     class Meta:
         model = Message
-        fields = ['id', 'role', 'content', 'created_at', 'metadata']
+        fields = ['id', 'role', 'content', 'created_at', 'metadata', 'tool_calls', 'action_results']
         read_only_fields = ['id', 'created_at']
+
+    def get_action_results(self, obj):
+        """Récupère les action_results depuis metadata"""
+        if obj.metadata and isinstance(obj.metadata, dict):
+            return obj.metadata.get('action_results', [])
+        return []
 
 
 class ConversationSerializer(serializers.ModelSerializer):

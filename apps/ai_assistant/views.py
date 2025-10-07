@@ -114,12 +114,13 @@ class ChatView(APIView):
                         })
                         final_response += f"\n\n✗ Erreur lors de l'exécution: {str(e)}"
 
-            # Sauvegarder la réponse de l'IA avec les résultats d'actions
+            # Sauvegarder la réponse de l'IA avec les résultats d'actions dans metadata
             ai_msg = Message.objects.create(
                 conversation=conversation,
                 role='assistant',
                 content=final_response,
-                tool_calls=result.get('tool_calls')
+                tool_calls=result.get('tool_calls'),
+                metadata={'action_results': action_results} if action_results else None
             )
 
             # Exécuter l'action legacy si nécessaire (compatibilité)

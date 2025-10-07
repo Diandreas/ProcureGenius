@@ -422,19 +422,55 @@ class ActionExecutor:
             }
     
     async def create_supplier(self, params: Dict, user) -> Dict:
-        """Crée un nouveau fournisseur"""
+        """Crée un nouveau fournisseur après vérification des doublons"""
         from apps.suppliers.models import Supplier
         from asgiref.sync import sync_to_async
+        from .entity_matcher import entity_matcher
 
         try:
-            # Utiliser sync_to_async pour les opérations Django ORM
+            name = params.get('name')
+            email = params.get('email', '')
+            phone = params.get('phone', '')
+
+            # Vérifier les doublons potentiels
+            @sync_to_async
+            def check_similar():
+                return entity_matcher.find_similar_suppliers(
+                    name=name,
+                    email=email if email else None,
+                    phone=phone if phone else None
+                )
+
+            similar_suppliers = await check_similar()
+
+            # Si des fournisseurs similaires sont trouvés
+            if similar_suppliers:
+                # Retourner les similarités pour confirmation
+                return {
+                    'success': False,
+                    'error': 'similar_entities_found',
+                    'similar_entities': [
+                        {
+                            'id': str(supplier.id),
+                            'name': supplier.name,
+                            'email': supplier.email,
+                            'phone': supplier.phone,
+                            'similarity': score,
+                            'reason': entity_matcher.format_match_reason(reason)
+                        }
+                        for supplier, score, reason in similar_suppliers[:3]
+                    ],
+                    'message': entity_matcher.create_similarity_message('supplier', similar_suppliers)
+                }
+
+            # Aucun doublon, créer le fournisseur
             @sync_to_async
             def create_supplier_sync():
                 return Supplier.objects.create(
-                    name=params.get('name'),
+                    name=name,
                     contact_person=params.get('contact_person', ''),
-                    email=params.get('email', ''),
-                    phone=params.get('phone', ''),
+                    email=email,
+                    phone=phone,
                     address=params.get('address', ''),
                     city=params.get('city', ''),
                     status='pending'
@@ -454,6 +490,9 @@ class ActionExecutor:
                 }
             }
         except Exception as e:
+            import traceback
+            logger.error(f"Error creating supplier: {e}")
+            logger.error(traceback.format_exc())
             return {
                 'success': False,
                 'error': str(e)
@@ -517,13 +556,30 @@ class ActionExecutor:
                     if clients.exists():
                         client = clients.first()
 
-                # Si pas trouvé, créer un nouveau client
+                # Si pas trouvé, vérifier les clients similaires
                 if not client:
+                    from .entity_matcher import entity_matcher
+
                     # Extraire prénom et nom
                     name_parts = client_name.split(' ', 1)
                     first_name = name_parts[0]
                     last_name = name_parts[1] if len(name_parts) > 1 else ''
 
+                    # Chercher des clients similaires
+                    similar_clients = entity_matcher.find_similar_clients(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=client_email if client_email else None,
+                        company=params.get('client_company', client_name)
+                    )
+
+                    # Si des clients similaires existent, demander confirmation
+                    if similar_clients:
+                        raise ValueError(
+                            entity_matcher.create_similarity_message('client', similar_clients)
+                        )
+
+                    # Créer un nouveau client
                     # Générer un username unique
                     username = f"{first_name.lower()}.{last_name.lower()}".replace(' ', '')
                     base_username = username

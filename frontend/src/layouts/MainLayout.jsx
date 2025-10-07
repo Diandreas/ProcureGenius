@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
@@ -81,6 +81,19 @@ function MainLayout() {
     const currentPath = location.pathname;
 
     switch (currentPath) {
+      case '/dashboard':
+        return {
+          title: 'Tableau de bord'
+        };
+      case '/suppliers':
+        return {
+          title: 'Fournisseurs',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau fournisseur',
+            icon: <Add />,
+            onClick: () => navigate('/suppliers/new')
+          }
+        };
       case '/purchase-orders':
         return {
           title: 'Bons de commande',
@@ -129,10 +142,19 @@ function MainLayout() {
             }
           }
         };
+      case '/settings':
+        return {
+          title: 'Paramètres'
+        };
+      default:
+        // Fallback pour les routes non définies
+        return {
+          title: 'ProcureGenius'
+        };
     }
   };
 
-  const contextualActions = getContextualActions();
+  const contextualActions = useMemo(() => getContextualActions(), [location.pathname, isMobile]);
 
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -238,10 +260,10 @@ function MainLayout() {
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
-              {contextualActions.title}
+              {contextualActions?.title || 'ProcureGenius'}
             </Typography>
           </Box>
-          {contextualActions.action && (
+          {contextualActions?.action && (
             <Button
               variant="contained"
               startIcon={contextualActions.action.icon}

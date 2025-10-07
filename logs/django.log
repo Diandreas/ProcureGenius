@@ -621,3 +621,374 @@ Not Found: /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/pdf/
 "GET /api/v1/ai/conversations/e8b7c7e1-ac3a-49f0-9676-e06d21890430/ HTTP/1.1" 200 3000
 "OPTIONS /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 0
 "GET /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 2892
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 4079
+"GET /api/v1/invoices/ HTTP/1.1" 200 4079
+"OPTIONS /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/ HTTP/1.1" 200 776
+"GET /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/ HTTP/1.1" 200 776
+"OPTIONS /api/v1/clients/undefined/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/undefined/ HTTP/1.1" 200 0
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/ HTTP/1.1" 200 4079
+"GET /api/v1/invoices/ HTTP/1.1" 200 4079
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 2454
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1235
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3669
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+Nouvel utilisateur créé: ralph.
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1315
+"OPTIONS /api/v1/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/ HTTP/1.1" 200 802
+"GET /api/v1/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/ HTTP/1.1" 200 802
+Not Found: /api/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/pdf/
+"POST /api/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/pdf/ HTTP/1.1" 404 7336
+Not Found: /api/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/pdf/
+"POST /api/invoices/5ddc069d-4509-41c8-8ac8-319b085fb4c4/pdf/ HTTP/1.1" 404 7336
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/ HTTP/1.1" 200 4882
+"GET /api/v1/invoices/ HTTP/1.1" 200 4882
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3644
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3644
+"OPTIONS /api/v1/ai/conversations/6e6893b1-3775-4085-b669-ed043a8e968f/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/6e6893b1-3775-4085-b669-ed043a8e968f/ HTTP/1.1" 200 2408
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3644
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3644
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+Mistral API error: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+Full traceback: Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 156, in _connect
+    stream = stream.start_tls(**kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_backends\sync.py", line 154, in start_tls
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 222, in complete
+    http_res = self.do_request(
+        hook_ctx=HookContext(
+    ...<10 lines>...
+        retry_config=retry_config,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 275, in do_request
+    http_res = do()
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 243, in do
+    raise e
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 238, in do
+    http_res = client.send(req, stream=stream)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 411
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 4093
+"OPTIONS /api/v1/ai/conversations/6e6893b1-3775-4085-b669-ed043a8e968f/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/6e6893b1-3775-4085-b669-ed043a8e968f/ HTTP/1.1" 200 2860
+"OPTIONS /api/v1/ai/conversations/7cea3676-b482-4c59-a19a-cbac7bdfb76a/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/7cea3676-b482-4c59-a19a-cbac7bdfb76a/ HTTP/1.1" 200 1060
+Mistral API error: [WinError 10051] Une opération a été tentée sur un réseau impossible à atteindre
+Full traceback: Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10051] Une opération a été tentée sur un réseau impossible à atteindre
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 222, in complete
+    http_res = self.do_request(
+        hook_ctx=HookContext(
+    ...<10 lines>...
+        retry_config=retry_config,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 275, in do_request
+    http_res = do()
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 243, in do
+    raise e
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 238, in do
+    http_res = client.send(req, stream=stream)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10051] Une opération a été tentée sur un réseau impossible à atteindre
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 415
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 756
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 3639
+Internal Server Error: /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/ HTTP/1.1" 500 7050
+Internal Server Error: /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/ HTTP/1.1" 500 7050
+Internal Server Error: /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/pdf/ HTTP/1.1" 500 7050
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 19046
+"OPTIONS /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 956
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 956
+"OPTIONS /api/v1/clients/undefined/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/undefined/ HTTP/1.1" 200 0
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+Not Found: /api/v1/clients/undefined/
+"GET /api/v1/clients/undefined/ HTTP/1.1" 404 25
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 4062
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 4062
+"GET /api/v1/ai/conversations/7cea3676-b482-4c59-a19a-cbac7bdfb76a/ HTTP/1.1" 200 5332
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 956
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/e0e5df45-6654-4970-9a61-df867b3ff9ac/ HTTP/1.1" 200 956
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"GET /api/v1/purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 1325
+"OPTIONS /api/v1/suppliers/undefined/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/undefined/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/undefined/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/undefined/ HTTP/1.1" 200 0
+Not Found: /api/v1/suppliers/undefined/
+Not Found: /api/v1/suppliers/undefined/statistics/
+"GET /api/v1/suppliers/undefined/statistics/ HTTP/1.1" 404 25
+"GET /api/v1/suppliers/undefined/ HTTP/1.1" 404 25
+Not Found: /api/v1/suppliers/undefined/
+Not Found: /api/v1/suppliers/undefined/statistics/
+"GET /api/v1/suppliers/undefined/ HTTP/1.1" 404 25
+"GET /api/v1/suppliers/undefined/statistics/ HTTP/1.1" 404 25
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 381
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 381
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
