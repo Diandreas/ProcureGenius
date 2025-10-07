@@ -5,6 +5,11 @@ import os
 import django
 import sys
 
+# Fix encoding for Windows
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 # Configure Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings')
 django.setup()

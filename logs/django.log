@@ -126,3 +126,104 @@ Mistral API error: API error occurred: Status 400
 "GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
 D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
 Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+Action execution error: You cannot call this from an async context - use a thread or sync_to_async.
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+Not Found: /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/
+"POST /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/ HTTP/1.1" 404 7336
+Not Found: /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/
+"POST /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/ HTTP/1.1" 404 7336
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110

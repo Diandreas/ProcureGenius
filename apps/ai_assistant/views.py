@@ -69,16 +69,10 @@ class ChatView(APIView):
             finally:
                 loop.close()
             
-            # Sauvegarder la réponse de l'IA
-            ai_msg = Message.objects.create(
-                conversation=conversation,
-                role='assistant',
-                content=result['response'],
-                tool_calls=result.get('tool_calls')
-            )
-
-            # Exécuter les tool_calls si présents
+            # Exécuter les tool_calls si présents AVANT de sauvegarder la réponse
             action_results = []
+            final_response = result['response']
+
             if result.get('tool_calls'):
                 executor = ActionExecutor()
 
@@ -102,6 +96,12 @@ class ChatView(APIView):
                             'result': action_result
                         })
 
+                        # Ajouter le résultat à la réponse finale
+                        if action_result.get('success'):
+                            final_response += f"\n\n✓ {action_result.get('message', 'Action exécutée avec succès')}"
+                        else:
+                            final_response += f"\n\n✗ Erreur: {action_result.get('error', 'Erreur inconnue')}"
+
                     except Exception as e:
                         logger.error(f"Tool call execution error: {e}")
                         action_results.append({
@@ -112,6 +112,15 @@ class ChatView(APIView):
                                 'error': str(e)
                             }
                         })
+                        final_response += f"\n\n✗ Erreur lors de l'exécution: {str(e)}"
+
+            # Sauvegarder la réponse de l'IA avec les résultats d'actions
+            ai_msg = Message.objects.create(
+                conversation=conversation,
+                role='assistant',
+                content=final_response,
+                tool_calls=result.get('tool_calls')
+            )
 
             # Exécuter l'action legacy si nécessaire (compatibilité)
             action_result = None

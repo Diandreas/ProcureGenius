@@ -257,6 +257,21 @@ Réponds toujours en français et sois professionnel mais amical."""
                     for tool_call in message_response.tool_calls
                 ]
 
+                # Si pas de contenu textuel, générer un message par défaut
+                if not result['response']:
+                    # Créer un message descriptif basé sur les tool_calls
+                    action_descriptions = {
+                        'create_supplier': "Je vais créer le fournisseur",
+                        'create_invoice': "Je vais créer la facture",
+                        'create_purchase_order': "Je vais créer le bon de commande",
+                        'search_supplier': "Je recherche les fournisseurs",
+                        'get_statistics': "Je récupère les statistiques"
+                    }
+
+                    actions = [action_descriptions.get(tc['function'], f"J'exécute {tc['function']}")
+                              for tc in result['tool_calls']]
+                    result['response'] = " et ".join(actions) + "..."
+
             return result
 
         except Exception as e:
@@ -409,18 +424,24 @@ class ActionExecutor:
     async def create_supplier(self, params: Dict, user) -> Dict:
         """Crée un nouveau fournisseur"""
         from apps.suppliers.models import Supplier
-        
+        from asgiref.sync import sync_to_async
+
         try:
-            supplier = Supplier.objects.create(
-                name=params.get('name'),
-                contact_person=params.get('contact_person', ''),
-                email=params.get('email', ''),
-                phone=params.get('phone', ''),
-                address=params.get('address', ''),
-                city=params.get('city', ''),
-                status='pending'
-            )
-            
+            # Utiliser sync_to_async pour les opérations Django ORM
+            @sync_to_async
+            def create_supplier_sync():
+                return Supplier.objects.create(
+                    name=params.get('name'),
+                    contact_person=params.get('contact_person', ''),
+                    email=params.get('email', ''),
+                    phone=params.get('phone', ''),
+                    address=params.get('address', ''),
+                    city=params.get('city', ''),
+                    status='pending'
+                )
+
+            supplier = await create_supplier_sync()
+
             return {
                 'success': True,
                 'message': f"Fournisseur '{supplier.name}' créé avec succès",
@@ -442,22 +463,27 @@ class ActionExecutor:
         """Recherche des fournisseurs"""
         from apps.suppliers.models import Supplier
         from django.db.models import Q
-        
-        query = params.get('query', '')
-        suppliers = Supplier.objects.filter(
-            Q(name__icontains=query) |
-            Q(contact_person__icontains=query) |
-            Q(email__icontains=query)
-        )[:5]  # Limiter à 5 résultats
-        
-        results = [{
-            'id': str(s.id),
-            'name': s.name,
-            'contact': s.contact_person,
-            'email': s.email,
-            'status': s.status
-        } for s in suppliers]
-        
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_suppliers_sync():
+            query = params.get('query', '')
+            suppliers = Supplier.objects.filter(
+                Q(name__icontains=query) |
+                Q(contact_person__icontains=query) |
+                Q(email__icontains=query)
+            )[:5]  # Limiter à 5 résultats
+
+            return [{
+                'id': str(s.id),
+                'name': s.name,
+                'contact': s.contact_person,
+                'email': s.email,
+                'status': s.status
+            } for s in suppliers]
+
+        results = await search_suppliers_sync()
+
         return {
             'success': True,
             'data': results,
@@ -467,33 +493,42 @@ class ActionExecutor:
     async def create_invoice(self, params: Dict, user) -> Dict:
         """Crée une nouvelle facture"""
         from apps.invoicing.models import Invoice, Client
-        
+        from asgiref.sync import sync_to_async
+
         try:
-            # Trouver ou créer le client
-            client_name = params.get('client_name')
-            client = Client.objects.filter(name=client_name).first()
-            
-            if not client:
-                client = Client.objects.create(
-                    name=client_name,
-                    email=params.get('client_email', ''),
-                    phone=params.get('client_phone', '')
+            @sync_to_async
+            def create_invoice_sync():
+                # Trouver ou créer le client
+                client_name = params.get('client_name')
+                client = Client.objects.filter(name=client_name).first()
+
+                if not client:
+                    client = Client.objects.create(
+                        name=client_name,
+                        email=params.get('client_email', ''),
+                        phone=params.get('client_phone', '')
+                    )
+
+                invoice = Invoice.objects.create(
+                    title=params.get('title', f'Facture pour {client_name}'),
+                    client=client,
+                    description=params.get('description', ''),
+                    created_by=user
                 )
-            
-            invoice = Invoice.objects.create(
-                title=params.get('title', f'Facture pour {client_name}'),
-                client=client,
-                description=params.get('description', ''),
-                created_by=user
-            )
-            
-            return {
-                'success': True,
-                'message': f"Facture '{invoice.invoice_number}' créée avec succès",
-                'data': {
+
+                return {
                     'id': str(invoice.id),
                     'invoice_number': invoice.invoice_number,
-                    'client_name': client.name,
+                    'client_name': client.name
+                }
+
+            result = await create_invoice_sync()
+
+            return {
+                'success': True,
+                'message': f"Facture '{result['invoice_number']}' créée avec succès",
+                'data': {
+                    **result,
                     'entity_type': 'invoice'
                 }
             }
@@ -531,17 +566,22 @@ class ActionExecutor:
         from apps.invoicing.models import Invoice
         from apps.purchase_orders.models import PurchaseOrder
         from django.db.models import Sum
-        
-        stats = {
-            'total_suppliers': Supplier.objects.count(),
-            'active_suppliers': Supplier.objects.filter(status='active').count(),
-            'total_invoices': Invoice.objects.count(),
-            'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
-            'total_revenue': Invoice.objects.filter(status='paid').aggregate(
-                Sum('total_amount')
-            )['total_amount__sum'] or 0
-        }
-        
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_stats_sync():
+            return {
+                'total_suppliers': Supplier.objects.count(),
+                'active_suppliers': Supplier.objects.filter(status='active').count(),
+                'total_invoices': Invoice.objects.count(),
+                'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
+                'total_revenue': Invoice.objects.filter(status='paid').aggregate(
+                    Sum('total_amount')
+                )['total_amount__sum'] or 0
+            }
+
+        stats = await get_stats_sync()
+
         return {
             'success': True,
             'data': stats
