@@ -251,7 +251,7 @@ function AIChat() {
               
               {/* Actions rapides */}
               <Grid container spacing={2} justifyContent="center">
-                {quickActions.map((action) => (
+                {Array.isArray(quickActions) && quickActions.map((action) => (
                   <Grid item key={action.id}>
                     <Card sx={{ width: 150 }}>
                       <CardActionArea onClick={() => handleQuickAction(action)}>

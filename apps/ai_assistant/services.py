@@ -260,12 +260,16 @@ Réponds toujours en français et sois professionnel mais amical."""
             return result
 
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             logger.error(f"Mistral API error: {e}")
+            logger.error(f"Full traceback: {error_details}")
             return {
-                'response': "Désolé, j'ai rencontré une erreur. Veuillez réessayer.",
+                'response': f"Désolé, j'ai rencontré une erreur: {str(e)}",
                 'tool_calls': None,
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'error_details': error_details
             }
     
     def analyze_document(self, text: str, document_type: str) -> Dict[str, Any]:

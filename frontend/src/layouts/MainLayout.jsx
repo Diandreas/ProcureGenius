@@ -34,7 +34,7 @@ import {
 import { logout } from '../store/slices/authSlice';
 import MobileBottomNav from '../components/MobileBottomNav';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Tableau de bord', icon: <Dashboard />, path: '/dashboard' },
@@ -71,34 +71,76 @@ function MainLayout() {
   };
 
   const drawer = (
-    <Box>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
-          Gestion App
-        </Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Toolbar sx={{ px: 2.5, py: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '1.125rem',
+            }}
+          >
+            PG
+          </Box>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>
+            ProcureGenius
+          </Typography>
+        </Box>
       </Toolbar>
       <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1 }}>
+        <List sx={{ px: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => navigate(item.path)}
+                sx={{
+                  minHeight: 44,
+                  px: 2,
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: location.pathname === item.path ? 600 : 500,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
       <Divider />
-      <List>
+      <List sx={{ px: 1, py: 1 }}>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => navigate('/settings')}>
-            <ListItemIcon>
+          <ListItemButton
+            onClick={() => navigate('/settings')}
+            sx={{
+              minHeight: 44,
+              px: 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
               <Settings />
             </ListItemIcon>
-            <ListItemText primary="Paramètres" />
+            <ListItemText
+              primary="Paramètres"
+              primaryTypographyProps={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
@@ -109,15 +151,18 @@ function MainLayout() {
     <Box sx={{ display: 'flex' }}>
       <AppBar
         position="fixed"
+        elevation={0}
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'background.paper',
+          bgcolor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(20px)',
           color: 'text.primary',
-          boxShadow: 1,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -127,11 +172,32 @@ function MainLayout() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Application'}
-          </Typography>
-          <IconButton onClick={handleMenuClick} color="inherit">
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
+              {menuItems.find(item => item.path === location.pathname)?.text || 'Application'}
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={handleMenuClick}
+            size="small"
+            sx={{
+              ml: 2,
+              transition: 'all 0.2s',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
+            <Avatar
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'primary.main',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                boxShadow: '0 2px 8px rgba(30, 64, 175, 0.15)',
+              }}
+            >
               U
             </Avatar>
           </IconButton>
@@ -139,18 +205,32 @@ function MainLayout() {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
+            PaperProps={{
+              sx: {
+                mt: 1.5,
+                minWidth: 200,
+                borderRadius: 2,
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+              },
+            }}
           >
-            <MenuItem onClick={() => { navigate('/settings'); handleMenuClose(); }}>
+            <MenuItem
+              onClick={() => {
+                navigate('/settings');
+                handleMenuClose();
+              }}
+              sx={{ py: 1.5, px: 2 }}
+            >
               <ListItemIcon>
                 <Settings fontSize="small" />
               </ListItemIcon>
-              Paramètres
+              <Typography variant="body2">Paramètres</Typography>
             </MenuItem>
-            <MenuItem onClick={handleLogout}>
+            <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2 }}>
               <ListItemIcon>
                 <Logout fontSize="small" />
               </ListItemIcon>
-              Déconnexion
+              <Typography variant="body2">Déconnexion</Typography>
             </MenuItem>
           </Menu>
         </Toolbar>
@@ -188,15 +268,17 @@ function MainLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 2, sm: 3 },
           pb: { xs: 10, sm: 3 }, // Padding bottom pour la navigation mobile
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
           bgcolor: 'background.default',
         }}
       >
-        <Toolbar />
-        <Outlet />
+        <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }} />
+        <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
+          <Outlet />
+        </Box>
       </Box>
       
       {/* Mobile Bottom Navigation */}

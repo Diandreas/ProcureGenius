@@ -16,5 +16,11 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom', '@emotion/react', '@emotion/styled']
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@emotion/react', '@emotion/styled']
   }
 })
