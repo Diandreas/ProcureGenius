@@ -17,6 +17,9 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Button,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,6 +33,7 @@ import {
   Settings,
   Logout,
   ChevronLeft,
+  Add,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -52,6 +56,8 @@ function MainLayout() {
   const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -69,6 +75,66 @@ function MainLayout() {
     dispatch(logout());
     navigate('/login');
   };
+
+  // Actions contextuelles selon la page
+  const getContextualActions = () => {
+    const currentPath = location.pathname;
+
+    switch (currentPath) {
+      case '/purchase-orders':
+        return {
+          title: 'Bons de commande',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau bon de commande',
+            icon: <Add />,
+            onClick: () => navigate('/purchase-orders/new')
+          }
+        };
+      case '/invoices':
+        return {
+          title: 'Factures',
+          action: {
+            label: isMobile ? 'Nouvelle' : 'Nouvelle facture',
+            icon: <Add />,
+            onClick: () => navigate('/invoices/new')
+          }
+        };
+      case '/products':
+        return {
+          title: 'Produits',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau produit',
+            icon: <Add />,
+            onClick: () => navigate('/products/new')
+          }
+        };
+      case '/clients':
+        return {
+          title: 'Clients',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau client',
+            icon: <Add />,
+            onClick: () => navigate('/clients/new')
+          }
+        };
+      case '/suppliers':
+        return {
+          title: 'Fournisseurs',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau fournisseur',
+            icon: <Add />,
+            onClick: () => navigate('/suppliers/new')
+          }
+        };
+      default:
+        return {
+          title: menuItems.find(item => item.path === currentPath)?.text || 'Application',
+          action: null
+        };
+    }
+  };
+
+  const contextualActions = getContextualActions();
 
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -174,9 +240,33 @@ function MainLayout() {
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
-              {menuItems.find(item => item.path === location.pathname)?.text || 'Application'}
+              {contextualActions.title}
             </Typography>
           </Box>
+          {contextualActions.action && (
+            <Button
+              variant="contained"
+              startIcon={contextualActions.action.icon}
+              onClick={contextualActions.action.onClick}
+              size="small"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+                px: isMobile ? 1.5 : 2,
+                py: 0.5,
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
+                mr: 2,
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.02)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                }
+              }}
+            >
+              {contextualActions.action.label}
+            </Button>
+          )}
           <IconButton
             onClick={handleMenuClick}
             size="small"
@@ -280,7 +370,7 @@ function MainLayout() {
           <Outlet />
         </Box>
       </Box>
-      
+
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
     </Box>

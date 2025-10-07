@@ -240,39 +240,7 @@ function Invoices() {
 
   return (
     <Box p={isMobile ? 2 : 3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2.5}>
-        <Typography variant="h4" sx={{
-          fontSize: { xs: '1.75rem', md: '2.25rem' },
-          fontWeight: 600,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-          color: 'text.primary'
-        }}>
-          Factures
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => navigate('/invoices/new')}
-          size={isMobile ? 'small' : 'medium'}
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 500,
-            px: 3,
-            py: 1.5,
-            minHeight: 40,
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              transform: 'scale(1.02)',
-              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
-            }
-          }}
-        >
-          {isMobile ? 'Nouvelle' : 'Nouvelle facture'}
-        </Button>
-      </Box>
-
+      {/* Filtres de recherche */}
       <Box mb={2.5}>
         <TextField
           fullWidth

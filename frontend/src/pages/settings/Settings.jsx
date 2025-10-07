@@ -50,6 +50,9 @@ import {
 } from '@mui/icons-material';
 
 function TabPanel({ children, value, index, ...other }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   return (
     <div
       role="tabpanel"
@@ -58,7 +61,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`settings-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: isMobile ? 1.5 : 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -250,11 +253,11 @@ function Settings() {
   ];
 
   return (
-    <Box p={isMobile ? 2 : 3}>
+    <Box p={isMobile ? 1.5 : 3}>
       {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: isMobile ? 1.5 : 2.5 }}>
         <Typography variant="h4" sx={{
-          fontSize: { xs: '1.75rem', md: '2.25rem' },
+          fontSize: { xs: '1.5rem', md: '2.25rem' },
           fontWeight: 600,
           letterSpacing: '-0.02em',
           lineHeight: 1.2,
@@ -262,12 +265,14 @@ function Settings() {
         }}>
           Paramètres
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{
-          fontSize: '0.875rem',
-          mt: 0.5
-        }}>
-          Configurez votre application selon vos besoins
-        </Typography>
+        {!isMobile && (
+          <Typography variant="body2" color="text.secondary" sx={{
+            fontSize: '0.875rem',
+            mt: 0.5
+          }}>
+            Configurez votre application selon vos besoins
+          </Typography>
+        )}
       </Box>
 
       <Card sx={{
@@ -290,11 +295,13 @@ function Settings() {
             scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
-                minHeight: 60,
-                fontSize: '0.875rem',
+                minHeight: isMobile ? 48 : 60,
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
                 fontWeight: 500,
                 textTransform: 'none',
                 transition: 'all 0.2s ease-in-out',
+                px: isMobile ? 1 : 2,
+                py: isMobile ? 0.5 : 1,
                 '&:hover': {
                   backgroundColor: 'rgba(25, 118, 210, 0.04)'
                 },
@@ -307,12 +314,13 @@ function Settings() {
             {tabs.map((tab, index) => (
               <Tab
                 key={index}
-                icon={tab.icon}
-                label={tab.label}
+                icon={isMobile ? null : tab.icon}
+                label={isMobile ? tab.label.substring(0, 8) : tab.label}
                 iconPosition="start"
                 sx={{
-                  minHeight: 60,
-                  fontSize: isMobile ? '0.8rem' : '0.875rem'
+                  minHeight: isMobile ? 48 : 60,
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  px: isMobile ? 1 : 2
                 }}
               />
             ))}
@@ -322,14 +330,14 @@ function Settings() {
         {/* Onglet Général */}
         <TabPanel value={activeTab} index={0}>
           <Typography variant="h6" gutterBottom sx={{
-            fontSize: '1.1rem',
+            fontSize: isMobile ? '1rem' : '1.1rem',
             fontWeight: 600,
             letterSpacing: '-0.01em',
-            mb: 2
+            mb: isMobile ? 1 : 2
           }}>
             Informations de l'entreprise
           </Typography>
-          <Grid container spacing={isMobile ? 2 : 2.5}>
+          <Grid container spacing={isMobile ? 1.5 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -384,11 +392,14 @@ function Settings() {
                   variant="outlined"
                   startIcon={<FileUpload />}
                   component="label"
-                  size={isMobile ? 'small' : 'medium'}
+                  size="small"
                   sx={{
                     borderRadius: 2,
                     textTransform: 'none',
                     fontWeight: 500,
+                    px: isMobile ? 1.5 : 2,
+                    py: isMobile ? 0.5 : 1,
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
                       transform: 'scale(1.02)',
@@ -396,7 +407,7 @@ function Settings() {
                     }
                   }}
                 >
-                  Télécharger le logo
+                  {isMobile ? 'Logo' : 'Télécharger le logo'}
                   <input type="file" hidden accept="image/*" />
                 </Button>
                 <Typography variant="body2" color="textSecondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
@@ -406,7 +417,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom sx={{
             fontSize: '1.1rem',
@@ -502,7 +513,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Configuration des taxes
@@ -548,7 +559,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             En-tête de facture
@@ -814,7 +825,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Paramètres d'impression
@@ -927,7 +938,7 @@ function Settings() {
             </ListItem>
           </List>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Configuration email
@@ -996,7 +1007,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Couleurs personnalisées
@@ -1087,7 +1098,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Journal d'audit
@@ -1139,7 +1150,7 @@ function Settings() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Sauvegarde manuelle
@@ -1156,7 +1167,7 @@ function Settings() {
             </Button>
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
             Export des données
@@ -1185,15 +1196,17 @@ function Settings() {
           borderTop: '1px solid rgba(0,0,0,0.05)'
         }}>
           <Divider sx={{ mb: 2.5, opacity: 0.6 }} />
-          <Box display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
+          <Box display="flex" justifyContent="flex-end" gap={isMobile ? 1 : 2} flexWrap="wrap">
             <Button
               variant="outlined"
+              size="small"
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 500,
-                px: 3,
-                py: 1,
+                px: isMobile ? 2 : 3,
+                py: isMobile ? 0.5 : 1,
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
                   transform: 'scale(1.02)',
@@ -1201,18 +1214,20 @@ function Settings() {
                 }
               }}
             >
-              Réinitialiser
+              {isMobile ? 'Reset' : 'Réinitialiser'}
             </Button>
             <Button
               variant="contained"
-              startIcon={<Save />}
+              startIcon={isMobile ? null : <Save />}
               onClick={handleSave}
+              size="small"
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 500,
-                px: 3,
-                py: 1,
+                px: isMobile ? 2 : 3,
+                py: isMobile ? 0.5 : 1,
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
                   transform: 'scale(1.02)',
@@ -1220,7 +1235,7 @@ function Settings() {
                 }
               }}
             >
-              Sauvegarder les paramètres
+              {isMobile ? 'Sauvegarder' : 'Sauvegarder les paramètres'}
             </Button>
           </Box>
         </CardContent>

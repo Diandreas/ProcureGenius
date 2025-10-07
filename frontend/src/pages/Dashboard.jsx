@@ -329,24 +329,7 @@ function Dashboard() {
 
   return (
     <Box p={isMobile ? 2 : 3}>
-      {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h4" sx={{
-          fontSize: { xs: '1.75rem', md: '2.25rem' },
-          fontWeight: 600,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-          color: 'text.primary'
-        }}>
-          Tableau de bord
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{
-          fontSize: '0.875rem',
-          mt: 0.5
-        }}>
-          Vue d'ensemble de votre activité
-        </Typography>
-      </Box>
+      {/* Contenu principal */}
 
       {isMobile ? (
         <Box>

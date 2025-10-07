@@ -211,7 +211,7 @@ function Suppliers() {
         />
       </Box>
 
-      {/* Header */}
+      {/* Actions */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -227,13 +227,6 @@ function Suppliers() {
             onClick={handleExport}
           >
             Exporter
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/suppliers/new')}
-          >
-            Nouveau fournisseur
           </Button>
         </Box>
       </Box>
