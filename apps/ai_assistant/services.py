@@ -492,34 +492,105 @@ class ActionExecutor:
     
     async def create_invoice(self, params: Dict, user) -> Dict:
         """Crée une nouvelle facture"""
-        from apps.invoicing.models import Invoice, Client
+        from apps.invoicing.models import Invoice
+        from apps.accounts.models import CustomUser
         from asgiref.sync import sync_to_async
+        from datetime import datetime, timedelta
 
         try:
             @sync_to_async
             def create_invoice_sync():
-                # Trouver ou créer le client
+                # Trouver ou créer le client (CustomUser)
                 client_name = params.get('client_name')
-                client = Client.objects.filter(name=client_name).first()
+                client_email = params.get('client_email', '')
+
+                # Chercher un client existant par nom ou email
+                client = None
+                if client_email:
+                    client = CustomUser.objects.filter(email=client_email).first()
 
                 if not client:
-                    client = Client.objects.create(
-                        name=client_name,
-                        email=params.get('client_email', ''),
-                        phone=params.get('client_phone', '')
+                    # Chercher par nom complet
+                    clients = CustomUser.objects.filter(
+                        first_name__icontains=client_name.split()[0] if ' ' in client_name else client_name
+                    )
+                    if clients.exists():
+                        client = clients.first()
+
+                # Si pas trouvé, créer un nouveau client
+                if not client:
+                    # Extraire prénom et nom
+                    name_parts = client_name.split(' ', 1)
+                    first_name = name_parts[0]
+                    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                    # Générer un username unique
+                    username = f"{first_name.lower()}.{last_name.lower()}".replace(' ', '')
+                    base_username = username
+                    counter = 1
+                    while CustomUser.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+
+                    client = CustomUser.objects.create_user(
+                        username=username,
+                        email=client_email or f"{username}@client.local",
+                        first_name=first_name,
+                        last_name=last_name,
+                        phone=params.get('client_phone', ''),
+                        company=params.get('client_company', client_name),
+                        password=CustomUser.objects.make_random_password()
                     )
 
+                # Créer la facture
+                title = params.get('title', f'Facture pour {client_name}')
+                description = params.get('description', '')
+                amount = params.get('amount', 0)
+                due_date = params.get('due_date')
+
+                # Parser la date d'échéance
+                if due_date:
+                    if isinstance(due_date, str):
+                        try:
+                            # Essayer plusieurs formats
+                            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                                try:
+                                    due_date = datetime.strptime(due_date, fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                        except:
+                            due_date = (datetime.now() + timedelta(days=30)).date()
+                else:
+                    due_date = (datetime.now() + timedelta(days=30)).date()
+
                 invoice = Invoice.objects.create(
-                    title=params.get('title', f'Facture pour {client_name}'),
+                    title=title,
                     client=client,
-                    description=params.get('description', ''),
-                    created_by=user
+                    description=description,
+                    created_by=user,
+                    due_date=due_date,
+                    subtotal=amount,
+                    total_amount=amount,
+                    status='draft'
                 )
+
+                # Ajouter des items si fournis
+                items = params.get('items', [])
+                if items:
+                    for item in items:
+                        invoice.add_item(
+                            service_code=item.get('service_code', 'SVC-001'),
+                            description=item.get('description', ''),
+                            quantity=item.get('quantity', 1),
+                            unit_price=item.get('unit_price', 0)
+                        )
+                    invoice.recalculate_totals()
 
                 return {
                     'id': str(invoice.id),
                     'invoice_number': invoice.invoice_number,
-                    'client_name': client.name
+                    'client_name': client.get_full_name() or client.username
                 }
 
             result = await create_invoice_sync()
@@ -533,6 +604,9 @@ class ActionExecutor:
                 }
             }
         except Exception as e:
+            import traceback
+            logger.error(f"Error creating invoice: {e}")
+            logger.error(traceback.format_exc())
             return {
                 'success': False,
                 'error': str(e)

@@ -117,19 +117,17 @@ function MainLayout() {
             onClick: () => navigate('/clients/new')
           }
         };
-      case '/suppliers':
+      case '/ai-chat':
         return {
-          title: 'Fournisseurs',
+          title: 'Assistant IA',
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau fournisseur',
+            label: isMobile ? 'Nouvelle' : 'Nouvelle conversation',
             icon: <Add />,
-            onClick: () => navigate('/suppliers/new')
+            onClick: () => {
+              // Cette action sera gérée par le composant AIChat
+              window.dispatchEvent(new CustomEvent('ai-chat-new-conversation'));
+            }
           }
-        };
-      default:
-        return {
-          title: menuItems.find(item => item.path === currentPath)?.text || 'Application',
-          action: null
         };
     }
   };

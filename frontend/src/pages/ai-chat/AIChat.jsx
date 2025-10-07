@@ -7,29 +7,26 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
-  ListItemAvatar,
   Avatar,
-  Divider,
   CircularProgress,
-  Chip,
   Grid,
   Card,
   CardContent,
   CardActionArea,
   InputAdornment,
-  Menu,
-  MenuItem,
   Drawer,
   ListItemButton,
+  ListItemText,
   Button,
+  Fade,
+  Tooltip,
+  Chip,
 } from '@mui/material';
 import {
   Send,
   SmartToy,
   Person,
   AttachFile,
-  CameraAlt,
   Receipt,
   ShoppingCart,
   Business,
@@ -37,17 +34,19 @@ import {
   DocumentScanner,
   Menu as MenuIcon,
   Add,
-  History,
+  Close,
+  Circle,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
+import MessageContent from '../../components/ai-chat/MessageContent';
 
 function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  
+
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -55,10 +54,22 @@ function AIChat() {
   const [currentConversation, setCurrentConversation] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickActions, setQuickActions] = useState([]);
+  const [typingIndicator, setTypingIndicator] = useState(false);
 
   useEffect(() => {
     fetchConversations();
     fetchQuickActions();
+
+    // Écouter l'événement pour créer une nouvelle conversation depuis la navbar
+    const handleNewConversation = () => {
+      startNewConversation();
+    };
+
+    window.addEventListener('ai-chat-new-conversation', handleNewConversation);
+
+    return () => {
+      window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
+    };
   }, []);
 
   useEffect(() => {
@@ -81,7 +92,7 @@ function AIChat() {
   const fetchQuickActions = async () => {
     try {
       const response = await aiChatAPI.getQuickActions();
-      setQuickActions(response.data);
+      setQuickActions(response.data.actions || []);
     } catch (error) {
       console.error('Error fetching quick actions:', error);
     }
@@ -104,18 +115,20 @@ function AIChat() {
     setDrawerOpen(false);
   };
 
-  const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  const handleSendMessage = async (messageText = null) => {
+    const textToSend = messageText || message;
+    if (!textToSend.trim()) return;
 
     const userMessage = {
       role: 'user',
-      content: message,
+      content: textToSend,
       created_at: new Date().toISOString(),
     };
 
     setMessages(prev => [...prev, userMessage]);
     setMessage('');
     setLoading(true);
+    setTypingIndicator(true);
 
     try {
       const response = await aiChatAPI.sendMessage({
@@ -123,7 +136,13 @@ function AIChat() {
         conversation_id: currentConversation?.id,
       });
 
-      const aiMessage = response.data.message;
+      setTypingIndicator(false);
+
+      const aiMessage = {
+        ...response.data.message,
+        action_results: response.data.action_results || [],
+      };
+
       setMessages(prev => [...prev, aiMessage]);
 
       if (!currentConversation) {
@@ -131,18 +150,19 @@ function AIChat() {
         fetchConversations();
       }
 
-      // Afficher le résultat de l'action si présent
-      if (response.data.action_result) {
-        const result = response.data.action_result;
-        if (result.success) {
-          enqueueSnackbar(result.message || 'Action exécutée avec succès', { variant: 'success' });
-        } else {
-          enqueueSnackbar(result.error || 'Erreur lors de l\'exécution', { variant: 'error' });
-        }
+      if (response.data.action_results) {
+        response.data.action_results.forEach(result => {
+          if (result.result?.success) {
+            enqueueSnackbar(result.result.message || 'Action exécutée avec succès', {
+              variant: 'success',
+              autoHideDuration: 3000,
+            });
+          }
+        });
       }
     } catch (error) {
+      setTypingIndicator(false);
       enqueueSnackbar('Erreur lors de l\'envoi du message', { variant: 'error' });
-      // Retirer le message utilisateur en cas d'erreur
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -150,165 +170,246 @@ function AIChat() {
   };
 
   const handleQuickAction = (action) => {
-    setMessage(action.prompt);
-    handleSendMessage();
+    handleSendMessage(action.prompt);
   };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
-    // TODO: Implémenter l'upload et l'OCR
     enqueueSnackbar('Fonctionnalité de scan en cours de développement', { variant: 'info' });
   };
 
   const getActionIcon = (actionId) => {
     const icons = {
-      create_invoice: <Receipt />,
-      create_po: <ShoppingCart />,
-      add_supplier: <Business />,
-      view_stats: <Analytics />,
-      scan_document: <DocumentScanner />,
+      create_invoice: <Receipt fontSize="small" />,
+      create_purchase_order: <ShoppingCart fontSize="small" />,
+      create_supplier: <Business fontSize="small" />,
+      get_statistics: <Analytics fontSize="small" />,
+      analyze_document: <DocumentScanner fontSize="small" />,
     };
-    return icons[actionId] || <SmartToy />;
+    return icons[actionId] || <SmartToy fontSize="small" />;
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      suppliers: '#3b82f6',
+      invoices: '#10b981',
+      purchase_orders: '#06b6d4',
+      dashboard: '#f59e0b',
+      documents: '#8b5cf6',
+    };
+    return colors[category] || '#6b7280';
   };
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
-      {/* Drawer des conversations */}
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', backgroundColor: '#fafafa' }}>
+      {/* Drawer compact */}
       <Drawer
         anchor="left"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         sx={{
           '& .MuiDrawer-paper': {
-            width: 300,
-            position: 'relative',
+            width: 280,
+            boxSizing: 'border-box',
           },
         }}
       >
-        <Box sx={{ p: 2 }}>
-          <Button
-            fullWidth
-            variant="contained"
-            startIcon={<Add />}
-            onClick={startNewConversation}
-            sx={{ mb: 2 }}
-          >
-            Nouvelle conversation
-          </Button>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Historique
-          </Typography>
-          <List>
-            {conversations.map((conv) => (
-              <ListItemButton
-                key={conv.id}
-                selected={currentConversation?.id === conv.id}
-                onClick={() => loadConversation(conv.id)}
-              >
-                <ListItemText
-                  primary={conv.title}
-                  secondary={formatDateTime(conv.last_message_at)}
-                  primaryTypographyProps={{ noWrap: true }}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-              </ListItemButton>
-            ))}
-          </List>
+        <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight="600">Conversations</Typography>
+            <IconButton onClick={() => setDrawerOpen(false)} size="small">
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+            <List dense>
+              {conversations.map((conv) => (
+                <ListItemButton
+                  key={conv.id}
+                  selected={currentConversation?.id === conv.id}
+                  onClick={() => loadConversation(conv.id)}
+                  sx={{
+                    borderRadius: 1,
+                    mb: 0.5,
+                    py: 1,
+                    '&.Mui-selected': {
+                      backgroundColor: 'primary.light',
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={conv.title}
+                    secondary={formatDateTime(conv.last_message_at)}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      fontSize: '0.875rem',
+                      fontWeight: currentConversation?.id === conv.id ? 600 : 400,
+                    }}
+                    secondaryTypographyProps={{ variant: 'caption', fontSize: '0.75rem' }}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
         </Box>
       </Drawer>
 
-      {/* Zone de chat principale */}
+      {/* Zone principale */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <Paper elevation={1} sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-          <IconButton onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
-            <MenuIcon />
-          </IconButton>
-          <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-            <SmartToy />
-          </Avatar>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6">Assistant IA</Typography>
-            <Typography variant="caption" color="text.secondary">
-              Votre assistant intelligent pour la gestion
-            </Typography>
-          </Box>
-        </Paper>
-
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+          {/* Bouton pour ouvrir les conversations */}
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton
+              onClick={() => setDrawerOpen(true)}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(0,0,0,0.04)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0,0,0,0.08)',
+                }
+              }}
+            >
+              <MenuIcon fontSize="small" />
+            </IconButton>
+          </Box>
           {messages.length === 0 ? (
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                Bonjour ! Comment puis-je vous aider ?
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                Je peux vous aider à gérer vos fournisseurs, créer des factures,
-                suivre vos commandes et bien plus encore.
-              </Typography>
-              
-              {/* Actions rapides */}
-              <Grid container spacing={2} justifyContent="center">
-                {Array.isArray(quickActions) && quickActions.map((action) => (
-                  <Grid item key={action.id}>
-                    <Card sx={{ width: 150 }}>
-                      <CardActionArea onClick={() => handleQuickAction(action)}>
-                        <CardContent sx={{ textAlign: 'center' }}>
-                          <Avatar sx={{ bgcolor: 'primary.light', mb: 1, mx: 'auto' }}>
-                            {getActionIcon(action.id)}
-                          </Avatar>
-                          <Typography variant="body2">
-                            {action.title}
+            <Fade in timeout={600}>
+              <Box sx={{ textAlign: 'center', mt: 4, maxWidth: 800, mx: 'auto' }}>
+                <Avatar
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    mx: 'auto',
+                    mb: 2,
+                    backgroundColor: 'primary.main',
+                  }}
+                >
+                  <SmartToy sx={{ fontSize: 36 }} />
+                </Avatar>
+
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                  Bonjour 👋
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Je peux vous aider à gérer vos fournisseurs, factures, commandes et plus encore.
+                </Typography>
+
+                {/* Actions rapides compactes */}
+                <Grid container spacing={1.5} sx={{ mt: 2 }}>
+                  {quickActions.slice(0, 6).map((action) => (
+                    <Grid item xs={6} sm={4} key={action.id}>
+                      <Card
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 2,
+                          },
+                        }}
+                        onClick={() => handleQuickAction(action)}
+                      >
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Avatar
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                backgroundColor: getCategoryColor(action.category) + '20',
+                                color: getCategoryColor(action.category),
+                              }}
+                            >
+                              {getActionIcon(action.id)}
+                            </Avatar>
+                            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                              {action.title}
+                            </Typography>
+                          </Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                            {action.description}
                           </Typography>
                         </CardContent>
-                      </CardActionArea>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            </Fade>
           ) : (
-            <List>
+            <List sx={{ maxWidth: 900, mx: 'auto', p: 0 }}>
               {messages.map((msg, index) => (
                 <ListItem
                   key={index}
                   sx={{
                     flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
                     alignItems: 'flex-start',
+                    mb: 2,
+                    p: 0,
                   }}
                 >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: msg.role === 'user' ? 'secondary.main' : 'primary.main' }}>
-                      {msg.role === 'user' ? <Person /> : <SmartToy />}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <Paper
-                    elevation={1}
+                  <Avatar
                     sx={{
-                      p: 2,
-                      maxWidth: '70%',
-                      bgcolor: msg.role === 'user' ? 'secondary.light' : 'background.paper',
+                      bgcolor: msg.role === 'user' ? 'secondary.main' : 'primary.main',
+                      ml: msg.role === 'user' ? 1.5 : 0,
+                      mr: msg.role === 'user' ? 0 : 1.5,
+                      width: 32,
+                      height: 32,
                     }}
                   >
-                    <Typography variant="body1" style={{ whiteSpace: 'pre-wrap' }}>
-                      {msg.content}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {msg.role === 'user' ? <Person sx={{ fontSize: 18 }} /> : <SmartToy sx={{ fontSize: 18 }} />}
+                  </Avatar>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      maxWidth: '75%',
+                      backgroundColor: msg.role === 'user' ? '#f3f4f6' : 'white',
+                      border: 1,
+                      borderColor: msg.role === 'user' ? 'transparent' : 'divider',
+                      borderRadius: 2,
+                    }}
+                  >
+                    <MessageContent
+                      content={msg.content}
+                      actionResults={msg.action_results}
+                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 1, display: 'block', fontSize: '0.7rem' }}
+                    >
                       {formatDateTime(msg.created_at)}
                     </Typography>
                   </Paper>
                 </ListItem>
               ))}
-              {loading && (
-                <ListItem>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'primary.main' }}>
-                      <SmartToy />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <CircularProgress size={20} />
+
+              {/* Indicateur de frappe compact */}
+              {typingIndicator && (
+                <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
+                  <Avatar sx={{ bgcolor: 'primary.main', mr: 1.5, width: 32, height: 32 }}>
+                    <SmartToy sx={{ fontSize: 18 }} />
+                  </Avatar>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <CircularProgress size={14} />
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                      L'assistant réfléchit...
+                    </Typography>
+                  </Paper>
                 </ListItem>
               )}
               <div ref={messagesEndRef} />
@@ -316,52 +417,85 @@ function AIChat() {
           )}
         </Box>
 
-        {/* Input zone */}
-        <Paper elevation={3} sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            multiline
-            maxRows={4}
-            placeholder="Tapez votre message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            disabled={loading}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    style={{ display: 'none' }}
-                    accept="image/*,.pdf"
-                  />
-                  <IconButton
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={loading}
-                  >
-                    <AttachFile />
-                  </IconButton>
-                  <IconButton>
-                    <CameraAlt />
-                  </IconButton>
-                  <IconButton
-                    onClick={handleSendMessage}
-                    disabled={loading || !message.trim()}
-                    color="primary"
-                  >
-                    <Send />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+        {/* Input zone compacte */}
+        <Paper
+          elevation={3}
+          sx={{
+            p: 1.5,
+            borderTop: 1,
+            borderColor: 'divider',
+            backgroundColor: 'white',
+          }}
+        >
+          <Box sx={{ maxWidth: 900, mx: 'auto', display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={3}
+              placeholder="Tapez votre message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              disabled={loading}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: '#f9fafb',
+                  fontSize: '0.875rem',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'divider',
+                },
+              }}
+            />
+            <Tooltip title="Joindre">
+              <span>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                  accept="image/*,.pdf"
+                />
+                <IconButton
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  size="small"
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <AttachFile fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Envoyer">
+              <span>
+                <IconButton
+                  onClick={() => handleSendMessage()}
+                  disabled={loading || !message.trim()}
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: 'action.disabledBackground',
+                      color: 'action.disabled',
+                    },
+                  }}
+                  size="small"
+                >
+                  <Send fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
         </Paper>
       </Box>
     </Box>

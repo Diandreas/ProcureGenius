@@ -523,3 +523,101 @@ Not Found: /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/
 "GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
 "GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
 "GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 809
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2355
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1057
+Mistral API error: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+Full traceback: Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 247, in complete
+    raise models.SDKError(
+        "API error occurred", http_res.status_code, http_res_text, http_res
+    )
+mistralai.models.sdkerror.SDKError: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 485
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 490
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 369
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 490
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 369
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 1053
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 1053
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2361
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2361
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1496
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2805
+Action execution error: cannot import name 'Client' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 627
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+Nouvel utilisateur créé: entreprise.abc
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1422
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3252
+Mistral API error: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+Full traceback: Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 247, in complete
+    raise models.SDKError(
+        "API error occurred", http_res.status_code, http_res_text, http_res
+    )
+mistralai.models.sdkerror.SDKError: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 485
+Nouvel utilisateur créé: zambo.
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1315
+Not Found: /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/pdf/
+"GET /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/pdf/ HTTP/1.1" 404 21006
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"OPTIONS /api/v1/ai/conversations/e8b7c7e1-ac3a-49f0-9676-e06d21890430/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/e8b7c7e1-ac3a-49f0-9676-e06d21890430/ HTTP/1.1" 200 3000
+"OPTIONS /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 2892
