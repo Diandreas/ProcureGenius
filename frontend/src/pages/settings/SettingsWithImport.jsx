@@ -28,6 +28,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Save,
@@ -69,6 +72,50 @@ function Settings() {
   const [headerPreview, setHeaderPreview] = useState(null);
   const [openImportDialog, setOpenImportDialog] = useState(false);
   const [importType, setImportType] = useState('clients');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Helper function for responsive TextField styling
+  const getTextFieldProps = () => ({
+    size: isMobile ? 'small' : 'medium',
+    sx: {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 2,
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+            borderWidth: 2
+          }
+        },
+        '&.Mui-focused': {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+            borderWidth: 2
+          }
+        }
+      }
+    }
+  });
+
+  // Helper function for responsive FormControl styling
+  const getFormControlProps = () => ({
+    size: isMobile ? 'small' : 'medium',
+    sx: {
+      borderRadius: 2,
+      '& .MuiOutlinedInput-notchedOutline': {
+        transition: 'all 0.2s ease-in-out',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: 'primary.main',
+        borderWidth: 2
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: 'primary.main',
+        borderWidth: 2
+      }
+    }
+  });
   const [settings, setSettings] = useState({
     // Paramètres généraux
     companyName: 'ProcureGenius Inc.',
@@ -208,21 +255,70 @@ function Settings() {
   ];
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Paramètres
-      </Typography>
+    <Box p={isMobile ? 2 : 3}>
+      {/* Header */}
+      <Box sx={{ mb: 2.5 }}>
+        <Typography variant="h4" sx={{
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
+          fontWeight: 600,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          color: 'text.primary'
+        }}>
+          Paramètres
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{
+          fontSize: '0.875rem',
+          mt: 0.5
+        }}>
+          Configurez votre application selon vos besoins
+        </Typography>
+      </Box>
 
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
+      <Card sx={{
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          background: 'rgba(0,0,0,0.02)'
+        }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant={isMobile ? 'scrollable' : 'standard'}
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: 60,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                }
+              }
+            }}
+          >
             {tabs.map((tab, index) => (
               <Tab
                 key={index}
                 icon={tab.icon}
                 label={tab.label}
                 iconPosition="start"
-                sx={{ minHeight: 60 }}
+                sx={{
+                  minHeight: 60,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem'
+                }}
               />
             ))}
           </Tabs>
@@ -233,13 +329,14 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Informations de l'entreprise
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Nom de l'entreprise"
                 value={settings.companyName}
                 onChange={(e) => handleSettingChange('companyName', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -299,7 +396,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Paramètres de localisation
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Langue</InputLabel>
@@ -345,7 +442,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Numérotation des documents
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -390,7 +487,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Configuration des taxes
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
               <FormControlLabel
                 control={
@@ -440,7 +537,7 @@ function Settings() {
             Configurez l'apparence de l'en-tête de vos factures. Ratio recommandé: 2.6:1 (210mm x 80mm pour A4).
           </Alert>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Type d'en-tête</InputLabel>
@@ -702,7 +799,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Paramètres d'impression
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Taille du papier</InputLabel>
@@ -818,7 +915,7 @@ function Settings() {
           <Alert severity="info" sx={{ mb: 2 }}>
             Configurez vos paramètres SMTP pour envoyer des emails automatiques.
           </Alert>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -863,7 +960,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Thème et couleurs
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Thème</InputLabel>
@@ -884,7 +981,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Couleurs personnalisées
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
               <Box display="flex" alignItems="center" gap={2}>
                 <Box
@@ -927,7 +1024,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Paramètres de sécurité
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -985,7 +1082,7 @@ function Settings() {
           <Typography variant="h6" gutterBottom>
             Sauvegarde automatique
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
               <FormControlLabel
                 control={
@@ -1072,14 +1169,22 @@ function Settings() {
             Importez facilement vos données depuis des fichiers Excel, CSV ou depuis vos contacts téléphone.
           </Alert>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
               <Card
                 sx={{
                   cursor: 'pointer',
-                  '&:hover': { boxShadow: 4 },
-                  border: '2px solid transparent',
-                  '&:hover': { borderColor: 'primary.main' }
+                  borderRadius: 3,
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                    borderColor: 'primary.main'
+                  }
                 }}
                 onClick={() => {
                   setImportType('clients');

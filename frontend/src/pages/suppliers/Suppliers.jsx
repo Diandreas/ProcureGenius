@@ -25,6 +25,10 @@ import {
   CircularProgress,
   Alert,
   Pagination,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -50,6 +54,8 @@ import FloatingAIAssistant from '../../components/FloatingAIAssistant';
 function Suppliers() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);

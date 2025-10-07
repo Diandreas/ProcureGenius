@@ -20,6 +20,9 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  Stack,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Save,
@@ -62,7 +65,9 @@ function SupplierForm() {
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const isEdit = Boolean(id);
-  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [loading, setLoading] = useState(false);
   const [initialValues, setInitialValues] = useState({
     name: '',
@@ -130,10 +135,25 @@ function SupplierForm() {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-        {isEdit ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
-      </Typography>
+    <Box p={isMobile ? 2 : 3}>
+      {/* Header */}
+      <Box sx={{ mb: 2.5 }}>
+        <Typography variant="h4" sx={{
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
+          fontWeight: 600,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          color: 'text.primary'
+        }}>
+          {isEdit ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{
+          fontSize: '0.875rem',
+          mt: 0.5
+        }}>
+          {isEdit ? 'Modifiez les informations du fournisseur' : 'Ajoutez un nouveau fournisseur à votre système'}
+        </Typography>
+      </Box>
 
       <Formik
         initialValues={initialValues}
@@ -146,12 +166,24 @@ function SupplierForm() {
             <Grid container spacing={3}>
               {/* Informations générales */}
               <Grid item xs={12} md={8}>
-                <Card>
+                <Card sx={{
+                  borderRadius: 3,
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    borderColor: 'primary.main'
+                  }
+                }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
                       Informations générales
                     </Typography>
-                    
+
                     <Grid container spacing={2}>
                       <Grid item xs={12}>
                         <TextField
@@ -166,7 +198,7 @@ function SupplierForm() {
                           required
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
@@ -179,7 +211,7 @@ function SupplierForm() {
                           helperText={touched.contact_person && errors.contact_person}
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <FormControl fullWidth required>
                           <InputLabel>Statut</InputLabel>
@@ -196,7 +228,7 @@ function SupplierForm() {
                           </Select>
                         </FormControl>
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
@@ -211,7 +243,7 @@ function SupplierForm() {
                           required
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
@@ -224,7 +256,7 @@ function SupplierForm() {
                           helperText={touched.phone && errors.phone}
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -239,7 +271,7 @@ function SupplierForm() {
                           helperText={touched.address && errors.address}
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
@@ -252,7 +284,7 @@ function SupplierForm() {
                           helperText={touched.city && errors.city}
                         />
                       </Grid>
-                      
+
                       <Grid item xs={12} md={6}>
                         <FormControl fullWidth>
                           <InputLabel>Province</InputLabel>
@@ -283,7 +315,7 @@ function SupplierForm() {
                     <Typography variant="h6" gutterBottom>
                       Évaluation
                     </Typography>
-                    
+
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Rating
                         name="rating"
@@ -303,7 +335,7 @@ function SupplierForm() {
                     <Typography variant="h6" gutterBottom>
                       Diversité
                     </Typography>
-                    
+
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -314,7 +346,7 @@ function SupplierForm() {
                       }
                       label="Fournisseur local"
                     />
-                    
+
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -325,7 +357,7 @@ function SupplierForm() {
                       }
                       label="Propriété minoritaire"
                     />
-                    
+
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -336,7 +368,7 @@ function SupplierForm() {
                       }
                       label="Propriété féminine"
                     />
-                    
+
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -353,12 +385,24 @@ function SupplierForm() {
 
               {/* Actions */}
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                   <Button
                     variant="outlined"
                     startIcon={<Cancel />}
                     onClick={() => navigate('/suppliers')}
                     disabled={isSubmitting}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      px: 3,
+                      py: 1,
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }
+                    }}
                   >
                     Annuler
                   </Button>
@@ -367,6 +411,18 @@ function SupplierForm() {
                     variant="contained"
                     startIcon={<Save />}
                     disabled={isSubmitting}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      px: 3,
+                      py: 1,
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                      }
+                    }}
                   >
                     {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? 'Modifier' : 'Créer')}
                   </Button>

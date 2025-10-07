@@ -25,6 +25,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -47,6 +51,8 @@ function Products() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     fetchProducts();
@@ -102,6 +108,134 @@ function Products() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  const MobileProductCard = ({ product }) => {
+    const stockStatus = getStockStatus(product);
+    return (
+      <Card sx={{
+        mb: 1.5,
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-1px)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          borderColor: 'primary.main',
+          background: 'rgba(255, 255, 255, 0.95)'
+        }
+      }}>
+        <CardContent sx={{ p: 1.5 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              {product.image ? (
+                <Avatar
+                  src={product.image}
+                  sx={{ width: 32, height: 32 }}
+                  variant="rounded"
+                />
+              ) : (
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                  <Inventory fontSize="small" />
+                </Avatar>
+              )}
+              <Box>
+                <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                  {product.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                  SKU: {product.sku}
+                </Typography>
+              </Box>
+            </Box>
+            <Chip
+              label={getAvailabilityLabel(product.is_available)}
+              color={getAvailabilityColor(product.is_available)}
+              size="small"
+              sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Business fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {product.supplier?.name || 'N/A'}
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+              {formatCurrency(product.unit_price)}
+            </Typography>
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.25}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Inventory fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {product.stock_quantity !== null ? product.stock_quantity : 'N/A'}
+              </Typography>
+              {stockStatus && (
+                <Chip
+                  label={stockStatus.label}
+                  color={stockStatus.color}
+                  size="small"
+                  sx={{ fontSize: '0.65rem', height: 18 }}
+                />
+              )}
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+              {formatDate(product.created_at)}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
+
+          <Stack direction="row" spacing={0.75} justifyContent="flex-end">
+            <IconButton
+              size="small"
+              onClick={() => navigate(`/products/${product.id}`)}
+              sx={{
+                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                color: 'primary.main',
+                width: 28,
+                height: 28,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+                }
+              }}
+            >
+              <Visibility fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => navigate(`/products/${product.id}/edit`)}
+              sx={{
+                bgcolor: 'rgba(66, 66, 66, 0.08)',
+                color: 'text.secondary',
+                width: 28,
+                height: 28,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'secondary.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+                }
+              }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -119,24 +253,51 @@ function Products() {
   }
 
   return (
-    <Box>
+    <Box p={isMobile ? 2 : 3}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold">
+      <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" sx={{
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
+          fontWeight: 600,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          color: 'text.primary'
+        }}>
           Produits ({filteredProducts.length})
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/products/new')}
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 500,
+            px: 3,
+            py: 1.5,
+            minHeight: 40,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              transform: 'scale(1.02)',
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+            }
+          }}
         >
-          Nouveau produit
+          {isMobile ? 'Nouveau' : 'Nouveau produit'}
         </Button>
       </Box>
 
       {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <Card sx={{
+        mb: 2.5,
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}>
+        <CardContent sx={{ p: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={4}>
               <TextField
@@ -145,10 +306,28 @@ function Products() {
                 placeholder="Rechercher par nom, SKU ou description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'primary.main',
+                        borderWidth: 2
+                      }
+                    },
+                    '&.Mui-focused': {
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'primary.main',
+                        borderWidth: 2
+                      }
+                    }
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search fontSize="small" />
+                      <Search sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -161,6 +340,7 @@ function Products() {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   label="Statut"
+                  sx={{ borderRadius: 2 }}
                 >
                   <MenuItem value="">Tous</MenuItem>
                   <MenuItem value="available">Disponible</MenuItem>
@@ -177,6 +357,7 @@ function Products() {
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   label="Catégorie"
+                  sx={{ borderRadius: 2 }}
                 >
                   <MenuItem value="">Toutes</MenuItem>
                   {/* TODO: Add categories from API */}
@@ -192,6 +373,11 @@ function Products() {
                   setCategoryFilter('');
                   setStatusFilter('');
                 }}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
               >
                 Effacer
               </Button>
@@ -200,134 +386,11 @@ function Products() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Produit</TableCell>
-                  <TableCell>Fournisseur</TableCell>
-                  <TableCell>Prix</TableCell>
-                  <TableCell>Stock</TableCell>
-                  <TableCell>Disponibilité</TableCell>
-                  <TableCell>Date création</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredProducts.map((product) => {
-                  const stockStatus = getStockStatus(product);
-                  return (
-                    <TableRow key={product.id} hover sx={{ cursor: 'pointer' }}>
-                      <TableCell onClick={() => navigate(`/products/${product.id}`)}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          {product.image ? (
-                            <Avatar
-                              src={product.image}
-                              sx={{ width: 40, height: 40 }}
-                              variant="rounded"
-                            />
-                          ) : (
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
-                              <Inventory />
-                            </Avatar>
-                          )}
-                          <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 'medium' }}>
-                              {product.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              SKU: {product.sku}
-                            </Typography>
-                            {product.category && (
-                              <Chip
-                                label={product.category.name}
-                                size="small"
-                                variant="outlined"
-                                sx={{ ml: 1 }}
-                              />
-                            )}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {product.supplier && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Business fontSize="small" color="action" />
-                            <Typography
-                              variant="body2"
-                              color="primary"
-                              sx={{ cursor: 'pointer' }}
-                              onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
-                            >
-                              {product.supplier.name}
-                            </Typography>
-                          </Box>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                            {formatCurrency(product.unit_price)}
-                          </Typography>
-                          {product.bulk_price && (
-                            <Typography variant="caption" color="text.secondary">
-                              Gros: {formatCurrency(product.bulk_price)}
-                            </Typography>
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Inventory fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {product.stock_quantity !== null ? product.stock_quantity : 'N/A'}
-                          </Typography>
-                          {stockStatus && (
-                            <Chip
-                              label={stockStatus.label}
-                              color={stockStatus.color}
-                              size="small"
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getAvailabilityLabel(product.is_available)}
-                          color={getAvailabilityColor(product.is_available)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(product.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/products/${product.id}`)}
-                            color="primary"
-                          >
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/products/${product.id}/edit`)}
-                            color="primary"
-                          >
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
+      {isMobile ? (
+        <Box>
+          {filteredProducts.map((product) => (
+            <MobileProductCard key={product.id} product={product} />
+          ))}
           {filteredProducts.length === 0 && products.length > 0 && (
             <Box textAlign="center" py={4}>
               <Typography variant="h6" color="text.secondary">
@@ -335,7 +398,6 @@ function Products() {
               </Typography>
             </Box>
           )}
-
           {products.length === 0 && !loading && (
             <Box textAlign="center" py={4}>
               <Typography variant="h6" color="text.secondary">
@@ -351,8 +413,184 @@ function Products() {
               </Button>
             </Box>
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      ) : (
+        <Card sx={{
+          borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          overflow: 'hidden'
+        }}>
+          <CardContent sx={{ p: 0 }}>
+            <TableContainer component={Paper} sx={{
+              borderRadius: 0,
+              background: 'transparent',
+              boxShadow: 'none'
+            }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Produit</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Fournisseur</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Prix</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Stock</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Disponibilité</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Date création</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredProducts.map((product) => {
+                    const stockStatus = getStockStatus(product);
+                    return (
+                      <TableRow key={product.id} hover sx={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                          transform: 'scale(1.001)'
+                        }
+                      }}>
+                        <TableCell onClick={() => navigate(`/products/${product.id}`)} sx={{ py: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {product.image ? (
+                              <Avatar
+                                src={product.image}
+                                sx={{ width: 40, height: 40 }}
+                                variant="rounded"
+                              />
+                            ) : (
+                              <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+                                <Inventory />
+                              </Avatar>
+                            )}
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                {product.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                SKU: {product.sku}
+                              </Typography>
+                              {product.category && (
+                                <Chip
+                                  label={product.category.name}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ ml: 1, fontSize: '0.7rem' }}
+                                />
+                              )}
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          {product.supplier && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Business fontSize="small" color="action" />
+                              <Typography
+                                variant="body2"
+                                color="primary"
+                                sx={{ cursor: 'pointer', fontSize: '0.875rem' }}
+                                onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
+                              >
+                                {product.supplier.name}
+                              </Typography>
+                            </Box>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                              {formatCurrency(product.unit_price)}
+                            </Typography>
+                            {product.bulk_price && (
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                Gros: {formatCurrency(product.bulk_price)}
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Inventory fontSize="small" color="action" />
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              {product.stock_quantity !== null ? product.stock_quantity : 'N/A'}
+                            </Typography>
+                            {stockStatus && (
+                              <Chip
+                                label={stockStatus.label}
+                                color={stockStatus.color}
+                                size="small"
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Chip
+                            label={getAvailabilityLabel(product.is_available)}
+                            color={getAvailabilityColor(product.is_available)}
+                            size="small"
+                            sx={{ fontSize: '0.7rem' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                            {formatDate(product.created_at)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`/products/${product.id}`)}
+                              sx={{
+                                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                color: 'primary.main',
+                                width: 32,
+                                height: 32,
+                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                '&:hover': {
+                                  bgcolor: 'primary.main',
+                                  color: 'white',
+                                  transform: 'scale(1.1)',
+                                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+                                }
+                              }}
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`/products/${product.id}/edit`)}
+                              sx={{
+                                bgcolor: 'rgba(66, 66, 66, 0.08)',
+                                color: 'text.secondary',
+                                width: 32,
+                                height: 32,
+                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                '&:hover': {
+                                  bgcolor: 'secondary.main',
+                                  color: 'white',
+                                  transform: 'scale(1.1)',
+                                  boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+                                }
+                              }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }

@@ -28,6 +28,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Save,
@@ -65,6 +68,50 @@ function Settings() {
   const [openTaxDialog, setOpenTaxDialog] = useState(false);
   const [openHeaderDialog, setOpenHeaderDialog] = useState(false);
   const [headerPreview, setHeaderPreview] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Helper function for responsive TextField styling
+  const getTextFieldProps = () => ({
+    size: isMobile ? 'small' : 'medium',
+    sx: {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 2,
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+            borderWidth: 2
+          }
+        },
+        '&.Mui-focused': {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+            borderWidth: 2
+          }
+        }
+      }
+    }
+  });
+
+  // Helper function for responsive FormControl styling
+  const getFormControlProps = () => ({
+    size: isMobile ? 'small' : 'medium',
+    sx: {
+      borderRadius: 2,
+      '& .MuiOutlinedInput-notchedOutline': {
+        transition: 'all 0.2s ease-in-out',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: 'primary.main',
+        borderWidth: 2
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: 'primary.main',
+        borderWidth: 2
+      }
+    }
+  });
   const [settings, setSettings] = useState({
     // Paramètres généraux
     companyName: 'ProcureGenius Inc.',
@@ -203,21 +250,70 @@ function Settings() {
   ];
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Paramètres
-      </Typography>
+    <Box p={isMobile ? 2 : 3}>
+      {/* Header */}
+      <Box sx={{ mb: 2.5 }}>
+        <Typography variant="h4" sx={{
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
+          fontWeight: 600,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          color: 'text.primary'
+        }}>
+          Paramètres
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{
+          fontSize: '0.875rem',
+          mt: 0.5
+        }}>
+          Configurez votre application selon vos besoins
+        </Typography>
+      </Box>
 
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
+      <Card sx={{
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          background: 'rgba(0,0,0,0.02)'
+        }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant={isMobile ? 'scrollable' : 'standard'}
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: 60,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                }
+              }
+            }}
+          >
             {tabs.map((tab, index) => (
               <Tab
                 key={index}
                 icon={tab.icon}
                 label={tab.label}
                 iconPosition="start"
-                sx={{ minHeight: 60 }}
+                sx={{
+                  minHeight: 60,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem'
+                }}
               />
             ))}
           </Tabs>
@@ -225,16 +321,22 @@ function Settings() {
 
         {/* Onglet Général */}
         <TabPanel value={activeTab} index={0}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+            mb: 2
+          }}>
             Informations de l'entreprise
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Nom de l'entreprise"
                 value={settings.companyName}
                 onChange={(e) => handleSettingChange('companyName', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -243,6 +345,7 @@ function Settings() {
                 label="Téléphone"
                 value={settings.companyPhone}
                 onChange={(e) => handleSettingChange('companyPhone', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -252,6 +355,7 @@ function Settings() {
                 type="email"
                 value={settings.companyEmail}
                 onChange={(e) => handleSettingChange('companyEmail', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -260,6 +364,7 @@ function Settings() {
                 label="Site web"
                 value={settings.companyWebsite}
                 onChange={(e) => handleSettingChange('companyWebsite', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12}>
@@ -267,22 +372,34 @@ function Settings() {
                 fullWidth
                 label="Adresse"
                 multiline
-                rows={3}
+                rows={isMobile ? 2 : 3}
                 value={settings.companyAddress}
                 onChange={(e) => handleSettingChange('companyAddress', e.target.value)}
+                {...getTextFieldProps()}
               />
             </Grid>
             <Grid item xs={12}>
-              <Box display="flex" alignItems="center" gap={2}>
+              <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
                 <Button
                   variant="outlined"
                   startIcon={<FileUpload />}
                   component="label"
+                  size={isMobile ? 'small' : 'medium'}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }
+                  }}
                 >
                   Télécharger le logo
                   <input type="file" hidden accept="image/*" />
                 </Button>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="textSecondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
                   Formats acceptés: PNG, JPG, SVG (max 2MB)
                 </Typography>
               </Box>
@@ -291,12 +408,17 @@ function Settings() {
 
           <Divider sx={{ my: 3 }} />
 
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+            mb: 2
+          }}>
             Paramètres de localisation
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
+              <FormControl fullWidth {...getFormControlProps()}>
                 <InputLabel>Langue</InputLabel>
                 <Select
                   value={settings.language}
@@ -308,7 +430,7 @@ function Settings() {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
+              <FormControl fullWidth {...getFormControlProps()}>
                 <InputLabel>Format de date</InputLabel>
                 <Select
                   value={settings.dateFormat}
@@ -321,7 +443,7 @@ function Settings() {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
+              <FormControl fullWidth {...getFormControlProps()}>
                 <InputLabel>Format d'heure</InputLabel>
                 <Select
                   value={settings.timeFormat}
@@ -1058,16 +1180,45 @@ function Settings() {
           </Box>
         </TabPanel>
 
-        <CardContent>
-          <Divider sx={{ mb: 3 }} />
-          <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined">
+        <CardContent sx={{
+          background: 'rgba(0,0,0,0.02)',
+          borderTop: '1px solid rgba(0,0,0,0.05)'
+        }}>
+          <Divider sx={{ mb: 2.5, opacity: 0.6 }} />
+          <Box display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
+            <Button
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3,
+                py: 1,
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.02)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }
+              }}
+            >
               Réinitialiser
             </Button>
             <Button
               variant="contained"
               startIcon={<Save />}
               onClick={handleSave}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3,
+                py: 1,
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.02)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                }
+              }}
             >
               Sauvegarder les paramètres
             </Button>

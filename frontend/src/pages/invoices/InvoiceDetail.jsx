@@ -208,14 +208,37 @@ function InvoiceDetail() {
   };
 
   const MobileInvoiceInfoCard = ({ invoice }) => (
-    <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <CardContent sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+    <Card sx={{
+      mb: 1.5,
+      borderRadius: 3,
+      background: 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        borderColor: 'primary.main',
+        background: 'rgba(255, 255, 255, 0.95)'
+      }
+    }}>
+      <CardContent sx={{ p: 1.5 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
           <Box>
-            <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600, mb: 0.5 }}>
+            <Typography variant="h6" sx={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              mb: 0.5,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.3
+            }}>
               {invoice.title}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+            <Typography variant="body2" color="text.secondary" sx={{
+              fontSize: '0.8rem',
+              lineHeight: 1.4
+            }}>
               {invoice.invoice_number}
             </Typography>
           </Box>
@@ -224,7 +247,7 @@ function InvoiceDetail() {
             label={isOverdue() ? `En retard (${getDaysOverdue()} jours)` : getStatusLabel(invoice.status)}
             color={isOverdue() ? 'error' : getStatusColor(invoice.status)}
             size="small"
-            sx={{ fontSize: '0.75rem', height: 24 }}
+            sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
           />
         </Box>
 
@@ -241,16 +264,22 @@ function InvoiceDetail() {
 
         <Divider sx={{ mb: 2 }} />
 
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
+        <Stack direction="row" spacing={0.75} justifyContent="flex-end">
           <IconButton
             size="small"
             onClick={() => setPdfDialogOpen(true)}
             sx={{
-              bgcolor: 'primary.light',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.main' },
-              width: 32,
-              height: 32
+              bgcolor: 'rgba(25, 118, 210, 0.08)',
+              color: 'primary.main',
+              width: 28,
+              height: 28,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+              }
             }}
           >
             <PictureAsPdf fontSize="small" />
@@ -259,11 +288,17 @@ function InvoiceDetail() {
             size="small"
             onClick={handleEdit}
             sx={{
-              bgcolor: 'secondary.light',
-              color: 'secondary.contrastText',
-              '&:hover': { bgcolor: 'secondary.main' },
-              width: 32,
-              height: 32
+              bgcolor: 'rgba(66, 66, 66, 0.08)',
+              color: 'text.secondary',
+              width: 28,
+              height: 28,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'secondary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+              }
             }}
           >
             <Edit fontSize="small" />
@@ -273,11 +308,17 @@ function InvoiceDetail() {
               size="small"
               onClick={() => setSendDialogOpen(true)}
               sx={{
-                bgcolor: 'success.light',
-                color: 'success.contrastText',
-                '&:hover': { bgcolor: 'success.main' },
-                width: 32,
-                height: 32
+                bgcolor: 'rgba(46, 125, 50, 0.08)',
+                color: 'success.main',
+                width: 28,
+                height: 28,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'success.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)'
+                }
               }}
             >
               <Send fontSize="small" />
@@ -288,11 +329,17 @@ function InvoiceDetail() {
               size="small"
               onClick={() => setMarkPaidDialogOpen(true)}
               sx={{
-                bgcolor: 'warning.light',
-                color: 'warning.contrastText',
-                '&:hover': { bgcolor: 'warning.main' },
-                width: 32,
-                height: 32
+                bgcolor: 'rgba(255, 152, 0, 0.08)',
+                color: 'warning.main',
+                width: 28,
+                height: 28,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'warning.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(255, 152, 0, 0.3)'
+                }
               }}
             >
               <Payment fontSize="small" />

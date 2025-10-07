@@ -34,6 +34,9 @@ import {
   InputLabel,
   Select,
   Collapse,
+  Stack,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Edit,
@@ -68,7 +71,9 @@ function SupplierDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [supplier, setSupplier] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -189,26 +194,70 @@ function SupplierDetail() {
   }
 
   return (
-    <Box>
+    <Box p={isMobile ? 2 : 3}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate('/suppliers')}>
+          <IconButton
+            onClick={() => navigate('/suppliers')}
+            sx={{
+              bgcolor: 'rgba(25, 118, 210, 0.08)',
+              color: 'primary.main',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+              }
+            }}
+          >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h4" sx={{
+            fontSize: { xs: '1.75rem', md: '2.25rem' },
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2,
+            color: 'text.primary'
+          }}>
             {supplier.name}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             startIcon={<Edit />}
             onClick={handleEdit}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              px: 2,
+              py: 1,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'scale(1.02)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }
+            }}
           >
             Modifier
           </Button>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+          <IconButton
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{
+              bgcolor: 'rgba(66, 66, 66, 0.08)',
+              color: 'text.secondary',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'secondary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+              }
+            }}
+          >
             <MoreVert />
           </IconButton>
           <Menu
@@ -230,7 +279,20 @@ function SupplierDetail() {
       <Grid container spacing={3}>
         {/* Informations principales */}
         <Grid item xs={12} md={8}>
-          <Card sx={{ mb: 3 }}>
+          <Card sx={{
+            mb: 2.5,
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              borderColor: 'primary.main'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                 <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
@@ -274,7 +336,7 @@ function SupplierDetail() {
                     </Box>
                   </Grid>
                 )}
-                
+
                 {supplier.email && (
                   <Grid item xs={12} sm={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -292,7 +354,7 @@ function SupplierDetail() {
                     </Box>
                   </Grid>
                 )}
-                
+
                 {supplier.phone && (
                   <Grid item xs={12} sm={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -310,7 +372,7 @@ function SupplierDetail() {
                     </Box>
                   </Grid>
                 )}
-                
+
                 {(supplier.address || supplier.city || supplier.province) && (
                   <Grid item xs={12} sm={6}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -705,46 +767,46 @@ function SupplierDetail() {
 
           {/* Performance Metrics - Only show if at least one metric is available */}
           {statistics && statistics.performance_metrics &&
-           (statistics.performance_metrics.avg_delivery_time ||
-            statistics.performance_metrics.on_time_delivery_rate ||
-            statistics.performance_metrics.total_suppliers_rank) && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Assessment color="primary" />
-                  <Typography variant="h6">
-                    Métriques de performance
-                  </Typography>
-                </Box>
-                <List dense>
-                  {statistics.performance_metrics.avg_delivery_time && (
-                    <ListItem>
-                      <ListItemText
-                        primary="Temps de livraison moyen"
-                        secondary={statistics.performance_metrics.avg_delivery_time}
-                      />
-                    </ListItem>
-                  )}
-                  {statistics.performance_metrics.on_time_delivery_rate && (
-                    <ListItem>
-                      <ListItemText
-                        primary="Taux de livraison à temps"
-                        secondary={statistics.performance_metrics.on_time_delivery_rate}
-                      />
-                    </ListItem>
-                  )}
-                  {statistics.performance_metrics.total_suppliers_rank && (
-                    <ListItem>
-                      <ListItemText
-                        primary="Classement général"
-                        secondary={statistics.performance_metrics.total_suppliers_rank}
-                      />
-                    </ListItem>
-                  )}
-                </List>
-              </CardContent>
-            </Card>
-          )}
+            (statistics.performance_metrics.avg_delivery_time ||
+              statistics.performance_metrics.on_time_delivery_rate ||
+              statistics.performance_metrics.total_suppliers_rank) && (
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Assessment color="primary" />
+                    <Typography variant="h6">
+                      Métriques de performance
+                    </Typography>
+                  </Box>
+                  <List dense>
+                    {statistics.performance_metrics.avg_delivery_time && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Temps de livraison moyen"
+                          secondary={statistics.performance_metrics.avg_delivery_time}
+                        />
+                      </ListItem>
+                    )}
+                    {statistics.performance_metrics.on_time_delivery_rate && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Taux de livraison à temps"
+                          secondary={statistics.performance_metrics.on_time_delivery_rate}
+                        />
+                      </ListItem>
+                    )}
+                    {statistics.performance_metrics.total_suppliers_rank && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Classement général"
+                          secondary={statistics.performance_metrics.total_suppliers_rank}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Dates */}
           <Card>

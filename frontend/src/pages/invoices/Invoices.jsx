@@ -95,31 +95,40 @@ function Invoices() {
   const MobileInvoiceCard = ({ invoice }) => (
     <Card
       sx={{
-        mb: 2,
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        mb: 1.5,
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transform: 'translateY(-1px)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          borderColor: 'primary.main',
+          background: 'rgba(255, 255, 255, 0.95)'
         }
       }}
     >
-      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
           <Box>
             <Typography
               variant="h6"
               sx={{
-                fontSize: '1rem',
+                fontSize: '0.95rem',
                 fontWeight: 600,
                 color: 'primary.main',
                 cursor: 'pointer',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.3,
                 '&:hover': { textDecoration: 'underline' }
               }}
               onClick={() => navigate(`/invoices/${invoice.id}`)}
             >
               {invoice.invoice_number}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
               {invoice.title}
             </Typography>
           </Box>
@@ -127,38 +136,44 @@ function Invoices() {
             label={getStatusLabel(invoice.status)}
             color={getStatusColor(invoice.status)}
             size="small"
-            sx={{ fontSize: '0.75rem', height: 24 }}
+            sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
           />
         </Box>
 
-        <Box display="flex" alignItems="center" mb={1}>
-          <Business fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />
-          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+        <Box display="flex" alignItems="center" mb={0.75}>
+          <Business fontSize="small" sx={{ color: 'text.secondary', mr: 0.75, fontSize: '0.875rem' }} />
+          <Typography variant="body2" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
             {invoice.client_name || 'N/A'}
           </Typography>
         </Box>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.25}>
+          <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {invoice.total_amount} {invoice.currency}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
             Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
           </Typography>
         </Box>
 
-        <Divider sx={{ mb: 1.5 }} />
+        <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
 
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
+        <Stack direction="row" spacing={0.75} justifyContent="flex-end">
           <IconButton
             size="small"
             onClick={() => navigate(`/invoices/${invoice.id}`)}
             sx={{
-              bgcolor: 'primary.light',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.main' },
-              width: 32,
-              height: 32
+              bgcolor: 'rgba(25, 118, 210, 0.08)',
+              color: 'primary.main',
+              width: 28,
+              height: 28,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+              }
             }}
           >
             <Visibility fontSize="small" />
@@ -167,11 +182,17 @@ function Invoices() {
             size="small"
             onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
             sx={{
-              bgcolor: 'secondary.light',
-              color: 'secondary.contrastText',
-              '&:hover': { bgcolor: 'secondary.main' },
-              width: 32,
-              height: 32
+              bgcolor: 'rgba(66, 66, 66, 0.08)',
+              color: 'text.secondary',
+              width: 28,
+              height: 28,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                bgcolor: 'secondary.main',
+                color: 'white',
+                transform: 'scale(1.1)',
+                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+              }
             }}
           >
             <Edit fontSize="small" />
@@ -180,11 +201,17 @@ function Invoices() {
             <IconButton
               size="small"
               sx={{
-                bgcolor: 'success.light',
-                color: 'success.contrastText',
-                '&:hover': { bgcolor: 'success.main' },
-                width: 32,
-                height: 32
+                bgcolor: 'rgba(46, 125, 50, 0.08)',
+                color: 'success.main',
+                width: 28,
+                height: 28,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'success.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)'
+                }
               }}
             >
               <Send fontSize="small" />
@@ -213,9 +240,9 @@ function Invoices() {
 
   return (
     <Box p={isMobile ? 2 : 3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" sx={{ 
-          fontSize: { xs: '1.75rem', md: '2.25rem' }, 
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2.5}>
+        <Typography variant="h4" sx={{
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
           fontWeight: 600,
           letterSpacing: '-0.02em',
           lineHeight: 1.2,
@@ -231,14 +258,22 @@ function Invoices() {
           sx={{
             borderRadius: 2,
             textTransform: 'none',
-            fontWeight: 600
+            fontWeight: 500,
+            px: 3,
+            py: 1.5,
+            minHeight: 40,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              transform: 'scale(1.02)',
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+            }
           }}
         >
           {isMobile ? 'Nouvelle' : 'Nouvelle facture'}
         </Button>
       </Box>
 
-      <Box mb={3}>
+      <Box mb={2.5}>
         <TextField
           fullWidth
           variant="outlined"
@@ -249,12 +284,25 @@ function Invoices() {
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                  borderWidth: 2
+                }
+              },
+              '&.Mui-focused': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                  borderWidth: 2
+                }
+              }
             }
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search />
+                <Search sx={{ color: 'text.secondary' }} />
               </InputAdornment>
             ),
           }}
@@ -292,25 +340,46 @@ function Invoices() {
           )}
         </Box>
       ) : (
-        <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Card sx={{
+          borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          overflow: 'hidden'
+        }}>
           <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+            <TableContainer component={Paper} sx={{
+              borderRadius: 0,
+              background: 'transparent',
+              boxShadow: 'none'
+            }}>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>Numéro</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Client</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Montant total</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Date d'échéance</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Numéro</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Titre</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Client</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Statut</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Montant total</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Date d'échéance</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.id} hover>
-                      <TableCell>
+                    <TableRow
+                      key={invoice.id}
+                      hover
+                      sx={{
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                          transform: 'scale(1.001)'
+                        }
+                      }}
+                    >
+                      <TableCell sx={{ py: 1.25 }}>
                         <Link
                           component="button"
                           variant="body1"
@@ -319,6 +388,7 @@ function Invoices() {
                             textDecoration: 'none',
                             color: 'primary.main',
                             fontWeight: 'medium',
+                            fontSize: '0.875rem',
                             '&:hover': {
                               textDecoration: 'underline',
                             },
@@ -327,8 +397,8 @@ function Invoices() {
                           {invoice.invoice_number}
                         </Link>
                       </TableCell>
-                      <TableCell>{invoice.title}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ py: 1.25, fontSize: '0.875rem' }}>{invoice.title}</TableCell>
+                      <TableCell sx={{ py: 1.25 }}>
                         {invoice.client ? (
                           <Link
                             component="button"
@@ -340,6 +410,7 @@ function Invoices() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
+                              fontSize: '0.875rem',
                               '&:hover': {
                                 textDecoration: 'underline',
                               },
@@ -349,30 +420,42 @@ function Invoices() {
                             {invoice.client_name || invoice.client.name || 'N/A'}
                           </Link>
                         ) : (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', fontSize: '0.875rem' }}>
                             <Business fontSize="small" />
                             {invoice.client_name || 'N/A'}
                           </Box>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ py: 1.25 }}>
                         <Chip
                           label={getStatusLabel(invoice.status)}
                           color={getStatusColor(invoice.status)}
                           size="small"
+                          sx={{ fontSize: '0.75rem', height: 20 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{invoice.total_amount} {invoice.currency}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.25, fontSize: '0.875rem' }}>{invoice.total_amount} {invoice.currency}</TableCell>
+                      <TableCell sx={{ py: 1.25, fontSize: '0.875rem' }}>
                         {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
                       </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={1}>
+                      <TableCell sx={{ py: 1.25 }}>
+                        <Stack direction="row" spacing={0.75}>
                           <Button
                             size="small"
                             startIcon={<Visibility />}
                             onClick={() => navigate(`/invoices/${invoice.id}`)}
-                            sx={{ textTransform: 'none' }}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1.5,
+                              transition: 'all 0.2s ease-in-out',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
+                              }
+                            }}
                           >
                             Voir
                           </Button>
@@ -380,7 +463,18 @@ function Invoices() {
                             size="small"
                             startIcon={<Edit />}
                             onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
-                            sx={{ textTransform: 'none' }}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1.5,
+                              transition: 'all 0.2s ease-in-out',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.2)'
+                              }
+                            }}
                           >
                             Modifier
                           </Button>
@@ -389,7 +483,18 @@ function Invoices() {
                               size="small"
                               startIcon={<Send />}
                               color="success"
-                              sx={{ textTransform: 'none' }}
+                              sx={{
+                                textTransform: 'none',
+                                fontSize: '0.75rem',
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1.5,
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  transform: 'scale(1.05)',
+                                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.2)'
+                                }
+                              }}
                             >
                               Envoyer
                             </Button>

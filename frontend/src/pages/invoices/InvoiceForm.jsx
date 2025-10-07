@@ -244,23 +244,37 @@ function InvoiceForm() {
   };
 
   const MobileItemCard = ({ item, index }) => (
-    <Card sx={{ mb: 1.5, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <CardContent sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+    <Card sx={{
+      mb: 1.25,
+      borderRadius: 3,
+      background: 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        borderColor: 'primary.main',
+        background: 'rgba(255, 255, 255, 0.95)'
+      }
+    }}>
+      <CardContent sx={{ p: 1.5 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
           <Box>
-            <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
               {item.product_reference || 'N/A'}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
               {item.description}
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {formatCurrency(item.total_price)}
           </Typography>
         </Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', lineHeight: 1.4 }}>
             {item.quantity} × {formatCurrency(item.unit_price)}
           </Typography>
           <Stack direction="row" spacing={0.5}>
@@ -268,11 +282,17 @@ function InvoiceForm() {
               size="small"
               onClick={() => handleEditItem(index)}
               sx={{
-                bgcolor: 'secondary.light',
-                color: 'secondary.contrastText',
-                '&:hover': { bgcolor: 'secondary.main' },
-                width: 28,
-                height: 28
+                bgcolor: 'rgba(66, 66, 66, 0.08)',
+                color: 'text.secondary',
+                width: 26,
+                height: 26,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'secondary.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
+                }
               }}
             >
               <Edit fontSize="small" />
@@ -281,11 +301,17 @@ function InvoiceForm() {
               size="small"
               onClick={() => handleDeleteItem(index)}
               sx={{
-                bgcolor: 'error.light',
-                color: 'error.contrastText',
-                '&:hover': { bgcolor: 'error.main' },
-                width: 28,
-                height: 28
+                bgcolor: 'rgba(211, 47, 47, 0.08)',
+                color: 'error.main',
+                width: 26,
+                height: 26,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 2px 8px rgba(211, 47, 47, 0.3)'
+                }
               }}
             >
               <Delete fontSize="small" />
