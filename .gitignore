@@ -226,3 +226,4 @@ cache/
 # Temporary directories
 tmp/
 temp/
+*.log
