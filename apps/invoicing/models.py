@@ -18,18 +18,26 @@ class Product(models.Model):
         ('service', 'Service'),
         ('digital', 'Produit numérique'),
     ]
-    
+
+    SOURCE_TYPES = [
+        ('purchased', 'Acheté (fournisseur)'),
+        ('manufactured', 'Fabriqué (maison)'),
+        ('resale', 'Revente'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, verbose_name="Nom")
     description = models.TextField(blank=True, verbose_name="Description")
     reference = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Référence")
     barcode = models.CharField(max_length=50, blank=True, null=True, unique=True, verbose_name="Code-barres")
-    
+
     product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='physical', verbose_name="Type")
-    
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPES, default='purchased', verbose_name="Source")
+    supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='products', verbose_name="Fournisseur")
+
     # Prix
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix")
-    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix de revient")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de vente")
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix d'achat")
     
     # Stock (pour produits physiques)
     stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
@@ -84,7 +92,21 @@ class Product(models.Model):
             return 'low'
         else:
             return 'good'
-    
+
+    @property
+    def margin(self):
+        """Calcule la marge bénéficiaire"""
+        if self.cost_price > 0:
+            return self.price - self.cost_price
+        return 0
+
+    @property
+    def margin_percent(self):
+        """Calcule le pourcentage de marge"""
+        if self.cost_price > 0:
+            return ((self.price - self.cost_price) / self.cost_price) * 100
+        return 0
+
     def format_price(self):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"

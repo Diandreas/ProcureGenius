@@ -992,3 +992,51 @@ Not Found: /api/v1/suppliers/undefined/statistics/
 "GET /api/v1/products/ HTTP/1.1" 200 3819
 "GET /api/v1/clients/ HTTP/1.1" 200 842
 "GET /api/v1/products/ HTTP/1.1" 200 3819
+D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\urls.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4214
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4214
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4214
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"GET /api/v1/products/ HTTP/1.1" 200 5136
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4282
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388

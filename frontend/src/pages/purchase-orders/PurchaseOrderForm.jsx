@@ -42,6 +42,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI, suppliersAPI, productsAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
+import QuickCreateDialog from '../../components/common/QuickCreateDialog';
+import { supplierFields, getProductFields } from '../../config/quickCreateFields';
 
 function PurchaseOrderForm() {
   const { id } = useParams();
@@ -75,6 +77,10 @@ function PurchaseOrderForm() {
   const [products, setProducts] = useState([]);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(-1);
+
+  // Quick Create states
+  const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
 
   // Totals calculation
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
@@ -149,6 +155,26 @@ function PurchaseOrderForm() {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Quick Create handlers
+  const handleSupplierCreated = (result) => {
+    enqueueSnackbar(result.message || 'Fournisseur créé avec succès', { variant: 'success' });
+    setSuppliers(prev => [...prev, result.data]);
+    setFormData(prev => ({ ...prev, supplier: result.data }));
+    fetchSuppliers();
+  };
+
+  const handleProductCreated = (result) => {
+    enqueueSnackbar(result.message || 'Produit créé avec succès', { variant: 'success' });
+    setProducts(prev => [...prev, result.data]);
+    setNewItem(prev => ({
+      ...prev,
+      product_reference: result.data.reference || '',
+      description: result.data.name,
+      unit_price: parseFloat(result.data.cost_price) || parseFloat(result.data.price) || 0
+    }));
+    fetchProducts();
   };
 
   const handleAddItem = () => {
@@ -336,26 +362,40 @@ function PurchaseOrderForm() {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    options={suppliers}
-                    getOptionLabel={(option) => option.name || ''}
-                    value={formData.supplier}
-                    onChange={(event, newValue) => handleInputChange('supplier', newValue)}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Fournisseur *" required />
-                    )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Business sx={{ mr: 2 }} />
-                        <Box>
-                          <Typography variant="body2">{option.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {option.email}
-                          </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                    <Autocomplete
+                      options={suppliers}
+                      getOptionLabel={(option) => option.name || ''}
+                      value={formData.supplier}
+                      onChange={(event, newValue) => handleInputChange('supplier', newValue)}
+                      fullWidth
+                      renderInput={(params) => (
+                        <TextField {...params} label="Fournisseur *" required />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Business sx={{ mr: 2 }} />
+                          <Box>
+                            <Typography variant="body2">{option.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {option.email}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
-                  />
+                      )}
+                    />
+                    <IconButton
+                      onClick={() => setSupplierDialogOpen(true)}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                        mt: 0.5
+                      }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -503,24 +543,37 @@ function PurchaseOrderForm() {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <Autocomplete
-                options={products}
-                getOptionLabel={(option) => option.name || ''}
-                onChange={(event, newValue) => handleProductSelect(newValue)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Sélectionner un produit (optionnel)" />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props}>
-                    <Box>
-                      <Typography variant="body2">{option.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Réf: {option.reference || option.sku} - {formatCurrency(option.price || option.unit_price || 0)}
-                      </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Autocomplete
+                  options={products}
+                  getOptionLabel={(option) => option.name || ''}
+                  onChange={(event, newValue) => handleProductSelect(newValue)}
+                  fullWidth
+                  renderInput={(params) => (
+                    <TextField {...params} label="Sélectionner un produit (optionnel)" />
+                  )}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                      <Box>
+                        <Typography variant="body2">{option.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Réf: {option.reference || option.sku} - {formatCurrency(option.price || option.unit_price || 0)}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-              />
+                  )}
+                />
+                <IconButton
+                  onClick={() => setProductDialogOpen(true)}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                >
+                  <Add />
+                </IconButton>
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -582,6 +635,28 @@ function PurchaseOrderForm() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Quick Create Dialogs */}
+      <QuickCreateDialog
+        open={supplierDialogOpen}
+        onClose={() => setSupplierDialogOpen(false)}
+        onSuccess={handleSupplierCreated}
+        entityType="supplier"
+        fields={supplierFields}
+        createFunction={suppliersAPI.quickCreate}
+        title="Créer un fournisseur rapidement"
+      />
+
+      <QuickCreateDialog
+        open={productDialogOpen}
+        onClose={() => setProductDialogOpen(false)}
+        onSuccess={handleProductCreated}
+        entityType="product"
+        fields={getProductFields(suppliers, formData.supplier)}
+        createFunction={productsAPI.quickCreate}
+        title="Créer un produit rapidement"
+        contextData={formData.supplier ? { supplier_id: formData.supplier.id } : {}}
+      />
     </Box>
   );
 }

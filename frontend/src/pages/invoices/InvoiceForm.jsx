@@ -48,6 +48,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import QuickCreateDialog from '../../components/common/QuickCreateDialog';
+import { clientFields, getProductFields } from '../../config/quickCreateFields';
 
 function InvoiceForm() {
   const { id } = useParams();
@@ -80,6 +82,10 @@ function InvoiceForm() {
     product_reference: '',
     product: null
   });
+
+  // Quick Create states
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -140,6 +146,31 @@ function InvoiceForm() {
 
   const calculateTotal = () => {
     return calculateSubtotal() + calculateTaxAmount();
+  };
+
+  // Quick Create handlers
+  const handleClientCreated = (result) => {
+    enqueueSnackbar(result.message || 'Client créé avec succès', { variant: 'success' });
+    // Ajouter le nouveau client à la liste
+    setClients(prev => [...prev, result.data]);
+    // Sélectionner automatiquement le nouveau client
+    setFormData(prev => ({ ...prev, client: result.data }));
+    fetchClients(); // Rafraîchir la liste complète
+  };
+
+  const handleProductCreated = (result) => {
+    enqueueSnackbar(result.message || 'Produit créé avec succès', { variant: 'success' });
+    // Ajouter le nouveau produit à la liste
+    setProducts(prev => [...prev, result.data]);
+    // Pré-remplir le formulaire d'item avec ce produit
+    setNewItem(prev => ({
+      ...prev,
+      product: result.data,
+      product_reference: result.data.reference || '',
+      description: result.data.name,
+      unit_price: parseFloat(result.data.price) || 0
+    }));
+    fetchProducts(); // Rafraîchir la liste complète
   };
 
   const handleAddItem = () => {
@@ -433,9 +464,24 @@ function InvoiceForm() {
             {/* Client Selection Mobile */}
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  Client
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                    Client
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setClientDialogOpen(true)}
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      width: 28,
+                      height: 28
+                    }}
+                  >
+                    <Add fontSize="small" />
+                  </IconButton>
+                </Box>
                 <Autocomplete
                   options={clients}
                   getOptionLabel={(option) => option.name || ''}
@@ -773,9 +819,22 @@ function InvoiceForm() {
               {/* Client Selection */}
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Client
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Client
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => setClientDialogOpen(true)}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' }
+                      }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
                   <Autocomplete
                     options={clients}
                     getOptionLabel={(option) => option.name || ''}
@@ -860,33 +919,46 @@ function InvoiceForm() {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <Autocomplete
-                options={products}
-                getOptionLabel={(option) => option.name || ''}
-                value={newItem.product}
-                onChange={(event, newValue) => handleProductSelect(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Rechercher un produit"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
-                    }}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props}>
-                    <Box>
-                      <Typography variant="body1">{option.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Réf: {option.reference} - {formatCurrency(option.price)}
-                      </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Autocomplete
+                  options={products}
+                  getOptionLabel={(option) => option.name || ''}
+                  value={newItem.product}
+                  onChange={(event, newValue) => handleProductSelect(newValue)}
+                  fullWidth
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Rechercher un produit"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                      <Box>
+                        <Typography variant="body1">{option.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Réf: {option.reference} - {formatCurrency(option.price)}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-              />
+                  )}
+                />
+                <IconButton
+                  onClick={() => setProductDialogOpen(true)}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                >
+                  <Add />
+                </IconButton>
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -960,6 +1032,27 @@ function InvoiceForm() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Quick Create Dialogs */}
+      <QuickCreateDialog
+        open={clientDialogOpen}
+        onClose={() => setClientDialogOpen(false)}
+        onSuccess={handleClientCreated}
+        entityType="client"
+        fields={clientFields}
+        createFunction={clientsAPI.quickCreate}
+        title="Créer un client rapidement"
+      />
+
+      <QuickCreateDialog
+        open={productDialogOpen}
+        onClose={() => setProductDialogOpen(false)}
+        onSuccess={handleProductCreated}
+        entityType="product"
+        fields={getProductFields([], null)}
+        createFunction={productsAPI.quickCreate}
+        title="Créer un produit rapidement"
+      />
     </Box>
   );
 }

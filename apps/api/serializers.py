@@ -56,14 +56,20 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     """Serializer pour les produits"""
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    margin = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    margin_percent = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'reference', 'description', 'price',
+            'id', 'name', 'reference', 'description', 'barcode',
+            'product_type', 'source_type', 'supplier', 'supplier_name',
+            'price', 'cost_price', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'is_active',
-            'product_type', 'created_at', 'updated_at'
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'margin', 'margin_percent']
 
 
 class ClientSerializer(serializers.ModelSerializer):

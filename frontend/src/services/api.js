@@ -57,6 +57,7 @@ export const suppliersAPI = {
   toggleStatus: (id) => api.post(`/suppliers/${id}/toggle_status/`),
   getStatistics: (id) => api.get(`/suppliers/${id}/statistics/`),
   exportCSV: () => api.get('/suppliers/export_csv/', { responseType: 'blob' }),
+  quickCreate: (data) => api.post('/quick-create/supplier/', data),
 };
 
 // Purchase Orders API
@@ -91,6 +92,7 @@ export const productsAPI = {
   update: (id, data) => api.patch(`/products/${id}/`, data),
   delete: (id) => api.delete(`/products/${id}/`),
   lowStock: () => api.get('/products/low_stock/'),
+  quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 
 // Clients API
@@ -100,6 +102,7 @@ export const clientsAPI = {
   create: (data) => api.post('/clients/', data),
   update: (id, data) => api.patch(`/clients/${id}/`, data),
   delete: (id) => api.delete(`/clients/${id}/`),
+  quickCreate: (data) => api.post('/quick-create/client/', data),
 };
 
 // Dashboard API
