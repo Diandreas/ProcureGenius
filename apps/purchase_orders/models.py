@@ -109,12 +109,12 @@ class PurchaseOrder(models.Model):
         from datetime import datetime
         year = datetime.now().year
         month = datetime.now().month
-        
+
         # Trouve le prochain numéro disponible
         last_po = PurchaseOrder.objects.filter(
             po_number__startswith=f"BC{year}{month:02d}"
         ).order_by('-po_number').first()
-        
+
         if last_po:
             try:
                 last_number = int(last_po.po_number[-4:])
@@ -123,15 +123,68 @@ class PurchaseOrder(models.Model):
                 next_number = 1
         else:
             next_number = 1
-            
+
         return f"BC{year}{month:02d}{next_number:04d}"
+
+    def receive_items(self, user=None):
+        """
+        Marque le bon de commande comme reçu et met à jour le stock des produits physiques
+
+        Returns:
+            dict: Résumé des mouvements de stock créés
+        """
+        if self.status == 'received':
+            return {'error': 'Ce bon de commande a déjà été reçu'}
+
+        from apps.invoicing.models import Product
+
+        movements = []
+        errors = []
+
+        for item in self.items.all():
+            try:
+                # Chercher le produit par référence
+                product = Product.objects.filter(reference=item.product_reference).first()
+
+                if product and product.product_type == 'physical':
+                    # Ajuster le stock
+                    movement = product.adjust_stock(
+                        quantity=item.quantity,
+                        movement_type='reception',
+                        reference_type='purchase_order',
+                        reference_id=self.id,
+                        notes=f"Réception BC {self.po_number} - {item.description}",
+                        user=user
+                    )
+                    if movement:
+                        movements.append({
+                            'product': product.name,
+                            'quantity': item.quantity,
+                            'new_stock': product.stock_quantity
+                        })
+            except Exception as e:
+                errors.append({
+                    'item': item.description,
+                    'error': str(e)
+                })
+
+        # Mettre à jour le statut
+        self.status = 'received'
+        self.save(update_fields=['status'])
+
+        return {
+            'success': True,
+            'movements': movements,
+            'errors': errors,
+            'total_updated': len(movements)
+        }
 
 
 class PurchaseOrderItem(models.Model):
     """Article d'un bon de commande"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items', verbose_name=_("Bon de commande"))
-    
+
     # Informations produit
     product_reference = models.CharField(max_length=100, default="REF-001", verbose_name=_("Référence produit"))
     product_code = models.CharField(max_length=100, blank=True, verbose_name=_("Code produit"))
@@ -145,7 +198,10 @@ class PurchaseOrderItem(models.Model):
     unit_of_measure = models.CharField(max_length=20, default="unité", verbose_name=_("Unité de mesure"))
     expected_delivery_date = models.DateField(null=True, blank=True, verbose_name=_("Date de livraison prévue"))
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
-    
+
+    # Suivi réception
+    quantity_received = models.PositiveIntegerField(default=0, verbose_name=_("Quantité reçue"))
+
     # Dates
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -162,3 +218,20 @@ class PurchaseOrderItem(models.Model):
         super().save(*args, **kwargs)
         # Recalculer les totaux du bon de commande
         self.purchase_order.recalculate_totals()
+
+    @property
+    def quantity_remaining(self):
+        """Quantité restant à recevoir"""
+        return self.quantity - self.quantity_received
+
+    @property
+    def is_fully_received(self):
+        """Vérifie si l'item est entièrement reçu"""
+        return self.quantity_received >= self.quantity
+
+    @property
+    def reception_progress(self):
+        """Pourcentage de réception"""
+        if self.quantity == 0:
+            return 0
+        return (self.quantity_received / self.quantity) * 100

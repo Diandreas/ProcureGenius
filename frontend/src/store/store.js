@@ -6,6 +6,9 @@ import invoicesReducer from './slices/invoicesSlice';
 import productsReducer from './slices/productsSlice';
 import clientsReducer from './slices/clientsSlice';
 import aiChatReducer from './slices/aiChatSlice';
+import eSourcingReducer from './slices/eSourcingSlice';
+import contractsReducer from './slices/contractsSlice';
+import migrationReducer from './slices/migrationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +19,8 @@ export const store = configureStore({
     products: productsReducer,
     clients: clientsReducer,
     aiChat: aiChatReducer,
+    eSourcing: eSourcingReducer,
+    contracts: contractsReducer,
+    migration: migrationReducer,
   },
 });

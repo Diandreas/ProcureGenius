@@ -34,6 +34,9 @@ import {
   Logout,
   ChevronLeft,
   Add,
+  Gavel,
+  CompareArrows,
+  CloudUpload,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -47,6 +50,9 @@ const menuItems = [
   { text: 'Factures', icon: <Receipt />, path: '/invoices' },
   { text: 'Produits', icon: <Inventory />, path: '/products' },
   { text: 'Clients', icon: <People />, path: '/clients' },
+  { text: 'E-Sourcing (RFQ)', icon: <CompareArrows />, path: '/e-sourcing/events' },
+  { text: 'Contrats', icon: <Gavel />, path: '/contracts' },
+  { text: 'Import de données', icon: <CloudUpload />, path: '/migration/jobs' },
   { text: 'Assistant IA', icon: <Chat />, path: '/ai-chat' },
 ];
 
@@ -129,6 +135,37 @@ function MainLayout() {
             icon: <Add />,
             onClick: () => navigate('/clients/new')
           }
+        };
+      case '/e-sourcing/events':
+        return {
+          title: 'E-Sourcing (RFQ)',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouvel événement RFQ',
+            icon: <Add />,
+            onClick: () => navigate('/e-sourcing/events/new')
+          }
+        };
+      case '/contracts':
+        return {
+          title: 'Contrats',
+          action: {
+            label: isMobile ? 'Nouveau' : 'Nouveau contrat',
+            icon: <Add />,
+            onClick: () => navigate('/contracts/new')
+          }
+        };
+      case '/migration/jobs':
+        return {
+          title: 'Import de données',
+          action: {
+            label: isMobile ? 'Nouvel import' : 'Nouvel import',
+            icon: <CloudUpload />,
+            onClick: () => navigate('/migration/wizard')
+          }
+        };
+      case '/migration/wizard':
+        return {
+          title: 'Assistant d\'import'
         };
       case '/ai-chat':
         return {

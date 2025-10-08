@@ -39,6 +39,9 @@ TENANT_APPS = [
     'apps.ai_assistant',
     'apps.integrations',
     'apps.core',
+    'apps.e_sourcing',
+    'apps.contracts',
+    'apps.data_migration',
 ]
 
 SHARED_APPS = [

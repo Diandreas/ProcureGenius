@@ -111,6 +111,103 @@ class Product(models.Model):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
 
+    def adjust_stock(self, quantity, movement_type, reference_type=None, reference_id=None, notes="", user=None):
+        """
+        Ajuste le stock et crée un mouvement
+
+        Args:
+            quantity: Quantité (positive pour entrée, négative pour sortie)
+            movement_type: Type de mouvement (reception, sale, adjustment, return)
+            reference_type: Type de référence (purchase_order, invoice, etc.)
+            reference_id: ID de la référence
+            notes: Notes du mouvement
+            user: Utilisateur qui effectue le mouvement
+        """
+        if self.product_type != 'physical':
+            return None
+
+        old_quantity = self.stock_quantity
+        self.stock_quantity += quantity
+        self.save(update_fields=['stock_quantity'])
+
+        # Créer le mouvement
+        movement = StockMovement.objects.create(
+            product=self,
+            movement_type=movement_type,
+            quantity=quantity,
+            quantity_before=old_quantity,
+            quantity_after=self.stock_quantity,
+            reference_type=reference_type,
+            reference_id=reference_id,
+            notes=notes,
+            created_by=user
+        )
+
+        # Vérifier et envoyer alertes si nécessaire
+        from .stock_alerts import check_stock_after_movement
+        check_stock_after_movement(self)
+
+        return movement
+
+
+class StockMovement(models.Model):
+    """Historique des mouvements de stock"""
+    MOVEMENT_TYPES = [
+        ('reception', 'Réception (Bon de commande)'),
+        ('sale', 'Vente (Facture)'),
+        ('adjustment', 'Ajustement manuel'),
+        ('return', 'Retour'),
+        ('initial', 'Stock initial'),
+    ]
+
+    REFERENCE_TYPES = [
+        ('purchase_order', 'Bon de commande'),
+        ('invoice', 'Facture'),
+        ('manual', 'Manuel'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements', verbose_name="Produit")
+
+    # Détails du mouvement
+    movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES, verbose_name="Type de mouvement")
+    quantity = models.IntegerField(verbose_name="Quantité")  # Positif = entrée, Négatif = sortie
+    quantity_before = models.IntegerField(verbose_name="Quantité avant")
+    quantity_after = models.IntegerField(verbose_name="Quantité après")
+
+    # Référence (PO, Facture, etc.)
+    reference_type = models.CharField(max_length=20, choices=REFERENCE_TYPES, blank=True, null=True, verbose_name="Type de référence")
+    reference_id = models.UUIDField(blank=True, null=True, verbose_name="ID de référence")
+    reference_number = models.CharField(max_length=100, blank=True, verbose_name="Numéro de référence")
+
+    # Informations supplémentaires
+    notes = models.TextField(blank=True, verbose_name="Notes")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Créé par")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date")
+
+    class Meta:
+        verbose_name = "Mouvement de stock"
+        verbose_name_plural = "Mouvements de stock"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['reference_type', 'reference_id']),
+        ]
+
+    def __str__(self):
+        direction = "+" if self.quantity > 0 else ""
+        return f"{self.product.name} - {direction}{self.quantity} ({self.get_movement_type_display()})"
+
+    @property
+    def is_entry(self):
+        """Vérifie si c'est une entrée de stock"""
+        return self.quantity > 0
+
+    @property
+    def is_exit(self):
+        """Vérifie si c'est une sortie de stock"""
+        return self.quantity < 0
+
 
 class Invoice(models.Model):
     """Facture"""

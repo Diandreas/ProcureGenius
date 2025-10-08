@@ -124,4 +124,142 @@ export const aiChatAPI = {
   },
 };
 
+// Contracts API
+export const contractsAPI = {
+  list: (params) => api.get('/contracts/contracts/', { params }),
+  get: (id) => api.get(`/contracts/contracts/${id}/`),
+  create: (data) => api.post('/contracts/contracts/', data),
+  update: (id, data) => api.patch(`/contracts/contracts/${id}/`, data),
+  delete: (id) => api.delete(`/contracts/contracts/${id}/`),
+  approve: (id, notes) => api.post(`/contracts/contracts/${id}/approve/`, { notes }),
+  activate: (id) => api.post(`/contracts/contracts/${id}/activate/`),
+  terminate: (id) => api.post(`/contracts/contracts/${id}/terminate/`),
+  renew: (id, data) => api.post(`/contracts/contracts/${id}/renew/`, data),
+  extractClauses: (id, contractText, language = 'fr') =>
+    api.post(`/contracts/contracts/${id}/extract_clauses/`, {
+      contract_text: contractText,
+      language,
+    }),
+  statistics: () => api.get('/contracts/contracts/statistics/'),
+
+  // Clauses
+  clauses: {
+    list: (params) => api.get('/contracts/clauses/', { params }),
+    get: (id) => api.get(`/contracts/clauses/${id}/`),
+    create: (data) => api.post('/contracts/clauses/', data),
+    update: (id, data) => api.patch(`/contracts/clauses/${id}/`, data),
+    delete: (id) => api.delete(`/contracts/clauses/${id}/`),
+    verify: (id) => api.post(`/contracts/clauses/${id}/verify/`),
+    analyzeRisk: (id, language = 'fr') =>
+      api.post(`/contracts/clauses/${id}/analyze_risk/`, { language }),
+  },
+
+  // Milestones
+  milestones: {
+    list: (params) => api.get('/contracts/milestones/', { params }),
+    get: (id) => api.get(`/contracts/milestones/${id}/`),
+    create: (data) => api.post('/contracts/milestones/', data),
+    update: (id, data) => api.patch(`/contracts/milestones/${id}/`, data),
+    delete: (id) => api.delete(`/contracts/milestones/${id}/`),
+    complete: (id) => api.post(`/contracts/milestones/${id}/complete/`),
+  },
+
+  // Documents
+  documents: {
+    list: (params) => api.get('/contracts/documents/', { params }),
+    get: (id) => api.get(`/contracts/documents/${id}/`),
+    create: (data) => {
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        formData.append(key, data[key]);
+      });
+      return api.post('/contracts/documents/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
+    delete: (id) => api.delete(`/contracts/documents/${id}/`),
+  },
+};
+
+// E-Sourcing API
+export const eSourcingAPI = {
+  // Sourcing Events
+  events: {
+    list: (params) => api.get('/e-sourcing/events/', { params }),
+    get: (id) => api.get(`/e-sourcing/events/${id}/`),
+    create: (data) => api.post('/e-sourcing/events/', data),
+    update: (id, data) => api.patch(`/e-sourcing/events/${id}/`, data),
+    delete: (id) => api.delete(`/e-sourcing/events/${id}/`),
+    publish: (id) => api.post(`/e-sourcing/events/${id}/publish/`),
+    close: (id) => api.post(`/e-sourcing/events/${id}/close/`),
+    cancel: (id) => api.post(`/e-sourcing/events/${id}/cancel/`),
+    compareBids: (id) => api.get(`/e-sourcing/events/${id}/compare_bids/`),
+    statistics: (id) => api.get(`/e-sourcing/events/${id}/statistics/`),
+  },
+
+  // Supplier Bids
+  bids: {
+    list: (params) => api.get('/e-sourcing/bids/', { params }),
+    get: (id) => api.get(`/e-sourcing/bids/${id}/`),
+    create: (data) => api.post('/e-sourcing/bids/', data),
+    update: (id, data) => api.patch(`/e-sourcing/bids/${id}/`, data),
+    delete: (id) => api.delete(`/e-sourcing/bids/${id}/`),
+    submit: (id) => api.post(`/e-sourcing/bids/${id}/submit/`),
+    withdraw: (id) => api.post(`/e-sourcing/bids/${id}/withdraw/`),
+    evaluate: (id, data) => api.post(`/e-sourcing/bids/${id}/evaluate/`, data),
+    award: (id) => api.post(`/e-sourcing/bids/${id}/award/`),
+  },
+
+  // Supplier Invitations
+  invitations: {
+    list: (params) => api.get('/e-sourcing/invitations/', { params }),
+    get: (id) => api.get(`/e-sourcing/invitations/${id}/`),
+    create: (data) => api.post('/e-sourcing/invitations/', data),
+    delete: (id) => api.delete(`/e-sourcing/invitations/${id}/`),
+    send: (id) => api.post(`/e-sourcing/invitations/${id}/send/`),
+    markViewed: (id) => api.post(`/e-sourcing/invitations/${id}/mark_viewed/`),
+    decline: (id, reason) => api.post(`/e-sourcing/invitations/${id}/decline/`, { decline_reason: reason }),
+  },
+
+  // Bid Items
+  bidItems: {
+    list: (params) => api.get('/e-sourcing/bid-items/', { params }),
+    get: (id) => api.get(`/e-sourcing/bid-items/${id}/`),
+    create: (data) => api.post('/e-sourcing/bid-items/', data),
+    update: (id, data) => api.patch(`/e-sourcing/bid-items/${id}/`, data),
+    delete: (id) => api.delete(`/e-sourcing/bid-items/${id}/`),
+  },
+};
+
+// Data Migration API
+export const migrationAPI = {
+  list: (params) => api.get('/migration/jobs/', { params }),
+  get: (id) => api.get(`/migration/jobs/${id}/`),
+  create: (data) => {
+    const formData = new FormData();
+    Object.keys(data).forEach((key) => {
+      formData.append(key, data[key]);
+    });
+    return api.post('/migration/jobs/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  preview: (id) => api.post(`/migration/jobs/${id}/preview/`),
+  configure: (id, config) => api.post(`/migration/jobs/${id}/configure/`, config),
+  start: (id) => api.post(`/migration/jobs/${id}/start/`),
+  cancel: (id) => api.post(`/migration/jobs/${id}/cancel/`),
+  logs: (id) => api.get(`/migration/jobs/${id}/logs/`),
+};
+
+// QuickBooks API
+export const quickbooksAPI = {
+  getAuthUrl: () => api.get('/migration/quickbooks/auth-url/'),
+  getStatus: () => api.get('/migration/quickbooks/status/'),
+  disconnect: () => api.post('/migration/quickbooks/disconnect/'),
+  testConnection: () => api.post('/migration/quickbooks/test/'),
+  previewData: (entityType) => api.get('/migration/quickbooks/preview/', {
+    params: { entity_type: entityType }
+  }),
+};
+
 export default api;

@@ -47,7 +47,12 @@ import {
   Edit,
   Delete,
   FileUpload,
+  CloudUpload,
+  ImportExport,
+  People,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import QuickBooksConnect from '../../components/QuickBooksConnect';
 
 function TabPanel({ children, value, index, ...other }) {
   const theme = useTheme();
@@ -67,10 +72,12 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 function Settings() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [openTaxDialog, setOpenTaxDialog] = useState(false);
   const [openHeaderDialog, setOpenHeaderDialog] = useState(false);
   const [headerPreview, setHeaderPreview] = useState(null);
+  const [footerPreview, setFooterPreview] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -176,6 +183,16 @@ function Settings() {
     showLogo: true,
     logoPosition: 'left', // 'left', 'center', 'right'
     logoSize: 'medium', // 'small', 'medium', 'large'
+
+    // Paramètres de pied de page (footer)
+    invoiceFooterType: 'simple', // 'simple', 'custom', 'uploaded'
+    invoiceFooterTemplate: null,
+    footerHeight: 40, // mm
+    footerBackground: '#f5f5f5',
+    footerTextColor: '#666666',
+    footerText: 'Merci pour votre confiance!',
+    showPaymentInfo: true,
+    showTerms: true,
   });
 
   const handleTabChange = (event, newValue) => {
@@ -246,6 +263,7 @@ function Settings() {
   const tabs = [
     { label: 'Général', icon: <Business /> },
     { label: 'Facturation', icon: <Print /> },
+    { label: 'Migration', icon: <ImportExport /> },
     { label: 'Notifications', icon: <Notifications /> },
     { label: 'Apparence', icon: <Palette /> },
     { label: 'Sécurité', icon: <Security /> },
@@ -880,10 +898,320 @@ function Settings() {
               />
             </Grid>
           </Grid>
+
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+
+          <Typography variant="h6" gutterBottom>
+            Pied de page de facture
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Configurez le pied de page qui apparaîtra au bas de vos factures et documents.
+          </Alert>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Type de pied de page</InputLabel>
+                <Select
+                  value={settings.invoiceFooterType}
+                  onChange={(e) => handleSettingChange('invoiceFooterType', e.target.value)}
+                >
+                  <MenuItem value="simple">Simple (texte uniquement)</MenuItem>
+                  <MenuItem value="custom">Personnalisé</MenuItem>
+                  <MenuItem value="uploaded">Image uploadée</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {settings.invoiceFooterType === 'simple' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Texte du pied de page"
+                  value={settings.footerText}
+                  onChange={(e) => handleSettingChange('footerText', e.target.value)}
+                  placeholder="Merci pour votre confiance! Pour toute question, contactez-nous."
+                />
+              </Grid>
+            )}
+
+            {settings.invoiceFooterType === 'custom' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Typography variant="body2">Couleur de fond:</Typography>
+                    <input
+                      type="color"
+                      value={settings.footerBackground}
+                      onChange={(e) => handleSettingChange('footerBackground', e.target.value)}
+                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
+                    />
+                    <Typography variant="caption">{settings.footerBackground}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Typography variant="body2">Couleur du texte:</Typography>
+                    <input
+                      type="color"
+                      value={settings.footerTextColor}
+                      onChange={(e) => handleSettingChange('footerTextColor', e.target.value)}
+                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
+                    />
+                    <Typography variant="caption">{settings.footerTextColor}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    label="Texte personnalisé"
+                    value={settings.footerText}
+                    onChange={(e) => handleSettingChange('footerText', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.showPaymentInfo}
+                        onChange={(e) => handleSettingChange('showPaymentInfo', e.target.checked)}
+                      />
+                    }
+                    label="Afficher les informations de paiement"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.showTerms}
+                        onChange={(e) => handleSettingChange('showTerms', e.target.checked)}
+                      />
+                    }
+                    label="Afficher les conditions générales"
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Hauteur du pied de page (mm)"
+                type="number"
+                value={settings.footerHeight}
+                onChange={(e) => handleSettingChange('footerHeight', e.target.value)}
+                helperText="Hauteur recommandée: 40mm"
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Onglet Migration */}
+        <TabPanel value={activeTab} index={2}>
+          <Typography variant="h6" gutterBottom sx={{
+            fontSize: isMobile ? '1rem' : '1.1rem',
+            fontWeight: 600,
+            mb: 2
+          }}>
+            Migration depuis vos outils actuels
+          </Typography>
+
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Importez facilement vos données depuis vos systèmes existants ou depuis nos concurrents.
+            Notre assistant d'import supporte Excel, CSV et bientôt QuickBooks.
+          </Alert>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                Import rapide par type de données
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{
+                p: 2,
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }
+              }}>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                  <Business color="primary" />
+                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Fournisseurs</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Importez votre liste de fournisseurs depuis Excel/CSV
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CloudUpload />}
+                  onClick={() => navigate('/migration/wizard?type=suppliers')}
+                  fullWidth
+                >
+                  Importer fournisseurs
+                </Button>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{
+                p: 2,
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }
+              }}>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                  <Storage color="primary" />
+                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Produits</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Importez votre catalogue de produits
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CloudUpload />}
+                  onClick={() => navigate('/migration/wizard?type=products')}
+                  fullWidth
+                >
+                  Importer produits
+                </Button>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{
+                p: 2,
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }
+              }}>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                  <People color="primary" />
+                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Clients</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Importez votre base de clients
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CloudUpload />}
+                  onClick={() => navigate('/migration/wizard?type=clients')}
+                  fullWidth
+                >
+                  Importer clients
+                </Button>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{
+                p: 2,
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }
+              }}>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                  <Print color="primary" />
+                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Factures & BC</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Importez vos factures et bons de commande
+                </Typography>
+                <Box display="flex" gap={1}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => navigate('/migration/wizard?type=invoices')}
+                    fullWidth
+                  >
+                    Factures
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => navigate('/migration/wizard?type=purchase_orders')}
+                    fullWidth
+                  >
+                    Bons de commande
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+            Migration depuis les concurrents
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Card variant="outlined" sx={{ p: 2, bgcolor: 'primary.50', borderColor: 'primary.main' }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <ImportExport color="primary" />
+                  <Box flex={1}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                      Vous venez de SAP Ariba, Coupa, ou Procurify?
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Nous facilitons votre transition! Exportez vos données depuis votre plateforme actuelle
+                      en format Excel/CSV, puis utilisez notre assistant d'import ci-dessus.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => navigate('/migration/jobs')}
+                  >
+                    Voir l'historique
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12}>
+              <QuickBooksConnect />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+
+          <Box>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              Besoin d'aide pour la migration?
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Notre équipe peut vous accompagner dans la migration de vos données.
+            </Typography>
+            <Button variant="outlined" startIcon={<Email />} size="small">
+              Contacter le support
+            </Button>
+          </Box>
         </TabPanel>
 
         {/* Onglet Notifications */}
-        <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index={3}>
           <Typography variant="h6" gutterBottom>
             Notifications par email
           </Typography>
@@ -987,7 +1315,7 @@ function Settings() {
         </TabPanel>
 
         {/* Onglet Apparence */}
-        <TabPanel value={activeTab} index={3}>
+        <TabPanel value={activeTab} index={4}>
           <Typography variant="h6" gutterBottom>
             Thème et couleurs
           </Typography>
@@ -1051,7 +1379,7 @@ function Settings() {
         </TabPanel>
 
         {/* Onglet Sécurité */}
-        <TabPanel value={activeTab} index={4}>
+        <TabPanel value={activeTab} index={5}>
           <Typography variant="h6" gutterBottom>
             Paramètres de sécurité
           </Typography>
@@ -1109,7 +1437,7 @@ function Settings() {
         </TabPanel>
 
         {/* Onglet Sauvegarde */}
-        <TabPanel value={activeTab} index={5}>
+        <TabPanel value={activeTab} index={6}>
           <Typography variant="h6" gutterBottom>
             Sauvegarde automatique
           </Typography>

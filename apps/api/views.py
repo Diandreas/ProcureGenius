@@ -162,19 +162,96 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
-    filterset_fields = ['is_active']
-    search_fields = ['name', 'sku', 'description']
-    ordering_fields = ['name', 'unit_price', 'stock_quantity']
+    filterset_fields = ['is_active', 'product_type']
+    search_fields = ['name', 'reference', 'description']
+    ordering_fields = ['name', 'price', 'stock_quantity']
     ordering = ['name']
-    
+
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
         """Produits avec stock faible"""
         products = self.get_queryset().filter(
-            stock_quantity__lte=models.F('reorder_level')
+            product_type='physical',
+            stock_quantity__lte=F('low_stock_threshold')
         )
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def stock_movements(self, request, pk=None):
+        """Historique des mouvements de stock pour un produit"""
+        from apps.invoicing.models import StockMovement
+        from .serializers import StockMovementSerializer
+
+        product = self.get_object()
+        movements = StockMovement.objects.filter(product=product).order_by('-created_at')
+
+        # Pagination
+        page = self.paginate_queryset(movements)
+        if page is not None:
+            serializer = StockMovementSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = StockMovementSerializer(movements, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def adjust_stock(self, request, pk=None):
+        """Ajustement manuel du stock"""
+        product = self.get_object()
+
+        if product.product_type != 'physical':
+            return Response(
+                {'error': 'Seuls les produits physiques ont un stock'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        quantity = request.data.get('quantity')
+        notes = request.data.get('notes', '')
+
+        if quantity is None:
+            return Response(
+                {'error': 'La quantité est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            quantity = int(quantity)
+        except ValueError:
+            return Response(
+                {'error': 'Quantité invalide'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ajuster le stock
+        movement = product.adjust_stock(
+            quantity=quantity,
+            movement_type='adjustment',
+            reference_type='manual',
+            notes=notes,
+            user=request.user if request.user.is_authenticated else None
+        )
+
+        from .serializers import StockMovementSerializer
+        return Response({
+            'product': self.get_serializer(product).data,
+            'movement': StockMovementSerializer(movement).data
+        })
+
+    @action(detail=False, methods=['get'])
+    def stock_alerts(self, request):
+        """Liste des produits nécessitant une attention (stock bas/rupture)"""
+        from apps.invoicing.stock_alerts import StockAlertService
+
+        low_stock = StockAlertService.check_low_stock_products()
+        out_of_stock = StockAlertService.get_out_of_stock_products()
+
+        return Response({
+            'low_stock': self.get_serializer(low_stock, many=True).data,
+            'out_of_stock': self.get_serializer(out_of_stock, many=True).data,
+            'low_stock_count': len(low_stock),
+            'out_of_stock_count': len(out_of_stock)
+        })
 
 
 class ClientViewSet(viewsets.ModelViewSet):

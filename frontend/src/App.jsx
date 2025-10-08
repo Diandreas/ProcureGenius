@@ -30,6 +30,15 @@ import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
 import AIChat from './pages/ai-chat/AIChat';
 import Settings from './pages/settings/Settings';
+import SourcingEvents from './pages/e-sourcing/SourcingEvents';
+import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
+import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
+import BidComparison from './pages/e-sourcing/BidComparison';
+import Contracts from './pages/contracts/Contracts';
+import ContractDetail from './pages/contracts/ContractDetail';
+import ContractForm from './pages/contracts/ContractForm';
+import MigrationJobs from './pages/migration/MigrationJobs';
+import MigrationWizard from './pages/migration/MigrationWizard';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -408,6 +417,23 @@ function App() {
                   <Route path="/clients/new" element={<ClientForm />} />
                   <Route path="/clients/:id" element={<ClientDetail />} />
                   <Route path="/clients/:id/edit" element={<ClientForm />} />
+
+                  {/* E-Sourcing */}
+                  <Route path="/e-sourcing/events" element={<SourcingEvents />} />
+                  <Route path="/e-sourcing/events/new" element={<SourcingEventForm />} />
+                  <Route path="/e-sourcing/events/:id" element={<SourcingEventDetail />} />
+                  <Route path="/e-sourcing/events/:id/edit" element={<SourcingEventForm />} />
+                  <Route path="/e-sourcing/events/:eventId/compare" element={<BidComparison />} />
+
+                  {/* Contracts */}
+                  <Route path="/contracts" element={<Contracts />} />
+                  <Route path="/contracts/new" element={<ContractForm />} />
+                  <Route path="/contracts/:id" element={<ContractDetail />} />
+                  <Route path="/contracts/:id/edit" element={<ContractForm />} />
+
+                  {/* Data Migration */}
+                  <Route path="/migration/jobs" element={<MigrationJobs />} />
+                  <Route path="/migration/wizard" element={<MigrationWizard />} />
 
                   {/* AI Chat */}
                   <Route path="/ai-chat" element={<AIChat />} />

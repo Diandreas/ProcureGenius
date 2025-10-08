@@ -34,6 +34,15 @@ urlpatterns = [
     # AI Assistant endpoints
     path('ai/', include('apps.ai_assistant.api_urls')),
 
+    # E-Sourcing endpoints
+    path('e-sourcing/', include('apps.e_sourcing.urls')),
+
+    # Contracts endpoints
+    path('contracts/', include('apps.contracts.urls')),
+
+    # Data Migration endpoints
+    path('migration/', include('apps.data_migration.urls')),
+
     # Keep existing endpoints if they exist
     # path('analytics/', include('apps.analytics.api_urls')),
     # path('integrations/', include('apps.integrations.api_urls')),
