@@ -126,18 +126,23 @@ class SupplierInvitationSerializer(serializers.ModelSerializer):
     supplier_email = serializers.EmailField(source='supplier.email', read_only=True)
     event_title = serializers.CharField(source='sourcing_event.title', read_only=True)
     has_bid = serializers.SerializerMethodField()
+    public_url = serializers.SerializerMethodField()
 
     class Meta:
         model = SupplierInvitation
         fields = [
             'id', 'sourcing_event', 'event_title', 'supplier', 'supplier_name',
             'supplier_email', 'status', 'invitation_message', 'decline_reason',
-            'created_at', 'sent_at', 'viewed_at', 'responded_at', 'has_bid'
+            'created_at', 'sent_at', 'viewed_at', 'responded_at', 'has_bid',
+            'access_token', 'public_url'
         ]
-        read_only_fields = ['id', 'created_at', 'sent_at', 'viewed_at', 'responded_at']
+        read_only_fields = ['id', 'created_at', 'sent_at', 'viewed_at', 'responded_at', 'access_token']
 
     def get_has_bid(self, obj):
         return hasattr(obj, 'bid') and obj.bid is not None
+
+    def get_public_url(self, obj):
+        return obj.get_public_url()
 
 
 class SourcingEventListSerializer(serializers.ModelSerializer):
@@ -164,6 +169,7 @@ class SourcingEventDetailSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     invitations = SupplierInvitationSerializer(many=True, read_only=True)
     bids = SupplierBidListSerializer(many=True, read_only=True)
+    public_url = serializers.SerializerMethodField()
 
     class Meta:
         model = SourcingEvent
@@ -172,9 +178,12 @@ class SourcingEventDetailSerializer(serializers.ModelSerializer):
             'requirements', 'terms_and_conditions', 'created_by', 'created_by_name',
             'created_at', 'updated_at', 'published_at', 'submission_deadline',
             'evaluation_deadline', 'estimated_budget', 'evaluation_criteria',
-            'invitations', 'bids'
+            'invitations', 'bids', 'public_token', 'public_url'
         ]
-        read_only_fields = ['id', 'event_number', 'created_at', 'updated_at', 'published_at']
+        read_only_fields = ['id', 'event_number', 'created_at', 'updated_at', 'published_at', 'public_token']
+
+    def get_public_url(self, obj):
+        return obj.get_public_url()
 
 
 class SourcingEventCreateSerializer(serializers.ModelSerializer):
@@ -269,3 +278,44 @@ class BidComparisonSerializer(serializers.Serializer):
     status = serializers.CharField()
     submitted_at = serializers.DateTimeField()
     items = BidItemSerializer(many=True)
+
+
+# Serializers pour l'accès public via token
+class PublicSourcingEventSerializer(serializers.ModelSerializer):
+    """Serializer pour afficher l'événement aux fournisseurs (sans info sensible)"""
+
+    class Meta:
+        model = SourcingEvent
+        fields = [
+            'event_number', 'title', 'description', 'requirements',
+            'terms_and_conditions', 'submission_deadline', 'event_type'
+        ]
+
+
+class PublicBidSubmitSerializer(serializers.Serializer):
+    """Serializer pour soumettre une offre via lien public"""
+
+    # Informations fournisseur
+    supplier_name = serializers.CharField(max_length=200, required=True)
+    supplier_email = serializers.EmailField(required=True)
+    supplier_phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    supplier_address = serializers.CharField(required=False, allow_blank=True)
+
+    # Informations de soumission
+    cover_letter = serializers.CharField(required=False, allow_blank=True)
+    technical_response = serializers.CharField(required=False, allow_blank=True)
+    terms_accepted = serializers.BooleanField(required=True)
+    tax_amount = serializers.DecimalField(max_digits=14, decimal_places=2, default=0)
+    delivery_time_days = serializers.IntegerField(required=False, allow_null=True)
+
+    items = BidItemCreateSerializer(many=True, required=True)
+
+    def validate_terms_accepted(self, value):
+        if not value:
+            raise serializers.ValidationError("Vous devez accepter les termes et conditions")
+        return value
+
+    def validate_items(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Au moins un article est requis")
+        return value

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 import uuid
+import secrets
 
 User = get_user_model()
 
@@ -29,6 +30,9 @@ class SourcingEvent(models.Model):
     event_number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro d'événement"))
     event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, default='rfq', verbose_name=_("Type d'événement"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
+
+    # Token d'accès public pour l'événement (sans invitation)
+    public_token = models.CharField(max_length=64, unique=True, editable=False, blank=True, default='', verbose_name=_("Token public"))
 
     # Informations générales
     title = models.CharField(max_length=200, verbose_name=_("Titre"))
@@ -63,6 +67,8 @@ class SourcingEvent(models.Model):
     def save(self, *args, **kwargs):
         if not self.event_number:
             self.event_number = self.generate_event_number()
+        if not self.public_token:
+            self.public_token = secrets.token_urlsafe(32)
         super().save(*args, **kwargs)
 
     def generate_event_number(self):
@@ -100,6 +106,12 @@ class SourcingEvent(models.Model):
         """Vérifie si les soumissions sont encore possibles"""
         return self.status == 'published' and timezone.now() < self.submission_deadline
 
+    def get_public_url(self):
+        """Retourne l'URL publique pour l'événement"""
+        from django.conf import settings
+        base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        return f"{base_url}/sourcing/public/{self.public_token}"
+
     @property
     def total_invitations(self):
         """Retourne le nombre total d'invitations"""
@@ -127,6 +139,9 @@ class SupplierInvitation(models.Model):
     sourcing_event = models.ForeignKey(SourcingEvent, on_delete=models.CASCADE, related_name='invitations', verbose_name=_("Événement de sourcing"))
     supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.CASCADE, related_name='sourcing_invitations', verbose_name=_("Fournisseur"))
 
+    # Token d'accès unique pour accès public
+    access_token = models.CharField(max_length=64, unique=True, editable=False, blank=True, default='', verbose_name=_("Token d'accès"))
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_("Statut"))
 
     # Dates
@@ -147,6 +162,17 @@ class SupplierInvitation(models.Model):
 
     def __str__(self):
         return f"{self.sourcing_event.event_number} - {self.supplier.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.access_token:
+            self.access_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    def get_public_url(self):
+        """Retourne l'URL publique pour accéder à l'invitation"""
+        from django.conf import settings
+        base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        return f"{base_url}/sourcing/submit/{self.access_token}"
 
     def mark_as_sent(self):
         """Marque l'invitation comme envoyée"""

@@ -1,16 +1,18 @@
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 from django.db.models import Q, Count, Avg
+from django.shortcuts import get_object_or_404
 from .models import SourcingEvent, SupplierInvitation, SupplierBid, BidItem
 from .serializers import (
     SourcingEventListSerializer, SourcingEventDetailSerializer,
     SourcingEventCreateSerializer, SupplierInvitationSerializer,
     SupplierBidListSerializer, SupplierBidDetailSerializer,
     SupplierBidCreateSerializer, BidItemSerializer,
-    BidEvaluationSerializer, BidComparisonSerializer
+    BidEvaluationSerializer, BidComparisonSerializer,
+    PublicSourcingEventSerializer, PublicBidSubmitSerializer
 )
 
 
@@ -398,3 +400,111 @@ class BidItemViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(bid_id=bid_id)
 
         return queryset.select_related('bid')
+
+
+# ===== VUES PUBLIQUES POUR SOUMISSION VIA TOKEN =====
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_sourcing_event(request, token):
+    """
+    Récupère les détails d'un événement de sourcing via token public
+    URL: /api/e-sourcing/public/{token}/
+    """
+    event = get_object_or_404(SourcingEvent, public_token=token)
+
+    # Vérifie si l'événement accepte encore des soumissions
+    can_submit = event.can_submit_bid()
+
+    return Response({
+        'event': PublicSourcingEventSerializer(event).data,
+        'can_submit': can_submit
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def public_submit_bid(request, token):
+    """
+    Soumet une offre via token public (avec création automatique du fournisseur)
+    URL: /api/e-sourcing/public/{token}/submit/
+    """
+    from apps.suppliers.models import Supplier
+
+    event = get_object_or_404(SourcingEvent, public_token=token)
+
+    # Vérifie si l'événement accepte encore des soumissions
+    if not event.can_submit_bid():
+        return Response({
+            'status': 'error',
+            'message': "La date limite de soumission est dépassée"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Valide les données
+    serializer = PublicBidSubmitSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response({
+            'status': 'error',
+            'message': "Données invalides",
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+
+    # Cherche ou crée le fournisseur
+    supplier, created = Supplier.objects.get_or_create(
+        email=data['supplier_email'],
+        defaults={
+            'name': data['supplier_name'],
+            'phone': data.get('supplier_phone', ''),
+            'address': data.get('supplier_address', ''),
+        }
+    )
+
+    # Vérifie si ce fournisseur a déjà soumis
+    existing_bid = SupplierBid.objects.filter(
+        sourcing_event=event,
+        supplier=supplier
+    ).first()
+
+    if existing_bid and existing_bid.status != 'draft':
+        return Response({
+            'status': 'error',
+            'message': "Vous avez déjà soumis une offre pour cet événement"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Crée ou met à jour la soumission
+    bid_data = {
+        'cover_letter': data.get('cover_letter', ''),
+        'technical_response': data.get('technical_response', ''),
+        'terms_accepted': data['terms_accepted'],
+        'tax_amount': data.get('tax_amount', 0),
+        'delivery_time_days': data.get('delivery_time_days'),
+    }
+
+    if existing_bid:
+        bid = existing_bid
+        for attr, value in bid_data.items():
+            setattr(bid, attr, value)
+        bid.save()
+        bid.items.all().delete()
+    else:
+        bid = SupplierBid.objects.create(
+            sourcing_event=event,
+            supplier=supplier,
+            **bid_data
+        )
+
+    # Crée les items
+    items_data = data.get('items', [])
+    for item_data in items_data:
+        BidItem.objects.create(bid=bid, **item_data)
+
+    # Soumet la soumission
+    bid.submit()
+
+    return Response({
+        'status': 'success',
+        'message': "Votre offre a été soumise avec succès",
+        'bid_id': str(bid.id)
+    }, status=status.HTTP_201_CREATED)

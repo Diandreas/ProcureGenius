@@ -1,7 +1,6 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q, Count, Sum
 from .models import Contract, ContractClause, ContractMilestone, ContractDocument
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ContractViewSet(viewsets.ModelViewSet):
     """ViewSet pour les contrats"""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['contract_number', 'title', 'description', 'supplier__name']
     ordering_fields = ['created_at', 'start_date', 'end_date', 'total_value', 'status']
@@ -255,7 +254,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 class ContractClauseViewSet(viewsets.ModelViewSet):
     """ViewSet pour les clauses de contrat"""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
     serializer_class = ContractClauseSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'section_reference']
@@ -339,7 +338,7 @@ class ContractClauseViewSet(viewsets.ModelViewSet):
 class ContractMilestoneViewSet(viewsets.ModelViewSet):
     """ViewSet pour les jalons de contrat"""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
     serializer_class = ContractMilestoneSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description']
@@ -382,7 +381,7 @@ class ContractMilestoneViewSet(viewsets.ModelViewSet):
 class ContractDocumentViewSet(viewsets.ModelViewSet):
     """ViewSet pour les documents de contrat"""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
     serializer_class = ContractDocumentSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description']

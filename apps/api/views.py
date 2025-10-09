@@ -238,6 +238,72 @@ class ProductViewSet(viewsets.ModelViewSet):
             'movement': StockMovementSerializer(movement).data
         })
 
+    @action(detail=True, methods=['post'])
+    def report_loss(self, request, pk=None):
+        """Déclarer une perte de stock avec raison détaillée"""
+        product = self.get_object()
+
+        if product.product_type != 'physical':
+            return Response(
+                {'error': 'Seuls les produits physiques peuvent avoir des pertes'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from apps.invoicing.models import StockMovement
+
+        # Validation des données
+        quantity = request.data.get('quantity')
+        loss_reason = request.data.get('loss_reason')
+        loss_description = request.data.get('loss_description', '')
+        notes = request.data.get('notes', '')
+
+        if not quantity:
+            return Response({'error': 'La quantité est requise'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not loss_reason:
+            return Response({'error': 'La raison de la perte est requise'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if loss_reason not in dict(StockMovement.LOSS_REASONS):
+            return Response({'error': 'Raison de perte invalide'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            quantity_lost = abs(int(quantity))
+        except ValueError:
+            return Response({'error': 'Quantité invalide'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculer la valeur de la perte
+        loss_value = product.cost_price * quantity_lost if product.cost_price else 0
+
+        # Créer le mouvement de perte
+        old_quantity = product.stock_quantity
+        product.stock_quantity -= quantity_lost
+        product.save(update_fields=['stock_quantity'])
+
+        movement = StockMovement.objects.create(
+            product=product,
+            movement_type='loss',
+            quantity=-quantity_lost,
+            quantity_before=old_quantity,
+            quantity_after=product.stock_quantity,
+            reference_type='loss_report',
+            loss_reason=loss_reason,
+            loss_description=loss_description,
+            loss_value=loss_value,
+            notes=notes,
+            created_by=request.user if request.user.is_authenticated else None
+        )
+
+        # Vérifier et envoyer alertes si nécessaire
+        from apps.invoicing.stock_alerts import check_stock_after_movement
+        check_stock_after_movement(product)
+
+        from .serializers import StockMovementSerializer
+        return Response({
+            'product': self.get_serializer(product).data,
+            'movement': StockMovementSerializer(movement).data,
+            'loss_value': float(loss_value)
+        })
+
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """Liste des produits nécessitant une attention (stock bas/rupture)"""
@@ -307,6 +373,7 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
         purchase_order = self.get_object()
         if purchase_order.status == 'draft':
             purchase_order.status = 'approved'
+            purchase_order.approved_by = request.user if request.user.is_authenticated else None
             purchase_order.save()
             serializer = self.get_serializer(purchase_order)
             return Response(serializer.data)
@@ -314,7 +381,32 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
             {'error': 'Only draft orders can be approved'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+    @action(detail=True, methods=['post'])
+    def receive(self, request, pk=None):
+        """Marquer le bon de commande comme reçu et mettre à jour le stock"""
+        purchase_order = self.get_object()
+
+        if purchase_order.status == 'received':
+            return Response(
+                {'error': 'Ce bon de commande a déjà été reçu'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Recevoir les items et mettre à jour le stock
+        result = purchase_order.receive_items(
+            user=request.user if request.user.is_authenticated else None
+        )
+
+        if 'error' in result:
+            return Response({'error': result['error']}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(purchase_order)
+        return Response({
+            'purchase_order': serializer.data,
+            'stock_update': result
+        })
+
     @action(detail=True, methods=['get'])
     def print_pdf(self, request, pk=None):
         """Générer PDF du bon de commande"""

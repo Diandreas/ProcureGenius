@@ -31,6 +31,8 @@ import {
   Assessment,
   Send,
   Visibility,
+  ContentCopy,
+  Share,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
@@ -83,6 +85,11 @@ function SourcingEventDetail() {
     } catch (error) {
       enqueueSnackbar("Erreur lors de l'annulation", { variant: 'error' });
     }
+  };
+
+  const handleCopyLink = (publicUrl) => {
+    navigator.clipboard.writeText(publicUrl);
+    enqueueSnackbar('Lien copié dans le presse-papiers', { variant: 'success' });
   };
 
   const getStatusChip = (status) => {
@@ -146,6 +153,54 @@ function SourcingEventDetail() {
               </Box>
 
               <Divider sx={{ my: 2 }} />
+
+              {/* Lien public de partage */}
+              {currentEvent.public_url && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, border: 1, borderColor: 'primary.200' }}>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                    🔗 Lien public de l'événement
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Partagez ce lien avec n'importe quel fournisseur pour recevoir des offres :
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        flex: 1,
+                        p: 1,
+                        bgcolor: 'white',
+                        borderRadius: 1,
+                        border: 1,
+                        borderColor: 'divider',
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {currentEvent.public_url}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<ContentCopy />}
+                      onClick={() => handleCopyLink(currentEvent.public_url)}
+                    >
+                      Copier
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Share />}
+                      onClick={() => window.open(currentEvent.public_url, '_blank')}
+                    >
+                      Ouvrir
+                    </Button>
+                  </Stack>
+                </Box>
+              )}
 
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 {currentEvent.status === 'draft' && (
@@ -326,12 +381,13 @@ function SourcingEventDetail() {
                       <TableCell>Statut</TableCell>
                       <TableCell>Envoyé le</TableCell>
                       <TableCell>Soumission</TableCell>
+                      <TableCell align="right">Lien de partage</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {currentEvent.invitations?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} align="center">
+                        <TableCell colSpan={6} align="center">
                           <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                             Aucune invitation
                           </Typography>
@@ -372,6 +428,28 @@ function SourcingEventDetail() {
                             ) : (
                               <Chip label="En attente" size="small" />
                             )}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                              <Tooltip title="Copier le lien">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleCopyLink(invitation.public_url)}
+                                  color="primary"
+                                >
+                                  <ContentCopy fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Ouvrir le lien">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => window.open(invitation.public_url, '_blank')}
+                                  color="primary"
+                                >
+                                  <Share fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       ))

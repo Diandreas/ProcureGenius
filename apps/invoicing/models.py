@@ -157,6 +157,7 @@ class StockMovement(models.Model):
         ('sale', 'Vente (Facture)'),
         ('adjustment', 'Ajustement manuel'),
         ('return', 'Retour'),
+        ('loss', 'Perte/Casse/Vol'),
         ('initial', 'Stock initial'),
     ]
 
@@ -164,6 +165,16 @@ class StockMovement(models.Model):
         ('purchase_order', 'Bon de commande'),
         ('invoice', 'Facture'),
         ('manual', 'Manuel'),
+        ('loss_report', 'Rapport de perte'),
+    ]
+
+    LOSS_REASONS = [
+        ('damaged', 'Produit endommagé'),
+        ('expired', 'Produit périmé'),
+        ('stolen', 'Vol'),
+        ('lost', 'Perte/Égarement'),
+        ('quality_issue', 'Problème de qualité'),
+        ('other', 'Autre raison'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -179,6 +190,11 @@ class StockMovement(models.Model):
     reference_type = models.CharField(max_length=20, choices=REFERENCE_TYPES, blank=True, null=True, verbose_name="Type de référence")
     reference_id = models.UUIDField(blank=True, null=True, verbose_name="ID de référence")
     reference_number = models.CharField(max_length=100, blank=True, verbose_name="Numéro de référence")
+
+    # Détails sur les pertes (si movement_type='loss')
+    loss_reason = models.CharField(max_length=20, choices=LOSS_REASONS, blank=True, null=True, verbose_name="Raison de la perte")
+    loss_description = models.TextField(blank=True, verbose_name="Description détaillée de la perte")
+    loss_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Valeur de la perte")
 
     # Informations supplémentaires
     notes = models.TextField(blank=True, verbose_name="Notes")
@@ -207,6 +223,18 @@ class StockMovement(models.Model):
     def is_exit(self):
         """Vérifie si c'est une sortie de stock"""
         return self.quantity < 0
+
+    @property
+    def is_loss(self):
+        """Vérifie si c'est une perte"""
+        return self.movement_type == 'loss'
+
+    @property
+    def loss_reason_display(self):
+        """Retourne le libellé de la raison de perte"""
+        if self.loss_reason:
+            return dict(self.LOSS_REASONS).get(self.loss_reason, '')
+        return ''
 
 
 class Invoice(models.Model):

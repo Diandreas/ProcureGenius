@@ -27,6 +27,8 @@ import {
     TableRow,
     Paper,
     LinearProgress,
+    Tabs,
+    Tab,
 } from '@mui/material';
 import {
     Edit,
@@ -46,10 +48,13 @@ import {
     TrendingUp,
     Schedule,
     Star,
+    History,
+    Info as InfoIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import StockMovementsTab from '../../components/StockMovementsTab';
 
 function ProductDetail() {
     const { id } = useParams();
@@ -59,6 +64,7 @@ function ProductDetail() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
         fetchProduct();
@@ -170,9 +176,20 @@ function ProductDetail() {
                 </Box>
             </Box>
 
-            <Grid container spacing={3}>
-                {/* Informations principales */}
-                <Grid item xs={12} md={8}>
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+                    <Tab icon={<InfoIcon />} label="Informations" />
+                    {product.product_type === 'physical' && (
+                        <Tab icon={<History />} label="Historique Stock" />
+                    )}
+                </Tabs>
+            </Box>
+
+            {activeTab === 0 && (
+                <Grid container spacing={3}>
+                    {/* Informations principales */}
+                    <Grid item xs={12} md={8}>
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
@@ -452,6 +469,11 @@ function ProductDetail() {
                     </Card>
                 </Grid>
             </Grid>
+            )}
+
+            {activeTab === 1 && product.product_type === 'physical' && (
+                <StockMovementsTab productId={id} productType={product.product_type} />
+            )}
         </Box>
     );
 }

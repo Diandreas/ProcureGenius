@@ -4,7 +4,9 @@ from .views import (
     SourcingEventViewSet,
     SupplierInvitationViewSet,
     SupplierBidViewSet,
-    BidItemViewSet
+    BidItemViewSet,
+    public_sourcing_event,
+    public_submit_bid
 )
 
 router = DefaultRouter()
@@ -15,4 +17,7 @@ router.register(r'bid-items', BidItemViewSet, basename='bid-item')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # URLs publiques pour soumission via token
+    path('public/<str:token>/', public_sourcing_event, name='public-sourcing-event'),
+    path('public/<str:token>/submit/', public_submit_bid, name='public-submit-bid'),
 ]

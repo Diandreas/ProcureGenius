@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product
+from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement
 from apps.accounts.models import Client
 from django.contrib.auth import get_user_model
 
@@ -59,6 +59,9 @@ class ProductSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     margin = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     margin_percent = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    stock_status = serializers.CharField(read_only=True)
+    is_low_stock = serializers.BooleanField(read_only=True)
+    is_out_of_stock = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Product
@@ -66,10 +69,44 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'reference', 'description', 'barcode',
             'product_type', 'source_type', 'supplier', 'supplier_name',
             'price', 'cost_price', 'margin', 'margin_percent',
-            'stock_quantity', 'low_stock_threshold', 'is_active',
+            'stock_quantity', 'low_stock_threshold', 'stock_status',
+            'is_low_stock', 'is_out_of_stock', 'is_active',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'margin', 'margin_percent']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
+            'stock_status', 'is_low_stock', 'is_out_of_stock'
+        ]
+
+
+class StockMovementSerializer(serializers.ModelSerializer):
+    """Serializer pour les mouvements de stock"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_reference = serializers.CharField(source='product.reference', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    movement_type_display = serializers.CharField(source='get_movement_type_display', read_only=True)
+    reference_type_display = serializers.CharField(source='get_reference_type_display', read_only=True)
+    loss_reason_display = serializers.CharField(read_only=True)
+    is_entry = serializers.BooleanField(read_only=True)
+    is_exit = serializers.BooleanField(read_only=True)
+    is_loss = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = StockMovement
+        fields = [
+            'id', 'product', 'product_name', 'product_reference',
+            'movement_type', 'movement_type_display',
+            'quantity', 'quantity_before', 'quantity_after',
+            'reference_type', 'reference_type_display', 'reference_id', 'reference_number',
+            'loss_reason', 'loss_reason_display', 'loss_description', 'loss_value',
+            'notes', 'created_by', 'created_by_name', 'created_at',
+            'is_entry', 'is_exit', 'is_loss'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'product_name', 'product_reference',
+            'created_by_name', 'movement_type_display', 'reference_type_display',
+            'loss_reason_display', 'is_entry', 'is_exit', 'is_loss'
+        ]
 
 
 class ClientSerializer(serializers.ModelSerializer):

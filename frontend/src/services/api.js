@@ -69,6 +69,7 @@ export const purchaseOrdersAPI = {
   delete: (id) => api.delete(`/purchase-orders/${id}/`),
   addItem: (id, item) => api.post(`/purchase-orders/${id}/add_item/`, item),
   approve: (id) => api.post(`/purchase-orders/${id}/approve/`),
+  receive: (id) => api.post(`/purchase-orders/${id}/receive/`),
   printPDF: (id) => api.get(`/purchase-orders/${id}/print_pdf/`, { responseType: 'blob' }),
 };
 
@@ -92,6 +93,10 @@ export const productsAPI = {
   update: (id, data) => api.patch(`/products/${id}/`, data),
   delete: (id) => api.delete(`/products/${id}/`),
   lowStock: () => api.get('/products/low_stock/'),
+  stockAlerts: () => api.get('/products/stock_alerts/'),
+  stockMovements: (id, params) => api.get(`/products/${id}/stock_movements/`, { params }),
+  adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
+  reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
   quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 
@@ -126,21 +131,21 @@ export const aiChatAPI = {
 
 // Contracts API
 export const contractsAPI = {
-  list: (params) => api.get('/contracts/contracts/', { params }),
-  get: (id) => api.get(`/contracts/contracts/${id}/`),
-  create: (data) => api.post('/contracts/contracts/', data),
-  update: (id, data) => api.patch(`/contracts/contracts/${id}/`, data),
-  delete: (id) => api.delete(`/contracts/contracts/${id}/`),
-  approve: (id, notes) => api.post(`/contracts/contracts/${id}/approve/`, { notes }),
-  activate: (id) => api.post(`/contracts/contracts/${id}/activate/`),
-  terminate: (id) => api.post(`/contracts/contracts/${id}/terminate/`),
-  renew: (id, data) => api.post(`/contracts/contracts/${id}/renew/`, data),
+  list: (params) => api.get('/contracts/', { params }),
+  get: (id) => api.get(`/contracts/${id}/`),
+  create: (data) => api.post('/contracts/', data),
+  update: (id, data) => api.patch(`/contracts/${id}/`, data),
+  delete: (id) => api.delete(`/contracts/${id}/`),
+  approve: (id, notes) => api.post(`/contracts/${id}/approve/`, { notes }),
+  activate: (id) => api.post(`/contracts/${id}/activate/`),
+  terminate: (id) => api.post(`/contracts/${id}/terminate/`),
+  renew: (id, data) => api.post(`/contracts/${id}/renew/`, data),
   extractClauses: (id, contractText, language = 'fr') =>
-    api.post(`/contracts/contracts/${id}/extract_clauses/`, {
+    api.post(`/contracts/${id}/extract_clauses/`, {
       contract_text: contractText,
       language,
     }),
-  statistics: () => api.get('/contracts/contracts/statistics/'),
+  statistics: () => api.get('/contracts/statistics/'),
 
   // Clauses
   clauses: {
