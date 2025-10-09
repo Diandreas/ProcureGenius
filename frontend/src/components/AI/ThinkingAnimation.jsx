@@ -13,6 +13,7 @@ import {
   AutoAwesome,
   Lightbulb,
 } from '@mui/icons-material';
+import Mascot from '../Mascot';
 
 const THINKING_MESSAGES = [
   "Je réfléchis à votre demande...",
@@ -105,17 +106,10 @@ function ThinkingAnimation({
       boxShadow: 1,
     }}>
       <Box sx={{ position: 'relative' }}>
-        <SmartToy
-          sx={{
-            fontSize: 32,
-            color: 'primary.main',
-            animation: 'pulse 2s infinite',
-            '@keyframes pulse': {
-              '0%': { opacity: 0.6 },
-              '50%': { opacity: 1 },
-              '100%': { opacity: 0.6 },
-            },
-          }}
+        <Mascot
+          pose="thinking"
+          animation="pulse"
+          size={48}
         />
         <AutoAwesome
           sx={{
@@ -285,15 +279,10 @@ function ThinkingAnimation({
         borderRadius: 3,
         color: 'success.contrastText',
       }}>
-        <AutoAwesome
-          sx={{
-            fontSize: 32,
-            animation: 'celebrate 0.8s infinite alternate',
-            '@keyframes celebrate': {
-              '0%': { transform: 'scale(1) rotate(0deg)' },
-              '100%': { transform: 'scale(1.2) rotate(15deg)' },
-            },
-          }}
+        <Mascot
+          pose="excited"
+          animation="bounce"
+          size={40}
         />
         <Typography variant="body1" sx={{ fontWeight: 500 }}>
           {message || "Action terminée avec succès !"}

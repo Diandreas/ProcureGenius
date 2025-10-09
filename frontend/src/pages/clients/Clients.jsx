@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { clientsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import EmptyState from '../../components/EmptyState';
 
 function Clients() {
   const [clients, setClients] = useState([]);
@@ -361,19 +362,13 @@ function Clients() {
             </Box>
           )}
           {clients.length === 0 && !loading && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="text.secondary">
-                Aucun client trouvé
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/clients/new')}
-                sx={{ mt: 2 }}
-              >
-                Créer le premier client
-              </Button>
-            </Box>
+            <EmptyState
+              title="Aucun client"
+              description="Vous n'avez pas encore de clients. Commencez par créer votre premier client pour gérer vos factures et revenus."
+              mascotPose="excited"
+              actionLabel="Créer le premier client"
+              onAction={() => navigate('/clients/new')}
+            />
           )}
         </Box>
       ) : (

@@ -40,6 +40,7 @@ import {
 } from 'chart.js';
 import { dashboardAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
+import Mascot from '../components/Mascot';
 
 ChartJS.register(
   CategoryScale,
@@ -328,7 +329,31 @@ function Dashboard() {
   );
 
   return (
-    <Box p={isMobile ? 2 : 3}>
+    <Box p={isMobile ? 2 : 3} sx={{ position: 'relative' }}>
+      {/* Mascotte de bienvenue flottante (desktop uniquement) */}
+      {!isMobile && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 120,
+            left: 20,
+            zIndex: 10,
+            opacity: 0.85,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              opacity: 1,
+              transform: 'scale(1.1)',
+            },
+          }}
+        >
+          <Mascot
+            pose="thumbup"
+            animation="wave"
+            size={80}
+          />
+        </Box>
+      )}
+
       {/* Contenu principal */}
 
       {isMobile ? (

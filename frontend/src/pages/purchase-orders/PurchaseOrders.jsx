@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { Add, Visibility, Edit, Search, Business } from '@mui/icons-material';
 import { purchaseOrdersAPI } from '../../services/api';
+import EmptyState from '../../components/EmptyState';
 
 function PurchaseOrders() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -266,19 +267,13 @@ function PurchaseOrders() {
             </Box>
           )}
           {purchaseOrders.length === 0 && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="textSecondary">
-                Aucun bon de commande trouvé
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/purchase-orders/new')}
-                sx={{ mt: 2 }}
-              >
-                Créer le premier bon de commande
-              </Button>
-            </Box>
+            <EmptyState
+              title="Aucun bon de commande"
+              description="Vous n'avez pas encore créé de bon de commande. Commencez par créer votre premier bon de commande pour gérer vos achats."
+              mascotPose="thinking"
+              actionLabel="Créer le premier bon de commande"
+              onAction={() => navigate('/purchase-orders/new')}
+            />
           )}
         </Box>
       ) : (

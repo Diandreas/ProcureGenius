@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { Add, Visibility, Edit, Send, Search, Business, MoreVert } from '@mui/icons-material';
 import { invoicesAPI } from '../../services/api';
+import EmptyState from '../../components/EmptyState';
 
 function Invoices() {
   const [invoices, setInvoices] = useState([]);
@@ -292,19 +293,13 @@ function Invoices() {
           )}
 
           {invoices.length === 0 && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="textSecondary">
-                Aucune facture trouvée
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/invoices/new')}
-                sx={{ mt: 2, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-              >
-                Créer la première facture
-              </Button>
-            </Box>
+            <EmptyState
+              title="Aucune facture"
+              description="Vous n'avez pas encore créé de facture. Commencez par créer votre première facture pour suivre vos revenus."
+              mascotPose="reading"
+              actionLabel="Créer la première facture"
+              onAction={() => navigate('/invoices/new')}
+            />
           )}
         </Box>
       ) : (

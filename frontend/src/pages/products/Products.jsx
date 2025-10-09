@@ -42,6 +42,8 @@ import {
 } from '@mui/icons-material';
 import { productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 
 function Products() {
   const [products, setProducts] = useState([]);
@@ -247,7 +249,11 @@ function Products() {
   if (error) {
     return (
       <Box p={3}>
-        <Alert severity="error">{error}</Alert>
+        <ErrorState
+          title="Erreur de chargement"
+          message={error}
+          onRetry={fetchProducts}
+        />
       </Box>
     );
   }
@@ -365,19 +371,13 @@ function Products() {
             </Box>
           )}
           {products.length === 0 && !loading && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="text.secondary">
-                Aucun produit trouvé
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/products/new')}
-                sx={{ mt: 2 }}
-              >
-                Créer le premier produit
-              </Button>
-            </Box>
+            <EmptyState
+              title="Aucun produit"
+              description="Vous n'avez pas encore de produits dans votre catalogue. Commencez par créer votre premier produit."
+              mascotPose="reading"
+              actionLabel="Créer le premier produit"
+              onAction={() => navigate('/products/new')}
+            />
           )}
         </Box>
       ) : (

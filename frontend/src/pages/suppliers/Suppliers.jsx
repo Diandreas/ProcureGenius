@@ -50,6 +50,7 @@ import { parseRating } from '../../utils/formatters';
 import { getStatusColor, getStatusLabel } from '../../utils/formatters';
 import AIAssistantToggle from '../../components/AIAssistantToggle';
 import FloatingAIAssistant from '../../components/FloatingAIAssistant';
+import EmptyState from '../../components/EmptyState';
 
 function Suppliers() {
   const navigate = useNavigate();
@@ -285,24 +286,13 @@ function Suppliers() {
 
       {/* Suppliers Grid */}
       {suppliers.length === 0 ? (
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 5 }}>
-            <Business sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Aucun fournisseur trouvé
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-              Commencez par ajouter votre premier fournisseur
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/suppliers/new')}
-            >
-              Ajouter un fournisseur
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="Aucun fournisseur"
+          description="Commencez par ajouter votre premier fournisseur pour gérer vos achats et commandes."
+          mascotPose="happy"
+          actionLabel="Ajouter un fournisseur"
+          onAction={() => navigate('/suppliers/new')}
+        />
       ) : (
         <>
           <Grid container spacing={3}>

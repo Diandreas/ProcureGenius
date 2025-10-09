@@ -12,6 +12,7 @@ import {
   Container,
 } from '@mui/material';
 import { login, clearError } from '../../store/slices/authSlice';
+import Mascot from '../../components/Mascot';
 
 function Login() {
   const navigate = useNavigate();
@@ -47,7 +48,16 @@ function Login() {
           alignItems: 'center',
         }}
       >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+        <Paper elevation={3} sx={{ padding: 4, width: '100%', position: 'relative', overflow: 'visible' }}>
+          {/* Mascotte animée en haut du formulaire */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <Mascot
+              pose={error ? 'error' : 'happy'}
+              animation="float"
+              size={100}
+            />
+          </Box>
+
           <Typography component="h1" variant="h5" align="center" sx={{ mb: 3 }}>
             Connexion
           </Typography>

@@ -40,6 +40,7 @@ import { aiChatAPI } from '../services/api';
 import { formatDateTime } from '../utils/formatters';
 import ChatMessage from './AI/ChatMessage';
 import ThinkingAnimation from './AI/ThinkingAnimation';
+import Mascot from './Mascot';
 
 /**
  * Assistant IA flottant - MODULE 3 IA Conversationnelle
@@ -220,23 +221,26 @@ function FloatingAIAssistant({
     <>
       {/* Bouton flottant */}
       {!isOpen && (
-        <Fab
-          color="primary"
-          aria-label="assistant-ia"
+        <Box
           onClick={() => setIsOpen(true)}
           sx={{
             position: 'fixed',
             bottom: 24,
             right: 24,
             zIndex: 1000,
+            cursor: 'pointer',
             '&:hover': {
               transform: 'scale(1.1)',
             },
             transition: 'transform 0.2s',
           }}
         >
-          <SmartToy />
-        </Fab>
+          <Mascot
+            pose="happy"
+            animation="bounce"
+            size={80}
+          />
+        </Box>
       )}
 
       {/* Dialog de chat */}
@@ -260,9 +264,13 @@ function FloatingAIAssistant({
       >
         {/* Header */}
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', pb: 1 }}>
-          <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 32, height: 32 }}>
-            <SmartToy sx={{ fontSize: 20 }} />
-          </Avatar>
+          <Box sx={{ mr: 2 }}>
+            <Mascot
+              pose={loading ? 'thinking' : 'happy'}
+              animation={loading ? 'pulse' : 'none'}
+              size={40}
+            />
+          </Box>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6">Assistant IA</Typography>
             <Typography variant="caption" color="text.secondary">
@@ -286,6 +294,15 @@ function FloatingAIAssistant({
             <Box sx={{ flexGrow: 1, overflow: 'auto', px: 2, py: 1 }}>
               {messages.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 2 }}>
+                  {/* Mascotte de bienvenue */}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <Mascot
+                      pose="reading"
+                      animation="float"
+                      size={100}
+                    />
+                  </Box>
+
                   <Typography variant="body2" gutterBottom>
                     {getWelcomeMessage()}
                   </Typography>

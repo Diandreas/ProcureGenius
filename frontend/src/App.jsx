@@ -34,6 +34,7 @@ import SourcingEvents from './pages/e-sourcing/SourcingEvents';
 import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
 import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
 import BidComparison from './pages/e-sourcing/BidComparison';
+import PublicBidSubmission from './pages/e-sourcing/PublicBidSubmission';
 import Contracts from './pages/contracts/Contracts';
 import ContractDetail from './pages/contracts/ContractDetail';
 import ContractForm from './pages/contracts/ContractForm';
@@ -377,6 +378,9 @@ function App() {
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
           <Router>
             <Routes>
+              {/* Public Routes */}
+              <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<Login />} />
