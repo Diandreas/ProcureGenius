@@ -41,6 +41,7 @@ import {
 import { dashboardAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import Mascot from '../components/Mascot';
+import LoadingState from '../components/LoadingState';
 
 ChartJS.register(
   CategoryScale,
@@ -59,6 +60,22 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Déterminer le message de bienvenue selon l'heure
+  const getWelcomeMessage = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return { greeting: 'Bonjour', message: 'Excellente journée à vous !', pose: 'excited' };
+    } else if (hour >= 12 && hour < 18) {
+      return { greeting: 'Bon après-midi', message: 'Continuez sur cette lancée !', pose: 'reading' };
+    } else if (hour >= 18 && hour < 22) {
+      return { greeting: 'Bonsoir', message: 'Bonne fin de journée !', pose: 'happy' };
+    } else {
+      return { greeting: 'Bonne nuit', message: 'Il se fait tard !', pose: 'thinking' };
+    }
+  };
+
+  const welcome = getWelcomeMessage();
 
   useEffect(() => {
     fetchDashboardData();
@@ -80,7 +97,7 @@ function Dashboard() {
   };
 
   if (loading) {
-    return <LinearProgress />;
+    return <LoadingState message="Chargement de votre tableau de bord..." fullScreen />;
   }
 
   const statsCards = [
@@ -262,10 +279,9 @@ function Dashboard() {
       backdropFilter: 'blur(12px)',
       border: '1px solid rgba(255, 255, 255, 0.3)',
       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       '&:hover': {
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         borderColor: 'primary.main',
         background: 'rgba(255, 255, 255, 0.95)'
       }
@@ -330,28 +346,36 @@ function Dashboard() {
 
   return (
     <Box p={isMobile ? 2 : 3} sx={{ position: 'relative' }}>
-      {/* Mascotte de bienvenue flottante (desktop uniquement) */}
+      {/* Message de bienvenue personnalisé */}
       {!isMobile && (
-        <Box
+        <Card
           sx={{
-            position: 'fixed',
-            bottom: 120,
-            left: 20,
-            zIndex: 10,
-            opacity: 0.85,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              opacity: 1,
-              transform: 'scale(1.1)',
-            },
+            mb: 3,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            borderRadius: 3,
+            overflow: 'visible',
+            position: 'relative',
           }}
         >
-          <Mascot
-            pose="thumbup"
-            animation="wave"
-            size={80}
-          />
-        </Box>
+          <CardContent sx={{ display: 'flex', alignItems: 'center', py: 2 }}>
+            <Box sx={{ position: 'relative', mr: 3 }}>
+              <Mascot
+                pose={welcome.pose}
+                animation="wave"
+                size={80}
+              />
+            </Box>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {welcome.greeting} ! 👋
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.95 }}>
+                {welcome.message} Voici un aperçu de votre activité.
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
       )}
 
       {/* Contenu principal */}
@@ -396,10 +420,10 @@ function Dashboard() {
                     backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                       borderColor: stat.color,
                     },
                     '&::before': {
@@ -620,9 +644,9 @@ function Dashboard() {
                         py: 1.5,
                         borderBottom: index < recentActivity.recent_purchase_orders.length - 1 ? '1px solid' : 'none',
                         borderColor: 'divider',
-                        transition: 'all 0.2s ease-in-out',
+                        transition: 'all 0.3s ease-in-out',
                         '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                          backgroundColor: 'rgba(25, 118, 210, 0.03)',
                           borderRadius: 2,
                         }
                       }}
@@ -696,9 +720,9 @@ function Dashboard() {
                         py: 1.5,
                         borderBottom: index < recentActivity.recent_invoices.length - 1 ? '1px solid' : 'none',
                         borderColor: 'divider',
-                        transition: 'all 0.2s ease-in-out',
+                        transition: 'all 0.3s ease-in-out',
                         '&:hover': {
-                          backgroundColor: 'rgba(16, 185, 129, 0.04)',
+                          backgroundColor: 'rgba(16, 185, 129, 0.03)',
                           borderRadius: 2,
                         }
                       }}

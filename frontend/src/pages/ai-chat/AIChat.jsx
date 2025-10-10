@@ -41,6 +41,7 @@ import { useSnackbar } from 'notistack';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
+import Mascot from '../../components/Mascot';
 
 function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
@@ -157,6 +158,11 @@ function AIChat() {
               variant: 'success',
               autoHideDuration: 3000,
             });
+            // Déclencher l'animation de succès de la mascotte contextuelle
+            window.dispatchEvent(new CustomEvent('mascot-success'));
+          } else if (result.result?.success === false) {
+            // Déclencher l'animation d'erreur de la mascotte contextuelle
+            window.dispatchEvent(new CustomEvent('mascot-error'));
           }
         });
       }
@@ -164,6 +170,8 @@ function AIChat() {
       setTypingIndicator(false);
       enqueueSnackbar('Erreur lors de l\'envoi du message', { variant: 'error' });
       setMessages(prev => prev.slice(0, -1));
+      // Déclencher l'animation d'erreur de la mascotte contextuelle
+      window.dispatchEvent(new CustomEvent('mascot-error'));
     } finally {
       setLoading(false);
     }
@@ -278,20 +286,16 @@ function AIChat() {
           {messages.length === 0 ? (
             <Fade in timeout={600}>
               <Box sx={{ textAlign: 'center', mt: 4, maxWidth: 800, mx: 'auto' }}>
-                <Avatar
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    mx: 'auto',
-                    mb: 2,
-                    backgroundColor: 'primary.main',
-                  }}
-                >
-                  <SmartToy sx={{ fontSize: 36 }} />
-                </Avatar>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <Mascot
+                    pose="excited"
+                    animation="wave"
+                    size={120}
+                  />
+                </Box>
 
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Bonjour 👋
+                  Bonjour ! Je suis Procura 👋
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Je peux vous aider à gérer vos fournisseurs, factures, commandes et plus encore.

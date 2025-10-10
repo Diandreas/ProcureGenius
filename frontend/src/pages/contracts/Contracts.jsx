@@ -55,6 +55,8 @@ import {
 } from '../../store/slices/contractsSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
 
 function Contracts() {
   const navigate = useNavigate();
@@ -252,9 +254,15 @@ function Contracts() {
           </Box>
 
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <LoadingState message="Chargement des contrats..." />
+          ) : contracts.length === 0 ? (
+            <EmptyState
+              title="Aucun contrat"
+              description="Commencez par créer votre premier contrat pour gérer vos accords avec les fournisseurs."
+              mascotPose="reading"
+              actionLabel="Nouveau contrat"
+              onAction={() => navigate('/contracts/new')}
+            />
           ) : (
             <>
               <TableContainer component={Paper} variant="outlined">
@@ -273,73 +281,64 @@ function Contracts() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {contracts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center">
-                          <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
-                            Aucun contrat trouvé
+                    {contracts.map((contract) => (
+                      <TableRow key={contract.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {contract.contract_number}
                           </Typography>
                         </TableCell>
-                      </TableRow>
-                    ) : (
-                      contracts.map((contract) => (
-                        <TableRow key={contract.id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              {contract.contract_number}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{contract.title}</Typography>
-                          </TableCell>
-                          <TableCell>{contract.supplier_name}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={
-                                contract.contract_type === 'purchase'
-                                  ? 'Achat'
-                                  : contract.contract_type === 'service'
+                        <TableCell>
+                          <Typography variant="body2">{contract.title}</Typography>
+                        </TableCell>
+                        <TableCell>{contract.supplier_name}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              contract.contract_type === 'purchase'
+                                ? 'Achat'
+                                : contract.contract_type === 'service'
                                   ? 'Service'
                                   : contract.contract_type === 'maintenance'
-                                  ? 'Maintenance'
-                                  : contract.contract_type === 'lease'
-                                  ? 'Location'
-                                  : contract.contract_type
-                              }
-                              size="small"
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {getStatusChip(
-                              contract.status,
-                              contract.is_expiring_soon,
-                              contract.is_expired
-                            )}
-                          </TableCell>
-                          <TableCell>{formatDate(contract.start_date)}</TableCell>
-                          <TableCell>
-                            {formatDate(contract.end_date)}
-                            {contract.days_until_expiry !== null && contract.days_until_expiry >= 0 && (
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                ({contract.days_until_expiry} jours)
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {parseFloat(contract.total_value).toLocaleString()} {contract.currency}
-                          </TableCell>
-                          <TableCell align="right">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuClick(e, contract)}
-                            >
-                              <MoreVert />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                                    ? 'Maintenance'
+                                    : contract.contract_type === 'lease'
+                                      ? 'Location'
+                                      : contract.contract_type
+                            }
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {getStatusChip(
+                            contract.status,
+                            contract.is_expiring_soon,
+                            contract.is_expired
+                          )}
+                        </TableCell>
+                        <TableCell>{formatDate(contract.start_date)}</TableCell>
+                        <TableCell>
+                          {formatDate(contract.end_date)}
+                          {contract.days_until_expiry !== null && contract.days_until_expiry >= 0 && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              ({contract.days_until_expiry} jours)
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {parseFloat(contract.total_value).toLocaleString()} {contract.currency}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuClick(e, contract)}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>

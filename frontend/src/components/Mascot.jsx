@@ -1,26 +1,26 @@
 import React from 'react';
 import { Box, keyframes } from '@mui/material';
 
-// Animations pour la mascotte
+// Animations subtiles et professionnelles pour la mascotte
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-3px); }
 `;
 
 const bounce = keyframes`
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.02); }
 `;
 
 const wave = keyframes`
   0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-10deg); }
-  75% { transform: rotate(10deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
 `;
 
 const pulse = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.03); }
 `;
 
 /**
@@ -65,7 +65,7 @@ function Mascot({
     if (!anim) return {};
 
     return {
-      animation: `${anim} 2s ease-in-out infinite`,
+      animation: `${anim} 3s ease-in-out infinite`,
     };
   };
 

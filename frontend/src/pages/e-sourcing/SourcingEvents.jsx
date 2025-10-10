@@ -56,6 +56,8 @@ import {
 } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
 
 function SourcingEvents() {
   const navigate = useNavigate();
@@ -235,9 +237,15 @@ function SourcingEvents() {
           </Box>
 
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <LoadingState message="Chargement des événements de sourcing..." />
+          ) : events.length === 0 ? (
+            <EmptyState
+              title="Aucun événement de sourcing"
+              description="Créez votre premier événement RFQ pour comparer les offres de vos fournisseurs et obtenir les meilleurs prix."
+              mascotPose="thinking"
+              actionLabel="Nouvel événement"
+              onAction={() => navigate('/e-sourcing/events/new')}
+            />
           ) : (
             <>
               <TableContainer component={Paper} variant="outlined">
@@ -255,52 +263,43 @@ function SourcingEvents() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {events.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center">
-                          <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
-                            Aucun événement trouvé
+                    {events.map((event) => (
+                      <TableRow key={event.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {event.event_number}
                           </Typography>
                         </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{event.title}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Par {event.created_by_name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{getStatusChip(event.status)}</TableCell>
+                        <TableCell>{formatDate(event.submission_deadline)}</TableCell>
+                        <TableCell>
+                          {event.estimated_budget
+                            ? `${parseFloat(event.estimated_budget).toLocaleString()} $`
+                            : '-'}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={event.invitations_count || 0} size="small" />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={event.bids_count || 0} size="small" color="primary" />
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuClick(e, event)}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
-                    ) : (
-                      events.map((event) => (
-                        <TableRow key={event.id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              {event.event_number}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{event.title}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Par {event.created_by_name}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>{getStatusChip(event.status)}</TableCell>
-                          <TableCell>{formatDate(event.submission_deadline)}</TableCell>
-                          <TableCell>
-                            {event.estimated_budget
-                              ? `${parseFloat(event.estimated_budget).toLocaleString()} $`
-                              : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip label={event.invitations_count || 0} size="small" />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip label={event.bids_count || 0} size="small" color="primary" />
-                          </TableCell>
-                          <TableCell align="right">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuClick(e, event)}
-                            >
-                              <MoreVert />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                    ))
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>

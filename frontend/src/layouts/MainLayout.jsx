@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
@@ -20,6 +20,7 @@ import {
   Button,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -37,23 +38,29 @@ import {
   Gavel,
   CompareArrows,
   CloudUpload,
+  Lock,
+  SupervisorAccount,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import MobileBottomNav from '../components/MobileBottomNav';
+import PermanentAIAssistant from '../components/PermanentAIAssistant';
+import ModuleActivationDialog from '../components/ModuleActivationDialog';
 
 const drawerWidth = 260;
 
+// Modules incontournables (toujours affichés)
+const CORE_MODULES = ['dashboard'];
+
 const menuItems = [
-  { text: 'Tableau de bord', icon: <Dashboard />, path: '/dashboard' },
-  { text: 'Fournisseurs', icon: <Business />, path: '/suppliers' },
-  { text: 'Bons de commande', icon: <ShoppingCart />, path: '/purchase-orders' },
-  { text: 'Factures', icon: <Receipt />, path: '/invoices' },
-  { text: 'Produits', icon: <Inventory />, path: '/products' },
-  { text: 'Clients', icon: <People />, path: '/clients' },
-  { text: 'E-Sourcing (RFQ)', icon: <CompareArrows />, path: '/e-sourcing/events' },
-  { text: 'Contrats', icon: <Gavel />, path: '/contracts' },
-  { text: 'Import de données', icon: <CloudUpload />, path: '/migration/jobs' },
-  { text: 'Assistant IA', icon: <Chat />, path: '/ai-chat' },
+  { text: 'Tableau de bord', icon: <Dashboard />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
+  { text: 'Fournisseurs', icon: <Business />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
+  { text: 'Bons de commande', icon: <ShoppingCart />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
+  { text: 'Factures', icon: <Receipt />, path: '/invoices', moduleId: 'invoices', isCore: false },
+  { text: 'Produits', icon: <Inventory />, path: '/products', moduleId: 'products', isCore: false },
+  { text: 'Clients', icon: <People />, path: '/clients', moduleId: 'clients', isCore: false },
+  { text: 'E-Sourcing (RFQ)', icon: <CompareArrows />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
+  { text: 'Contrats', icon: <Gavel />, path: '/contracts', moduleId: 'contracts', isCore: false },
+  { text: 'Assistant IA', icon: <Chat />, path: '/ai-chat', moduleId: 'dashboard', isCore: true }, // Toujours disponible
 ];
 
 function MainLayout() {
@@ -64,6 +71,35 @@ function MainLayout() {
   const [anchorEl, setAnchorEl] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // États pour la gestion des modules
+  const [enabledModules, setEnabledModules] = useState(['dashboard']);
+  const [userPermissions, setUserPermissions] = useState(null);
+  const [moduleActivationDialogOpen, setModuleActivationDialogOpen] = useState(false);
+  const [selectedModule, setSelectedModule] = useState(null);
+
+  // Charger les préférences utilisateur au montage
+  useEffect(() => {
+    fetchUserPreferences();
+  }, []);
+
+  const fetchUserPreferences = async () => {
+    try {
+      const response = await fetch('/api/v1/accounts/profile/', {
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEnabledModules(data.preferences?.enabled_modules || ['dashboard']);
+        setUserPermissions(data.permissions);
+      }
+    } catch (error) {
+      console.error('Error fetching user preferences:', error);
+    }
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -81,6 +117,59 @@ function MainLayout() {
     dispatch(logout());
     navigate('/login');
   };
+
+  const handleModuleClick = (item) => {
+    // Les modules core sont toujours accessibles
+    if (item.isCore || enabledModules.includes(item.moduleId)) {
+      // Module activé ou core: navigation normale
+      navigate(item.path);
+      if (isMobile) {
+        setMobileOpen(false);
+      }
+    } else {
+      // Module désactivé: ouvrir le dialog d'activation
+      setSelectedModule(item.moduleId);
+      setModuleActivationDialogOpen(true);
+    }
+  };
+
+  const handleActivateModule = async (moduleId) => {
+    try {
+      const response = await fetch('/api/v1/accounts/preferences/', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({
+          enabled_modules: [...enabledModules, moduleId],
+        }),
+      });
+
+      if (response.ok) {
+        setEnabledModules([...enabledModules, moduleId]);
+        setModuleActivationDialogOpen(false);
+        // Naviguer vers le module nouvellement activé
+        const item = menuItems.find(m => m.moduleId === moduleId);
+        if (item) {
+          navigate(item.path);
+        }
+      }
+    } catch (error) {
+      console.error('Error activating module:', error);
+    }
+  };
+
+  // Déterminer le module actuel depuis le path
+  const currentModule = useMemo(() => {
+    const path = location.pathname;
+    for (const item of menuItems) {
+      if (path.startsWith(item.path) || path === item.path) {
+        return item.moduleId;
+      }
+    }
+    return 'dashboard';
+  }, [location.pathname]);
 
   // Actions contextuelles selon la page
   const getContextualActions = () => {
@@ -221,31 +310,90 @@ function MainLayout() {
       <Divider />
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1 }}>
         <List sx={{ px: 1 }}>
-          {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                selected={location.pathname === item.path}
-                onClick={() => navigate(item.path)}
-                sx={{
-                  minHeight: 44,
-                  px: 2,
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: location.pathname === item.path ? 600 : 500,
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {menuItems.map((item) => {
+            // Les modules core sont toujours activés
+            const isEnabled = item.isCore || enabledModules.includes(item.moduleId);
+            const isSelected = location.pathname === item.path;
+
+            return (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <Tooltip
+                  title={!isEnabled ? "Module désactivé - Cliquez pour activer" : ""}
+                  placement="right"
+                >
+                  <ListItemButton
+                    selected={isSelected && isEnabled}
+                    onClick={() => handleModuleClick(item)}
+                    sx={{
+                      minHeight: 44,
+                      px: 2,
+                      opacity: isEnabled ? 1 : 0.4,
+                      '&:hover': {
+                        opacity: isEnabled ? 1 : 0.6,
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      {isEnabled ? item.icon : <Lock fontSize="small" />}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: isSelected && isEnabled ? 600 : 500,
+                      }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
+            );
+          })}
         </List>
       </Box>
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate('/settings/modules')}
+            sx={{
+              minHeight: 44,
+              px: 2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <Settings />
+            </ListItemIcon>
+            <ListItemText
+              primary="Modules"
+              primaryTypographyProps={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+        {userPermissions?.can_manage_users && (
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => navigate('/settings/users')}
+              sx={{
+                minHeight: 44,
+                px: 2,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <SupervisorAccount />
+              </ListItemIcon>
+              <ListItemText
+                primary="Utilisateurs"
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
         <ListItem disablePadding>
           <ListItemButton
             onClick={() => navigate('/settings')}
@@ -314,10 +462,10 @@ function MainLayout() {
                 py: 0.5,
                 fontSize: isMobile ? '0.75rem' : '0.875rem',
                 mr: 2,
-                transition: 'all 0.2s ease-in-out',
+                transition: 'all 0.3s ease-in-out',
                 '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                  transform: 'scale(1.01)',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
                 }
               }}
             >
@@ -329,9 +477,9 @@ function MainLayout() {
             size="small"
             sx={{
               ml: 2,
-              transition: 'all 0.2s',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                transform: 'scale(1.05)',
+                transform: 'scale(1.02)',
               },
             }}
           >
@@ -429,7 +577,18 @@ function MainLayout() {
       </Box>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      <MobileBottomNav enabledModules={enabledModules} />
+
+      {/* Assistant IA permanent (toujours visible) */}
+      {!isMobile && <PermanentAIAssistant currentModule={currentModule} />}
+
+      {/* Dialog d'activation de module */}
+      <ModuleActivationDialog
+        open={moduleActivationDialogOpen}
+        moduleId={selectedModule}
+        onClose={() => setModuleActivationDialogOpen(false)}
+        onActivate={handleActivateModule}
+      />
     </Box>
   );
 }

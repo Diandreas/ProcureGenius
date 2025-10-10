@@ -1,90 +1,69 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+"""
+API Views pour la gestion des comptes utilisateurs, préférences et permissions
+"""
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 from django.db import transaction
-import json
 from .models import CustomUser, UserPreferences, UserPermissions, Organization
 
 
-def profile(request):
-    """Profil utilisateur simplifié"""
-    if request.user.is_authenticated:
-        return render(request, 'accounts/profile.html', {
-            'user': request.user
-        })
-    return redirect('login')
-
-
-def dashboard(request):
-    """Tableau de bord simplifié"""
-    if request.user.is_authenticated:
-        return render(request, 'core/dashboard.html', {
-            'user': request.user
-        })
-    return redirect('login')
-
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def api_profile(request):
     """API profil utilisateur avec permissions et préférences"""
-    if request.user.is_authenticated:
-        user = request.user
-        
-        # Récupérer ou créer les préférences et permissions
-        preferences, _ = UserPreferences.objects.get_or_create(user=user)
-        permissions, _ = UserPermissions.objects.get_or_create(user=user)
-        
-        # Organisation modules (si l'utilisateur appartient à une organisation)
-        organization_modules = []
-        organization_name = None
-        if user.organization:
-            organization_modules = user.organization.enabled_modules
-            organization_name = user.organization.name
-        
-        return JsonResponse({
-            'id': str(user.id),
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'phone': user.phone,
-            'company': user.company,
-            'role': user.role,
-            'organization': {
-                'id': str(user.organization.id) if user.organization else None,
-                'name': organization_name,
-                'enabled_modules': organization_modules
-            },
-            'preferences': {
-                'enabled_modules': preferences.enabled_modules,
-                'onboarding_completed': preferences.onboarding_completed,
-                'onboarding_data': preferences.onboarding_data,
-            },
-            'permissions': {
-                'can_manage_users': permissions.can_manage_users,
-                'can_manage_settings': permissions.can_manage_settings,
-                'can_view_analytics': permissions.can_view_analytics,
-                'can_approve_purchases': permissions.can_approve_purchases,
-                'module_access': permissions.module_access,
-            }
-        })
-    return JsonResponse({'error': 'Non authentifié'}, status=401)
+    
+    user = request.user
+    
+    # Récupérer ou créer les préférences et permissions
+    preferences, _ = UserPreferences.objects.get_or_create(user=user)
+    permissions, _ = UserPermissions.objects.get_or_create(user=user)
+    
+    # Organisation modules (si l'utilisateur appartient à une organisation)
+    organization_modules = []
+    organization_name = None
+    if user.organization:
+        organization_modules = user.organization.enabled_modules
+        organization_name = user.organization.name
+    
+    return Response({
+        'id': str(user.id),
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'phone': user.phone,
+        'company': user.company,
+        'role': user.role,
+        'organization': {
+            'id': str(user.organization.id) if user.organization else None,
+            'name': organization_name,
+            'enabled_modules': organization_modules
+        },
+        'preferences': {
+            'enabled_modules': preferences.enabled_modules,
+            'onboarding_completed': preferences.onboarding_completed,
+            'onboarding_data': preferences.onboarding_data,
+        },
+        'permissions': {
+            'can_manage_users': permissions.can_manage_users,
+            'can_manage_settings': permissions.can_manage_settings,
+            'can_view_analytics': permissions.can_view_analytics,
+            'can_approve_purchases': permissions.can_approve_purchases,
+            'module_access': permissions.module_access,
+        }
+    })
 
 
-@csrf_exempt
-@require_http_methods(["GET", "PUT"])
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
 def api_user_preferences(request):
     """API pour gérer les préférences utilisateur"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non authentifié'}, status=401)
-    
     preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
     
     if request.method == 'GET':
-        return JsonResponse({
+        return Response({
             'enabled_modules': preferences.enabled_modules,
             'onboarding_completed': preferences.onboarding_completed,
             'onboarding_data': preferences.onboarding_data,
@@ -94,7 +73,7 @@ def api_user_preferences(request):
     
     elif request.method == 'PUT':
         try:
-            data = json.loads(request.body)
+            data = request.data
             
             # Mettre à jour les champs si fournis
             if 'enabled_modules' in data:
@@ -110,7 +89,7 @@ def api_user_preferences(request):
             
             preferences.save()
             
-            return JsonResponse({
+            return Response({
                 'success': True,
                 'message': 'Préférences mises à jour',
                 'preferences': {
@@ -120,20 +99,17 @@ def api_user_preferences(request):
                 }
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
-@require_http_methods(["GET", "POST"])
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def api_organization_users(request):
     """API pour gérer les utilisateurs de l'organisation"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non authentifié'}, status=401)
-    
     # Vérifier que l'utilisateur a les permissions
     permissions, _ = UserPermissions.objects.get_or_create(user=request.user)
     if not permissions.can_manage_users:
-        return JsonResponse({'error': 'Permission refusée'}, status=403)
+        return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
     
     if request.method == 'GET':
         # Lister tous les utilisateurs de l'organisation
@@ -164,14 +140,14 @@ def api_organization_users(request):
                     }
                 })
             
-            return JsonResponse({'users': users_data})
+            return Response({'users': users_data})
         else:
-            return JsonResponse({'users': []})
+            return Response({'users': []})
     
     elif request.method == 'POST':
         # Créer un nouvel utilisateur
         try:
-            data = json.loads(request.body)
+            data = request.data
             
             with transaction.atomic():
                 # Créer l'utilisateur
@@ -187,35 +163,32 @@ def api_organization_users(request):
                 
                 # Les préférences et permissions seront créées automatiquement par le signal
                 
-                return JsonResponse({
+                return Response({
                     'success': True,
                     'message': 'Utilisateur créé avec succès',
                     'user_id': str(user.id)
                 })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
-@require_http_methods(["PUT", "DELETE"])
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def api_organization_user_detail(request, user_id):
     """API pour modifier ou supprimer un utilisateur"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non authentifié'}, status=401)
-    
     # Vérifier les permissions
     permissions, _ = UserPermissions.objects.get_or_create(user=request.user)
     if not permissions.can_manage_users:
-        return JsonResponse({'error': 'Permission refusée'}, status=403)
+        return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
     
     try:
         user = CustomUser.objects.get(id=user_id, organization=request.user.organization)
     except CustomUser.DoesNotExist:
-        return JsonResponse({'error': 'Utilisateur non trouvé'}, status=404)
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'PUT':
         try:
-            data = json.loads(request.body)
+            data = request.data
             
             # Mettre à jour les champs de base
             if 'first_name' in data:
@@ -231,42 +204,39 @@ def api_organization_user_detail(request, user_id):
             
             user.save()
             
-            return JsonResponse({
+            return Response({
                 'success': True,
                 'message': 'Utilisateur mis à jour'
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
         user.is_active = False
         user.save()
-        return JsonResponse({
+        return Response({
             'success': True,
             'message': 'Utilisateur désactivé'
         })
 
 
-@csrf_exempt
-@require_http_methods(["GET", "PUT"])
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
 def api_user_permissions(request, user_id):
     """API pour gérer les permissions d'un utilisateur"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non authentifié'}, status=401)
-    
     # Vérifier que l'utilisateur a les permissions
     user_permissions, _ = UserPermissions.objects.get_or_create(user=request.user)
     if not user_permissions.can_manage_users:
-        return JsonResponse({'error': 'Permission refusée'}, status=403)
+        return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
     
     try:
         user = CustomUser.objects.get(id=user_id, organization=request.user.organization)
         permissions, _ = UserPermissions.objects.get_or_create(user=user)
     except CustomUser.DoesNotExist:
-        return JsonResponse({'error': 'Utilisateur non trouvé'}, status=404)
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
-        return JsonResponse({
+        return Response({
             'can_manage_users': permissions.can_manage_users,
             'can_manage_settings': permissions.can_manage_settings,
             'can_view_analytics': permissions.can_view_analytics,
@@ -276,7 +246,7 @@ def api_user_permissions(request, user_id):
     
     elif request.method == 'PUT':
         try:
-            data = json.loads(request.body)
+            data = request.data
             
             if 'can_manage_users' in data:
                 permissions.can_manage_users = data['can_manage_users']
@@ -291,9 +261,10 @@ def api_user_permissions(request, user_id):
             
             permissions.save()
             
-            return JsonResponse({
+            return Response({
                 'success': True,
                 'message': 'Permissions mises à jour'
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

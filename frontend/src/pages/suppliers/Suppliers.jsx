@@ -48,8 +48,6 @@ import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
 import { parseRating } from '../../utils/formatters';
 import { getStatusColor, getStatusLabel } from '../../utils/formatters';
-import AIAssistantToggle from '../../components/AIAssistantToggle';
-import FloatingAIAssistant from '../../components/FloatingAIAssistant';
 import EmptyState from '../../components/EmptyState';
 
 function Suppliers() {
@@ -68,10 +66,6 @@ function Suppliers() {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-
-  // États pour l'IA
-  const [isAIMode, setIsAIMode] = useState(false);
-  const [showAIAssistant, setShowAIAssistant] = useState(true);
 
   useEffect(() => {
     fetchSuppliers();
@@ -149,33 +143,6 @@ function Suppliers() {
     }
   };
 
-  // Fonctions pour l'IA
-  const handleAIModeChange = (newMode) => {
-    setIsAIMode(newMode);
-    if (newMode) {
-      enqueueSnackbar('Mode IA activé - L\'assistant peut maintenant vous aider', { variant: 'info' });
-    } else {
-      enqueueSnackbar('Mode manuel activé - Contrôle total restauré', { variant: 'info' });
-    }
-  };
-
-  const handleAIActionExecuted = (actionResult) => {
-    // Recharger les données si une action a été exécutée
-    if (actionResult.success && actionResult.entity_type === 'supplier') {
-      fetchSuppliers();
-    }
-  };
-
-  // Données contextuelles pour l'IA
-  const aiContextData = {
-    page: 'suppliers',
-    totalSuppliers: suppliers.length,
-    currentFilters: {
-      search: searchTerm,
-      status: statusFilter,
-    },
-  };
-
   const handleImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -203,15 +170,6 @@ function Suppliers() {
 
   return (
     <Box>
-      {/* Toggle Mode IA */}
-      <Box sx={{ mb: 3 }}>
-        <AIAssistantToggle
-          isAIMode={isAIMode}
-          onModeChange={handleAIModeChange}
-          showModeDescription={true}
-        />
-      </Box>
-
       {/* Actions */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -484,13 +442,6 @@ function Suppliers() {
           <Button onClick={() => setImportDialogOpen(false)}>Annuler</Button>
         </DialogActions>
       </Dialog>
-
-      {/* Assistant IA flottant */}
-      <FloatingAIAssistant
-        isVisible={showAIAssistant && isAIMode}
-        contextData={aiContextData}
-        onActionExecuted={handleAIActionExecuted}
-      />
     </Box>
   );
 }

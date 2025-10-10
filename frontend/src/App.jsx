@@ -30,6 +30,8 @@ import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
 import AIChat from './pages/ai-chat/AIChat';
 import Settings from './pages/settings/Settings';
+import ModuleSettings from './pages/settings/ModuleSettings';
+import UserManagement from './pages/settings/UserManagement';
 import SourcingEvents from './pages/e-sourcing/SourcingEvents';
 import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
 import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
@@ -47,6 +49,9 @@ import PrivateRoute from './components/guards/PrivateRoute';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+
+// Onboarding
+import OnboardingWizard from './components/OnboardingWizard';
 
 // Theme configuration - Material Design 3 inspired
 const theme = createTheme({
@@ -226,10 +231,10 @@ const theme = createTheme({
           borderRadius: 10,
           padding: '8px 20px',
           boxShadow: 'none',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.1)',
-            transform: 'translateY(-1px)',
+            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.08)',
+            transform: 'translateY(-0.5px)',
           },
         },
         contained: {
@@ -255,8 +260,8 @@ const theme = createTheme({
           border: '1px solid #f1f5f9',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 8px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
+            transform: 'translateY(-1px)',
           },
         },
       },
@@ -372,90 +377,139 @@ const theme = createTheme({
 });
 
 function App() {
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [onboardingChecked, setOnboardingChecked] = React.useState(false);
+
+  React.useEffect(() => {
+    checkOnboardingStatus();
+  }, []);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        setOnboardingChecked(true);
+        return;
+      }
+
+      const response = await fetch('/api/v1/accounts/profile/', {
+        headers: {
+          'Authorization': `Token ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShowOnboarding(!data.preferences?.onboarding_completed);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+    } finally {
+      setOnboardingChecked(true);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    window.location.reload(); // Recharger pour mettre à jour la navigation
+  };
+
   return (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-          <Router>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+          {onboardingChecked && (
+            <>
+              <Router>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
 
-              {/* Auth Routes */}
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<Login />} />
-              </Route>
+                  {/* Auth Routes */}
+                  <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<Login />} />
+                  </Route>
 
-              {/* Protected Routes */}
-              <Route element={<PrivateRoute />}>
-                <Route element={<MainLayout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  {/* Protected Routes */}
+                  <Route element={<PrivateRoute />}>
+                    <Route element={<MainLayout />}>
+                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
 
-                  {/* Suppliers */}
-                  <Route path="/suppliers" element={<Suppliers />} />
-                  <Route path="/suppliers/new" element={<SupplierForm />} />
-                  <Route path="/suppliers/:id" element={<SupplierDetail />} />
-                  <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
+                      {/* Suppliers */}
+                      <Route path="/suppliers" element={<Suppliers />} />
+                      <Route path="/suppliers/new" element={<SupplierForm />} />
+                      <Route path="/suppliers/:id" element={<SupplierDetail />} />
+                      <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
 
-                  {/* Purchase Orders */}
-                  <Route path="/purchase-orders" element={<PurchaseOrders />} />
-                  <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
-                  <Route path="/purchase-orders/:id" element={<PurchaseOrderDetail />} />
-                  <Route path="/purchase-orders/:id/edit" element={<PurchaseOrderForm />} />
+                      {/* Purchase Orders */}
+                      <Route path="/purchase-orders" element={<PurchaseOrders />} />
+                      <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
+                      <Route path="/purchase-orders/:id" element={<PurchaseOrderDetail />} />
+                      <Route path="/purchase-orders/:id/edit" element={<PurchaseOrderForm />} />
 
-                  {/* Invoices */}
-                  <Route path="/invoices" element={<Invoices />} />
-                  <Route path="/invoices/new" element={<InvoiceForm />} />
-                  <Route path="/invoices/:id" element={<InvoiceDetail />} />
-                  <Route path="/invoices/:id/edit" element={<InvoiceForm />} />
+                      {/* Invoices */}
+                      <Route path="/invoices" element={<Invoices />} />
+                      <Route path="/invoices/new" element={<InvoiceForm />} />
+                      <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                      <Route path="/invoices/:id/edit" element={<InvoiceForm />} />
 
-                  {/* Products */}
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/new" element={<ProductForm />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/products/:id/edit" element={<ProductForm />} />
+                      {/* Products */}
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/products/new" element={<ProductForm />} />
+                      <Route path="/products/:id" element={<ProductDetail />} />
+                      <Route path="/products/:id/edit" element={<ProductForm />} />
 
-                  {/* Clients */}
-                  <Route path="/clients" element={<Clients />} />
-                  <Route path="/clients/new" element={<ClientForm />} />
-                  <Route path="/clients/:id" element={<ClientDetail />} />
-                  <Route path="/clients/:id/edit" element={<ClientForm />} />
+                      {/* Clients */}
+                      <Route path="/clients" element={<Clients />} />
+                      <Route path="/clients/new" element={<ClientForm />} />
+                      <Route path="/clients/:id" element={<ClientDetail />} />
+                      <Route path="/clients/:id/edit" element={<ClientForm />} />
 
-                  {/* E-Sourcing */}
-                  <Route path="/e-sourcing/events" element={<SourcingEvents />} />
-                  <Route path="/e-sourcing/events/new" element={<SourcingEventForm />} />
-                  <Route path="/e-sourcing/events/:id" element={<SourcingEventDetail />} />
-                  <Route path="/e-sourcing/events/:id/edit" element={<SourcingEventForm />} />
-                  <Route path="/e-sourcing/events/:eventId/compare" element={<BidComparison />} />
-                  <Route path="/e-sourcing/bids/:id" element={<BidDetail />} />
+                      {/* E-Sourcing */}
+                      <Route path="/e-sourcing/events" element={<SourcingEvents />} />
+                      <Route path="/e-sourcing/events/new" element={<SourcingEventForm />} />
+                      <Route path="/e-sourcing/events/:id" element={<SourcingEventDetail />} />
+                      <Route path="/e-sourcing/events/:id/edit" element={<SourcingEventForm />} />
+                      <Route path="/e-sourcing/events/:eventId/compare" element={<BidComparison />} />
+                      <Route path="/e-sourcing/bids/:id" element={<BidDetail />} />
 
-                  {/* Contracts */}
-                  <Route path="/contracts" element={<Contracts />} />
-                  <Route path="/contracts/new" element={<ContractForm />} />
-                  <Route path="/contracts/:id" element={<ContractDetail />} />
-                  <Route path="/contracts/:id/edit" element={<ContractForm />} />
+                      {/* Contracts */}
+                      <Route path="/contracts" element={<Contracts />} />
+                      <Route path="/contracts/new" element={<ContractForm />} />
+                      <Route path="/contracts/:id" element={<ContractDetail />} />
+                      <Route path="/contracts/:id/edit" element={<ContractForm />} />
 
-                  {/* Data Migration */}
-                  <Route path="/migration/jobs" element={<MigrationJobs />} />
-                  <Route path="/migration/wizard" element={<MigrationWizard />} />
+                      {/* Data Migration */}
+                      <Route path="/migration/jobs" element={<MigrationJobs />} />
+                      <Route path="/migration/wizard" element={<MigrationWizard />} />
 
-                  {/* AI Chat */}
-                  <Route path="/ai-chat" element={<AIChat />} />
+                      {/* AI Chat */}
+                      <Route path="/ai-chat" element={<AIChat />} />
 
-                  {/* Settings */}
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
-              </Route>
+                      {/* Settings */}
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/settings/modules" element={<ModuleSettings />} />
+                      <Route path="/settings/users" element={<UserManagement />} />
+                    </Route>
+                  </Route>
 
-              {/* 404 */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                  {/* 404 */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
 
-            {/* PWA Install Prompt */}
-            <PWAInstallPrompt />
-          </Router>
+                {/* PWA Install Prompt */}
+                <PWAInstallPrompt />
+              </Router>
+
+              {/* Onboarding Wizard */}
+              <OnboardingWizard
+                open={showOnboarding}
+                onComplete={handleOnboardingComplete}
+              />
+            </>
+          )}
         </SnackbarProvider>
       </ThemeProvider>
     </Provider>

@@ -118,10 +118,10 @@ function ThinkingAnimation({
             right: -4,
             fontSize: 12,
             color: 'warning.main',
-            animation: 'sparkle 1.5s infinite',
+            animation: 'sparkle 2s ease-in-out infinite',
             '@keyframes sparkle': {
-              '0%, 100%': { opacity: 0, transform: 'scale(0.5)' },
-              '50%': { opacity: 1, transform: 'scale(1)' },
+              '0%, 100%': { opacity: 0, transform: 'scale(0.8)' },
+              '50%': { opacity: 0.7, transform: 'scale(1)' },
             },
           }}
         />
@@ -148,11 +148,11 @@ function ThinkingAnimation({
           },
           '@keyframes bounce': {
             '0%, 80%, 100%': {
-              transform: 'scale(0.8)',
-              opacity: 0.5,
+              transform: 'scale(0.9)',
+              opacity: 0.6,
             },
             '40%': {
-              transform: 'scale(1.2)',
+              transform: 'scale(1.05)',
               opacity: 1,
             },
           },
@@ -178,7 +178,7 @@ function ThinkingAnimation({
           sx={{
             fontSize: 28,
             color: 'secondary.main',
-            animation: 'rotate 3s linear infinite',
+            animation: 'rotate 4s ease-in-out infinite',
             '@keyframes rotate': {
               '0%': { transform: 'rotate(0deg)' },
               '100%': { transform: 'rotate(360deg)' },
@@ -249,10 +249,10 @@ function ThinkingAnimation({
             transform: 'translate(-50%, -50%)',
             fontSize: 20,
             color: 'warning.main',
-            animation: 'glow 2s infinite',
+            animation: 'glow 2.5s ease-in-out infinite',
             '@keyframes glow': {
-              '0%, 100%': { opacity: 0.5 },
-              '50%': { opacity: 1, filter: 'drop-shadow(0 0 5px currentColor)' },
+              '0%, 100%': { opacity: 0.6 },
+              '50%': { opacity: 0.9 },
             },
           }}
         />

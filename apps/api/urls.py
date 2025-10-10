@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from . import quick_create_views
+from apps.accounts import api_views as accounts_api_views
 
 app_name = 'api'
 
@@ -18,6 +19,13 @@ router.register(r'invoices', views.InvoiceViewSet)
 urlpatterns = [
     # Authentication
     path('auth/token/', obtain_auth_token, name='api_token_auth'),
+
+    # Accounts & User management APIs
+    path('accounts/profile/', accounts_api_views.api_profile, name='api_profile'),
+    path('accounts/preferences/', accounts_api_views.api_user_preferences, name='api_user_preferences'),
+    path('accounts/organization/users/', accounts_api_views.api_organization_users, name='api_organization_users'),
+    path('accounts/organization/users/<uuid:user_id>/', accounts_api_views.api_organization_user_detail, name='api_organization_user_detail'),
+    path('accounts/organization/users/<uuid:user_id>/permissions/', accounts_api_views.api_user_permissions, name='api_user_permissions'),
 
     # Router URLs
     path('', include(router.urls)),
