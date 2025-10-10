@@ -200,3 +200,4 @@ If you encounter any more errors, please share:
 
 The backend is working correctly and all endpoints are responding. The main issue was the incorrect URL path in the frontend for the contracts API. After restarting the frontend, the application should work without any errors.
 
+

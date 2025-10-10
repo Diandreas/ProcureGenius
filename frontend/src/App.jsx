@@ -34,6 +34,7 @@ import SourcingEvents from './pages/e-sourcing/SourcingEvents';
 import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
 import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
 import BidComparison from './pages/e-sourcing/BidComparison';
+import BidDetail from './pages/e-sourcing/BidDetail';
 import PublicBidSubmission from './pages/e-sourcing/PublicBidSubmission';
 import Contracts from './pages/contracts/Contracts';
 import ContractDetail from './pages/contracts/ContractDetail';
@@ -428,6 +429,7 @@ function App() {
                   <Route path="/e-sourcing/events/:id" element={<SourcingEventDetail />} />
                   <Route path="/e-sourcing/events/:id/edit" element={<SourcingEventForm />} />
                   <Route path="/e-sourcing/events/:eventId/compare" element={<BidComparison />} />
+                  <Route path="/e-sourcing/bids/:id" element={<BidDetail />} />
 
                   {/* Contracts */}
                   <Route path="/contracts" element={<Contracts />} />

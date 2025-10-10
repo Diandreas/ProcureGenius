@@ -12,7 +12,7 @@ class BidItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = BidItem
         fields = [
-            'id', 'bid', 'product_reference', 'description', 'specifications',
+            'id', 'product_reference', 'description', 'specifications',
             'quantity', 'unit_price', 'total_price', 'unit_of_measure',
             'notes', 'created_at', 'updated_at'
         ]

@@ -6,8 +6,9 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from django.utils import timezone
 from .models import Conversation, Message
 from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer
-from .services import MistralService, ActionExecutor
-from .ocr_service import OCRService
+# Lazy imports to avoid module-level initialization errors
+# from .services import MistralService, ActionExecutor
+# from .ocr_service import OCRService
 from .action_manager import action_manager
 import asyncio
 import logging
@@ -53,7 +54,8 @@ class ChatView(APIView):
                 conversation=conversation
             ).order_by('created_at').values('role', 'content')
             
-            # Appeler Mistral AI
+            # Appeler Mistral AI (lazy import)
+            from .services import MistralService
             mistral_service = MistralService()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -74,6 +76,7 @@ class ChatView(APIView):
             final_response = result['response']
 
             if result.get('tool_calls'):
+                from .services import ActionExecutor
                 executor = ActionExecutor()
 
                 for tool_call in result['tool_calls']:
@@ -126,6 +129,7 @@ class ChatView(APIView):
             # Exécuter l'action legacy si nécessaire (compatibilité)
             action_result = None
             if result.get('action'):
+                from .services import ActionExecutor
                 executor = ActionExecutor()
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -258,7 +262,8 @@ class DocumentAnalysisView(APIView):
             auto_create = request.data.get('auto_create', 'false').lower() == 'true'
             
             try:
-                # Traiter le document avec OCR
+                # Traiter le document avec OCR (lazy import)
+                from .ocr_service import OCRService
                 processor = OCRService()
                 success, text_or_error, lang = processor.extract_text_from_image(image_file)
 
@@ -276,6 +281,7 @@ class DocumentAnalysisView(APIView):
                 }
                 
                 # Analyser avec Mistral pour une extraction plus intelligente
+                from .services import MistralService
                 mistral_service = MistralService()
                 ai_result = mistral_service.analyze_document(
                     result['ocr_text'],
@@ -321,6 +327,7 @@ class DocumentAnalysisView(APIView):
                 )
             
             try:
+                from .services import MistralService
                 mistral_service = MistralService()
                 result = mistral_service.analyze_document(text, document_type)
                 
@@ -427,47 +434,57 @@ class QuickActionsView(APIView):
 
     def get(self, request):
         """Retourner les actions rapides disponibles"""
-        # Récupérer la catégorie depuis les paramètres de requête
-        category = request.GET.get('category')
+        try:
+            # Récupérer la catégorie depuis les paramètres de requête
+            category = request.GET.get('category')
 
-        # Obtenir les actions configurables
-        available_actions = action_manager.get_available_actions(category)
+            # Obtenir les actions configurables
+            available_actions = action_manager.get_available_actions(category)
 
-        # Convertir en format compatible avec le frontend
-        quick_actions = []
-        for action in available_actions:
-            # Créer un prompt basé sur la configuration
-            prompt = action_manager.create_ai_prompt(
-                action['id'],
-                'extract'
-            )
-            if not prompt:
-                prompt = f"Je veux {action['name'].lower()}"
+            # Convertir en format compatible avec le frontend
+            quick_actions = []
+            for action in available_actions:
+                # Créer un prompt basé sur la configuration
+                prompt = action_manager.create_ai_prompt(
+                    action['id'],
+                    'extract'
+                )
+                if not prompt:
+                    prompt = f"Je veux {action['name'].lower()}"
 
-            quick_actions.append({
-                'id': action['id'],
-                'title': action['name'],
-                'icon': action['icon'],
-                'prompt': prompt,
-                'description': action['description'],
-                'category': action['category']
-            })
-
-        # Ajouter les réponses rapides contextuelles si une catégorie est spécifiée
-        if category:
-            quick_responses = action_manager.get_quick_responses(category)
-            for response in quick_responses:
                 quick_actions.append({
-                    'id': f'quick_response_{len(quick_actions)}',
-                    'title': response,
-                    'icon': 'chat',
-                    'prompt': response,
-                    'category': category
+                    'id': action['id'],
+                    'title': action['name'],
+                    'icon': action['icon'],
+                    'prompt': prompt,
+                    'description': action['description'],
+                    'category': action['category']
                 })
 
-        return Response({
-            'actions': quick_actions,
-            'total': len(quick_actions),
-            'category': category,
-            'summary': action_manager.get_action_summary()
-        })
+            # Ajouter les réponses rapides contextuelles si une catégorie est spécifiée
+            if category:
+                quick_responses = action_manager.get_quick_responses(category)
+                for response in quick_responses:
+                    quick_actions.append({
+                        'id': f'quick_response_{len(quick_actions)}',
+                        'title': response,
+                        'icon': 'chat',
+                        'prompt': response,
+                        'category': category
+                    })
+
+            return Response({
+                'actions': quick_actions,
+                'total': len(quick_actions),
+                'category': category,
+                'summary': action_manager.get_action_summary()
+            })
+        except Exception as e:
+            logger.error(f"Error in QuickActionsView: {e}")
+            # Return empty response instead of crashing
+            return Response({
+                'actions': [],
+                'total': 0,
+                'category': request.GET.get('category'),
+                'error': 'Failed to load quick actions'
+            }, status=status.HTTP_200_OK)  # Return 200 with empty data instead of 503
