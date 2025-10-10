@@ -1,0 +1,345 @@
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 373
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+code 400, message Bad request version ("¯2kÚªH\x03\xadã\x01ÿu\x88[¯³\x15³ÚÎØ±`¶à'@1\x11Ä_")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("Þ6\x10ìó'+À,,é©v1rÛÅ:\x16\x84\x01Ù¨\x9fQPVJ+Ï¼rª¨ò?~SÌµÜ\x87k")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x99\x9e\x18Ôa¸D÷e÷Æ\x937,á\x88\x17|Î\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x06²\x01\x00\x06®\x03\x03/Âgz')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("\x11B\x83\x89\x86G\x9e'~é\x94\x90")
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00-\x00\x02\x01\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('/ò]kì')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('úc\x82?<\x12¶"')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+code 400, message Bad request version ('ëy\x01\x14³ÒÁvE\x9fÌÊ^³f')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("\x97©»\x14\x01]3*f>\x8bCC×E.H\x8f\xad4£ù\x03®ëiæ¹\x82a\\þkëz4Ks0]\x96Î{'o\x8a\x8f$g\x07S\x91.É")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00-\x00\x02\x01\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x06ò\x01\x00\x06î\x03\x03\x02\x9d*ýO¥CÓ5xÄ\x08Ó\x0eÉàåü÷$\x12W\x06HÍÉYc\x93Æ"ù')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('XØÉxpeä\x17×y®\x18F\x9b\x16Ü¾')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00\x1b\x00\x03\x02\x00\x02\x00#\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00#\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00\x1b\x00\x03\x02\x00\x02\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00\x12\x00\x00\x00\x17\x00\x00\x00\x1b\x00\x03\x02\x00\x02DÍ\x00\x05\x00\x03\x02h2ÿ\x01\x00\x01\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06²\x01\x00\x06®\x03\x03\x82C)¸\x9a1\x1a\x11XÒÑÍYÊé)9Ü¦æð\x9d')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06Eªª\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('n')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('s\x89Q\\"ÈYð')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x07\x12\x01\x00\x07\x0e\x03\x03ÆH\x01CqW·\x9cÌO\x94[ÉÏfÞÈ¦&#%\x04')
+code 400, message Bad request version ('ÊÊ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06e\x8a\x8a\x00\x00ÿ\x01\x00\x01\x00\x00-\x00\x02\x01\x01\x00\x1b\x00\x03\x02\x00\x02\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+code 400, message Bad request syntax ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03Ç6¹¶k\x0f¨\x8dñM\x92¡\x10W\x1a%\x9aÎÑÐ4Ò"Öoæl2\x84j')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ÏØ¥\\{¸\x08(é\x00ìi\x15T1\x9e;ÀÖ\x06\x10\x07ÝÎ+=°\x9eJJ§\x15£8ÌËm¸\x18\x9b9\x9bò¼$PÖGUá\\Wr@Þ5xNy\x00\x12\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00+\x00\x07\x06\x1a\x1a\x03\x04\x03\x03\x00\x1b\x00\x03\x02\x00\x02\x00-\x00\x02\x01\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00-\x00\x02\x01\x01\x003\x04ï\x04í')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('#¹c\x14`\x90°ñ\x11\x03].ëÂ\x10-2\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('6ê\x00\x02`¼w»UÁ]t\x82')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x13\x86ù(Bð¢Oa\x03Þú\x82¦·o\x11P^\x15\x04HÃW¸ºaºB\x93\x17wÓ&·qHÂ\x98\x80O±\x92N¼t+\x937³å;Yû\x83ÌÁ\x03¬;³w¨5#')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x02\x01\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('³C\x15\x86')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+code 400, message Bad request version ('ªª\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06EJJ\x00\x00\x00+\x00\x07\x06JJ\x03\x04\x03\x03DÍ\x00\x05\x00\x03\x02h2\x00')
+code 400, message Bad request version ('W©ËF\x99\x9el\x94eù\x8f\x01ýnð4þÛ«jG\x8e\x06ü\x93Ì¯µ\\\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x07\x12\x01\x00\x07\x0e\x03\x0384')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x02\x01\x00\x00')
+code 400, message Bad request version ('localhost\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06²\x01\x00\x06®\x03\x03\x90\x18)\x19\x99´«õg\x0f\x07lç¹\x8ffd\x01')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('·¼ª\x02\x8f(\x1a6;)¶\x9b\x93û1¾ò\x8b<g\x86o\x80\x01f:Ò\x84Y×\x02Â#wMir\x00\x11`\x11¶jF$\x06\x92\x06\x94Ö´´VÃ·6¨X\x08¬8G3+')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ªª\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06eZZ\x00\x00DÍ\x00\x05\x00\x03\x02h2\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('Ù\x08\x7f¢\x96JÏö\x98nî\x15\x96}¸Ù\x93qî÷')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhostÿ\x01\x00\x01\x00\x00\x1b\x00\x03\x02\x00\x02DÍ\x00\x05\x00\x03\x02h2\x003\x04ï\x04í')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+code 400, message Bad request version ('\x89¼`×bÀ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('©/ÙWY\x86ÿ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ö\x89:r¶\x9eOÔ\x9c3ÿÝ\x9e\x00âÄ\x9c^K\x7f1ÊB¹\x89*.¤v¡\x11\x04$<ÿØ\x8a\x9brË\x95Ã:É*æñ\x00\x1b\x00\x03\x02\x00\x02\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('-\x9bHó\x8e\x91\x10W')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('¨º/Lbÿ\x01\x00\x01\x00\x00+\x00\x07\x06')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('6Ä;ílzÖ\x06')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x9a\x9a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06¥zz\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x07\x12\x01\x00\x07\x0e\x03\x03ù<:Úi®Ä')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ª\x0f«Î\x7féIª\x84dÆÌ`^Á\x97\x08üR\x00\x17\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('V|\x9e¿sÆÕ\x86º0ñ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 729
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"PUT /api/v1/accounts/preferences/ HTTP/1.1" 200 408
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 1400
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 1400
+"PUT /api/v1/accounts/preferences/ HTTP/1.1" 200 420
+"OPTIONS /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 0
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 598
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 598
+"PUT /api/v1/accounts/preferences/ HTTP/1.1" 200 430
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"PUT /api/v1/accounts/preferences/ HTTP/1.1" 200 441
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 5896
+"GET /api/v1/products/ HTTP/1.1" 200 5896
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4776
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4776
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 598
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 598
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 5338
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version (":Ä\x93ë'µF\\\x8bêÛ\x82\x8e¹\x17\x19¶.M\x98ÇÛ!\x16¾@JÜ£o¹\x9ay\x17A\x02;à\x8d0ZÂø¦\x00E'#Ä\x9b\x15«\x941²ÇXöK½\x1aIËøë\x8aÿü")
+code 400, message Bad request version ("\x02¸Ùc3IfCß\x07¯y¶Æ§È^«Ë\x06Þ6\x82\x8f\x9a\x9fÙ'Å\x81[}9²Âm\x11aµG´ü\x05¶")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version (',%\x83®qf')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x02\x01\x00\x00#\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00\x12\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x14EP\x9bDhü\x1a')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x1a\x1a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06¥')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03\x87fÆûÕ)Á\x9cb¸®\x86¶×¨¥¥Ë\x9fÒ\x1a@£')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x8fuLâ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version ('\x1a\x1a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06eªª\x00\x00DÍ\x00\x05\x00\x03\x02h2\x00\x17\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('#·RÛîêo=I\x19ø³qÂÔkræ\x981\x1a\x01\x16¼êéÒ\x81d\x89ã7\x0e{/ÜÜóD')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version ('ÊÊ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06E')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03cÿ]{ãw÷W¿Ü\xad\x18Å¢Ó§%La\x17')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('::\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06E')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('@/±Q\x95')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00+\x00\x07\x06ÊÊ\x03\x04\x03\x03\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('zz\x00\x00\x003\x04ï\x04í')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version ('\x18»\x8eA\x12\x9f¹')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x052Wý¢z>AÙ¿\x8c\x8a\x18\x9c2')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+code 400, message Bad request version ('localhost\x00-\x00\x02\x01\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("¥\x91\x06d9\x80ì£Ll:ßì9kê\x8bcw¯'÷&\x8d\x872_I.«ôÍL©º")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00\x05\x00\x05\x01\x00\x00\x00\x00\x00+\x00\x07\x06ºº\x03\x04\x03\x03\x00\x12\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03h\x97x%X')
+code 400, message Bad request version ('localhost\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x1a\x1a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06eºº\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03íl\x9bxPÉ\x18\\II\x9cu±Ú\x18')
+code 400, message Bad request version ('øàåþ5')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x86`©\x01\x8cñÀ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x92tj×*4\x14\x13¦9B)Xú4t±t¬Ô\x82³')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 775
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/invoices/ HTTP/1.1" 200 5839
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4708
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4776
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 567
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 567
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 1333
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 1333

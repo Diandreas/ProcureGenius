@@ -44,6 +44,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Ignorer les requêtes WebSocket et HMR de Vite
+  if (url.protocol === 'ws:' || url.protocol === 'wss:' ||
+      url.pathname.includes('/@vite/') ||
+      url.pathname.includes('/__vite_ping') ||
+      url.searchParams.has('token')) {
+    return;
+  }
+
+  // Gestion du partage de fichiers
+  if (url.pathname === '/share' && request.method === 'POST') {
+    event.respondWith(handleShare(request));
+    return;
+  }
+
   // Stratégie pour l'API
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(networkFirstStrategy(request));
@@ -92,15 +106,19 @@ async function networkFirstStrategy(request) {
 
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    // Ne pas mettre en cache les requêtes POST, PUT, DELETE, PATCH
+    if (networkResponse.ok && request.method === 'GET') {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
     console.error('Erreur réseau, utilisation du cache:', error);
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+    // Ne chercher dans le cache que pour les requêtes GET
+    if (request.method === 'GET') {
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
 
     // Pour les requêtes API, retourner une erreur JSON
@@ -179,15 +197,7 @@ async function syncData() {
   // Nettoyer les données synchronisées
 }
 
-// Gestion du partage de fichiers
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  if (url.pathname === '/share' && event.request.method === 'POST') {
-    event.respondWith(handleShare(event.request));
-  }
-});
-
+// Fonction pour gérer le partage de fichiers
 async function handleShare(request) {
   const formData = await request.formData();
   const file = formData.get('document');
