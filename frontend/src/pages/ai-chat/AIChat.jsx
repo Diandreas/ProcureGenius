@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -36,15 +37,18 @@ import {
   Add,
   Close,
   Circle,
+  Mic,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
 import Mascot from '../../components/Mascot';
+import VoiceRecorder from '../../components/VoiceRecorder';
 
 function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
+  const location = useLocation();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -56,10 +60,19 @@ function AIChat() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickActions, setQuickActions] = useState([]);
   const [typingIndicator, setTypingIndicator] = useState(false);
+  const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
 
   useEffect(() => {
     fetchConversations();
     fetchQuickActions();
+
+    // Gérer les messages vocaux entrants depuis la navigation
+    if (location.state?.voiceMessage) {
+      setMessage(location.state.voiceMessage);
+      enqueueSnackbar('Message vocal transcrit avec succès !', { variant: 'success' });
+      // Nettoyer le state pour éviter de réafficher le message
+      window.history.replaceState({}, document.title);
+    }
 
     // Écouter l'événement pour créer une nouvelle conversation depuis la navbar
     const handleNewConversation = () => {
@@ -71,7 +84,7 @@ function AIChat() {
     return () => {
       window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
     };
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     scrollToBottom();
@@ -332,7 +345,14 @@ function AIChat() {
                               {action.title}
                             </Typography>
                           </Box>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: '0.75rem',
+                              display: { xs: 'none', md: 'block' } // Caché sur mobile, visible sur desktop
+                            }}
+                          >
                             {action.description}
                           </Typography>
                         </CardContent>
@@ -477,6 +497,21 @@ function AIChat() {
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title="Message vocal">
+              <span>
+                <IconButton
+                  onClick={() => setVoiceRecorderOpen(true)}
+                  disabled={loading}
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    display: { xs: 'inline-flex', sm: 'none' } // Visible seulement sur mobile
+                  }}
+                >
+                  <Mic fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
             <Tooltip title="Envoyer">
               <span>
                 <IconButton
@@ -501,6 +536,17 @@ function AIChat() {
             </Tooltip>
           </Box>
         </Paper>
+
+        {/* Composant d'enregistrement vocal */}
+        {voiceRecorderOpen && (
+          <VoiceRecorder
+            onVoiceMessage={(transcribedText) => {
+              setMessage(transcribedText);
+              enqueueSnackbar('Message vocal transcrit avec succès !', { variant: 'success' });
+            }}
+            onClose={() => setVoiceRecorderOpen(false)}
+          />
+        )}
       </Box>
     </Box>
   );

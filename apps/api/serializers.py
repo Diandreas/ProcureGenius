@@ -3,6 +3,7 @@ from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
 from apps.accounts.models import Client
+from apps.core.serializer_mixins import ModuleAwareSerializerMixin
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -54,7 +55,7 @@ class SupplierSerializer(serializers.ModelSerializer):
         return obj.get_performance_badge()
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les produits"""
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     margin = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -62,6 +63,11 @@ class ProductSerializer(serializers.ModelSerializer):
     stock_status = serializers.CharField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
+    
+    # Hide supplier fields if suppliers module is disabled
+    module_dependent_fields = {
+        'suppliers': ['supplier', 'supplier_name'],
+    }
 
     class Meta:
         model = Product
@@ -134,11 +140,16 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total_price']
 
 
-class PurchaseOrderSerializer(serializers.ModelSerializer):
+class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les bons de commande"""
     items = PurchaseOrderItemSerializer(many=True, read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    
+    # Hide supplier fields if suppliers module is disabled
+    module_dependent_fields = {
+        'suppliers': ['supplier', 'supplier_name'],
+    }
 
     class Meta:
         model = PurchaseOrder
@@ -172,11 +183,18 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total']
 
 
-class InvoiceSerializer(serializers.ModelSerializer):
+class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les factures"""
     items = InvoiceItemSerializer(many=True, read_only=True)
     client_name = serializers.CharField(source='client.username', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    purchase_order_number = serializers.CharField(source='purchase_order.po_number', read_only=True, required=False)
+    
+    # Hide fields for disabled modules
+    module_dependent_fields = {
+        'purchase-orders': ['purchase_order', 'purchase_order_number'],
+        'clients': ['client', 'client_name'],
+    }
 
     class Meta:
         model = Invoice
@@ -184,13 +202,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'id', 'invoice_number', 'title', 'description', 'client', 'client_name',
             'status', 'currency', 'subtotal', 'tax_amount',
             'total_amount', 'due_date', 'payment_method',
-            'billing_address', 'payment_terms',
+            'billing_address', 'payment_terms', 'purchase_order', 'purchase_order_number',
             'created_by', 'created_by_name',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
             'id', 'invoice_number', 'subtotal', 'total_amount',
-            'created_at', 'updated_at', 'created_by'
+            'created_at', 'updated_at', 'created_by', 'purchase_order_number'
         ]
     
     def create(self, validated_data):
@@ -238,13 +256,20 @@ class WarehouseSerializer(serializers.ModelSerializer):
 
 
 # Serializers pour les statistiques et tableaux de bord
-class DashboardStatsSerializer(serializers.Serializer):
+class DashboardStatsSerializer(ModuleAwareSerializerMixin, serializers.Serializer):
     """Serializer pour les statistiques du tableau de bord"""
-    total_suppliers = serializers.IntegerField()
-    active_suppliers = serializers.IntegerField()
-    total_purchase_orders = serializers.IntegerField()
-    pending_purchase_orders = serializers.IntegerField()
-    total_invoices = serializers.IntegerField()
-    unpaid_invoices = serializers.IntegerField()
-    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
-    total_expenses = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_suppliers = serializers.IntegerField(required=False)
+    active_suppliers = serializers.IntegerField(required=False)
+    total_purchase_orders = serializers.IntegerField(required=False)
+    pending_purchase_orders = serializers.IntegerField(required=False)
+    total_invoices = serializers.IntegerField(required=False)
+    unpaid_invoices = serializers.IntegerField(required=False)
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2, required=False)
+    total_expenses = serializers.DecimalField(max_digits=15, decimal_places=2, required=False)
+    
+    # Hide stats for disabled modules
+    module_dependent_fields = {
+        'suppliers': ['total_suppliers', 'active_suppliers'],
+        'purchase-orders': ['total_purchase_orders', 'pending_purchase_orders', 'total_expenses'],
+        'invoices': ['total_invoices', 'unpaid_invoices', 'total_revenue'],
+    }

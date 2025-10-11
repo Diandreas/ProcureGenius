@@ -11,6 +11,8 @@ from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
 from apps.accounts.models import Client
+from apps.core.permissions import HasModuleAccess
+from apps.core.modules import Modules
 
 from .serializers import (
     SupplierSerializer, SupplierCategorySerializer,
@@ -26,14 +28,16 @@ class SupplierCategoryViewSet(viewsets.ModelViewSet):
     """ViewSet pour les catégories de fournisseurs"""
     queryset = SupplierCategory.objects.all()
     serializer_class = SupplierCategorySerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.SUPPLIERS
 
 
 class SupplierViewSet(viewsets.ModelViewSet):
     """ViewSet pour les fournisseurs"""
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.SUPPLIERS
     filterset_fields = ['status', 'province', 'is_local', 'is_active']
     search_fields = ['name', 'contact_person', 'email', 'city']
     ordering_fields = ['name', 'rating', 'created_at']
@@ -162,7 +166,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.PRODUCTS
     filterset_fields = ['is_active', 'product_type']
     search_fields = ['name', 'reference', 'description']
     ordering_fields = ['name', 'price', 'stock_quantity']
@@ -325,7 +330,8 @@ class ClientViewSet(viewsets.ModelViewSet):
     """ViewSet pour les clients"""
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.CLIENTS
     filterset_fields = ['is_active']
     search_fields = ['name', 'email', 'contact_person']
     ordering_fields = ['name', 'created_at']
@@ -336,7 +342,8 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
     """ViewSet pour les bons de commande"""
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.PURCHASE_ORDERS
     filterset_fields = ['status', 'supplier', 'created_by']
     search_fields = ['po_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'required_date']
@@ -419,7 +426,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     """ViewSet pour les factures"""
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.INVOICES
     filterset_fields = ['status', 'client', 'created_by']
     search_fields = ['invoice_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'due_date']
@@ -671,7 +679,8 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
     """ViewSet pour les catégories de produits"""
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.PRODUCTS
     filterset_fields = ['is_active', 'parent']
     search_fields = ['name', 'slug', 'description']
     ordering_fields = ['name', 'created_at']
@@ -691,7 +700,8 @@ class WarehouseViewSet(viewsets.ModelViewSet):
     """ViewSet pour les entrepôts"""
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.PRODUCTS
     filterset_fields = ['is_active', 'city', 'province']
     search_fields = ['name', 'code', 'address', 'city']
     ordering_fields = ['name', 'code', 'created_at']

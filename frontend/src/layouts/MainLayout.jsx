@@ -42,9 +42,11 @@ import {
   SupervisorAccount,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
+import { useModules } from '../contexts/ModuleContext';
 import MobileBottomNav from '../components/MobileBottomNav';
 import PermanentAIAssistant from '../components/PermanentAIAssistant';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
+import IconImage from '../components/IconImage';
 
 const drawerWidth = 260;
 
@@ -52,15 +54,15 @@ const drawerWidth = 260;
 const CORE_MODULES = ['dashboard'];
 
 const menuItems = [
-  { text: 'Tableau de bord', icon: <Dashboard />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
-  { text: 'Fournisseurs', icon: <Business />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
-  { text: 'Bons de commande', icon: <ShoppingCart />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
-  { text: 'Factures', icon: <Receipt />, path: '/invoices', moduleId: 'invoices', isCore: false },
-  { text: 'Produits', icon: <Inventory />, path: '/products', moduleId: 'products', isCore: false },
-  { text: 'Clients', icon: <People />, path: '/clients', moduleId: 'clients', isCore: false },
-  { text: 'E-Sourcing (RFQ)', icon: <CompareArrows />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
-  { text: 'Contrats', icon: <Gavel />, path: '/contracts', moduleId: 'contracts', isCore: false },
-  { text: 'Assistant IA', icon: <Chat />, path: '/ai-chat', moduleId: 'dashboard', isCore: true }, // Toujours disponible
+  { text: 'Tableau de bord', icon: <IconImage src="/icon/dashboard.png" alt="Dashboard" size={24} />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
+  { text: 'Fournisseurs', icon: <IconImage src="/icon/supplier.png" alt="Suppliers" size={24} />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
+  { text: 'Bons de commande', icon: <IconImage src="/icon/purchase-order.png" alt="Purchase Orders" size={24} />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
+  { text: 'Factures', icon: <IconImage src="/icon/bill.png" alt="Invoices" size={24} />, path: '/invoices', moduleId: 'invoices', isCore: false },
+  { text: 'Produits', icon: <IconImage src="/icon/product.png" alt="Products" size={24} />, path: '/products', moduleId: 'products', isCore: false },
+  { text: 'Clients', icon: <IconImage src="/icon/user.png" alt="Clients" size={24} />, path: '/clients', moduleId: 'clients', isCore: false },
+  { text: 'E-Sourcing (RFQ)', icon: <IconImage src="/icon/market.png" alt="E-Sourcing" size={24} />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
+  { text: 'Contrats', icon: <IconImage src="/icon/contract.png" alt="Contracts" size={24} />, path: '/contracts', moduleId: 'contracts', isCore: false },
+  { text: 'Assistant IA', icon: <IconImage src="/icon/ai-assistant.png" alt="AI Assistant" size={24} />, path: '/ai-chat', moduleId: 'dashboard', isCore: true }, // Toujours disponible
 ];
 
 function MainLayout() {
@@ -72,18 +74,20 @@ function MainLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Use module context
+  const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+
   // États pour la gestion des modules
-  const [enabledModules, setEnabledModules] = useState(['dashboard']);
   const [userPermissions, setUserPermissions] = useState(null);
   const [moduleActivationDialogOpen, setModuleActivationDialogOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
 
   // Charger les préférences utilisateur au montage
   useEffect(() => {
-    fetchUserPreferences();
+    fetchUserPermissions();
   }, []);
 
-  const fetchUserPreferences = async () => {
+  const fetchUserPermissions = async () => {
     try {
       const response = await fetch('/api/v1/accounts/profile/', {
         headers: {
@@ -93,11 +97,10 @@ function MainLayout() {
 
       if (response.ok) {
         const data = await response.json();
-        setEnabledModules(data.preferences?.enabled_modules || ['dashboard']);
         setUserPermissions(data.permissions);
       }
     } catch (error) {
-      console.error('Error fetching user preferences:', error);
+      console.error('Error fetching user permissions:', error);
     }
   };
 
@@ -120,44 +123,24 @@ function MainLayout() {
 
   const handleModuleClick = (item) => {
     // Les modules core sont toujours accessibles
-    if (item.isCore || enabledModules.includes(item.moduleId)) {
+    if (item.isCore || hasModule(item.moduleId)) {
       // Module activé ou core: navigation normale
       navigate(item.path);
       if (isMobile) {
         setMobileOpen(false);
       }
     } else {
-      // Module désactivé: ouvrir le dialog d'activation
+      // Module désactivé: display message (admin needs to change subscription)
       setSelectedModule(item.moduleId);
       setModuleActivationDialogOpen(true);
     }
   };
 
   const handleActivateModule = async (moduleId) => {
-    try {
-      const response = await fetch('/api/v1/accounts/preferences/', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify({
-          enabled_modules: [...enabledModules, moduleId],
-        }),
-      });
-
-      if (response.ok) {
-        setEnabledModules([...enabledModules, moduleId]);
-        setModuleActivationDialogOpen(false);
-        // Naviguer vers le module nouvellement activé
-        const item = menuItems.find(m => m.moduleId === moduleId);
-        if (item) {
-          navigate(item.path);
-        }
-      }
-    } catch (error) {
-      console.error('Error activating module:', error);
-    }
+    // Module activation is now controlled at organization level
+    // Redirect to module settings where admin can upgrade subscription
+    setModuleActivationDialogOpen(false);
+    navigate('/settings/modules');
   };
 
   // Déterminer le module actuel depuis le path
@@ -248,7 +231,7 @@ function MainLayout() {
           title: 'Import de données',
           action: {
             label: isMobile ? 'Nouvel import' : 'Nouvel import',
-            icon: <CloudUpload />,
+            icon: <IconImage src="/icon/migration.png" alt="Import" size={20} />,
             onClick: () => navigate('/migration/wizard')
           }
         };
@@ -310,41 +293,33 @@ function MainLayout() {
       <Divider />
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1 }}>
         <List sx={{ px: 1 }}>
-          {menuItems.map((item) => {
-            // Les modules core sont toujours activés
-            const isEnabled = item.isCore || enabledModules.includes(item.moduleId);
+          {menuItems.filter(item => {
+            // Only show items if module is enabled (hide completely instead of graying out)
+            return item.isCore || hasModule(item.moduleId);
+          }).map((item) => {
             const isSelected = location.pathname === item.path;
 
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                <Tooltip
-                  title={!isEnabled ? "Module désactivé - Cliquez pour activer" : ""}
-                  placement="right"
+                <ListItemButton
+                  selected={isSelected}
+                  onClick={() => handleModuleClick(item)}
+                  sx={{
+                    minHeight: 44,
+                    px: 2,
+                  }}
                 >
-                  <ListItemButton
-                    selected={isSelected && isEnabled}
-                    onClick={() => handleModuleClick(item)}
-                    sx={{
-                      minHeight: 44,
-                      px: 2,
-                      opacity: isEnabled ? 1 : 0.4,
-                      '&:hover': {
-                        opacity: isEnabled ? 1 : 0.6,
-                      },
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: isSelected ? 600 : 500,
                     }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      {isEnabled ? item.icon : <Lock fontSize="small" />}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.text}
-                      primaryTypographyProps={{
-                        fontSize: '0.875rem',
-                        fontWeight: isSelected && isEnabled ? 600 : 500,
-                      }}
-                    />
-                  </ListItemButton>
-                </Tooltip>
+                  />
+                </ListItemButton>
               </ListItem>
             );
           })}
@@ -361,7 +336,7 @@ function MainLayout() {
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
-              <Settings />
+              <IconImage src="/icon/setting.png" alt="Modules" size={24} />
             </ListItemIcon>
             <ListItemText
               primary="Modules"
@@ -403,7 +378,7 @@ function MainLayout() {
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
-              <Settings />
+              <IconImage src="/icon/setting.png" alt="Settings" size={24} />
             </ListItemIcon>
             <ListItemText
               primary="Paramètres"
@@ -517,13 +492,13 @@ function MainLayout() {
               sx={{ py: 1.5, px: 2 }}
             >
               <ListItemIcon>
-                <Settings fontSize="small" />
+                <IconImage src="/icon/setting.png" alt="Settings" size={20} />
               </ListItemIcon>
               <Typography variant="body2">Paramètres</Typography>
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2 }}>
               <ListItemIcon>
-                <Logout fontSize="small" />
+                <IconImage src="/icon/logout.png" alt="Logout" size={20} />
               </ListItemIcon>
               <Typography variant="body2">Déconnexion</Typography>
             </MenuItem>

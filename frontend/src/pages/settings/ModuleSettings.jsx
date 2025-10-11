@@ -4,7 +4,6 @@ import {
     Card,
     CardContent,
     Typography,
-    Switch,
     Button,
     Grid,
     Chip,
@@ -18,7 +17,11 @@ import {
     ListItem,
     ListItemIcon,
     ListItemText,
-    ListItemSecondaryAction,
+    Radio,
+    RadioGroup,
+    FormControlLabel,
+    CircularProgress,
+    Paper,
 } from '@mui/material';
 import {
     Business,
@@ -29,203 +32,160 @@ import {
     CompareArrows,
     Gavel,
     Dashboard as DashboardIcon,
-    Warning,
-    RestartAlt,
+    Analytics,
+    CheckCircle,
+    Lock,
+    Upgrade,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import Mascot from '../../components/Mascot';
+import { useModules } from '../../contexts/ModuleContext';
 
-// Configuration des modules
-const AVAILABLE_MODULES = [
-    {
-        id: 'dashboard',
-        name: 'Tableau de bord',
-        icon: <DashboardIcon />,
-        description: 'Vue d\'ensemble et statistiques',
-        isCore: true, // Module obligatoire
-    },
-    {
-        id: 'suppliers',
-        name: 'Fournisseurs',
-        icon: <Business />,
-        description: 'Gestion des fournisseurs',
-        isCore: false,
-    },
-    {
-        id: 'purchase-orders',
-        name: 'Bons de commande',
-        icon: <ShoppingCart />,
-        description: 'Gestion des achats',
-        isCore: false,
-    },
-    {
-        id: 'invoices',
-        name: 'Factures',
-        icon: <Receipt />,
-        description: 'Facturation et paiements',
-        isCore: false,
-    },
-    {
-        id: 'products',
-        name: 'Produits',
-        icon: <Inventory />,
-        description: 'Catalogue et stocks',
-        isCore: false,
-    },
-    {
-        id: 'clients',
-        name: 'Clients',
-        icon: <People />,
-        description: 'Gestion des clients',
-        isCore: false,
-    },
-    {
-        id: 'e-sourcing',
-        name: 'E-Sourcing',
-        icon: <CompareArrows />,
-        description: 'Appels d\'offres (RFQ)',
-        isCore: false,
-    },
-    {
-        id: 'contracts',
-        name: 'Contrats',
-        icon: <Gavel />,
-        description: 'Gestion des contrats',
-        isCore: false,
-    },
-];
-
-// Profils prédéfinis
-const MODULE_PROFILES = {
-    basic: {
-        name: 'Basique',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices'],
-    },
-    advanced: {
-        name: 'Avancé',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-    },
-    complete: {
-        name: 'Complet',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-    },
+// Module icons map
+const MODULE_ICONS = {
+    'dashboard': <DashboardIcon />,
+    'suppliers': <Business />,
+    'purchase-orders': <ShoppingCart />,
+    'invoices': <Receipt />,
+    'products': <Inventory />,
+    'clients': <People />,
+    'e-sourcing': <CompareArrows />,
+    'contracts': <Gavel />,
+    'analytics': <Analytics />,
 };
 
 function ModuleSettings() {
     const { enqueueSnackbar } = useSnackbar();
-    const [enabledModules, setEnabledModules] = useState([]);
+    const { moduleMetadata, refreshModules } = useModules();
     const [loading, setLoading] = useState(true);
-    const [resetDialogOpen, setResetDialogOpen] = useState(false);
-    const [selectedProfile, setSelectedProfile] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [organizationSettings, setOrganizationSettings] = useState(null);
+    const [profileTypes, setProfileTypes] = useState([]);
+    const [selectedProfile, setSelectedProfile] = useState('');
+    const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+    const [userPermissions, setUserPermissions] = useState(null);
 
     useEffect(() => {
-        fetchUserPreferences();
+        fetchData();
     }, []);
 
-    const fetchUserPreferences = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/accounts/preferences/', {
+            const token = localStorage.getItem('authToken');
+
+            // Fetch user profile to check permissions
+            const profileResponse = await fetch('/api/v1/accounts/profile/', {
                 headers: {
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
+                    'Authorization': `Token ${token}`,
                 },
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setEnabledModules(data.enabled_modules || ['dashboard']);
+            if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                setUserPermissions(profileData.permissions);
             }
+
+            // Fetch organization settings
+            const settingsResponse = await fetch('/api/v1/accounts/organization/settings/', {
+                headers: {
+                    'Authorization': `Token ${token}`,
+                },
+            });
+
+            if (settingsResponse.ok) {
+                const settingsData = await settingsResponse.json();
+                setOrganizationSettings(settingsData);
+                setSelectedProfile(settingsData.subscription_type);
+            } else if (settingsResponse.status === 403) {
+                enqueueSnackbar('Vous n\'avez pas les permissions pour gérer les paramètres', { variant: 'warning' });
+            }
+
+            // Fetch available profile types
+            const profileTypesResponse = await fetch('/api/v1/accounts/profile-types/', {
+                headers: {
+                    'Authorization': `Token ${token}`,
+                },
+            });
+
+            if (profileTypesResponse.ok) {
+                const profileTypesData = await profileTypesResponse.json();
+                setProfileTypes(profileTypesData.profiles || []);
+            }
+
         } catch (error) {
-            console.error('Error fetching preferences:', error);
-            enqueueSnackbar('Erreur lors du chargement des préférences', { variant: 'error' });
+            console.error('Error fetching data:', error);
+            enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleModuleToggle = async (moduleId) => {
-        const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
-
-        // Empêcher la désactivation des modules core
-        if (module.isCore && enabledModules.includes(moduleId)) {
-            enqueueSnackbar('Ce module est obligatoire et ne peut pas être désactivé', { variant: 'warning' });
+    const handleChangeSubscription = async () => {
+        if (!selectedProfile || selectedProfile === organizationSettings?.subscription_type) {
+            setUpgradeDialogOpen(false);
             return;
         }
 
-        const newModules = enabledModules.includes(moduleId)
-            ? enabledModules.filter(m => m !== moduleId)
-            : [...enabledModules, moduleId];
-
+        setSaving(true);
         try {
-            const response = await fetch('/api/v1/accounts/preferences/', {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/v1/accounts/organization/settings/', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
+                    'Authorization': `Token ${token}`,
                 },
                 body: JSON.stringify({
-                    enabled_modules: newModules,
+                    subscription_type: selectedProfile,
                 }),
             });
 
             if (response.ok) {
-                setEnabledModules(newModules);
-                enqueueSnackbar(
-                    enabledModules.includes(moduleId) ? 'Module désactivé' : 'Module activé',
-                    { variant: 'success' }
-                );
+                const data = await response.json();
+                setOrganizationSettings(data);
+                setUpgradeDialogOpen(false);
+                enqueueSnackbar('Type de profil mis à jour avec succès', { variant: 'success' });
 
-                // Recharger la page pour mettre à jour la navigation
+                // Refresh modules in context
+                refreshModules();
+
+                // Reload page to update navigation
                 setTimeout(() => {
                     window.location.reload();
-                }, 1000);
+                }, 1500);
             } else {
-                throw new Error('Failed to update preferences');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update subscription');
             }
         } catch (error) {
-            console.error('Error updating preferences:', error);
-            enqueueSnackbar('Erreur lors de la mise à jour', { variant: 'error' });
-        }
-    };
-
-    const handleResetToProfile = async (profile) => {
-        try {
-            const response = await fetch('/api/v1/accounts/preferences/', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify({
-                    enabled_modules: MODULE_PROFILES[profile].modules,
-                }),
-            });
-
-            if (response.ok) {
-                setEnabledModules(MODULE_PROFILES[profile].modules);
-                setResetDialogOpen(false);
-                enqueueSnackbar(`Modules réinitialisés au profil ${MODULE_PROFILES[profile].name}`, { variant: 'success' });
-
-                // Recharger la page
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                throw new Error('Failed to update preferences');
-            }
-        } catch (error) {
-            console.error('Error resetting preferences:', error);
-            enqueueSnackbar('Erreur lors de la réinitialisation', { variant: 'error' });
+            console.error('Error updating subscription:', error);
+            enqueueSnackbar(error.message || 'Erreur lors de la mise à jour', { variant: 'error' });
+        } finally {
+            setSaving(false);
         }
     };
 
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-                <Mascot pose="thinking" animation="pulse" size={80} />
+                <CircularProgress />
             </Box>
         );
     }
+
+    // Check if user has permission to manage settings
+    if (!userPermissions?.can_manage_settings) {
+        return (
+            <Box>
+                <Alert severity="warning">
+                    Vous n'avez pas les permissions nécessaires pour gérer les modules de l'organisation.
+                    Contactez un administrateur.
+                </Alert>
+            </Box>
+        );
+    }
+
+    const currentProfile = profileTypes.find(p => p.type === organizationSettings?.subscription_type);
 
     return (
         <Box>
@@ -234,220 +194,213 @@ function ModuleSettings() {
                     Gestion des modules
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    Activez ou désactivez les modules selon vos besoins
+                    Gérez le profil d'abonnement et les modules disponibles pour votre organisation
                 </Typography>
             </Box>
 
-            {/* Statistiques */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={4}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h3" color="primary.main">
-                                {enabledModules.length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Modules activés
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h3" color="text.secondary">
-                                {AVAILABLE_MODULES.length - enabledModules.length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Modules désactivés
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <Card sx={{ bgcolor: 'primary.lighter' }}>
-                        <CardContent>
-                            <Typography variant="h3">
-                                {Math.round((enabledModules.length / AVAILABLE_MODULES.length) * 100)}%
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Utilisation
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
-
-            {/* Profils prédéfinis */}
+            {/* Current Subscription */}
             <Card sx={{ mb: 3 }}>
                 <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                        <Typography variant="h6">
-                            Profils prédéfinis
-                        </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Box>
+                            <Typography variant="h6" gutterBottom>
+                                Profil actuel
+                            </Typography>
+                            {currentProfile && (
+                                <>
+                                    <Typography variant="h5" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                                        {currentProfile.name}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {currentProfile.description}
+                                    </Typography>
+                                </>
+                            )}
+                        </Box>
                         <Button
-                            startIcon={<RestartAlt />}
-                            onClick={() => setResetDialogOpen(true)}
-                            variant="outlined"
-                            size="small"
+                            variant="contained"
+                            startIcon={<Upgrade />}
+                            onClick={() => setUpgradeDialogOpen(true)}
+                            size="large"
                         >
-                            Réinitialiser
+                            Changer de profil
                         </Button>
                     </Box>
 
-                    <Grid container spacing={2}>
-                        {Object.entries(MODULE_PROFILES).map(([key, profile]) => (
-                            <Grid item xs={12} md={4} key={key}>
-                                <Card
-                                    variant="outlined"
-                                    sx={{
-                                        cursor: 'pointer',
-                                        '&:hover': { borderColor: 'primary.main' },
-                                    }}
-                                    onClick={() => {
-                                        setSelectedProfile(key);
-                                        setResetDialogOpen(true);
-                                    }}
-                                >
-                                    <CardContent>
-                                        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                                            {profile.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                            {profile.modules.length} modules
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {profile.modules.slice(0, 4).map((moduleId) => {
-                                                const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
-                                                return (
-                                                    <Chip
-                                                        key={moduleId}
-                                                        label={module?.name}
-                                                        size="small"
-                                                        variant="outlined"
-                                                    />
-                                                );
-                                            })}
-                                            {profile.modules.length > 4 && (
-                                                <Chip label={`+${profile.modules.length - 4}`} size="small" />
-                                            )}
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* Current modules */}
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                        Modules inclus ({organizationSettings?.enabled_modules?.length || 0})
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {organizationSettings?.enabled_modules?.map((moduleCode) => {
+                            const metadata = moduleMetadata.find(m => m.code === moduleCode);
+                            if (!metadata) return null;
+
+                            return (
+                                <Grid item xs={12} sm={6} md={4} key={moduleCode}>
+                                    <Paper
+                                        elevation={0}
+                                        sx={{
+                                            p: 2,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            borderRadius: 2,
+                                        }}
+                                    >
+                                        <Box sx={{ color: 'primary.main', fontSize: 32 }}>
+                                            {MODULE_ICONS[moduleCode] || <DashboardIcon />}
                                         </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                {metadata.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {metadata.description}
+                                            </Typography>
+                                        </Box>
+                                        <CheckCircle color="success" />
+                                    </Paper>
+                                </Grid>
+                            );
+                        })}
                     </Grid>
                 </CardContent>
             </Card>
 
-            {/* Liste des modules */}
-            <Card>
-                <CardContent>
-                    <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                        Modules disponibles
-                    </Typography>
-
-                    <List>
-                        {AVAILABLE_MODULES.map((module, index) => (
-                            <React.Fragment key={module.id}>
-                                {index > 0 && <Divider />}
-                                <ListItem>
-                                    <ListItemIcon sx={{ color: 'primary.main', fontSize: 40 }}>
-                                        {module.icon}
+            {/* Features list */}
+            {currentProfile && currentProfile.features && (
+                <Card>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                            Fonctionnalités incluses
+                        </Typography>
+                        <List>
+                            {currentProfile.features.map((feature, index) => (
+                                <ListItem key={index}>
+                                    <ListItemIcon>
+                                        <CheckCircle color="success" />
                                     </ListItemIcon>
-                                    <ListItemText
-                                        primary={
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="subtitle1" fontWeight={600}>
-                                                    {module.name}
-                                                </Typography>
-                                                {module.isCore && (
-                                                    <Chip label="Obligatoire" size="small" color="primary" />
-                                                )}
-                                                {enabledModules.includes(module.id) && (
-                                                    <Chip label="Activé" size="small" color="success" variant="outlined" />
-                                                )}
-                                            </Box>
-                                        }
-                                        secondary={module.description}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Switch
-                                            edge="end"
-                                            checked={enabledModules.includes(module.id)}
-                                            onChange={() => handleModuleToggle(module.id)}
-                                            disabled={module.isCore && enabledModules.includes(module.id)}
-                                        />
-                                    </ListItemSecondaryAction>
+                                    <ListItemText primary={feature} />
                                 </ListItem>
-                            </React.Fragment>
-                        ))}
-                    </List>
+                            ))}
+                        </List>
+                    </CardContent>
+                </Card>
+            )}
 
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                        <Typography variant="body2">
-                            💡 Les modules désactivés n'apparaîtront pas dans la navigation.
-                            Vous pourrez les réactiver à tout moment.
-                        </Typography>
-                    </Alert>
-                </CardContent>
-            </Card>
-
-            {/* Dialog de confirmation de réinitialisation */}
-            <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)} maxWidth="sm" fullWidth>
+            {/* Upgrade Dialog */}
+            <Dialog
+                open={upgradeDialogOpen}
+                onClose={() => !saving && setUpgradeDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
                 <DialogTitle>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Warning color="warning" />
-                        <Typography variant="h6">
-                            Réinitialiser aux profils prédéfinis
-                        </Typography>
-                    </Box>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        Changer de profil d'abonnement
+                    </Typography>
                 </DialogTitle>
                 <DialogContent>
-                    <Typography variant="body1" gutterBottom sx={{ mb: 2 }}>
-                        Choisissez un profil pour réinitialiser vos modules:
-                    </Typography>
-
-                    <Grid container spacing={2}>
-                        {Object.entries(MODULE_PROFILES).map(([key, profile]) => (
-                            <Grid item xs={12} key={key}>
-                                <Card
-                                    variant="outlined"
-                                    sx={{
-                                        cursor: 'pointer',
-                                        border: selectedProfile === key ? 2 : 1,
-                                        borderColor: selectedProfile === key ? 'primary.main' : 'divider',
-                                        '&:hover': { borderColor: 'primary.main' },
-                                    }}
-                                    onClick={() => setSelectedProfile(key)}
-                                >
-                                    <CardContent>
-                                        <Typography variant="subtitle1" fontWeight={600}>
-                                            {profile.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {profile.modules.length} modules: {profile.modules.join(', ')}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-
-                    <Alert severity="warning" sx={{ mt: 2 }}>
-                        Cette action remplacera votre configuration actuelle.
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                        Sélectionnez le profil qui correspond le mieux à vos besoins. Les modules seront automatiquement mis à jour.
                     </Alert>
+
+                    <RadioGroup value={selectedProfile} onChange={(e) => setSelectedProfile(e.target.value)}>
+                        {profileTypes.map((profile) => (
+                            <Card
+                                key={profile.type}
+                                variant="outlined"
+                                sx={{
+                                    mb: 2,
+                                    border: selectedProfile === profile.type ? 2 : 1,
+                                    borderColor: selectedProfile === profile.type ? 'primary.main' : 'divider',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': {
+                                        borderColor: 'primary.main',
+                                        boxShadow: 1,
+                                    },
+                                }}
+                                onClick={() => setSelectedProfile(profile.type)}
+                            >
+                                <CardContent>
+                                    <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
+                                        <FormControlLabel
+                                            value={profile.type}
+                                            control={<Radio />}
+                                            label=""
+                                            sx={{ m: 0 }}
+                                        />
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                {profile.name}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                                {profile.description}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                                                Modules inclus ({profile.modules.length}):
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                {profile.modules.map((moduleCode) => {
+                                                    const metadata = moduleMetadata.find(m => m.code === moduleCode);
+                                                    return (
+                                                        <Chip
+                                                            key={moduleCode}
+                                                            label={metadata?.name || moduleCode}
+                                                            size="small"
+                                                            variant={selectedProfile === profile.type ? 'filled' : 'outlined'}
+                                                            color={selectedProfile === profile.type ? 'primary' : 'default'}
+                                                        />
+                                                    );
+                                                })}
+                                            </Box>
+
+                                            {profile.features && profile.features.length > 0 && (
+                                                <>
+                                                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+                                                        Fonctionnalités:
+                                                    </Typography>
+                                                    <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                                                        {profile.features.map((feature, idx) => (
+                                                            <Typography key={idx} variant="caption" component="li" color="text.secondary">
+                                                                {feature}
+                                                            </Typography>
+                                                        ))}
+                                                    </Box>
+                                                </>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </RadioGroup>
+
+                    {selectedProfile && selectedProfile !== organizationSettings?.subscription_type && (
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                            Cette action modifiera les modules disponibles pour tous les utilisateurs de l'organisation.
+                            La page se rechargera automatiquement après la mise à jour.
+                        </Alert>
+                    )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setResetDialogOpen(false)}>
+                    <Button onClick={() => setUpgradeDialogOpen(false)} disabled={saving}>
                         Annuler
                     </Button>
                     <Button
-                        onClick={() => selectedProfile && handleResetToProfile(selectedProfile)}
+                        onClick={handleChangeSubscription}
                         variant="contained"
-                        disabled={!selectedProfile}
+                        disabled={!selectedProfile || selectedProfile === organizationSettings?.subscription_type || saving}
+                        startIcon={saving ? <CircularProgress size={20} /> : <Upgrade />}
                     >
-                        Confirmer
+                        {saving ? 'Mise à jour...' : 'Confirmer'}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -456,4 +409,3 @@ function ModuleSettings() {
 }
 
 export default ModuleSettings;
-

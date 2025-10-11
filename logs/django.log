@@ -2957,3 +2957,858 @@ django.db.utils.OperationalError: no such column: invoicing_warehouse.country
 "GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
 "GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
 "GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 946
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 946
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 946
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 946
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+D:\project\BFMa\ProcureGenius\apps\accounts\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\accounts\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\accounts\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\accounts\api_views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\accounts\api_views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\accounts\api_views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\urls.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"PUT /api/v1/accounts/preferences/ HTTP/1.1" 200 377
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 857
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 857
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 857
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 857
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/preferences/ HTTP/1.1" 200 355
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 291
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 291
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1078
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 216
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 146
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\sqlite3\base.py", line 329, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: invoicing_warehouse.country
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 40, in list
+    page = self.paginate_queryset(queryset)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\generics.py", line 171, in paginate_queryset
+    return self.paginator.paginate_queryset(queryset, self.request, view=self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\pagination.py", line 216, in paginate_queryset
+    return list(self.page)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\paginator.py", line 191, in __len__
+    return len(self.object_list)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 382, in __len__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\sqlite3\base.py", line 329, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such column: invoicing_warehouse.country
+"GET /api/v1/warehouses/ HTTP/1.1" 500 178095
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\sqlite3\base.py", line 329, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: invoicing_warehouse.country
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 40, in list
+    page = self.paginate_queryset(queryset)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\generics.py", line 171, in paginate_queryset
+    return self.paginator.paginate_queryset(queryset, self.request, view=self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\pagination.py", line 216, in paginate_queryset
+    return list(self.page)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\paginator.py", line 191, in __len__
+    return len(self.object_list)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 382, in __len__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\sqlite3\base.py", line 329, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such column: invoicing_warehouse.country
+"GET /api/v1/warehouses/ HTTP/1.1" 500 178095
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 216
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 216
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"OPTIONS /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 0
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 52
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 52
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 52
+"POST /api/v1/suppliers/ HTTP/1.1" 201 495
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\api_urls.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1127
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 52
+"GET /api/v1/contracts/?page=1&search=&status=&contract_type= HTTP/1.1" 200 52
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1103
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 266
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 146
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 554
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/clients/ HTTP/1.1" 200 605
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 567
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 981
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 199
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 194
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 875
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 875
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 875
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1061
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 245
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 245
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 547
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+D:\project\BFMa\ProcureGenius\apps\core\modules.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143

@@ -14,8 +14,10 @@ class Organization(models.Model):
         max_length=50,
         choices=[
             ('free', _('Gratuit')),
-            ('basic', _('Basique')),
+            ('billing', _('Facturation')),
+            ('procurement', _('Achats')),
             ('professional', _('Professionnel')),
+            ('strategic', _('Stratégique')),
             ('enterprise', _('Entreprise')),
         ],
         default='free',
@@ -36,6 +38,45 @@ class Organization(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def has_module(self, module_code):
+        """Check if organization has access to a specific module"""
+        from apps.core.modules import Modules
+        
+        # Dashboard is always enabled
+        if module_code == Modules.DASHBOARD:
+            return True
+        
+        enabled = self.enabled_modules or []
+        return module_code in enabled
+    
+    def get_available_modules(self):
+        """Get list of modules available to this organization"""
+        from apps.core.modules import Modules, get_modules_for_profile
+        
+        # If custom modules are set, use them
+        if self.enabled_modules:
+            return self.enabled_modules
+        
+        # Otherwise, use profile default
+        return get_modules_for_profile(self.subscription_type)
+    
+    def update_modules_from_profile(self):
+        """Update enabled_modules based on subscription_type"""
+        from apps.core.modules import get_modules_for_profile
+        
+        self.enabled_modules = get_modules_for_profile(self.subscription_type)
+        self.save(update_fields=['enabled_modules', 'updated_at'])
+    
+    def save(self, *args, **kwargs):
+        """Override save to auto-populate modules if not set"""
+        from apps.core.modules import get_modules_for_profile
+        
+        # Auto-populate modules if empty
+        if not self.enabled_modules:
+            self.enabled_modules = get_modules_for_profile(self.subscription_type)
+        
+        super().save(*args, **kwargs)
 
 
 class CustomUser(AbstractUser):
@@ -189,7 +230,7 @@ def create_user_preferences_and_permissions(sender, instance, created, **kwargs)
     """Créer automatiquement les préférences et permissions lors de la création d'un utilisateur"""
     if created:
         # Créer les préférences avec modules par défaut selon le rôle
-        default_modules = _get_default_modules_for_role(instance.role)
+        default_modules = _get_default_modules_for_role(instance.role, instance.organization)
         UserPreferences.objects.get_or_create(
             user=instance,
             defaults={'enabled_modules': default_modules}
@@ -206,16 +247,44 @@ def create_user_preferences_and_permissions(sender, instance, created, **kwargs)
         )
 
 
-def _get_default_modules_for_role(role):
+def _get_default_modules_for_role(role, organization=None):
     """Retourne les modules par défaut selon le rôle"""
+    from apps.core.modules import Modules
+    
+    # If organization is provided, limit to org's modules
+    if organization:
+        org_modules = organization.get_available_modules()
+    else:
+        org_modules = None
+    
     role_modules = {
-        'admin': ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-        'manager': ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-        'buyer': ['dashboard', 'suppliers', 'purchase-orders', 'products'],
-        'accountant': ['dashboard', 'invoices', 'clients'],
-        'viewer': ['dashboard'],
+        'admin': [
+            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 
+            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS, 
+            Modules.E_SOURCING, Modules.CONTRACTS, Modules.ANALYTICS
+        ],
+        'manager': [
+            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 
+            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS, 
+            Modules.E_SOURCING, Modules.CONTRACTS
+        ],
+        'buyer': [
+            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 
+            Modules.PRODUCTS
+        ],
+        'accountant': [
+            Modules.DASHBOARD, Modules.INVOICES, Modules.CLIENTS, Modules.PRODUCTS
+        ],
+        'viewer': [Modules.DASHBOARD],
     }
-    return role_modules.get(role, ['dashboard'])
+    
+    modules = role_modules.get(role, [Modules.DASHBOARD])
+    
+    # Intersect with org modules if provided
+    if org_modules:
+        modules = [m for m in modules if m in org_modules]
+    
+    return modules
 
 
 def _get_default_permissions_for_role(role):

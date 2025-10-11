@@ -488,3 +488,151 @@ class QuickActionsView(APIView):
                 'category': request.GET.get('category'),
                 'error': 'Failed to load quick actions'
             }, status=status.HTTP_200_OK)  # Return 200 with empty data instead of 503
+
+
+class VoiceTranscriptionView(APIView):
+    """Transcription de messages vocaux pour l'assistant IA"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        """Transcrire un fichier audio en texte"""
+        if 'audio' not in request.FILES:
+            return Response(
+                {'error': 'No audio file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        audio_file = request.FILES['audio']
+
+        try:
+            # Vérifier le type de fichier
+            allowed_types = ['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg']
+            if audio_file.content_type not in allowed_types:
+                return Response(
+                    {'error': f'Invalid audio type. Allowed types: {", ".join(allowed_types)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Vérifier la taille du fichier (max 10MB)
+            if audio_file.size > 10 * 1024 * 1024:
+                return Response(
+                    {'error': 'Audio file too large. Maximum size: 10MB'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Utiliser l'API Mistral pour la transcription
+            # Note: Mistral AI supporte la transcription audio via leur API
+            from .services import MistralService
+            mistral_service = MistralService()
+
+            # Lire le contenu du fichier
+            audio_content = audio_file.read()
+
+            # Appeler l'API de transcription
+            # Pour l'instant, utilisons une méthode de fallback avec whisper ou Google Speech
+            transcription_result = self._transcribe_audio(audio_content, audio_file.content_type)
+
+            if transcription_result['success']:
+                return Response({
+                    'success': True,
+                    'text': transcription_result['text'],
+                    'language': transcription_result.get('language', 'fr'),
+                    'duration': transcription_result.get('duration')
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': transcription_result.get('error', 'Transcription failed')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        except Exception as e:
+            logger.error(f"Voice transcription error: {e}")
+            return Response(
+                {'error': 'An error occurred during transcription'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def _transcribe_audio(self, audio_content, content_type):
+        """
+        Transcrire l'audio en utilisant Google Speech-to-Text
+        """
+        try:
+            from google.cloud import speech
+            from django.conf import settings
+            import base64
+
+            # Vérifier que les credentials Google Cloud sont configurés
+            if not hasattr(settings, 'GOOGLE_APPLICATION_CREDENTIALS'):
+                return {
+                    'success': False,
+                    'error': 'Google Cloud credentials not configured. Please set GOOGLE_APPLICATION_CREDENTIALS in settings.'
+                }
+
+            # Initialiser le client Google Speech-to-Text
+            client = speech.SpeechClient()
+
+            # Mapper les types MIME vers les encodings Google Speech
+            encoding_map = {
+                'audio/webm': speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+                'audio/wav': speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                'audio/mp3': speech.RecognitionConfig.AudioEncoding.MP3,
+                'audio/mpeg': speech.RecognitionConfig.AudioEncoding.MP3,
+                'audio/ogg': speech.RecognitionConfig.AudioEncoding.OGG_OPUS,
+            }
+
+            encoding = encoding_map.get(content_type, speech.RecognitionConfig.AudioEncoding.WEBM_OPUS)
+
+            # Configuration de la reconnaissance
+            config = speech.RecognitionConfig(
+                encoding=encoding,
+                sample_rate_hertz=48000,  # Taux d'échantillonnage standard pour WebM
+                language_code="fr-FR",  # Français
+                enable_automatic_punctuation=True,  # Ponctuation automatique
+                model="default",  # Modèle par défaut (ou "latest_long" pour audio long)
+                use_enhanced=True,  # Utiliser le modèle amélioré si disponible
+            )
+
+            # Préparer l'audio
+            audio = speech.RecognitionAudio(content=audio_content)
+
+            # Effectuer la transcription
+            response = client.recognize(config=config, audio=audio)
+
+            # Extraire le texte transcrit
+            if not response.results:
+                return {
+                    'success': False,
+                    'error': 'No speech detected in the audio file'
+                }
+
+            # Combiner tous les résultats
+            transcription_text = ' '.join([
+                result.alternatives[0].transcript
+                for result in response.results
+            ])
+
+            # Obtenir la confiance moyenne
+            confidence = sum([
+                result.alternatives[0].confidence
+                for result in response.results
+            ]) / len(response.results) if response.results else 0
+
+            return {
+                'success': True,
+                'text': transcription_text,
+                'language': 'fr-FR',
+                'confidence': confidence
+            }
+
+        except ImportError:
+            return {
+                'success': False,
+                'error': 'Google Cloud Speech library not installed. Run: pip install google-cloud-speech'
+            }
+        except Exception as e:
+            logger.error(f"Google Speech-to-Text error: {e}")
+            return {
+                'success': False,
+                'error': f'Transcription error: {str(e)}'
+            }

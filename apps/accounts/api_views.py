@@ -7,6 +7,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
 from .models import CustomUser, UserPreferences, UserPermissions, Organization
+from apps.core.modules import (
+    get_user_accessible_modules, 
+    MODULE_METADATA, 
+    PROFILE_METADATA,
+    ProfileTypes,
+    get_modules_for_profile
+)
 
 
 @api_view(['GET'])
@@ -23,9 +30,14 @@ def api_profile(request):
     # Organisation modules (si l'utilisateur appartient à une organisation)
     organization_modules = []
     organization_name = None
+    subscription_type = None
     if user.organization:
-        organization_modules = user.organization.enabled_modules
+        organization_modules = user.organization.get_available_modules()
         organization_name = user.organization.name
+        subscription_type = user.organization.subscription_type
+    
+    # Get user's actual accessible modules (intersection of org and user permissions)
+    accessible_modules = get_user_accessible_modules(user)
     
     return Response({
         'id': str(user.id),
@@ -39,8 +51,10 @@ def api_profile(request):
         'organization': {
             'id': str(user.organization.id) if user.organization else None,
             'name': organization_name,
+            'subscription_type': subscription_type,
             'enabled_modules': organization_modules
         },
+        'accessible_modules': accessible_modules,  # Actual modules user can access
         'preferences': {
             'enabled_modules': preferences.enabled_modules,
             'onboarding_completed': preferences.onboarding_completed,
@@ -264,6 +278,104 @@ def api_user_permissions(request, user_id):
             return Response({
                 'success': True,
                 'message': 'Permissions mises à jour'
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_user_modules(request):
+    """Get user's accessible modules with metadata"""
+    user = request.user
+    accessible_modules = get_user_accessible_modules(user)
+    
+    # Add metadata for each module
+    modules_with_metadata = []
+    for module_code in accessible_modules:
+        metadata = MODULE_METADATA.get(module_code, {})
+        modules_with_metadata.append({
+            'code': module_code,
+            'name': str(metadata.get('name', module_code)),
+            'description': str(metadata.get('description', '')),
+            'icon': metadata.get('icon', 'apps'),
+            'always_enabled': metadata.get('always_enabled', False),
+        })
+    
+    return Response({
+        'modules': modules_with_metadata,
+        'module_codes': accessible_modules,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_profile_types(request):
+    """Get available profile types with their modules"""
+    profiles = []
+    for profile_type, metadata in PROFILE_METADATA.items():
+        modules = get_modules_for_profile(profile_type)
+        profiles.append({
+            'type': profile_type,
+            'name': str(metadata.get('name', profile_type)),
+            'description': str(metadata.get('description', '')),
+            'features': [str(f) for f in metadata.get('features', [])],
+            'modules': modules,
+        })
+    
+    return Response({'profiles': profiles})
+
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
+def api_organization_settings(request):
+    """Manage organization module settings (admin only)"""
+    user = request.user
+    
+    # Check if user has permission to manage settings
+    permissions, _ = UserPermissions.objects.get_or_create(user=user)
+    if not permissions.can_manage_settings:
+        return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
+    
+    if not user.organization:
+        return Response({'error': 'Aucune organisation associée'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    org = user.organization
+    
+    if request.method == 'GET':
+        return Response({
+            'subscription_type': org.subscription_type,
+            'enabled_modules': org.get_available_modules(),
+            'available_profile_types': list(PROFILE_METADATA.keys()),
+        })
+    
+    elif request.method == 'PUT':
+        try:
+            data = request.data
+            
+            # Update subscription type if provided
+            if 'subscription_type' in data:
+                new_type = data['subscription_type']
+                if new_type in PROFILE_METADATA:
+                    org.subscription_type = new_type
+                    # Auto-update modules based on new profile
+                    org.update_modules_from_profile()
+                else:
+                    return Response(
+                        {'error': 'Type d\'abonnement invalide'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Allow custom module selection if provided
+            elif 'enabled_modules' in data:
+                org.enabled_modules = data['enabled_modules']
+                org.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Paramètres mis à jour',
+                'subscription_type': org.subscription_type,
+                'enabled_modules': org.get_available_modules(),
             })
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
