@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement
+from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
 from apps.accounts.models import Client
 from django.contrib.auth import get_user_model
 
@@ -196,6 +196,45 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
+
+
+# Serializers pour ProductCategory et Warehouse
+class ProductCategorySerializer(serializers.ModelSerializer):
+    """Serializer pour les catégories de produits"""
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    children_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductCategory
+        fields = [
+            'id', 'organization', 'organization_name', 'name', 'slug',
+            'description', 'parent', 'parent_name', 'children_count',
+            'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_children_count(self, obj):
+        return obj.children.count()
+
+
+class WarehouseSerializer(serializers.ModelSerializer):
+    """Serializer pour les entrepôts"""
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    products_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Warehouse
+        fields = [
+            'id', 'organization', 'organization_name', 'name', 'code',
+            'address', 'city', 'province', 'postal_code', 'country',
+            'is_active', 'products_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_products_count(self, obj):
+        from apps.invoicing.models import ProductStock
+        return ProductStock.objects.filter(warehouse=obj).count()
 
 
 # Serializers pour les statistiques et tableaux de bord

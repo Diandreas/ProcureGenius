@@ -40,7 +40,7 @@ import {
   Business,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { purchaseOrdersAPI, suppliersAPI, productsAPI } from '../../services/api';
+import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields, getProductFields } from '../../config/quickCreateFields';
@@ -57,7 +57,10 @@ function PurchaseOrderForm() {
     title: '',
     description: '',
     supplier: null,
+    delivery_warehouse: null,
     required_date: '',
+    expected_delivery_date: '',
+    delivery_address: '',
     status: 'draft',
   });
 
@@ -75,6 +78,7 @@ function PurchaseOrderForm() {
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(-1);
 
@@ -91,6 +95,7 @@ function PurchaseOrderForm() {
   useEffect(() => {
     fetchSuppliers();
     fetchProducts();
+    fetchWarehouses();
     if (isEdit) {
       fetchPurchaseOrder();
     } else {
@@ -116,6 +121,16 @@ function PurchaseOrderForm() {
     }
   };
 
+  const fetchWarehouses = async () => {
+    try {
+      const response = await warehousesAPI.list();
+      setWarehouses(response.data.results || response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des entrepôts:', error);
+      setWarehouses([]);
+    }
+  };
+
   const fetchPurchaseOrder = async () => {
     setLoading(true);
     try {
@@ -126,7 +141,10 @@ function PurchaseOrderForm() {
         title: po.title,
         description: po.description || '',
         supplier: po.supplier,
+        delivery_warehouse: po.delivery_warehouse || null,
         required_date: po.required_date ? po.required_date.split('T')[0] : '',
+        expected_delivery_date: po.expected_delivery_date ? po.expected_delivery_date.split('T')[0] : '',
+        delivery_address: po.delivery_address || '',
         status: po.status,
       });
       setItems(po.items || []);
@@ -244,6 +262,7 @@ function PurchaseOrderForm() {
       const payload = {
         ...formData,
         supplier: formData.supplier.id,
+        delivery_warehouse: formData.delivery_warehouse ? formData.delivery_warehouse.id : null,
         items,
         subtotal,
         tax_amount: taxAmount,
@@ -405,6 +424,38 @@ function PurchaseOrderForm() {
                     value={formData.required_date}
                     onChange={(e) => handleInputChange('required_date', e.target.value)}
                     InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Date de livraison prévue"
+                    type="date"
+                    value={formData.expected_delivery_date}
+                    onChange={(e) => handleInputChange('expected_delivery_date', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    options={warehouses}
+                    getOptionLabel={(option) => option.name || ''}
+                    value={formData.delivery_warehouse}
+                    onChange={(event, newValue) => handleInputChange('delivery_warehouse', newValue)}
+                    fullWidth
+                    renderInput={(params) => (
+                      <TextField {...params} label="Entrepôt de livraison" />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Adresse de livraison"
+                    value={formData.delivery_address}
+                    onChange={(e) => handleInputChange('delivery_address', e.target.value)}
+                    multiline
+                    rows={2}
                   />
                 </Grid>
               </Grid>

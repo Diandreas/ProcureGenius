@@ -100,6 +100,24 @@ export const productsAPI = {
   quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 
+// Product Categories API
+export const productCategoriesAPI = {
+  list: (params) => api.get('/product-categories/', { params }),
+  get: (id) => api.get(`/product-categories/${id}/`),
+  create: (data) => api.post('/product-categories/', data),
+  update: (id, data) => api.patch(`/product-categories/${id}/`, data),
+  delete: (id) => api.delete(`/product-categories/${id}/`),
+};
+
+// Warehouses API
+export const warehousesAPI = {
+  list: (params) => api.get('/warehouses/', { params }),
+  get: (id) => api.get(`/warehouses/${id}/`),
+  create: (data) => api.post('/warehouses/', data),
+  update: (id, data) => api.patch(`/warehouses/${id}/`, data),
+  delete: (id) => api.delete(`/warehouses/${id}/`),
+};
+
 // Clients API
 export const clientsAPI = {
   list: (params) => api.get('/clients/', { params }),

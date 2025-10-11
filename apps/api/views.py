@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from apps.suppliers.models import Supplier, SupplierCategory
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product
+from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
 from apps.accounts.models import Client
 
 from .serializers import (
@@ -17,6 +17,7 @@ from .serializers import (
     PurchaseOrderSerializer, PurchaseOrderItemSerializer,
     InvoiceSerializer, InvoiceItemSerializer,
     ProductSerializer, ClientSerializer,
+    ProductCategorySerializer, WarehouseSerializer,
     DashboardStatsSerializer
 )
 
@@ -664,3 +665,43 @@ class AIQuickActionsView(APIView):
             }
         ]
         return Response(actions)
+
+
+class ProductCategoryViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les catégories de produits"""
+    queryset = ProductCategory.objects.all()
+    serializer_class = ProductCategorySerializer
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    filterset_fields = ['is_active', 'parent']
+    search_fields = ['name', 'slug', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filtre par organization de l'utilisateur
+        if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
+            queryset = queryset.filter(organization=self.request.user.organization)
+
+        return queryset
+
+
+class WarehouseViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les entrepôts"""
+    queryset = Warehouse.objects.all()
+    serializer_class = WarehouseSerializer
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    filterset_fields = ['is_active', 'city', 'province']
+    search_fields = ['name', 'code', 'address', 'city']
+    ordering_fields = ['name', 'code', 'created_at']
+    ordering = ['name']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filtre par organization de l'utilisateur
+        if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
+            queryset = queryset.filter(organization=self.request.user.organization)
+
+        return queryset

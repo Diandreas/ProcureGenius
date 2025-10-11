@@ -11,6 +11,74 @@ import base64
 User = get_user_model()
 
 
+class ProductCategory(models.Model):
+    """Catégorie de produits"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='product_categories',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
+    name = models.CharField(max_length=100, verbose_name=_("Nom"))
+    slug = models.SlugField(max_length=100, unique=True, verbose_name=_("Slug"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+        verbose_name=_("Catégorie parente")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Catégorie de produit")
+        verbose_name_plural = _("Catégories de produits")
+        ordering = ['name']
+        unique_together = [['organization', 'slug']]
+
+    def __str__(self):
+        return self.name
+
+
+class Warehouse(models.Model):
+    """Entrepôt pour la gestion multi-warehouse"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='warehouses',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
+    name = models.CharField(max_length=200, verbose_name=_("Nom"))
+    code = models.CharField(max_length=50, unique=True, verbose_name=_("Code"))
+    address = models.TextField(blank=True, verbose_name=_("Adresse"))
+    city = models.CharField(max_length=100, blank=True, verbose_name=_("Ville"))
+    province = models.CharField(max_length=100, blank=True, verbose_name=_("Province"))
+    postal_code = models.CharField(max_length=20, blank=True, verbose_name=_("Code postal"))
+    country = models.CharField(max_length=100, default='Canada', verbose_name=_("Pays"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Entrepôt")
+        verbose_name_plural = _("Entrepôts")
+        ordering = ['name']
+        unique_together = [['organization', 'code']]
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
 class Product(models.Model):
     """Produit ou service facturable"""
     PRODUCT_TYPES = [
@@ -26,6 +94,14 @@ class Product(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='products',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
     name = models.CharField(max_length=200, verbose_name="Nom")
     description = models.TextField(blank=True, verbose_name="Description")
     reference = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Référence")
@@ -33,6 +109,14 @@ class Product(models.Model):
 
     product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='physical', verbose_name="Type")
     source_type = models.CharField(max_length=20, choices=SOURCE_TYPES, default='purchased', verbose_name="Source")
+    category = models.ForeignKey(
+        ProductCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        verbose_name=_("Catégorie")
+    )
     supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='products', verbose_name="Fournisseur")
 
     # Prix
