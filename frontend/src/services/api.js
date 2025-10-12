@@ -126,6 +126,7 @@ export const clientsAPI = {
   create: (data) => api.post('/clients/', data),
   update: (id, data) => api.patch(`/clients/${id}/`, data),
   delete: (id) => api.delete(`/clients/${id}/`),
+  getStatistics: (id) => api.get(`/clients/${id}/statistics/`),
   quickCreate: (data) => api.post('/quick-create/client/', data),
 };
 

@@ -120,12 +120,21 @@ User = CustomUser
 class Client(models.Model):
     """Modèle pour les clients"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='clients',
+        verbose_name=_("Organisation")
+    )
     name = models.CharField(max_length=200, verbose_name=_("Nom"))
     email = models.EmailField(blank=True, verbose_name=_("Email"))
     phone = models.CharField(max_length=20, blank=True, verbose_name=_("Téléphone"))
     address = models.TextField(blank=True, verbose_name=_("Adresse"))
     contact_person = models.CharField(max_length=100, blank=True, verbose_name=_("Personne contact"))
     tax_id = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro de taxe"))
+    payment_terms = models.CharField(max_length=100, default="Net 30", blank=True, verbose_name=_("Conditions de paiement"))
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -42,6 +42,7 @@ import {
   AttachMoney,
   Business,
   CreditCard,
+  Receipt,
 } from '@mui/icons-material';
 import { clientsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -162,26 +163,34 @@ function Clients() {
             </Box>
           </Box>
 
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.25}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Email fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
               <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
                 {client.email || 'N/A'}
               </Typography>
             </Box>
-            {client.ai_payment_risk_score > 0 ? (
+            {client.total_invoices > 0 && (
               <Chip
-                label={riskBadge.label}
-                color={riskBadge.color}
+                icon={<Receipt sx={{ fontSize: 14 }} />}
+                label={client.total_invoices}
                 size="small"
+                color="info"
                 sx={{ fontSize: '0.65rem', height: 18 }}
               />
-            ) : (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                En attente
-              </Typography>
             )}
           </Box>
+
+          {client.total_sales_amount > 0 && (
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                Total ventes:
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'success.main' }}>
+                {formatCurrency(client.total_sales_amount)}
+              </Typography>
+            </Box>
+          )}
 
           <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
 
@@ -391,11 +400,10 @@ function Clients() {
                   <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Client</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Contact</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Conditions de paiement</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Limite de crédit</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Risque IA</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Conditions paiement</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Factures</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }} align="right">Total ventes</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Statut</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Date création</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -458,34 +466,26 @@ function Clients() {
                         <TableCell sx={{ py: 1.5 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <CreditCard fontSize="small" color="action" />
-                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{client.payment_terms}</Typography>
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              {client.payment_terms || 'Net 30'}
+                            </Typography>
                           </Box>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
-                          {client.credit_limit ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <AttachMoney fontSize="small" color="action" />
-                              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                                {formatCurrency(client.credit_limit)}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                              Non définie
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Receipt fontSize="small" color="info" />
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                              {client.total_invoices || 0}
                             </Typography>
-                          )}
+                          </Box>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          {client.ai_payment_risk_score > 0 ? (
-                            <Chip
-                              label={riskBadge.label}
-                              color={riskBadge.color}
-                              size="small"
-                              sx={{ fontSize: '0.7rem' }}
-                            />
-                          ) : (
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                              En attente
+                        <TableCell sx={{ py: 1.5 }} align="right">
+                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'success.main' }}>
+                            {formatCurrency(client.total_sales_amount || 0)}
+                          </Typography>
+                          {client.total_outstanding > 0 && (
+                            <Typography variant="caption" color="warning.main" display="block" sx={{ fontSize: '0.7rem' }}>
+                              {formatCurrency(client.total_outstanding)} en attente
                             </Typography>
                           )}
                         </TableCell>
@@ -496,11 +496,6 @@ function Clients() {
                             size="small"
                             sx={{ fontSize: '0.7rem' }}
                           />
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                            {formatDate(client.created_at)}
-                          </Typography>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>

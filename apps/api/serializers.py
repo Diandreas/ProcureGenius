@@ -158,14 +158,49 @@ class StockMovementSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     """Serializer pour les clients"""
+    # Statistiques
+    total_invoices = serializers.SerializerMethodField()
+    total_sales_amount = serializers.SerializerMethodField()
+    total_paid_amount = serializers.SerializerMethodField()
+    total_outstanding = serializers.SerializerMethodField()
+    last_invoice_date = serializers.SerializerMethodField()
+    
     class Meta:
         model = Client
         fields = [
             'id', 'name', 'email', 'phone', 'address',
-            'contact_person', 'is_active',
+            'contact_person', 'tax_id', 'payment_terms', 'is_active',
+            'total_invoices', 'total_sales_amount', 'total_paid_amount',
+            'total_outstanding', 'last_invoice_date',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at',
+            'total_invoices', 'total_sales_amount', 'total_paid_amount',
+            'total_outstanding', 'last_invoice_date'
+        ]
+    
+    def get_total_invoices(self, obj):
+        return obj.invoices.count()
+        
+    def get_total_sales_amount(self, obj):
+        from django.db.models import Sum
+        total = obj.invoices.aggregate(Sum('total_amount'))['total_amount__sum']
+        return float(total) if total else 0
+        
+    def get_total_paid_amount(self, obj):
+        from django.db.models import Sum
+        total = obj.invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum']
+        return float(total) if total else 0
+        
+    def get_total_outstanding(self, obj):
+        from django.db.models import Sum
+        total = obj.invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum']
+        return float(total) if total else 0
+        
+    def get_last_invoice_date(self, obj):
+        last_invoice = obj.invoices.order_by('-created_at').first()
+        return last_invoice.created_at if last_invoice else None
 
 
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):

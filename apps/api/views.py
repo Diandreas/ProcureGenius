@@ -462,6 +462,101 @@ class ClientViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'email', 'contact_person']
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
+    
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Statistiques complètes pour un client"""
+        client = self.get_object()
+        from django.db.models import Sum, Count, Avg
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        # Stats factures
+        invoices = client.invoices.all()
+        
+        invoice_stats = {
+            'draft': invoices.filter(status='draft').count(),
+            'sent': invoices.filter(status='sent').count(),
+            'paid': invoices.filter(status='paid').count(),
+            'overdue': invoices.filter(status='overdue').count(),
+            'cancelled': invoices.filter(status='cancelled').count(),
+        }
+        
+        # Montants
+        total_sales = invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_paid = invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_outstanding = invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
+        # Produits les plus achetés
+        from apps.invoicing.models import InvoiceItem
+        top_products = InvoiceItem.objects.filter(
+            invoice__client=client,
+            product__isnull=False
+        ).values(
+            'product__id',
+            'product__name',
+            'product__reference'
+        ).annotate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('total_price'),
+            purchase_count=Count('invoice', distinct=True)
+        ).order_by('-total_amount')[:10]
+        
+        # Factures récentes
+        recent_invoices = invoices.order_by('-created_at')[:10]
+        recent_invoices_data = [{
+            'id': str(inv.id),
+            'invoice_number': inv.invoice_number,
+            'title': inv.title,
+            'status': inv.status,
+            'total_amount': float(inv.total_amount),
+            'created_at': inv.created_at,
+            'due_date': inv.due_date,
+        } for inv in recent_invoices]
+        
+        # Tendance (30 derniers jours)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        sixty_days_ago = timezone.now() - timedelta(days=60)
+        
+        recent_sales = invoices.filter(created_at__gte=thirty_days_ago).aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        
+        previous_sales = invoices.filter(
+            created_at__gte=sixty_days_ago,
+            created_at__lt=thirty_days_ago
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        trend = ((recent_sales - previous_sales) / previous_sales * 100) if previous_sales > 0 else 0
+        
+        return Response({
+            'client_id': str(client.id),
+            'client_name': client.name,
+            
+            'invoice_summary': {
+                'total_invoices': invoices.count(),
+                'total_sales_amount': float(total_sales),
+                'total_paid_amount': float(total_paid),
+                'total_outstanding': float(total_outstanding),
+                'average_invoice_amount': float(total_sales / invoices.count()) if invoices.count() > 0 else 0,
+            },
+            
+            'invoice_status_breakdown': invoice_stats,
+            
+            'top_products': list(top_products),
+            'recent_invoices': recent_invoices_data,
+            
+            'sales_trend': {
+                'last_30_days': float(recent_sales),
+                'previous_30_days': float(previous_sales),
+                'trend_percent': round(trend, 2),
+            },
+            
+            'payment_info': {
+                'payment_terms': client.payment_terms,
+                'tax_id': client.tax_id,
+            },
+        })
 
 
 class PurchaseOrderViewSet(viewsets.ModelViewSet):

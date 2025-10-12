@@ -26,6 +26,8 @@ import {
     TableHead,
     TableRow,
     Paper,
+    Tabs,
+    Tab,
 } from '@mui/material';
 import {
     Edit,
@@ -47,10 +49,15 @@ import {
     Schedule,
     CreditCard,
     Visibility,
+    Inventory,
+    Info as InfoIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { clientsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import ClientStatisticsCard from '../../components/clients/ClientStatisticsCard';
+import ClientInvoicesTable from '../../components/clients/ClientInvoicesTable';
+import ClientProductsTable from '../../components/clients/ClientProductsTable';
 
 function ClientDetail() {
     const { id } = useParams();
@@ -62,6 +69,7 @@ function ClientDetail() {
     const [loading, setLoading] = useState(true);
     const [statsLoading, setStatsLoading] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
         fetchClient();
@@ -84,10 +92,11 @@ function ClientDetail() {
     const fetchStatistics = async () => {
         setStatsLoading(true);
         try {
-            // TODO: Implement client statistics endpoint
-            setStatistics(null);
+            const response = await clientsAPI.getStatistics(id);
+            setStatistics(response.data);
         } catch (error) {
             console.error('Erreur lors du chargement des statistiques:', error);
+            setStatistics(null);
         } finally {
             setStatsLoading(false);
         }
@@ -194,287 +203,334 @@ function ClientDetail() {
                 </Box>
             </Box>
 
-            <Grid container spacing={3}>
-                {/* Informations principales */}
-                <Grid item xs={12} md={8}>
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                                <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
-                                    {client.name.charAt(0).toUpperCase()}
-                                </Avatar>
-                                <Box sx={{ flexGrow: 1 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                                        <Typography variant="h5">
-                                            {client.name}
-                                        </Typography>
-                                        <Chip
-                                            icon={getStatusIcon(client.is_active)}
-                                            label={getStatusLabel(client.is_active)}
-                                            color={getStatusColor(client.is_active)}
-                                        />
-                                    </Box>
-                                    {client.legal_name && client.legal_name !== client.name && (
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            Nom légal: {client.legal_name}
-                                        </Typography>
-                                    )}
-                                    {client.business_number && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            N° d'entreprise: {client.business_number}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            </Box>
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="scrollable" scrollButtons="auto">
+                    <Tab icon={<InfoIcon />} label="Informations" iconPosition="start" />
+                    <Tab icon={<Receipt />} label="Factures" iconPosition="start" />
+                    <Tab icon={<Inventory />} label="Produits achetés" iconPosition="start" />
+                </Tabs>
+            </Box>
 
-                            <Divider sx={{ my: 2 }} />
+            {/* Tab Informations */}
+            {activeTab === 0 && (
+                <>
+                    {/* Statistiques */}
+                    <Box sx={{ mb: 3 }}>
+                        <ClientStatisticsCard statistics={statistics} loading={statsLoading} />
+                    </Box>
 
-                            <Grid container spacing={2}>
-                                {client.contact_person && (
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Person color="action" />
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Personne contact
-                                                </Typography>
-                                                <Typography>{client.contact_person}</Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                )}
-
-                                {client.email && (
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Email color="action" />
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Email
-                                                </Typography>
-                                                <Typography>
-                                                    <a href={`mailto:${client.email}`} style={{ color: 'inherit' }}>
-                                                        {client.email}
-                                                    </a>
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                )}
-
-                                {client.phone && (
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Phone color="action" />
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Téléphone
-                                                </Typography>
-                                                <Typography>
-                                                    <a href={`tel:${client.phone}`} style={{ color: 'inherit' }}>
-                                                        {client.phone}
-                                                    </a>
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                )}
-
-                                {client.billing_address && (
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                                            <LocationOn color="action" />
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Adresse de facturation
-                                                </Typography>
-                                                <Typography>{client.billing_address}</Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                )}
-                            </Grid>
-                        </CardContent>
-                    </Card>
-
-                    {/* Conditions commerciales */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <CreditCard color="primary" />
-                                Conditions commerciales
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'info.50', borderRadius: 1 }}>
-                                        <Typography variant="h6" color="info.main">
-                                            {client.payment_terms}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Conditions de paiement
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                {client.credit_limit && (
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
-                                            <Typography variant="h6" color="success.main">
-                                                {formatCurrency(client.credit_limit)}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Limite de crédit
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                )}
-                            </Grid>
-                        </CardContent>
-                    </Card>
-
-                    {/* Analyses IA */}
-                    {(client.ai_payment_risk_score > 0 ||
-                        (client.ai_payment_pattern && Object.keys(client.ai_payment_pattern).length > 0)) && (
-                            <Card>
+                    <Grid container spacing={3}>
+                        {/* Informations principales */}
+                        <Grid item xs={12} md={8}>
+                            <Card sx={{ mb: 3 }}>
                                 <CardContent>
-                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Assessment color="primary" />
-                                        Analyses IA
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                        <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
+                                            {client.name.charAt(0).toUpperCase()}
+                                        </Avatar>
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                                <Typography variant="h5">
+                                                    {client.name}
+                                                </Typography>
+                                                <Chip
+                                                    icon={getStatusIcon(client.is_active)}
+                                                    label={getStatusLabel(client.is_active)}
+                                                    color={getStatusColor(client.is_active)}
+                                                />
+                                            </Box>
+                                            {client.legal_name && client.legal_name !== client.name && (
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    Nom légal: {client.legal_name}
+                                                </Typography>
+                                            )}
+                                            {client.business_number && (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    N° d'entreprise: {client.business_number}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+
+                                    <Divider sx={{ my: 2 }} />
+
                                     <Grid container spacing={2}>
-                                        {client.ai_payment_risk_score > 0 && (
+                                        {client.contact_person && (
                                             <Grid item xs={12} sm={6}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                    <Chip
-                                                        label={riskBadge.label}
-                                                        color={riskBadge.color}
-                                                        size="large"
-                                                    />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Score: {(client.ai_payment_risk_score * 100).toFixed(1)}%
-                                                    </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Person color="action" />
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Personne contact
+                                                        </Typography>
+                                                        <Typography>{client.contact_person}</Typography>
+                                                    </Box>
                                                 </Box>
                                             </Grid>
                                         )}
-                                        {client.ai_payment_pattern && Object.keys(client.ai_payment_pattern).length > 0 && (
+
+                                        {client.email && (
                                             <Grid item xs={12} sm={6}>
-                                                <Typography variant="subtitle2" gutterBottom>
-                                                    Modèle de paiement
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {JSON.stringify(client.ai_payment_pattern)}
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Email color="action" />
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Email
+                                                        </Typography>
+                                                        <Typography>
+                                                            <a href={`mailto:${client.email}`} style={{ color: 'inherit' }}>
+                                                                {client.email}
+                                                            </a>
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Grid>
+                                        )}
+
+                                        {client.phone && (
+                                            <Grid item xs={12} sm={6}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Phone color="action" />
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Téléphone
+                                                        </Typography>
+                                                        <Typography>
+                                                            <a href={`tel:${client.phone}`} style={{ color: 'inherit' }}>
+                                                                {client.phone}
+                                                            </a>
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Grid>
+                                        )}
+
+                                        {client.billing_address && (
+                                            <Grid item xs={12} sm={6}>
+                                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                                    <LocationOn color="action" />
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Adresse de facturation
+                                                        </Typography>
+                                                        <Typography>{client.billing_address}</Typography>
+                                                    </Box>
+                                                </Box>
                                             </Grid>
                                         )}
                                     </Grid>
                                 </CardContent>
                             </Card>
-                        )}
-                </Grid>
 
-                {/* Sidebar */}
-                <Grid item xs={12} md={4}>
-                    {/* Statistiques rapides */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <TrendingUp color="primary" />
-                                Aperçu
-                            </Typography>
+                            {/* Conditions commerciales */}
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CreditCard color="primary" />
+                                        Conditions commerciales
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'info.50', borderRadius: 1 }}>
+                                                <Typography variant="h6" color="info.main">
+                                                    {client.payment_terms}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Conditions de paiement
+                                                </Typography>
+                                            </Box>
+                                        </Grid>
 
-                            <List dense>
-                                <ListItem>
-                                    <ListItemIcon>
-                                        <Receipt />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="Factures"
-                                        secondary="Voir toutes les factures"
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemIcon>
-                                        <AttachMoney />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="Chiffre d'affaires"
-                                        secondary="Historique des ventes"
-                                    />
-                                </ListItem>
-                            </List>
-                        </CardContent>
-                    </Card>
+                                        {client.credit_limit && (
+                                            <Grid item xs={12} sm={6}>
+                                                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                                                    <Typography variant="h6" color="success.main">
+                                                        {formatCurrency(client.credit_limit)}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Limite de crédit
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                        )}
+                                    </Grid>
+                                </CardContent>
+                            </Card>
 
-                    {/* Actions rapides */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Actions rapides
-                            </Typography>
-
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    startIcon={<Receipt />}
-                                    onClick={() => navigate(`/invoices/new?client=${id}`)}
-                                >
-                                    Créer une facture
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    startIcon={<Email />}
-                                    href={`mailto:${client.email}`}
-                                    disabled={!client.email}
-                                >
-                                    Envoyer un email
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    startIcon={<Phone />}
-                                    href={`tel:${client.phone}`}
-                                    disabled={!client.phone}
-                                >
-                                    Appeler
-                                </Button>
-                            </Box>
-                        </CardContent>
-                    </Card>
-
-                    {/* Dates */}
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Informations système
-                            </Typography>
-                            <List dense>
-                                <ListItem>
-                                    <ListItemIcon>
-                                        <Schedule />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="Date de création"
-                                        secondary={formatDate(client.created_at)}
-                                    />
-                                </ListItem>
-                                {client.updated_at && (
-                                    <ListItem>
-                                        <ListItemIcon>
-                                            <Schedule />
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary="Dernière modification"
-                                            secondary={formatDate(client.updated_at)}
-                                        />
-                                    </ListItem>
+                            {/* Analyses IA */}
+                            {(client.ai_payment_risk_score > 0 ||
+                                (client.ai_payment_pattern && Object.keys(client.ai_payment_pattern).length > 0)) && (
+                                    <Card>
+                                        <CardContent>
+                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Assessment color="primary" />
+                                                Analyses IA
+                                            </Typography>
+                                            <Grid container spacing={2}>
+                                                {client.ai_payment_risk_score > 0 && (
+                                                    <Grid item xs={12} sm={6}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                            <Chip
+                                                                label={riskBadge.label}
+                                                                color={riskBadge.color}
+                                                                size="large"
+                                                            />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Score: {(client.ai_payment_risk_score * 100).toFixed(1)}%
+                                                            </Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                )}
+                                                {client.ai_payment_pattern && Object.keys(client.ai_payment_pattern).length > 0 && (
+                                                    <Grid item xs={12} sm={6}>
+                                                        <Typography variant="subtitle2" gutterBottom>
+                                                            Modèle de paiement
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {JSON.stringify(client.ai_payment_pattern)}
+                                                        </Typography>
+                                                    </Grid>
+                                                )}
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
                                 )}
-                            </List>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+                        </Grid>
+
+                        {/* Sidebar */}
+                        <Grid item xs={12} md={4}>
+                            {/* Statistiques rapides */}
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <TrendingUp color="primary" />
+                                        Aperçu
+                                    </Typography>
+
+                                    <List dense>
+                                        <ListItem>
+                                            <ListItemIcon>
+                                                <Receipt />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary="Factures"
+                                                secondary="Voir toutes les factures"
+                                            />
+                                        </ListItem>
+                                        <ListItem>
+                                            <ListItemIcon>
+                                                <AttachMoney />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary="Chiffre d'affaires"
+                                                secondary="Historique des ventes"
+                                            />
+                                        </ListItem>
+                                    </List>
+                                </CardContent>
+                            </Card>
+
+                            {/* Actions rapides */}
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        Actions rapides
+                                    </Typography>
+
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            startIcon={<Receipt />}
+                                            onClick={() => navigate(`/invoices/new?client=${id}`)}
+                                        >
+                                            Créer une facture
+                                        </Button>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            startIcon={<Email />}
+                                            href={`mailto:${client.email}`}
+                                            disabled={!client.email}
+                                        >
+                                            Envoyer un email
+                                        </Button>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            startIcon={<Phone />}
+                                            href={`tel:${client.phone}`}
+                                            disabled={!client.phone}
+                                        >
+                                            Appeler
+                                        </Button>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+
+                            {/* Dates */}
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        Informations système
+                                    </Typography>
+                                    <List dense>
+                                        <ListItem>
+                                            <ListItemIcon>
+                                                <Schedule />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary="Date de création"
+                                                secondary={formatDate(client.created_at)}
+                                            />
+                                        </ListItem>
+                                        {client.updated_at && (
+                                            <ListItem>
+                                                <ListItemIcon>
+                                                    <Schedule />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary="Dernière modification"
+                                                    secondary={formatDate(client.updated_at)}
+                                                />
+                                            </ListItem>
+                                        )}
+                                    </List>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
+                </>
+            )}
+
+            {/* Tab Factures */}
+            {activeTab === 1 && (
+                <Box>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Receipt color="primary" />
+                        Factures du client
+                    </Typography>
+                    <ClientInvoicesTable
+                        invoices={statistics?.recent_invoices}
+                        loading={statsLoading}
+                    />
+                </Box>
+            )}
+
+            {/* Tab Produits */}
+            {activeTab === 2 && (
+                <Box>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Inventory color="primary" />
+                        Produits les plus achetés
+                    </Typography>
+                    <ClientProductsTable
+                        products={statistics?.top_products}
+                        loading={statsLoading}
+                    />
+                </Box>
+            )}
         </Box>
     );
 }
