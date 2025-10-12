@@ -66,41 +66,30 @@ import { useSnackbar } from 'notistack';
 import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI } from '../../services/api';
 
 // Validation dynamique selon le type de produit
-const getValidationSchema = (productType) => {
+const getValidationSchema = (productType, hasWarehouses = true) => {
     const baseSchema = {
         name: Yup.string().required('Le nom est requis'),
-        sku: Yup.string().required('Le SKU est requis'),
+        reference: Yup.string(),
         description: Yup.string().required('La description est requise'),
-        unit_price: Yup.number().positive('Le prix doit être positif').required('Le prix est requis'),
+        price: Yup.number().positive('Le prix doit être positif').required('Le prix est requis'),
+        cost_price: Yup.number().min(0, 'Le coût ne peut pas être négatif'),
         category_id: Yup.string().nullable(),
+        supplier_id: Yup.string().nullable(),
     };
 
     // Ajout des validations spécifiques selon le type
     if (productType === 'physical') {
         return Yup.object({
             ...baseSchema,
-            supplier_id: Yup.string().required('Le fournisseur est requis'),
-            warehouse_id: Yup.string().required('L\'entrepôt est requis'),
+            // Warehouse requis seulement s'il y en a de disponibles
+            warehouse_id: hasWarehouses
+                ? Yup.string().required('L\'entrepôt est requis pour les produits physiques')
+                : Yup.string().nullable(),
             stock_quantity: Yup.number().min(0, 'Le stock ne peut pas être négatif').required('Le stock est requis'),
-            minimum_order_quantity: Yup.number().positive('Doit être positif').required('Requis'),
-            lead_time_days: Yup.number().positive('Doit être positif').required('Requis'),
-            bulk_price: Yup.number().positive('Le prix de gros doit être positif').nullable(),
-            bulk_quantity: Yup.number().positive('La quantité doit être positive').nullable(),
+            low_stock_threshold: Yup.number().min(0, 'Le seuil ne peut pas être négatif').required('Requis'),
         });
-    } else if (productType === 'digital') {
-        return Yup.object({
-            ...baseSchema,
-            supplier_id: Yup.string().required('L\'éditeur est requis'),
-            stock_quantity: Yup.number().min(0, 'Les licences ne peuvent pas être négatives').nullable(),
-            download_url: Yup.string().url('URL invalide').nullable(),
-            license_duration_days: Yup.number().positive('Doit être positif').nullable(),
-        });
-    } else { // service
-        return Yup.object({
-            ...baseSchema,
-            service_duration_hours: Yup.number().positive('Doit être positif').nullable(),
-            max_simultaneous_bookings: Yup.number().positive('Doit être positif').nullable(),
-        });
+    } else {
+        return Yup.object(baseSchema);
     }
 };
 
@@ -128,39 +117,24 @@ function ProductForm() {
     const [initialValues, setInitialValues] = useState({
         // Informations de base
         name: '',
-        sku: '',
+        reference: '',
         description: '',
         product_type: 'physical',
         source_type: 'purchased',
         category_id: '',
 
         // Prix
-        unit_price: '',
-        bulk_price: '',
-        bulk_quantity: '',
+        price: '',
+        cost_price: '',
 
-        // Spécifique aux produits physiques
+        // Relations et stock
         supplier_id: '',
         warehouse_id: '',
-        stock_quantity: '',
-        minimum_order_quantity: 1,
-        lead_time_days: 7,
+        stock_quantity: 0,
+        low_stock_threshold: 5,
 
-        // Spécifique aux produits numériques
-        download_url: '',
-        license_duration_days: '',
-        max_downloads: '',
-
-        // Spécifique aux services
-        service_duration_hours: '',
-        max_simultaneous_bookings: '',
-        booking_buffer_hours: '',
-
-        // Autres
-        is_available: true,
-        tags: [],
-        specifications: {},
-        image: null,
+        // Métadonnées
+        is_active: true,
     });
 
     useEffect(() => {
@@ -170,24 +144,54 @@ function ProductForm() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [suppliersRes, categoriesRes, warehousesRes] = await Promise.all([
-                suppliersAPI.list(),
-                productCategoriesAPI.list(),
-                warehousesAPI.list(),
-            ]);
+            // Charger les données de manière indépendante pour gérer les erreurs 403
+            // Suppliers (optionnel si module désactivé)
+            try {
+                const suppliersRes = await suppliersAPI.list();
+                setSuppliers(suppliersRes.data.results || suppliersRes.data);
+            } catch (error) {
+                if (error.response?.status === 403) {
+                    console.log('Module Suppliers non accessible - continuer sans');
+                    setSuppliers([]);
+                } else {
+                    throw error;
+                }
+            }
 
-            setSuppliers(suppliersRes.data.results || suppliersRes.data);
-            setCategories(categoriesRes.data.results || categoriesRes.data);
-            setWarehouses(warehousesRes.data.results || warehousesRes.data);
+            // Categories (optionnel)
+            try {
+                const categoriesRes = await productCategoriesAPI.list();
+                setCategories(categoriesRes.data.results || categoriesRes.data);
+            } catch (error) {
+                if (error.response?.status === 403) {
+                    console.log('Catégories non accessibles - continuer sans');
+                    setCategories([]);
+                } else {
+                    console.error('Erreur catégories:', error);
+                    setCategories([]);
+                }
+            }
 
+            // Warehouses (requis pour produits physiques)
+            try {
+                const warehousesRes = await warehousesAPI.list();
+                setWarehouses(warehousesRes.data.results || warehousesRes.data);
+            } catch (error) {
+                console.error('Erreur warehouses:', error);
+                setWarehouses([]);
+                enqueueSnackbar('Impossible de charger les entrepôts', { variant: 'warning' });
+            }
+
+            // Charger le produit si en mode édition
             if (isEdit) {
                 const response = await productsAPI.get(id);
+                const productData = response.data;
                 setInitialValues({
                     ...initialValues,
-                    ...response.data,
-                    supplier_id: response.data.supplier?.id || '',
-                    category_id: response.data.category?.id || '',
-                    warehouse_id: response.data.warehouse?.id || '',
+                    ...productData,
+                    supplier_id: productData.supplier || '',
+                    category_id: productData.category || '',
+                    warehouse_id: productData.warehouse || '',
                 });
             }
         } catch (error) {
@@ -210,38 +214,29 @@ function ProductForm() {
             // Nettoyer les valeurs selon le type de produit
             const cleanedValues = {
                 name: values.name,
-                sku: values.sku,
+                reference: values.reference || '',
                 description: values.description,
                 product_type: values.product_type,
-                unit_price: parseFloat(values.unit_price),
-                category_id: values.category_id || null,
-                is_available: values.is_available,
+                source_type: values.source_type,
+                price: parseFloat(values.price),
+                cost_price: parseFloat(values.cost_price) || 0,
+                category: values.category_id || null,
+                is_active: values.is_active,
             };
 
-            // Ajouter les champs spécifiques selon le type
+            // Ajouter supplier et warehouse pour tous les types si définis
+            if (values.supplier_id) {
+                cleanedValues.supplier = values.supplier_id;
+            }
+
+            if (values.warehouse_id) {
+                cleanedValues.warehouse = values.warehouse_id;
+            }
+
+            // Ajouter stock pour produits physiques
             if (values.product_type === 'physical') {
-                Object.assign(cleanedValues, {
-                    source_type: values.source_type,
-                    supplier_id: values.supplier_id,
-                    warehouse_id: values.warehouse_id,
-                    stock_quantity: parseInt(values.stock_quantity),
-                    minimum_order_quantity: parseInt(values.minimum_order_quantity),
-                    lead_time_days: parseInt(values.lead_time_days),
-                    bulk_price: values.bulk_price ? parseFloat(values.bulk_price) : null,
-                    bulk_quantity: values.bulk_quantity ? parseInt(values.bulk_quantity) : null,
-                });
-            } else if (values.product_type === 'digital') {
-                Object.assign(cleanedValues, {
-                    supplier_id: values.supplier_id,
-                    download_url: values.download_url || null,
-                    license_duration_days: values.license_duration_days ? parseInt(values.license_duration_days) : null,
-                    stock_quantity: values.stock_quantity ? parseInt(values.stock_quantity) : null,
-                });
-            } else if (values.product_type === 'service') {
-                Object.assign(cleanedValues, {
-                    service_duration_hours: values.service_duration_hours ? parseFloat(values.service_duration_hours) : null,
-                    max_simultaneous_bookings: values.max_simultaneous_bookings ? parseInt(values.max_simultaneous_bookings) : null,
-                });
+                cleanedValues.stock_quantity = parseInt(values.stock_quantity) || 0;
+                cleanedValues.low_stock_threshold = parseInt(values.low_stock_threshold) || 5;
             }
 
             if (isEdit) {
@@ -254,7 +249,29 @@ function ProductForm() {
             navigate('/products');
         } catch (error) {
             console.error('Erreur:', error);
-            enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+
+            // Afficher message d'erreur plus détaillé
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                const errorMessages = [];
+
+                // Parser les erreurs de validation Django
+                for (const [field, messages] of Object.entries(errorData)) {
+                    if (Array.isArray(messages)) {
+                        errorMessages.push(`${field}: ${messages.join(', ')}`);
+                    } else if (typeof messages === 'string') {
+                        errorMessages.push(messages);
+                    }
+                }
+
+                if (errorMessages.length > 0) {
+                    enqueueSnackbar(`Erreur: ${errorMessages.join(' | ')}`, { variant: 'error' });
+                } else {
+                    enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+                }
+            } else {
+                enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+            }
         } finally {
             setSubmitting(false);
         }
@@ -312,9 +329,17 @@ function ProductForm() {
                 {isEdit ? 'Modifier le produit' : 'Nouveau produit'}
             </Typography>
 
+            {/* Message d'information si modules manquants */}
+            {(suppliers.length === 0 || warehouses.length === 0) && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    {suppliers.length === 0 && 'Le module Fournisseurs n\'est pas activé. '}
+                    {warehouses.length === 0 && 'Aucun entrepôt disponible. Créez-en un dans les paramètres pour les produits physiques.'}
+                </Alert>
+            )}
+
             <Formik
                 initialValues={initialValues}
-                validationSchema={getValidationSchema(initialValues.product_type)}
+                validationSchema={getValidationSchema(initialValues.product_type, warehouses.length > 0)}
                 onSubmit={handleSubmit}
                 enableReinitialize
             >
@@ -366,15 +391,14 @@ function ProductForm() {
                                                 <TextField
                                                     fullWidth
                                                     size={isMobile ? "small" : "medium"}
-                                                    name="sku"
-                                                    label="Code SKU"
-                                                    value={values.sku}
+                                                    name="reference"
+                                                    label="Référence"
+                                                    value={values.reference}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
-                                                    error={touched.sku && Boolean(errors.sku)}
-                                                    helperText={touched.sku && errors.sku}
-                                                    required
-                                                    placeholder="PRD-001"
+                                                    error={touched.reference && Boolean(errors.reference)}
+                                                    helperText={touched.reference && errors.reference || "Laissez vide pour générer automatiquement"}
+                                                    placeholder="PRD-0001"
                                                 />
                                             </Grid>
 
@@ -457,22 +481,22 @@ function ProductForm() {
                                         </Typography>
 
                                         <Grid container spacing={2}>
-                                            <Grid item xs={12} md={values.product_type === 'service' ? 12 : 6}>
+                                            <Grid item xs={12} md={6}>
                                                 <TextField
                                                     fullWidth
                                                     size={isMobile ? "small" : "medium"}
-                                                    name="unit_price"
+                                                    name="price"
                                                     label={
-                                                        values.product_type === 'service' ? 'Tarif horaire / Forfait' :
+                                                        values.product_type === 'service' ? 'Prix de vente' :
                                                             values.product_type === 'digital' ? 'Prix par licence' :
-                                                                'Prix unitaire'
+                                                                'Prix de vente'
                                                     }
                                                     type="number"
-                                                    value={values.unit_price}
+                                                    value={values.price}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
-                                                    error={touched.unit_price && Boolean(errors.unit_price)}
-                                                    helperText={touched.unit_price && errors.unit_price}
+                                                    error={touched.price && Boolean(errors.price)}
+                                                    helperText={touched.price && errors.price}
                                                     InputProps={{
                                                         startAdornment: <InputAdornment position="start">$</InputAdornment>,
                                                     }}
@@ -480,73 +504,24 @@ function ProductForm() {
                                                 />
                                             </Grid>
 
-                                            {/* Prix de gros - seulement pour produits physiques */}
-                                            <Collapse in={values.product_type === 'physical'} timeout="auto">
-                                                <Grid container spacing={2} sx={{ pl: 2, mt: 0 }}>
-                                                    <Grid item xs={12} md={6}>
-                                                        <TextField
-                                                            fullWidth
-                                                            size={isMobile ? "small" : "medium"}
-                                                            name="bulk_price"
-                                                            label="Prix de gros (optionnel)"
-                                                            type="number"
-                                                            value={values.bulk_price}
-                                                            onChange={handleChange}
-                                                            onBlur={handleBlur}
-                                                            error={touched.bulk_price && Boolean(errors.bulk_price)}
-                                                            helperText={touched.bulk_price && errors.bulk_price}
-                                                            InputProps={{
-                                                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={12} md={6}>
-                                                        <TextField
-                                                            fullWidth
-                                                            size={isMobile ? "small" : "medium"}
-                                                            name="bulk_quantity"
-                                                            label="Quantité min. pour prix de gros"
-                                                            type="number"
-                                                            value={values.bulk_quantity}
-                                                            onChange={handleChange}
-                                                            disabled={!values.bulk_price}
-                                                            helperText="Active automatiquement le prix de gros"
-                                                        />
-                                                    </Grid>
-                                                </Grid>
-                                            </Collapse>
+                                            <Grid item xs={12} md={6}>
+                                                <TextField
+                                                    fullWidth
+                                                    size={isMobile ? "small" : "medium"}
+                                                    name="cost_price"
+                                                    label="Prix d'achat / Coût"
+                                                    type="number"
+                                                    value={values.cost_price}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    error={touched.cost_price && Boolean(errors.cost_price)}
+                                                    helperText={touched.cost_price && errors.cost_price}
+                                                    InputProps={{
+                                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                    }}
+                                                />
+                                            </Grid>
 
-                                            {/* Durée pour les services */}
-                                            <Collapse in={values.product_type === 'service'} timeout="auto">
-                                                <Grid container spacing={2} sx={{ pl: 2, mt: 0 }}>
-                                                    <Grid item xs={12} md={6}>
-                                                        <TextField
-                                                            fullWidth
-                                                            size={isMobile ? "small" : "medium"}
-                                                            name="service_duration_hours"
-                                                            label="Durée du service (heures)"
-                                                            type="number"
-                                                            value={values.service_duration_hours}
-                                                            onChange={handleChange}
-                                                            InputProps={{
-                                                                startAdornment: <Schedule sx={{ mr: 1, color: 'action.active' }} />,
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={12} md={6}>
-                                                        <TextField
-                                                            fullWidth
-                                                            size={isMobile ? "small" : "medium"}
-                                                            name="max_simultaneous_bookings"
-                                                            label="Réservations simultanées max"
-                                                            type="number"
-                                                            value={values.max_simultaneous_bookings}
-                                                            onChange={handleChange}
-                                                            helperText="Nombre de clients en même temps"
-                                                        />
-                                                    </Grid>
-                                                </Grid>
-                                            </Collapse>
                                         </Grid>
                                     </CardContent>
                                 </Card>
@@ -561,24 +536,26 @@ function ProductForm() {
                                             </Typography>
 
                                             <Grid container spacing={2}>
-                                                {/* Fournisseur/Éditeur */}
+                                                {/* Fournisseur/Éditeur - Afficher toujours, vide si non disponible */}
                                                 <Grid item xs={12} md={6}>
                                                     <FormControl
                                                         fullWidth
                                                         size={isMobile ? "small" : "medium"}
-                                                        required
                                                         error={touched.supplier_id && Boolean(errors.supplier_id)}
                                                     >
                                                         <InputLabel>
-                                                            {values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur'}
+                                                            {values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur (optionnel)'}
                                                         </InputLabel>
                                                         <Select
                                                             name="supplier_id"
                                                             value={values.supplier_id}
                                                             onChange={handleChange}
-                                                            label={values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur'}
+                                                            label={values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur (optionnel)'}
                                                             startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                         >
+                                                            <MenuItem value="">
+                                                                <em>Aucun fournisseur</em>
+                                                            </MenuItem>
                                                             {suppliers.map((supplier) => (
                                                                 <MenuItem key={supplier.id} value={supplier.id}>
                                                                     {supplier.name}
@@ -587,6 +564,11 @@ function ProductForm() {
                                                         </Select>
                                                         {touched.supplier_id && errors.supplier_id && (
                                                             <FormHelperText>{errors.supplier_id}</FormHelperText>
+                                                        )}
+                                                        {suppliers.length === 0 && (
+                                                            <FormHelperText>
+                                                                Module Fournisseurs non activé ou vide
+                                                            </FormHelperText>
                                                         )}
                                                     </FormControl>
                                                 </Grid>
@@ -597,59 +579,46 @@ function ProductForm() {
                                                         <FormControl
                                                             fullWidth
                                                             size={isMobile ? "small" : "medium"}
-                                                            required
+                                                            required={warehouses.length > 0}
                                                             error={touched.warehouse_id && Boolean(errors.warehouse_id)}
                                                         >
-                                                            <InputLabel>Entrepôt principal</InputLabel>
+                                                            <InputLabel>Entrepôt principal {warehouses.length > 0 ? '' : '(optionnel)'}</InputLabel>
                                                             <Select
                                                                 name="warehouse_id"
                                                                 value={values.warehouse_id}
                                                                 onChange={handleChange}
-                                                                label="Entrepôt principal"
+                                                                label={`Entrepôt principal ${warehouses.length > 0 ? '' : '(optionnel)'}`}
                                                                 startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                             >
-                                                                {warehouses.map((warehouse) => (
-                                                                    <MenuItem key={warehouse.id} value={warehouse.id}>
-                                                                        {warehouse.name} ({warehouse.code})
+                                                                {warehouses.length === 0 ? (
+                                                                    <MenuItem value="">
+                                                                        <em>Aucun entrepôt disponible</em>
                                                                     </MenuItem>
-                                                                ))}
+                                                                ) : (
+                                                                    <>
+                                                                        <MenuItem value="">
+                                                                            <em>Sélectionner un entrepôt</em>
+                                                                        </MenuItem>
+                                                                        {warehouses.map((warehouse) => (
+                                                                            <MenuItem key={warehouse.id} value={warehouse.id}>
+                                                                                {warehouse.name} ({warehouse.code}) - {warehouse.city}
+                                                                            </MenuItem>
+                                                                        ))}
+                                                                    </>
+                                                                )}
                                                             </Select>
                                                             {touched.warehouse_id && errors.warehouse_id && (
-                                                                <FormHelperText>{errors.warehouse_id}</FormHelperText>
+                                                                <FormHelperText error>{errors.warehouse_id}</FormHelperText>
+                                                            )}
+                                                            {warehouses.length === 0 && (
+                                                                <FormHelperText>
+                                                                    ⚠️ Aucun entrepôt disponible. Le produit sera créé sans entrepôt.
+                                                                </FormHelperText>
                                                             )}
                                                         </FormControl>
                                                     </Grid>
                                                 )}
 
-                                                {/* URL de téléchargement - Seulement pour produits numériques */}
-                                                {values.product_type === 'digital' && (
-                                                    <>
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="download_url"
-                                                                label="URL de téléchargement"
-                                                                value={values.download_url}
-                                                                onChange={handleChange}
-                                                                placeholder="https://..."
-                                                                helperText="Lien direct ou plateforme de distribution"
-                                                            />
-                                                        </Grid>
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="license_duration_days"
-                                                                label="Durée de la licence (jours)"
-                                                                type="number"
-                                                                value={values.license_duration_days}
-                                                                onChange={handleChange}
-                                                                helperText="Laissez vide pour une licence permanente"
-                                                            />
-                                                        </Grid>
-                                                    </>
-                                                )}
 
                                                 {/* Stock / Licences */}
                                                 <Grid item xs={12} md={6}>
@@ -663,11 +632,7 @@ function ProductForm() {
                                                         onChange={handleChange}
                                                         onBlur={handleBlur}
                                                         error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                        helperText={
-                                                            values.product_type === 'digital'
-                                                                ? 'Laissez vide pour illimité'
-                                                                : touched.stock_quantity && errors.stock_quantity
-                                                        }
+                                                        helperText={touched.stock_quantity && errors.stock_quantity}
                                                         required={values.product_type === 'physical'}
                                                         InputProps={{
                                                             startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
@@ -675,44 +640,23 @@ function ProductForm() {
                                                     />
                                                 </Grid>
 
-                                                {/* Quantité minimum - Seulement pour produits physiques */}
+                                                {/* Seuil stock bas - Seulement pour produits physiques */}
                                                 {values.product_type === 'physical' && (
-                                                    <>
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="minimum_order_quantity"
-                                                                label="Quantité minimum de commande"
-                                                                type="number"
-                                                                value={values.minimum_order_quantity}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.minimum_order_quantity && Boolean(errors.minimum_order_quantity)}
-                                                                helperText={touched.minimum_order_quantity && errors.minimum_order_quantity}
-                                                                required
-                                                            />
-                                                        </Grid>
-
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="lead_time_days"
-                                                                label="Délai de livraison (jours)"
-                                                                type="number"
-                                                                value={values.lead_time_days}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.lead_time_days && Boolean(errors.lead_time_days)}
-                                                                helperText={touched.lead_time_days && errors.lead_time_days}
-                                                                required
-                                                                InputProps={{
-                                                                    startAdornment: <LocalShipping sx={{ mr: 1, color: 'action.active' }} />,
-                                                                }}
-                                                            />
-                                                        </Grid>
-                                                    </>
+                                                    <Grid item xs={12} md={6}>
+                                                        <TextField
+                                                            fullWidth
+                                                            size={isMobile ? "small" : "medium"}
+                                                            name="low_stock_threshold"
+                                                            label="Seuil de stock bas"
+                                                            type="number"
+                                                            value={values.low_stock_threshold}
+                                                            onChange={handleChange}
+                                                            onBlur={handleBlur}
+                                                            error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
+                                                            helperText={touched.low_stock_threshold && errors.low_stock_threshold || "Alerte si stock <= ce seuil"}
+                                                            required
+                                                        />
+                                                    </Grid>
                                                 )}
                                             </Grid>
                                         </CardContent>
@@ -731,23 +675,23 @@ function ProductForm() {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
-                                                    name="is_available"
-                                                    checked={values.is_available}
+                                                    name="is_active"
+                                                    checked={values.is_active}
                                                     onChange={handleChange}
                                                     color="success"
                                                 />
                                             }
                                             label={
                                                 <Box display="flex" alignItems="center">
-                                                    {values.is_available ? (
+                                                    {values.is_active ? (
                                                         <>
                                                             <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                                            Disponible à la vente
+                                                            Produit actif
                                                         </>
                                                     ) : (
                                                         <>
                                                             <Warning sx={{ mr: 1, color: 'warning.main' }} />
-                                                            Non disponible
+                                                            Produit inactif
                                                         </>
                                                     )}
                                                 </Box>
@@ -824,10 +768,10 @@ function ProductForm() {
                                                     }
                                                 />
                                             </Box>
-                                            {values.unit_price && (
+                                            {values.price && (
                                                 <Box display="flex" justifyContent="space-between">
                                                     <Typography variant="caption" color="text.secondary">Prix:</Typography>
-                                                    <Typography variant="body2" fontWeight="bold">${values.unit_price}</Typography>
+                                                    <Typography variant="body2" fontWeight="bold">${values.price}</Typography>
                                                 </Box>
                                             )}
                                             {values.stock_quantity && values.product_type !== 'service' && (

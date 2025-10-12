@@ -64,6 +64,18 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
     
+    # Warehouse info
+    warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
+    warehouse_code = serializers.CharField(source='warehouse.code', read_only=True)
+    warehouse_location = serializers.SerializerMethodField()
+    
+    # Statistiques
+    total_invoices = serializers.SerializerMethodField()
+    total_sales_amount = serializers.SerializerMethodField()
+    unique_clients_count = serializers.SerializerMethodField()
+    last_sale_date = serializers.SerializerMethodField()
+    active_contracts_count = serializers.SerializerMethodField()
+    
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
         'suppliers': ['supplier', 'supplier_name'],
@@ -74,15 +86,44 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         fields = [
             'id', 'name', 'reference', 'description', 'barcode',
             'product_type', 'source_type', 'supplier', 'supplier_name',
+            'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
             'price', 'cost_price', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_active',
+            'total_invoices', 'total_sales_amount', 'unique_clients_count',
+            'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
-            'stock_status', 'is_low_stock', 'is_out_of_stock'
+            'stock_status', 'is_low_stock', 'is_out_of_stock',
+            'warehouse_name', 'warehouse_code', 'warehouse_location',
+            'total_invoices', 'total_sales_amount', 'unique_clients_count',
+            'last_sale_date', 'active_contracts_count'
         ]
+    
+    def get_warehouse_location(self, obj):
+        if obj.warehouse:
+            return f"{obj.warehouse.city}, {obj.warehouse.province}"
+        return None
+        
+    def get_total_invoices(self, obj):
+        return obj.invoice_items.values('invoice').distinct().count()
+        
+    def get_total_sales_amount(self, obj):
+        from django.db.models import Sum
+        total = obj.invoice_items.aggregate(Sum('total_price'))['total_price__sum']
+        return float(total) if total else 0
+        
+    def get_unique_clients_count(self, obj):
+        return obj.invoice_items.values('invoice__client').distinct().count()
+        
+    def get_last_sale_date(self, obj):
+        last_item = obj.invoice_items.order_by('-created_at').first()
+        return last_item.created_at if last_item else None
+        
+    def get_active_contracts_count(self, obj):
+        return obj.contract_items.filter(contract__status='active').count()
 
 
 class StockMovementSerializer(serializers.ModelSerializer):

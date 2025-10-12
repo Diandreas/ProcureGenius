@@ -18,7 +18,7 @@ import random
 
 # Configuration Django
 if __name__ == "__main__":
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings')
     django.setup()
 
 from django.contrib.auth import get_user_model
@@ -48,16 +48,16 @@ def print_header(text):
     print(f"{Colors.HEADER}{Colors.BOLD}{'='*60}{Colors.ENDC}\n")
 
 def print_success(text):
-    print(f"{Colors.OKGREEN}✓ {text}{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[OK] {text}{Colors.ENDC}")
 
 def print_info(text):
-    print(f"{Colors.OKCYAN}→ {text}{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}> {text}{Colors.ENDC}")
 
 def print_warning(text):
-    print(f"{Colors.WARNING}⚠ {text}{Colors.ENDC}")
+    print(f"{Colors.WARNING}[!] {text}{Colors.ENDC}")
 
 def print_error(text):
-    print(f"{Colors.FAIL}✗ {text}{Colors.ENDC}")
+    print(f"{Colors.FAIL}[ERROR] {text}{Colors.ENDC}")
 
 
 def create_organization():
@@ -829,7 +829,7 @@ def create_invoices(user, clients, products):
         unit_of_measure="pièce",
     )
 
-    print_success(f"Facture EN RETARD: {inv5.invoice_number} - {inv5.title} ({inv5.total_amount}€) ⚠️")
+    print_success(f"Facture EN RETARD: {inv5.invoice_number} - {inv5.title} ({inv5.total_amount}€) [ALERTE]")
 
     return [inv1, inv2, inv3, inv4, inv5]
 
@@ -897,9 +897,9 @@ def create_stock_movements(user, products):
     # Afficher alertes stock bas
     low_stock_products = [p for p in products if hasattr(p, 'is_low_stock') and p.is_low_stock]
     if low_stock_products:
-        print_warning(f"\n⚠️  ALERTES STOCK BAS ({len(low_stock_products)} produits):")
+        print_warning(f"\nALERTES STOCK BAS ({len(low_stock_products)} produits):")
         for p in low_stock_products:
-            print_warning(f"   - {p.name}: {p.stock_quantity} unités (seuil: {p.low_stock_threshold})")
+            print_warning(f"   - {p.name}: {p.stock_quantity} unites (seuil: {p.low_stock_threshold})")
 
 
 def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
@@ -918,13 +918,13 @@ def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
     print(f"  • Rôle: {user.get_role_display()}")
     print(f"  • Mot de passe: password123")
 
-    print(f"\n{Colors.BOLD}📊 Statistiques:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Statistiques:{Colors.ENDC}")
     print(f"  • Fournisseurs: {len(suppliers)}")
     print(f"  • Produits: {len(products)} (dont {sum(1 for p in products if p.product_type == 'physical')} physiques)")
     print(f"  • Bons de commande: {len(purchase_orders)}")
     print(f"  • Factures: {len(invoices)}")
 
-    print(f"\n{Colors.BOLD}💰 Chiffres clés:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Chiffres cles:{Colors.ENDC}")
 
     # Calculs ventes
     total_invoices = sum(inv.total_amount for inv in invoices)
@@ -944,7 +944,7 @@ def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
     avg_margin = sum(p.margin_percent for p in products_sold) / len(products_sold) if products_sold else 0
     print(f"  • Marge moyenne produits: {avg_margin:.1f}%")
 
-    print(f"\n{Colors.BOLD}📦 État des stocks:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Etat des stocks:{Colors.ENDC}")
     physical_products = [p for p in products if p.product_type == 'physical']
     low_stock = [p for p in physical_products if p.is_low_stock]
     out_stock = [p for p in physical_products if p.is_out_of_stock]
@@ -953,7 +953,7 @@ def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
     print(f"  • Stock bas: {len(low_stock)} produits")
     print(f"  • Rupture: {len(out_stock)} produits")
 
-    print(f"\n{Colors.BOLD}📋 Statuts:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Statuts:{Colors.ENDC}")
     print(f"  • Factures:")
     for status, label in Invoice.STATUS_CHOICES:
         count = sum(1 for inv in invoices if inv.status == status)
@@ -966,7 +966,7 @@ def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
         if count > 0:
             print(f"    - {label}: {count}")
 
-    print(f"\n{Colors.BOLD}✅ Modules testables:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Modules testables:{Colors.ENDC}")
     modules_to_test = [
         ("Dashboard", "Vue d'ensemble avec KPIs"),
         ("Fournisseurs", f"{len(suppliers)} fournisseurs avec notes et catégories"),
@@ -979,9 +979,9 @@ def generate_summary(org, user, suppliers, products, invoices, purchase_orders):
     ]
 
     for module, desc in modules_to_test:
-        print(f"  ✓ {module}: {desc}")
+        print(f"  [OK] {module}: {desc}")
 
-    print(f"\n{Colors.BOLD}🔑 Connexion:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Connexion:{Colors.ENDC}")
     print(f"  Username: {user.username}")
     print(f"  Password: password123")
     print(f"  URL: http://localhost:3000/")
@@ -1005,8 +1005,8 @@ def main():
         # Créer les fournisseurs
         suppliers = create_suppliers(categories)
 
-        # Créer les entrepôts
-        warehouses = create_warehouses(org)
+        # Créer les entrepôts (désactivé car migration manquante)
+        # warehouses = create_warehouses(org)
 
         # Créer les produits
         products = create_products(org, categories, suppliers)
@@ -1026,7 +1026,7 @@ def main():
         # Générer le résumé
         generate_summary(org, user, suppliers, products, invoices, purchase_orders)
 
-        print_header("SEED TERMINÉ AVEC SUCCÈS ✓")
+        print_header("SEED TERMINE AVEC SUCCES")
 
     except Exception as e:
         print_error(f"Erreur lors du seed: {str(e)}")

@@ -324,6 +324,132 @@ class ProductViewSet(viewsets.ModelViewSet):
             'low_stock_count': len(low_stock),
             'out_of_stock_count': len(out_of_stock)
         })
+    
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Statistiques complètes inter-modules pour un produit"""
+        product = self.get_object()
+        from django.db.models import Sum, Count, Avg, Min, Max
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        # Stats ventes (InvoiceItems)
+        invoice_items = product.invoice_items.all()
+        invoices = invoice_items.values('invoice').distinct()
+        
+        total_sales = invoice_items.aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('total_price')
+        )
+        
+        # Top clients
+        top_clients = invoice_items.values(
+            'invoice__client__id',
+            'invoice__client__username',
+            'invoice__client__first_name',
+            'invoice__client__last_name'
+        ).annotate(
+            total_purchases=Sum('total_price'),
+            purchase_count=Count('invoice', distinct=True),
+            total_quantity=Sum('quantity')
+        ).order_by('-total_purchases')[:10]
+        
+        # Factures récentes
+        recent_invoices = invoice_items.select_related('invoice', 'invoice__client').order_by('-created_at')[:10]
+        recent_invoices_data = [{
+            'invoice_id': str(item.invoice.id),
+            'invoice_number': item.invoice.invoice_number,
+            'client_name': item.invoice.client.get_full_name() if item.invoice.client else 'N/A',
+            'created_at': item.invoice.created_at,
+            'quantity': item.quantity,
+            'total_price': float(item.total_price)
+        } for item in recent_invoices]
+        
+        # Stats achats (PurchaseOrderItems)
+        po_items = product.purchase_order_items.all()
+        purchase_stats = po_items.aggregate(
+            total_pos=Count('purchase_order', distinct=True),
+            total_quantity=Sum('quantity'),
+            avg_price=Avg('unit_price')
+        )
+        
+        # Stats contrats
+        contract_items = product.contract_items.filter(contract__status='active')
+        contract_stats = contract_items.aggregate(
+            active_contracts=Count('contract', distinct=True),
+            min_price=Min('contracted_price'),
+            max_price=Max('contracted_price')
+        )
+        
+        # Stats e-sourcing
+        bid_items = product.bid_items.all()
+        sourcing_stats = {
+            'total_bids': bid_items.count(),
+            'awarded_bids': bid_items.filter(bid__status='awarded').count()
+        }
+        
+        # Tendance (30 derniers jours vs 30 jours précédents)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        sixty_days_ago = timezone.now() - timedelta(days=60)
+        
+        recent_sales = invoice_items.filter(created_at__gte=thirty_days_ago).aggregate(
+            total=Sum('total_price')
+        )['total'] or 0
+        
+        previous_sales = invoice_items.filter(
+            created_at__gte=sixty_days_ago,
+            created_at__lt=thirty_days_ago
+        ).aggregate(total=Sum('total_price'))['total'] or 0
+        
+        trend = ((recent_sales - previous_sales) / previous_sales * 100) if previous_sales > 0 else 0
+        
+        return Response({
+            'product_id': str(product.id),
+            'product_name': product.name,
+            'product_reference': product.reference,
+            
+            'sales_summary': {
+                'total_invoices': invoices.count(),
+                'total_quantity_sold': int(total_sales['total_quantity'] or 0),
+                'total_sales_amount': float(total_sales['total_amount'] or 0),
+                'average_sale': float(total_sales['total_amount'] / invoices.count()) if invoices.count() > 0 else 0,
+                'unique_clients': invoice_items.values('invoice__client').distinct().count(),
+            },
+            
+            'purchase_summary': {
+                'total_purchase_orders': purchase_stats['total_pos'] or 0,
+                'total_quantity_purchased': int(purchase_stats['total_quantity'] or 0),
+                'average_purchase_price': float(purchase_stats['avg_price'] or 0),
+            },
+            
+            'contract_summary': {
+                'active_contracts': contract_stats['active_contracts'] or 0,
+                'contracted_price_min': float(contract_stats['min_price'] or 0),
+                'contracted_price_max': float(contract_stats['max_price'] or 0),
+            },
+            
+            'sourcing_summary': sourcing_stats,
+            
+            'warehouse_info': {
+                'warehouse_id': str(product.warehouse.id) if product.warehouse else None,
+                'warehouse_name': product.warehouse.name if product.warehouse else None,
+                'warehouse_code': product.warehouse.code if product.warehouse else None,
+                'location': f"{product.warehouse.city}, {product.warehouse.province}" if product.warehouse else None,
+                'current_stock': product.stock_quantity,
+                'stock_status': product.stock_status,
+            },
+            
+            'top_clients': list(top_clients),
+            'recent_invoices': recent_invoices_data,
+            
+            'sales_trend': {
+                'last_30_days': float(recent_sales),
+                'previous_30_days': float(previous_sales),
+                'trend_percent': round(trend, 2),
+            },
+            
+            'stock_movements_count': product.stock_movements.count(),
+        })
 
 
 class ClientViewSet(viewsets.ModelViewSet):

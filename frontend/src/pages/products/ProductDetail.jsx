@@ -50,11 +50,17 @@ import {
     Star,
     History,
     Info as InfoIcon,
+    Receipt,
+    People,
+    Warehouse,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import StockMovementsTab from '../../components/StockMovementsTab';
+import ProductStatisticsCard from '../../components/products/ProductStatisticsCard';
+import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
+import ProductClientsTable from '../../components/products/ProductClientsTable';
 
 function ProductDetail() {
     const { id } = useParams();
@@ -62,12 +68,15 @@ function ProductDetail() {
     const { enqueueSnackbar } = useSnackbar();
 
     const [product, setProduct] = useState(null);
+    const [statistics, setStatistics] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
         fetchProduct();
+        fetchStatistics();
     }, [id]);
 
     const fetchProduct = async () => {
@@ -80,6 +89,19 @@ function ProductDetail() {
             navigate('/products');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchStatistics = async () => {
+        setStatsLoading(true);
+        try {
+            const response = await productsAPI.getStatistics(id);
+            setStatistics(response.data);
+        } catch (error) {
+            console.error('Erreur lors du chargement des statistiques', error);
+            setStatistics(null);
+        } finally {
+            setStatsLoading(false);
         }
     };
 
@@ -178,300 +200,350 @@ function ProductDetail() {
 
             {/* Tabs */}
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-                    <Tab icon={<InfoIcon />} label="Informations" />
+                <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="scrollable" scrollButtons="auto">
+                    <Tab icon={<InfoIcon />} label="Informations" iconPosition="start" />
+                    <Tab icon={<Receipt />} label="Factures" iconPosition="start" />
+                    <Tab icon={<People />} label="Clients" iconPosition="start" />
                     {product.product_type === 'physical' && (
-                        <Tab icon={<History />} label="Historique Stock" />
+                        <Tab icon={<History />} label="Historique Stock" iconPosition="start" />
                     )}
                 </Tabs>
             </Box>
 
             {activeTab === 0 && (
                 <Grid container spacing={3}>
+                    {/* Statistiques */}
+                    <Grid item xs={12}>
+                        <ProductStatisticsCard statistics={statistics} loading={statsLoading} />
+                    </Grid>
+
                     {/* Informations principales */}
                     <Grid item xs={12} md={8}>
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                                {product.image ? (
-                                    <Avatar
-                                        src={product.image}
-                                        sx={{ width: 80, height: 80 }}
-                                        variant="rounded"
-                                    />
-                                ) : (
-                                    <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
-                                        <Inventory />
-                                    </Avatar>
-                                )}
-                                <Box sx={{ flexGrow: 1 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                                        <Typography variant="h5">
-                                            {product.name}
-                                        </Typography>
-                                        <Chip
-                                            icon={getAvailabilityIcon(product.is_available)}
-                                            label={product.is_available ? 'Disponible' : 'Indisponible'}
-                                            color={product.is_available ? 'success' : 'error'}
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                    {product.image ? (
+                                        <Avatar
+                                            src={product.image}
+                                            sx={{ width: 80, height: 80 }}
+                                            variant="rounded"
                                         />
-                                    </Box>
-                                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                                        SKU: {product.sku}
-                                    </Typography>
-                                    {product.category && (
-                                        <Chip
-                                            icon={<Category />}
-                                            label={product.category.name}
-                                            variant="outlined"
-                                            size="small"
-                                        />
+                                    ) : (
+                                        <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
+                                            <Inventory />
+                                        </Avatar>
                                     )}
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                            <Typography variant="h5">
+                                                {product.name}
+                                            </Typography>
+                                            <Chip
+                                                icon={getAvailabilityIcon(product.is_available)}
+                                                label={product.is_available ? 'Disponible' : 'Indisponible'}
+                                                color={product.is_available ? 'success' : 'error'}
+                                            />
+                                        </Box>
+                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                            SKU: {product.sku}
+                                        </Typography>
+                                        {product.category && (
+                                            <Chip
+                                                icon={<Category />}
+                                                label={product.category.name}
+                                                variant="outlined"
+                                                size="small"
+                                            />
+                                        )}
+                                    </Box>
                                 </Box>
-                            </Box>
 
-                            <Divider sx={{ my: 2 }} />
+                                <Divider sx={{ my: 2 }} />
 
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <Typography variant="h6" gutterBottom>
-                                        Description
-                                    </Typography>
-                                    <Typography variant="body1" paragraph>
-                                        {product.description}
-                                    </Typography>
-                                </Grid>
-
-                                {product.specifications && Object.keys(product.specifications).length > 0 && (
+                                <Grid container spacing={2}>
                                     <Grid item xs={12}>
                                         <Typography variant="h6" gutterBottom>
-                                            Spécifications
+                                            Description
                                         </Typography>
-                                        <List dense>
-                                            {Object.entries(product.specifications).map(([key, value]) => (
-                                                <ListItem key={key}>
-                                                    <ListItemText
-                                                        primary={key}
-                                                        secondary={value}
-                                                    />
-                                                </ListItem>
-                                            ))}
-                                        </List>
+                                        <Typography variant="body1" paragraph>
+                                            {product.description}
+                                        </Typography>
                                     </Grid>
-                                )}
 
-                                {product.supplier && (
+                                    {product.specifications && Object.keys(product.specifications).length > 0 && (
+                                        <Grid item xs={12}>
+                                            <Typography variant="h6" gutterBottom>
+                                                Spécifications
+                                            </Typography>
+                                            <List dense>
+                                                {Object.entries(product.specifications).map(([key, value]) => (
+                                                    <ListItem key={key}>
+                                                        <ListItemText
+                                                            primary={key}
+                                                            secondary={value}
+                                                        />
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        </Grid>
+                                    )}
+
+                                    {product.supplier && (
+                                        <Grid item xs={12} sm={6}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Business color="action" />
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Fournisseur
+                                                    </Typography>
+                                                    <Typography
+                                                        component="span"
+                                                        color="primary"
+                                                        sx={{ cursor: 'pointer', fontWeight: 'medium' }}
+                                                        onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
+                                                    >
+                                                        {product.supplier.name}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Grid>
+                                    )}
+
                                     <Grid item xs={12} sm={6}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Business color="action" />
+                                            <LocalShipping color="action" />
                                             <Box>
                                                 <Typography variant="caption" color="text.secondary">
-                                                    Fournisseur
+                                                    Délai de livraison
                                                 </Typography>
-                                                <Typography
-                                                    component="span"
-                                                    color="primary"
-                                                    sx={{ cursor: 'pointer', fontWeight: 'medium' }}
-                                                    onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
-                                                >
-                                                    {product.supplier.name}
-                                                </Typography>
+                                                <Typography>{product.lead_time_days} jours</Typography>
                                             </Box>
                                         </Box>
                                     </Grid>
-                                )}
-
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <LocalShipping color="action" />
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Délai de livraison
-                                            </Typography>
-                                            <Typography>{product.lead_time_days} jours</Typography>
-                                        </Box>
-                                    </Box>
                                 </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
 
-                    {/* Prix et commande */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <AttachMoney color="primary" />
-                                Tarification
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                                        <Typography variant="h4" color="primary">
-                                            {formatCurrency(product.unit_price)}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Prix unitaire
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                {product.bulk_price && product.bulk_quantity && (
+                        {/* Prix et commande */}
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <AttachMoney color="primary" />
+                                    Tarification
+                                </Typography>
+                                <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6}>
-                                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
-                                            <Typography variant="h4" color="success.main">
-                                                {formatCurrency(product.bulk_price)}
+                                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                                            <Typography variant="h4" color="primary">
+                                                {formatCurrency(product.unit_price)}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                Prix en gros (min. {product.bulk_quantity})
+                                                Prix unitaire
                                             </Typography>
                                         </Box>
                                     </Grid>
+
+                                    {product.bulk_price && product.bulk_quantity && (
+                                        <Grid item xs={12} sm={6}>
+                                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="success.main">
+                                                    {formatCurrency(product.bulk_price)}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Prix en gros (min. {product.bulk_quantity})
+                                                </Typography>
+                                            </Box>
+                                        </Grid>
+                                    )}
+
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Quantité minimum de commande: {product.minimum_order_quantity}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+
+                        {/* Prévisions IA */}
+                        {(product.ai_demand_forecast && Object.keys(product.ai_demand_forecast).length > 0) ||
+                            (product.ai_price_trend && Object.keys(product.ai_price_trend).length > 0) && (
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Assessment color="primary" />
+                                            Analyses IA
+                                        </Typography>
+                                        <Grid container spacing={2}>
+                                            {product.ai_demand_forecast && Object.keys(product.ai_demand_forecast).length > 0 && (
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="subtitle2" gutterBottom>
+                                                        Prévision de demande
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {JSON.stringify(product.ai_demand_forecast)}
+                                                    </Typography>
+                                                </Grid>
+                                            )}
+                                            {product.ai_price_trend && Object.keys(product.ai_price_trend).length > 0 && (
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="subtitle2" gutterBottom>
+                                                        Tendance des prix
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {JSON.stringify(product.ai_price_trend)}
+                                                    </Typography>
+                                                </Grid>
+                                            )}
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            )}
+                    </Grid>
+
+                    {/* Sidebar */}
+                    <Grid item xs={12} md={4}>
+                        {/* Stock et Entrepôt */}
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Inventory color="primary" />
+                                    Gestion du stock
+                                </Typography>
+
+                                {stockStatus && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                        <Chip
+                                            icon={stockStatus.icon}
+                                            label={stockStatus.label}
+                                            color={stockStatus.color}
+                                            size="large"
+                                        />
+                                    </Box>
                                 )}
 
-                                <Grid item xs={12}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Quantité minimum de commande: {product.minimum_order_quantity}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
+                                <List dense>
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Quantité en stock"
+                                            secondary={product.stock_quantity || 'Non spécifié'}
+                                        />
+                                    </ListItem>
+                                    {product.warehouse_name && (
+                                        <ListItem>
+                                            <ListItemIcon>
+                                                <Warehouse color="primary" />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary="Entrepôt principal"
+                                                secondary={
+                                                    <Box component="span">
+                                                        <strong>{product.warehouse_name}</strong> ({product.warehouse_code})
+                                                        {product.warehouse_location && (
+                                                            <Box component="span" display="block" variant="caption">
+                                                                📍 {product.warehouse_location}
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                }
+                                            />
+                                        </ListItem>
+                                    )}
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Disponibilité"
+                                            secondary={product.is_active ? 'Disponible' : 'Indisponible'}
+                                        />
+                                    </ListItem>
+                                </List>
+                            </CardContent>
+                        </Card>
 
-                    {/* Prévisions IA */}
-                    {(product.ai_demand_forecast && Object.keys(product.ai_demand_forecast).length > 0) ||
-                        (product.ai_price_trend && Object.keys(product.ai_price_trend).length > 0) && (
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Assessment color="primary" />
-                                        Analyses IA
-                                    </Typography>
-                                    <Grid container spacing={2}>
-                                        {product.ai_demand_forecast && Object.keys(product.ai_demand_forecast).length > 0 && (
-                                            <Grid item xs={12} sm={6}>
-                                                <Typography variant="subtitle2" gutterBottom>
-                                                    Prévision de demande
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {JSON.stringify(product.ai_demand_forecast)}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                        {product.ai_price_trend && Object.keys(product.ai_price_trend).length > 0 && (
-                                            <Grid item xs={12} sm={6}>
-                                                <Typography variant="subtitle2" gutterBottom>
-                                                    Tendance des prix
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {JSON.stringify(product.ai_price_trend)}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        )}
+                        {/* Calculateur de prix */}
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Calculateur de prix
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    Prix selon la quantité commandée
+                                </Typography>
+
+                                {[1, 5, 10, product.bulk_quantity].filter(Boolean).map((qty) => (
+                                    <Box key={qty} sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                                        <Typography variant="body2">
+                                            {qty} unité{qty > 1 ? 's' : ''}
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {formatCurrency(getEffectivePrice(qty))}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        {/* Dates */}
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Informations système
+                                </Typography>
+                                <List dense>
+                                    <ListItem>
+                                        <ListItemIcon>
+                                            <Schedule />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary="Date de création"
+                                            secondary={formatDate(product.created_at)}
+                                        />
+                                    </ListItem>
+                                    <ListItem>
+                                        <ListItemIcon>
+                                            <Schedule />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary="Dernière modification"
+                                            secondary={formatDate(product.updated_at)}
+                                        />
+                                    </ListItem>
+                                </List>
+                            </CardContent>
+                        </Card>
+                    </Grid>
                 </Grid>
-
-                {/* Sidebar */}
-                <Grid item xs={12} md={4}>
-                    {/* Stock */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Inventory color="primary" />
-                                Gestion du stock
-                            </Typography>
-
-                            {stockStatus && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                    <Chip
-                                        icon={stockStatus.icon}
-                                        label={stockStatus.label}
-                                        color={stockStatus.color}
-                                        size="large"
-                                    />
-                                </Box>
-                            )}
-
-                            <List dense>
-                                <ListItem>
-                                    <ListItemText
-                                        primary="Quantité en stock"
-                                        secondary={product.stock_quantity || 'Non spécifié'}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText
-                                        primary="Commande minimum"
-                                        secondary={product.minimum_order_quantity}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText
-                                        primary="Disponibilité"
-                                        secondary={product.is_available ? 'Disponible' : 'Indisponible'}
-                                    />
-                                </ListItem>
-                            </List>
-                        </CardContent>
-                    </Card>
-
-                    {/* Calculateur de prix */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Calculateur de prix
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                Prix selon la quantité commandée
-                            </Typography>
-
-                            {[1, 5, 10, product.bulk_quantity].filter(Boolean).map((qty) => (
-                                <Box key={qty} sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-                                    <Typography variant="body2">
-                                        {qty} unité{qty > 1 ? 's' : ''}
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {formatCurrency(getEffectivePrice(qty))}
-                                    </Typography>
-                                </Box>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    {/* Dates */}
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Informations système
-                            </Typography>
-                            <List dense>
-                                <ListItem>
-                                    <ListItemIcon>
-                                        <Schedule />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="Date de création"
-                                        secondary={formatDate(product.created_at)}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemIcon>
-                                        <Schedule />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="Dernière modification"
-                                        secondary={formatDate(product.updated_at)}
-                                    />
-                                </ListItem>
-                            </List>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
             )}
 
-            {activeTab === 1 && product.product_type === 'physical' && (
+            {/* Tab Factures */}
+            {activeTab === 1 && (
+                <Box>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Receipt color="primary" />
+                        Factures associées
+                    </Typography>
+                    <ProductInvoicesTable
+                        invoices={statistics?.recent_invoices}
+                        loading={statsLoading}
+                    />
+                </Box>
+            )}
+
+            {/* Tab Clients */}
+            {activeTab === 2 && (
+                <Box>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <People color="primary" />
+                        Clients ayant acheté ce produit
+                    </Typography>
+                    <ProductClientsTable
+                        clients={statistics?.top_clients}
+                        loading={statsLoading}
+                    />
+                </Box>
+            )}
+
+            {/* Tab Historique Stock */}
+            {activeTab === 3 && product.product_type === 'physical' && (
                 <StockMovementsTab productId={id} productType={product.product_type} />
             )}
         </Box>

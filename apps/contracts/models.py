@@ -331,3 +331,49 @@ class ContractDocument(models.Model):
         if self.file:
             self.file_size = self.file.size
         super().save(*args, **kwargs)
+
+
+class ContractItem(models.Model):
+    """Produits couverts par un contrat"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name=_("Contrat")
+    )
+    product = models.ForeignKey(
+        'invoicing.Product',
+        on_delete=models.CASCADE,
+        related_name='contract_items',
+        verbose_name=_("Produit")
+    )
+    
+    # Prix contractuel
+    contracted_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix contractuel")
+    )
+    min_quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name=_("Quantité minimum")
+    )
+    max_quantity = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Quantité maximum")
+    )
+    
+    # Dates
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Article de contrat")
+        verbose_name_plural = _("Articles de contrat")
+        unique_together = ['contract', 'product']
+        ordering = ['contract', 'product']
+    
+    def __str__(self):
+        return f"{self.contract.contract_number} - {self.product.name}"

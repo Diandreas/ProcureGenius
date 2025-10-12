@@ -97,6 +97,7 @@ export const productsAPI = {
   stockMovements: (id, params) => api.get(`/products/${id}/stock_movements/`, { params }),
   adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
+  getStatistics: (id) => api.get(`/products/${id}/statistics/`),
   quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 

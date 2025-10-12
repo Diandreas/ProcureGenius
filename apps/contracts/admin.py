@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contract, ContractClause, ContractMilestone, ContractDocument
+from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractItem
 
 
 @admin.register(Contract)
@@ -59,3 +59,12 @@ class ContractDocumentAdmin(admin.ModelAdmin):
     list_filter = ['document_type', 'uploaded_at']
     search_fields = ['title', 'description', 'contract__contract_number']
     readonly_fields = ['file_size', 'mime_type', 'uploaded_at']
+
+
+@admin.register(ContractItem)
+class ContractItemAdmin(admin.ModelAdmin):
+    list_display = ['contract', 'product', 'contracted_price', 'min_quantity', 'max_quantity', 'created_at']
+    list_filter = ['created_at', 'contract__status']
+    search_fields = ['contract__contract_number', 'product__name', 'product__reference']
+    readonly_fields = ['created_at', 'updated_at']
+    autocomplete_fields = ['contract', 'product']

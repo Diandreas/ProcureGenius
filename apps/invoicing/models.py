@@ -118,6 +118,14 @@ class Product(models.Model):
         verbose_name=_("Catégorie")
     )
     supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='products', verbose_name="Fournisseur")
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        verbose_name=_("Entrepôt principal")
+    )
 
     # Prix
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de vente")
@@ -612,10 +620,19 @@ class InvoiceItem(models.Model):
     """Article d'une facture"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items', verbose_name=_("Facture"))
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoice_items',
+        verbose_name=_("Produit"),
+        help_text=_("Produit facturé (si applicable)")
+    )
     
     # Informations service/produit
     service_code = models.CharField(max_length=100, verbose_name=_("Code service"), default="SVC-001")
-    product_reference = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Référence produit"))
+    product_reference = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Référence produit"), help_text=_("Référence manuelle si produit non lié"))
     description = models.CharField(max_length=500, verbose_name=_("Description"))
     detailed_description = models.TextField(blank=True, default="", verbose_name=_("Description détaillée"))
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)], verbose_name=_("Quantité"))
@@ -641,6 +658,13 @@ class InvoiceItem(models.Model):
 
     def save(self, *args, **kwargs):
         from decimal import Decimal
+        
+        # Synchroniser product_reference si product défini
+        if self.product:
+            self.product_reference = self.product.reference
+            if not self.description or self.description == "":
+                self.description = self.product.name
+        
         # Calcul avec remise
         base_total = self.quantity * self.unit_price
         discount_amount = base_total * (self.discount_percent / Decimal('100'))

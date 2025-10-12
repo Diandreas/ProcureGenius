@@ -18,10 +18,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings')
 django.setup()
 
 # Imports des modèles
-from apps.accounts.models import Tenant, Domain, CustomUser, UserPreferences
-from apps.suppliers.models import Supplier, Product, Client, ProductCategory
+from apps.accounts.models import CustomUser
+from apps.suppliers.models import Supplier
+from apps.invoicing.models import Product, ProductCategory, Invoice, InvoiceItem, Payment
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Payment
 from apps.ai_assistant.models import AIConversation, AIMessage, AIAction
 
 User = get_user_model()

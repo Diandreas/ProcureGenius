@@ -39,25 +39,31 @@ import {
   FilterList,
   AttachMoney,
   Business,
+  Warehouse,
+  TrendingUp,
+  Receipt,
 } from '@mui/icons-material';
-import { productsAPI } from '../../services/api';
+import { productsAPI, warehousesAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 import ErrorState from '../../components/ErrorState';
 
 function Products() {
   const [products, setProducts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [warehouseFilter, setWarehouseFilter] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     fetchProducts();
+    fetchWarehouses();
   }, []);
 
   const fetchProducts = async () => {
@@ -70,6 +76,15 @@ function Products() {
       console.error('Error fetching products:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWarehouses = async () => {
+    try {
+      const response = await warehousesAPI.list();
+      setWarehouses(response.data.results || response.data);
+    } catch (err) {
+      console.error('Error fetching warehouses:', err);
     }
   };
 
@@ -96,18 +111,21 @@ function Products() {
   const filteredProducts = products.filter(product => {
     const matchesSearch = !searchTerm ||
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.barcode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = !categoryFilter || product.category?.id === categoryFilter;
 
-    const matchesStatus = !statusFilter ||
-      (statusFilter === 'available' && product.is_available) ||
-      (statusFilter === 'unavailable' && !product.is_available) ||
-      (statusFilter === 'low_stock' && getStockStatus(product)?.color === 'warning') ||
-      (statusFilter === 'out_of_stock' && getStockStatus(product)?.color === 'error');
+    const matchesWarehouse = !warehouseFilter || product.warehouse === warehouseFilter;
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    const matchesStatus = !statusFilter ||
+      (statusFilter === 'available' && product.is_active) ||
+      (statusFilter === 'unavailable' && !product.is_active) ||
+      (statusFilter === 'low_stock' && product.is_low_stock) ||
+      (statusFilter === 'out_of_stock' && product.is_out_of_stock);
+
+    return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus;
   });
 
   const MobileProductCard = ({ product }) => {
@@ -171,7 +189,7 @@ function Products() {
             </Typography>
           </Box>
 
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.25}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Inventory fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
               <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
@@ -186,10 +204,25 @@ function Products() {
                 />
               )}
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-              {formatDate(product.created_at)}
-            </Typography>
+            {product.total_invoices > 0 && (
+              <Chip
+                icon={<Receipt sx={{ fontSize: 14 }} />}
+                label={product.total_invoices}
+                size="small"
+                color="info"
+                sx={{ fontSize: '0.65rem', height: 18 }}
+              />
+            )}
           </Box>
+
+          {product.warehouse_name && (
+            <Box display="flex" alignItems="center" mb={0.75}>
+              <Warehouse fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem', mr: 0.5 }} />
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                {product.warehouse_code}
+              </Typography>
+            </Box>
+          )}
 
           <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
 
@@ -322,7 +355,7 @@ function Products() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={2.5}>
               <FormControl fullWidth size="small">
                 <InputLabel>Catégorie</InputLabel>
                 <Select
@@ -336,6 +369,24 @@ function Products() {
                 </Select>
               </FormControl>
             </Grid>
+            <Grid item xs={12} sm={2.5}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Entrepôt</InputLabel>
+                <Select
+                  value={warehouseFilter}
+                  onChange={(e) => setWarehouseFilter(e.target.value)}
+                  label="Entrepôt"
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="">Tous</MenuItem>
+                  {warehouses.map((warehouse) => (
+                    <MenuItem key={warehouse.id} value={warehouse.id}>
+                      {warehouse.name} ({warehouse.code})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
             <Grid item xs={12} sm={2}>
               <Button
                 fullWidth
@@ -344,6 +395,7 @@ function Products() {
                   setSearchTerm('');
                   setCategoryFilter('');
                   setStatusFilter('');
+                  setWarehouseFilter('');
                 }}
                 sx={{
                   borderRadius: 2,
@@ -400,10 +452,11 @@ function Products() {
                   <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Produit</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Fournisseur</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Entrepôt</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Prix</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Stock</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Ventes</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Disponibilité</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Date création</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -460,21 +513,33 @@ function Products() {
                                 sx={{ cursor: 'pointer', fontSize: '0.875rem' }}
                                 onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
                               >
-                                {product.supplier.name}
+                                {product.supplier_name || product.supplier.name}
                               </Typography>
                             </Box>
                           )}
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
+                          {product.warehouse_name ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Warehouse fontSize="small" color="action" />
+                              <Box>
+                                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                                  {product.warehouse_code}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                  {product.warehouse_name}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">-</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                              {formatCurrency(product.unit_price)}
+                              {formatCurrency(product.price)}
                             </Typography>
-                            {product.bulk_price && (
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                                Gros: {formatCurrency(product.bulk_price)}
-                              </Typography>
-                            )}
                           </Box>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
@@ -494,17 +559,29 @@ function Products() {
                           </Box>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
+                          {product.total_invoices > 0 ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Receipt fontSize="small" color="info" />
+                              <Box>
+                                <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                                  {product.total_invoices}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                  {formatCurrency(product.total_sales_amount || 0)}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">Aucune</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Chip
-                            label={getAvailabilityLabel(product.is_available)}
-                            color={getAvailabilityColor(product.is_available)}
+                            label={product.is_active ? 'Disponible' : 'Indisponible'}
+                            color={product.is_active ? 'success' : 'error'}
                             size="small"
                             sx={{ fontSize: '0.7rem' }}
                           />
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                            {formatDate(product.created_at)}
-                          </Typography>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>

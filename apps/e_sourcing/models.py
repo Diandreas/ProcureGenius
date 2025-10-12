@@ -281,6 +281,14 @@ class BidItem(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bid = models.ForeignKey(SupplierBid, on_delete=models.CASCADE, related_name='items', verbose_name=_("Soumission"))
+    product = models.ForeignKey(
+        'invoicing.Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='bid_items',
+        verbose_name=_("Produit catalogue")
+    )
 
     # Informations produit/service
     product_reference = models.CharField(max_length=100, verbose_name=_("Référence produit"))
@@ -311,6 +319,14 @@ class BidItem(models.Model):
         return f"{self.product_reference} - {self.description}"
 
     def save(self, *args, **kwargs):
+        # Synchroniser avec product si défini
+        if self.product:
+            self.product_reference = self.product.reference
+            if not self.description or self.description == "":
+                self.description = self.product.name
+            if not self.unit_price or self.unit_price == 0:
+                self.unit_price = self.product.price
+        
         # Calcul automatique du prix total
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)

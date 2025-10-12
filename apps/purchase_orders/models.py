@@ -143,8 +143,10 @@ class PurchaseOrder(models.Model):
 
         for item in self.items.all():
             try:
-                # Chercher le produit par référence
-                product = Product.objects.filter(reference=item.product_reference).first()
+                # Utiliser FK product directement ou chercher par référence en fallback
+                product = item.product
+                if not product and item.product_reference:
+                    product = Product.objects.filter(reference=item.product_reference).first()
 
                 if product and product.product_type == 'physical':
                     # Ajuster le stock
@@ -184,6 +186,14 @@ class PurchaseOrderItem(models.Model):
     """Article d'un bon de commande"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items', verbose_name=_("Bon de commande"))
+    product = models.ForeignKey(
+        'invoicing.Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='purchase_order_items',
+        verbose_name=_("Produit")
+    )
 
     # Informations produit
     product_reference = models.CharField(max_length=100, default="REF-001", verbose_name=_("Référence produit"))
@@ -214,6 +224,14 @@ class PurchaseOrderItem(models.Model):
         return f"{self.product_reference} - {self.description}"
 
     def save(self, *args, **kwargs):
+        # Synchroniser avec product si défini
+        if self.product:
+            self.product_reference = self.product.reference
+            if not self.description or self.description == "":
+                self.description = self.product.name
+            if not self.unit_price or self.unit_price == 0:
+                self.unit_price = self.product.cost_price or self.product.price
+        
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
         # Recalculer les totaux du bon de commande
