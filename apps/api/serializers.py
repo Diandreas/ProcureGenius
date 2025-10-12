@@ -164,7 +164,7 @@ class ClientSerializer(serializers.ModelSerializer):
     total_paid_amount = serializers.SerializerMethodField()
     total_outstanding = serializers.SerializerMethodField()
     last_invoice_date = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Client
         fields = [
@@ -179,6 +179,12 @@ class ClientSerializer(serializers.ModelSerializer):
             'total_invoices', 'total_sales_amount', 'total_paid_amount',
             'total_outstanding', 'last_invoice_date'
         ]
+
+    def validate_name(self, value):
+        """Valider que le nom n'est pas vide"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Le nom du client est obligatoire.")
+        return value.strip()
     
     def get_total_invoices(self, obj):
         return obj.invoices.count()
@@ -218,78 +224,224 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les bons de commande"""
-    items = PurchaseOrderItemSerializer(many=True, read_only=True)
+    items = PurchaseOrderItemSerializer(many=True, required=False)
+    
+    # Nested serializers pour read (affichage complet)
+    supplier_detail = SupplierSerializer(source='supplier', read_only=True)
+    created_by_detail = UserSerializer(source='created_by', read_only=True)
+    
+    # Champs simples pour rétrocompatibilité
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    
+
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
-        'suppliers': ['supplier', 'supplier_name'],
+        'suppliers': ['supplier', 'supplier_name', 'supplier_detail'],
     }
 
     class Meta:
         model = PurchaseOrder
         fields = [
-            'id', 'po_number', 'title', 'description', 'supplier', 'supplier_name',
+            'id', 'po_number', 'title', 'description', 
+            'supplier', 'supplier_name', 'supplier_detail',
             'status', 'priority', 'subtotal', 'tax_gst_hst', 'tax_qst',
             'total_amount', 'required_date', 'expected_delivery_date',
-            'delivery_address', 'notes', 'created_by', 'created_by_name',
+            'delivery_address', 'notes', 
+            'created_by', 'created_by_name', 'created_by_detail',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
             'id', 'po_number', 'subtotal', 'total_amount',
-            'created_at', 'updated_at', 'created_by'
+            'created_at', 'updated_at', 'created_by', 
+            'supplier_name', 'created_by_name',
+            'supplier_detail', 'created_by_detail'
         ]
     
+    def to_representation(self, instance):
+        """Surcharger pour renvoyer supplier et created_by comme objets complets"""
+        representation = super().to_representation(instance)
+        
+        # Remplacer supplier par supplier_detail si disponible
+        if representation.get('supplier_detail'):
+            representation['supplier'] = representation.pop('supplier_detail')
+        
+        # Remplacer created_by par created_by_detail si disponible
+        if representation.get('created_by_detail'):
+            representation['created_by'] = representation.pop('created_by_detail')
+        
+        return representation
+
     def create(self, validated_data):
+        from apps.purchase_orders.models import PurchaseOrderItem
+
+        items_data = validated_data.pop('items', [])
         validated_data['created_by'] = self.context['request'].user
-        return super().create(validated_data)
+
+        # Initialiser les totaux à 0 (seront recalculés après)
+        validated_data.setdefault('subtotal', 0)
+        validated_data.setdefault('total_amount', 0)
+
+        # Créer le bon de commande
+        purchase_order = PurchaseOrder.objects.create(**validated_data)
+
+        # Créer les items
+        for item_data in items_data:
+            PurchaseOrderItem.objects.create(purchase_order=purchase_order, **item_data)
+
+        # Recalculer les totaux
+        purchase_order.recalculate_totals()
+
+        return purchase_order
+
+    def update(self, instance, validated_data):
+        from apps.purchase_orders.models import PurchaseOrderItem
+
+        items_data = validated_data.pop('items', None)
+
+        # Mettre à jour le bon de commande
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Mettre à jour les items si fournis
+        if items_data is not None:
+            instance.items.all().delete()
+            for item_data in items_data:
+                PurchaseOrderItem.objects.create(purchase_order=instance, **item_data)
+            instance.recalculate_totals()
+
+        return instance
 
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de facture"""
     total = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True, source='total_price')
+    product_name = serializers.CharField(source='product.name', read_only=True)
 
     class Meta:
         model = InvoiceItem
         fields = [
-            'id', 'product_reference', 'description', 'quantity',
+            'id', 'product', 'product_reference', 'product_name', 'description', 'quantity',
             'unit_price', 'discount_percent', 'total'
         ]
-        read_only_fields = ['id', 'total']
+        read_only_fields = ['id', 'total', 'product_name']
+    
+    def validate(self, attrs):
+        """Valider la disponibilité du stock pour les produits physiques"""
+        product = attrs.get('product')
+        quantity = attrs.get('quantity', 1)
+        
+        # Vérifier le stock uniquement si un produit est lié
+        if product and product.product_type == 'physical':
+            # Si c'est une modification, prendre en compte la quantité précédente
+            if self.instance:
+                previous_quantity = self.instance.quantity
+                stock_needed = quantity - previous_quantity
+            else:
+                stock_needed = quantity
+            
+            # Vérifier si le stock est suffisant
+            if stock_needed > 0 and product.stock_quantity < stock_needed:
+                raise serializers.ValidationError({
+                    'quantity': f"Stock insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
+                })
+        
+        return attrs
 
 
 class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les factures"""
-    items = InvoiceItemSerializer(many=True, read_only=True)
-    client_name = serializers.CharField(source='client.username', read_only=True)
+    items = InvoiceItemSerializer(many=True, required=False)
+    
+    # Nested serializers pour read (affichage complet)
+    client_detail = ClientSerializer(source='client', read_only=True)
+    created_by_detail = UserSerializer(source='created_by', read_only=True)
+    
+    # Champs simples pour rétrocompatibilité
+    client_name = serializers.CharField(source='client.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     purchase_order_number = serializers.CharField(source='purchase_order.po_number', read_only=True, required=False)
-    
+
     # Hide fields for disabled modules
     module_dependent_fields = {
         'purchase-orders': ['purchase_order', 'purchase_order_number'],
-        'clients': ['client', 'client_name'],
+        'clients': ['client', 'client_name', 'client_detail'],
     }
 
     class Meta:
         model = Invoice
         fields = [
-            'id', 'invoice_number', 'title', 'description', 'client', 'client_name',
+            'id', 'invoice_number', 'title', 'description', 
+            'client', 'client_name', 'client_detail',
             'status', 'currency', 'subtotal', 'tax_amount',
             'total_amount', 'due_date', 'payment_method',
-            'billing_address', 'payment_terms', 'purchase_order', 'purchase_order_number',
-            'created_by', 'created_by_name',
+            'billing_address', 'payment_terms', 
+            'purchase_order', 'purchase_order_number',
+            'created_by', 'created_by_name', 'created_by_detail',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
             'id', 'invoice_number', 'subtotal', 'total_amount',
-            'created_at', 'updated_at', 'created_by', 'purchase_order_number'
+            'created_at', 'updated_at', 'created_by', 
+            'purchase_order_number', 'client_name', 'created_by_name',
+            'client_detail', 'created_by_detail'
         ]
     
+    def to_representation(self, instance):
+        """Surcharger pour renvoyer client et created_by comme objets complets"""
+        representation = super().to_representation(instance)
+        
+        # Remplacer client par client_detail si disponible
+        if representation.get('client_detail'):
+            representation['client'] = representation.pop('client_detail')
+        
+        # Remplacer created_by par created_by_detail si disponible
+        if representation.get('created_by_detail'):
+            representation['created_by'] = representation.pop('created_by_detail')
+        
+        return representation
+
     def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
         validated_data['created_by'] = self.context['request'].user
-        return super().create(validated_data)
+
+        # Initialiser les totaux à 0 (seront recalculés après)
+        validated_data.setdefault('subtotal', 0)
+        validated_data.setdefault('total_amount', 0)
+
+        # Créer la facture
+        invoice = Invoice.objects.create(**validated_data)
+
+        # Créer les items
+        for item_data in items_data:
+            InvoiceItem.objects.create(invoice=invoice, **item_data)
+
+        # Recalculer les totaux
+        invoice.recalculate_totals()
+
+        return invoice
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+
+        # Mettre à jour la facture
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Mettre à jour les items si fournis
+        if items_data is not None:
+            # Supprimer les anciens items
+            instance.items.all().delete()
+
+            # Créer les nouveaux items
+            for item_data in items_data:
+                InvoiceItem.objects.create(invoice=instance, **item_data)
+
+            # Recalculer les totaux
+            instance.recalculate_totals()
+
+        return instance
 
 
 # Serializers pour ProductCategory et Warehouse

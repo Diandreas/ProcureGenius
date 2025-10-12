@@ -23,7 +23,9 @@
       "Read(//d/**)",
       "Bash(del \"D:\\project\\BFMa\\ProcureGenius\\apps\\invoicing\\migrations\\0010_product_organization_productcategory_and_more.py\")",
       "Bash(ren:*)",
-      "Bash(rename:*)"
+      "Bash(rename:*)",
+      "Bash(cd:*)",
+      "Bash(more:*)"
     ],
     "deny": [],
     "ask": []

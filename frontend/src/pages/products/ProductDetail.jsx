@@ -126,22 +126,18 @@ function ProductDetail() {
     };
 
     const getStockStatus = () => {
-        if (!product.stock_quantity) return null;
+        if (!product || product.product_type !== 'physical') return null;
 
-        if (product.stock_quantity === 0) {
+        const stockQty = product.stock_quantity ?? 0;
+        const threshold = product.low_stock_threshold ?? 5;
+
+        if (stockQty === 0) {
             return { label: 'Rupture de stock', color: 'error', icon: <Warning /> };
-        } else if (product.stock_quantity <= product.minimum_order_quantity) {
+        } else if (stockQty <= threshold) {
             return { label: 'Stock bas', color: 'warning', icon: <Warning /> };
         } else {
             return { label: 'En stock', color: 'success', icon: <CheckCircle /> };
         }
-    };
-
-    const getEffectivePrice = (quantity = 1) => {
-        if (product.bulk_price && product.bulk_quantity && quantity >= product.bulk_quantity) {
-            return product.bulk_price;
-        }
-        return product.unit_price;
     };
 
     if (loading) {
@@ -239,13 +235,13 @@ function ProductDetail() {
                                                 {product.name}
                                             </Typography>
                                             <Chip
-                                                icon={getAvailabilityIcon(product.is_available)}
-                                                label={product.is_available ? 'Disponible' : 'Indisponible'}
-                                                color={product.is_available ? 'success' : 'error'}
+                                                icon={getAvailabilityIcon(product.is_active)}
+                                                label={product.is_active ? 'Disponible' : 'Indisponible'}
+                                                color={product.is_active ? 'success' : 'error'}
                                             />
                                         </Box>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            SKU: {product.sku}
+                                            Réf: {product.reference}
                                         </Typography>
                                         {product.category && (
                                             <Chip
@@ -302,24 +298,26 @@ function ProductDetail() {
                                                         sx={{ cursor: 'pointer', fontWeight: 'medium' }}
                                                         onClick={() => navigate(`/suppliers/${product.supplier.id}`)}
                                                     >
-                                                        {product.supplier.name}
+                                                        {product.supplier_name || product.supplier.name}
                                                     </Typography>
                                                 </Box>
                                             </Box>
                                         </Grid>
                                     )}
 
-                                    <Grid item xs={12} sm={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <LocalShipping color="action" />
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Délai de livraison
-                                                </Typography>
-                                                <Typography>{product.lead_time_days} jours</Typography>
+                                    {product.lead_time_days && (
+                                        <Grid item xs={12} sm={6}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <LocalShipping color="action" />
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Délai de livraison
+                                                    </Typography>
+                                                    <Typography>{product.lead_time_days} jours</Typography>
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                    </Grid>
+                                        </Grid>
+                                    )}
                                 </Grid>
                             </CardContent>
                         </Card>
@@ -335,32 +333,42 @@ function ProductDetail() {
                                     <Grid item xs={12} sm={6}>
                                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
                                             <Typography variant="h4" color="primary">
-                                                {formatCurrency(product.unit_price)}
+                                                {formatCurrency(product.price)}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                Prix unitaire
+                                                Prix de vente
                                             </Typography>
                                         </Box>
                                     </Grid>
 
-                                    {product.bulk_price && product.bulk_quantity && (
+                                    {product.cost_price > 0 && (
                                         <Grid item xs={12} sm={6}>
-                                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
-                                                <Typography variant="h4" color="success.main">
-                                                    {formatCurrency(product.bulk_price)}
+                                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'info.50', borderRadius: 1 }}>
+                                                <Typography variant="h4" color="info.main">
+                                                    {formatCurrency(product.cost_price)}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Prix en gros (min. {product.bulk_quantity})
+                                                    Prix d'achat
                                                 </Typography>
                                             </Box>
                                         </Grid>
                                     )}
 
-                                    <Grid item xs={12}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Quantité minimum de commande: {product.minimum_order_quantity}
-                                        </Typography>
-                                    </Grid>
+                                    {product.margin && product.margin > 0 && (
+                                        <Grid item xs={12}>
+                                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    Marge bénéficiaire
+                                                </Typography>
+                                                <Typography variant="h6" color="success.main">
+                                                    {formatCurrency(product.margin)}
+                                                    {product.margin_percent && (
+                                                        <> ({parseFloat(product.margin_percent).toFixed(1)}%)</>
+                                                    )}
+                                                </Typography>
+                                            </Box>
+                                        </Grid>
+                                    )}
                                 </Grid>
                             </CardContent>
                         </Card>
@@ -423,12 +431,14 @@ function ProductDetail() {
                                 )}
 
                                 <List dense>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary="Quantité en stock"
-                                            secondary={product.stock_quantity || 'Non spécifié'}
-                                        />
-                                    </ListItem>
+                                    {product.product_type === 'physical' && (
+                                        <ListItem>
+                                            <ListItemText
+                                                primary="Quantité en stock"
+                                                secondary={product.stock_quantity ?? 0}
+                                            />
+                                        </ListItem>
+                                    )}
                                     {product.warehouse_name && (
                                         <ListItem>
                                             <ListItemIcon>
@@ -451,8 +461,8 @@ function ProductDetail() {
                                     )}
                                     <ListItem>
                                         <ListItemText
-                                            primary="Disponibilité"
-                                            secondary={product.is_active ? 'Disponible' : 'Indisponible'}
+                                            primary="Statut"
+                                            secondary={product.is_active ? 'Actif' : 'Inactif'}
                                         />
                                     </ListItem>
                                 </List>
@@ -469,13 +479,13 @@ function ProductDetail() {
                                     Prix selon la quantité commandée
                                 </Typography>
 
-                                {[1, 5, 10, product.bulk_quantity].filter(Boolean).map((qty) => (
-                                    <Box key={qty} sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                                {[1, 5, 10, 20, 50].map((qty) => (
+                                    <Box key={qty} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                         <Typography variant="body2">
                                             {qty} unité{qty > 1 ? 's' : ''}
                                         </Typography>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            {formatCurrency(getEffectivePrice(qty))}
+                                        <Typography variant="body2" fontWeight="medium" color="primary.main">
+                                            {formatCurrency(product.price * qty)}
                                         </Typography>
                                     </Box>
                                 ))}

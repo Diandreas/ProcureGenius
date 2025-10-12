@@ -360,7 +360,7 @@ class Invoice(models.Model):
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
     client = models.ForeignKey('accounts.Client', on_delete=models.PROTECT, related_name='invoices', null=True, blank=True, verbose_name=_("Client"))
-    purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Bon de commande associé"))
+    purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, related_name='invoices', null=True, blank=True, verbose_name=_("Bon de commande associé"))
 
     # Informations de facturation
     billing_address = models.TextField(blank=True, verbose_name=_("Adresse de facturation"))
@@ -410,7 +410,7 @@ class Invoice(models.Model):
 
     def generate_qr_code(self):
         """Génère un QR code pour la facture"""
-        client_name = self.client.get_full_name() if self.client else "Client"
+        client_name = self.client.name if self.client else "Client non spécifié"
         qr_data = f"FACTURE-{self.invoice_number}-{self.total_amount}{self.currency}-{client_name}"
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(qr_data)
@@ -443,6 +443,67 @@ class Invoice(models.Model):
             next_number = 1
 
         return f"FAC{year}{month:02d}{next_number:04d}"
+    
+    def get_balance_due(self):
+        """Calcule le solde restant à payer"""
+        from decimal import Decimal
+        total_payments = sum(Decimal(str(p.amount)) for p in self.payments.all())
+        return Decimal(str(self.total_amount)) - total_payments
+
+    def get_payment_status(self):
+        """Retourne le statut de paiement: unpaid, partial, paid"""
+        from decimal import Decimal
+        balance = self.get_balance_due()
+        
+        if balance <= Decimal('0'):
+            return 'paid'
+        elif balance < Decimal(str(self.total_amount)):
+            return 'partial'
+        else:
+            return 'unpaid'
+
+    def update_status_from_payments(self):
+        """Met à jour le statut selon les paiements reçus"""
+        payment_status = self.get_payment_status()
+        
+        if payment_status == 'paid':
+            self.status = 'paid'
+        elif payment_status == 'partial':
+            # Garder le statut actuel si c'est 'sent' ou 'overdue'
+            if self.status in ['draft', 'paid']:
+                self.status = 'sent'
+        # Ne rien changer si unpaid (garder sent/overdue/draft)
+        
+        self.save(update_fields=['status'])
+
+    @property
+    def is_overdue(self):
+        """Vérifie si la facture est en retard"""
+        from django.utils import timezone
+        if self.status in ['paid', 'cancelled', 'draft']:
+            return False
+        return self.due_date < timezone.now().date()
+
+    @property
+    def days_overdue(self):
+        """Nombre de jours de retard (0 si pas en retard)"""
+        from django.utils import timezone
+        if not self.is_overdue:
+            return 0
+        delta = timezone.now().date() - self.due_date
+        return delta.days
+
+    @property
+    def days_until_due(self):
+        """Nombre de jours avant échéance (négatif si en retard)"""
+        from django.utils import timezone
+        delta = self.due_date - timezone.now().date()
+        return delta.days
+
+    @property
+    def items_count(self):
+        """Nombre d'éléments dans la facture"""
+        return self.items.count()
 
     @classmethod
     def create_with_items(cls, created_by, title, due_date, items_data, **kwargs):
@@ -856,3 +917,91 @@ class PrintHistory(models.Model):
 
     def __str__(self):
         return f"{self.get_document_type_display()} {self.document_number} - {self.printed_at.strftime('%d/%m/%Y %H:%M')}"
+
+
+class Payment(models.Model):
+    """Paiement d'une facture"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Relations
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name=_("Facture")
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='payments_created',
+        verbose_name=_("Créé par")
+    )
+    
+    # Informations de paiement
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Montant")
+    )
+    payment_date = models.DateField(verbose_name=_("Date de paiement"))
+    payment_method = models.CharField(
+        max_length=50,
+        choices=[
+            ('cash', _('Comptant')),
+            ('check', _('Chèque')),
+            ('credit_card', _('Carte de crédit')),
+            ('bank_transfer', _('Virement bancaire')),
+            ('paypal', _('PayPal')),
+            ('other', _('Autre')),
+        ],
+        default='bank_transfer',
+        verbose_name=_("Mode de paiement")
+    )
+    reference_number = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_("Numéro de référence")
+    )
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    
+    # Audit
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Paiement")
+        verbose_name_plural = _("Paiements")
+        ordering = ['-payment_date', '-created_at']
+        indexes = [
+            models.Index(fields=['invoice', 'payment_date']),
+            models.Index(fields=['payment_method']),
+        ]
+    
+    def __str__(self):
+        return f"Paiement {self.amount} pour {self.invoice.invoice_number}"
+    
+    def clean(self):
+        """Validation du paiement"""
+        from django.core.exceptions import ValidationError
+        from decimal import Decimal
+        
+        # Vérifier que le montant ne dépasse pas le solde dû
+        if self.invoice_id:
+            balance_due = self.invoice.get_balance_due()
+            # Si c'est une modification, exclure le paiement actuel du calcul
+            if self.pk:
+                balance_due += self.amount
+            
+            if self.amount > balance_due:
+                raise ValidationError(
+                    f"Le montant du paiement ({self.amount}) dépasse le solde dû ({balance_due})"
+                )
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
+        # Mettre à jour le statut de la facture après le paiement
+        if self.invoice_id:
+            self.invoice.update_status_from_payments()

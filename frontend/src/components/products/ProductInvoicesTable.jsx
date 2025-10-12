@@ -76,7 +76,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         <Person sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
-                                        {invoice.client_name}
+                                        {invoice.client_name || 'Aucun client'}
                                     </Typography>
                                 </Box>
                                 <Typography variant="body2" fontWeight="bold">
@@ -140,7 +140,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                                 <Box display="flex" alignItems="center">
                                     <Person sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
                                     <Typography variant="body2">
-                                        {invoice.client_name}
+                                        {invoice.client_name || 'Aucun client'}
                                     </Typography>
                                 </Box>
                             </TableCell>

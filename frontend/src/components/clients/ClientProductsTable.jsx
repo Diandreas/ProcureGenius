@@ -81,14 +81,14 @@ function ClientProductsTable({ products, loading }) {
                                 >
                                     <Inventory />
                                 </Avatar>
-                                <Box flexGrow={1}>
-                                    <Typography variant="body2" fontWeight="bold">
-                                        {product.product__name}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Réf: {product.product__reference}
-                                    </Typography>
-                                </Box>
+                                    <Box flexGrow={1}>
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {product.product__name || 'Produit non disponible'}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Réf: {product.product__reference || 'N/A'}
+                                        </Typography>
+                                    </Box>
                             </Box>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <Chip
@@ -148,13 +148,13 @@ function ClientProductsTable({ products, loading }) {
                                         <Inventory />
                                     </Avatar>
                                     <Typography variant="body2" fontWeight="medium">
-                                        {product.product__name}
+                                        {product.product__name || 'Produit non disponible'}
                                     </Typography>
                                 </Box>
                             </TableCell>
                             <TableCell>
                                 <Typography variant="body2" color="text.secondary">
-                                    {product.product__reference}
+                                    {product.product__reference || 'N/A'}
                                 </Typography>
                             </TableCell>
                             <TableCell align="right">

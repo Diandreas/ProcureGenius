@@ -93,6 +93,42 @@ class PurchaseOrder(models.Model):
         img.save(buffer, format='PNG')
 
         return base64.b64encode(buffer.getvalue()).decode()
+    
+    @property
+    def is_overdue(self):
+        """Vérifie si le BC est en retard par rapport à required_date"""
+        from django.utils import timezone
+        if self.status in ['received', 'cancelled']:
+            return False
+        return self.required_date < timezone.now().date()
+
+    @property
+    def days_overdue(self):
+        """Nombre de jours de retard"""
+        from django.utils import timezone
+        if not self.is_overdue:
+            return 0
+        delta = timezone.now().date() - self.required_date
+        return delta.days
+
+    @property
+    def items_count(self):
+        """Nombre d'items dans le bon de commande"""
+        return self.items.count()
+
+    @property
+    def related_invoices_count(self):
+        """Nombre de factures liées à ce BC"""
+        return self.invoices.count()
+
+    def get_approval_status(self):
+        """Retourne le statut d'approbation: pending, approved, not_required"""
+        if self.status in ['draft']:
+            return 'pending'
+        elif self.approved_by is not None:
+            return 'approved'
+        else:
+            return 'not_required'
 
     @property
     def qr_code_data(self):

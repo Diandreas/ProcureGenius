@@ -342,24 +342,35 @@ class ProductViewSet(viewsets.ModelViewSet):
             total_amount=Sum('total_price')
         )
         
-        # Top clients
-        top_clients = invoice_items.values(
+        # Top clients - Reformater pour le frontend
+        top_clients_qs = invoice_items.filter(
+            invoice__client__isnull=False
+        ).values(
             'invoice__client__id',
-            'invoice__client__username',
-            'invoice__client__first_name',
-            'invoice__client__last_name'
+            'invoice__client__name',
+            'invoice__client__email'
         ).annotate(
             total_purchases=Sum('total_price'),
             purchase_count=Count('invoice', distinct=True),
             total_quantity=Sum('quantity')
         ).order_by('-total_purchases')[:10]
         
+        # Convertir au format attendu par le frontend
+        top_clients = [{
+            'invoice__client__id': str(item['invoice__client__id']),
+            'invoice__client__name': item['invoice__client__name'],
+            'invoice__client__email': item['invoice__client__email'] or '',
+            'total_purchases': float(item['total_purchases']) if item['total_purchases'] else 0,
+            'purchase_count': item['purchase_count'],
+            'total_quantity': item['total_quantity']
+        } for item in top_clients_qs]
+        
         # Factures récentes
         recent_invoices = invoice_items.select_related('invoice', 'invoice__client').order_by('-created_at')[:10]
         recent_invoices_data = [{
             'invoice_id': str(item.invoice.id),
             'invoice_number': item.invoice.invoice_number,
-            'client_name': item.invoice.client.get_full_name() if item.invoice.client else 'N/A',
+            'client_name': item.invoice.client.name if item.invoice.client else 'N/A',
             'created_at': item.invoice.created_at,
             'quantity': item.quantity,
             'total_price': float(item.total_price)
@@ -489,7 +500,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         
         # Produits les plus achetés
         from apps.invoicing.models import InvoiceItem
-        top_products = InvoiceItem.objects.filter(
+        top_products_qs = InvoiceItem.objects.filter(
             invoice__client=client,
             product__isnull=False
         ).values(
@@ -501,6 +512,16 @@ class ClientViewSet(viewsets.ModelViewSet):
             total_amount=Sum('total_price'),
             purchase_count=Count('invoice', distinct=True)
         ).order_by('-total_amount')[:10]
+        
+        # Reformater pour correspondre au frontend
+        top_products = [{
+            'product__id': item['product__id'],
+            'product__name': item['product__name'],
+            'product__reference': item['product__reference'],
+            'total_quantity': item['total_quantity'],
+            'total_amount': float(item['total_amount']) if item['total_amount'] else 0,
+            'purchase_count': item['purchase_count']
+        } for item in top_products_qs]
         
         # Factures récentes
         recent_invoices = invoices.order_by('-created_at')[:10]

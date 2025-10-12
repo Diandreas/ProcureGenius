@@ -210,118 +210,127 @@ function InvoiceDetail() {
   const MobileInvoiceInfoCard = ({ invoice }) => (
     <Card sx={{
       mb: 1.5,
-      borderRadius: 3,
-      background: 'rgba(255, 255, 255, 0.9)',
-      backdropFilter: 'blur(12px)',
-      border: '1px solid rgba(255, 255, 255, 0.3)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-      '&:hover': {
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        borderColor: 'primary.main',
-        background: 'rgba(255, 255, 255, 0.95)'
-      }
+      borderRadius: 2.5,
+      background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 252, 0.95))',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(200, 200, 220, 0.2)',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      overflow: 'hidden'
     }}>
-      <CardContent sx={{ p: 1.5 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
-          <Box>
+      <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+          <Box flex={1} mr={1}>
             <Typography variant="h6" sx={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              mb: 0.5,
-              letterSpacing: '-0.01em',
-              lineHeight: 1.3
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              mb: 0.25,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.2,
+              color: 'text.primary'
             }}>
               {invoice.title}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{
-              fontSize: '0.8rem',
-              lineHeight: 1.4
+            <Typography variant="caption" sx={{
+              fontSize: '0.7rem',
+              color: 'text.secondary',
+              fontWeight: 500,
+              letterSpacing: '0.02em'
             }}>
               {invoice.invoice_number}
             </Typography>
           </Box>
           <Chip
             icon={getStatusIcon(isOverdue() ? 'overdue' : invoice.status)}
-            label={isOverdue() ? `En retard (${getDaysOverdue()} jours)` : getStatusLabel(invoice.status)}
+            label={isOverdue() ? `${getDaysOverdue()}j retard` : getStatusLabel(invoice.status)}
             color={isOverdue() ? 'error' : getStatusColor(invoice.status)}
             size="small"
-            sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
+            sx={{
+              fontSize: '0.65rem',
+              height: 22,
+              fontWeight: 600,
+              '& .MuiChip-icon': { fontSize: '0.9rem' }
+            }}
           />
         </Box>
 
         {invoice.description && (
-          <Box mb={2}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mb: 0.5 }}>
-              Description
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-              {invoice.description}
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{
+            fontSize: '0.75rem',
+            color: 'text.secondary',
+            mb: 1,
+            lineHeight: 1.4,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
+          }}>
+            {invoice.description}
+          </Typography>
         )}
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ my: 1 }} />
 
-        <Stack direction="row" spacing={0.75} justifyContent="flex-end">
+        <Stack direction="row" spacing={0.5} justifyContent="center">
           <IconButton
             size="small"
             onClick={() => setPdfDialogOpen(true)}
             sx={{
-              bgcolor: 'rgba(25, 118, 210, 0.08)',
+              bgcolor: 'primary.50',
               color: 'primary.main',
-              width: 28,
-              height: 28,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              width: 32,
+              height: 32,
+              borderRadius: 1.5,
               '&:hover': {
                 bgcolor: 'primary.main',
                 color: 'white',
-                transform: 'scale(1.1)',
-                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
-              }
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.25)'
+              },
+              transition: 'all 0.2s'
             }}
           >
-            <PictureAsPdf fontSize="small" />
+            <PictureAsPdf sx={{ fontSize: '1.1rem' }} />
           </IconButton>
           <IconButton
             size="small"
             onClick={handleEdit}
             sx={{
-              bgcolor: 'rgba(66, 66, 66, 0.08)',
-              color: 'text.secondary',
-              width: 28,
-              height: 28,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              bgcolor: 'grey.100',
+              color: 'grey.700',
+              width: 32,
+              height: 32,
+              borderRadius: 1.5,
               '&:hover': {
-                bgcolor: 'secondary.main',
+                bgcolor: 'grey.700',
                 color: 'white',
-                transform: 'scale(1.1)',
-                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
-              }
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(100, 100, 100, 0.25)'
+              },
+              transition: 'all 0.2s'
             }}
           >
-            <Edit fontSize="small" />
+            <Edit sx={{ fontSize: '1.1rem' }} />
           </IconButton>
           {invoice.status === 'draft' && (
             <IconButton
               size="small"
               onClick={() => setSendDialogOpen(true)}
               sx={{
-                bgcolor: 'rgba(46, 125, 50, 0.08)',
+                bgcolor: 'success.50',
                 color: 'success.main',
-                width: 28,
-                height: 28,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
                 '&:hover': {
                   bgcolor: 'success.main',
                   color: 'white',
-                  transform: 'scale(1.1)',
-                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)'
-                }
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(46, 125, 50, 0.25)'
+                },
+                transition: 'all 0.2s'
               }}
             >
-              <Send fontSize="small" />
+              <Send sx={{ fontSize: '1.1rem' }} />
             </IconButton>
           )}
           {(invoice.status === 'sent' || isOverdue()) && (
@@ -329,20 +338,21 @@ function InvoiceDetail() {
               size="small"
               onClick={() => setMarkPaidDialogOpen(true)}
               sx={{
-                bgcolor: 'rgba(255, 152, 0, 0.08)',
+                bgcolor: 'warning.50',
                 color: 'warning.main',
-                width: 28,
-                height: 28,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
                 '&:hover': {
                   bgcolor: 'warning.main',
                   color: 'white',
-                  transform: 'scale(1.1)',
-                  boxShadow: '0 2px 8px rgba(255, 152, 0, 0.3)'
-                }
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(255, 152, 0, 0.25)'
+                },
+                transition: 'all 0.2s'
               }}
             >
-              <Payment fontSize="small" />
+              <Payment sx={{ fontSize: '1.1rem' }} />
             </IconButton>
           )}
         </Stack>
@@ -457,7 +467,7 @@ function InvoiceDetail() {
           <MobileInvoiceInfoCard invoice={invoice} />
 
           {/* Client Info Mobile */}
-          {invoice.client && (
+          {invoice.client ? (
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
@@ -469,10 +479,10 @@ function InvoiceDetail() {
                   </Avatar>
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {invoice.client.name}
+                      {invoice.client.name || 'Client sans nom'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {invoice.client.email}
+                      {invoice.client.email || 'Aucun email'}
                     </Typography>
                   </Box>
                 </Box>
@@ -487,120 +497,151 @@ function InvoiceDetail() {
                 </Button>
               </CardContent>
             </Card>
+          ) : (
+            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '1px dashed', borderColor: 'warning.main' }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Warning color="warning" fontSize="small" />
+                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    Aucun client associé
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  Cette facture n'a pas de client associé. Modifiez la facture pour l'ajouter.
+                </Typography>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Financial Summary Mobile */}
-          <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                Résumé financier
-              </Typography>
-              <Grid container spacing={1}>
-                <Grid item xs={4}>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
-                    <Typography variant="h6" color="primary" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                      {formatCurrency(invoice.subtotal || 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      Sous-total
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={4}>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'warning.50', borderRadius: 1 }}>
-                    <Typography variant="h6" color="warning.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                      {formatCurrency(invoice.tax_amount || 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      Taxes
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={4}>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
-                    <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                      {formatCurrency(invoice.total_amount || 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      Total
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
+          {/* Financial Summary Mobile - Ultra Compact */}
+          <Card sx={{
+            mb: 1.5,
+            borderRadius: 2.5,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+            overflow: 'hidden'
+          }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Stack spacing={0.75}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                    Sous-total
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                    {formatCurrency(invoice.subtotal || 0)}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                    Taxes
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                    {formatCurrency(invoice.tax_amount || 0)}
+                  </Typography>
+                </Box>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
+                    TOTAL
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', color: 'white', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                    {formatCurrency(invoice.total_amount || 0)}
+                  </Typography>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
 
-          {/* Items Table Mobile */}
-          <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                Articles facturés
+          {/* Items Table Mobile - Compact */}
+          <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
+                Articles ({invoice.items?.length || 0})
               </Typography>
               {invoice.items?.map((item, index) => (
-                <Box key={index} sx={{ mb: 1.5, pb: 1.5, borderBottom: index < invoice.items.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.5}>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {item.product_reference || 'N/A'}
+                <Box key={index} sx={{
+                  mb: 1,
+                  pb: 1,
+                  borderBottom: index < invoice.items.length - 1 ? '1px solid' : 'none',
+                  borderColor: 'rgba(0,0,0,0.06)'
+                }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                    <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'primary.main' }}>
+                      {item.product_reference || 'REF-?'}
                     </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
                       {formatCurrency(item.total_price)}
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
+                  <Typography variant="body2" sx={{
+                    fontSize: '0.75rem',
+                    color: 'text.secondary',
+                    mb: 0.25,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 1,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
                     {item.description}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
                     {item.quantity} × {formatCurrency(item.unit_price)}
                   </Typography>
                 </Box>
               ))}
               {(!invoice.items || invoice.items.length === 0) && (
-                <Typography color="text.secondary" sx={{ fontSize: '0.875rem', textAlign: 'center', py: 2 }}>
-                  Aucun article dans cette facture
-                </Typography>
+                <Box sx={{ textAlign: 'center', py: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    Aucun article
+                  </Typography>
+                </Box>
               )}
             </CardContent>
           </Card>
 
-          {/* Dates Mobile */}
-          <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                Dates importantes
+          {/* Dates Mobile - Compact */}
+          <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
+                Dates
               </Typography>
-              <Stack spacing={1}>
+              <Stack spacing={0.5}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                     Création
                   </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                     {formatDate(invoice.created_at)}
                   </Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                     Émission
                   </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                     {formatDate(invoice.issue_date)}
                   </Typography>
                 </Box>
                 {invoice.due_date && (
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                       Échéance
                     </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: isOverdue() ? 'error.main' : 'inherit' }}>
+                    <Typography variant="body2" sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: isOverdue() ? 'error.main' : 'success.main'
+                    }}>
                       {formatDate(invoice.due_date)}
                     </Typography>
                   </Box>
                 )}
                 {invoice.payment_date && (
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                       Paiement
                     </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'success.main' }}>
                       {formatDate(invoice.payment_date)}
                     </Typography>
                   </Box>
@@ -737,7 +778,7 @@ function InvoiceDetail() {
           {/* Sidebar */}
           <Grid item xs={12} md={4}>
             {/* Client Info */}
-            {invoice.client && (
+            {invoice.client ? (
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
@@ -749,10 +790,10 @@ function InvoiceDetail() {
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {invoice.client.name}
+                        {invoice.client.name || 'Client sans nom'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {invoice.client.email}
+                        {invoice.client.email || 'Aucun email'}
                       </Typography>
                     </Box>
                   </Box>
@@ -763,6 +804,33 @@ function InvoiceDetail() {
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
                     Voir le client
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '2px dashed', borderColor: 'warning.light' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Avatar sx={{ bgcolor: 'warning.light' }}>
+                      <Warning color="warning" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                        Aucun client associé
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Cette facture n'a pas de client
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="warning"
+                    onClick={handleEdit}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Associer un client
                   </Button>
                 </CardContent>
               </Card>
@@ -801,16 +869,16 @@ function InvoiceDetail() {
                       <ListItemText
                         primary="Date d'échéance"
                         secondary={
-                          <Box>
-                            <Typography variant="body2" color={isOverdue() ? "error" : "inherit"}>
+                          <React.Fragment>
+                            <Typography variant="body2" component="span" display="block" color={isOverdue() ? "error" : "inherit"}>
                               {formatDate(invoice.due_date)}
                             </Typography>
                             {isOverdue() && (
-                              <Typography variant="caption" color="error">
+                              <Typography variant="caption" component="span" display="block" color="error">
                                 En retard de {getDaysOverdue()} jours
                               </Typography>
                             )}
-                          </Box>
+                          </React.Fragment>
                         }
                       />
                     </ListItem>

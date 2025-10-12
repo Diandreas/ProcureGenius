@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Product, Invoice, InvoiceItem, PrintTemplate, PrintConfiguration, PrintHistory
+from .models import Product, Invoice, InvoiceItem, Payment, PrintTemplate, PrintConfiguration, PrintHistory
 
 
 @admin.register(Product)
@@ -182,6 +182,45 @@ class InvoiceItemAdmin(admin.ModelAdmin):
         """Affiche le numéro de facture"""
         return obj.invoice.invoice_number
     invoice_number.short_description = 'N° Facture'
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    """Administration des paiements"""
+    list_display = [
+        'invoice', 'amount', 'payment_date', 'payment_method',
+        'reference_number', 'created_by', 'created_at'
+    ]
+    list_filter = ['payment_method', 'payment_date', 'created_at']
+    search_fields = [
+        'invoice__invoice_number', 'reference_number',
+        'created_by__username', 'created_by__email'
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'payment_date'
+    
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('invoice', 'amount', 'payment_date')
+        }),
+        ('Détails du paiement', {
+            'fields': ('payment_method', 'reference_number', 'notes')
+        }),
+        ('Audit', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Modification
+            return self.readonly_fields + ['invoice', 'created_by']
+        return self.readonly_fields
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Création
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(PrintTemplate)

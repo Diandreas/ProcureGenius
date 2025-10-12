@@ -2,10 +2,30 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export const formatCurrency = (amount, currency = 'CAD') => {
+  // Valider et convertir l'amount
+  if (amount === null || amount === undefined || amount === '') {
+    return new Intl.NumberFormat('fr-CA', {
+      style: 'currency',
+      currency: currency,
+    }).format(0);
+  }
+
+  // Convertir en nombre si c'est une chaîne
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+
+  // Vérifier si c'est un nombre valide
+  if (isNaN(numAmount)) {
+    console.warn(`formatCurrency: Invalid amount "${amount}", defaulting to 0`);
+    return new Intl.NumberFormat('fr-CA', {
+      style: 'currency',
+      currency: currency,
+    }).format(0);
+  }
+
   return new Intl.NumberFormat('fr-CA', {
     style: 'currency',
     currency: currency,
-  }).format(amount);
+  }).format(numAmount);
 };
 
 export const formatDate = (date) => {

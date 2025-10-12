@@ -128,7 +128,11 @@ class Client(models.Model):
         related_name='clients',
         verbose_name=_("Organisation")
     )
-    name = models.CharField(max_length=200, verbose_name=_("Nom"))
+    name = models.CharField(
+        max_length=200,
+        verbose_name=_("Nom"),
+        help_text=_("Nom complet du client (obligatoire)")
+    )
     email = models.EmailField(blank=True, verbose_name=_("Email"))
     phone = models.CharField(max_length=20, blank=True, verbose_name=_("Téléphone"))
     address = models.TextField(blank=True, verbose_name=_("Adresse"))
@@ -143,9 +147,48 @@ class Client(models.Model):
         verbose_name = _("Client")
         verbose_name_plural = _("Clients")
         ordering = ['name']
-    
+
     def __str__(self):
+        return self.name or "Client sans nom"
+
+    def clean(self):
+        """Validation du client"""
+        from django.core.exceptions import ValidationError
+
+        # Vérifier que le nom n'est pas vide
+        if not self.name or not self.name.strip():
+            raise ValidationError({
+                'name': _("Le nom du client est obligatoire.")
+            })
+
+        # Nettoyer le nom (enlever les espaces multiples)
+        self.name = ' '.join(self.name.split())
+
+    def save(self, *args, **kwargs):
+        """Sauvegarder avec validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def get_full_name(self):
+        """Retourne le nom complet du client (alias pour cohérence avec User)"""
         return self.name
+
+    @property
+    def invoices_count(self):
+        """Nombre de factures pour ce client"""
+        return self.invoices.count()
+
+    @property
+    def total_invoiced(self):
+        """Montant total facturé à ce client"""
+        from decimal import Decimal
+        return sum(Decimal(str(invoice.total_amount)) for invoice in self.invoices.all())
+
+    @property
+    def outstanding_balance(self):
+        """Solde restant à payer"""
+        from decimal import Decimal
+        return sum(invoice.get_balance_due() for invoice in self.invoices.filter(status__in=['sent', 'overdue']))
 
 
 class UserPreferences(models.Model):

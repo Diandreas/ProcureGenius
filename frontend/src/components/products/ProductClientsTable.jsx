@@ -50,10 +50,8 @@ function ProductClientsTable({ clients, loading }) {
     }
 
     const getClientName = (client) => {
-        if (client.invoice__client__first_name || client.invoice__client__last_name) {
-            return `${client.invoice__client__first_name || ''} ${client.invoice__client__last_name || ''}`.trim();
-        }
-        return client.invoice__client__username || 'Client inconnu';
+        // Le backend renvoie invoice__client__name depuis le modèle Client
+        return client.invoice__client__name || 'Client inconnu';
     };
 
     const getInitials = (name) => {

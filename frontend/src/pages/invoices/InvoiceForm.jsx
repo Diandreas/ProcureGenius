@@ -68,7 +68,7 @@ function InvoiceForm() {
     description: '',
     client: null,
     issue_date: new Date().toISOString().split('T')[0],
-    due_date: '',
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
     status: 'draft'
   });
@@ -265,10 +265,25 @@ function InvoiceForm() {
 
       navigate('/invoices');
     } catch (error) {
-      enqueueSnackbar(
-        isEdit ? 'Erreur lors de la modification' : 'Erreur lors de la création',
-        { variant: 'error' }
-      );
+      console.error('Erreur API:', error);
+      console.error('Response data:', error.response?.data);
+
+      let errorMessage = isEdit ? 'Erreur lors de la modification' : 'Erreur lors de la création';
+
+      // Afficher les erreurs de validation détaillées
+      if (error.response?.data) {
+        const errors = error.response.data;
+        if (typeof errors === 'object') {
+          const errorDetails = Object.entries(errors)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join(' | ');
+          errorMessage = `${errorMessage}: ${errorDetails}`;
+        } else if (typeof errors === 'string') {
+          errorMessage = `${errorMessage}: ${errors}`;
+        }
+      }
+
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -854,17 +869,20 @@ function InvoiceForm() {
                         }}
                       />
                     )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Business sx={{ mr: 2, color: 'action.active' }} />
-                        <Box>
-                          <Typography variant="body1">{option.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {option.email}
-                          </Typography>
+                    renderOption={(props, option) => {
+                      const { key, ...otherProps } = props;
+                      return (
+                        <Box component="li" key={key} {...otherProps}>
+                          <Business sx={{ mr: 2, color: 'action.active' }} />
+                          <Box>
+                            <Typography variant="body1">{option.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {option.email}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
+                      );
+                    }}
                   />
                   {formData.client && (
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
