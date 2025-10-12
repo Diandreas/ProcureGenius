@@ -236,6 +236,23 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@procuregenius.com'
 # Mistral AI configuration
 MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '')
 
+# Google Cloud Speech-to-Text configuration
+GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', '')
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv(
+    'GOOGLE_APPLICATION_CREDENTIALS',
+    str(BASE_DIR / 'google_credentials' / 'service-account.json')
+)
+
+# Configuration pour Google Speech-to-Text
+GOOGLE_SPEECH_CONFIG = {
+    'language_code': 'fr-FR',  # Code de langue par défaut (français)
+    'alternative_language_codes': ['en-US', 'en-CA'],  # Langues alternatives
+    'sample_rate_hertz': 48000,  # Taux d'échantillonnage
+    'enable_automatic_punctuation': True,  # Ponctuation automatique
+    'model': 'default',  # Modèle de reconnaissance ('default', 'latest_long', 'latest_short')
+    'use_enhanced': True,  # Utiliser le modèle amélioré si disponible
+}
+
 # PayPal configuration
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')

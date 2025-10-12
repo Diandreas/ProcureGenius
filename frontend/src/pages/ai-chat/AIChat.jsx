@@ -497,7 +497,7 @@ function AIChat() {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Message vocal">
+            <Tooltip title="Message vocal (en temps réel)">
               <span>
                 <IconButton
                   onClick={() => setVoiceRecorderOpen(true)}
@@ -505,7 +505,10 @@ function AIChat() {
                   size="small"
                   sx={{
                     color: 'text.secondary',
-                    display: { xs: 'inline-flex', sm: 'none' } // Visible seulement sur mobile
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                    }
                   }}
                 >
                   <Mic fontSize="small" />

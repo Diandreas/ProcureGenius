@@ -12,6 +12,9 @@ urlpatterns = [
     # Analyse de documents
     path('analyze-document/', views.DocumentAnalysisView.as_view(), name='analyze_document'),
     
+    # Transcription vocale
+    path('voice-transcription/', views.VoiceTranscriptionView.as_view(), name='voice_transcription'),
+    
     # Actions rapides
     path('quick-actions/', views.QuickActionsView.as_view(), name='quick_actions'),
 ]

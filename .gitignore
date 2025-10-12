@@ -215,6 +215,14 @@ secrets.json
 *.pem
 *.crt
 
+# Google Cloud credentials
+google_credentials/
+google-credentials.json
+gcloud-credentials.json
+service-account*.json
+*-credentials.json
+GOOGLE_APPLICATION_CREDENTIALS
+
 # Generated files
 generated/
 auto_generated/
