@@ -55,32 +55,40 @@ function ClientProductsTable({ products, loading }) {
     if (isMobile) {
         return (
             <Box>
-                {products.map((product, index) => (
-                    <Card
-                        key={product.product__id || index}
-                        sx={{
-                            mb: 1.5,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: 3,
-                            },
-                        }}
-                        onClick={() => navigate(`/products/${product.product__id}`)}
-                    >
-                        <CardContent sx={{ p: 2 }}>
-                            <Box display="flex" alignItems="center" mb={1.5}>
-                                <Avatar
-                                    sx={{
-                                        bgcolor: 'primary.main',
-                                        width: 40,
-                                        height: 40,
-                                        mr: 2,
-                                    }}
-                                >
-                                    <Inventory />
-                                </Avatar>
+                {products.map((product, index) => {
+                    const hasProductId = product.product__id && product.product__id !== 'None';
+
+                    return (
+                        <Card
+                            key={product.product__id || index}
+                            sx={{
+                                mb: 1.5,
+                                cursor: hasProductId ? 'pointer' : 'default',
+                                transition: 'all 0.2s',
+                                '&:hover': hasProductId ? {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: 3,
+                                } : {},
+                                opacity: hasProductId ? 1 : 0.6,
+                            }}
+                            onClick={() => {
+                                if (hasProductId) {
+                                    navigate(`/products/${product.product__id}`);
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ p: 2 }}>
+                                <Box display="flex" alignItems="center" mb={1.5}>
+                                    <Avatar
+                                        sx={{
+                                            bgcolor: 'primary.main',
+                                            width: 40,
+                                            height: 40,
+                                            mr: 2,
+                                        }}
+                                    >
+                                        <Inventory />
+                                    </Avatar>
                                     <Box flexGrow={1}>
                                         <Typography variant="body2" fontWeight="bold">
                                             {product.product__name || 'Produit non disponible'}
@@ -89,21 +97,22 @@ function ClientProductsTable({ products, loading }) {
                                             Réf: {product.product__reference || 'N/A'}
                                         </Typography>
                                     </Box>
-                            </Box>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <Chip
-                                    icon={<ShoppingCart />}
-                                    label={`${product.total_quantity} unités`}
-                                    size="small"
-                                    variant="outlined"
-                                />
-                                <Typography variant="body2" fontWeight="bold" color="success.main">
-                                    {formatCurrency(product.total_amount)}
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                ))}
+                                </Box>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Chip
+                                        icon={<ShoppingCart />}
+                                        label={`${product.total_quantity} unités`}
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                    <Typography variant="body2" fontWeight="bold" color="success.main">
+                                        {formatCurrency(product.total_amount)}
+                                    </Typography>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </Box>
         );
     }
@@ -122,61 +131,70 @@ function ClientProductsTable({ products, loading }) {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {products.map((product, index) => (
-                        <TableRow
-                            key={product.product__id || index}
-                            hover
-                            sx={{
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                                },
-                            }}
-                            onClick={() => navigate(`/products/${product.product__id}`)}
-                        >
-                            <TableCell>
-                                <Box display="flex" alignItems="center">
-                                    <Avatar
-                                        sx={{
-                                            bgcolor: 'primary.main',
-                                            width: 36,
-                                            height: 36,
-                                            mr: 1.5,
-                                        }}
-                                    >
-                                        <Inventory />
-                                    </Avatar>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {product.product__name || 'Produit non disponible'}
+                    {products.map((product, index) => {
+                        const hasProductId = product.product__id && product.product__id !== 'None';
+
+                        return (
+                            <TableRow
+                                key={product.product__id || index}
+                                hover={hasProductId}
+                                sx={{
+                                    cursor: hasProductId ? 'pointer' : 'default',
+                                    transition: 'all 0.2s',
+                                    '&:hover': hasProductId ? {
+                                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                    } : {},
+                                    opacity: hasProductId ? 1 : 0.6,
+                                }}
+                                onClick={() => {
+                                    if (hasProductId) {
+                                        navigate(`/products/${product.product__id}`);
+                                    }
+                                }}
+                            >
+                                <TableCell>
+                                    <Box display="flex" alignItems="center">
+                                        <Avatar
+                                            sx={{
+                                                bgcolor: 'primary.main',
+                                                width: 36,
+                                                height: 36,
+                                                mr: 1.5,
+                                            }}
+                                        >
+                                            <Inventory />
+                                        </Avatar>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {product.product__name || 'Produit non disponible'}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {product.product__reference || 'N/A'}
                                     </Typography>
-                                </Box>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="body2" color="text.secondary">
-                                    {product.product__reference || 'N/A'}
-                                </Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                                <Chip
-                                    label={product.total_quantity}
-                                    size="small"
-                                    color="primary"
-                                    variant="outlined"
-                                />
-                            </TableCell>
-                            <TableCell align="right">
-                                <Typography variant="body2">
-                                    {product.purchase_count}
-                                </Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                                <Typography variant="body2" fontWeight="bold" color="success.main">
-                                    {formatCurrency(product.total_amount)}
-                                </Typography>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                                </TableCell>
+                                <TableCell align="right">
+                                    <Chip
+                                        label={product.total_quantity}
+                                        size="small"
+                                        color="primary"
+                                        variant="outlined"
+                                    />
+                                </TableCell>
+                                <TableCell align="right">
+                                    <Typography variant="body2">
+                                        {product.purchase_count}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                    <Typography variant="body2" fontWeight="bold" color="success.main">
+                                        {formatCurrency(product.total_amount)}
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         </TableContainer>

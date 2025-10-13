@@ -357,8 +357,11 @@ def api_organization_settings(request):
             if 'subscription_type' in data:
                 new_type = data['subscription_type']
                 if new_type in PROFILE_METADATA:
+                    # IMPORTANT: Sauvegarder d'abord le subscription_type
                     org.subscription_type = new_type
-                    # Auto-update modules based on new profile
+                    org.save(update_fields=['subscription_type', 'updated_at'])
+                    
+                    # Puis mettre à jour les modules basés sur le nouveau profil
                     org.update_modules_from_profile()
                 else:
                     return Response(
@@ -370,6 +373,9 @@ def api_organization_settings(request):
             elif 'enabled_modules' in data:
                 org.enabled_modules = data['enabled_modules']
                 org.save()
+            
+            # Recharger l'organisation pour avoir les données fraîches
+            org.refresh_from_db()
             
             return Response({
                 'success': True,

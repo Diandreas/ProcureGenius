@@ -5,19 +5,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-  Avatar,
-  Grid,
   IconButton,
   TextField,
   InputAdornment,
@@ -25,39 +12,40 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Grid,
+  Chip,
+  Avatar,
   Stack,
-  Divider,
+  CircularProgress,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import {
-  Add,
-  Edit,
-  Email,
-  Phone,
-  Person,
-  Visibility,
   Search,
   FilterList,
+  Person,
+  Email,
+  Phone,
   AttachMoney,
-  Business,
-  CreditCard,
   Receipt,
+  CreditCard,
+  Business,
+  TrendingUp,
 } from '@mui/icons-material';
 import { clientsAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Clients() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentTermsFilter, setPaymentTermsFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     fetchClients();
@@ -69,30 +57,15 @@ function Clients() {
       const response = await clientsAPI.list();
       setClients(response.data.results || response.data);
     } catch (err) {
-      setError('Erreur lors du chargement des clients');
       console.error('Error fetching clients:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (isActive) => {
-    return isActive ? 'success' : 'error';
-  };
-
-  const getStatusLabel = (isActive) => {
-    return isActive ? 'Actif' : 'Inactif';
-  };
-
-  const getRiskBadge = (score) => {
-    if (score <= 0.3) return { label: 'Faible risque', color: 'success' };
-    if (score <= 0.6) return { label: 'Risque modéré', color: 'warning' };
-    return { label: 'Risque élevé', color: 'error' };
-  };
-
   const filteredClients = clients.filter(client => {
     const matchesSearch = !searchTerm ||
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -105,448 +78,373 @@ function Clients() {
     return matchesSearch && matchesStatus && matchesPaymentTerms;
   });
 
-  const MobileClientCard = ({ client }) => {
-    const riskBadge = getRiskBadge(client.ai_payment_risk_score || 0);
-    return (
-      <Card sx={{
-        mb: 1.5,
-        borderRadius: 3,
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  // Statistiques
+  const totalClients = clients.length;
+  const activeClients = clients.filter(c => c.is_active).length;
+  const totalRevenue = clients.reduce((sum, c) => sum + (c.total_sales_amount || 0), 0);
+  const totalInvoices = clients.reduce((sum, c) => sum + (c.total_invoices || 0), 0);
+
+  const ClientCard = ({ client }) => (
+    <Card
+      onClick={() => navigate(`/clients/${client.id}`)}
+      sx={{
+        cursor: 'pointer',
+        height: '100%',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
         '&:hover': {
-          transform: 'translateY(-1px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           borderColor: 'primary.main',
-          background: 'rgba(255, 255, 255, 0.95)'
-        }
-      }}>
-        <CardContent sx={{ p: 1.5 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                {client.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box>
-                <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-                  {client.name}
-                </Typography>
-                {client.legal_name && client.legal_name !== client.name && (
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                    {client.legal_name}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-            <Chip
-              label={getStatusLabel(client.is_active)}
-              color={getStatusColor(client.is_active)}
-              size="small"
-              sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
-            />
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Person fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {client.contact_person || 'N/A'}
+          boxShadow: 2,
+          transform: 'translateY(-2px)',
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+          <Avatar
+            sx={{
+              width: isMobile ? 48 : 56,
+              height: isMobile ? 48 : 56,
+              bgcolor: 'primary.main',
+              borderRadius: 1,
+              fontSize: isMobile ? '1.2rem' : '1.5rem',
+            }}
+          >
+            {client.name?.charAt(0)?.toUpperCase() || '?'}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                mb: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                fontSize: isMobile ? '0.875rem' : '0.95rem',
+              }}
+            >
+              {client.name}
+            </Typography>
+            {client.legal_name && client.legal_name !== client.name && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.7rem', display: 'block' }}
+              >
+                {client.legal_name}
               </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CreditCard fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                {client.payment_terms}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Email fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {client.email || 'N/A'}
-              </Typography>
-            </Box>
-            {client.total_invoices > 0 && (
-              <Chip
-                icon={<Receipt sx={{ fontSize: 14 }} />}
-                label={client.total_invoices}
-                size="small"
-                color="info"
-                sx={{ fontSize: '0.65rem', height: 18 }}
-              />
             )}
           </Box>
+        </Box>
 
-          {client.total_sales_amount > 0 && (
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                Total ventes:
-              </Typography>
-              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'success.main' }}>
-                {formatCurrency(client.total_sales_amount)}
+        {/* Infos de contact */}
+        <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+          {client.contact_person && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Person sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {client.contact_person}
               </Typography>
             </Box>
           )}
 
-          <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
+          {client.email && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {client.email}
+              </Typography>
+            </Box>
+          )}
 
-          <Stack direction="row" spacing={0.75} justifyContent="flex-end">
-            <IconButton
-              size="small"
-              onClick={() => navigate(`/clients/${client.id}`)}
-              sx={{
-                bgcolor: 'rgba(25, 118, 210, 0.08)',
-                color: 'primary.main',
-                width: 28,
-                height: 28,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  transform: 'scale(1.1)',
-                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
-                }
-              }}
-            >
-              <Visibility fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => navigate(`/clients/${client.id}/edit`)}
-              sx={{
-                bgcolor: 'rgba(66, 66, 66, 0.08)',
-                color: 'text.secondary',
-                width: 28,
-                height: 28,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  bgcolor: 'secondary.main',
-                  color: 'white',
-                  transform: 'scale(1.1)',
-                  boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
-                }
-              }}
-            >
-              <Edit fontSize="small" />
-            </IconButton>
-          </Stack>
-        </CardContent>
-      </Card>
-    );
-  };
+          {client.phone && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Phone sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {client.phone}
+              </Typography>
+            </Box>
+          )}
+
+          {client.payment_terms && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <CreditCard sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {client.payment_terms}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+
+        {/* Stats */}
+        {(client.total_invoices > 0 || client.total_sales_amount > 0) && (
+          <Box
+            sx={{
+              bgcolor: 'success.50',
+              borderRadius: 1,
+              p: 1,
+              mb: 1.5,
+            }}
+          >
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              {client.total_invoices > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Receipt sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                    {client.total_invoices}
+                  </Typography>
+                </Box>
+              )}
+              {client.total_sales_amount > 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'success.main' }}
+                >
+                  {formatCurrency(client.total_sales_amount)}
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+        )}
+
+        {/* Footer */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            label={client.is_active ? 'Actif' : 'Inactif'}
+            size="small"
+            color={client.is_active ? 'success' : 'default'}
+            sx={{ fontSize: '0.7rem', height: 20 }}
+          />
+          {client.business_number && (
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+              N° {client.business_number}
+            </Typography>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" p={4}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  if (error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
-
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Filters */}
-      <Card sx={{
-        mb: 2.5,
-        borderRadius: 3,
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-      }}>
-        <CardContent sx={{ p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec stats */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
+          Clients
+        </Typography>
+
+        {/* Stats Cards */}
+        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
+                      {totalClients}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <TrendingUp sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {activeClients}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Actifs
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
+                      {totalInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Factures
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      variant={isMobile ? 'subtitle2' : 'h6'}
+                      fontWeight="bold"
+                      color="info.main"
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontSize: isMobile ? '0.9rem' : '1.25rem',
+                      }}
+                    >
+                      {formatCurrency(totalRevenue)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      CA Total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* Search & Filters */}
+      <Card sx={{ mb: 3, borderRadius: 1 }}>
+        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher par nom, contact ou email..."
+                placeholder="Rechercher un client..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                        borderWidth: 2
-                      }
-                    },
-                    '&.Mui-focused': {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                        borderWidth: 2
-                      }
-                    }
-                  }
-                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search sx={{ color: 'text.secondary' }} />
+                      <Search />
                     </InputAdornment>
                   ),
                 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
               />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Statut</InputLabel>
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Statut"
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tous</MenuItem>
-                  <MenuItem value="active">Actif</MenuItem>
-                  <MenuItem value="inactive">Inactif</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Conditions de paiement</InputLabel>
-                <Select
-                  value={paymentTermsFilter}
-                  onChange={(e) => setPaymentTermsFilter(e.target.value)}
-                  label="Conditions de paiement"
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Toutes</MenuItem>
-                  <MenuItem value="NET 15">NET 15</MenuItem>
-                  <MenuItem value="NET 30">NET 30</MenuItem>
-                  <MenuItem value="NET 45">NET 45</MenuItem>
-                  <MenuItem value="NET 60">NET 60</MenuItem>
-                  <MenuItem value="CASH">CASH</MenuItem>
-                  <MenuItem value="2/10 NET 30">2/10 NET 30</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <Button
-                fullWidth
-                size="small"
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('');
-                  setPaymentTermsFilter('');
-                }}
+              <IconButton
+                onClick={() => setShowFilters(!showFilters)}
                 sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500
+                  bgcolor: showFilters ? 'primary.main' : 'transparent',
+                  color: showFilters ? 'white' : 'inherit',
+                  '&:hover': {
+                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                  },
                 }}
               >
-                Effacer
-              </Button>
-            </Grid>
-          </Grid>
+                <FilterList />
+              </IconButton>
+            </Box>
+
+            {showFilters && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Statut</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      label="Statut"
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">Tous</MenuItem>
+                      <MenuItem value="active">Actif</MenuItem>
+                      <MenuItem value="inactive">Inactif</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Conditions de paiement</InputLabel>
+                    <Select
+                      value={paymentTermsFilter}
+                      onChange={(e) => setPaymentTermsFilter(e.target.value)}
+                      label="Conditions de paiement"
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">Toutes</MenuItem>
+                      <MenuItem value="NET 15">NET 15</MenuItem>
+                      <MenuItem value="NET 30">NET 30</MenuItem>
+                      <MenuItem value="NET 45">NET 45</MenuItem>
+                      <MenuItem value="NET 60">NET 60</MenuItem>
+                      <MenuItem value="CASH">CASH</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+          </Stack>
         </CardContent>
       </Card>
 
-      {isMobile ? (
-        <Box>
-          {filteredClients.map((client) => (
-            <MobileClientCard key={client.id} client={client} />
-          ))}
-          {filteredClients.length === 0 && clients.length > 0 && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="text.secondary">
-                Aucun client ne correspond aux filtres
-              </Typography>
-            </Box>
-          )}
-          {clients.length === 0 && !loading && (
-            <EmptyState
-              title="Aucun client"
-              description="Vous n'avez pas encore de clients. Commencez par créer votre premier client pour gérer vos factures et revenus."
-              mascotPose="excited"
-              actionLabel="Créer le premier client"
-              onAction={() => navigate('/clients/new')}
-            />
-          )}
-        </Box>
+      {/* Clients Grid */}
+      {filteredClients.length === 0 ? (
+        <EmptyState
+          title="Aucun client"
+          description="Aucun client ne correspond à vos critères de recherche."
+          actionLabel="Nouveau client"
+          onAction={() => navigate('/clients/new')}
+        />
       ) : (
-        <Card sx={{
-          borderRadius: 3,
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          overflow: 'hidden'
-        }}>
-          <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} sx={{
-              borderRadius: 0,
-              background: 'transparent',
-              boxShadow: 'none'
-            }}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Client</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Contact</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Conditions paiement</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Factures</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }} align="right">Total ventes</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Statut</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredClients.map((client) => {
-                    const riskBadge = getRiskBadge(client.ai_payment_risk_score || 0);
-                    return (
-                      <TableRow key={client.id} hover sx={{
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                          transform: 'scale(1.001)'
-                        }
-                      }}>
-                        <TableCell onClick={() => navigate(`/clients/${client.id}`)} sx={{ py: 1.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                              {client.name.charAt(0).toUpperCase()}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                                {client.name}
-                              </Typography>
-                              {client.legal_name && client.legal_name !== client.name && (
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                                  {client.legal_name}
-                                </Typography>
-                              )}
-                              {client.business_number && (
-                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.75rem' }}>
-                                  N° {client.business_number}
-                                </Typography>
-                              )}
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Box>
-                            {client.contact_person && (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                <Person fontSize="small" color="action" />
-                                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{client.contact_person}</Typography>
-                              </Box>
-                            )}
-                            {client.email && (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                <Email fontSize="small" color="action" />
-                                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{client.email}</Typography>
-                              </Box>
-                            )}
-                            {client.phone && (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Phone fontSize="small" color="action" />
-                                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{client.phone}</Typography>
-                              </Box>
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CreditCard fontSize="small" color="action" />
-                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                              {client.payment_terms || 'Net 30'}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Receipt fontSize="small" color="info" />
-                            <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                              {client.total_invoices || 0}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }} align="right">
-                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'success.main' }}>
-                            {formatCurrency(client.total_sales_amount || 0)}
-                          </Typography>
-                          {client.total_outstanding > 0 && (
-                            <Typography variant="caption" color="warning.main" display="block" sx={{ fontSize: '0.7rem' }}>
-                              {formatCurrency(client.total_outstanding)} en attente
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Chip
-                            label={getStatusLabel(client.is_active)}
-                            color={getStatusColor(client.is_active)}
-                            size="small"
-                            sx={{ fontSize: '0.7rem' }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`/clients/${client.id}`)}
-                              sx={{
-                                bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                color: 'primary.main',
-                                width: 32,
-                                height: 32,
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '&:hover': {
-                                  bgcolor: 'primary.main',
-                                  color: 'white',
-                                  transform: 'scale(1.1)',
-                                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
-                                }
-                              }}
-                            >
-                              <Visibility fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`/clients/${client.id}/edit`)}
-                              sx={{
-                                bgcolor: 'rgba(66, 66, 66, 0.08)',
-                                color: 'text.secondary',
-                                width: 32,
-                                height: 32,
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '&:hover': {
-                                  bgcolor: 'secondary.main',
-                                  color: 'white',
-                                  transform: 'scale(1.1)',
-                                  boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
-                                }
-                              }}
-                            >
-                              <Edit fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
+        <Grid container spacing={isMobile ? 2 : 3}>
+          {filteredClients.map((client) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={client.id}>
+              <ClientCard client={client} />
+            </Grid>
+          ))}
+        </Grid>
       )}
     </Box>
   );

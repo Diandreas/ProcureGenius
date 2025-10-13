@@ -27,13 +27,13 @@ function ProductStatisticsCard({ statistics, loading }) {
 
     if (loading) {
         return (
-            <Card>
-                <CardContent>
-                    <Skeleton variant="text" width="60%" height={30} />
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Card sx={{ borderRadius: 1 }}>
+                <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                    <Skeleton variant="text" width="60%" height={24} />
+                    <Grid container spacing={isMobile ? 1 : 1.5} sx={{ mt: 0.5 }}>
                         {[1, 2, 3, 4].map((i) => (
                             <Grid item xs={6} md={3} key={i}>
-                                <Skeleton variant="rectangular" height={80} />
+                                <Skeleton variant="rectangular" height={isMobile ? 70 : 80} sx={{ borderRadius: 1 }} />
                             </Grid>
                         ))}
                     </Grid>
@@ -88,10 +88,10 @@ function ProductStatisticsCard({ statistics, loading }) {
     ];
 
     return (
-        <Card>
-            <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" fontWeight="bold">
+        <Card sx={{ borderRadius: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+            <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: isMobile ? 1 : 1.5 }}>
+                    <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight="bold" sx={{ fontSize: isMobile ? '0.95rem' : '1.25rem' }}>
                         Statistiques de vente
                     </Typography>
                     {statistics.sales_trend && (
@@ -100,39 +100,41 @@ function ProductStatisticsCard({ statistics, loading }) {
                             label={`${statistics.sales_trend.trend_percent > 0 ? '+' : ''}${statistics.sales_trend.trend_percent}%`}
                             color={getTrendColor(statistics.sales_trend.trend_percent)}
                             size="small"
+                            sx={{ borderRadius: 0.5, fontSize: '0.7rem', height: 20 }}
                         />
                     )}
                 </Box>
 
-                <Grid container spacing={2}>
+                <Grid container spacing={isMobile ? 1 : 1.5}>
                     {stats.map((stat, index) => (
                         <Grid item xs={6} md={3} key={index}>
                             <Box
                                 sx={{
-                                    p: 2,
-                                    borderRadius: 2,
+                                    p: isMobile ? 1.25 : 1.5,
+                                    borderRadius: 1,
                                     bgcolor: `${stat.color}.50`,
                                     border: 1,
                                     borderColor: `${stat.color}.100`,
                                     textAlign: 'center',
-                                    transition: 'all 0.2s',
+                                    transition: 'all 0.2s ease',
                                     '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 2,
+                                        transform: 'translateY(-1px)',
+                                        boxShadow: 1,
                                     },
                                 }}
                             >
-                                <Box sx={{ color: `${stat.color}.main`, mb: 1 }}>
-                                    {stat.icon}
+                                <Box sx={{ color: `${stat.color}.main`, mb: 0.5, fontSize: isMobile ? 18 : 20 }}>
+                                    {React.cloneElement(stat.icon, { fontSize: isMobile ? 'small' : 'medium' })}
                                 </Box>
                                 <Typography
-                                    variant={isMobile ? 'h6' : 'h5'}
+                                    variant={isMobile ? 'subtitle1' : 'h6'}
                                     fontWeight="bold"
                                     color={`${stat.color}.main`}
+                                    sx={{ fontSize: isMobile ? '0.95rem' : '1.25rem', lineHeight: 1.2 }}
                                 >
                                     {stat.value}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
                                     {stat.label}
                                 </Typography>
                             </Box>

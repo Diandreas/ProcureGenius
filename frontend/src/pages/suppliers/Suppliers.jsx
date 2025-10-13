@@ -5,84 +5,60 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
+  IconButton,
   TextField,
   InputAdornment,
-  IconButton,
-  Grid,
-  Chip,
-  Avatar,
-  Rating,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
-  CircularProgress,
-  Alert,
-  Pagination,
+  MenuItem,
+  Grid,
+  Chip,
+  Avatar,
   Stack,
-  Divider,
+  Rating,
+  CircularProgress,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import {
-  Add,
   Search,
   FilterList,
-  MoreVert,
-  Edit,
-  Delete,
   Business,
   Email,
   Phone,
   LocationOn,
-  Download,
-  Upload,
+  Star,
+  TrendingUp,
+  LocalShipping,
+  CheckCircle,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
-import { parseRating } from '../../utils/formatters';
-import { getStatusColor, getStatusLabel } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Suppliers() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchSuppliers();
-  }, [page, searchTerm, statusFilter]);
+  }, []);
 
   const fetchSuppliers = async () => {
-    setLoading(true);
     try {
-      const params = {
-        page,
-        search: searchTerm,
-        status: statusFilter,
-      };
-      const response = await suppliersAPI.list(params);
+      setLoading(true);
+      const response = await suppliersAPI.list();
       setSuppliers(response.data.results || response.data);
-      const count = response.data.count || response.data.length;
-      setTotalPages(Math.ceil(count / 20));
     } catch (error) {
       enqueueSnackbar('Erreur lors du chargement des fournisseurs', { variant: 'error' });
     } finally {
@@ -90,113 +66,297 @@ function Suppliers() {
     }
   };
 
-  const handleMenuClick = (event, supplier) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedSupplier(supplier);
-  };
+  const filteredSuppliers = suppliers.filter(supplier => {
+    const matchesSearch = !searchTerm ||
+      supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplier.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplier.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+    const matchesStatus = !statusFilter || supplier.status === statusFilter;
 
-  const handleEdit = () => {
-    navigate(`/suppliers/${selectedSupplier.id}/edit`);
-    handleMenuClose();
-  };
+    return matchesSearch && matchesStatus;
+  });
 
-  const handleDelete = async () => {
-    try {
-      await suppliersAPI.delete(selectedSupplier.id);
-      enqueueSnackbar('Fournisseur supprimé avec succès', { variant: 'success' });
-      fetchSuppliers();
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
-    } finally {
-      setDeleteDialogOpen(false);
-      handleMenuClose();
-    }
-  };
+  // Statistiques
+  const totalSuppliers = suppliers.length;
+  const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
+  const localSuppliers = suppliers.filter(s => s.is_local).length;
+  const avgRating = suppliers.length > 0
+    ? suppliers.reduce((sum, s) => sum + (parseRating(s.rating) || 0), 0) / suppliers.length
+    : 0;
 
-  const handleToggleStatus = async (supplier) => {
-    try {
-      await suppliersAPI.toggleStatus(supplier.id);
-      enqueueSnackbar('Statut modifié avec succès', { variant: 'success' });
-      fetchSuppliers();
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de la modification du statut', { variant: 'error' });
-    }
-  };
+  const SupplierCard = ({ supplier }) => (
+    <Card
+      onClick={() => navigate(`/suppliers/${supplier.id}`)}
+      sx={{
+        cursor: 'pointer',
+        height: '100%',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: 2,
+          transform: 'translateY(-2px)',
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+          <Avatar
+            sx={{
+              width: isMobile ? 48 : 56,
+              height: isMobile ? 48 : 56,
+              bgcolor: 'primary.main',
+              borderRadius: 1,
+              fontSize: isMobile ? '1.2rem' : '1.5rem',
+            }}
+          >
+            {supplier.name?.charAt(0)?.toUpperCase() || '?'}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                mb: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                fontSize: isMobile ? '0.875rem' : '0.95rem',
+              }}
+            >
+              {supplier.name}
+            </Typography>
+            {parseRating(supplier.rating) > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Rating
+                  value={parseRating(supplier.rating)}
+                  readOnly
+                  size="small"
+                  sx={{ fontSize: '0.9rem' }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  ({parseRating(supplier.rating).toFixed(1)})
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Box>
 
-  const handleExport = async () => {
-    try {
-      const response = await suppliersAPI.exportCSV();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'fournisseurs.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      enqueueSnackbar('Export réussi', { variant: 'success' });
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'export', { variant: 'error' });
-    }
-  };
+        {/* Infos de contact */}
+        <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+          {supplier.contact_person && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {supplier.contact_person}
+              </Typography>
+            </Box>
+          )}
 
-  const handleImport = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+          {supplier.email && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {supplier.email}
+              </Typography>
+            </Box>
+          )}
 
-    const formData = new FormData();
-    formData.append('file', file);
+          {supplier.phone && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Phone sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {supplier.phone}
+              </Typography>
+            </Box>
+          )}
 
-    try {
-      await suppliersAPI.import(formData);
-      enqueueSnackbar('Import réussi', { variant: 'success' });
-      fetchSuppliers();
-      setImportDialogOpen(false);
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'import', { variant: 'error' });
-    }
-  };
+          {(supplier.city || supplier.province) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {[supplier.city, supplier.province].filter(Boolean).join(', ')}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
 
-  if (loading && suppliers.length === 0) {
+        {/* Footer - Tags diversité */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+          <Chip
+            label={getStatusLabel(supplier.status)}
+            size="small"
+            color={getStatusColor(supplier.status)}
+            sx={{ fontSize: '0.7rem', height: 20 }}
+          />
+          {supplier.is_local && (
+            <Chip
+              label="Local"
+              size="small"
+              color="success"
+              variant="outlined"
+              sx={{ fontSize: '0.65rem', height: 18 }}
+            />
+          )}
+          {supplier.is_minority_owned && (
+            <Chip
+              label="Minorité"
+              size="small"
+              color="info"
+              variant="outlined"
+              sx={{ fontSize: '0.65rem', height: 18 }}
+            />
+          )}
+          {supplier.is_woman_owned && (
+            <Chip
+              label="Femme"
+              size="small"
+              color="secondary"
+              variant="outlined"
+              sx={{ fontSize: '0.65rem', height: 18 }}
+            />
+          )}
+          {supplier.is_indigenous && (
+            <Chip
+              label="Autochtone"
+              size="small"
+              color="warning"
+              variant="outlined"
+              sx={{ fontSize: '0.65rem', height: 18 }}
+            />
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      {/* Actions */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Upload />}
-            onClick={() => setImportDialogOpen(true)}
-          >
-            Importer
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={handleExport}
-          >
-            Exporter
-          </Button>
-        </Box>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec stats */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
+          Fournisseurs
+        </Typography>
+
+        {/* Stats Cards */}
+        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Business sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
+                      {totalSuppliers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {activeSuppliers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Actifs
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <LocalShipping sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
+                      {localSuppliers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Locaux
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Star sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
+                      {avgRating.toFixed(1)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Note moy.
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Box>
 
-      {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
+      {/* Search & Filters */}
+      <Card sx={{ mb: 3, borderRadius: 1 }}>
+        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField
                 fullWidth
+                size="small"
                 placeholder="Rechercher un fournisseur..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -207,241 +367,64 @@ function Suppliers() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
               />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Statut</InputLabel>
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Statut"
-                >
-                  <MenuItem value="">Tous</MenuItem>
-                  <MenuItem value="active">Actif</MenuItem>
-                  <MenuItem value="pending">En attente</MenuItem>
-                  <MenuItem value="inactive">Inactif</MenuItem>
-                  <MenuItem value="blocked">Bloqué</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<FilterList />}
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('');
+              <IconButton
+                onClick={() => setShowFilters(!showFilters)}
+                sx={{
+                  bgcolor: showFilters ? 'primary.main' : 'transparent',
+                  color: showFilters ? 'white' : 'inherit',
+                  '&:hover': {
+                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                  },
                 }}
               >
-                Réinitialiser
-              </Button>
-            </Grid>
-          </Grid>
+                <FilterList />
+              </IconButton>
+            </Box>
+
+            {showFilters && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Statut</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      label="Statut"
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">Tous</MenuItem>
+                      <MenuItem value="active">Actif</MenuItem>
+                      <MenuItem value="pending">En attente</MenuItem>
+                      <MenuItem value="inactive">Inactif</MenuItem>
+                      <MenuItem value="blocked">Bloqué</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+          </Stack>
         </CardContent>
       </Card>
 
       {/* Suppliers Grid */}
-      {suppliers.length === 0 ? (
+      {filteredSuppliers.length === 0 ? (
         <EmptyState
           title="Aucun fournisseur"
-          description="Commencez par ajouter votre premier fournisseur pour gérer vos achats et commandes."
-          mascotPose="happy"
-          actionLabel="Ajouter un fournisseur"
+          description="Aucun fournisseur ne correspond à vos critères de recherche."
+          actionLabel="Nouveau fournisseur"
           onAction={() => navigate('/suppliers/new')}
         />
       ) : (
-        <>
-          <Grid container spacing={3}>
-            {suppliers.map((supplier) => (
-              <Grid item xs={12} md={6} lg={4} key={supplier.id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 3,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                          {supplier.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" component="div">
-                            {supplier.name}
-                          </Typography>
-                          <Chip
-                            label={getStatusLabel(supplier.status)}
-                            color={getStatusColor(supplier.status)}
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuClick(e, supplier)}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                    </Box>
-
-                    <Box sx={{ mb: 2 }}>
-                      {supplier.contact_person && (
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Contact: {supplier.contact_person}
-                        </Typography>
-                      )}
-
-                      {supplier.email && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Email fontSize="small" color="action" />
-                          <Typography variant="body2">{supplier.email}</Typography>
-                        </Box>
-                      )}
-
-                      {supplier.phone && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Phone fontSize="small" color="action" />
-                          <Typography variant="body2">{supplier.phone}</Typography>
-                        </Box>
-                      )}
-
-                      {supplier.city && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocationOn fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {supplier.city}{supplier.province && `, ${supplier.province}`}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {parseRating(supplier.rating) > 0 && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <Rating value={parseRating(supplier.rating)} readOnly size="small" />
-                        <Typography variant="body2" color="text.secondary">
-                          ({parseRating(supplier.rating).toFixed(1)})
-                        </Typography>
-                      </Box>
-                    )}
-
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {supplier.is_local && (
-                        <Chip label="Local" size="small" color="success" />
-                      )}
-                      {supplier.is_minority_owned && (
-                        <Chip label="Minorité" size="small" color="info" />
-                      )}
-                      {supplier.is_woman_owned && (
-                        <Chip label="Femme" size="small" color="secondary" />
-                      )}
-                      {supplier.is_indigenous && (
-                        <Chip label="Autochtone" size="small" color="warning" />
-                      )}
-                    </Box>
-                  </CardContent>
-
-                  <Box sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      onClick={() => navigate(`/suppliers/${supplier.id}`)}
-                    >
-                      Voir détails
-                    </Button>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, value) => setPage(value)}
-                color="primary"
-              />
-            </Box>
-          )}
-        </>
+        <Grid container spacing={isMobile ? 2 : 3}>
+          {filteredSuppliers.map((supplier) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={supplier.id}>
+              <SupplierCard supplier={supplier} />
+            </Grid>
+          ))}
+        </Grid>
       )}
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleEdit}>
-          <Edit fontSize="small" sx={{ mr: 1 }} />
-          Modifier
-        </MenuItem>
-        <MenuItem
-          onClick={() => handleToggleStatus(selectedSupplier)}
-        >
-          {selectedSupplier?.status === 'active' ? 'Désactiver' : 'Activer'}
-        </MenuItem>
-        <MenuItem
-          onClick={() => setDeleteDialogOpen(true)}
-          sx={{ color: 'error.main' }}
-        >
-          <Delete fontSize="small" sx={{ mr: 1 }} />
-          Supprimer
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirmer la suppression</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Êtes-vous sûr de vouloir supprimer le fournisseur "{selectedSupplier?.name}" ?
-            Cette action est irréversible.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Supprimer
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Import Dialog */}
-      <Dialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)}>
-        <DialogTitle>Importer des fournisseurs</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Le fichier CSV doit contenir les colonnes : name, contact_person, email, phone, address, city, status
-          </Alert>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleImport}
-            style={{ display: 'none' }}
-            id="import-file"
-          />
-          <label htmlFor="import-file">
-            <Button variant="contained" component="span" fullWidth>
-              Sélectionner un fichier CSV
-            </Button>
-          </label>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImportDialogOpen(false)}>Annuler</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

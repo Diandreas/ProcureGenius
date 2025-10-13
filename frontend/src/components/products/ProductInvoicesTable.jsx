@@ -29,7 +29,7 @@ function ProductInvoicesTable({ invoices, loading }) {
         return (
             <Box>
                 {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} variant="rectangular" height={60} sx={{ mb: 1 }} />
+                    <Skeleton key={i} variant="rectangular" height={isMobile ? 80 : 60} sx={{ mb: 1, borderRadius: 1 }} />
                 ))}
             </Box>
         );
@@ -37,11 +37,11 @@ function ProductInvoicesTable({ invoices, loading }) {
 
     if (!invoices || invoices.length === 0) {
         return (
-            <Card>
-                <CardContent>
-                    <Box textAlign="center" py={4}>
-                        <Receipt sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-                        <Typography variant="h6" color="text.secondary">
+            <Card sx={{ borderRadius: 1 }}>
+                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Box textAlign="center" py={isMobile ? 2 : 4}>
+                        <Receipt sx={{ fontSize: isMobile ? 48 : 60, color: 'text.secondary', mb: isMobile ? 1 : 2 }} />
+                        <Typography variant={isMobile ? 'subtitle1' : 'h6'} color="text.secondary">
                             Aucune facture pour ce produit
                         </Typography>
                     </Box>
@@ -58,28 +58,30 @@ function ProductInvoicesTable({ invoices, loading }) {
                     <Card
                         key={invoice.invoice_id}
                         sx={{
-                            mb: 1.5,
+                            mb: 1,
+                            borderRadius: 1,
                             cursor: 'pointer',
-                            transition: 'all 0.2s',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                            transition: 'all 0.2s ease',
                             '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: 3,
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                             },
                         }}
                         onClick={() => navigate(`/invoices/${invoice.invoice_id}`)}
                     >
-                        <CardContent sx={{ p: 2 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                                <Box>
-                                    <Typography variant="body2" fontWeight="bold" color="primary">
+                        <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                    <Typography variant="body2" fontWeight="600" color="primary" sx={{ fontSize: '0.875rem', lineHeight: 1.3 }}>
                                         {invoice.invoice_number}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        <Person sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 0.3, mt: 0.25 }}>
+                                        <Person sx={{ fontSize: 12 }} />
                                         {invoice.client_name || 'Aucun client'}
                                     </Typography>
                                 </Box>
-                                <Typography variant="body2" fontWeight="bold">
+                                <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.875rem', whiteSpace: 'nowrap', ml: 1 }}>
                                     {formatCurrency(invoice.total_price)}
                                 </Typography>
                             </Box>
@@ -88,8 +90,9 @@ function ProductInvoicesTable({ invoices, loading }) {
                                     label={`Qté: ${invoice.quantity}`}
                                     size="small"
                                     variant="outlined"
+                                    sx={{ fontSize: '0.7rem', height: 20, borderRadius: 0.5 }}
                                 />
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                                     {formatDate(invoice.created_at)}
                                 </Typography>
                             </Box>
@@ -102,15 +105,15 @@ function ProductInvoicesTable({ invoices, loading }) {
 
     // Mode Desktop - Table
     return (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ borderRadius: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                        <TableCell sx={{ fontWeight: 600 }}>N° Facture</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Client</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Quantité</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Montant</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>N° Facture</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>Client</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Quantité</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Montant</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>Date</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -120,45 +123,47 @@ function ProductInvoicesTable({ invoices, loading }) {
                             hover
                             sx={{
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
+                                transition: 'all 0.2s ease',
                                 '&:hover': {
                                     backgroundColor: 'rgba(25, 118, 210, 0.04)',
                                 },
                             }}
                             onClick={() => navigate(`/invoices/${invoice.invoice_id}`)}
                         >
-                            <TableCell>
+                            <TableCell sx={{ py: 1.25 }}>
                                 <Typography
                                     variant="body2"
                                     color="primary"
-                                    fontWeight="medium"
+                                    fontWeight="500"
+                                    sx={{ fontSize: '0.875rem' }}
                                 >
                                     {invoice.invoice_number}
                                 </Typography>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ py: 1.25 }}>
                                 <Box display="flex" alignItems="center">
-                                    <Person sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-                                    <Typography variant="body2">
+                                    <Person sx={{ fontSize: 16, mr: 0.75, color: 'text.secondary' }} />
+                                    <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
                                         {invoice.client_name || 'Aucun client'}
                                     </Typography>
                                 </Box>
                             </TableCell>
-                            <TableCell align="right">
+                            <TableCell align="right" sx={{ py: 1.25 }}>
                                 <Chip
                                     label={invoice.quantity}
                                     size="small"
                                     color="primary"
                                     variant="outlined"
+                                    sx={{ fontSize: '0.75rem', height: 24, borderRadius: 0.5 }}
                                 />
                             </TableCell>
-                            <TableCell align="right">
-                                <Typography variant="body2" fontWeight="medium">
+                            <TableCell align="right" sx={{ py: 1.25 }}>
+                                <Typography variant="body2" fontWeight="500" sx={{ fontSize: '0.875rem' }}>
                                     {formatCurrency(invoice.total_price)}
                                 </Typography>
                             </TableCell>
-                            <TableCell>
-                                <Typography variant="body2" color="text.secondary">
+                            <TableCell sx={{ py: 1.25 }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
                                     {formatDate(invoice.created_at)}
                                 </Typography>
                             </TableCell>

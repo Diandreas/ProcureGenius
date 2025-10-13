@@ -315,16 +315,15 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de facture"""
-    total = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True, source='total_price')
     product_name = serializers.CharField(source='product.name', read_only=True)
 
     class Meta:
         model = InvoiceItem
         fields = [
             'id', 'product', 'product_reference', 'product_name', 'description', 'quantity',
-            'unit_price', 'discount_percent', 'total'
+            'unit_price', 'discount_percent', 'total_price'
         ]
-        read_only_fields = ['id', 'total', 'product_name']
+        read_only_fields = ['id', 'total_price', 'product_name']
     
     def validate(self, attrs):
         """Valider la disponibilité du stock pour les produits physiques"""

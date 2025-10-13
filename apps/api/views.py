@@ -365,16 +365,23 @@ class ProductViewSet(viewsets.ModelViewSet):
             'total_quantity': item['total_quantity']
         } for item in top_clients_qs]
         
-        # Factures récentes
+        # Factures récentes avec clients
         recent_invoices = invoice_items.select_related('invoice', 'invoice__client').order_by('-created_at')[:10]
-        recent_invoices_data = [{
-            'invoice_id': str(item.invoice.id),
-            'invoice_number': item.invoice.invoice_number,
-            'client_name': item.invoice.client.name if item.invoice.client else 'N/A',
-            'created_at': item.invoice.created_at,
-            'quantity': item.quantity,
-            'total_price': float(item.total_price)
-        } for item in recent_invoices]
+        recent_invoices_data = []
+        for item in recent_invoices:
+            # Récupérer le nom du client avec fallback
+            client_name = 'Aucun client'
+            if item.invoice.client:
+                client_name = item.invoice.client.name or 'Client sans nom'
+            
+            recent_invoices_data.append({
+                'invoice_id': str(item.invoice.id),
+                'invoice_number': item.invoice.invoice_number,
+                'client_name': client_name,
+                'created_at': item.invoice.created_at,
+                'quantity': item.quantity,
+                'total_price': float(item.total_price)
+            })
         
         # Stats achats (PurchaseOrderItems)
         po_items = product.purchase_order_items.all()
@@ -498,30 +505,50 @@ class ClientViewSet(viewsets.ModelViewSet):
         total_paid = invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         total_outstanding = invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         
-        # Produits les plus achetés
+        # Produits les plus achetés (avec gestion FK product ou champs texte)
         from apps.invoicing.models import InvoiceItem
-        top_products_qs = InvoiceItem.objects.filter(
-            invoice__client=client,
-            product__isnull=False
-        ).values(
-            'product__id',
-            'product__name',
-            'product__reference'
-        ).annotate(
-            total_quantity=Sum('quantity'),
-            total_amount=Sum('total_price'),
-            purchase_count=Count('invoice', distinct=True)
-        ).order_by('-total_amount')[:10]
         
-        # Reformater pour correspondre au frontend
-        top_products = [{
-            'product__id': item['product__id'],
-            'product__name': item['product__name'],
-            'product__reference': item['product__reference'],
-            'total_quantity': item['total_quantity'],
-            'total_amount': float(item['total_amount']) if item['total_amount'] else 0,
-            'purchase_count': item['purchase_count']
-        } for item in top_products_qs]
+        # Récupérer tous les items du client
+        all_items = InvoiceItem.objects.filter(
+            invoice__client=client
+        ).select_related('product').order_by('-total_price')
+        
+        # Construire manuellement la liste avec fallbacks
+        products_dict = {}
+        
+        for item in all_items:
+            # Identifier le produit par son ID FK s'il existe, sinon par product_reference
+            if item.product_id:
+                product_key = str(item.product_id)
+                product_name = item.product.name
+                product_ref = item.product.reference
+            else:
+                # Pas de FK, utiliser les champs texte
+                product_key = f"manual_{item.product_reference}_{item.description[:20]}"
+                product_name = item.description or 'Produit sans nom'
+                product_ref = item.product_reference or 'N/A'
+            
+            # Agréger les quantités pour le même produit
+            if product_key in products_dict:
+                products_dict[product_key]['total_quantity'] += item.quantity
+                products_dict[product_key]['total_amount'] += float(item.total_price)
+                products_dict[product_key]['purchase_count'] += 1
+            else:
+                products_dict[product_key] = {
+                    'product__id': str(item.product_id) if item.product_id else None,
+                    'product__name': product_name,
+                    'product__reference': product_ref,
+                    'total_quantity': item.quantity,
+                    'total_amount': float(item.total_price),
+                    'purchase_count': 1
+                }
+        
+        # Convertir en liste et trier par montant total
+        top_products = sorted(
+            products_dict.values(),
+            key=lambda x: x['total_amount'],
+            reverse=True
+        )[:10]
         
         # Factures récentes
         recent_invoices = invoices.order_by('-created_at')[:10]
