@@ -5,39 +5,47 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Grid,
   Chip,
+  Avatar,
   CircularProgress,
   Alert,
   TextField,
   InputAdornment,
-  Link,
-  IconButton,
   Stack,
-  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { Add, Visibility, Edit, Send, Search, Business, MoreVert } from '@mui/icons-material';
+import {
+  Search,
+  FilterList,
+  Receipt,
+  Business,
+  Person,
+  AttachMoney,
+  TrendingUp,
+  Schedule,
+  CheckCircle,
+} from '@mui/icons-material';
 import { invoicesAPI } from '../../services/api';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Invoices() {
   const [invoices, setInvoices] = useState([]);
-  const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     fetchInvoices();
@@ -47,9 +55,7 @@ function Invoices() {
     try {
       setLoading(true);
       const response = await invoicesAPI.list();
-      const invoiceList = response.data.results || response.data;
-      setInvoices(invoiceList);
-      setFilteredInvoices(invoiceList);
+      setInvoices(response.data.results || response.data);
     } catch (err) {
       setError('Erreur lors du chargement des factures');
       console.error('Error fetching invoices:', err);
@@ -58,18 +64,16 @@ function Invoices() {
     }
   };
 
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredInvoices(invoices);
-    } else {
-      const filtered = invoices.filter(invoice =>
-        invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredInvoices(filtered);
-    }
-  }, [searchTerm, invoices]);
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = !searchTerm ||
+      invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = !statusFilter || invoice.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status) => {
     const colors = {
@@ -93,139 +97,134 @@ function Invoices() {
     return labels[status] || status;
   };
 
-  const MobileInvoiceCard = ({ invoice }) => (
+  // Statistiques
+  const totalInvoices = invoices.length;
+  const paidInvoices = invoices.filter(i => i.status === 'paid').length;
+  const pendingInvoices = invoices.filter(i => i.status === 'sent').length;
+  const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+
+  const InvoiceCard = ({ invoice }) => (
     <Card
+      onClick={() => navigate(`/invoices/${invoice.id}`)}
       sx={{
-        mb: 1.5,
-        borderRadius: 3,
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
+        height: '100%',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
         '&:hover': {
-          transform: 'translateY(-1px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           borderColor: 'primary.main',
-          background: 'rgba(255, 255, 255, 0.95)'
-        }
+          boxShadow: 2,
+          transform: 'translateY(-2px)',
+        },
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
-          <Box>
+      <CardContent sx={{ p: 2 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+          <Avatar
+            sx={{
+              width: isMobile ? 48 : 56,
+              height: isMobile ? 48 : 56,
+              bgcolor: 'primary.main',
+              borderRadius: 1,
+            }}
+          >
+            <Receipt />
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
-              variant="h6"
+              variant="subtitle2"
               sx={{
-                fontSize: '0.95rem',
                 fontWeight: 600,
+                mb: 0.5,
                 color: 'primary.main',
-                cursor: 'pointer',
-                letterSpacing: '-0.01em',
-                lineHeight: 1.3,
-                '&:hover': { textDecoration: 'underline' }
+                fontSize: isMobile ? '0.875rem' : '0.95rem',
               }}
-              onClick={() => navigate(`/invoices/${invoice.id}`)}
             >
               {invoice.invoice_number}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                fontSize: '0.75rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block',
+              }}
+            >
               {invoice.title}
             </Typography>
           </Box>
-          <Chip
-            label={getStatusLabel(invoice.status)}
-            color={getStatusColor(invoice.status)}
-            size="small"
-            sx={{ fontSize: '0.7rem', height: 20, fontWeight: 500 }}
-          />
         </Box>
 
-        <Box display="flex" alignItems="center" mb={0.75}>
-          <Business fontSize="small" sx={{ color: 'text.secondary', mr: 0.75, fontSize: '0.875rem' }} />
-          <Typography variant="body2" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
-            {invoice.client_name || 'N/A'}
-          </Typography>
-        </Box>
-
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.25}>
-          <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-            {invoice.total_amount} {invoice.currency}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
-            Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
-          </Typography>
-        </Box>
-
-        <Divider sx={{ mb: 1.25, opacity: 0.6 }} />
-
-        <Stack direction="row" spacing={0.75} justifyContent="flex-end">
-          <IconButton
-            size="small"
-            onClick={() => navigate(`/invoices/${invoice.id}`)}
-            sx={{
-              bgcolor: 'rgba(25, 118, 210, 0.08)',
-              color: 'primary.main',
-              width: 28,
-              height: 28,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                bgcolor: 'primary.main',
-                color: 'white',
-                transform: 'scale(1.1)',
-                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
-              }
-            }}
+        {/* Prix */}
+        <Box
+          sx={{
+            bgcolor: 'success.50',
+            borderRadius: 1,
+            p: 1,
+            mb: 1.5,
+            textAlign: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            color="success.main"
+            sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
           >
-            <Visibility fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
-            sx={{
-              bgcolor: 'rgba(66, 66, 66, 0.08)',
-              color: 'text.secondary',
-              width: 28,
-              height: 28,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                bgcolor: 'secondary.main',
-                color: 'white',
-                transform: 'scale(1.1)',
-                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.3)'
-              }
-            }}
-          >
-            <Edit fontSize="small" />
-          </IconButton>
-          {invoice.status === 'draft' && (
-            <IconButton
-              size="small"
-              sx={{
-                bgcolor: 'rgba(46, 125, 50, 0.08)',
-                color: 'success.main',
-                width: 28,
-                height: 28,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  bgcolor: 'success.main',
-                  color: 'white',
-                  transform: 'scale(1.1)',
-                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)'
-                }
-              }}
-            >
-              <Send fontSize="small" />
-            </IconButton>
+            {formatCurrency(invoice.total_amount)}
+          </Typography>
+        </Box>
+
+        {/* Infos */}
+        <Stack spacing={0.75}>
+          {invoice.client_name && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {invoice.client_name}
+              </Typography>
+            </Box>
+          )}
+
+          {invoice.due_date && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                Échéance: {formatDate(invoice.due_date)}
+              </Typography>
+            </Box>
           )}
         </Stack>
+
+        {/* Footer */}
+        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            label={getStatusLabel(invoice.status)}
+            size="small"
+            color={getStatusColor(invoice.status)}
+            sx={{ fontSize: '0.7rem', height: 20 }}
+          />
+        </Box>
       </CardContent>
     </Card>
   );
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" p={4}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
       </Box>
     );
@@ -240,261 +239,175 @@ function Invoices() {
   }
 
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Filtres de recherche */}
-      <Box mb={2.5}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Rechercher par numéro, titre ou client..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          size={isMobile ? 'small' : 'medium'}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                  borderWidth: 2
-                }
-              },
-              '&.Mui-focused': {
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                  borderWidth: 2
-                }
-              }
-            }
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Box>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec stats */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
+          Factures
+        </Typography>
 
-      {isMobile ? (
-        <Box>
-          {filteredInvoices.map((invoice) => (
-            <MobileInvoiceCard key={invoice.id} invoice={invoice} />
-          ))}
+        {/* Stats Cards */}
+        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
+                      {totalInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
 
-          {filteredInvoices.length === 0 && invoices.length > 0 && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h6" color="textSecondary">
-                Aucune facture ne correspond à votre recherche
-              </Typography>
-            </Box>
-          )}
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {paidInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Payées
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
 
-          {invoices.length === 0 && (
-            <EmptyState
-              title="Aucune facture"
-              description="Vous n'avez pas encore créé de facture. Commencez par créer votre première facture pour suivre vos revenus."
-              mascotPose="reading"
-              actionLabel="Créer la première facture"
-              onAction={() => navigate('/invoices/new')}
-            />
-          )}
-        </Box>
-      ) : (
-        <Card sx={{
-          borderRadius: 3,
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          overflow: 'hidden'
-        }}>
-          <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} sx={{
-              borderRadius: 0,
-              background: 'transparent',
-              boxShadow: 'none'
-            }}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Numéro</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Titre</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Client</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Statut</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Montant total</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Date d'échéance</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.5 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredInvoices.map((invoice) => (
-                    <TableRow
-                      key={invoice.id}
-                      hover
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Schedule sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
+                      {pendingInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      En attente
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      variant={isMobile ? 'subtitle2' : 'h6'}
+                      fontWeight="bold"
+                      color="info.main"
                       sx={{
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                          transform: 'scale(1.001)'
-                        }
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontSize: isMobile ? '0.9rem' : '1.25rem',
                       }}
                     >
-                      <TableCell sx={{ py: 1.25 }}>
-                        <Link
-                          component="button"
-                          variant="body1"
-                          onClick={() => navigate(`/invoices/${invoice.id}`)}
-                          sx={{
-                            textDecoration: 'none',
-                            color: 'primary.main',
-                            fontWeight: 'medium',
-                            fontSize: '0.875rem',
-                            '&:hover': {
-                              textDecoration: 'underline',
-                            },
-                          }}
-                        >
-                          {invoice.invoice_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25, fontSize: '0.875rem' }}>{invoice.title}</TableCell>
-                      <TableCell sx={{ py: 1.25 }}>
-                        {invoice.client ? (
-                          <Link
-                            component="button"
-                            variant="body1"
-                            onClick={() => navigate(`/clients/${invoice.client.id || invoice.client}`)}
-                            sx={{
-                              textDecoration: 'none',
-                              color: 'primary.main',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              fontSize: '0.875rem',
-                              '&:hover': {
-                                textDecoration: 'underline',
-                              },
-                            }}
-                          >
-                            <Business fontSize="small" />
-                            {invoice.client_name || invoice.client.name || 'N/A'}
-                          </Link>
-                        ) : (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', fontSize: '0.875rem' }}>
-                            <Business fontSize="small" />
-                            {invoice.client_name || 'N/A'}
-                          </Box>
-                        )}
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25 }}>
-                        <Chip
-                          label={getStatusLabel(invoice.status)}
-                          color={getStatusColor(invoice.status)}
-                          size="small"
-                          sx={{ fontSize: '0.75rem', height: 20 }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, py: 1.25, fontSize: '0.875rem' }}>{invoice.total_amount} {invoice.currency}</TableCell>
-                      <TableCell sx={{ py: 1.25, fontSize: '0.875rem' }}>
-                        {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25 }}>
-                        <Stack direction="row" spacing={0.75}>
-                          <Button
-                            size="small"
-                            startIcon={<Visibility />}
-                            onClick={() => navigate(`/invoices/${invoice.id}`)}
-                            sx={{
-                              textTransform: 'none',
-                              fontSize: '0.75rem',
-                              px: 1.5,
-                              py: 0.5,
-                              borderRadius: 1.5,
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
-                              }
-                            }}
-                          >
-                            Voir
-                          </Button>
-                          <Button
-                            size="small"
-                            startIcon={<Edit />}
-                            onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
-                            sx={{
-                              textTransform: 'none',
-                              fontSize: '0.75rem',
-                              px: 1.5,
-                              py: 0.5,
-                              borderRadius: 1.5,
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                                boxShadow: '0 2px 8px rgba(66, 66, 66, 0.2)'
-                              }
-                            }}
-                          >
-                            Modifier
-                          </Button>
-                          {invoice.status === 'draft' && (
-                            <Button
-                              size="small"
-                              startIcon={<Send />}
-                              color="success"
-                              sx={{
-                                textTransform: 'none',
-                                fontSize: '0.75rem',
-                                px: 1.5,
-                                py: 0.5,
-                                borderRadius: 1.5,
-                                transition: 'all 0.2s ease-in-out',
-                                '&:hover': {
-                                  transform: 'scale(1.05)',
-                                  boxShadow: '0 2px 8px rgba(46, 125, 50, 0.2)'
-                                }
-                              }}
-                            >
-                              Envoyer
-                            </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                      {formatCurrency(totalAmount)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Montant total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
 
-            {filteredInvoices.length === 0 && invoices.length > 0 && (
-              <Box textAlign="center" py={4}>
-                <Typography variant="h6" color="textSecondary">
-                  Aucune facture ne correspond à votre recherche
-                </Typography>
-              </Box>
-            )}
+      {/* Search & Filters */}
+      <Card sx={{ mb: 3, borderRadius: 1 }}>
+        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Rechercher une facture..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+              />
+              <IconButton
+                onClick={() => setShowFilters(!showFilters)}
+                sx={{
+                  bgcolor: showFilters ? 'primary.main' : 'transparent',
+                  color: showFilters ? 'white' : 'inherit',
+                  '&:hover': {
+                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                  },
+                }}
+              >
+                <FilterList />
+              </IconButton>
+            </Box>
 
-            {invoices.length === 0 && (
-              <Box textAlign="center" py={4}>
-                <Typography variant="h6" color="textSecondary">
-                  Aucune facture trouvée
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={() => navigate('/invoices/new')}
-                  sx={{ mt: 2, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                >
-                  Créer la première facture
-                </Button>
-              </Box>
+            {showFilters && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Statut</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      label="Statut"
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">Tous</MenuItem>
+                      <MenuItem value="draft">Brouillon</MenuItem>
+                      <MenuItem value="sent">Envoyée</MenuItem>
+                      <MenuItem value="paid">Payée</MenuItem>
+                      <MenuItem value="overdue">En retard</MenuItem>
+                      <MenuItem value="cancelled">Annulée</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
             )}
-          </CardContent>
-        </Card>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Invoices Grid */}
+      {filteredInvoices.length === 0 ? (
+        <EmptyState
+          title="Aucune facture"
+          description="Aucune facture ne correspond à vos critères de recherche."
+          actionLabel="Nouvelle facture"
+          onAction={() => navigate('/invoices/new')}
+        />
+      ) : (
+        <Grid container spacing={isMobile ? 2 : 3}>
+          {filteredInvoices.map((invoice) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={invoice.id}>
+              <InvoiceCard invoice={invoice} />
+            </Grid>
+          ))}
+        </Grid>
       )}
     </Box>
   );
