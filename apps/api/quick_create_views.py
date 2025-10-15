@@ -61,7 +61,6 @@ def quick_create_client(request):
                         'name': f"{client.first_name} {client.last_name}".strip(),
                         'email': client.email or '',
                         'phone': client.phone or '',
-                        'company': getattr(client, 'company', ''),
                         'similarity': score,
                         'reason': reason
                     }
@@ -73,17 +72,23 @@ def quick_create_client(request):
     # Créer le client
     try:
         with transaction.atomic():
-            client = User.objects.create(
-                username=data.get('email', f"{first_name.lower()}_{User.objects.count() + 1}"),
+            # Générer un username unique si l'email n'est pas fourni
+            username = data.get('email') or f"{first_name.lower()}_{User.objects.count() + 1}"
+
+            # Créer le client
+            client = User.objects.create_user(
+                username=username,
                 email=data.get('email', ''),
                 first_name=first_name,
                 last_name=data.get('last_name', ''),
-                phone=data.get('phone', ''),
             )
 
-            # Ajouter l'adresse si fournie
+            # Ajouter les champs optionnels si disponibles
+            if data.get('phone'):
+                client.phone = data['phone']
             if data.get('address'):
                 client.address = data['address']
+            if data.get('phone') or data.get('address'):
                 client.save()
 
             serializer = ClientSerializer(client)

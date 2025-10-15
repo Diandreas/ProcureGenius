@@ -744,18 +744,44 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def send(self, request, pk=None):
-        """Envoyer une facture"""
+        """Envoyer une facture par email"""
         invoice = self.get_object()
-        if invoice.status == 'draft':
-            invoice.status = 'sent'
-            invoice.save()
-            # Ici, ajouter la logique d'envoi par email
-            serializer = self.get_serializer(invoice)
-            return Response(serializer.data)
-        return Response(
-            {'error': 'Only draft invoices can be sent'},
-            status=status.HTTP_400_BAD_REQUEST
+
+        if invoice.status != 'draft':
+            return Response(
+                {'error': 'Seules les factures en brouillon peuvent être envoyées'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Email du destinataire (par défaut: client, sinon fourni dans la requête)
+        recipient_email = request.data.get('email')
+        template_type = request.data.get('template', 'classic')
+
+        # Envoyer l'email avec le PDF
+        from .services.email_service import InvoiceEmailService
+
+        result = InvoiceEmailService.send_invoice_email(
+            invoice=invoice,
+            recipient_email=recipient_email,
+            template_type=template_type
         )
+
+        if result['success']:
+            # Marquer la facture comme envoyée
+            invoice.status = 'sent'
+            invoice.sent_date = timezone.now().date()
+            invoice.save()
+
+            serializer = self.get_serializer(invoice)
+            return Response({
+                'invoice': serializer.data,
+                'message': result['message']
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
@@ -824,26 +850,121 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 class DashboardStatsView(APIView):
     """Vue pour les statistiques du tableau de bord"""
     permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
-    
+
     def get(self, request):
-        # Calculer les statistiques
+        from apps.core.modules import get_user_accessible_modules
+        from datetime import datetime
+
+        # Récupérer les modules accessibles par l'utilisateur
+        user_modules = get_user_accessible_modules(request.user) if request.user.is_authenticated else []
+
+        # Initialiser les stats
         stats = {
-            'total_suppliers': Supplier.objects.count(),
-            'active_suppliers': Supplier.objects.filter(status='active').count(),
-            'total_purchase_orders': PurchaseOrder.objects.count(),
-            'pending_purchase_orders': PurchaseOrder.objects.filter(
-                status__in=['draft', 'pending']
-            ).count(),
-            'total_invoices': Invoice.objects.count(),
-            'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
-            'total_revenue': Invoice.objects.filter(
-                status='paid'
-            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
-            'total_expenses': PurchaseOrder.objects.filter(
-                status__in=['approved', 'sent', 'received']
-            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+            'enabled_modules': user_modules,
         }
-        
+
+        # Stats Fournisseurs (si module actif)
+        if Modules.SUPPLIERS in user_modules:
+            stats['total_suppliers'] = Supplier.objects.count()
+            stats['active_suppliers'] = Supplier.objects.filter(status='active').count()
+            stats['inactive_suppliers'] = Supplier.objects.filter(status='inactive').count()
+            stats['suppliers_by_rating'] = {
+                '5_stars': Supplier.objects.filter(rating=5).count(),
+                '4_stars': Supplier.objects.filter(rating=4).count(),
+                '3_stars': Supplier.objects.filter(rating=3).count(),
+                'below_3': Supplier.objects.filter(rating__lt=3).count(),
+            }
+
+        # Stats Bons de commande (si module actif)
+        if Modules.PURCHASE_ORDERS in user_modules:
+            stats['total_purchase_orders'] = PurchaseOrder.objects.count()
+            stats['pending_purchase_orders'] = PurchaseOrder.objects.filter(
+                status__in=['draft', 'pending']
+            ).count()
+            stats['approved_purchase_orders'] = PurchaseOrder.objects.filter(status='approved').count()
+            stats['received_purchase_orders'] = PurchaseOrder.objects.filter(status='received').count()
+            stats['total_expenses'] = PurchaseOrder.objects.filter(
+                status__in=['approved', 'sent', 'received']
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Stats Factures (si module actif)
+        if Modules.INVOICES in user_modules:
+            stats['total_invoices'] = Invoice.objects.count()
+            stats['unpaid_invoices'] = Invoice.objects.filter(status='sent').count()
+            stats['paid_invoices'] = Invoice.objects.filter(status='paid').count()
+            stats['overdue_invoices'] = Invoice.objects.filter(status='overdue').count()
+            stats['draft_invoices'] = Invoice.objects.filter(status='draft').count()
+            stats['total_revenue'] = Invoice.objects.filter(
+                status='paid'
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            stats['pending_revenue'] = Invoice.objects.filter(
+                status='sent'
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Stats Produits (si module actif)
+        if Modules.PRODUCTS in user_modules:
+            stats['total_products'] = Product.objects.count()
+            stats['active_products'] = Product.objects.filter(is_active=True).count()
+            stats['low_stock_products'] = Product.objects.filter(
+                product_type='physical',
+                stock_quantity__lte=F('low_stock_threshold')
+            ).count()
+            stats['out_of_stock_products'] = Product.objects.filter(
+                product_type='physical',
+                stock_quantity=0
+            ).count()
+            stats['total_stock_value'] = Product.objects.filter(
+                product_type='physical'
+            ).aggregate(
+                total=Sum(F('stock_quantity') * F('cost_price'))
+            )['total'] or 0
+
+        # Stats Clients (si module actif)
+        if Modules.CLIENTS in user_modules:
+            stats['total_clients'] = Client.objects.count()
+            stats['active_clients'] = Client.objects.filter(is_active=True).count()
+            # Clients avec au moins une facture payée dans les 3 derniers mois
+            three_months_ago = timezone.now() - timedelta(days=90)
+            stats['recent_active_clients'] = Client.objects.filter(
+                invoices__status='paid',
+                invoices__paid_date__gte=three_months_ago
+            ).distinct().count()
+
+        # Stats de performance globale
+        if Modules.INVOICES in user_modules and Modules.PURCHASE_ORDERS in user_modules:
+            revenue = stats.get('total_revenue', 0)
+            expenses = stats.get('total_expenses', 0)
+            stats['net_profit'] = revenue - expenses
+            stats['profit_margin'] = ((revenue - expenses) / revenue * 100) if revenue > 0 else 0
+
+        # Tendances (30 derniers jours)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        sixty_days_ago = timezone.now() - timedelta(days=60)
+
+        if Modules.INVOICES in user_modules:
+            recent_invoices_count = Invoice.objects.filter(created_at__gte=thirty_days_ago).count()
+            previous_invoices_count = Invoice.objects.filter(
+                created_at__gte=sixty_days_ago,
+                created_at__lt=thirty_days_ago
+            ).count()
+            stats['invoices_trend'] = {
+                'current': recent_invoices_count,
+                'previous': previous_invoices_count,
+                'percent_change': ((recent_invoices_count - previous_invoices_count) / previous_invoices_count * 100) if previous_invoices_count > 0 else 0
+            }
+
+        if Modules.PURCHASE_ORDERS in user_modules:
+            recent_po_count = PurchaseOrder.objects.filter(created_at__gte=thirty_days_ago).count()
+            previous_po_count = PurchaseOrder.objects.filter(
+                created_at__gte=sixty_days_ago,
+                created_at__lt=thirty_days_ago
+            ).count()
+            stats['purchase_orders_trend'] = {
+                'current': recent_po_count,
+                'previous': previous_po_count,
+                'percent_change': ((recent_po_count - previous_po_count) / previous_po_count * 100) if previous_po_count > 0 else 0
+            }
+
         serializer = DashboardStatsSerializer(stats)
         return Response(serializer.data)
 

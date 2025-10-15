@@ -33,12 +33,14 @@ import {
   People,
   TrendingUp,
   Info,
+  History,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
+import StockMovementsTab from '../../components/StockMovementsTab';
 
 function ProductDetail() {
   const { id } = useParams();
@@ -168,11 +170,37 @@ function ProductDetail() {
         onChange={(e, v) => setActiveTab(v)}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        sx={{
+          mb: 3,
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': {
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.75rem' : '0.875rem',
+            px: isMobile ? 1 : 2,
+          }
+        }}
       >
-        <Tab icon={<Info />} label="Infos" iconPosition="start" />
-        <Tab icon={<Receipt />} label="Factures" iconPosition="start" />
-        <Tab icon={<People />} label="Clients" iconPosition="start" />
+        <Tab
+          icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label={isMobile ? "Info" : "Infos"}
+          iconPosition="start"
+        />
+        <Tab
+          icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label="Factures"
+          iconPosition="start"
+        />
+        <Tab
+          icon={<People sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label="Clients"
+          iconPosition="start"
+        />
+        <Tab
+          icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label={isMobile ? "Stock" : "Mouvements"}
+          iconPosition="start"
+        />
       </Tabs>
 
       {/* Tab: Informations */}
@@ -441,6 +469,13 @@ function ProductDetail() {
             clients={statistics?.top_clients}
             loading={!statistics}
           />
+        </Box>
+      )}
+
+      {/* Tab: Mouvements de Stock */}
+      {activeTab === 3 && (
+        <Box>
+          <StockMovementsTab productId={id} productType={product?.product_type} />
         </Box>
       )}
     </Box>

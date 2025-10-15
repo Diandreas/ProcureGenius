@@ -20,6 +20,12 @@ import {
   DialogActions,
   Button,
   TextField,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -27,18 +33,22 @@ import {
   Info,
   Refresh,
   Edit as EditIcon,
+  SwapVert,
 } from '@mui/icons-material';
 import { productsAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
 
 function StockMovementsTab({ productId, productType }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [adjustQuantity, setAdjustQuantity] = useState('');
   const [adjustNotes, setAdjustNotes] = useState('');
+  const [movementType, setMovementType] = useState('add'); // 'add' or 'remove'
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -65,20 +75,30 @@ function StockMovementsTab({ productId, productType }) {
     const quantity = parseInt(adjustQuantity);
 
     if (isNaN(quantity) || quantity === 0) {
-      enqueueSnackbar('Quantité invalide', { variant: 'error' });
+      enqueueSnackbar('Veuillez entrer une quantité valide', { variant: 'error' });
+      return;
+    }
+
+    if (!adjustNotes.trim()) {
+      enqueueSnackbar('Veuillez saisir une justification', { variant: 'error' });
       return;
     }
 
     try {
+      // Appliquer le signe selon le type de mouvement
+      const finalQuantity = movementType === 'remove' ? -Math.abs(quantity) : Math.abs(quantity);
+
       await productsAPI.adjustStock(productId, {
-        quantity,
+        quantity: finalQuantity,
         notes: adjustNotes,
       });
 
-      enqueueSnackbar('Stock ajusté avec succès', { variant: 'success' });
+      const action = movementType === 'add' ? 'ajouté au' : 'retiré du';
+      enqueueSnackbar(`Stock ${action} stock avec succès`, { variant: 'success' });
       setAdjustDialogOpen(false);
       setAdjustQuantity('');
       setAdjustNotes('');
+      setMovementType('add');
       fetchMovements();
     } catch (err) {
       enqueueSnackbar('Erreur lors de l\'ajustement du stock', { variant: 'error' });
@@ -142,14 +162,29 @@ function StockMovementsTab({ productId, productType }) {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} p={2}>
-        <Typography variant="h6">Historique des mouvements de stock</Typography>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+        p={2}
+        flexWrap="wrap"
+        gap={2}
+      >
+        <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+          Historique des mouvements
+        </Typography>
         <Button
           variant="contained"
-          startIcon={<EditIcon />}
+          startIcon={<SwapVert />}
           onClick={() => setAdjustDialogOpen(true)}
+          size="medium"
+          sx={{
+            minWidth: { xs: '100%', sm: 'auto' },
+            fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+          }}
         >
-          Ajuster le stock
+          Mouvement de stock
         </Button>
       </Box>
 
@@ -157,7 +192,79 @@ function StockMovementsTab({ productId, productType }) {
         <Box p={3}>
           <Alert severity="info">Aucun mouvement de stock enregistré</Alert>
         </Box>
+      ) : isMobile ? (
+        // Vue mobile avec cartes
+        <Box>
+          {movements.map((movement) => (
+            <Card key={movement.id} sx={{ mb: 1.5, borderRadius: 2, boxShadow: 1 }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Stack spacing={1.5}>
+                  {/* Header: Date et Type */}
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                      {formatDate(movement.created_at)}
+                    </Typography>
+                    <Chip
+                      label={movement.movement_type_display}
+                      size="small"
+                      color={getMovementTypeColor(movement.movement_type)}
+                      sx={{ height: 20, fontSize: '0.65rem' }}
+                    />
+                  </Box>
+
+                  {/* Mouvement principal */}
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {getMovementIcon(movement)}
+                      <Typography
+                        variant="h6"
+                        color={getMovementColor(movement)}
+                        fontWeight="bold"
+                        sx={{ fontSize: '1.1rem' }}
+                      >
+                        {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                      </Typography>
+                    </Box>
+                    <Box textAlign="right">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                        {movement.quantity_before} → <strong>{movement.quantity_after}</strong>
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Détails supplémentaires */}
+                  {(movement.reference_type_display || movement.created_by_name || movement.notes) && (
+                    <>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Stack spacing={0.5}>
+                        {movement.reference_type_display && (
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                              {movement.reference_type_display}
+                              {movement.reference_number && `: ${movement.reference_number}`}
+                            </Typography>
+                          </Box>
+                        )}
+                        {movement.created_by_name && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                            Par: {movement.created_by_name}
+                          </Typography>
+                        )}
+                        {movement.notes && (
+                          <Typography variant="body2" sx={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
+                            "{movement.notes}"
+                          </Typography>
+                        )}
+                      </Stack>
+                    </>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       ) : (
+        // Vue desktop avec tableau
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -237,37 +344,101 @@ function StockMovementsTab({ productId, productType }) {
       )}
 
       {/* Dialog d'ajustement de stock */}
-      <Dialog open={adjustDialogOpen} onClose={() => setAdjustDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajuster le stock</DialogTitle>
+      <Dialog
+        open={adjustDialogOpen}
+        onClose={() => {
+          setAdjustDialogOpen(false);
+          setAdjustQuantity('');
+          setAdjustNotes('');
+          setMovementType('add');
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <SwapVert color="primary" />
+            <Typography variant="h6">Nouveau mouvement de stock</Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <Box pt={1} display="flex" flexDirection="column" gap={2}>
-            <Alert severity="info">
-              Entrez une quantité positive pour ajouter du stock ou négative pour en retirer.
-            </Alert>
+          <Box pt={2} display="flex" flexDirection="column" gap={2.5}>
+            {/* Sélection du type de mouvement */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
+                Type de mouvement
+              </Typography>
+              <Box display="flex" gap={1}>
+                <Button
+                  variant={movementType === 'add' ? 'contained' : 'outlined'}
+                  color="success"
+                  startIcon={<Add />}
+                  onClick={() => setMovementType('add')}
+                  fullWidth
+                  sx={{ py: 1.5 }}
+                >
+                  Ajouter au stock
+                </Button>
+                <Button
+                  variant={movementType === 'remove' ? 'contained' : 'outlined'}
+                  color="error"
+                  startIcon={<Remove />}
+                  onClick={() => setMovementType('remove')}
+                  fullWidth
+                  sx={{ py: 1.5 }}
+                >
+                  Retirer du stock
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Quantité */}
             <TextField
               label="Quantité"
               type="number"
               value={adjustQuantity}
               onChange={(e) => setAdjustQuantity(e.target.value)}
-              placeholder="Ex: +10 ou -5"
+              placeholder="Ex: 10"
               fullWidth
               autoFocus
+              required
+              inputProps={{ min: 1 }}
+              helperText={movementType === 'add' ? 'Quantité à ajouter' : 'Quantité à retirer'}
             />
+
+            {/* Justification */}
             <TextField
-              label="Notes (optionnel)"
+              label="Justification"
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               multiline
-              rows={3}
+              rows={4}
               fullWidth
-              placeholder="Raison de l'ajustement..."
+              required
+              placeholder="Décrivez la raison de ce mouvement de stock (réception, inventaire, perte, retour client, etc.)"
+              helperText="Ce champ est obligatoire pour la traçabilité"
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAdjustDialogOpen(false)}>Annuler</Button>
-          <Button onClick={handleAdjustStock} variant="contained" disabled={!adjustQuantity}>
-            Ajuster
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={() => {
+              setAdjustDialogOpen(false);
+              setAdjustQuantity('');
+              setAdjustNotes('');
+              setMovementType('add');
+            }}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleAdjustStock}
+            variant="contained"
+            disabled={!adjustQuantity || !adjustNotes.trim()}
+            color={movementType === 'add' ? 'success' : 'error'}
+            startIcon={movementType === 'add' ? <Add /> : <Remove />}
+          >
+            {movementType === 'add' ? 'Ajouter' : 'Retirer'}
           </Button>
         </DialogActions>
       </Dialog>

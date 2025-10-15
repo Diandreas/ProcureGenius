@@ -1,421 +1,346 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  InputAdornment,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  CircularProgress,
-  Pagination,
-  Tooltip,
+  Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
+  FormControl, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
+  CircularProgress, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
-  Add,
-  Search,
-  FilterList,
-  MoreVert,
-  Edit,
-  Delete,
-  Visibility,
-  CheckCircle,
-  PlayArrow,
-  Stop,
-  Autorenew,
-  Warning,
+  Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
 } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchContracts,
-  deleteContract,
-  approveContract,
-  activateContract,
-  terminateContract,
-} from '../../store/slices/contractsSlice';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { contractsAPI } from '../../services/api';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
-import LoadingState from '../../components/LoadingState';
 
 function Contracts() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-
-  const { contracts, loading, totalCount } = useSelector((state) => state.contracts);
-
+  const [contracts, setContracts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [page, setPage] = useState(1);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedContract, setSelectedContract] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
-    loadContracts();
-  }, [page, searchTerm, statusFilter, typeFilter]);
+    fetchContracts();
+  }, []);
 
-  const loadContracts = () => {
-    const params = {
-      page,
-      search: searchTerm,
-      status: statusFilter,
-      contract_type: typeFilter,
-    };
-    dispatch(fetchContracts(params));
-  };
-
-  const handleMenuClick = (event, contract) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedContract(contract);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleView = () => {
-    navigate(`/contracts/${selectedContract.id}`);
-    handleMenuClose();
-  };
-
-  const handleEdit = () => {
-    navigate(`/contracts/${selectedContract.id}/edit`);
-    handleMenuClose();
-  };
-
-  const handleApprove = async () => {
+  const fetchContracts = async () => {
     try {
-      await dispatch(approveContract({ id: selectedContract.id, notes: '' })).unwrap();
-      enqueueSnackbar('Contrat approuvé avec succès', { variant: 'success' });
-      loadContracts();
-    } catch (error) {
-      enqueueSnackbar("Erreur lors de l'approbation", { variant: 'error' });
-    }
-    handleMenuClose();
-  };
-
-  const handleActivate = async () => {
-    try {
-      await dispatch(activateContract(selectedContract.id)).unwrap();
-      enqueueSnackbar('Contrat activé avec succès', { variant: 'success' });
-      loadContracts();
-    } catch (error) {
-      enqueueSnackbar("Erreur lors de l'activation", { variant: 'error' });
-    }
-    handleMenuClose();
-  };
-
-  const handleTerminate = async () => {
-    try {
-      await dispatch(terminateContract(selectedContract.id)).unwrap();
-      enqueueSnackbar('Contrat résilié avec succès', { variant: 'success' });
-      loadContracts();
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de la résiliation', { variant: 'error' });
-    }
-    handleMenuClose();
-  };
-
-  const handleRenew = () => {
-    navigate(`/contracts/${selectedContract.id}/renew`);
-    handleMenuClose();
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteDialogOpen(true);
-    handleMenuClose();
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      await dispatch(deleteContract(selectedContract.id)).unwrap();
-      enqueueSnackbar('Contrat supprimé avec succès', { variant: 'success' });
-      setDeleteDialogOpen(false);
-      loadContracts();
-    } catch (error) {
-      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+      setLoading(true);
+      const response = await contractsAPI.list();
+      setContracts(response.data.results || response.data);
+    } catch (err) {
+      console.error('Error fetching contracts:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusChip = (status, isExpiringSoon, isExpired) => {
-    if (isExpired) {
-      return <Chip label="Expiré" color="error" size="small" />;
-    }
-    if (isExpiringSoon) {
-      return <Chip label="Expire bientôt" color="warning" size="small" icon={<Warning />} />;
-    }
-
-    const statusConfig = {
-      draft: { label: 'Brouillon', color: 'default' },
-      pending_review: { label: 'En révision', color: 'info' },
-      pending_approval: { label: 'En attente', color: 'warning' },
-      approved: { label: 'Approuvé', color: 'success' },
-      active: { label: 'Actif', color: 'primary' },
-      expiring_soon: { label: 'Expire bientôt', color: 'warning' },
-      expired: { label: 'Expiré', color: 'error' },
-      terminated: { label: 'Résilié', color: 'error' },
-      renewed: { label: 'Renouvelé', color: 'default' },
-    };
-
-    const config = statusConfig[status] || { label: status, color: 'default' };
-    return <Chip label={config.label} color={config.color} size="small" />;
+  const getStatusColor = (status) => {
+    const colors = { draft: 'default', active: 'success', expired: 'error', cancelled: 'error' };
+    return colors[status] || 'default';
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return format(new Date(dateString), 'dd MMM yyyy', { locale: fr });
+  const getStatusLabel = (status) => {
+    const labels = { draft: 'Brouillon', active: 'Actif', expired: 'Expiré', cancelled: 'Annulé' };
+    return labels[status] || status;
   };
+
+  const filteredContracts = contracts.filter(contract => {
+    const matchesSearch = !searchTerm ||
+      contract.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.contract_number?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || contract.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalContracts = contracts.length;
+  const activeContracts = contracts.filter(c => c.status === 'active').length;
+  const expiring = contracts.filter(c => {
+    if (!c.end_date) return false;
+    const end = new Date(c.end_date);
+    const now = new Date();
+    const diff = (end - now) / (1000 * 60 * 60 * 24);
+    return diff > 0 && diff <= 30;
+  }).length;
+  const totalValue = contracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
+
+  const ContractCard = ({ contract }) => (
+    <Card
+      onClick={() => navigate(`/contracts/${contract.id}`)}
+      sx={{
+        cursor: 'pointer',
+        height: '100%',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: 2,
+          transform: 'translateY(-2px)',
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+          <Avatar
+            sx={{
+              width: isMobile ? 48 : 56,
+              height: isMobile ? 48 : 56,
+              bgcolor: 'primary.main',
+              borderRadius: 1,
+            }}
+          >
+            <Description />
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                mb: 0.5,
+                fontSize: isMobile ? '0.875rem' : '0.95rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {contract.title}
+            </Typography>
+            {contract.contract_number && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.75rem', display: 'block' }}
+              >
+                {contract.contract_number}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        {contract.total_value > 0 && (
+          <Box
+            sx={{
+              bgcolor: 'success.50',
+              borderRadius: 1,
+              p: 1,
+              mb: 1.5,
+              textAlign: 'center',
+            }}
+          >
+            <Typography
+              variant="h6"
+              color="success.main"
+              sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+            >
+              {formatCurrency(contract.total_value)}
+            </Typography>
+          </Box>
+        )}
+
+        <Stack spacing={0.75}>
+          {contract.end_date && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                Fin: {formatDate(contract.end_date)}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+
+        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            label={getStatusLabel(contract.status)}
+            size="small"
+            color={getStatusColor(contract.status)}
+            sx={{ fontSize: '0.7rem', height: 20 }}
+          />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" component="h1">
-              Contrats
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/contracts/new')}
-            >
-              Nouveau Contrat
-            </Button>
-          </Box>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
+          Contrats
+        </Typography>
 
-          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-            <TextField
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ flexGrow: 1, minWidth: 250 }}
-            />
+        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
+                      {totalContracts}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Statut</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Statut"
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {activeContracts}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Actifs
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Schedule sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
+                      {expiring}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      À renouveler
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      variant={isMobile ? 'subtitle2' : 'h6'}
+                      fontWeight="bold"
+                      color="info.main"
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontSize: isMobile ? '0.9rem' : '1.25rem',
+                      }}
+                    >
+                      {formatCurrency(totalValue)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Valeur totale
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Card sx={{ mb: 3, borderRadius: 1 }}>
+        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Rechercher un contrat..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+              />
+              <IconButton
+                onClick={() => setShowFilters(!showFilters)}
+                sx={{
+                  bgcolor: showFilters ? 'primary.main' : 'transparent',
+                  color: showFilters ? 'white' : 'inherit',
+                  '&:hover': {
+                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                  },
+                }}
               >
-                <MenuItem value="">Tous</MenuItem>
-                <MenuItem value="draft">Brouillon</MenuItem>
-                <MenuItem value="active">Actif</MenuItem>
-                <MenuItem value="expiring_soon">Expire bientôt</MenuItem>
-                <MenuItem value="expired">Expiré</MenuItem>
-                <MenuItem value="approved">Approuvé</MenuItem>
-              </Select>
-            </FormControl>
+                <FilterList />
+              </IconButton>
+            </Box>
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                label="Type"
-              >
-                <MenuItem value="">Tous</MenuItem>
-                <MenuItem value="purchase">Achat</MenuItem>
-                <MenuItem value="service">Service</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="lease">Location</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {loading ? (
-            <LoadingState message="Chargement des contrats..." />
-          ) : contracts.length === 0 ? (
-            <EmptyState
-              title="Aucun contrat"
-              description="Commencez par créer votre premier contrat pour gérer vos accords avec les fournisseurs."
-              mascotPose="reading"
-              actionLabel="Nouveau contrat"
-              onAction={() => navigate('/contracts/new')}
-            />
-          ) : (
-            <>
-              <TableContainer component={Paper} variant="outlined">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Numéro</TableCell>
-                      <TableCell>Titre</TableCell>
-                      <TableCell>Fournisseur</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell>Début</TableCell>
-                      <TableCell>Fin</TableCell>
-                      <TableCell>Valeur</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {contracts.map((contract) => (
-                      <TableRow key={contract.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="medium">
-                            {contract.contract_number}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{contract.title}</Typography>
-                        </TableCell>
-                        <TableCell>{contract.supplier_name}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={
-                              contract.contract_type === 'purchase'
-                                ? 'Achat'
-                                : contract.contract_type === 'service'
-                                  ? 'Service'
-                                  : contract.contract_type === 'maintenance'
-                                    ? 'Maintenance'
-                                    : contract.contract_type === 'lease'
-                                      ? 'Location'
-                                      : contract.contract_type
-                            }
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {getStatusChip(
-                            contract.status,
-                            contract.is_expiring_soon,
-                            contract.is_expired
-                          )}
-                        </TableCell>
-                        <TableCell>{formatDate(contract.start_date)}</TableCell>
-                        <TableCell>
-                          {formatDate(contract.end_date)}
-                          {contract.days_until_expiry !== null && contract.days_until_expiry >= 0 && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              ({contract.days_until_expiry} jours)
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {parseFloat(contract.total_value).toLocaleString()} {contract.currency}
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuClick(e, contract)}
-                          >
-                            <MoreVert />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                    }
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {totalCount > 20 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                  <Pagination
-                    count={Math.ceil(totalCount / 20)}
-                    page={page}
-                    onChange={(e, value) => setPage(value)}
-                    color="primary"
-                  />
-                </Box>
-              )}
-            </>
-          )}
+            {showFilters && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Statut</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      label="Statut"
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">Tous</MenuItem>
+                      <MenuItem value="draft">Brouillon</MenuItem>
+                      <MenuItem value="active">Actif</MenuItem>
+                      <MenuItem value="expired">Expiré</MenuItem>
+                      <MenuItem value="cancelled">Annulé</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+          </Stack>
         </CardContent>
       </Card>
 
-      {/* Menu contextuel */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleView}>
-          <Visibility fontSize="small" sx={{ mr: 1 }} />
-          Voir les détails
-        </MenuItem>
-        {selectedContract?.status === 'draft' && (
-          <>
-            <MenuItem onClick={handleEdit}>
-              <Edit fontSize="small" sx={{ mr: 1 }} />
-              Modifier
-            </MenuItem>
-            <MenuItem onClick={handleApprove}>
-              <CheckCircle fontSize="small" sx={{ mr: 1 }} />
-              Approuver
-            </MenuItem>
-          </>
-        )}
-        {selectedContract?.status === 'approved' && (
-          <MenuItem onClick={handleActivate}>
-            <PlayArrow fontSize="small" sx={{ mr: 1 }} />
-            Activer
-          </MenuItem>
-        )}
-        {selectedContract?.status === 'active' && (
-          <>
-            <MenuItem onClick={handleRenew}>
-              <Autorenew fontSize="small" sx={{ mr: 1 }} />
-              Renouveler
-            </MenuItem>
-            <MenuItem onClick={handleTerminate}>
-              <Stop fontSize="small" sx={{ mr: 1 }} />
-              Résilier
-            </MenuItem>
-          </>
-        )}
-        {selectedContract?.status === 'draft' && (
-          <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-            <Delete fontSize="small" sx={{ mr: 1 }} />
-            Supprimer
-          </MenuItem>
-        )}
-      </Menu>
-
-      {/* Dialog de confirmation de suppression */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirmer la suppression</DialogTitle>
-        <DialogContent>
-          Êtes-vous sûr de vouloir supprimer le contrat "{selectedContract?.contract_number}" ?
-          Cette action est irréversible.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Supprimer
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {filteredContracts.length === 0 ? (
+        <EmptyState
+          title="Aucun contrat"
+          description="Aucun contrat ne correspond à vos critères de recherche."
+          actionLabel="Nouveau contrat"
+          onAction={() => navigate('/contracts/new')}
+        />
+      ) : (
+        <Grid container spacing={isMobile ? 2 : 3}>
+          {filteredContracts.map((contract) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={contract.id}>
+              <ContractCard contract={contract} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 }

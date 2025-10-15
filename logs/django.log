@@ -9914,3 +9914,1272 @@ Watching for file changes with StatReloader
 "GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
 "GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
 "GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/invoices/ HTTP/1.1" 200 15235
+"GET /api/v1/invoices/ HTTP/1.1" 200 15235
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10082
+"GET /api/v1/products/ HTTP/1.1" 200 10082
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 3357
+"GET /api/v1/clients/ HTTP/1.1" 200 3357
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 187
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 187
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 19061
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 19061
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"OPTIONS /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 1637
+"GET /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 1637
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/invoices/ HTTP/1.1" 200 15235
+"GET /api/v1/invoices/ HTTP/1.1" 200 15235
+"GET /api/v1/clients/ HTTP/1.1" 200 3357
+"GET /api/v1/products/ HTTP/1.1" 200 10082
+"GET /api/v1/clients/ HTTP/1.1" 200 3357
+"GET /api/v1/products/ HTTP/1.1" 200 10082
+"OPTIONS /api/v1/quick-create/client/ HTTP/1.1" 200 0
+Nouvel utilisateur créé: bertony@gmail.com
+Internal Server Error: /api/v1/quick-create/client/
+"POST /api/v1/quick-create/client/ HTTP/1.1" 500 301
+Nouvel utilisateur créé: bertony@gmail.com
+Internal Server Error: /api/v1/quick-create/client/
+"POST /api/v1/quick-create/client/ HTTP/1.1" 500 301
+Nouvel utilisateur créé: bertony@gmail.com
+Internal Server Error: /api/v1/quick-create/client/
+"POST /api/v1/quick-create/client/ HTTP/1.1" 500 301
+Nouvel utilisateur créé: bertony@gmail.com
+Internal Server Error: /api/v1/quick-create/client/
+"POST /api/v1/quick-create/client/ HTTP/1.1" 500 301
+"OPTIONS /api/v1/quick-create/product/ HTTP/1.1" 200 0
+"POST /api/v1/quick-create/product/ HTTP/1.1" 201 758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"POST /api/v1/invoices/ HTTP/1.1" 201 1389
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"OPTIONS /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1389
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1389
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 146
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+Not Found: /api/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/pdf/
+"POST /api/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/pdf/ HTTP/1.1" 404 7336
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 1237
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 1237
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 1237
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/ HTTP/1.1" 200 822
+"GET /api/v1/products/54500aa2-bfc3-40e0-a00b-d9d62b7ce00d/statistics/ HTTP/1.1" 200 1237
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/ HTTP/1.1" 200 653
+"GET /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/statistics/ HTTP/1.1" 200 786
+"GET /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/ HTTP/1.1" 200 653
+"GET /api/v1/products/a9ba5767-b2e8-4f07-baa9-4fa0e1111d3e/statistics/ HTTP/1.1" 200 786
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+Nouvel utilisateur créé: marco.
+Error creating invoice: Cannot assign "<CustomUser: marco.>": "Invoice.client" must be a "Client" instance.
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 652, in create_invoice
+    result = await create_invoice_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\asgiref\sync.py", line 439, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\asgiref\sync.py", line 493, in thread_handler
+    return func(*args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 623, in create_invoice_sync
+    invoice = Invoice.objects.create(
+        title=title,
+    ...<6 lines>...
+        status='draft'
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 677, in create
+    obj = self.model(**kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\base.py", line 543, in __init__
+    _setattr(self, field.name, rel_obj)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 284, in __set__
+    raise ValueError(
+    ...<7 lines>...
+    )
+ValueError: Cannot assign "<CustomUser: marco.>": "Invoice.client" must be a "Client" instance.
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1178
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+Mistral API error: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+Full traceback: Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 156, in _connect
+    stream = stream.start_tls(**kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_backends\sync.py", line 154, in start_tls
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 222, in complete
+    http_res = self.do_request(
+        hook_ctx=HookContext(
+    ...<10 lines>...
+        retry_config=retry_config,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 275, in do_request
+    http_res = do()
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 243, in do
+    raise e
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 238, in do
+    http_res = client.send(req, stream=stream)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 411
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1016
+Mistral API error: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+Full traceback: Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 247, in complete
+    raise models.SDKError(
+        "API error occurred", http_res.status_code, http_res_text, http_res
+    )
+mistralai.models.sdkerror.SDKError: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 523
+Mistral API error: [WinError 10060] Une tentative de connexion a échoué car le parti connecté n’a pas répondu convenablement au-delà d’une certaine durée ou une connexion établie a échoué car l’hôte de connexion n’a pas répondu
+Full traceback: Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout: [WinError 10060] Une tentative de connexion a échoué car le parti connecté n’a pas répondu convenablement au-delà d’une certaine durée ou une connexion établie a échoué car l’hôte de connexion n’a pas répondu
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 222, in complete
+    http_res = self.do_request(
+        hook_ctx=HookContext(
+    ...<10 lines>...
+        retry_config=retry_config,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 275, in do_request
+    http_res = do()
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 243, in do
+    raise e
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 238, in do
+    http_res = client.send(req, stream=stream)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout: [WinError 10060] Une tentative de connexion a échoué car le parti connecté n’a pas répondu convenablement au-delà d’une certaine durée ou une connexion établie a échoué car l’hôte de connexion n’a pas répondu
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 556
+Mistral API error: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+Full traceback: Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\http11.py", line 136, in handle_request
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\http11.py", line 106, in handle_request
+    ) = self._receive_response_headers(**kwargs)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\http11.py", line 177, in _receive_response_headers
+    event = self._receive_event(timeout=timeout)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_sync\http11.py", line 217, in _receive_event
+    data = self._network_stream.read(
+        self.READ_NUM_BYTES, timeout=timeout
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_backends\sync.py", line 126, in read
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 222, in complete
+    http_res = self.do_request(
+        hook_ctx=HookContext(
+    ...<10 lines>...
+        retry_config=retry_config,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 275, in do_request
+    http_res = do()
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 243, in do
+    raise e
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\basesdk.py", line 238, in do
+    http_res = client.send(req, stream=stream)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadError: [WinError 10054] Une connexion existante a dû être fermée par l’hôte distant
+
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 411
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00')
+code 400, message Bad request version ('OGZ_\x00°\x02¢[`\x048,Æ\x7fy\x8f\x00$bQ2R¶aæ©Ø\x17Æÿ4\x9e¤bG-u\x84\xad:ð¹ìs\x94\x15LÉ¸\x19')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("$à6ºu'\x11,\x83[5õ4ð\x19a6\x9b3¾\x81M§")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ("ÅöÌK'kÅfÁJøå3\x11¸g\x84\x8c9\x82\\É\x8b*\x8ekìÈ1É.\xadÐJÖ*|g`Ïð\x00R")
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00\x17\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03F«ÆÀ\x13j©(\x08éò¸\x8f')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ('\x16\x03\x01\x06ò\x01\x00\x06î\x03\x03\x01eìôfé\x80¬gÔ\x10OG\x16<<ò')
+code 400, message Bad request version ('O\xad¤ý"ìø²\x86Oh\x9f\x08+JÑÄ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request syntax ("\x16\x03\x01\x06Ò\x01\x00\x06Î\x03\x03'Ê®\x07")
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('(')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06e\x1a\x1a\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00\x12\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ís\x84É\x96·ÉYK\x98&ÁªQSNLngZ¬|çCQ*?\x10.ºZ~7¥Ò¦')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x06ò\x01\x00\x06î\x03\x03¼û½×n\x9b.\x8e\x93')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x02h2\x08http/1.1\x00\x12\x00\x00DÍ\x00\x05\x00\x03\x02h2\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('UÊQÇ"µ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('`R\x86ö\x8c\x02\x81]Nð8[\x92f\x8c,·Ö\x86Â\x80©\x8f¬Ãwù\x8b?Ó«+ð\x82Á\x91\x03\x84ÊK\x16\x82±]*ðx9\x07/A¦\x89µæ+·\x80\x17"\x83[zu\x8bOÕ\xad')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('Åñ,\x18³ºê\x12l:Õ¿Ú\x80O®\x121g!T×ÑG\x8b')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('.')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+code 400, message Bad request version ('pÊ,¯ñ5£B=\x15\x00\x05\x00\x05\x01\x00\x00\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x7f§\x02J+´Ì')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x1a\x1a\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06Eúú\x00\x00\x00-\x00\x02\x01\x01\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('³Â¹ËÜX¦\x99Ù\x7fÁ\x99&q\x0eÛ7v\x00\x05\x00\x05\x01\x00\x00\x00\x00\x00-\x00\x02\x01\x01\x00\x17\x00\x00\x003\x04ï\x04í')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('¼¶2;º\x8e©(©ÑÈ4©\x83\x89µ\x95Ô¶p\x03Â\x82\x06gz.èZ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('ø2\x8cÍB»=Âo>vN\x12U\x07Ì%É¨àô\x8fKZ°Þ_à-\x8b')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00#\x00\x00\x00+\x00\x07\x06')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x07\x12\x01\x00\x07\x0e\x03\x03?')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x8e\xadÓrçêK>\x88\x9e\x11¦#\x02»\x12')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\xad@mã°\x16\x17')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+code 400, message Bad request version ('\x1a\x1a\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x89¢©\x96\x87iöK\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x07\x12\x01\x00\x07\x0e\x03\x03\x10`ÏÎ')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('zz\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('õ|ë¤Ç½f@tøË;\x87ÙÙÓ»\x8b¼I\x90')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('localhost\x00+\x00\x07\x06ÊÊ\x03\x04\x03\x03\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('_þwy\x13\x15¬nE?½,\x90uùr')
+code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00\x05\x00\x05\x01\x00\x00\x00\x00\x00')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('\x9c§\x00¦ºÇÇgÜeè8Æ\x17')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+code 400, message Bad request version ('!Äe¿\x80Q¹íðrg\x05¯ÔÔ4\x9bªW\x11ªEË\x02RX')
+You're accessing the development server over HTTPS, but it only supports HTTP.
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"OPTIONS /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"OPTIONS /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/ HTTP/1.1" 200 526
+"GET /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/statistics/ HTTP/1.1" 200 867
+"GET /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/ HTTP/1.1" 200 526
+"GET /api/v1/clients/3520e4ff-dd07-4401-ab01-6f31243bf774/statistics/ HTTP/1.1" 200 867
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+D:\project\BFMa\ProcureGenius\apps\api\quick_create_views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"OPTIONS /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/pdf/?template=classic HTTP/1.1" 200 0
+Internal Server Error: /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/pdf/
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/pdf/?template=classic HTTP/1.1" 500 80
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1367
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"OPTIONS /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1105
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1105
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"OPTIONS /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 1451
+"GET /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 1451
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 1451
+"GET /api/v1/invoices/378fde32-077a-41e6-a96f-38e9d98ddda0/ HTTP/1.1" 200 1451
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 798
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 858
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 798
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 858
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 0
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+Forbidden: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 403 68
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/invoices/ HTTP/1.1" 200 16361
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 848
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/products/ HTTP/1.1" 200 10118
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1081
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 194
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 194
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 216
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+D:\project\BFMa\ProcureGenius\apps\api\services\pdf_generator.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"OPTIONS /api/v1/purchase-orders/991932de-625a-427b-9f64-4819a067afa5/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/991932de-625a-427b-9f64-4819a067afa5/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/991932de-625a-427b-9f64-4819a067afa5/ HTTP/1.1" 200 1660
+"GET /api/v1/purchase-orders/991932de-625a-427b-9f64-4819a067afa5/ HTTP/1.1" 200 1660
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"OPTIONS /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 1637
+"GET /api/v1/purchase-orders/88366fae-ca82-4c54-a52f-17f3a70b11c2/ HTTP/1.1" 200 1637
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1389
+"GET /api/v1/invoices/e35855ef-41cf-451d-b454-29067b2b2d96/ HTTP/1.1" 200 1389
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 188
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003

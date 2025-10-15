@@ -90,7 +90,10 @@ function InvoiceForm() {
   useEffect(() => {
     fetchClients();
     fetchProducts();
-    if (isEdit) {
+  }, []);
+
+  useEffect(() => {
+    if (isEdit && id) {
       fetchInvoice();
     }
   }, [id, isEdit]);

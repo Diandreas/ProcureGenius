@@ -7,18 +7,20 @@ export const TEMPLATE_TYPES = {
 };
 
 // Generate Invoice PDF
-export const generateInvoicePDF = async (invoiceData) => {
+export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classic') => {
   try {
     console.log('Generating invoice PDF for:', invoiceData);
 
     // Try to call backend API for PDF generation
     try {
-      const response = await fetch(`/api/invoices/${invoiceData.id}/pdf/`, {
-        method: 'POST',
+      const token = localStorage.getItem('authToken');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+      const response = await fetch(`${apiUrl}/invoices/${invoiceData.id}/pdf/?template=${selectedTemplate}`, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ template: 'classic' })
+          'Authorization': `Token ${token}`,
+        }
       });
 
       if (response.ok) {

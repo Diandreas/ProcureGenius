@@ -161,7 +161,13 @@ class InvoicePDFGenerator:
         if hasattr(invoice, 'description') and invoice.description:
             invoice_details.append(invoice.description)
 
-        invoice_details.append(f"Date d'émission: {invoice.issue_date.strftime('%d/%m/%Y') if invoice.issue_date else 'N/A'}")
+        # Utiliser created_at comme date d'émission
+        issue_date = getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)
+        if issue_date:
+            date_str = issue_date.strftime('%d/%m/%Y') if hasattr(issue_date, 'strftime') else str(issue_date)
+            invoice_details.append(f"Date d'émission: {date_str}")
+        else:
+            invoice_details.append("Date d'émission: N/A")
 
         if hasattr(invoice, 'due_date') and invoice.due_date:
             invoice_details.append(f"Date d'échéance: {invoice.due_date.strftime('%d/%m/%Y')}")
@@ -169,10 +175,12 @@ class InvoicePDFGenerator:
         # Informations client
         client_details = []
         if hasattr(invoice, 'client') and invoice.client:
-            client_details.append(f"<b>{invoice.client.name}</b>")
-            if hasattr(invoice.client, 'email'):
+            # Gérer les différents types de clients (User ou Client model)
+            client_name = getattr(invoice.client, 'name', None) or f"{getattr(invoice.client, 'first_name', '')} {getattr(invoice.client, 'last_name', '')}".strip() or "Client"
+            client_details.append(f"<b>{client_name}</b>")
+            if hasattr(invoice.client, 'email') and invoice.client.email:
                 client_details.append(invoice.client.email)
-            if hasattr(invoice.client, 'address'):
+            if hasattr(invoice.client, 'address') and invoice.client.address:
                 client_details.append(invoice.client.address)
         else:
             client_details.append("Aucun client spécifié")
@@ -304,11 +312,12 @@ class InvoicePDFGenerator:
         # QR Code
         qr_code = None
         try:
+            issue_date = getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)
             qr_data = {
                 'invoice_id': str(invoice.id),
                 'invoice_number': invoice.invoice_number,
                 'total': float(getattr(invoice, 'total_amount', 0) or 0),
-                'date': invoice.issue_date.isoformat() if invoice.issue_date else None
+                'date': issue_date.isoformat() if issue_date else None
             }
 
             qr = qrcode.QRCode(version=1, box_size=3, border=1)

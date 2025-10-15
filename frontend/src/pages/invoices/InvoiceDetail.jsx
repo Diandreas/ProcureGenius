@@ -96,7 +96,9 @@ function InvoiceDetail() {
   });
 
   useEffect(() => {
-    fetchInvoice();
+    if (id) {
+      fetchInvoice();
+    }
   }, [id]);
 
   const fetchInvoice = async () => {
@@ -711,8 +713,28 @@ function InvoiceDetail() {
                     <TableBody>
                       {invoice.items?.map((item, index) => (
                         <TableRow key={index} hover>
-                          <TableCell>{item.product_reference || '-'}</TableCell>
-                          <TableCell>{item.description}</TableCell>
+                          <TableCell>
+                            {item.product_reference || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {item.product ? (
+                              <Box
+                                component="span"
+                                sx={{
+                                  cursor: 'pointer',
+                                  color: 'primary.main',
+                                  '&:hover': {
+                                    textDecoration: 'underline'
+                                  }
+                                }}
+                                onClick={() => navigate(`/products/${item.product}`)}
+                              >
+                                {item.description}
+                              </Box>
+                            ) : (
+                              item.description
+                            )}
+                          </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(item.total_price)}</TableCell>
@@ -802,6 +824,7 @@ function InvoiceDetail() {
                     variant="outlined"
                     onClick={() => navigate(`/clients/${invoice.client.id}`)}
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    startIcon={<Business />}
                   >
                     Voir le client
                   </Button>
