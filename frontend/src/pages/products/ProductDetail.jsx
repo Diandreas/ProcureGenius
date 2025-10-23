@@ -18,6 +18,7 @@ import {
   Tab,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -112,56 +113,42 @@ function ProductDetail() {
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton onClick={() => navigate('/products')} size={isMobile ? 'small' : 'medium'}>
             <ArrowBack />
           </IconButton>
           <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
             {product.name}
           </Typography>
-          {!isMobile && (
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={() => navigate(`/products/${id}/edit`)}
-              >
-                Modifier
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Delete />}
-                onClick={handleDelete}
-              >
-                Supprimer
-              </Button>
-            </Stack>
-          )}
-        </Box>
-        {isMobile && (
-          <Stack direction="row" spacing={1}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Edit />}
+          <Tooltip title="Modifier le produit">
+            <IconButton
               onClick={() => navigate(`/products/${id}/edit`)}
-              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.light',
+                  color: 'white',
+                }
+              }}
             >
-              Modifier
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Supprimer le produit">
+            <IconButton
               onClick={handleDelete}
-              size="small"
+              sx={{
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.light',
+                  color: 'white',
+                }
+              }}
             >
-              Supprimer
-            </Button>
-          </Stack>
-        )}
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Tabs */}
@@ -196,11 +183,14 @@ function ProductDetail() {
           label="Clients"
           iconPosition="start"
         />
-        <Tab
-          icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={isMobile ? "Stock" : "Mouvements"}
-          iconPosition="start"
-        />
+        {/* Afficher l'onglet Stock uniquement pour les produits physiques */}
+        {product?.product_type === 'physical' && (
+          <Tab
+            icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
+            label={isMobile ? "Stock" : "Mouvements"}
+            iconPosition="start"
+          />
+        )}
       </Tabs>
 
       {/* Tab: Informations */}
@@ -472,8 +462,8 @@ function ProductDetail() {
         </Box>
       )}
 
-      {/* Tab: Mouvements de Stock */}
-      {activeTab === 3 && (
+      {/* Tab: Mouvements de Stock - Affiché uniquement pour les produits physiques */}
+      {product?.product_type === 'physical' && activeTab === 3 && (
         <Box>
           <StockMovementsTab productId={id} productType={product?.product_type} />
         </Box>

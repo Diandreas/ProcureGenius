@@ -568,9 +568,25 @@ function InvoiceDetail() {
                   borderColor: 'rgba(0,0,0,0.06)'
                 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'primary.main' }}>
-                      {item.product_reference || 'REF-?'}
-                    </Typography>
+                    {item.product ? (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          color: 'primary.main',
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'underline' }
+                        }}
+                        onClick={() => navigate(`/products/${item.product}`)}
+                      >
+                        {item.product_reference || 'REF-?'}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'primary.main' }}>
+                        {item.product_reference || 'REF-?'}
+                      </Typography>
+                    )}
                     <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
                       {formatCurrency(item.total_price)}
                     </Typography>
@@ -714,7 +730,25 @@ function InvoiceDetail() {
                       {invoice.items?.map((item, index) => (
                         <TableRow key={index} hover>
                           <TableCell>
-                            {item.product_reference || '-'}
+                            {item.product ? (
+                              <Box
+                                component="span"
+                                sx={{
+                                  cursor: 'pointer',
+                                  color: 'primary.main',
+                                  fontWeight: 600,
+                                  '&:hover': {
+                                    textDecoration: 'underline'
+                                  }
+                                }}
+                                onClick={() => navigate(`/products/${item.product}`)}
+                                title="Cliquer pour voir les détails du produit"
+                              >
+                                {item.product_reference || '-'}
+                              </Box>
+                            ) : (
+                              item.product_reference || '-'
+                            )}
                           </TableCell>
                           <TableCell>
                             {item.product ? (
@@ -728,6 +762,7 @@ function InvoiceDetail() {
                                   }
                                 }}
                                 onClick={() => navigate(`/products/${item.product}`)}
+                                title="Cliquer pour voir les détails du produit"
                               >
                                 {item.description}
                               </Box>

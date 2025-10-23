@@ -18,6 +18,7 @@ import {
   Tab,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -108,56 +109,42 @@ function ClientDetail() {
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton onClick={() => navigate('/clients')} size={isMobile ? 'small' : 'medium'}>
             <ArrowBack />
           </IconButton>
           <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
             {client.name}
           </Typography>
-          {!isMobile && (
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={() => navigate(`/clients/${id}/edit`)}
-              >
-                Modifier
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Delete />}
-                onClick={handleDelete}
-              >
-                Supprimer
-              </Button>
-            </Stack>
-          )}
-        </Box>
-        {isMobile && (
-          <Stack direction="row" spacing={1}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Edit />}
+          <Tooltip title="Modifier le client">
+            <IconButton
               onClick={() => navigate(`/clients/${id}/edit`)}
-              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.light',
+                  color: 'white',
+                }
+              }}
             >
-              Modifier
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Supprimer le client">
+            <IconButton
               onClick={handleDelete}
-              size="small"
+              sx={{
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.light',
+                  color: 'white',
+                }
+              }}
             >
-              Supprimer
-            </Button>
-          </Stack>
-        )}
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Tabs */}
