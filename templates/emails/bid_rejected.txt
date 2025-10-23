@@ -1,0 +1,16 @@
+Mise à jour de votre soumission - ProcureGenius
+
+Bonjour,
+
+{{ event_title }}
+Date : {{ rejected_at|date:"d F Y à H:i" }}
+
+Nous vous remercions pour votre soumission. Après examen attentif de toutes les offres reçues, nous avons choisi une autre proposition pour ce projet.
+
+Nous apprécions votre intérêt et espérons collaborer avec vous sur de futurs projets.
+
+Cordialement,
+L'équipe ProcureGenius
+
+---
+Cet email a été envoyé automatiquement. Merci de ne pas y répondre.

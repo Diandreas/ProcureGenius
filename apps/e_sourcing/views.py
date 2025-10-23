@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 from django.db.models import Q, Count, Avg
 from django.shortcuts import get_object_or_404
-from .models import SourcingEvent, SupplierInvitation, SupplierBid, BidItem
+from .models import SourcingEvent, SupplierInvitation, SupplierBid, BidItem, BidderAuth
 from .serializers import (
     SourcingEventListSerializer, SourcingEventDetailSerializer,
     SourcingEventCreateSerializer, SupplierInvitationSerializer,
@@ -14,6 +14,7 @@ from .serializers import (
     BidEvaluationSerializer, BidComparisonSerializer,
     PublicSourcingEventSerializer, PublicBidSubmitSerializer
 )
+from .services import EmailService
 
 
 class SourcingEventViewSet(viewsets.ModelViewSet):
@@ -508,3 +509,163 @@ def public_submit_bid(request, token):
         'message': "Votre offre a été soumise avec succès",
         'bid_id': str(bid.id)
     }, status=status.HTTP_201_CREATED)
+
+
+# ===== ENDPOINTS POUR ENVOI D'EMAILS =====
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_invitations(request, event_id):
+    """
+    Envoie les invitations par email pour un événement e-sourcing
+    URL: /api/e-sourcing/events/{event_id}/send-invitations/
+    """
+    event = get_object_or_404(SourcingEvent, id=event_id)
+
+    # Récupère les invitations en attente
+    invitations = event.invitations.filter(status='pending')
+
+    if not invitations.exists():
+        return Response({
+            'status': 'error',
+            'message': "Aucune invitation en attente"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Envoie les emails
+    sent_count = 0
+    failed_count = 0
+    errors = []
+
+    for invitation in invitations:
+        success = EmailService.send_supplier_invitation(invitation)
+        if success:
+            sent_count += 1
+        else:
+            failed_count += 1
+            errors.append(f"Échec pour {invitation.supplier.name}")
+
+    return Response({
+        'status': 'success' if failed_count == 0 else 'partial',
+        'message': f"{sent_count} invitations envoyées, {failed_count} échecs",
+        'sent': sent_count,
+        'failed': failed_count,
+        'errors': errors
+    })
+
+
+# ===== ENDPOINTS POUR PROTECTION DDOS (OTP) =====
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_otp(request, event_id):
+    """
+    Demande un code OTP pour soumettre une offre
+    URL: /api/e-sourcing/events/{event_id}/request-otp/
+    Body: { "email": "bidder@example.com" }
+    """
+    event = get_object_or_404(SourcingEvent, id=event_id)
+
+    # Vérifie si l'événement accepte encore des soumissions
+    if not event.can_submit_bid():
+        return Response({
+            'status': 'error',
+            'message': "La date limite de soumission est dépassée"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    email = request.data.get('email')
+    if not email:
+        return Response({
+            'status': 'error',
+            'message': "L'email est requis"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Récupère l'adresse IP et le user agent
+    ip_address = request.META.get('REMOTE_ADDR')
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+    try:
+        # Crée l'OTP
+        auth = BidderAuth.create_otp_for_email(
+            email=email,
+            sourcing_event=event,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        # Envoie l'email
+        EmailService.send_otp_email(email, auth.otp_code, event)
+
+        return Response({
+            'status': 'success',
+            'message': f"Un code de vérification a été envoyé à {email}",
+            'auth_id': str(auth.id),
+            'expires_in_minutes': 10
+        })
+
+    except ValueError as e:
+        return Response({
+            'status': 'error',
+            'message': str(e)
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': "Erreur lors de l'envoi du code"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp(request, event_id):
+    """
+    Vérifie le code OTP et retourne un token de session
+    URL: /api/e-sourcing/events/{event_id}/verify-otp/
+    Body: { "email": "bidder@example.com", "otp_code": "123456" }
+    """
+    event = get_object_or_404(SourcingEvent, id=event_id)
+
+    email = request.data.get('email')
+    otp_code = request.data.get('otp_code')
+
+    if not email or not otp_code:
+        return Response({
+            'status': 'error',
+            'message': "L'email et le code OTP sont requis"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Recherche l'authentification la plus récente non expirée
+    auth = BidderAuth.objects.filter(
+        email=email,
+        sourcing_event=event,
+        verified_at__isnull=True
+    ).order_by('-created_at').first()
+
+    if not auth:
+        return Response({
+            'status': 'error',
+            'message': "Aucun code OTP trouvé pour cet email"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    # Vérifie si bloqué
+    if auth.is_blocked():
+        return Response({
+            'status': 'error',
+            'message': "Trop de tentatives. Compte temporairement bloqué",
+            'blocked_until': auth.blocked_until
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    # Vérifie le code OTP
+    if auth.verify_otp(otp_code):
+        return Response({
+            'status': 'success',
+            'message': "Code vérifié avec succès",
+            'session_token': auth.session_token,
+            'email': email
+        })
+    else:
+        remaining_attempts = 3 - auth.attempts
+        return Response({
+            'status': 'error',
+            'message': "Code OTP invalide ou expiré",
+            'remaining_attempts': max(remaining_attempts, 0)
+        }, status=status.HTTP_400_BAD_REQUEST)

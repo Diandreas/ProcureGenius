@@ -13,7 +13,9 @@
       "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate reports)",
       "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py showmigrations --plan)",
       "Bash(findstr:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate e_sourcing)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

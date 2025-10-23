@@ -1,0 +1,22 @@
+Soumission Acceptée - ProcureGenius
+
+Bonjour,
+
+✓ FÉLICITATIONS !
+
+Votre soumission a été acceptée
+
+{{ event_title }}
+
+Montant de votre soumission : {{ bid_amount }} $
+Date d'acceptation : {{ accepted_at|date:"d F Y à H:i" }}
+
+Félicitations ! Votre soumission a été sélectionnée. Notre équipe vous contactera prochainement pour les prochaines étapes.
+
+Merci de votre participation !
+
+Cordialement,
+L'équipe ProcureGenius
+
+---
+Cet email a été envoyé automatiquement. Merci de ne pas y répondre.

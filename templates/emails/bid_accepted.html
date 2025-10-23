@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soumission Acceptée</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .success-badge {
+            background: #10B981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-left: 4px solid #10B981;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✓ Félicitations !</h1>
+    </div>
+    <div class="content">
+        <p>Bonjour,</p>
+
+        <center>
+            <div class="success-badge">Votre soumission a été acceptée</div>
+        </center>
+
+        <div class="info-box">
+            <h3>{{ event_title }}</h3>
+            <p><strong>Montant de votre soumission :</strong> {{ bid_amount }} $</p>
+            <p><strong>Date d'acceptation :</strong> {{ accepted_at|date:"d F Y à H:i" }}</p>
+        </div>
+
+        <p>Félicitations ! Votre soumission a été sélectionnée. Notre équipe vous contactera prochainement pour les prochaines étapes.</p>
+
+        <p>Merci de votre participation !</p>
+
+        <p>Cordialement,<br>L'équipe ProcureGenius</p>
+    </div>
+    <div class="footer">
+        <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+    </div>
+</body>
+</html>

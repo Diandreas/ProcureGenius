@@ -6,7 +6,10 @@ from .views import (
     SupplierBidViewSet,
     BidItemViewSet,
     public_sourcing_event,
-    public_submit_bid
+    public_submit_bid,
+    send_invitations,
+    request_otp,
+    verify_otp
 )
 
 router = DefaultRouter()
@@ -20,4 +23,9 @@ urlpatterns = [
     # URLs publiques pour soumission via token
     path('public/<str:token>/', public_sourcing_event, name='public-sourcing-event'),
     path('public/<str:token>/submit/', public_submit_bid, name='public-submit-bid'),
+    # URLs pour envoi d'emails
+    path('events/<uuid:event_id>/send-invitations/', send_invitations, name='send-invitations'),
+    # URLs pour OTP (protection DDoS)
+    path('events/<uuid:event_id>/request-otp/', request_otp, name='request-otp'),
+    path('events/<uuid:event_id>/verify-otp/', verify_otp, name='verify-otp'),
 ]

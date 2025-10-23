@@ -1,0 +1,21 @@
+Code de Vérification - ProcureGenius
+
+Bonjour,
+
+Vous avez demandé à soumettre une offre pour :
+{{ event_title }}
+
+Voici votre code de vérification à usage unique (OTP) :
+
+{{ otp_code }}
+
+IMPORTANT :
+- Ce code expire dans {{ valid_minutes }} minutes
+- Ne partagez jamais ce code avec personne
+- Si vous n'avez pas demandé ce code, ignorez cet email
+
+Cordialement,
+L'équipe ProcureGenius
+
+---
+Cet email a été envoyé automatiquement. Merci de ne pas y répondre.

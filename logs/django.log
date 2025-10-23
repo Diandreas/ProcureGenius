@@ -12804,3 +12804,13 @@ Watching for file changes with StatReloader
 "GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
 "GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
 "GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+D:\project\BFMa\ProcureGenius\apps\e_sourcing\models.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+D:\project\BFMa\ProcureGenius\apps\e_sourcing\views.py changed, reloading.
+Watching for file changes with StatReloader

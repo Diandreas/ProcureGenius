@@ -326,10 +326,134 @@ class BidItem(models.Model):
                 self.description = self.product.name
             if not self.unit_price or self.unit_price == 0:
                 self.unit_price = self.product.price
-        
+
         # Calcul automatique du prix total
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
         # Recalcule les totaux de la soumission
         self.bid.recalculate_totals()
+
+
+class BidderAuth(models.Model):
+    """Authentification OTP pour les soumissionnaires publics (protection DDoS)"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(verbose_name=_("Email"))
+    sourcing_event = models.ForeignKey(
+        SourcingEvent,
+        on_delete=models.CASCADE,
+        related_name='bidder_auths',
+        verbose_name=_("Événement de sourcing")
+    )
+
+    # Code OTP à 6 chiffres
+    otp_code = models.CharField(max_length=6, verbose_name=_("Code OTP"))
+    otp_expires_at = models.DateTimeField(verbose_name=_("Expiration OTP"))
+
+    # Session token après vérification
+    session_token = models.CharField(max_length=64, unique=True, blank=True, verbose_name=_("Token de session"))
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Vérifié le"))
+
+    # Rate limiting
+    attempts = models.PositiveIntegerField(default=0, verbose_name=_("Tentatives"))
+    blocked_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Bloqué jusqu'à"))
+
+    # Métadonnées
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name=_("Adresse IP"))
+    user_agent = models.TextField(blank=True, verbose_name=_("User Agent"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Mis à jour le"))
+
+    class Meta:
+        verbose_name = _("Authentification soumissionnaire")
+        verbose_name_plural = _("Authentifications soumissionnaires")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['email', 'sourcing_event']),
+            models.Index(fields=['session_token']),
+            models.Index(fields=['otp_expires_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.email} - {self.sourcing_event.event_number}"
+
+    def save(self, *args, **kwargs):
+        if not self.session_token:
+            self.session_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_otp():
+        """Génère un code OTP à 6 chiffres"""
+        import random
+        return f"{random.randint(100000, 999999)}"
+
+    def is_valid_otp(self, otp_code):
+        """Vérifie si le code OTP est valide"""
+        if self.is_blocked():
+            return False
+        if timezone.now() > self.otp_expires_at:
+            return False
+        return self.otp_code == otp_code
+
+    def verify_otp(self, otp_code):
+        """Vérifie et valide le code OTP"""
+        if self.is_valid_otp(otp_code):
+            self.verified_at = timezone.now()
+            self.attempts = 0
+            self.save(update_fields=['verified_at', 'attempts', 'updated_at'])
+            return True
+        else:
+            self.attempts += 1
+            # Bloquer après 3 tentatives échouées
+            if self.attempts >= 3:
+                from datetime import timedelta
+                self.blocked_until = timezone.now() + timedelta(minutes=15)
+            self.save(update_fields=['attempts', 'blocked_until', 'updated_at'])
+            return False
+
+    def is_blocked(self):
+        """Vérifie si l'authentification est bloquée"""
+        if self.blocked_until and timezone.now() < self.blocked_until:
+            return True
+        return False
+
+    def is_verified(self):
+        """Vérifie si l'email a été vérifié"""
+        return self.verified_at is not None and not self.is_otp_expired()
+
+    def is_otp_expired(self):
+        """Vérifie si l'OTP a expiré"""
+        return timezone.now() > self.otp_expires_at
+
+    @classmethod
+    def create_otp_for_email(cls, email, sourcing_event, ip_address=None, user_agent=None):
+        """Crée ou met à jour un OTP pour un email"""
+        from datetime import timedelta
+
+        # Vérifier le rate limiting: max 3 OTP par heure
+        one_hour_ago = timezone.now() - timedelta(hours=1)
+        recent_auths = cls.objects.filter(
+            email=email,
+            sourcing_event=sourcing_event,
+            created_at__gte=one_hour_ago
+        ).count()
+
+        if recent_auths >= 3:
+            raise ValueError("Trop de tentatives. Veuillez réessayer dans une heure.")
+
+        # Créer un nouveau OTP
+        otp_code = cls.generate_otp()
+        otp_expires_at = timezone.now() + timedelta(minutes=10)
+
+        auth = cls.objects.create(
+            email=email,
+            sourcing_event=sourcing_event,
+            otp_code=otp_code,
+            otp_expires_at=otp_expires_at,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        return auth

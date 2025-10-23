@@ -1,0 +1,23 @@
+Invitation à Soumissionner - ProcureGenius
+
+Bonjour {{ supplier_name }},
+
+Vous êtes invité à participer à l'événement e-sourcing suivant :
+
+{{ event_title }}
+{{ event_description }}
+
+Date limite : {{ deadline|date:"d F Y à H:i" }}
+
+Pour soumettre votre offre, veuillez accéder au lien suivant :
+{{ submission_url }}
+
+Code d'accès : {{ access_token }}
+
+Nous avons hâte de recevoir votre soumission !
+
+Cordialement,
+L'équipe ProcureGenius
+
+---
+Cet email a été envoyé automatiquement. Merci de ne pas y répondre.

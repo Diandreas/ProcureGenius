@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code de vérification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .otp-box {
+            background: white;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #3B82F6;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .warning {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Code de Vérification</h1>
+    </div>
+    <div class="content">
+        <p>Bonjour,</p>
+
+        <p>Vous avez demandé à soumettre une offre pour :</p>
+        <h3 style="text-align: center; color: #667eea;">{{ event_title }}</h3>
+
+        <p>Voici votre code de vérification à usage unique (OTP) :</p>
+
+        <div class="otp-box">
+            <div class="otp-code">{{ otp_code }}</div>
+            <p style="color: #666; margin-top: 15px;">Entrez ce code pour continuer</p>
+        </div>
+
+        <div class="warning">
+            <p style="margin: 0;"><strong>⚠️ Important :</strong></p>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Ce code expire dans {{ valid_minutes }} minutes</li>
+                <li>Ne partagez jamais ce code avec personne</li>
+                <li>Si vous n'avez pas demandé ce code, ignorez cet email</li>
+            </ul>
+        </div>
+
+        <p>Cordialement,<br>L'équipe ProcureGenius</p>
+    </div>
+    <div class="footer">
+        <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+    </div>
+</body>
+</html>
