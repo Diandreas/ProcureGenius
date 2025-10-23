@@ -31,6 +31,10 @@ import {
   CreditCard,
   Business,
   TrendingUp,
+  CheckCircle,
+  Block,
+  Star,
+  FiberNew,
 } from '@mui/icons-material';
 import { clientsAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
@@ -43,6 +47,7 @@ function Clients() {
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentTermsFilter, setPaymentTermsFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [quickFilter, setQuickFilter] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -63,6 +68,14 @@ function Clients() {
     }
   };
 
+  const handleQuickFilterClick = (filterValue) => {
+    if (quickFilter === filterValue) {
+      setQuickFilter('');
+    } else {
+      setQuickFilter(filterValue);
+    }
+  };
+
   const filteredClients = clients.filter(client => {
     const matchesSearch = !searchTerm ||
       client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,12 +88,33 @@ function Clients() {
 
     const matchesPaymentTerms = !paymentTermsFilter || client.payment_terms === paymentTermsFilter;
 
-    return matchesSearch && matchesStatus && matchesPaymentTerms;
+    const matchesQuick = !quickFilter || (() => {
+      if (quickFilter === 'active') return client.is_active;
+      if (quickFilter === 'inactive') return !client.is_active;
+      if (quickFilter === 'vip') return (client.total_sales_amount || 0) > 10000;
+      if (quickFilter === 'new') {
+        if (!client.created_at) return false;
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return new Date(client.created_at) > monthAgo;
+      }
+      return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesPaymentTerms && matchesQuick;
   });
 
   // Statistiques
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.is_active).length;
+  const inactiveClients = clients.filter(c => !c.is_active).length;
+  const vipClients = clients.filter(c => (c.total_sales_amount || 0) > 10000).length;
+  const newClients = clients.filter(c => {
+    if (!c.created_at) return false;
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    return new Date(c.created_at) > monthAgo;
+  }).length;
   const totalRevenue = clients.reduce((sum, c) => sum + (c.total_sales_amount || 0), 0);
   const totalInvoices = clients.reduce((sum, c) => sum + (c.total_invoices || 0), 0);
 
@@ -268,36 +302,34 @@ function Clients() {
           Clients
         </Typography>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Clickable Filters */}
         <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+          {/* Actifs */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('active')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'active' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'success.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Total
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <TrendingUp sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
                       {activeClients}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Actifs
                     </Typography>
                   </Box>
@@ -306,17 +338,33 @@ function Clients() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+          {/* Inactifs */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('inactive')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'error.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'inactive' ? 'error.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'error.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Block sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
                   <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
-                      {totalInvoices}
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
+                      {inactiveClients}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Factures
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Inactifs
                     </Typography>
                   </Box>
                 </Stack>
@@ -324,27 +372,101 @@ function Clients() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+          {/* VIP */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('vip')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'secondary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'vip' ? 'secondary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'secondary.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle2' : 'h6'}
-                      fontWeight="bold"
-                      color="info.main"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: isMobile ? '0.9rem' : '1.25rem',
-                      }}
-                    >
-                      {formatCurrency(totalRevenue)}
+                  <Star sx={{ fontSize: isMobile ? 20 : 24, color: 'secondary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="secondary.main">
+                      {vipClients}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      CA Total
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      VIP
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Nouveaux */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('new')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'info.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'new' ? 'info.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'info.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <FiberNew sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
+                      {newClients}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Nouveaux
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Tous */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'primary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'primary.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
+                      {totalClients}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Tous
                     </Typography>
                   </Box>
                 </Stack>
@@ -352,6 +474,29 @@ function Clients() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Filter Indicator */}
+        {quickFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Chip
+              label={
+                quickFilter === 'active' ? 'Actifs' :
+                quickFilter === 'inactive' ? 'Inactifs' :
+                quickFilter === 'vip' ? 'VIP' :
+                quickFilter === 'new' ? 'Nouveaux (30j)' : ''
+              }
+              onDelete={() => setQuickFilter('')}
+              color={
+                quickFilter === 'active' ? 'success' :
+                quickFilter === 'inactive' ? 'error' :
+                quickFilter === 'vip' ? 'secondary' :
+                quickFilter === 'new' ? 'info' : 'primary'
+              }
+              size="small"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Search & Filters */}
