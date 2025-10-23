@@ -32,6 +32,9 @@ import {
   TrendingUp,
   LocalShipping,
   CheckCircle,
+  Block,
+  Public,
+  StarBorder,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
@@ -48,6 +51,7 @@ function Suppliers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [quickFilter, setQuickFilter] = useState(''); // Nouveau: filtre rapide
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -74,16 +78,34 @@ function Suppliers() {
 
     const matchesStatus = !statusFilter || supplier.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    // Nouveau: filtre rapide
+    const matchesQuick = !quickFilter || (() => {
+      if (quickFilter === 'active') return supplier.status === 'active';
+      if (quickFilter === 'inactive') return supplier.status === 'inactive';
+      if (quickFilter === 'local') return supplier.is_local;
+      if (quickFilter === 'international') return !supplier.is_local;
+      if (quickFilter === 'top_rated') return parseRating(supplier.rating) >= 4;
+      return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesQuick;
   });
 
   // Statistiques
   const totalSuppliers = suppliers.length;
   const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
+  const inactiveSuppliers = suppliers.filter(s => s.status === 'inactive').length;
   const localSuppliers = suppliers.filter(s => s.is_local).length;
-  const avgRating = suppliers.length > 0
-    ? suppliers.reduce((sum, s) => sum + (parseRating(s.rating) || 0), 0) / suppliers.length
-    : 0;
+  const internationalSuppliers = suppliers.filter(s => !s.is_local).length;
+  const topRatedSuppliers = suppliers.filter(s => parseRating(s.rating) >= 4).length;
+
+  const handleQuickFilterClick = (filterValue) => {
+    if (quickFilter === filterValue) {
+      setQuickFilter('');
+    } else {
+      setQuickFilter(filterValue);
+    }
+  };
 
   const SupplierCard = ({ supplier }) => (
     <Card
@@ -273,28 +295,22 @@ function Suppliers() {
           Fournisseurs
         </Typography>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Cliquables pour filtrer */}
         <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Business sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalSuppliers}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Total
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+          {/* Actifs */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('active')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'active' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: 3, borderColor: 'success.main' }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
@@ -302,7 +318,7 @@ function Suppliers() {
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
                       {activeSuppliers}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Actifs
                     </Typography>
                   </Box>
@@ -311,8 +327,50 @@ function Suppliers() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+          {/* Inactifs */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('inactive')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'error.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'inactive' ? 'error.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: 3, borderColor: 'error.main' }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Block sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
+                      {inactiveSuppliers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Inactifs
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Locaux */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('local')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'warning.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'local' ? 'warning.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: 3, borderColor: 'warning.main' }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <LocalShipping sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
@@ -320,7 +378,7 @@ function Suppliers() {
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
                       {localSuppliers}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Locaux
                     </Typography>
                   </Box>
@@ -329,17 +387,59 @@ function Suppliers() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+          {/* Internationaux */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('international')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'info.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'international' ? 'info.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: 3, borderColor: 'info.main' }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Star sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Public sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
-                      {avgRating.toFixed(1)}
+                      {internationalSuppliers}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Note moy.
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Internat.
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Top Rated */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('top_rated')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: quickFilter === 'top_rated' ? 'secondary.100' : 'secondary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'top_rated' ? 'secondary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: 3, borderColor: 'secondary.main' }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Star sx={{ fontSize: isMobile ? 20 : 24, color: 'secondary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="secondary.main">
+                      {topRatedSuppliers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Top Rated
                     </Typography>
                   </Box>
                 </Stack>
@@ -347,6 +447,31 @@ function Suppliers() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Indicateur de filtre actif */}
+        {quickFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Chip
+              label={
+                quickFilter === 'active' ? 'Actifs' :
+                quickFilter === 'inactive' ? 'Inactifs' :
+                quickFilter === 'local' ? 'Locaux' :
+                quickFilter === 'international' ? 'Internationaux' :
+                quickFilter === 'top_rated' ? 'Top Rated (≥4★)' : ''
+              }
+              onDelete={() => setQuickFilter('')}
+              color={
+                quickFilter === 'active' ? 'success' :
+                quickFilter === 'inactive' ? 'error' :
+                quickFilter === 'local' ? 'warning' :
+                quickFilter === 'international' ? 'info' :
+                quickFilter === 'top_rated' ? 'secondary' : 'default'
+              }
+              size="small"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Search & Filters */}
