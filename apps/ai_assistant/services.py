@@ -155,14 +155,14 @@ Réponds toujours en français et sois professionnel mais amical."""
             {
                 "type": "function",
                 "function": {
-                    "name": "get_statistics",
-                    "description": "Affiche les statistiques de l'entreprise",
+                    "name": "get_stats",
+                    "description": "Affiche les statistiques de l'entreprise (fournisseurs, factures, chiffre d'affaires, bons de commande)",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "period": {
                                 "type": "string",
-                                "enum": ["today", "week", "month", "year"],
+                                "enum": ["today", "week", "month", "year", "all"],
                                 "description": "Période des statistiques"
                             },
                             "category": {
@@ -171,7 +171,51 @@ Réponds toujours en français et sois professionnel mais amical."""
                                 "description": "Catégorie de statistiques"
                             }
                         },
-                        "required": ["period"]
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_client",
+                    "description": "Recherche des clients par nom, prénom, email ou entreprise",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Terme de recherche"},
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 5)"}
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_clients",
+                    "description": "Liste tous les clients de l'entreprise",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_latest_invoice",
+                    "description": "Récupère la ou les dernière(s) facture(s) créée(s)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "limit": {"type": "integer", "description": "Nombre de factures récentes à afficher (défaut: 1)"},
+                            "client_name": {"type": "string", "description": "Filtrer par nom de client (optionnel)"}
+                        },
+                        "required": []
                     }
                 }
             }
@@ -265,7 +309,11 @@ Réponds toujours en français et sois professionnel mais amical."""
                         'create_invoice': "Je vais créer la facture",
                         'create_purchase_order': "Je vais créer le bon de commande",
                         'search_supplier': "Je recherche les fournisseurs",
-                        'get_statistics': "Je récupère les statistiques"
+                        'search_client': "Je recherche les clients",
+                        'list_clients': "Je liste les clients",
+                        'get_stats': "Je récupère les statistiques",
+                        'get_latest_invoice': "Je récupère les dernières factures",
+                        'search_invoice': "Je recherche les factures"
                     }
 
                     actions = [action_descriptions.get(tc['function'], f"J'exécute {tc['function']}")
@@ -385,7 +433,9 @@ class ActionExecutor:
             'create_purchase_order': self.create_purchase_order,
             'search_purchase_order': self.search_purchase_order,
             'get_stats': self.get_stats,
-            # Ajouter d'autres actions ici
+            'search_client': self.search_client,
+            'list_clients': self.list_clients,
+            'get_latest_invoice': self.get_latest_invoice,
         }
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
@@ -671,30 +721,171 @@ class ActionExecutor:
     async def search_invoice(self, params: Dict, user) -> Dict:
         """Recherche des factures"""
         from apps.invoicing.models import Invoice
-        
-        # Implémentation similaire à search_supplier
-        pass
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_invoices_sync():
+            query = params.get('query', '')
+            status_filter = params.get('status')
+            limit = params.get('limit', 5)
+
+            invoices_qs = Invoice.objects.filter(
+                Q(invoice_number__icontains=query) |
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(client__username__icontains=query) |
+                Q(client__first_name__icontains=query) |
+                Q(client__last_name__icontains=query)
+            )
+
+            if status_filter:
+                invoices_qs = invoices_qs.filter(status=status_filter)
+
+            invoices = invoices_qs.order_by('-created_at')[:limit]
+
+            return [{
+                'id': str(i.id),
+                'invoice_number': i.invoice_number,
+                'title': i.title,
+                'client_name': i.client.get_full_name() if i.client else 'N/A',
+                'total_amount': float(i.total_amount),
+                'status': i.status,
+                'due_date': str(i.due_date) if i.due_date else None
+            } for i in invoices]
+
+        results = await search_invoices_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"J'ai trouvé {len(results)} facture(s)"
+        }
     
     async def create_purchase_order(self, params: Dict, user) -> Dict:
         """Crée un bon de commande"""
         from apps.purchase_orders.models import PurchaseOrder
         from apps.suppliers.models import Supplier
-        
-        # Implémentation similaire à create_invoice
-        pass
+        from asgiref.sync import sync_to_async
+        from datetime import datetime, timedelta
+
+        try:
+            @sync_to_async
+            def create_po_sync():
+                # Trouver le fournisseur
+                supplier_name = params.get('supplier_name')
+                supplier = Supplier.objects.filter(name__icontains=supplier_name).first()
+
+                if not supplier:
+                    raise ValueError(f"Fournisseur '{supplier_name}' non trouvé. Créez-le d'abord.")
+
+                # Préparer les données
+                description = params.get('description', '')
+                total_amount = params.get('total_amount', 0)
+                delivery_date = params.get('delivery_date')
+
+                # Parser la date de livraison
+                if delivery_date:
+                    if isinstance(delivery_date, str):
+                        try:
+                            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                                try:
+                                    delivery_date = datetime.strptime(delivery_date, fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                        except:
+                            delivery_date = (datetime.now() + timedelta(days=30)).date()
+                else:
+                    delivery_date = (datetime.now() + timedelta(days=30)).date()
+
+                # Créer le bon de commande
+                po = PurchaseOrder.objects.create(
+                    supplier=supplier,
+                    title=f"BC {supplier.name}",
+                    description=description,
+                    created_by=user,
+                    delivery_date=delivery_date,
+                    total_amount=total_amount,
+                    status='draft'
+                )
+
+                # Ajouter des items si fournis
+                items = params.get('items', [])
+                if items:
+                    for item in items:
+                        # Logique d'ajout d'items si le modèle PurchaseOrder l'implémente
+                        pass
+
+                return {
+                    'id': str(po.id),
+                    'po_number': po.po_number,
+                    'supplier_name': supplier.name
+                }
+
+            result = await create_po_sync()
+
+            return {
+                'success': True,
+                'message': f"Bon de commande '{result['po_number']}' créé avec succès",
+                'data': {
+                    **result,
+                    'entity_type': 'purchase_order'
+                }
+            }
+        except Exception as e:
+            import traceback
+            logger.error(f"Error creating purchase order: {e}")
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
     async def search_purchase_order(self, params: Dict, user) -> Dict:
         """Recherche des bons de commande"""
         from apps.purchase_orders.models import PurchaseOrder
-        
-        # Implémentation similaire à search_supplier
-        pass
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_pos_sync():
+            query = params.get('query', '')
+            limit = params.get('limit', 5)
+
+            pos = PurchaseOrder.objects.filter(
+                Q(po_number__icontains=query) |
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(supplier__name__icontains=query)
+            ).order_by('-created_at')[:limit]
+
+            return [{
+                'id': str(po.id),
+                'po_number': po.po_number,
+                'title': po.title,
+                'supplier_name': po.supplier.name if po.supplier else 'N/A',
+                'total_amount': float(po.total_amount),
+                'status': po.status,
+                'delivery_date': str(po.delivery_date) if po.delivery_date else None
+            } for po in pos]
+
+        results = await search_pos_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"J'ai trouvé {len(results)} bon(s) de commande"
+        }
     
     async def get_stats(self, params: Dict, user) -> Dict:
         """Récupère les statistiques"""
         from apps.suppliers.models import Supplier
         from apps.invoicing.models import Invoice
         from apps.purchase_orders.models import PurchaseOrder
+        from apps.accounts.models import CustomUser
         from django.db.models import Sum
         from asgiref.sync import sync_to_async
 
@@ -703,16 +894,150 @@ class ActionExecutor:
             return {
                 'total_suppliers': Supplier.objects.count(),
                 'active_suppliers': Supplier.objects.filter(status='active').count(),
+                'total_clients': CustomUser.objects.filter(is_staff=False, is_superuser=False).count(),
                 'total_invoices': Invoice.objects.count(),
+                'paid_invoices': Invoice.objects.filter(status='paid').count(),
                 'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
+                'overdue_invoices': Invoice.objects.filter(status='overdue').count(),
                 'total_revenue': Invoice.objects.filter(status='paid').aggregate(
                     Sum('total_amount')
-                )['total_amount__sum'] or 0
+                )['total_amount__sum'] or 0,
+                'total_purchase_orders': PurchaseOrder.objects.count(),
+                'pending_purchase_orders': PurchaseOrder.objects.filter(status='sent').count()
             }
 
         stats = await get_stats_sync()
 
         return {
             'success': True,
-            'data': stats
+            'data': stats,
+            'message': f"Statistiques récupérées: {stats['total_invoices']} factures, {stats['total_suppliers']} fournisseurs, {stats['total_clients']} clients"
+        }
+
+    async def search_client(self, params: Dict, user) -> Dict:
+        """Recherche des clients par nom, prénom, email ou entreprise"""
+        from apps.accounts.models import CustomUser
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_clients_sync():
+            query = params.get('query', '')
+            limit = params.get('limit', 5)
+
+            # Chercher dans les utilisateurs non-staff (clients)
+            clients = CustomUser.objects.filter(
+                Q(username__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(company__icontains=query)
+            ).filter(
+                is_staff=False,
+                is_superuser=False
+            )[:limit]
+
+            return [{
+                'id': str(c.id),
+                'username': c.username,
+                'full_name': c.get_full_name() or c.username,
+                'email': c.email,
+                'phone': c.phone or '',
+                'company': c.company or ''
+            } for c in clients]
+
+        results = await search_clients_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"J'ai trouvé {len(results)} client(s)"
+        }
+
+    async def list_clients(self, params: Dict, user) -> Dict:
+        """Liste tous les clients de l'entreprise"""
+        from apps.accounts.models import CustomUser
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def list_clients_sync():
+            limit = params.get('limit', 10)
+
+            # Récupérer tous les clients (non-staff)
+            clients = CustomUser.objects.filter(
+                is_staff=False,
+                is_superuser=False
+            ).order_by('-date_joined')[:limit]
+
+            return [{
+                'id': str(c.id),
+                'username': c.username,
+                'full_name': c.get_full_name() or c.username,
+                'email': c.email,
+                'phone': c.phone or '',
+                'company': c.company or '',
+                'date_joined': str(c.date_joined.date()) if c.date_joined else None
+            } for c in clients]
+
+        results = await list_clients_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"Voici les {len(results)} derniers clients"
+        }
+
+    async def get_latest_invoice(self, params: Dict, user) -> Dict:
+        """Récupère la ou les dernière(s) facture(s) créée(s)"""
+        from apps.invoicing.models import Invoice
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_latest_invoices_sync():
+            limit = params.get('limit', 1)
+            client_name = params.get('client_name')
+
+            invoices_qs = Invoice.objects.all()
+
+            # Filtrer par client si spécifié
+            if client_name:
+                invoices_qs = invoices_qs.filter(
+                    Q(client__username__icontains=client_name) |
+                    Q(client__first_name__icontains=client_name) |
+                    Q(client__last_name__icontains=client_name) |
+                    Q(client__company__icontains=client_name)
+                )
+
+            # Trier par date de création (plus récent en premier)
+            invoices = invoices_qs.order_by('-created_at')[:limit]
+
+            return [{
+                'id': str(i.id),
+                'invoice_number': i.invoice_number,
+                'title': i.title,
+                'client_name': i.client.get_full_name() if i.client else 'N/A',
+                'total_amount': float(i.total_amount),
+                'status': i.status,
+                'created_at': str(i.created_at.date()) if i.created_at else None,
+                'due_date': str(i.due_date) if i.due_date else None
+            } for i in invoices]
+
+        results = await get_latest_invoices_sync()
+
+        if not results:
+            return {
+                'success': True,
+                'data': [],
+                'count': 0,
+                'message': "Aucune facture trouvée"
+            }
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"Voici {'la dernière facture' if len(results) == 1 else f'les {len(results)} dernières factures'}"
         }
