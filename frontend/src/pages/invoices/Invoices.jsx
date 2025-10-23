@@ -31,6 +31,9 @@ import {
   TrendingUp,
   Schedule,
   CheckCircle,
+  Warning,
+  Error,
+  Description,
 } from '@mui/icons-material';
 import { invoicesAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -43,6 +46,7 @@ function Invoices() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [quickFilter, setQuickFilter] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -64,6 +68,14 @@ function Invoices() {
     }
   };
 
+  const handleQuickFilterClick = (filterValue) => {
+    if (quickFilter === filterValue) {
+      setQuickFilter('');
+    } else {
+      setQuickFilter(filterValue);
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = !searchTerm ||
       invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,7 +84,15 @@ function Invoices() {
 
     const matchesStatus = !statusFilter || invoice.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesQuick = !quickFilter || (() => {
+      if (quickFilter === 'paid') return invoice.status === 'paid';
+      if (quickFilter === 'unpaid') return invoice.status === 'sent';
+      if (quickFilter === 'overdue') return invoice.status === 'overdue';
+      if (quickFilter === 'draft') return invoice.status === 'draft';
+      return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesQuick;
   });
 
   const getStatusColor = (status) => {
@@ -100,7 +120,9 @@ function Invoices() {
   // Statistiques
   const totalInvoices = invoices.length;
   const paidInvoices = invoices.filter(i => i.status === 'paid').length;
-  const pendingInvoices = invoices.filter(i => i.status === 'sent').length;
+  const unpaidInvoices = invoices.filter(i => i.status === 'sent').length;
+  const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
+  const draftInvoices = invoices.filter(i => i.status === 'draft').length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
   const InvoiceCard = ({ invoice }) => (
@@ -246,28 +268,26 @@ function Invoices() {
           Factures
         </Typography>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Clickable Filters */}
         <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Total
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+          {/* Payées */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('paid')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'paid' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'success.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
@@ -275,7 +295,7 @@ function Invoices() {
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
                       {paidInvoices}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Payées
                     </Typography>
                   </Box>
@@ -284,17 +304,33 @@ function Invoices() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+          {/* Impayées */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('unpaid')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'warning.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'unpaid' ? 'warning.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'warning.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Schedule sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Warning sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
-                      {pendingInvoices}
+                      {unpaidInvoices}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      En attente
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Impayées
                     </Typography>
                   </Box>
                 </Stack>
@@ -302,27 +338,101 @@ function Invoices() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+          {/* En retard */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('overdue')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'error.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'overdue' ? 'error.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'error.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle2' : 'h6'}
-                      fontWeight="bold"
-                      color="info.main"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: isMobile ? '0.9rem' : '1.25rem',
-                      }}
-                    >
-                      {formatCurrency(totalAmount)}
+                  <Error sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
+                      {overdueInvoices}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Montant total
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      En retard
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Brouillons */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('draft')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'grey.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'draft' ? 'grey.600' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'grey.600'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'grey.600' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="grey.700">
+                      {draftInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Brouillons
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Toutes */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'primary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'primary.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
+                      {totalInvoices}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Toutes
                     </Typography>
                   </Box>
                 </Stack>
@@ -330,6 +440,29 @@ function Invoices() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Filter Indicator */}
+        {quickFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Chip
+              label={
+                quickFilter === 'paid' ? 'Payées' :
+                quickFilter === 'unpaid' ? 'Impayées' :
+                quickFilter === 'overdue' ? 'En retard' :
+                quickFilter === 'draft' ? 'Brouillons' : ''
+              }
+              onDelete={() => setQuickFilter('')}
+              color={
+                quickFilter === 'paid' ? 'success' :
+                quickFilter === 'unpaid' ? 'warning' :
+                quickFilter === 'overdue' ? 'error' :
+                quickFilter === 'draft' ? 'default' : 'primary'
+              }
+              size="small"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Search & Filters */}
