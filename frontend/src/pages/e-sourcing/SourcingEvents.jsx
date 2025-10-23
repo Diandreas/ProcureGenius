@@ -30,6 +30,10 @@ import {
   Pagination,
   Stack,
   Tooltip,
+  Grid,
+  Avatar,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -44,6 +48,11 @@ import {
   Cancel,
   Assessment,
   CompareArrows,
+  Description,
+  PlayCircle,
+  CheckCircle,
+  Lock,
+  List,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
@@ -63,11 +72,14 @@ function SourcingEvents() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { events, loading, totalCount } = useSelector((state) => state.eSourcing);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [quickFilter, setQuickFilter] = useState('');
   const [page, setPage] = useState(1);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -75,15 +87,23 @@ function SourcingEvents() {
 
   useEffect(() => {
     loadEvents();
-  }, [page, searchTerm, statusFilter]);
+  }, [page, searchTerm, statusFilter, quickFilter]);
 
   const loadEvents = () => {
     const params = {
       page,
       search: searchTerm,
-      status: statusFilter,
+      status: quickFilter || statusFilter,
     };
     dispatch(fetchSourcingEvents(params));
+  };
+
+  const handleQuickFilterClick = (filterValue) => {
+    if (quickFilter === filterValue) {
+      setQuickFilter('');
+    } else {
+      setQuickFilter(filterValue);
+    }
   };
 
   const handleMenuClick = (event, sourcingEvent) => {
@@ -184,14 +204,220 @@ function SourcingEvents() {
     return format(new Date(dateString), 'dd MMM yyyy', { locale: fr });
   };
 
+  // Statistiques
+  const totalEvents = events.length;
+  const draftEvents = events.filter(e => e.status === 'draft').length;
+  const publishedEvents = events.filter(e => e.status === 'published').length;
+  const activeEvents = events.filter(e => e.status === 'in_progress').length;
+  const closedEvents = events.filter(e => e.status === 'closed').length;
+
   return (
     <Box sx={{ p: 3 }}>
+      {/* Stats Cards - Clickable Filters */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
+          Événements de Sourcing
+        </Typography>
+
+        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+          {/* Brouillons */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('draft')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'grey.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'draft' ? 'grey.600' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'grey.600'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'grey.600' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="grey.700">
+                      {draftEvents}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Brouillons
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Publiés */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('published')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'info.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'published' ? 'info.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'info.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Publish sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
+                      {publishedEvents}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Publiés
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* En cours */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('in_progress')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'in_progress' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'success.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <PlayCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {activeEvents}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      En cours
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Clôturés */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('closed')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'grey.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'closed' ? 'grey.600' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'grey.600'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Lock sx={{ fontSize: isMobile ? 20 : 24, color: 'grey.600' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="grey.700">
+                      {closedEvents}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Clôturés
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Tous */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'primary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'primary.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <List sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
+                      {totalEvents}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Tous
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Filter Indicator */}
+        {quickFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Chip
+              label={
+                quickFilter === 'draft' ? 'Brouillons' :
+                quickFilter === 'published' ? 'Publiés' :
+                quickFilter === 'in_progress' ? 'En cours' :
+                quickFilter === 'closed' ? 'Clôturés' : ''
+              }
+              onDelete={() => setQuickFilter('')}
+              color={
+                quickFilter === 'draft' ? 'default' :
+                quickFilter === 'published' ? 'info' :
+                quickFilter === 'in_progress' ? 'success' :
+                quickFilter === 'closed' ? 'default' : 'primary'
+              }
+              size="small"
+            />
+          </Box>
+        )}
+      </Box>
+
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" component="h1">
-              Événements de Sourcing
-            </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
             <Button
               variant="contained"
               startIcon={<Add />}
