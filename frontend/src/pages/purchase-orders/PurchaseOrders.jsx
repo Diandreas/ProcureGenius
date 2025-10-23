@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import {
   Search, FilterList, ShoppingCart, AttachMoney, CheckCircle, Schedule, Business,
+  Description, HourglassEmpty, Cancel,
 } from '@mui/icons-material';
 import { purchaseOrdersAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -18,6 +19,7 @@ function PurchaseOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [quickFilter, setQuickFilter] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -38,6 +40,14 @@ function PurchaseOrders() {
     }
   };
 
+  const handleQuickFilterClick = (filterValue) => {
+    if (quickFilter === filterValue) {
+      setQuickFilter('');
+    } else {
+      setQuickFilter(filterValue);
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = { draft: 'default', sent: 'info', approved: 'success', cancelled: 'error' };
     return colors[status] || 'default';
@@ -54,12 +64,23 @@ function PurchaseOrders() {
       po.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       po.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || po.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    const matchesQuick = !quickFilter || (() => {
+      if (quickFilter === 'draft') return po.status === 'draft';
+      if (quickFilter === 'sent') return po.status === 'sent';
+      if (quickFilter === 'approved') return po.status === 'approved';
+      if (quickFilter === 'cancelled') return po.status === 'cancelled';
+      return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesQuick;
   });
 
   const totalPOs = purchaseOrders.length;
-  const approvedPOs = purchaseOrders.filter(po => po.status === 'approved').length;
+  const draftPOs = purchaseOrders.filter(po => po.status === 'draft').length;
   const pendingPOs = purchaseOrders.filter(po => po.status === 'sent').length;
+  const approvedPOs = purchaseOrders.filter(po => po.status === 'approved').length;
+  const cancelledPOs = purchaseOrders.filter(po => po.status === 'cancelled').length;
   const totalAmount = purchaseOrders.reduce((sum, po) => sum + (po.total_amount || 0), 0);
 
   const POCard = ({ po }) => (
@@ -191,18 +212,35 @@ function PurchaseOrders() {
           Bons de commande
         </Typography>
 
+        {/* Stats Cards - Clickable Filters */}
         <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+          {/* Brouillons */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('draft')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'grey.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'draft' ? 'grey.600' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'grey.600'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <ShoppingCart sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'grey.600' }} />
                   <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalPOs}
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="grey.700">
+                      {draftPOs}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Total
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Brouillons
                     </Typography>
                   </Box>
                 </Stack>
@@ -210,34 +248,32 @@ function PurchaseOrders() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+          {/* En attente */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('sent')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'warning.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'sent' ? 'warning.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'warning.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {approvedPOs}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Approuvés
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Schedule sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <HourglassEmpty sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
                       {pendingPOs}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       En attente
                     </Typography>
                   </Box>
@@ -246,27 +282,101 @@ function PurchaseOrders() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+          {/* Approuvés */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('approved')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'approved' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'success.main'
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle2' : 'h6'}
-                      fontWeight="bold"
-                      color="info.main"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: isMobile ? '0.9rem' : '1.25rem',
-                      }}
-                    >
-                      {formatCurrency(totalAmount)}
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
+                      {approvedPOs}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Montant total
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Approuvés
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Annulés */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('cancelled')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'error.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === 'cancelled' ? 'error.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'error.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Cancel sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
+                      {cancelledPOs}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Annulés
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Tous */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleQuickFilterClick('')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'primary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'primary.main'
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <ShoppingCart sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
+                      {totalPOs}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Tous
                     </Typography>
                   </Box>
                 </Stack>
@@ -274,6 +384,29 @@ function PurchaseOrders() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Filter Indicator */}
+        {quickFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Chip
+              label={
+                quickFilter === 'draft' ? 'Brouillons' :
+                quickFilter === 'sent' ? 'En attente' :
+                quickFilter === 'approved' ? 'Approuvés' :
+                quickFilter === 'cancelled' ? 'Annulés' : ''
+              }
+              onDelete={() => setQuickFilter('')}
+              color={
+                quickFilter === 'draft' ? 'default' :
+                quickFilter === 'sent' ? 'warning' :
+                quickFilter === 'approved' ? 'success' :
+                quickFilter === 'cancelled' ? 'error' : 'primary'
+              }
+              size="small"
+            />
+          </Box>
+        )}
       </Box>
 
       <Card sx={{ mb: 3, borderRadius: 1 }}>
