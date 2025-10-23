@@ -582,70 +582,37 @@ class ActionExecutor:
     async def create_invoice(self, params: Dict, user) -> Dict:
         """Crée une nouvelle facture"""
         from apps.invoicing.models import Invoice
-        from apps.accounts.models import CustomUser
+        from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
         from datetime import datetime, timedelta
 
         try:
             @sync_to_async
             def create_invoice_sync():
-                # Trouver ou créer le client (CustomUser)
+                # Trouver ou créer le client (modèle Client, pas CustomUser!)
                 client_name = params.get('client_name')
                 client_email = params.get('client_email', '')
+                client_phone = params.get('client_phone', '')
 
                 # Chercher un client existant par nom ou email
                 client = None
                 if client_email:
-                    client = CustomUser.objects.filter(email=client_email).first()
+                    client = Client.objects.filter(email=client_email).first()
 
+                if not client and client_name:
+                    # Chercher par nom
+                    client = Client.objects.filter(name__iexact=client_name).first()
+
+                # Si pas trouvé, créer un nouveau client
                 if not client:
-                    # Chercher par nom complet
-                    clients = CustomUser.objects.filter(
-                        first_name__icontains=client_name.split()[0] if ' ' in client_name else client_name
-                    )
-                    if clients.exists():
-                        client = clients.first()
-
-                # Si pas trouvé, vérifier les clients similaires
-                if not client:
-                    from .entity_matcher import entity_matcher
-
-                    # Extraire prénom et nom
-                    name_parts = client_name.split(' ', 1)
-                    first_name = name_parts[0]
-                    last_name = name_parts[1] if len(name_parts) > 1 else ''
-
-                    # Chercher des clients similaires
-                    similar_clients = entity_matcher.find_similar_clients(
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=client_email if client_email else None,
-                        company=params.get('client_company', client_name)
-                    )
-
-                    # Si des clients similaires existent, demander confirmation
-                    if similar_clients:
-                        raise ValueError(
-                            entity_matcher.create_similarity_message('client', similar_clients)
-                        )
-
-                    # Créer un nouveau client
-                    # Générer un username unique
-                    username = f"{first_name.lower()}.{last_name.lower()}".replace(' ', '')
-                    base_username = username
-                    counter = 1
-                    while CustomUser.objects.filter(username=username).exists():
-                        username = f"{base_username}{counter}"
-                        counter += 1
-
-                    client = CustomUser.objects.create_user(
-                        username=username,
-                        email=client_email or f"{username}@client.local",
-                        first_name=first_name,
-                        last_name=last_name,
-                        phone=params.get('client_phone', ''),
-                        company=params.get('client_company', client_name),
-                        password=CustomUser.objects.make_random_password()
+                    client = Client.objects.create(
+                        name=client_name,
+                        email=client_email,
+                        phone=client_phone,
+                        contact_person=params.get('contact_person', ''),
+                        address=params.get('client_address', ''),
+                        payment_terms=params.get('payment_terms', 'Net 30'),
+                        is_active=True
                     )
 
                 # Créer la facture
@@ -685,25 +652,28 @@ class ActionExecutor:
                 items = params.get('items', [])
                 if items:
                     for item in items:
-                        invoice.add_item(
-                            service_code=item.get('service_code', 'SVC-001'),
-                            description=item.get('description', ''),
-                            quantity=item.get('quantity', 1),
-                            unit_price=item.get('unit_price', 0)
-                        )
-                    invoice.recalculate_totals()
+                        # Utiliser la méthode add_item si elle existe
+                        if hasattr(invoice, 'add_item'):
+                            invoice.add_item(
+                                service_code=item.get('service_code', 'SVC-001'),
+                                description=item.get('description', ''),
+                                quantity=item.get('quantity', 1),
+                                unit_price=item.get('unit_price', 0)
+                            )
+                    if hasattr(invoice, 'recalculate_totals'):
+                        invoice.recalculate_totals()
 
                 return {
                     'id': str(invoice.id),
                     'invoice_number': invoice.invoice_number,
-                    'client_name': client.get_full_name() or client.username
+                    'client_name': client.name
                 }
 
             result = await create_invoice_sync()
 
             return {
                 'success': True,
-                'message': f"Facture '{result['invoice_number']}' créée avec succès",
+                'message': f"Facture '{result['invoice_number']}' créée avec succès pour {result['client_name']}",
                 'data': {
                     **result,
                     'entity_type': 'invoice'
@@ -734,9 +704,9 @@ class ActionExecutor:
                 Q(invoice_number__icontains=query) |
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
-                Q(client__username__icontains=query) |
-                Q(client__first_name__icontains=query) |
-                Q(client__last_name__icontains=query)
+                Q(client__name__icontains=query) |
+                Q(client__email__icontains=query) |
+                Q(client__contact_person__icontains=query)
             )
 
             if status_filter:
@@ -748,7 +718,7 @@ class ActionExecutor:
                 'id': str(i.id),
                 'invoice_number': i.invoice_number,
                 'title': i.title,
-                'client_name': i.client.get_full_name() if i.client else 'N/A',
+                'client_name': i.client.name if i.client else 'N/A',
                 'total_amount': float(i.total_amount),
                 'status': i.status,
                 'due_date': str(i.due_date) if i.due_date else None
@@ -885,7 +855,7 @@ class ActionExecutor:
         from apps.suppliers.models import Supplier
         from apps.invoicing.models import Invoice
         from apps.purchase_orders.models import PurchaseOrder
-        from apps.accounts.models import CustomUser
+        from apps.accounts.models import Client
         from django.db.models import Sum
         from asgiref.sync import sync_to_async
 
@@ -894,7 +864,7 @@ class ActionExecutor:
             return {
                 'total_suppliers': Supplier.objects.count(),
                 'active_suppliers': Supplier.objects.filter(status='active').count(),
-                'total_clients': CustomUser.objects.filter(is_staff=False, is_superuser=False).count(),
+                'total_clients': Client.objects.filter(is_active=True).count(),
                 'total_invoices': Invoice.objects.count(),
                 'paid_invoices': Invoice.objects.filter(status='paid').count(),
                 'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
@@ -915,8 +885,8 @@ class ActionExecutor:
         }
 
     async def search_client(self, params: Dict, user) -> Dict:
-        """Recherche des clients par nom, prénom, email ou entreprise"""
-        from apps.accounts.models import CustomUser
+        """Recherche des clients par nom, email ou contact"""
+        from apps.accounts.models import Client
         from django.db.models import Q
         from asgiref.sync import sync_to_async
 
@@ -925,25 +895,23 @@ class ActionExecutor:
             query = params.get('query', '')
             limit = params.get('limit', 5)
 
-            # Chercher dans les utilisateurs non-staff (clients)
-            clients = CustomUser.objects.filter(
-                Q(username__icontains=query) |
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query) |
+            # Chercher dans les clients
+            clients = Client.objects.filter(
+                Q(name__icontains=query) |
                 Q(email__icontains=query) |
-                Q(company__icontains=query)
+                Q(contact_person__icontains=query) |
+                Q(phone__icontains=query)
             ).filter(
-                is_staff=False,
-                is_superuser=False
+                is_active=True
             )[:limit]
 
             return [{
                 'id': str(c.id),
-                'username': c.username,
-                'full_name': c.get_full_name() or c.username,
+                'name': c.name,
                 'email': c.email,
                 'phone': c.phone or '',
-                'company': c.company or ''
+                'contact_person': c.contact_person or '',
+                'payment_terms': c.payment_terms
             } for c in clients]
 
         results = await search_clients_sync()
@@ -957,27 +925,26 @@ class ActionExecutor:
 
     async def list_clients(self, params: Dict, user) -> Dict:
         """Liste tous les clients de l'entreprise"""
-        from apps.accounts.models import CustomUser
+        from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
 
         @sync_to_async
         def list_clients_sync():
             limit = params.get('limit', 10)
 
-            # Récupérer tous les clients (non-staff)
-            clients = CustomUser.objects.filter(
-                is_staff=False,
-                is_superuser=False
-            ).order_by('-date_joined')[:limit]
+            # Récupérer tous les clients actifs
+            clients = Client.objects.filter(
+                is_active=True
+            ).order_by('-created_at')[:limit]
 
             return [{
                 'id': str(c.id),
-                'username': c.username,
-                'full_name': c.get_full_name() or c.username,
+                'name': c.name,
                 'email': c.email,
                 'phone': c.phone or '',
-                'company': c.company or '',
-                'date_joined': str(c.date_joined.date()) if c.date_joined else None
+                'contact_person': c.contact_person or '',
+                'payment_terms': c.payment_terms,
+                'created_at': str(c.created_at.date()) if c.created_at else None
             } for c in clients]
 
         results = await list_clients_sync()
@@ -1002,13 +969,12 @@ class ActionExecutor:
 
             invoices_qs = Invoice.objects.all()
 
-            # Filtrer par client si spécifié
+            # Filtrer par client si spécifié (utilise le modèle Client)
             if client_name:
                 invoices_qs = invoices_qs.filter(
-                    Q(client__username__icontains=client_name) |
-                    Q(client__first_name__icontains=client_name) |
-                    Q(client__last_name__icontains=client_name) |
-                    Q(client__company__icontains=client_name)
+                    Q(client__name__icontains=client_name) |
+                    Q(client__email__icontains=client_name) |
+                    Q(client__contact_person__icontains=client_name)
                 )
 
             # Trier par date de création (plus récent en premier)
@@ -1018,7 +984,7 @@ class ActionExecutor:
                 'id': str(i.id),
                 'invoice_number': i.invoice_number,
                 'title': i.title,
-                'client_name': i.client.get_full_name() if i.client else 'N/A',
+                'client_name': i.client.name if i.client else 'N/A',
                 'total_amount': float(i.total_amount),
                 'status': i.status,
                 'created_at': str(i.created_at.date()) if i.created_at else None,
