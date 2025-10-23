@@ -29,6 +29,10 @@ import {
   Warehouse,
   TrendingUp,
   Category,
+  Warning,
+  Error,
+  CheckCircle,
+  DesignServices,
 } from '@mui/icons-material';
 import { productsAPI, warehousesAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
@@ -42,6 +46,7 @@ function Products() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState(''); // Nouveau: filtre de stock
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
@@ -85,7 +90,27 @@ function Products() {
       (statusFilter === 'available' && product.is_active) ||
       (statusFilter === 'unavailable' && !product.is_active);
 
-    return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus;
+    // Nouveau: filtre par statut de stock
+    const matchesStock = !stockFilter || (() => {
+      if (stockFilter === 'out_of_stock') {
+        return product.product_type === 'physical' && product.stock_quantity === 0;
+      }
+      if (stockFilter === 'low_stock') {
+        return product.product_type === 'physical' &&
+               product.stock_quantity > 0 &&
+               product.stock_quantity <= (product.low_stock_threshold || 10);
+      }
+      if (stockFilter === 'ok') {
+        return product.product_type === 'physical' &&
+               product.stock_quantity > (product.low_stock_threshold || 10);
+      }
+      if (stockFilter === 'services') {
+        return product.product_type !== 'physical';
+      }
+      return true;
+    })();
+
+    return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus && matchesStock;
   });
 
   const ProductCard = ({ product }) => (
@@ -266,8 +291,19 @@ function Products() {
   // Calculer les statistiques
   const totalProducts = products.length;
   const activeProducts = products.filter(p => p.is_active).length;
-  const lowStock = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 10).length;
-  const outOfStock = products.filter(p => p.stock_quantity === 0).length;
+  const lowStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)).length;
+  const outOfStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity === 0).length;
+  const inStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity > (p.low_stock_threshold || 10)).length;
+  const servicesCount = products.filter(p => p.product_type !== 'physical').length;
+
+  // Fonction pour gérer le clic sur les cartes de statistiques
+  const handleStockFilterClick = (filterValue) => {
+    if (stockFilter === filterValue) {
+      setStockFilter(''); // Désactiver le filtre si déjà actif
+    } else {
+      setStockFilter(filterValue); // Activer le nouveau filtre
+    }
+  };
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
@@ -277,37 +313,35 @@ function Products() {
           Produits
         </Typography>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Cliquables pour filtrer */}
         <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+          {/* En stock (OK) */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleStockFilterClick('ok')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: stockFilter === 'ok' ? 'success.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'success.main',
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Inventory sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalProducts}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Total
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <TrendingUp sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
+                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {activeProducts}
+                      {inStock}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Actifs
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      En stock
                     </Typography>
                   </Box>
                 </Stack>
@@ -315,16 +349,32 @@ function Products() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
+          {/* Stock bas */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleStockFilterClick('low_stock')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'warning.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: stockFilter === 'low_stock' ? 'warning.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'warning.main',
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Inventory sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
+                  <Warning sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
                       {lowStock}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Stock bas
                     </Typography>
                   </Box>
@@ -333,16 +383,32 @@ function Products() {
             </Card>
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'error.50' }}>
+          {/* Rupture de stock */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleStockFilterClick('out_of_stock')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'error.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: stockFilter === 'out_of_stock' ? 'error.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'error.main',
+                }
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Inventory sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
+                  <Error sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
                   <Box>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
                       {outOfStock}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
                       Rupture
                     </Typography>
                   </Box>
@@ -350,7 +416,100 @@ function Products() {
               </CardContent>
             </Card>
           </Grid>
+
+          {/* Services / Digital */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => handleStockFilterClick('services')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'info.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: stockFilter === 'services' ? 'info.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'info.main',
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <DesignServices sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
+                      {servicesCount}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Services
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Total */}
+          <Grid item xs={6} sm={2.4}>
+            <Card
+              onClick={() => setStockFilter('')}
+              sx={{
+                borderRadius: 2,
+                bgcolor: stockFilter === '' ? 'primary.100' : 'primary.50',
+                cursor: 'pointer',
+                border: '2px solid',
+                borderColor: stockFilter === '' ? 'primary.main' : 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                  borderColor: 'primary.main',
+                }
+              }}
+            >
+              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Inventory sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
+                  <Box>
+                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
+                      {totalProducts}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                      Tous
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
+
+        {/* Indicateur de filtre actif */}
+        {stockFilter && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Filtre actif:
+            </Typography>
+            <Chip
+              label={
+                stockFilter === 'ok' ? 'En stock' :
+                stockFilter === 'low_stock' ? 'Stock bas' :
+                stockFilter === 'out_of_stock' ? 'Rupture de stock' :
+                stockFilter === 'services' ? 'Services/Digital' : ''
+              }
+              onDelete={() => setStockFilter('')}
+              color={
+                stockFilter === 'ok' ? 'success' :
+                stockFilter === 'low_stock' ? 'warning' :
+                stockFilter === 'out_of_stock' ? 'error' :
+                stockFilter === 'services' ? 'info' : 'default'
+              }
+              size="small"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Search & Filters */}
