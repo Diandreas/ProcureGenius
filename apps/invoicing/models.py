@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 import uuid
 import qrcode
 from io import BytesIO
@@ -147,11 +148,31 @@ class Product(models.Model):
     
     def __str__(self):
         return self.name
-    
+
+    def clean(self):
+        """Validation du produit selon son type"""
+        super().clean()
+
+        # Les services et produits digitaux ne doivent pas avoir de gestion de stock
+        if self.product_type in ['service', 'digital']:
+            # Réinitialiser les champs de stock pour les services
+            if self.stock_quantity != 0 or self.low_stock_threshold != 0:
+                self.stock_quantity = 0
+                self.low_stock_threshold = 0
+
     def save(self, *args, **kwargs):
+        # Validation avant sauvegarde
+        self.full_clean()
+
         if not self.reference:
-            # Générer une référence automatique
-            prefix = 'PRD' if self.product_type == 'physical' else 'SVC'
+            # Générer une référence automatique selon le type
+            if self.product_type == 'physical':
+                prefix = 'PRD'
+            elif self.product_type == 'digital':
+                prefix = 'DIG'
+            else:
+                prefix = 'SVC'
+
             last_product = Product.objects.filter(reference__startswith=prefix).order_by('-reference').first()
             if last_product and last_product.reference:
                 try:

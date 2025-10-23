@@ -42,9 +42,13 @@ import {
   CheckCircle,
   Block,
   Assessment,
+  Add,
+  ReceiptLong,
+  Inventory2,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { suppliersAPI } from '../../services/api';
+import reportsAPI from '../../services/reportsAPI';
 import { getStatusColor, getStatusLabel, formatDate, parseRating, formatCurrency } from '../../utils/formatters';
 
 function SupplierDetail() {
@@ -95,6 +99,34 @@ function SupplierDetail() {
       } catch (error) {
         enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
       }
+    }
+  };
+
+  const handleGenerateReport = async (format = 'pdf') => {
+    try {
+      enqueueSnackbar(`Génération du rapport ${format.toUpperCase()} en cours...`, { variant: 'info' });
+
+      const response = await reportsAPI.generateSupplierReport(id, format);
+      const report = response.data;
+
+      if (report.status === 'completed') {
+        enqueueSnackbar('Rapport généré avec succès!', { variant: 'success' });
+
+        // Télécharger automatiquement
+        const downloadResponse = await reportsAPI.download(report.id);
+        const url = window.URL.createObjectURL(new Blob([downloadResponse.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', report.file_name || `rapport_${id}.${format}`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        enqueueSnackbar('Le rapport est en cours de génération...', { variant: 'info' });
+      }
+    } catch (error) {
+      console.error('Erreur génération rapport:', error);
+      enqueueSnackbar('Erreur lors de la génération du rapport', { variant: 'error' });
     }
   };
 
@@ -165,6 +197,78 @@ function SupplierDetail() {
           </Stack>
         )}
       </Box>
+
+      {/* Quick Actions */}
+      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          <Typography variant="h6" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
+            Actions rapides
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate(`/purchase-orders/new?supplier=${id}`)}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.5,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5568d3 0%, #63408a 100%)',
+                  }
+                }}
+              >
+                Nouveau bon de commande
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Inventory2 />}
+                onClick={() => navigate(`/products/new?supplier=${id}`)}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.5,
+                  bgcolor: 'success.main',
+                  '&:hover': {
+                    bgcolor: 'success.dark',
+                  }
+                }}
+              >
+                Ajouter des produits
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Assessment />}
+                onClick={() => handleGenerateReport('pdf')}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.5,
+                  bgcolor: 'warning.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'warning.dark',
+                  }
+                }}
+              >
+                Générer un rapport
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs

@@ -17,21 +17,34 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  Alert,
+  Tooltip as MuiTooltip,
 } from '@mui/material';
 import {
   TrendingUp,
+  TrendingDown,
   Business,
   ShoppingCart,
   Receipt,
   AttachMoney,
+  People,
+  Inventory,
+  Warning,
+  MoneyOff,
+  CheckCircle,
+  PendingActions,
+  Store,
+  LocalShipping,
+  AccountBalance,
 } from '@mui/icons-material';
-import { Line, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,

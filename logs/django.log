@@ -11183,3 +11183,1624 @@ Traceback (most recent call last):
 django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
 "GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
 "GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149992
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149992
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 18710
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 150003
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149414
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149414
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149425
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149403
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"OPTIONS /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/statistics/ HTTP/1.1" 200 384
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/statistics/ HTTP/1.1" 200 384
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/statistics/ HTTP/1.1" 200 384
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/ HTTP/1.1" 200 640
+"GET /api/v1/suppliers/ead2d2c1-687b-4b0a-bdf5-5f673cad3a45/statistics/ HTTP/1.1" 200 384
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4280
+"POST /api/v1/suppliers/ HTTP/1.1" 201 500
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4781
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4781
+"OPTIONS /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/ HTTP/1.1" 200 500
+"GET /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/statistics/ HTTP/1.1" 200 366
+"GET /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/ HTTP/1.1" 200 500
+"GET /api/v1/suppliers/4e34164e-577d-45fa-a51d-da9d031279e8/statistics/ HTTP/1.1" 200 366
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 10419
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4781
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 4781
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"OPTIONS /api/v1/quick-create/supplier/ HTTP/1.1" 200 0
+"POST /api/v1/quick-create/supplier/ HTTP/1.1" 201 584
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+Bad Request: /api/v1/purchase-orders/
+"POST /api/v1/purchase-orders/ HTTP/1.1" 400 72
+"POST /api/v1/purchase-orders/ HTTP/1.1" 201 1684
+"OPTIONS /api/v1/purchase-orders/1c0c3cc9-5ce3-490f-85a4-c10351ff1ced/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/1c0c3cc9-5ce3-490f-85a4-c10351ff1ced/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/1c0c3cc9-5ce3-490f-85a4-c10351ff1ced/ HTTP/1.1" 200 1684
+"GET /api/v1/purchase-orders/1c0c3cc9-5ce3-490f-85a4-c10351ff1ced/ HTTP/1.1" 200 1684
+"OPTIONS /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/ HTTP/1.1" 200 493
+"GET /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/statistics/ HTTP/1.1" 200 955
+"GET /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/ HTTP/1.1" 200 493
+"GET /api/v1/suppliers/34d319b3-1ebb-45a6-8bea-ed43c92a5039/statistics/ HTTP/1.1" 200 955
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/invoices/ HTTP/1.1" 200 16625
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/clients/ HTTP/1.1" 200 3392
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"POST /api/v1/invoices/ HTTP/1.1" 201 1518
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"OPTIONS /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"OPTIONS /api/v1/invoices/272423f1-0fb5-4c3b-83e6-35066979cd33/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/272423f1-0fb5-4c3b-83e6-35066979cd33/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/272423f1-0fb5-4c3b-83e6-35066979cd33/ HTTP/1.1" 200 1740
+"GET /api/v1/invoices/272423f1-0fb5-4c3b-83e6-35066979cd33/ HTTP/1.1" 200 1740
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"OPTIONS /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/ HTTP/1.1" 200 539
+"GET /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/statistics/ HTTP/1.1" 200 916
+"GET /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/ HTTP/1.1" 200 539
+"GET /api/v1/clients/43dc8e82-2796-42f4-aeee-12b7d3ec624b/statistics/ HTTP/1.1" 200 916
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"OPTIONS /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1127
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1127
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1127
+"GET /api/v1/invoices/04145751-0eb9-4f37-b82a-fefa2fdfb041/ HTTP/1.1" 200 1127
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/4191d651-71e2-49e0-a4e1-4befda600f58/ HTTP/1.1" 200 1518
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/ HTTP/1.1" 200 864
+"GET /api/v1/products/2db4d8f3-c86b-4803-a5d3-17b7d8f00d69/statistics/ HTTP/1.1" 200 1250
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 887
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 858
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/ HTTP/1.1" 200 887
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/statistics/ HTTP/1.1" 200 858
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 0
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/products/84dc4ef4-66fc-4077-9106-17d4726d98db/stock_movements/ HTTP/1.1" 200 772
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 874
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 874
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 452
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 12104
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 12104
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4268
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4268
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149429
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149429
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5275
+"OPTIONS /api/v1/e-sourcing/events/ HTTP/1.1" 200 0
+"POST /api/v1/e-sourcing/events/ HTTP/1.1" 201 256
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 452
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 452
+"OPTIONS /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1330
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1330
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 228
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 228
+"OPTIONS /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/publish/ HTTP/1.1" 200 0
+"POST /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/publish/ HTTP/1.1" 200 1462
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1391
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 227
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 227
+"POST /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/submit/ HTTP/1.1" 201 121
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 227
+"GET /api/v1/e-sourcing/public/5v6ehW8KxMTdgbIduSB58E4QjD7gtquiYzqDlUXNwWI/ HTTP/1.1" 200 227
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4763
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 4763
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149430
+Internal Server Error: /api/v1/dashboard/stats/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 928, in get
+    stats['recent_active_clients'] = Client.objects.filter(
+                                     ~~~~~~~~~~~~~~~~~~~~~^
+        invoices__status='paid',
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        invoices__paid_date__gte=three_months_ago
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).distinct().count()
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1559, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1376, in build_lookup
+    lhs = self.try_transform(lhs, name)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1427, in try_transform
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Unsupported lookup 'paid_date' for ManyToOneRel or join on the field not permitted.
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 500 149430
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1872
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1872
+"OPTIONS /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/compare_bids/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/compare_bids/ HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/compare_bids/ HTTP/1.1" 200 997
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/compare_bids/ HTTP/1.1" 200 997
+"OPTIONS /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 1077
+"GET /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 1077
+"PATCH /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 414
+"GET /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 1077
+"PATCH /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 414
+"GET /api/v1/e-sourcing/bids/0cd93400-df9b-4ff7-b43b-0a1cef906a60/ HTTP/1.1" 200 1077
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1872
+"GET /api/v1/e-sourcing/events/61c41899-47ac-46c0-8c7d-2e686b0d83a9/ HTTP/1.1" 200 1872
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5771
+"GET /api/v1/suppliers/ HTTP/1.1" 200 5771
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 264
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"GET /api/v1/accounts/organization/users/ HTTP/1.1" 200 591
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\suppliers\models.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\urls.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\urls.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1218

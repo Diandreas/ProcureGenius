@@ -42,6 +42,7 @@ TENANT_APPS = [
     'apps.e_sourcing',
     'apps.contracts',
     'apps.data_migration',
+    'apps.reports',
 ]
 
 SHARED_APPS = [

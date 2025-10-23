@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 import uuid
 import qrcode
 from io import BytesIO
@@ -259,7 +260,20 @@ class PurchaseOrderItem(models.Model):
     def __str__(self):
         return f"{self.product_reference} - {self.description}"
 
+    def clean(self):
+        """Validation de l'article de bon de commande"""
+        super().clean()
+
+        # Validation: Un produit doit toujours être associé
+        if not self.product:
+            raise ValidationError({
+                'product': _("Un produit doit être associé à cet article. Sélectionnez un produit existant ou créez-en un nouveau.")
+            })
+
     def save(self, *args, **kwargs):
+        # Validation avant sauvegarde
+        self.full_clean()
+
         # Synchroniser avec product si défini
         if self.product:
             self.product_reference = self.product.reference
@@ -267,7 +281,7 @@ class PurchaseOrderItem(models.Model):
                 self.description = self.product.name
             if not self.unit_price or self.unit_price == 0:
                 self.unit_price = self.product.cost_price or self.product.price
-        
+
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
         # Recalculer les totaux du bon de commande

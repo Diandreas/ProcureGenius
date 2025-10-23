@@ -11,6 +11,7 @@ app_name = 'api'
 router = DefaultRouter()
 router.register(r'suppliers', views.SupplierViewSet)
 router.register(r'supplier-categories', views.SupplierCategoryViewSet)
+router.register(r'supplier-products', views.SupplierProductViewSet)
 router.register(r'products', views.ProductViewSet)
 router.register(r'product-categories', views.ProductCategoryViewSet)
 router.register(r'warehouses', views.WarehouseViewSet)
@@ -55,6 +56,9 @@ urlpatterns = [
 
     # Data Migration endpoints
     path('migration/', include('apps.data_migration.urls')),
+
+    # Reports endpoints
+    path('reports/', include('apps.reports.urls')),
 
     # Keep existing endpoints if they exist
     # path('analytics/', include('apps.analytics.api_urls')),

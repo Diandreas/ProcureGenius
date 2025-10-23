@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.suppliers.models import Supplier, SupplierCategory
+from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
 from apps.accounts.models import Client
@@ -33,13 +33,13 @@ class SupplierSerializer(serializers.ModelSerializer):
     """Serializer pour les fournisseurs"""
     categories = SupplierCategorySerializer(many=True, read_only=True)
     category_ids = serializers.PrimaryKeyRelatedField(
-        many=True, 
+        many=True,
         queryset=SupplierCategory.objects.all(),
         source='categories',
         write_only=True
     )
     performance_badge = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Supplier
         fields = [
@@ -50,9 +50,50 @@ class SupplierSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'is_active'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'performance_badge']
-    
+
     def get_performance_badge(self, obj):
         return obj.get_performance_badge()
+
+
+class SupplierProductSerializer(serializers.ModelSerializer):
+    """Serializer pour la relation Fournisseur-Produit"""
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_reference = serializers.CharField(source='product.reference', read_only=True)
+    product_price = serializers.DecimalField(
+        source='product.price',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+
+    class Meta:
+        model = SupplierProduct
+        fields = [
+            'id', 'supplier', 'supplier_name', 'product', 'product_name',
+            'product_reference', 'product_price', 'supplier_reference',
+            'supplier_price', 'lead_time_days', 'is_preferred', 'is_active',
+            'notes', 'last_purchase_date', 'last_purchase_price',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'supplier_name',
+            'product_name', 'product_reference', 'product_price'
+        ]
+
+    def validate(self, attrs):
+        """Valider qu'il n'y a pas déjà une relation pour ce couple supplier-product"""
+        supplier = attrs.get('supplier')
+        product = attrs.get('product')
+
+        # Lors de la création (pas d'instance), vérifier l'unicité
+        if not self.instance:
+            if SupplierProduct.objects.filter(supplier=supplier, product=product).exists():
+                raise serializers.ValidationError({
+                    'non_field_errors': 'Cette relation fournisseur-produit existe déjà.'
+                })
+
+        return attrs
 
 
 class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
@@ -212,14 +253,56 @@ class ClientSerializer(serializers.ModelSerializer):
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de bon de commande"""
     total_price = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
-    
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    # Permettre la création de produit à la volée
+    product_data = serializers.DictField(write_only=True, required=False, help_text="Données pour créer un nouveau produit si nécessaire")
+
     class Meta:
         model = PurchaseOrderItem
         fields = [
-            'id', 'product_reference', 'description', 'specifications',
-            'quantity', 'unit_of_measure', 'unit_price', 'total_price'
+            'id', 'product', 'product_name', 'product_data', 'product_reference',
+            'description', 'specifications', 'quantity', 'unit_of_measure',
+            'unit_price', 'total_price'
         ]
-        read_only_fields = ['id', 'total_price']
+        read_only_fields = ['id', 'total_price', 'product_name']
+
+    def validate(self, attrs):
+        """Valider qu'un produit est associé ou créé"""
+        product = attrs.get('product')
+        product_data = attrs.get('product_data')
+
+        # Si ni product ni product_data fournis, erreur
+        if not product and not product_data:
+            raise serializers.ValidationError({
+                'product': "Un produit doit être sélectionné ou créé. Fournissez 'product' ou 'product_data'."
+            })
+
+        # Si product_data fourni, créer le produit
+        if product_data:
+            from apps.invoicing.models import Product
+            # Valider les champs requis pour créer un produit
+            required_fields = ['name', 'price']
+            missing_fields = [f for f in required_fields if f not in product_data]
+            if missing_fields:
+                raise serializers.ValidationError({
+                    'product_data': f"Champs manquants pour créer un produit: {', '.join(missing_fields)}"
+                })
+
+            # Créer le produit
+            try:
+                product_data.setdefault('product_type', 'physical')
+                product_data.setdefault('cost_price', product_data.get('price', 0))
+                new_product = Product.objects.create(**product_data)
+                attrs['product'] = new_product
+                # Retirer product_data des attrs pour ne pas le sauvegarder
+                attrs.pop('product_data', None)
+            except Exception as e:
+                raise serializers.ValidationError({
+                    'product_data': f"Erreur lors de la création du produit: {str(e)}"
+                })
+
+        return attrs
 
 
 class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):

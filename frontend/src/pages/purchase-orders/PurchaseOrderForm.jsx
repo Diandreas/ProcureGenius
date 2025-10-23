@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -44,12 +44,15 @@ import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI } from '../
 import { formatCurrency } from '../../utils/formatters';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields, getProductFields } from '../../config/quickCreateFields';
+import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 
 function PurchaseOrderForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
+  const supplierIdFromUrl = searchParams.get('supplier');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -67,6 +70,7 @@ function PurchaseOrderForm() {
   // Items state
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({
+    product: null,
     product_reference: '',
     description: '',
     quantity: 1,
@@ -112,14 +116,36 @@ function PurchaseOrderForm() {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (supplierId = null) => {
     try {
-      const response = await productsAPI.list();
+      // Si un fournisseur est sélectionné, filtrer les produits par ce fournisseur
+      const params = supplierId ? { supplier: supplierId } : {};
+      const response = await productsAPI.list(params);
       setProducts(response.data.results || response.data);
     } catch (error) {
       enqueueSnackbar('Erreur lors du chargement des produits', { variant: 'error' });
     }
   };
+
+  // Recharger les produits quand le fournisseur change
+  useEffect(() => {
+    if (formData.supplier && formData.supplier.id) {
+      fetchProducts(formData.supplier.id);
+    } else {
+      fetchProducts(); // Charger tous les produits si aucun fournisseur sélectionné
+    }
+  }, [formData.supplier]);
+
+  // Pré-sélectionner le fournisseur depuis l'URL
+  useEffect(() => {
+    if (supplierIdFromUrl && suppliers.length > 0 && !formData.supplier && !isEdit) {
+      const supplier = suppliers.find(s => s.id === supplierIdFromUrl);
+      if (supplier) {
+        setFormData(prev => ({ ...prev, supplier }));
+        enqueueSnackbar(`Fournisseur ${supplier.name} pré-sélectionné`, { variant: 'info' });
+      }
+    }
+  }, [supplierIdFromUrl, suppliers, formData.supplier, isEdit]);
 
   const fetchWarehouses = async () => {
     try {
@@ -196,6 +222,12 @@ function PurchaseOrderForm() {
   };
 
   const handleAddItem = () => {
+    // Validation: Un produit doit être sélectionné
+    if (!newItem.product) {
+      enqueueSnackbar('Veuillez sélectionner ou créer un produit', { variant: 'error' });
+      return;
+    }
+
     if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
       enqueueSnackbar('Veuillez remplir tous les champs requis', { variant: 'error' });
       return;
@@ -216,6 +248,7 @@ function PurchaseOrderForm() {
     }
 
     setNewItem({
+      product: null,
       product_reference: '',
       description: '',
       quantity: 1,
@@ -263,7 +296,10 @@ function PurchaseOrderForm() {
         ...formData,
         supplier: formData.supplier.id,
         delivery_warehouse: formData.delivery_warehouse ? formData.delivery_warehouse.id : null,
-        items,
+        items: items.map(item => ({
+          ...item,
+          product: item.product ? item.product.id : null,
+        })),
         subtotal,
         tax_amount: taxAmount,
         total_amount: total,
@@ -586,106 +622,17 @@ function PurchaseOrderForm() {
         </Grid>
       </Grid>
 
-      {/* Add/Edit Item Dialog */}
-      <Dialog open={addItemDialogOpen} onClose={() => setAddItemDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingItemIndex >= 0 ? 'Modifier l\'article' : 'Ajouter un article'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Autocomplete
-                  options={products}
-                  getOptionLabel={(option) => option.name || ''}
-                  onChange={(event, newValue) => handleProductSelect(newValue)}
-                  fullWidth
-                  renderInput={(params) => (
-                    <TextField {...params} label="Sélectionner un produit (optionnel)" />
-                  )}
-                  renderOption={(props, option) => (
-                    <Box component="li" {...props}>
-                      <Box>
-                        <Typography variant="body2">{option.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Réf: {option.reference || option.sku} - {formatCurrency(option.price || option.unit_price || 0)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  )}
-                />
-                <IconButton
-                  onClick={() => setProductDialogOpen(true)}
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' }
-                  }}
-                >
-                  <Add />
-                </IconButton>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Référence produit"
-                value={newItem.product_reference}
-                onChange={(e) => setNewItem({ ...newItem, product_reference: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Quantité *"
-                type="number"
-                required
-                value={newItem.quantity}
-                onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 1 })}
-                inputProps={{ min: 1 }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description *"
-                required
-                value={newItem.description}
-                onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Prix unitaire *"
-                type="number"
-                required
-                value={newItem.unit_price}
-                onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Total"
-                value={formatCurrency(newItem.quantity * newItem.unit_price)}
-                disabled
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddItemDialogOpen(false)}>Annuler</Button>
-          <Button
-            onClick={handleAddItem}
-            variant="contained"
-            disabled={!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0}
-          >
-            {editingItemIndex >= 0 ? 'Modifier' : 'Ajouter'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Add/Edit Item Dialog with Product Selection and Creation */}
+      <ProductSelectionDialog
+        open={addItemDialogOpen}
+        onClose={() => setAddItemDialogOpen(false)}
+        products={products}
+        newItem={newItem}
+        setNewItem={setNewItem}
+        onAddItem={handleAddItem}
+        onCreateProduct={() => setProductDialogOpen(true)}
+        editingItemIndex={editingItemIndex}
+      />
 
       {/* Quick Create Dialogs */}
       <QuickCreateDialog

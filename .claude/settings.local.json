@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"/c/Users/david/AppData/Local/Programs/Python/Python313/python.exe\":*)"
+      "Bash(\"/c/Users/david/AppData/Local/Programs/Python/Python313/python.exe\":*)",
+      "Bash(python manage.py makemigrations:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations invoicing --name add_product_type_validation)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations purchase_orders --name require_product_association)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations suppliers --name create_supplier_product_relation)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py showmigrations invoicing)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate invoicing 0016_add_product_type_validation --fake)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations reports)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate reports)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py showmigrations --plan)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

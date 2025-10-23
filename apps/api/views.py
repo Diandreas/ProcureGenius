@@ -7,7 +7,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 
-from apps.suppliers.models import Supplier, SupplierCategory
+from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
 from apps.accounts.models import Client
@@ -15,7 +15,7 @@ from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules
 
 from .serializers import (
-    SupplierSerializer, SupplierCategorySerializer,
+    SupplierSerializer, SupplierCategorySerializer, SupplierProductSerializer,
     PurchaseOrderSerializer, PurchaseOrderItemSerializer,
     InvoiceSerializer, InvoiceItemSerializer,
     ProductSerializer, ClientSerializer,
@@ -162,6 +162,61 @@ class SupplierViewSet(viewsets.ModelViewSet):
         return response
 
 
+class SupplierProductViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les relations Fournisseur-Produit"""
+    queryset = SupplierProduct.objects.all()
+    serializer_class = SupplierProductSerializer
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.SUPPLIERS
+    filterset_fields = ['supplier', 'product', 'is_preferred', 'is_active']
+    search_fields = ['supplier__name', 'product__name', 'supplier_reference']
+    ordering_fields = ['created_at', 'supplier_price', 'lead_time_days']
+    ordering = ['-is_preferred', 'supplier__name']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filtre par fournisseur
+        supplier_id = self.request.query_params.get('supplier_id')
+        if supplier_id:
+            queryset = queryset.filter(supplier_id=supplier_id)
+
+        # Filtre par produit
+        product_id = self.request.query_params.get('product_id')
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+
+        return queryset.select_related('supplier', 'product')
+
+    @action(detail=False, methods=['get'])
+    def by_supplier(self, request):
+        """Liste des produits d'un fournisseur spécifique"""
+        supplier_id = request.query_params.get('supplier_id')
+        if not supplier_id:
+            return Response(
+                {'error': 'supplier_id parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        supplier_products = self.get_queryset().filter(supplier_id=supplier_id)
+        serializer = self.get_serializer(supplier_products, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_product(self, request):
+        """Liste des fournisseurs d'un produit spécifique"""
+        product_id = request.query_params.get('product_id')
+        if not product_id:
+            return Response(
+                {'error': 'product_id parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        product_suppliers = self.get_queryset().filter(product_id=product_id)
+        serializer = self.get_serializer(product_suppliers, many=True)
+        return Response(serializer.data)
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
@@ -172,6 +227,32 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'reference', 'description']
     ordering_fields = ['name', 'price', 'stock_quantity']
     ordering = ['name']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filtre par fournisseur (via la relation SupplierProduct)
+        supplier_id = self.request.query_params.get('supplier')
+        if supplier_id:
+            queryset = queryset.filter(supplier_products__supplier_id=supplier_id).distinct()
+
+        # Filtre par statut de stock
+        stock_status = self.request.query_params.get('stock_status')
+        if stock_status == 'out_of_stock':
+            queryset = queryset.filter(product_type='physical', stock_quantity=0)
+        elif stock_status == 'low_stock':
+            queryset = queryset.filter(
+                product_type='physical',
+                stock_quantity__gt=0,
+                stock_quantity__lte=F('low_stock_threshold')
+            )
+        elif stock_status == 'ok':
+            queryset = queryset.filter(
+                product_type='physical',
+                stock_quantity__gt=F('low_stock_threshold')
+            )
+
+        return queryset
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
