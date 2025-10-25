@@ -15,7 +15,13 @@
       "Bash(findstr:*)",
       "Bash(git add:*)",
       "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate e_sourcing)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/consumers.py)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/views.py)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/services.py)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations ai_assistant --name create_action_history)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/models.py)"
     ],
     "deny": [],
     "ask": []

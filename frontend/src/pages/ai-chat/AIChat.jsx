@@ -207,6 +207,10 @@ function AIChat() {
       create_supplier: <Business fontSize="small" />,
       get_statistics: <Analytics fontSize="small" />,
       analyze_document: <DocumentScanner fontSize="small" />,
+      add_invoice_items: <Add fontSize="small" />,
+      send_invoice: <Send fontSize="small" />,
+      add_po_items: <Add fontSize="small" />,
+      send_purchase_order: <Send fontSize="small" />,
     };
     return icons[actionId] || <SmartToy fontSize="small" />;
   };

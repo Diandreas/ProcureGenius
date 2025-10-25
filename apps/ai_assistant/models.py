@@ -97,3 +97,62 @@ class DocumentScan(models.Model):
 class AIAssistant(models.Model):
     """Modèle d'assistant IA simplifié (gardé pour compatibilité)"""
     pass
+
+
+class ActionHistory(models.Model):
+    """Historique des actions IA pour système undo"""
+    ACTION_TYPES = [
+        ('create', 'Création'),
+        ('update', 'Modification'),
+        ('delete', 'Suppression'),
+    ]
+
+    ENTITY_TYPES = [
+        ('supplier', 'Fournisseur'),
+        ('invoice', 'Facture'),
+        ('purchase_order', 'Bon de commande'),
+        ('client', 'Client'),
+        ('product', 'Produit'),
+        ('stock', 'Stock'),
+        ('report', 'Rapport'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_actions')
+    action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
+    entity_type = models.CharField(max_length=50, choices=ENTITY_TYPES)
+    entity_id = models.CharField(max_length=100)  # UUID as string
+
+    # États pour undo
+    previous_state = models.JSONField(null=True, blank=True)  # État avant modification
+    new_state = models.JSONField(null=True, blank=True)       # État après modification
+
+    # Contrôle undo
+    can_undo = models.BooleanField(default=True)
+    is_undone = models.BooleanField(default=False)
+    undone_at = models.DateTimeField(null=True, blank=True)
+
+    # Métadonnées
+    conversation_id = models.UUIDField(null=True, blank=True)
+    message_id = models.UUIDField(null=True, blank=True)
+    description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['entity_type', 'entity_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.action_type} {self.entity_type} by {self.user.username}"
+
+    def mark_as_undone(self):
+        """Marque l'action comme annulée"""
+        from django.utils import timezone
+        self.is_undone = True
+        self.undone_at = timezone.now()
+        self.can_undo = False
+        self.save()

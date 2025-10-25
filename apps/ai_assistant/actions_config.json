@@ -222,6 +222,274 @@
           "depends_on": "document_type"
         }
       ]
+    },
+
+    "send_purchase_order": {
+      "name": "Envoyer un bon de commande",
+      "description": "Envoie un bon de commande par email au fournisseur",
+      "icon": "send",
+      "category": "purchase_orders",
+      "required_params": ["po_number"],
+      "optional_params": ["recipient_email"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Bon de commande envoyé avec succès au fournisseur"
+        }
+      ]
+    },
+
+    "update_supplier": {
+      "name": "Modifier un fournisseur",
+      "description": "Modifie les informations d'un fournisseur existant",
+      "icon": "edit",
+      "category": "suppliers",
+      "required_params": ["supplier_name"],
+      "optional_params": ["name", "email", "phone", "address", "city", "status"]
+    },
+
+    "update_invoice": {
+      "name": "Modifier une facture",
+      "description": "Modifie les informations d'une facture existante",
+      "icon": "edit",
+      "category": "invoices",
+      "required_params": ["invoice_number"],
+      "optional_params": ["title", "description", "status", "due_date"]
+    },
+
+    "update_purchase_order": {
+      "name": "Modifier un bon de commande",
+      "description": "Modifie les informations d'un BC existant",
+      "icon": "edit",
+      "category": "purchase_orders",
+      "required_params": ["po_number"],
+      "optional_params": ["description", "status", "delivery_date", "notes"]
+    },
+
+    "update_client": {
+      "name": "Modifier un client",
+      "description": "Modifie les informations d'un client existant",
+      "icon": "edit",
+      "category": "clients",
+      "required_params": ["client_name"],
+      "optional_params": ["name", "email", "phone", "address", "contact_person"]
+    },
+
+    "delete_supplier": {
+      "name": "Supprimer un fournisseur",
+      "description": "Désactive un fournisseur (soft delete)",
+      "icon": "delete",
+      "category": "suppliers",
+      "required_params": ["supplier_name"]
+    },
+
+    "delete_invoice": {
+      "name": "Supprimer une facture",
+      "description": "Supprime une facture non payée",
+      "icon": "delete",
+      "category": "invoices",
+      "required_params": ["invoice_number"]
+    },
+
+    "delete_purchase_order": {
+      "name": "Supprimer un bon de commande",
+      "description": "Supprime un BC non reçu",
+      "icon": "delete",
+      "category": "purchase_orders",
+      "required_params": ["po_number"]
+    },
+
+    "delete_client": {
+      "name": "Supprimer un client",
+      "description": "Désactive un client (soft delete)",
+      "icon": "delete",
+      "category": "clients",
+      "required_params": ["client_name"]
+    },
+
+    "create_product": {
+      "name": "Créer un produit",
+      "description": "Crée un nouveau produit (service ou physique)",
+      "icon": "inventory",
+      "category": "products",
+      "required_params": ["name"],
+      "optional_params": ["reference", "barcode", "product_type", "description", "price", "cost_price", "stock_quantity", "low_stock_threshold", "supplier_reference"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Produit '{name}' créé avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/products/{id}",
+          "label": "Voir le produit"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait les informations du produit : nom (obligatoire), référence, type (service/physique), description, prix",
+        "confirm": "Créer le produit '{name}' ?"
+      }
+    },
+
+    "search_product": {
+      "name": "Rechercher un produit",
+      "description": "Recherche des produits par nom, référence ou code-barres",
+      "icon": "search",
+      "category": "products",
+      "required_params": ["query"],
+      "optional_params": ["product_type", "limit"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "product_list"
+        },
+        {
+          "type": "quick_actions_per_result",
+          "actions": ["view_product", "edit_product", "adjust_stock"]
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Détermine les critères de recherche : nom, référence ou code-barres",
+        "results": "Voici les produits trouvés correspondant à '{query}'"
+      }
+    },
+
+    "update_product": {
+      "name": "Modifier un produit",
+      "description": "Modifie les informations d'un produit existant",
+      "icon": "edit",
+      "category": "products",
+      "required_params": ["product_name"],
+      "optional_params": ["name", "reference", "barcode", "description", "price", "cost_price", "stock_quantity", "low_stock_threshold"]
+    },
+
+    "delete_product": {
+      "name": "Supprimer un produit",
+      "description": "Supprime un produit non utilisé dans des factures/BCs",
+      "icon": "delete",
+      "category": "products",
+      "required_params": ["product_name"]
+    },
+
+    "adjust_stock": {
+      "name": "Ajuster le stock",
+      "description": "Ajoute ou retire du stock pour un produit physique",
+      "icon": "inventory_2",
+      "category": "stock",
+      "required_params": ["product_name", "adjustment_type", "quantity"],
+      "optional_params": ["reason", "product_id", "product_reference"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Stock ajusté: {previous_stock} → {new_stock}"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/products/{id}",
+          "label": "Voir le produit"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait: nom du produit, type d'ajustement (ajouter/retirer), quantité, raison optionnelle",
+        "confirm": "Ajuster le stock de '{product_name}' : {adjustment_type} {quantity} unité(s) ?"
+      }
+    },
+
+    "get_stock_alerts": {
+      "name": "Consulter les alertes de stock",
+      "description": "Affiche les produits en rupture ou avec stock bas",
+      "icon": "warning",
+      "category": "stock",
+      "required_params": [],
+      "optional_params": ["alert_type"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "stock_alerts_list"
+        },
+        {
+          "type": "quick_actions_per_result",
+          "actions": ["view_product", "adjust_stock", "create_purchase_order"]
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Type d'alerte: all (toutes), low_stock (stock bas uniquement), out_of_stock (rupture uniquement)",
+        "results": "Voici les alertes de stock"
+      }
+    },
+
+    "generate_report": {
+      "name": "Générer un rapport",
+      "description": "Génère un rapport PDF, Excel ou CSV",
+      "icon": "assessment",
+      "category": "reports",
+      "required_params": ["report_type"],
+      "optional_params": ["format", "date_start", "date_end", "supplier_id", "client_id"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Rapport généré avec succès"
+        },
+        {
+          "type": "download_option",
+          "label": "Télécharger le rapport",
+          "url": "{file_path}"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait: type de rapport (supplier, invoice, purchase_order, etc.), format (pdf/xlsx/csv), dates optionnelles",
+        "confirm": "Générer un rapport {report_type} au format {format} ?"
+      }
+    },
+
+    "search_report": {
+      "name": "Rechercher des rapports",
+      "description": "Recherche parmi les rapports générés",
+      "icon": "search",
+      "category": "reports",
+      "required_params": [],
+      "optional_params": ["report_type", "format", "status", "limit"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "reports_list"
+        },
+        {
+          "type": "quick_actions_per_result",
+          "actions": ["download_report", "view_report", "delete_report"]
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Filtres optionnels: type de rapport, format, statut",
+        "results": "Voici les rapports trouvés"
+      }
+    },
+
+    "get_report_status": {
+      "name": "Vérifier le statut d'un rapport",
+      "description": "Vérifie le statut de génération d'un rapport",
+      "icon": "hourglass_empty",
+      "category": "reports",
+      "required_params": ["report_id"],
+      "optional_params": []
+    },
+
+    "delete_report": {
+      "name": "Supprimer un rapport",
+      "description": "Supprime un rapport généré",
+      "icon": "delete",
+      "category": "reports",
+      "required_params": ["report_id"],
+      "optional_params": []
+    },
+
+    "undo_last_action": {
+      "name": "Annuler la dernière action",
+      "description": "Annule la dernière action effectuée",
+      "icon": "undo",
+      "category": "dashboard",
+      "required_params": [],
+      "optional_params": []
     }
   },
 

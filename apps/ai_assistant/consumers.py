@@ -3,8 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import AIConversation, AIMessage
-from .services import MistralAIService
+from .models import Conversation, Message
+from .services import MistralService
 
 User = get_user_model()
 
@@ -76,7 +76,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                         'id': str(user_msg.id),
                         'role': 'user',
                         'content': user_message,
-                        'timestamp': user_msg.timestamp.isoformat()
+                        'timestamp': user_msg.created_at.isoformat()
                     }
                 }
             )
@@ -115,7 +115,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                         'id': str(ai_msg.id),
                         'role': 'assistant',
                         'content': ai_response['message'],
-                        'timestamp': ai_msg.timestamp.isoformat(),
+                        'timestamp': ai_msg.created_at.isoformat(),
                         'action_result': ai_response.get('action_result'),
                         'tokens_used': ai_response.get('tokens', 0)
                     }
@@ -181,19 +181,19 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     def user_has_access(self):
         """Vérifie si l'utilisateur a accès à cette conversation"""
         try:
-            conversation = AIConversation.objects.get(
+            conversation = Conversation.objects.get(
                 id=self.conversation_id,
                 user=self.user
             )
             return True
-        except AIConversation.DoesNotExist:
+        except Conversation.DoesNotExist:
             return False
     
     @database_sync_to_async
     def save_user_message(self, content):
         """Sauvegarde un message utilisateur"""
-        conversation = AIConversation.objects.get(id=self.conversation_id)
-        return AIMessage.objects.create(
+        conversation = Conversation.objects.get(id=self.conversation_id)
+        return Message.objects.create(
             conversation=conversation,
             role='user',
             content=content
@@ -202,109 +202,119 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_ai_message(self, ai_response):
         """Sauvegarde un message IA"""
-        conversation = AIConversation.objects.get(id=self.conversation_id)
-        return AIMessage.objects.create(
+        conversation = Conversation.objects.get(id=self.conversation_id)
+
+        # Stocker les métadonnées dans le champ metadata JSON
+        metadata = {
+            'model_used': ai_response.get('model', 'mistral-large'),
+            'tokens_used': ai_response.get('tokens', 0),
+            'response_time_ms': ai_response.get('response_time', 0),
+            'action_triggered': ai_response.get('action'),
+            'action_result': ai_response.get('action_result')
+        }
+
+        return Message.objects.create(
             conversation=conversation,
             role='assistant',
             content=ai_response['message'],
-            model_used=ai_response.get('model', 'mistral-medium'),
-            tokens_used=ai_response.get('tokens', 0),
-            response_time_ms=ai_response.get('response_time', 0),
-            action_triggered=ai_response.get('action'),
-            action_result=ai_response.get('action_result')
+            metadata=metadata
         )
     
     @database_sync_to_async
     def process_with_ai(self, user_message):
         """Traite le message avec l'IA"""
-        ai_service = MistralAIService()
-        
+        ai_service = MistralService()
+
         # Construire le contexte
-        conversation = AIConversation.objects.get(id=self.conversation_id)
-        
+        conversation = Conversation.objects.get(id=self.conversation_id)
+
         user_context = {
             'user_id': self.user.id,
-            'user_role': self.user.role,
-            'user_language': self.user.language,
             'conversation_history': [
                 {'role': msg.role, 'content': msg.content}
-                for msg in conversation.messages.order_by('timestamp')[-10:]
-            ],
-            'conversation_type': conversation.conversation_type
+                for msg in conversation.messages.order_by('created_at')[-10:]
+            ]
         }
-        
+
         return ai_service.process_user_request(user_message, user_context)
     
     @database_sync_to_async
     def rate_ai_message(self, message_id, rating, feedback):
         """Note un message IA"""
         try:
-            message = AIMessage.objects.get(
+            message = Message.objects.get(
                 id=message_id,
                 conversation__user=self.user,
                 role='assistant'
             )
-            message.user_rating = int(rating)
-            message.feedback = feedback
+            # Stocker le rating dans metadata
+            if not message.metadata:
+                message.metadata = {}
+            message.metadata['user_rating'] = int(rating)
+            message.metadata['feedback'] = feedback
             message.save()
             return True
-        except (AIMessage.DoesNotExist, ValueError):
+        except (Message.DoesNotExist, ValueError):
             return False
 
 
-class AINotificationConsumer(AsyncWebsocketConsumer):
-    """Consumer pour les notifications IA en temps réel"""
-    
-    async def connect(self):
-        self.user = self.scope["user"]
-        self.room_group_name = f'ai_notifications_{self.user.id}'
-        
-        # Rejoindre le groupe des notifications
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        
-        await self.accept()
-    
-    async def disconnect(self, close_code):
-        # Quitter le groupe
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-    
-    async def receive(self, text_data):
-        """Traite les messages reçus (mark as read, etc.)"""
-        try:
-            data = json.loads(text_data)
-            action = data.get('action')
-            
-            if action == 'mark_read':
-                notification_id = data.get('notification_id')
-                if notification_id:
-                    await self.mark_notification_read(notification_id)
-                    
-        except json.JSONDecodeError:
-            pass
-    
-    # Handler pour les nouvelles notifications
-    async def ai_notification(self, event):
-        """Envoie une nouvelle notification"""
-        await self.send(text_data=json.dumps({
-            'type': 'notification',
-            'notification': event['notification']
-        }))
-    
-    @database_sync_to_async
-    def mark_notification_read(self, notification_id):
-        """Marque une notification comme lue"""
-        try:
-            notification = AINotification.objects.get(
-                id=notification_id,
-                user=self.user
-            )
-            notification.mark_as_read()
-            return True
-        except AINotification.DoesNotExist:
-            return False
+# TODO: Phase 4 - Réactiver quand le modèle AINotification sera créé
+# Le consumer ci-dessous est désactivé car le modèle AINotification n'existe pas encore
+# Fonctionnalité planifiée: notifications temps réel pour alertes stock, rapports générés, etc.
+
+# class AINotificationConsumer(AsyncWebsocketConsumer):
+#     """Consumer pour les notifications IA en temps réel"""
+#
+#     async def connect(self):
+#         self.user = self.scope["user"]
+#         self.room_group_name = f'ai_notifications_{self.user.id}'
+#
+#         # Rejoindre le groupe des notifications
+#         await self.channel_layer.group_add(
+#             self.room_group_name,
+#             self.channel_name
+#         )
+#
+#         await self.accept()
+#
+#     async def disconnect(self, close_code):
+#         # Quitter le groupe
+#         await self.channel_layer.group_discard(
+#             self.room_group_name,
+#             self.channel_name
+#         )
+#
+#     async def receive(self, text_data):
+#         """Traite les messages reçus (mark as read, etc.)"""
+#         try:
+#             data = json.loads(text_data)
+#             action = data.get('action')
+#
+#             if action == 'mark_read':
+#                 notification_id = data.get('notification_id')
+#                 if notification_id:
+#                     await self.mark_notification_read(notification_id)
+#
+#         except json.JSONDecodeError:
+#             pass
+#
+#     # Handler pour les nouvelles notifications
+#     async def ai_notification(self, event):
+#         """Envoie une nouvelle notification"""
+#         await self.send(text_data=json.dumps({
+#             'type': 'notification',
+#             'notification': event['notification']
+#         }))
+#
+#     @database_sync_to_async
+#     def mark_notification_read(self, notification_id):
+#         """Marque une notification comme lue"""
+#         try:
+#             notification = AINotification.objects.get(
+#                 id=notification_id,
+#                 user=self.user
+#             )
+#             notification.mark_as_read()
+#             return True
+#         except AINotification.DoesNotExist:
+#             return False

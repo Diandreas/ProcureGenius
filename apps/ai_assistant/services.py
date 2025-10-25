@@ -218,6 +218,453 @@ Réponds toujours en français et sois professionnel mais amical."""
                         "required": []
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "add_invoice_items",
+                    "description": "Ajoute des items/articles à une facture existante",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_number": {"type": "string", "description": "Numéro de la facture"},
+                            "invoice_id": {"type": "string", "description": "ID de la facture (alternative à invoice_number)"},
+                            "items": {
+                                "type": "array",
+                                "description": "Liste des articles à ajouter",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {"type": "string", "description": "Description de l'article"},
+                                        "quantity": {"type": "integer", "description": "Quantité"},
+                                        "unit_price": {"type": "number", "description": "Prix unitaire"},
+                                        "product_reference": {"type": "string", "description": "Référence produit (optionnel)"},
+                                        "discount_percent": {"type": "number", "description": "Remise en % (optionnel)"}
+                                    },
+                                    "required": ["description", "quantity", "unit_price"]
+                                }
+                            }
+                        },
+                        "required": ["items"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "send_invoice",
+                    "description": "Envoie une facture par email au client avec PDF en pièce jointe",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_number": {"type": "string", "description": "Numéro de la facture"},
+                            "invoice_id": {"type": "string", "description": "ID de la facture (alternative à invoice_number)"},
+                            "recipient_email": {"type": "string", "description": "Email du destinataire (par défaut: email du client)"},
+                            "template_type": {"type": "string", "description": "Type de template PDF: classic, modern, minimal (défaut: classic)"}
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "add_po_items",
+                    "description": "Ajoute des items/articles à un bon de commande existant",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "po_number": {"type": "string", "description": "Numéro du bon de commande"},
+                            "po_id": {"type": "string", "description": "ID du BC (alternative à po_number)"},
+                            "items": {
+                                "type": "array",
+                                "description": "Liste des articles à ajouter",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "product_reference": {"type": "string", "description": "Référence du produit (OBLIGATOIRE - le produit doit exister)"},
+                                        "description": {"type": "string", "description": "Description (optionnel si produit existe)"},
+                                        "quantity": {"type": "integer", "description": "Quantité"},
+                                        "unit_price": {"type": "number", "description": "Prix unitaire (optionnel si produit existe)"},
+                                        "specifications": {"type": "string", "description": "Spécifications techniques (optionnel)"}
+                                    },
+                                    "required": ["product_reference", "quantity"]
+                                }
+                            }
+                        },
+                        "required": ["items"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "send_purchase_order",
+                    "description": "Envoie un bon de commande par email au fournisseur",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "po_number": {"type": "string", "description": "Numéro du bon de commande"},
+                            "po_id": {"type": "string", "description": "ID du BC (alternative à po_number)"},
+                            "recipient_email": {"type": "string", "description": "Email du destinataire (par défaut: email du fournisseur)"}
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_supplier",
+                    "description": "Modifie un fournisseur existant",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "supplier_name": {"type": "string", "description": "Nom du fournisseur"},
+                            "name": {"type": "string", "description": "Nouveau nom"},
+                            "email": {"type": "string", "description": "Nouvel email"},
+                            "phone": {"type": "string", "description": "Nouveau téléphone"},
+                            "address": {"type": "string", "description": "Nouvelle adresse"},
+                            "city": {"type": "string", "description": "Nouvelle ville"},
+                            "status": {"type": "string", "description": "Nouveau statut"}
+                        },
+                        "required": ["supplier_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_invoice",
+                    "description": "Modifie une facture existante",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_number": {"type": "string", "description": "Numéro de la facture"},
+                            "title": {"type": "string", "description": "Nouveau titre"},
+                            "description": {"type": "string", "description": "Nouvelle description"},
+                            "status": {"type": "string", "description": "Nouveau statut"},
+                            "due_date": {"type": "string", "description": "Nouvelle date d'échéance (YYYY-MM-DD)"}
+                        },
+                        "required": ["invoice_number"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_purchase_order",
+                    "description": "Modifie un bon de commande existant",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "po_number": {"type": "string", "description": "Numéro du BC"},
+                            "description": {"type": "string", "description": "Nouvelle description"},
+                            "status": {"type": "string", "description": "Nouveau statut"},
+                            "delivery_date": {"type": "string", "description": "Nouvelle date de livraison (YYYY-MM-DD)"},
+                            "notes": {"type": "string", "description": "Nouvelles notes"}
+                        },
+                        "required": ["po_number"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_client",
+                    "description": "Modifie un client existant",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "client_name": {"type": "string", "description": "Nom du client"},
+                            "name": {"type": "string", "description": "Nouveau nom"},
+                            "email": {"type": "string", "description": "Nouvel email"},
+                            "phone": {"type": "string", "description": "Nouveau téléphone"},
+                            "address": {"type": "string", "description": "Nouvelle adresse"},
+                            "contact_person": {"type": "string", "description": "Nouvelle personne de contact"}
+                        },
+                        "required": ["client_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_supplier",
+                    "description": "Supprime (désactive) un fournisseur",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "supplier_name": {"type": "string", "description": "Nom du fournisseur à supprimer"}
+                        },
+                        "required": ["supplier_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_invoice",
+                    "description": "Supprime une facture non payée",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_number": {"type": "string", "description": "Numéro de la facture à supprimer"}
+                        },
+                        "required": ["invoice_number"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_purchase_order",
+                    "description": "Supprime un bon de commande non reçu",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "po_number": {"type": "string", "description": "Numéro du BC à supprimer"}
+                        },
+                        "required": ["po_number"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_client",
+                    "description": "Supprime (désactive) un client",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "client_name": {"type": "string", "description": "Nom du client à supprimer"}
+                        },
+                        "required": ["client_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_product",
+                    "description": "Crée un nouveau produit (service ou physique) avec entity matching pour éviter les doublons",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Nom du produit (obligatoire)"},
+                            "reference": {"type": "string", "description": "Référence du produit"},
+                            "barcode": {"type": "string", "description": "Code-barres"},
+                            "product_type": {
+                                "type": "string",
+                                "enum": ["service", "physical"],
+                                "description": "Type de produit: service ou physical (défaut: service)"
+                            },
+                            "description": {"type": "string", "description": "Description du produit"},
+                            "price": {"type": "number", "description": "Prix de vente"},
+                            "cost_price": {"type": "number", "description": "Prix de revient (pour produits physiques)"},
+                            "stock_quantity": {"type": "integer", "description": "Quantité en stock (pour produits physiques)"},
+                            "low_stock_threshold": {"type": "integer", "description": "Seuil d'alerte stock (défaut: 10)"},
+                            "supplier_reference": {"type": "string", "description": "Référence chez le fournisseur"}
+                        },
+                        "required": ["name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_product",
+                    "description": "Recherche des produits par nom, référence ou code-barres",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Terme de recherche (nom, référence, code-barres)"},
+                            "product_type": {
+                                "type": "string",
+                                "enum": ["service", "physical"],
+                                "description": "Filtrer par type de produit"
+                            },
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_product",
+                    "description": "Modifie un produit existant",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "product_name": {"type": "string", "description": "Nom du produit"},
+                            "product_id": {"type": "string", "description": "ID du produit (alternative à product_name)"},
+                            "product_reference": {"type": "string", "description": "Référence du produit (alternative)"},
+                            "name": {"type": "string", "description": "Nouveau nom"},
+                            "reference": {"type": "string", "description": "Nouvelle référence"},
+                            "barcode": {"type": "string", "description": "Nouveau code-barres"},
+                            "description": {"type": "string", "description": "Nouvelle description"},
+                            "price": {"type": "number", "description": "Nouveau prix"},
+                            "cost_price": {"type": "number", "description": "Nouveau prix de revient"},
+                            "stock_quantity": {"type": "integer", "description": "Nouvelle quantité en stock"},
+                            "low_stock_threshold": {"type": "integer", "description": "Nouveau seuil d'alerte"}
+                        },
+                        "required": ["product_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_product",
+                    "description": "Supprime un produit s'il n'est pas utilisé dans des factures ou BCs",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "product_name": {"type": "string", "description": "Nom du produit à supprimer"},
+                            "product_id": {"type": "string", "description": "ID du produit (alternative à product_name)"},
+                            "product_reference": {"type": "string", "description": "Référence du produit (alternative)"}
+                        },
+                        "required": ["product_name"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "adjust_stock",
+                    "description": "Ajuste le stock d'un produit physique (ajout ou retrait) avec alertes automatiques",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "product_name": {"type": "string", "description": "Nom du produit"},
+                            "product_id": {"type": "string", "description": "ID du produit (alternative)"},
+                            "product_reference": {"type": "string", "description": "Référence du produit (alternative)"},
+                            "adjustment_type": {
+                                "type": "string",
+                                "enum": ["add", "remove"],
+                                "description": "Type d'ajustement: 'add' pour ajouter, 'remove' pour retirer"
+                            },
+                            "quantity": {"type": "integer", "description": "Quantité à ajouter ou retirer (doit être > 0)"},
+                            "reason": {"type": "string", "description": "Raison de l'ajustement (optionnel)"}
+                        },
+                        "required": ["product_name", "adjustment_type", "quantity"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_stock_alerts",
+                    "description": "Récupère les produits avec des alertes de stock (rupture ou stock bas)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "alert_type": {
+                                "type": "string",
+                                "enum": ["all", "low_stock", "out_of_stock"],
+                                "description": "Type d'alerte: 'all' (toutes), 'low_stock' (stock bas uniquement), 'out_of_stock' (rupture uniquement)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "generate_report",
+                    "description": "Génère un rapport au format PDF, Excel ou CSV",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "report_type": {
+                                "type": "string",
+                                "enum": ["supplier", "supplier_all", "product", "product_all", "invoice", "purchase_order", "client", "client_all"],
+                                "description": "Type de rapport à générer"
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["pdf", "xlsx", "csv"],
+                                "description": "Format du rapport (défaut: pdf)"
+                            },
+                            "date_start": {"type": "string", "description": "Date de début (format ISO: YYYY-MM-DD)"},
+                            "date_end": {"type": "string", "description": "Date de fin (format ISO: YYYY-MM-DD)"},
+                            "supplier_id": {"type": "string", "description": "ID du fournisseur (pour rapport supplier)"},
+                            "client_id": {"type": "string", "description": "ID du client (pour rapport client)"}
+                        },
+                        "required": ["report_type"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_report",
+                    "description": "Recherche parmi les rapports déjà générés",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "report_type": {
+                                "type": "string",
+                                "description": "Filtrer par type de rapport"
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["pdf", "xlsx", "csv"],
+                                "description": "Filtrer par format"
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": ["pending", "processing", "completed", "failed"],
+                                "description": "Filtrer par statut"
+                            },
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_report_status",
+                    "description": "Vérifie le statut de génération d'un rapport",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "report_id": {"type": "string", "description": "ID du rapport"}
+                        },
+                        "required": ["report_id"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_report",
+                    "description": "Supprime un rapport généré",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "report_id": {"type": "string", "description": "ID du rapport à supprimer"}
+                        },
+                        "required": ["report_id"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "undo_last_action",
+                    "description": "Annule la dernière action effectuée par l'utilisateur",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                }
             }
         ]
 
@@ -308,12 +755,26 @@ Réponds toujours en français et sois professionnel mais amical."""
                         'create_supplier': "Je vais créer le fournisseur",
                         'create_invoice': "Je vais créer la facture",
                         'create_purchase_order': "Je vais créer le bon de commande",
+                        'create_product': "Je vais créer le produit",
                         'search_supplier': "Je recherche les fournisseurs",
                         'search_client': "Je recherche les clients",
+                        'search_product': "Je recherche les produits",
                         'list_clients': "Je liste les clients",
                         'get_stats': "Je récupère les statistiques",
                         'get_latest_invoice': "Je récupère les dernières factures",
-                        'search_invoice': "Je recherche les factures"
+                        'search_invoice': "Je recherche les factures",
+                        'update_product': "Je modifie le produit",
+                        'delete_product': "Je supprime le produit",
+                        'add_invoice_items': "J'ajoute des articles à la facture",
+                        'send_invoice': "J'envoie la facture",
+                        'send_purchase_order': "J'envoie le bon de commande",
+                        'adjust_stock': "J'ajuste le stock",
+                        'get_stock_alerts': "Je consulte les alertes de stock",
+                        'generate_report': "Je génère le rapport",
+                        'search_report': "Je recherche les rapports",
+                        'get_report_status': "Je vérifie le statut du rapport",
+                        'delete_report': "Je supprime le rapport",
+                        'undo_last_action': "J'annule la dernière action"
                     }
 
                     actions = [action_descriptions.get(tc['function'], f"J'exécute {tc['function']}")
@@ -436,6 +897,29 @@ class ActionExecutor:
             'search_client': self.search_client,
             'list_clients': self.list_clients,
             'get_latest_invoice': self.get_latest_invoice,
+            'add_invoice_items': self.add_invoice_items,
+            'send_invoice': self.send_invoice,
+            'add_po_items': self.add_po_items,
+            'send_purchase_order': self.send_purchase_order,
+            'update_supplier': self.update_supplier,
+            'update_invoice': self.update_invoice,
+            'update_purchase_order': self.update_purchase_order,
+            'update_client': self.update_client,
+            'delete_supplier': self.delete_supplier,
+            'delete_invoice': self.delete_invoice,
+            'delete_purchase_order': self.delete_purchase_order,
+            'delete_client': self.delete_client,
+            'create_product': self.create_product,
+            'search_product': self.search_product,
+            'update_product': self.update_product,
+            'delete_product': self.delete_product,
+            'adjust_stock': self.adjust_stock,
+            'get_stock_alerts': self.get_stock_alerts,
+            'generate_report': self.generate_report,
+            'search_report': self.search_report,
+            'get_report_status': self.get_report_status,
+            'delete_report': self.delete_report,
+            'undo_last_action': self.undo_last_action,
         }
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
@@ -580,31 +1064,35 @@ class ActionExecutor:
         }
     
     async def create_invoice(self, params: Dict, user) -> Dict:
-        """Crée une nouvelle facture"""
-        from apps.invoicing.models import Invoice
+        """Crée une nouvelle facture avec entity matching pour clients et produits"""
+        from apps.invoicing.models import Invoice, InvoiceItem, Product
         from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
         from datetime import datetime, timedelta
+        from decimal import Decimal
+        from .entity_matcher import entity_matcher
 
         try:
             @sync_to_async
             def create_invoice_sync():
-                # Trouver ou créer le client (modèle Client, pas CustomUser!)
+                # 1. TROUVER OU CRÉER CLIENT avec entity matching
                 client_name = params.get('client_name')
                 client_email = params.get('client_email', '')
                 client_phone = params.get('client_phone', '')
 
-                # Chercher un client existant par nom ou email
-                client = None
-                if client_email:
-                    client = Client.objects.filter(email=client_email).first()
+                # Entity matching pour clients
+                similar_clients = entity_matcher.find_similar_clients(
+                    first_name=client_name,
+                    last_name='',
+                    email=client_email if client_email else None,
+                    company=client_name
+                )
 
-                if not client and client_name:
-                    # Chercher par nom
-                    client = Client.objects.filter(name__iexact=client_name).first()
-
-                # Si pas trouvé, créer un nouveau client
-                if not client:
+                if similar_clients:
+                    # Utiliser le premier client similaire (meilleur match)
+                    client = similar_clients[0][0]
+                else:
+                    # Créer nouveau client
                     client = Client.objects.create(
                         name=client_name,
                         email=client_email,
@@ -648,20 +1136,46 @@ class ActionExecutor:
                     status='draft'
                 )
 
-                # Ajouter des items si fournis
+                # 2. AJOUTER ITEMS avec création auto des produits
                 items = params.get('items', [])
                 if items:
-                    for item in items:
-                        # Utiliser la méthode add_item si elle existe
-                        if hasattr(invoice, 'add_item'):
-                            invoice.add_item(
-                                service_code=item.get('service_code', 'SVC-001'),
-                                description=item.get('description', ''),
-                                quantity=item.get('quantity', 1),
-                                unit_price=item.get('unit_price', 0)
+                    for item_data in items:
+                        product_name = item_data.get('description', '')
+                        product_ref = item_data.get('product_reference', '')
+
+                        # Entity matching pour produits
+                        similar_products = entity_matcher.find_similar_products(
+                            name=product_name,
+                            reference=product_ref if product_ref else None
+                        )
+
+                        product = None
+                        if similar_products:
+                            # Utiliser produit existant
+                            product = similar_products[0][0]
+                        elif product_name:
+                            # Créer nouveau produit (type service par défaut)
+                            product = Product.objects.create(
+                                name=product_name,
+                                reference=product_ref or f"PROD-{Product.objects.count() + 1:04d}",
+                                product_type='service',
+                                price=Decimal(str(item_data.get('unit_price', 0))),
+                                is_active=True
                             )
-                    if hasattr(invoice, 'recalculate_totals'):
-                        invoice.recalculate_totals()
+
+                        # Créer l'item facture
+                        InvoiceItem.objects.create(
+                            invoice=invoice,
+                            product=product,
+                            service_code=item_data.get('service_code', 'SVC-001'),
+                            description=product_name,
+                            quantity=item_data.get('quantity', 1),
+                            unit_price=Decimal(str(item_data.get('unit_price', 0))),
+                            unit_of_measure=item_data.get('unit_of_measure', 'unité')
+                        )
+
+                    # Recalculer les totaux
+                    invoice.recalculate_totals()
 
                 return {
                     'id': str(invoice.id),
@@ -734,21 +1248,42 @@ class ActionExecutor:
         }
     
     async def create_purchase_order(self, params: Dict, user) -> Dict:
-        """Crée un bon de commande"""
-        from apps.purchase_orders.models import PurchaseOrder
+        """Crée un bon de commande avec entity matching pour fournisseur et produits"""
+        from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
         from apps.suppliers.models import Supplier
+        from apps.invoicing.models import Product
         from asgiref.sync import sync_to_async
         from datetime import datetime, timedelta
+        from decimal import Decimal
+        from .entity_matcher import entity_matcher
 
         try:
             @sync_to_async
             def create_po_sync():
-                # Trouver le fournisseur
+                # 1. TROUVER OU CRÉER FOURNISSEUR avec entity matching
                 supplier_name = params.get('supplier_name')
-                supplier = Supplier.objects.filter(name__icontains=supplier_name).first()
+                supplier_email = params.get('supplier_email', '')
+                supplier_phone = params.get('supplier_phone', '')
 
-                if not supplier:
-                    raise ValueError(f"Fournisseur '{supplier_name}' non trouvé. Créez-le d'abord.")
+                # Entity matching pour fournisseurs
+                similar_suppliers = entity_matcher.find_similar_suppliers(
+                    name=supplier_name,
+                    email=supplier_email if supplier_email else None,
+                    phone=supplier_phone if supplier_phone else None
+                )
+
+                if similar_suppliers:
+                    # Utiliser fournisseur existant
+                    supplier = similar_suppliers[0][0]
+                else:
+                    # Créer nouveau fournisseur
+                    supplier = Supplier.objects.create(
+                        name=supplier_name,
+                        email=supplier_email,
+                        phone=supplier_phone,
+                        status='pending',
+                        is_active=True
+                    )
 
                 # Préparer les données
                 description = params.get('description', '')
@@ -781,12 +1316,49 @@ class ActionExecutor:
                     status='draft'
                 )
 
-                # Ajouter des items si fournis
+                # 2. AJOUTER ITEMS avec création auto des produits
                 items = params.get('items', [])
                 if items:
-                    for item in items:
-                        # Logique d'ajout d'items si le modèle PurchaseOrder l'implémente
-                        pass
+                    for item_data in items:
+                        product_name = item_data.get('description', '')
+                        product_ref = item_data.get('product_reference', '')
+
+                        # Entity matching pour produits
+                        similar_products = entity_matcher.find_similar_products(
+                            name=product_name,
+                            reference=product_ref if product_ref else None
+                        )
+
+                        product = None
+                        if similar_products:
+                            # Utiliser produit existant
+                            product = similar_products[0][0]
+                        elif product_name:
+                            # Créer nouveau produit (type physical par défaut pour BC)
+                            product = Product.objects.create(
+                                name=product_name,
+                                reference=product_ref or f"PROD-{Product.objects.count() + 1:04d}",
+                                product_type='physical',
+                                cost_price=Decimal(str(item_data.get('unit_price', 0))),
+                                price=Decimal(str(item_data.get('unit_price', 0))) * Decimal('1.3'),  # Marge 30%
+                                stock_quantity=0,
+                                low_stock_threshold=10,
+                                is_active=True
+                            )
+
+                        # Créer l'item BC (requiert produit)
+                        if product:
+                            PurchaseOrderItem.objects.create(
+                                purchase_order=po,
+                                product=product,
+                                product_reference=product.reference,
+                                description=product_name,
+                                quantity=item_data.get('quantity', 1),
+                                unit_price=Decimal(str(item_data.get('unit_price', 0)))
+                            )
+
+                    # Recalculer totaux
+                    po.recalculate_totals()
 
                 return {
                     'id': str(po.id),
@@ -1007,3 +1579,1686 @@ class ActionExecutor:
             'count': len(results),
             'message': f"Voici {'la dernière facture' if len(results) == 1 else f'les {len(results)} dernières factures'}"
         }
+
+    async def add_invoice_items(self, params: Dict, user) -> Dict:
+        """Ajoute des items à une facture existante"""
+        from apps.invoicing.models import Invoice, InvoiceItem, Product
+        from asgiref.sync import sync_to_async
+        from decimal import Decimal
+
+        @sync_to_async
+        def add_items_sync():
+            # Récupérer la facture
+            invoice_number = params.get('invoice_number')
+            invoice_id = params.get('invoice_id')
+
+            if invoice_id:
+                invoice = Invoice.objects.get(id=invoice_id)
+            elif invoice_number:
+                invoice = Invoice.objects.get(invoice_number=invoice_number)
+            else:
+                raise ValueError("Vous devez fournir invoice_id ou invoice_number")
+
+            # Vérifier que la facture est modifiable
+            if invoice.status in ['paid', 'cancelled']:
+                raise ValueError(f"La facture {invoice.invoice_number} est {invoice.status} et ne peut pas être modifiée")
+
+            items_data = params.get('items', [])
+            if not items_data:
+                raise ValueError("Vous devez fournir au moins un item à ajouter")
+
+            created_items = []
+            for item_data in items_data:
+                # Chercher le produit si product_reference fourni
+                product = None
+                product_ref = item_data.get('product_reference')
+                if product_ref:
+                    try:
+                        product = Product.objects.get(reference=product_ref)
+                    except Product.DoesNotExist:
+                        pass
+
+                # Créer l'item
+                item = InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=product,
+                    service_code=item_data.get('service_code', 'SVC-001'),
+                    product_reference=item_data.get('product_reference', ''),
+                    description=item_data.get('description', ''),
+                    detailed_description=item_data.get('detailed_description', ''),
+                    quantity=item_data.get('quantity', 1),
+                    unit_price=Decimal(str(item_data.get('unit_price', 0))),
+                    unit_of_measure=item_data.get('unit_of_measure', 'unité'),
+                    discount_percent=Decimal(str(item_data.get('discount_percent', 0))),
+                    tax_rate=Decimal(str(item_data.get('tax_rate', 0))),
+                    notes=item_data.get('notes', '')
+                )
+                created_items.append(item)
+
+            # Rafraîchir la facture pour obtenir les totaux mis à jour
+            invoice.refresh_from_db()
+
+            return {
+                'invoice_id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'items_added': len(created_items),
+                'new_total': float(invoice.total_amount)
+            }
+
+        try:
+            result = await add_items_sync()
+
+            return {
+                'success': True,
+                'message': f"{result['items_added']} item(s) ajouté(s) à la facture {result['invoice_number']}. Nouveau total: {result['new_total']}$",
+                'data': {
+                    **result,
+                    'entity_type': 'invoice'
+                }
+            }
+        except Invoice.DoesNotExist:
+            return {
+                'success': False,
+                'error': "Facture non trouvée"
+            }
+        except ValueError as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error adding invoice items: {e}")
+            return {
+                'success': False,
+                'error': f"Erreur lors de l'ajout des items: {str(e)}"
+            }
+
+    async def send_invoice(self, params: Dict, user) -> Dict:
+        """Envoie une facture par email au client"""
+        from apps.invoicing.models import Invoice
+        from apps.api.services.email_service import InvoiceEmailService
+        from asgiref.sync import sync_to_async
+        from django.utils import timezone
+
+        @sync_to_async
+        def send_invoice_sync():
+            # Récupérer la facture
+            invoice_number = params.get('invoice_number')
+            invoice_id = params.get('invoice_id')
+
+            if invoice_id:
+                invoice = Invoice.objects.get(id=invoice_id)
+            elif invoice_number:
+                invoice = Invoice.objects.get(invoice_number=invoice_number)
+            else:
+                raise ValueError("Vous devez fournir invoice_id ou invoice_number")
+
+            # Email du destinataire (par défaut celui du client)
+            recipient_email = params.get('recipient_email')
+
+            # Template PDF (par défaut 'classic')
+            template_type = params.get('template_type', 'classic')
+
+            # Envoyer via le service existant
+            email_result = InvoiceEmailService.send_invoice_email(
+                invoice=invoice,
+                recipient_email=recipient_email,
+                template_type=template_type
+            )
+
+            if not email_result['success']:
+                raise ValueError(email_result['message'])
+
+            # Marquer la facture comme envoyée
+            invoice.sent_at = timezone.now()
+            if invoice.status == 'draft':
+                invoice.status = 'sent'
+            invoice.save(update_fields=['sent_at', 'status'])
+
+            return {
+                'invoice_id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'sent_to': recipient_email or (invoice.client.email if invoice.client else None),
+                'sent_at': invoice.sent_at.isoformat()
+            }
+
+        try:
+            result = await send_invoice_sync()
+
+            return {
+                'success': True,
+                'message': f"Facture {result['invoice_number']} envoyée avec succès à {result['sent_to']}",
+                'data': {
+                    **result,
+                    'entity_type': 'invoice'
+                }
+            }
+        except Invoice.DoesNotExist:
+            return {
+                'success': False,
+                'error': "Facture non trouvée"
+            }
+        except ValueError as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error sending invoice: {e}")
+            return {
+                'success': False,
+                'error': f"Erreur lors de l'envoi de la facture: {str(e)}"
+            }
+
+    async def add_po_items(self, params: Dict, user) -> Dict:
+        """Ajoute des items à un bon de commande existant"""
+        from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
+        from apps.invoicing.models import Product
+        from asgiref.sync import sync_to_async
+        from decimal import Decimal
+
+        @sync_to_async
+        def add_items_sync():
+            # Récupérer le bon de commande
+            po_number = params.get('po_number')
+            po_id = params.get('po_id')
+
+            if po_id:
+                purchase_order = PurchaseOrder.objects.get(id=po_id)
+            elif po_number:
+                purchase_order = PurchaseOrder.objects.get(po_number=po_number)
+            else:
+                raise ValueError("Vous devez fournir po_id ou po_number")
+
+            # Vérifier que le BC est modifiable
+            if purchase_order.status in ['received', 'cancelled']:
+                raise ValueError(f"Le bon de commande {purchase_order.po_number} est {purchase_order.status} et ne peut pas être modifié")
+
+            items_data = params.get('items', [])
+            if not items_data:
+                raise ValueError("Vous devez fournir au moins un item à ajouter")
+
+            created_items = []
+            for item_data in items_data:
+                # IMPORTANT: PurchaseOrderItem REQUIERT un produit associé
+                product_ref = item_data.get('product_reference')
+                if not product_ref:
+                    raise ValueError("product_reference est requis pour chaque item")
+
+                try:
+                    product = Product.objects.get(reference=product_ref)
+                except Product.DoesNotExist:
+                    raise ValueError(f"Produit avec référence '{product_ref}' introuvable. Créez d'abord le produit.")
+
+                # Créer l'item
+                item = PurchaseOrderItem.objects.create(
+                    purchase_order=purchase_order,
+                    product=product,
+                    product_reference=product_ref,
+                    product_code=item_data.get('product_code', ''),
+                    description=item_data.get('description', product.name),
+                    specifications=item_data.get('specifications', ''),
+                    quantity=item_data.get('quantity', 1),
+                    unit_price=Decimal(str(item_data.get('unit_price', product.cost_price or product.price))),
+                    unit_of_measure=item_data.get('unit_of_measure', 'unité'),
+                    expected_delivery_date=item_data.get('expected_delivery_date'),
+                    notes=item_data.get('notes', '')
+                )
+                created_items.append(item)
+
+            # Rafraîchir le BC pour obtenir les totaux mis à jour
+            purchase_order.refresh_from_db()
+
+            return {
+                'po_id': str(purchase_order.id),
+                'po_number': purchase_order.po_number,
+                'items_added': len(created_items),
+                'new_total': float(purchase_order.total_amount)
+            }
+
+        try:
+            result = await add_items_sync()
+
+            return {
+                'success': True,
+                'message': f"{result['items_added']} item(s) ajouté(s) au BC {result['po_number']}. Nouveau total: {result['new_total']}$",
+                'data': {
+                    **result,
+                    'entity_type': 'purchase_order'
+                }
+            }
+        except PurchaseOrder.DoesNotExist:
+            return {
+                'success': False,
+                'error': "Bon de commande non trouvé"
+            }
+        except ValueError as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error adding PO items: {e}")
+            return {
+                'success': False,
+                'error': f"Erreur lors de l'ajout des items: {str(e)}"
+            }
+
+    async def send_purchase_order(self, params: Dict, user) -> Dict:
+        """Envoie un bon de commande par email au fournisseur"""
+        from apps.purchase_orders.models import PurchaseOrder
+        from django.core.mail import EmailMessage
+        from django.conf import settings
+        from asgiref.sync import sync_to_async
+        from django.utils import timezone
+
+        @sync_to_async
+        def send_po_sync():
+            # Récupérer le bon de commande
+            po_number = params.get('po_number')
+            po_id = params.get('po_id')
+
+            if po_id:
+                purchase_order = PurchaseOrder.objects.get(id=po_id)
+            elif po_number:
+                purchase_order = PurchaseOrder.objects.get(po_number=po_number)
+            else:
+                raise ValueError("Vous devez fournir po_id ou po_number")
+
+            # Email du destinataire (fournisseur)
+            recipient_email = params.get('recipient_email')
+            if not recipient_email:
+                if purchase_order.supplier and purchase_order.supplier.email:
+                    recipient_email = purchase_order.supplier.email
+                else:
+                    raise ValueError("Le fournisseur n'a pas d'email renseigné. Spécifiez recipient_email.")
+
+            # Préparer le contenu de l'email
+            supplier_name = purchase_order.supplier.name if purchase_order.supplier else "Fournisseur"
+
+            # Corps de l'email HTML
+            items_html = ""
+            if purchase_order.items.exists():
+                items_html = "<h3>Articles commandés:</h3><ul>"
+                for item in purchase_order.items.all():
+                    items_html += f"<li><strong>{item.description}</strong> - Qté: {item.quantity} - Prix unitaire: {item.unit_price}$ = Total: {item.total_price}$</li>"
+                items_html += "</ul>"
+
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                    .content {{ padding: 30px; background: white; border: 1px solid #eee; border-radius: 0 0 8px 8px; }}
+                    .footer {{ margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee; color: #666; font-size: 0.9em; }}
+                    ul {{ padding-left: 20px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1 style="margin: 0; font-size: 28px;">Bon de Commande</h1>
+                        <p style="margin: 10px 0 0 0; opacity: 0.9;">ProcureGenius</p>
+                    </div>
+                    <div class="content">
+                        <p>Bonjour <strong>{supplier_name}</strong>,</p>
+                        <p>Veuillez trouver ci-dessous notre bon de commande <strong>{purchase_order.po_number}</strong>.</p>
+                        <p><strong>Montant total:</strong> {purchase_order.total_amount}$</p>
+                        <p><strong>Date de livraison souhaitée:</strong> {purchase_order.delivery_date.strftime('%d/%m/%Y') if purchase_order.delivery_date else 'À définir'}</p>
+                        {items_html}
+                        <p>Pour toute question, n'hésitez pas à nous contacter.</p>
+                        <div class="footer">
+                            <p><strong>ProcureGenius</strong></p>
+                            <p>Système de gestion des achats</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Version texte simple
+            items_text = ""
+            if purchase_order.items.exists():
+                items_text = "\n\nArticles commandés:\n"
+                for item in purchase_order.items.all():
+                    items_text += f"- {item.description} - Qté: {item.quantity} - {item.unit_price}$ = {item.total_price}$\n"
+
+            text_body = f"""
+Bonjour {supplier_name},
+
+Veuillez trouver ci-dessous notre bon de commande {purchase_order.po_number}.
+
+Montant total: {purchase_order.total_amount}$
+Date de livraison souhaitée: {purchase_order.delivery_date.strftime('%d/%m/%Y') if purchase_order.delivery_date else 'À définir'}
+{items_text}
+
+Pour toute question, n'hésitez pas à nous contacter.
+
+Cordialement,
+ProcureGenius
+            """
+
+            # Créer et envoyer l'email
+            email = EmailMessage(
+                subject=f"Bon de Commande {purchase_order.po_number} - ProcureGenius",
+                body=text_body,
+                from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@procuregenius.com',
+                to=[recipient_email],
+            )
+            email.content_subtype = "html"
+            email.body = html_body
+            email.send(fail_silently=False)
+
+            # Marquer le BC comme envoyé
+            purchase_order.sent_at = timezone.now()
+            if purchase_order.status == 'draft':
+                purchase_order.status = 'sent'
+            purchase_order.save(update_fields=['sent_at', 'status'])
+
+            return {
+                'po_id': str(purchase_order.id),
+                'po_number': purchase_order.po_number,
+                'sent_to': recipient_email,
+                'sent_at': purchase_order.sent_at.isoformat()
+            }
+
+        try:
+            result = await send_po_sync()
+
+            return {
+                'success': True,
+                'message': f"Bon de commande {result['po_number']} envoyé avec succès à {result['sent_to']}",
+                'data': {
+                    **result,
+                    'entity_type': 'purchase_order'
+                }
+            }
+        except PurchaseOrder.DoesNotExist:
+            return {
+                'success': False,
+                'error': "Bon de commande non trouvé"
+            }
+        except ValueError as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error sending purchase order: {e}")
+            return {
+                'success': False,
+                'error': f"Erreur lors de l'envoi du bon de commande: {str(e)}"
+            }
+
+    async def update_supplier(self, params: Dict, user) -> Dict:
+        """Modifie un fournisseur existant"""
+        from apps.suppliers.models import Supplier
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def update_supplier_sync():
+            supplier_id = params.get('supplier_id')
+            supplier_name = params.get('supplier_name')
+
+            if supplier_id:
+                supplier = Supplier.objects.get(id=supplier_id)
+            elif supplier_name:
+                supplier = Supplier.objects.get(name__iexact=supplier_name)
+            else:
+                raise ValueError("Vous devez fournir supplier_id ou supplier_name")
+
+            previous_state = {
+                'name': supplier.name,
+                'email': supplier.email,
+                'phone': supplier.phone
+            }
+
+            if 'name' in params:
+                supplier.name = params['name']
+            if 'contact_person' in params:
+                supplier.contact_person = params['contact_person']
+            if 'email' in params:
+                supplier.email = params['email']
+            if 'phone' in params:
+                supplier.phone = params['phone']
+            if 'address' in params:
+                supplier.address = params['address']
+            if 'city' in params:
+                supplier.city = params['city']
+            if 'status' in params:
+                supplier.status = params['status']
+
+            supplier.save()
+
+            return {
+                'id': str(supplier.id),
+                'name': supplier.name,
+                'previous_state': previous_state
+            }
+
+        try:
+            result = await update_supplier_sync()
+            return {
+                'success': True,
+                'message': f"Fournisseur '{result['name']}' modifié avec succès",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'entity_type': 'supplier',
+                    'previous_state': result['previous_state']
+                }
+            }
+        except Supplier.DoesNotExist:
+            return {'success': False, 'error': "Fournisseur non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error updating supplier: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def update_invoice(self, params: Dict, user) -> Dict:
+        """Modifie une facture existante"""
+        from apps.invoicing.models import Invoice
+        from asgiref.sync import sync_to_async
+        from datetime import datetime
+
+        @sync_to_async
+        def update_invoice_sync():
+            invoice_id = params.get('invoice_id')
+            invoice_number = params.get('invoice_number')
+
+            if invoice_id:
+                invoice = Invoice.objects.get(id=invoice_id)
+            elif invoice_number:
+                invoice = Invoice.objects.get(invoice_number=invoice_number)
+            else:
+                raise ValueError("Vous devez fournir invoice_id ou invoice_number")
+
+            if invoice.status == 'paid':
+                raise ValueError(f"La facture {invoice.invoice_number} est payée et ne peut pas être modifiée")
+
+            was_sent = invoice.sent_at is not None
+            previous_state = {
+                'title': invoice.title,
+                'description': invoice.description,
+                'status': invoice.status
+            }
+
+            if 'title' in params:
+                invoice.title = params['title']
+            if 'description' in params:
+                invoice.description = params['description']
+            if 'status' in params:
+                invoice.status = params['status']
+            if 'due_date' in params:
+                invoice.due_date = datetime.strptime(params['due_date'], '%Y-%m-%d').date()
+
+            invoice.save()
+
+            return {
+                'id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'was_sent': was_sent,
+                'previous_state': previous_state
+            }
+
+        try:
+            result = await update_invoice_sync()
+            message = f"Facture '{result['invoice_number']}' modifiée"
+            if result['was_sent']:
+                message += " (déjà envoyée)"
+            return {
+                'success': True,
+                'message': message,
+                'data': {
+                    'id': result['id'],
+                    'invoice_number': result['invoice_number'],
+                    'entity_type': 'invoice',
+                    'previous_state': result['previous_state']
+                }
+            }
+        except Invoice.DoesNotExist:
+            return {'success': False, 'error': "Facture non trouvée"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error updating invoice: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def update_purchase_order(self, params: Dict, user) -> Dict:
+        """Modifie un bon de commande"""
+        from apps.purchase_orders.models import PurchaseOrder
+        from asgiref.sync import sync_to_async
+        from datetime import datetime
+
+        @sync_to_async
+        def update_po_sync():
+            po_id = params.get('po_id')
+            po_number = params.get('po_number')
+
+            if po_id:
+                po = PurchaseOrder.objects.get(id=po_id)
+            elif po_number:
+                po = PurchaseOrder.objects.get(po_number=po_number)
+            else:
+                raise ValueError("Vous devez fournir po_id ou po_number")
+
+            if po.status in ['received', 'cancelled']:
+                raise ValueError(f"Le BC {po.po_number} est {po.status} et ne peut pas être modifié")
+
+            previous_state = {
+                'description': po.description,
+                'status': po.status
+            }
+
+            if 'description' in params:
+                po.description = params['description']
+            if 'status' in params:
+                po.status = params['status']
+            if 'delivery_date' in params:
+                po.delivery_date = datetime.strptime(params['delivery_date'], '%Y-%m-%d').date()
+            if 'notes' in params:
+                po.notes = params['notes']
+
+            po.save()
+
+            return {
+                'id': str(po.id),
+                'po_number': po.po_number,
+                'previous_state': previous_state
+            }
+
+        try:
+            result = await update_po_sync()
+            return {
+                'success': True,
+                'message': f"BC '{result['po_number']}' modifié",
+                'data': {
+                    'id': result['id'],
+                    'po_number': result['po_number'],
+                    'entity_type': 'purchase_order',
+                    'previous_state': result['previous_state']
+                }
+            }
+        except PurchaseOrder.DoesNotExist:
+            return {'success': False, 'error': "BC non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error updating PO: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def update_client(self, params: Dict, user) -> Dict:
+        """Modifie un client"""
+        from apps.accounts.models import Client
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def update_client_sync():
+            client_id = params.get('client_id')
+            client_name = params.get('client_name')
+
+            if client_id:
+                client = Client.objects.get(id=client_id)
+            elif client_name:
+                client = Client.objects.get(name__iexact=client_name)
+            else:
+                raise ValueError("Vous devez fournir client_id ou client_name")
+
+            previous_state = {
+                'name': client.name,
+                'email': client.email,
+                'phone': client.phone
+            }
+
+            if 'name' in params:
+                client.name = params['name']
+            if 'email' in params:
+                client.email = params['email']
+            if 'phone' in params:
+                client.phone = params['phone']
+            if 'address' in params:
+                client.address = params['address']
+            if 'contact_person' in params:
+                client.contact_person = params['contact_person']
+
+            client.save()
+
+            return {
+                'id': str(client.id),
+                'name': client.name,
+                'previous_state': previous_state
+            }
+
+        try:
+            result = await update_client_sync()
+            return {
+                'success': True,
+                'message': f"Client '{result['name']}' modifié",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'entity_type': 'client',
+                    'previous_state': result['previous_state']
+                }
+            }
+        except Client.DoesNotExist:
+            return {'success': False, 'error': "Client non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error updating client: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_supplier(self, params: Dict, user) -> Dict:
+        """Supprime un fournisseur (soft delete)"""
+        from apps.suppliers.models import Supplier
+        from apps.purchase_orders.models import PurchaseOrder
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def delete_supplier_sync():
+            supplier_id = params.get('supplier_id')
+            supplier_name = params.get('supplier_name')
+
+            if supplier_id:
+                supplier = Supplier.objects.get(id=supplier_id)
+            elif supplier_name:
+                supplier = Supplier.objects.get(name__iexact=supplier_name)
+            else:
+                raise ValueError("Vous devez fournir supplier_id ou supplier_name")
+
+            # Vérifier dépendances
+            po_count = PurchaseOrder.objects.filter(supplier=supplier).count()
+            if po_count > 0:
+                raise ValueError(f"Ce fournisseur a {po_count} bon(s) de commande. Suppression impossible.")
+
+            # Soft delete
+            supplier.is_active = False
+            supplier.status = 'inactive'
+            supplier.save()
+
+            return {
+                'id': str(supplier.id),
+                'name': supplier.name
+            }
+
+        try:
+            result = await delete_supplier_sync()
+            return {
+                'success': True,
+                'message': f"Fournisseur '{result['name']}' désactivé",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'entity_type': 'supplier'
+                }
+            }
+        except Supplier.DoesNotExist:
+            return {'success': False, 'error': "Fournisseur non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting supplier: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_invoice(self, params: Dict, user) -> Dict:
+        """Supprime une facture"""
+        from apps.invoicing.models import Invoice
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def delete_invoice_sync():
+            invoice_id = params.get('invoice_id')
+            invoice_number = params.get('invoice_number')
+
+            if invoice_id:
+                invoice = Invoice.objects.get(id=invoice_id)
+            elif invoice_number:
+                invoice = Invoice.objects.get(invoice_number=invoice_number)
+            else:
+                raise ValueError("Vous devez fournir invoice_id ou invoice_number")
+
+            if invoice.status == 'paid':
+                raise ValueError(f"La facture {invoice.invoice_number} est payée. Suppression impossible.")
+
+            invoice_number = invoice.invoice_number
+            invoice.delete()
+
+            return {'invoice_number': invoice_number}
+
+        try:
+            result = await delete_invoice_sync()
+            return {
+                'success': True,
+                'message': f"Facture '{result['invoice_number']}' supprimée",
+                'data': {
+                    'invoice_number': result['invoice_number'],
+                    'entity_type': 'invoice'
+                }
+            }
+        except Invoice.DoesNotExist:
+            return {'success': False, 'error': "Facture non trouvée"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting invoice: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_purchase_order(self, params: Dict, user) -> Dict:
+        """Supprime un bon de commande"""
+        from apps.purchase_orders.models import PurchaseOrder
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def delete_po_sync():
+            po_id = params.get('po_id')
+            po_number = params.get('po_number')
+
+            if po_id:
+                po = PurchaseOrder.objects.get(id=po_id)
+            elif po_number:
+                po = PurchaseOrder.objects.get(po_number=po_number)
+            else:
+                raise ValueError("Vous devez fournir po_id ou po_number")
+
+            if po.status == 'received':
+                raise ValueError(f"Le BC {po.po_number} est reçu. Suppression impossible.")
+
+            po_number = po.po_number
+            po.delete()
+
+            return {'po_number': po_number}
+
+        try:
+            result = await delete_po_sync()
+            return {
+                'success': True,
+                'message': f"BC '{result['po_number']}' supprimé",
+                'data': {
+                    'po_number': result['po_number'],
+                    'entity_type': 'purchase_order'
+                }
+            }
+        except PurchaseOrder.DoesNotExist:
+            return {'success': False, 'error': "BC non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting PO: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_client(self, params: Dict, user) -> Dict:
+        """Supprime un client (soft delete)"""
+        from apps.accounts.models import Client
+        from apps.invoicing.models import Invoice
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def delete_client_sync():
+            client_id = params.get('client_id')
+            client_name = params.get('client_name')
+
+            if client_id:
+                client = Client.objects.get(id=client_id)
+            elif client_name:
+                client = Client.objects.get(name__iexact=client_name)
+            else:
+                raise ValueError("Vous devez fournir client_id ou client_name")
+
+            # Vérifier dépendances
+            invoice_count = Invoice.objects.filter(client=client).count()
+            if invoice_count > 0:
+                raise ValueError(f"Ce client a {invoice_count} facture(s). Suppression impossible.")
+
+            # Soft delete
+            client.is_active = False
+            client.save()
+
+            return {
+                'id': str(client.id),
+                'name': client.name
+            }
+
+        try:
+            result = await delete_client_sync()
+            return {
+                'success': True,
+                'message': f"Client '{result['name']}' désactivé",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'entity_type': 'client'
+                }
+            }
+        except Client.DoesNotExist:
+            return {'success': False, 'error': "Client non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting client: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def undo_last_action(self, params: Dict, user) -> Dict:
+        """Annule la dernière action effectuée"""
+        from apps.ai_assistant.models import ActionHistory
+        from apps.suppliers.models import Supplier
+        from apps.invoicing.models import Invoice, Product
+        from apps.purchase_orders.models import PurchaseOrder
+        from apps.accounts.models import Client
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def undo_sync():
+            # Récupérer la dernière action annulable
+            last_action = ActionHistory.objects.filter(
+                user=user,
+                can_undo=True,
+                is_undone=False
+            ).first()
+
+            if not last_action:
+                raise ValueError("Aucune action à annuler")
+
+            entity_type = last_action.entity_type
+            entity_id = last_action.entity_id
+            action_type = last_action.action_type
+
+            # Annuler selon le type d'action
+            if action_type == 'create':
+                # Supprimer l'entité créée
+                if entity_type == 'supplier':
+                    Supplier.objects.filter(id=entity_id).update(is_active=False)
+                elif entity_type == 'invoice':
+                    Invoice.objects.filter(id=entity_id).delete()
+                elif entity_type == 'purchase_order':
+                    PurchaseOrder.objects.filter(id=entity_id).delete()
+                elif entity_type == 'client':
+                    Client.objects.filter(id=entity_id).update(is_active=False)
+                elif entity_type == 'product':
+                    Product.objects.filter(id=entity_id).delete()
+
+            elif action_type == 'update':
+                # Restaurer l'état précédent
+                if not last_action.previous_state:
+                    raise ValueError("Impossible de restaurer: état précédent non disponible")
+
+                if entity_type == 'supplier':
+                    Supplier.objects.filter(id=entity_id).update(**last_action.previous_state)
+                elif entity_type == 'invoice':
+                    Invoice.objects.filter(id=entity_id).update(**last_action.previous_state)
+                elif entity_type == 'purchase_order':
+                    PurchaseOrder.objects.filter(id=entity_id).update(**last_action.previous_state)
+                elif entity_type == 'client':
+                    Client.objects.filter(id=entity_id).update(**last_action.previous_state)
+                elif entity_type == 'product':
+                    Product.objects.filter(id=entity_id).update(**last_action.previous_state)
+
+            elif action_type == 'delete':
+                # Réactiver l'entité (soft delete uniquement)
+                if entity_type == 'supplier':
+                    Supplier.objects.filter(id=entity_id).update(is_active=True, status='active')
+                elif entity_type == 'client':
+                    Client.objects.filter(id=entity_id).update(is_active=True)
+                else:
+                    raise ValueError(f"Impossible d'annuler la suppression d'un(e) {entity_type}")
+
+            # Marquer comme annulée
+            last_action.mark_as_undone()
+
+            return {
+                'action_type': action_type,
+                'entity_type': entity_type,
+                'entity_id': entity_id
+            }
+
+        try:
+            result = await undo_sync()
+            action_fr = {'create': 'création', 'update': 'modification', 'delete': 'suppression'}
+            entity_fr = {
+                'supplier': 'fournisseur',
+                'invoice': 'facture',
+                'purchase_order': 'BC',
+                'client': 'client',
+                'product': 'produit'
+            }
+
+            return {
+                'success': True,
+                'message': f"{action_fr.get(result['action_type'], result['action_type'])} du {entity_fr.get(result['entity_type'], result['entity_type'])} annulée",
+                'data': result
+            }
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error undoing action: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    # ========== PRODUITS MODULE ==========
+
+    async def create_product(self, params: Dict, user) -> Dict:
+        """Crée un nouveau produit avec entity matching pour éviter les doublons"""
+        from apps.invoicing.models import Product
+        from .entity_matcher import entity_matcher
+        from asgiref.sync import sync_to_async
+        from decimal import Decimal
+
+        @sync_to_async
+        def create_product_sync():
+            name = params.get('name')
+            if not name:
+                raise ValueError("Le nom du produit est requis")
+
+            reference = params.get('reference', '')
+            barcode = params.get('barcode', '')
+            product_type = params.get('product_type', 'service')
+
+            # Entity matching pour éviter les doublons
+            similar_products = entity_matcher.find_similar_products(
+                name=name,
+                reference=reference if reference else None,
+                barcode=barcode if barcode else None
+            )
+
+            if similar_products:
+                existing_product = similar_products[0][0]
+                similarity_score = similar_products[0][1]
+                match_reason = similar_products[0][2]
+
+                return {
+                    'created': False,
+                    'matched': True,
+                    'product': existing_product,
+                    'similarity_score': similarity_score,
+                    'match_reason': match_reason
+                }
+
+            # Créer le nouveau produit
+            product_data = {
+                'name': name,
+                'reference': reference,
+                'barcode': barcode,
+                'product_type': product_type,
+                'description': params.get('description', ''),
+            }
+
+            # Champs spécifiques selon le type
+            if product_type == 'physical':
+                product_data.update({
+                    'cost_price': Decimal(str(params.get('cost_price', 0))),
+                    'price': Decimal(str(params.get('price', 0))),
+                    'stock_quantity': params.get('stock_quantity', 0),
+                    'low_stock_threshold': params.get('low_stock_threshold', 10),
+                    'supplier_reference': params.get('supplier_reference', '')
+                })
+            else:  # service
+                product_data.update({
+                    'price': Decimal(str(params.get('price', 0)))
+                })
+
+            product = Product.objects.create(**product_data)
+
+            return {
+                'created': True,
+                'matched': False,
+                'product': product
+            }
+
+        try:
+            result = await create_product_sync()
+
+            if result['matched']:
+                # Produit existant trouvé
+                product = result['product']
+                return {
+                    'success': True,
+                    'matched': True,
+                    'message': f"Produit similaire trouvé: '{product.name}' ({result['match_reason']})",
+                    'data': {
+                        'id': str(product.id),
+                        'name': product.name,
+                        'reference': product.reference,
+                        'product_type': product.product_type,
+                        'price': float(product.price) if product.price else 0,
+                        'similarity_score': result['similarity_score'],
+                        'entity_type': 'product'
+                    }
+                }
+            else:
+                # Nouveau produit créé
+                product = result['product']
+                return {
+                    'success': True,
+                    'created': True,
+                    'message': f"Produit '{product.name}' créé avec succès",
+                    'data': {
+                        'id': str(product.id),
+                        'name': product.name,
+                        'reference': product.reference,
+                        'product_type': product.product_type,
+                        'price': float(product.price) if product.price else 0,
+                        'entity_type': 'product'
+                    }
+                }
+
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error creating product: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def search_product(self, params: Dict, user) -> Dict:
+        """Recherche des produits par nom, référence ou code-barres"""
+        from apps.invoicing.models import Product
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_products_sync():
+            query = params.get('query', '')
+            product_type = params.get('product_type')
+            limit = params.get('limit', 10)
+
+            # Construire la requête
+            q_filter = Q()
+            if query:
+                q_filter = (
+                    Q(name__icontains=query) |
+                    Q(reference__icontains=query) |
+                    Q(barcode__icontains=query) |
+                    Q(description__icontains=query)
+                )
+
+            products = Product.objects.filter(q_filter)
+
+            # Filtrer par type si spécifié
+            if product_type in ['service', 'physical']:
+                products = products.filter(product_type=product_type)
+
+            products = products[:limit]
+
+            return [{
+                'id': str(p.id),
+                'name': p.name,
+                'reference': p.reference or '',
+                'barcode': p.barcode or '',
+                'product_type': p.product_type,
+                'description': p.description or '',
+                'price': float(p.price) if p.price else 0,
+                'stock_quantity': p.stock_quantity if p.product_type == 'physical' else None,
+                'low_stock_threshold': p.low_stock_threshold if p.product_type == 'physical' else None
+            } for p in products]
+
+        results = await search_products_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results),
+            'message': f"J'ai trouvé {len(results)} produit(s)"
+        }
+
+    async def update_product(self, params: Dict, user) -> Dict:
+        """Modifie un produit existant"""
+        from apps.invoicing.models import Product
+        from asgiref.sync import sync_to_async
+        from decimal import Decimal
+
+        @sync_to_async
+        def update_product_sync():
+            product_id = params.get('product_id')
+            product_name = params.get('product_name')
+            product_ref = params.get('product_reference')
+
+            # Trouver le produit
+            if product_id:
+                product = Product.objects.get(id=product_id)
+            elif product_ref:
+                product = Product.objects.get(reference=product_ref)
+            elif product_name:
+                product = Product.objects.get(name__iexact=product_name)
+            else:
+                raise ValueError("Vous devez fournir product_id, product_name ou product_reference")
+
+            # Sauvegarder l'état précédent
+            previous_state = {
+                'name': product.name,
+                'reference': product.reference,
+                'price': float(product.price) if product.price else 0,
+                'description': product.description
+            }
+
+            # Mettre à jour les champs fournis
+            if 'name' in params:
+                product.name = params['name']
+            if 'reference' in params:
+                product.reference = params['reference']
+            if 'barcode' in params:
+                product.barcode = params['barcode']
+            if 'description' in params:
+                product.description = params['description']
+            if 'price' in params:
+                product.price = Decimal(str(params['price']))
+            if 'cost_price' in params and product.product_type == 'physical':
+                product.cost_price = Decimal(str(params['cost_price']))
+            if 'stock_quantity' in params and product.product_type == 'physical':
+                product.stock_quantity = params['stock_quantity']
+            if 'low_stock_threshold' in params and product.product_type == 'physical':
+                product.low_stock_threshold = params['low_stock_threshold']
+
+            product.save()
+
+            return {
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'previous_state': previous_state
+            }
+
+        try:
+            result = await update_product_sync()
+            return {
+                'success': True,
+                'message': f"Produit '{result['name']}' modifié avec succès",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'reference': result['reference'],
+                    'entity_type': 'product',
+                    'previous_state': result['previous_state']
+                }
+            }
+        except Product.DoesNotExist:
+            return {'success': False, 'error': "Produit non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error updating product: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_product(self, params: Dict, user) -> Dict:
+        """Supprime un produit (hard delete si pas de dépendances)"""
+        from apps.invoicing.models import Product, InvoiceItem
+        from apps.purchase_orders.models import PurchaseOrderItem
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def delete_product_sync():
+            product_id = params.get('product_id')
+            product_name = params.get('product_name')
+            product_ref = params.get('product_reference')
+
+            # Trouver le produit
+            if product_id:
+                product = Product.objects.get(id=product_id)
+            elif product_ref:
+                product = Product.objects.get(reference=product_ref)
+            elif product_name:
+                product = Product.objects.get(name__iexact=product_name)
+            else:
+                raise ValueError("Vous devez fournir product_id, product_name ou product_reference")
+
+            # Vérifier les dépendances
+            invoice_items_count = InvoiceItem.objects.filter(product=product).count()
+            po_items_count = PurchaseOrderItem.objects.filter(product=product).count()
+
+            if invoice_items_count > 0 or po_items_count > 0:
+                raise ValueError(
+                    f"Ce produit est utilisé dans {invoice_items_count} facture(s) "
+                    f"et {po_items_count} bon(s) de commande. Suppression impossible."
+                )
+
+            product_name = product.name
+            product_id = str(product.id)
+            product.delete()
+
+            return {
+                'id': product_id,
+                'name': product_name
+            }
+
+        try:
+            result = await delete_product_sync()
+            return {
+                'success': True,
+                'message': f"Produit '{result['name']}' supprimé avec succès",
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'entity_type': 'product'
+                }
+            }
+        except Product.DoesNotExist:
+            return {'success': False, 'error': "Produit non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting product: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    # ========== STOCK MANAGEMENT MODULE ==========
+
+    async def adjust_stock(self, params: Dict, user) -> Dict:
+        """Ajuste le stock d'un produit physique (ajout ou retrait)"""
+        from apps.invoicing.models import Product
+        from apps.invoicing.stock_alerts import check_stock_after_movement
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def adjust_stock_sync():
+            product_id = params.get('product_id')
+            product_name = params.get('product_name')
+            product_ref = params.get('product_reference')
+
+            # Trouver le produit
+            if product_id:
+                product = Product.objects.get(id=product_id)
+            elif product_ref:
+                product = Product.objects.get(reference=product_ref)
+            elif product_name:
+                product = Product.objects.get(name__iexact=product_name)
+            else:
+                raise ValueError("Vous devez fournir product_id, product_name ou product_reference")
+
+            # Vérifier que c'est un produit physique
+            if product.product_type != 'physical':
+                raise ValueError(f"Le produit '{product.name}' est un service, pas un produit physique avec stock")
+
+            adjustment_type = params.get('adjustment_type', 'add')  # 'add' ou 'remove'
+            quantity = params.get('quantity', 0)
+            reason = params.get('reason', '')
+
+            if quantity <= 0:
+                raise ValueError("La quantité doit être supérieure à 0")
+
+            previous_stock = product.stock_quantity
+
+            # Ajuster le stock
+            if adjustment_type == 'add':
+                product.stock_quantity += quantity
+                action_description = f"Ajout de {quantity} unité(s)"
+            elif adjustment_type == 'remove':
+                if product.stock_quantity < quantity:
+                    raise ValueError(f"Stock insuffisant. Stock actuel: {product.stock_quantity}, demandé: {quantity}")
+                product.stock_quantity -= quantity
+                action_description = f"Retrait de {quantity} unité(s)"
+            else:
+                raise ValueError("adjustment_type doit être 'add' ou 'remove'")
+
+            product.save()
+
+            # Vérifier si alerte nécessaire
+            check_stock_after_movement(product)
+
+            return {
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'previous_stock': previous_stock,
+                'new_stock': product.stock_quantity,
+                'adjustment_type': adjustment_type,
+                'quantity': quantity,
+                'reason': reason,
+                'action_description': action_description,
+                'is_low_stock': product.is_low_stock,
+                'is_out_of_stock': product.is_out_of_stock
+            }
+
+        try:
+            result = await adjust_stock_sync()
+
+            # Construire le message
+            message = f"{result['action_description']} pour '{result['name']}'. "
+            message += f"Stock: {result['previous_stock']} → {result['new_stock']}"
+
+            if result['is_out_of_stock']:
+                message += " ⚠️ RUPTURE DE STOCK"
+            elif result['is_low_stock']:
+                message += " ⚠️ Stock bas"
+
+            return {
+                'success': True,
+                'message': message,
+                'data': {
+                    'id': result['id'],
+                    'name': result['name'],
+                    'reference': result['reference'],
+                    'previous_stock': result['previous_stock'],
+                    'new_stock': result['new_stock'],
+                    'adjustment_type': result['adjustment_type'],
+                    'quantity': result['quantity'],
+                    'reason': result['reason'],
+                    'is_low_stock': result['is_low_stock'],
+                    'is_out_of_stock': result['is_out_of_stock'],
+                    'entity_type': 'stock'
+                }
+            }
+        except Product.DoesNotExist:
+            return {'success': False, 'error': "Produit non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error adjusting stock: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def get_stock_alerts(self, params: Dict, user) -> Dict:
+        """Récupère les produits avec des alertes de stock (stock bas ou rupture)"""
+        from apps.invoicing.models import Product
+        from apps.invoicing.stock_alerts import StockAlertService
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_alerts_sync():
+            alert_type = params.get('alert_type', 'all')  # 'all', 'low_stock', 'out_of_stock'
+
+            if alert_type == 'out_of_stock':
+                products = StockAlertService.get_out_of_stock_products()
+            elif alert_type == 'low_stock':
+                # Produits en stock bas mais pas rupture
+                all_low = StockAlertService.check_low_stock_products()
+                products = [p for p in all_low if p.stock_quantity > 0]
+            else:  # 'all'
+                out_of_stock = StockAlertService.get_out_of_stock_products()
+                low_stock = [p for p in StockAlertService.check_low_stock_products()
+                            if p.stock_quantity > 0]
+                products = list(out_of_stock) + list(low_stock)
+
+            # Formatter les résultats
+            alerts = []
+            for product in products:
+                alert = {
+                    'id': str(product.id),
+                    'name': product.name,
+                    'reference': product.reference or '',
+                    'stock_quantity': product.stock_quantity,
+                    'low_stock_threshold': product.low_stock_threshold,
+                    'status': 'out_of_stock' if product.stock_quantity == 0 else 'low_stock',
+                    'supplier': product.supplier.name if hasattr(product, 'supplier') and product.supplier else 'N/A'
+                }
+                alerts.append(alert)
+
+            return alerts
+
+        try:
+            alerts = await get_alerts_sync()
+
+            # Compter par type
+            out_of_stock_count = sum(1 for a in alerts if a['status'] == 'out_of_stock')
+            low_stock_count = sum(1 for a in alerts if a['status'] == 'low_stock')
+
+            message = f"Alertes stock: "
+            if out_of_stock_count > 0:
+                message += f"{out_of_stock_count} rupture(s), "
+            if low_stock_count > 0:
+                message += f"{low_stock_count} stock(s) bas"
+            if not alerts:
+                message = "Aucune alerte de stock actuellement"
+
+            return {
+                'success': True,
+                'message': message.rstrip(', '),
+                'data': alerts,
+                'count': len(alerts),
+                'summary': {
+                    'out_of_stock': out_of_stock_count,
+                    'low_stock': low_stock_count,
+                    'total': len(alerts)
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting stock alerts: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    # ========== REPORTS MODULE ==========
+
+    async def generate_report(self, params: Dict, user) -> Dict:
+        """Génère un rapport (PDF, Excel ou CSV)"""
+        from apps.reports.models import Report
+        from apps.reports.services import SupplierReportService
+        from asgiref.sync import sync_to_async
+        from datetime import datetime
+
+        @sync_to_async
+        def generate_report_sync():
+            report_type = params.get('report_type')
+            format = params.get('format', 'pdf')  # pdf, xlsx, csv
+
+            if report_type not in dict(Report._meta.get_field('report_type').choices):
+                raise ValueError(f"Type de rapport invalide: {report_type}")
+
+            if format not in ['pdf', 'xlsx', 'csv']:
+                raise ValueError(f"Format invalide: {format}. Utilisez pdf, xlsx ou csv")
+
+            # Parse date parameters
+            date_start = params.get('date_start')
+            date_end = params.get('date_end')
+
+            if date_start and isinstance(date_start, str):
+                date_start = datetime.fromisoformat(date_start.replace('Z', '+00:00'))
+            if date_end and isinstance(date_end, str):
+                date_end = datetime.fromisoformat(date_end.replace('Z', '+00:00'))
+
+            # Créer l'enregistrement de rapport
+            report = Report.objects.create(
+                report_type=report_type,
+                format=format,
+                parameters={
+                    'date_start': date_start.isoformat() if date_start else None,
+                    'date_end': date_end.isoformat() if date_end else None,
+                    **{k: v for k, v in params.items() if k not in ['report_type', 'format', 'date_start', 'date_end']}
+                },
+                generated_by=user,
+                status='processing'
+            )
+
+            # Pour l'instant, on crée juste l'enregistrement
+            # La génération réelle se fera en async via une tâche Celery ou similaire
+            # Mais pour le MVP, on peut générer de manière synchrone pour les petits rapports
+
+            if report_type == 'supplier' and params.get('supplier_id'):
+                from apps.suppliers.models import Supplier
+                service = SupplierReportService(user=user)
+                supplier_id = params.get('supplier_id')
+
+                try:
+                    report = service.generate(
+                        supplier_id=supplier_id,
+                        format=format,
+                        date_start=date_start,
+                        date_end=date_end
+                    )
+                except Exception as e:
+                    report.status = 'failed'
+                    report.error_message = str(e)
+                    report.save()
+                    raise
+
+            return {
+                'id': str(report.id),
+                'report_type': report.report_type,
+                'format': report.format,
+                'status': report.status,
+                'generated_at': report.generated_at.isoformat(),
+                'file_path': report.file_path.url if report.file_path else None
+            }
+
+        try:
+            result = await generate_report_sync()
+
+            message = f"Rapport {result['report_type']} ({result['format'].upper()}) "
+            if result['status'] == 'completed':
+                message += "généré avec succès"
+            elif result['status'] == 'processing':
+                message += "en cours de génération"
+            else:
+                message += f"statut: {result['status']}"
+
+            return {
+                'success': True,
+                'message': message,
+                'data': {
+                    **result,
+                    'entity_type': 'report'
+                }
+            }
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error generating report: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def search_report(self, params: Dict, user) -> Dict:
+        """Recherche des rapports générés"""
+        from apps.reports.models import Report
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_reports_sync():
+            report_type = params.get('report_type')
+            format = params.get('format')
+            status = params.get('status')
+            limit = params.get('limit', 10)
+
+            # Construire la requête
+            reports = Report.objects.filter(generated_by=user)
+
+            if report_type:
+                reports = reports.filter(report_type=report_type)
+            if format:
+                reports = reports.filter(format=format)
+            if status:
+                reports = reports.filter(status=status)
+
+            reports = reports.order_by('-generated_at')[:limit]
+
+            return [{
+                'id': str(r.id),
+                'report_type': r.report_type,
+                'report_type_display': r.get_report_type_display(),
+                'format': r.format,
+                'status': r.status,
+                'generated_at': r.generated_at.isoformat(),
+                'completed_at': r.completed_at.isoformat() if r.completed_at else None,
+                'file_path': r.file_path.url if r.file_path else None,
+                'file_size': r.file_size,
+                'download_count': r.download_count
+            } for r in reports]
+
+        try:
+            results = await search_reports_sync()
+
+            return {
+                'success': True,
+                'data': results,
+                'count': len(results),
+                'message': f"J'ai trouvé {len(results)} rapport(s)"
+            }
+        except Exception as e:
+            logger.error(f"Error searching reports: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def get_report_status(self, params: Dict, user) -> Dict:
+        """Récupère le statut d'un rapport en cours de génération"""
+        from apps.reports.models import Report
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_status_sync():
+            report_id = params.get('report_id')
+            if not report_id:
+                raise ValueError("report_id est requis")
+
+            report = Report.objects.get(id=report_id, generated_by=user)
+
+            return {
+                'id': str(report.id),
+                'report_type': report.report_type,
+                'format': report.format,
+                'status': report.status,
+                'generated_at': report.generated_at.isoformat(),
+                'completed_at': report.completed_at.isoformat() if report.completed_at else None,
+                'file_path': report.file_path.url if report.file_path else None,
+                'error_message': report.error_message if report.status == 'failed' else None
+            }
+
+        try:
+            result = await get_status_sync()
+
+            status_messages = {
+                'pending': "en attente",
+                'processing': "en cours de génération",
+                'completed': "terminé et prêt à télécharger",
+                'failed': "échoué"
+            }
+
+            message = f"Rapport {result['report_type']} ({result['format'].upper()}): {status_messages.get(result['status'], result['status'])}"
+
+            return {
+                'success': True,
+                'message': message,
+                'data': result
+            }
+        except Report.DoesNotExist:
+            return {'success': False, 'error': "Rapport non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error getting report status: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}
+
+    async def delete_report(self, params: Dict, user) -> Dict:
+        """Supprime un rapport généré"""
+        from apps.reports.models import Report
+        from asgiref.sync import sync_to_async
+        import os
+
+        @sync_to_async
+        def delete_report_sync():
+            report_id = params.get('report_id')
+            if not report_id:
+                raise ValueError("report_id est requis")
+
+            report = Report.objects.get(id=report_id, generated_by=user)
+
+            report_info = {
+                'id': str(report.id),
+                'report_type': report.report_type,
+                'format': report.format
+            }
+
+            # Supprimer le fichier physique si existe
+            if report.file_path:
+                try:
+                    if os.path.exists(report.file_path.path):
+                        os.remove(report.file_path.path)
+                except Exception as e:
+                    logger.warning(f"Could not delete file: {e}")
+
+            # Supprimer l'enregistrement
+            report.delete()
+
+            return report_info
+
+        try:
+            result = await delete_report_sync()
+
+            return {
+                'success': True,
+                'message': f"Rapport {result['report_type']} ({result['format'].upper()}) supprimé",
+                'data': {
+                    **result,
+                    'entity_type': 'report'
+                }
+            }
+        except Report.DoesNotExist:
+            return {'success': False, 'error': "Rapport non trouvé"}
+        except ValueError as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Error deleting report: {e}")
+            return {'success': False, 'error': f"Erreur: {str(e)}"}

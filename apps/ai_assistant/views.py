@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.utils import timezone
+from asgiref.sync import async_to_sync
 from .models import Conversation, Message
 from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer
 # Lazy imports to avoid module-level initialization errors
@@ -57,19 +58,13 @@ class ChatView(APIView):
             # Appeler Mistral AI (lazy import)
             from .services import MistralService
             mistral_service = MistralService()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            try:
-                result = loop.run_until_complete(
-                    mistral_service.chat(
-                        message=user_message,
-                        conversation_history=list(history)[:-1],  # Exclure le dernier message
-                        user_context={'user_id': request.user.id}
-                    )
-                )
-            finally:
-                loop.close()
+
+            # Utiliser async_to_sync au lieu de créer un event loop
+            result = async_to_sync(mistral_service.chat)(
+                message=user_message,
+                conversation_history=list(history)[:-1],  # Exclure le dernier message
+                user_context={'user_id': request.user.id}
+            )
             
             # Exécuter les tool_calls si présents AVANT de sauvegarder la réponse
             action_results = []
@@ -81,17 +76,12 @@ class ChatView(APIView):
 
                 for tool_call in result['tool_calls']:
                     try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-
-                        action_result = loop.run_until_complete(
-                            executor.execute(
-                                action=tool_call['function'],
-                                params=tool_call['arguments'],
-                                user=request.user
-                            )
+                        # Utiliser async_to_sync au lieu de créer un event loop
+                        action_result = async_to_sync(executor.execute)(
+                            action=tool_call['function'],
+                            params=tool_call['arguments'],
+                            user=request.user
                         )
-                        loop.close()
 
                         action_results.append({
                             'tool_call_id': tool_call['id'],
@@ -131,19 +121,13 @@ class ChatView(APIView):
             if result.get('action'):
                 from .services import ActionExecutor
                 executor = ActionExecutor()
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
 
-                try:
-                    action_result = loop.run_until_complete(
-                        executor.execute(
-                            action=result['action']['action'],
-                            params=result['action']['params'],
-                            user=request.user
-                        )
-                    )
-                finally:
-                    loop.close()
+                # Utiliser async_to_sync au lieu de créer un event loop
+                action_result = async_to_sync(executor.execute)(
+                    action=result['action']['action'],
+                    params=result['action']['params'],
+                    user=request.user
+                )
 
                 # Ajouter le résultat de l'action à la conversation
                 if action_result:
