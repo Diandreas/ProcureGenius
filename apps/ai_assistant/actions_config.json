@@ -134,6 +134,86 @@
       }
     },
 
+    "search_client": {
+      "name": "Rechercher un client",
+      "description": "Recherche des clients par nom, email ou contact",
+      "icon": "search",
+      "category": "clients",
+      "required_params": ["query"],
+      "optional_params": ["limit"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "client_list"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Détermine les critères de recherche : nom, email, ou personne de contact",
+        "results": "Voici les clients trouvés correspondant à '{query}'"
+      }
+    },
+
+    "list_clients": {
+      "name": "Lister les clients",
+      "description": "Liste tous les clients actifs",
+      "icon": "list",
+      "category": "clients",
+      "required_params": [],
+      "optional_params": ["limit"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "client_list"
+        }
+      ]
+    },
+
+    "search_invoice": {
+      "name": "Rechercher une facture",
+      "description": "Recherche des factures",
+      "icon": "search",
+      "category": "invoices",
+      "required_params": [],
+      "optional_params": ["query", "status", "client_name", "limit"]
+    },
+
+    "search_purchase_order": {
+      "name": "Rechercher un bon de commande",
+      "description": "Recherche des bons de commande",
+      "icon": "search",
+      "category": "purchase_orders",
+      "required_params": [],
+      "optional_params": ["query", "status", "supplier_name", "limit"]
+    },
+
+    "get_latest_invoice": {
+      "name": "Obtenir les dernières factures",
+      "description": "Récupère les factures récentes",
+      "icon": "history",
+      "category": "invoices",
+      "required_params": [],
+      "optional_params": ["limit", "client_name"]
+    },
+
+    "add_po_items": {
+      "name": "Ajouter des articles au BC",
+      "description": "Ajoute des articles à un bon de commande existant",
+      "icon": "add_shopping_cart",
+      "category": "purchase_orders",
+      "required_params": ["po_number", "items"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "{count} article(s) ajouté(s) au bon de commande"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/purchase-orders/{po_id}",
+          "label": "Voir le bon de commande mis à jour"
+        }
+      ]
+    },
+
     "add_invoice_items": {
       "name": "Ajouter des articles à la facture",
       "description": "Ajoute des articles/services à une facture existante",
@@ -181,13 +261,13 @@
       ]
     },
 
-    "get_statistics": {
+    "get_stats": {
       "name": "Afficher les statistiques",
       "description": "Affiche les statistiques de l'entreprise",
       "icon": "analytics",
       "category": "dashboard",
-      "required_params": ["period"],
-      "optional_params": ["category", "detailed"],
+      "required_params": [],
+      "optional_params": ["period", "category"],
       "success_actions": [
         {
           "type": "display_stats",
@@ -202,26 +282,6 @@
         "extract": "Détermine la période : aujourd'hui, cette semaine, ce mois, cette année",
         "results": "Voici les statistiques pour {period}"
       }
-    },
-
-    "analyze_document": {
-      "name": "Analyser un document",
-      "description": "Analyse un document scanné (facture, BC, etc.)",
-      "icon": "document_scanner",
-      "category": "documents",
-      "required_params": ["document_type"],
-      "optional_params": ["auto_create"],
-      "success_actions": [
-        {
-          "type": "display_analysis",
-          "template": "document_analysis"
-        },
-        {
-          "type": "auto_create_option",
-          "label": "Créer automatiquement",
-          "depends_on": "document_type"
-        }
-      ]
     },
 
     "send_purchase_order": {
