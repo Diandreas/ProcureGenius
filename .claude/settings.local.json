@@ -1,27 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"/c/Users/david/AppData/Local/Programs/Python/Python313/python.exe\":*)",
-      "Bash(python manage.py makemigrations:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations invoicing --name add_product_type_validation)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations purchase_orders --name require_product_association)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations suppliers --name create_supplier_product_relation)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py showmigrations invoicing)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate invoicing 0016_add_product_type_validation --fake)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations reports)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate reports)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py showmigrations --plan)",
-      "Bash(findstr:*)",
-      "Bash(git add:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py migrate e_sourcing)",
-      "Bash(git commit:*)",
-      "Bash(dir:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/consumers.py)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/views.py)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/services.py)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations ai_assistant --name create_action_history)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" -m py_compile apps/ai_assistant/models.py)"
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations analytics --name add_dashboard_config_models)",
+      "Bash(npm install:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py check)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py shell -c \"from apps.core.modules import get_modules_for_profile, PROFILE_METADATA; print(''Profils disponibles:''); [print(f''  - {k}: {v[\"\"name\"\"]}'') for k,v in PROFILE_METADATA.items()]; print(''\\nModules pour standard:''); print(get_modules_for_profile(''standard''))\")"
     ],
     "deny": [],
     "ask": []

@@ -80,7 +80,7 @@ const PERIOD_OPTIONS = [
   { value: 'this_year', label: 'Cette année' },
 ];
 
-function Dashboard() {
+function DashboardEnhanced() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -495,4 +495,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default DashboardEnhanced;

@@ -1,0 +1,568 @@
+"""
+Service complet pour le dashboard avec statistiques personnalisables et export
+"""
+from datetime import datetime, timedelta
+from django.db.models import Sum, Count, Avg, F, Q, Max, Min
+from django.utils import timezone
+from decimal import Decimal
+from typing import Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class DashboardStatsService:
+    """Service centralisé pour toutes les statistiques du dashboard"""
+
+    def __init__(self, user, start_date=None, end_date=None, compare_previous=False):
+        """
+        Initialize dashboard stats service
+
+        Args:
+            user: Django User instance
+            start_date: Date de début (None = 30 derniers jours)
+            end_date: Date de fin (None = aujourd'hui)
+            compare_previous: Si True, compare avec la période précédente
+        """
+        self.user = user
+        self.end_date = end_date or timezone.now()
+
+        # Calcul de la date de début
+        if start_date:
+            self.start_date = start_date
+        else:
+            # Par défaut: 30 derniers jours
+            self.start_date = self.end_date - timedelta(days=30)
+
+        self.compare_previous = compare_previous
+        self.period_days = (self.end_date - self.start_date).days
+
+        # Période de comparaison (même durée avant start_date)
+        if compare_previous:
+            self.compare_end_date = self.start_date
+            self.compare_start_date = self.compare_end_date - timedelta(days=self.period_days)
+
+    def get_enabled_modules(self) -> List[str]:
+        """Récupère les modules activés pour l'utilisateur"""
+        from apps.core.modules import get_user_accessible_modules
+        return get_user_accessible_modules(self.user)
+
+    def get_comprehensive_stats(self) -> Dict:
+        """
+        Retourne toutes les statistiques du dashboard
+        """
+        enabled_modules = self.get_enabled_modules()
+
+        stats = {
+            'metadata': {
+                'start_date': self.start_date.isoformat(),
+                'end_date': self.end_date.isoformat(),
+                'period_days': self.period_days,
+                'generated_at': timezone.now().isoformat(),
+                'compare_previous': self.compare_previous,
+            },
+            'enabled_modules': enabled_modules,
+        }
+
+        # Ajouter stats par module
+        if 'suppliers' in enabled_modules:
+            stats['suppliers'] = self.get_supplier_stats()
+
+        if 'purchase_orders' in enabled_modules:
+            stats['purchase_orders'] = self.get_purchase_order_stats()
+
+        if 'invoices' in enabled_modules:
+            stats['invoices'] = self.get_invoice_stats()
+
+        if 'clients' in enabled_modules:
+            stats['clients'] = self.get_client_stats()
+
+        if 'products' in enabled_modules:
+            stats['products'] = self.get_product_stats()
+
+        # Stats financières globales
+        if 'invoices' in enabled_modules or 'purchase_orders' in enabled_modules:
+            stats['financial'] = self.get_financial_stats()
+
+        # Performance globale
+        stats['performance'] = self.get_performance_metrics()
+
+        return stats
+
+    def get_supplier_stats(self) -> Dict:
+        """Statistiques détaillées des fournisseurs"""
+        from apps.suppliers.models import Supplier
+
+        # Stats de base
+        total = Supplier.objects.count()
+        active = Supplier.objects.filter(is_active=True, status='active').count()
+
+        # Stats de la période
+        period_suppliers = Supplier.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        )
+        new_suppliers = period_suppliers.count()
+
+        # Par note
+        by_rating = {
+            '5_stars': Supplier.objects.filter(rating=5).count(),
+            '4_stars': Supplier.objects.filter(rating=4).count(),
+            '3_stars': Supplier.objects.filter(rating=3).count(),
+            'below_3': Supplier.objects.filter(rating__lt=3, rating__gte=0).count(),
+            'no_rating': Supplier.objects.filter(Q(rating__isnull=True) | Q(rating=0)).count(),
+        }
+
+        # Top fournisseurs par volume de commandes
+        from apps.purchase_orders.models import PurchaseOrder
+        top_suppliers = Supplier.objects.filter(
+            purchaseorder__created_at__gte=self.start_date,
+            purchaseorder__created_at__lte=self.end_date
+        ).annotate(
+            total_orders=Count('purchaseorder'),
+            total_amount=Sum('purchaseorder__total_amount')
+        ).order_by('-total_amount')[:5]
+
+        top_suppliers_data = [
+            {
+                'id': str(s.id),
+                'name': s.name,
+                'total_orders': s.total_orders,
+                'total_amount': float(s.total_amount or 0)
+            }
+            for s in top_suppliers
+        ]
+
+        stats = {
+            'total': total,
+            'active': active,
+            'inactive': total - active,
+            'new_in_period': new_suppliers,
+            'by_rating': by_rating,
+            'top_suppliers': top_suppliers_data,
+        }
+
+        # Comparaison avec période précédente
+        if self.compare_previous:
+            previous_new = Supplier.objects.filter(
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            ).count()
+            stats['comparison'] = {
+                'previous_new': previous_new,
+                'change': new_suppliers - previous_new,
+                'percent_change': ((new_suppliers - previous_new) / previous_new * 100) if previous_new > 0 else 0
+            }
+
+        return stats
+
+    def get_purchase_order_stats(self) -> Dict:
+        """Statistiques détaillées des bons de commande"""
+        from apps.purchase_orders.models import PurchaseOrder
+
+        # Stats globales
+        total = PurchaseOrder.objects.count()
+
+        # Par statut
+        by_status = {
+            'draft': PurchaseOrder.objects.filter(status='draft').count(),
+            'pending': PurchaseOrder.objects.filter(status='pending').count(),
+            'approved': PurchaseOrder.objects.filter(status='approved').count(),
+            'sent': PurchaseOrder.objects.filter(status='sent').count(),
+            'received': PurchaseOrder.objects.filter(status='received').count(),
+            'cancelled': PurchaseOrder.objects.filter(status='cancelled').count(),
+        }
+
+        # Stats de la période
+        period_pos = PurchaseOrder.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        )
+
+        new_count = period_pos.count()
+        total_amount = period_pos.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        average_amount = period_pos.aggregate(Avg('total_amount'))['total_amount__avg'] or 0
+
+        # Tendance par jour
+        daily_trend = []
+        current_date = self.start_date.date()
+        end_date_only = self.end_date.date()
+
+        while current_date <= end_date_only:
+            next_date = current_date + timedelta(days=1)
+            day_count = period_pos.filter(
+                created_at__date=current_date
+            ).count()
+            day_amount = period_pos.filter(
+                created_at__date=current_date
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            daily_trend.append({
+                'date': current_date.isoformat(),
+                'count': day_count,
+                'amount': float(day_amount)
+            })
+            current_date = next_date
+
+        stats = {
+            'total': total,
+            'by_status': by_status,
+            'period': {
+                'count': new_count,
+                'total_amount': float(total_amount),
+                'average_amount': float(average_amount),
+                'daily_trend': daily_trend
+            }
+        }
+
+        # Comparaison avec période précédente
+        if self.compare_previous:
+            previous_pos = PurchaseOrder.objects.filter(
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            )
+            previous_count = previous_pos.count()
+            previous_amount = previous_pos.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            stats['comparison'] = {
+                'previous_count': previous_count,
+                'previous_amount': float(previous_amount),
+                'count_change': new_count - previous_count,
+                'amount_change': float(total_amount - previous_amount),
+                'count_percent_change': ((new_count - previous_count) / previous_count * 100) if previous_count > 0 else 0,
+                'amount_percent_change': ((total_amount - previous_amount) / previous_amount * 100) if previous_amount > 0 else 0
+            }
+
+        return stats
+
+    def get_invoice_stats(self) -> Dict:
+        """Statistiques détaillées des factures"""
+        from apps.invoicing.models import Invoice
+
+        # Stats globales
+        total = Invoice.objects.count()
+
+        # Par statut
+        by_status = {
+            'draft': Invoice.objects.filter(status='draft').count(),
+            'sent': Invoice.objects.filter(status='sent').count(),
+            'paid': Invoice.objects.filter(status='paid').count(),
+            'overdue': Invoice.objects.filter(status='overdue').count(),
+            'cancelled': Invoice.objects.filter(status='cancelled').count(),
+        }
+
+        # Stats de la période
+        period_invoices = Invoice.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        )
+
+        new_count = period_invoices.count()
+        total_amount = period_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        paid_amount = period_invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        pending_amount = period_invoices.filter(status='sent').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Tendance quotidienne
+        daily_trend = []
+        current_date = self.start_date.date()
+        end_date_only = self.end_date.date()
+
+        while current_date <= end_date_only:
+            next_date = current_date + timedelta(days=1)
+            day_count = period_invoices.filter(created_at__date=current_date).count()
+            day_amount = period_invoices.filter(created_at__date=current_date).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            day_paid = period_invoices.filter(
+                payments__payment_date=current_date,
+                status='paid'
+            ).distinct().aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            daily_trend.append({
+                'date': current_date.isoformat(),
+                'count': day_count,
+                'amount': float(day_amount),
+                'paid_amount': float(day_paid)
+            })
+            current_date = next_date
+
+        # Taux de paiement
+        payment_rate = (paid_amount / total_amount * 100) if total_amount > 0 else 0
+
+        stats = {
+            'total': total,
+            'by_status': by_status,
+            'period': {
+                'count': new_count,
+                'total_amount': float(total_amount),
+                'paid_amount': float(paid_amount),
+                'pending_amount': float(pending_amount),
+                'payment_rate': float(payment_rate),
+                'daily_trend': daily_trend
+            }
+        }
+
+        # Comparaison avec période précédente
+        if self.compare_previous:
+            previous_invoices = Invoice.objects.filter(
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            )
+            previous_count = previous_invoices.count()
+            previous_amount = previous_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            previous_paid = previous_invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            stats['comparison'] = {
+                'previous_count': previous_count,
+                'previous_amount': float(previous_amount),
+                'previous_paid': float(previous_paid),
+                'count_change': new_count - previous_count,
+                'amount_change': float(total_amount - previous_amount),
+                'count_percent_change': ((new_count - previous_count) / previous_count * 100) if previous_count > 0 else 0,
+                'amount_percent_change': ((total_amount - previous_amount) / previous_amount * 100) if previous_amount > 0 else 0
+            }
+
+        return stats
+
+    def get_client_stats(self) -> Dict:
+        """Statistiques détaillées des clients"""
+        from apps.accounts.models import Client
+        from apps.invoicing.models import Invoice
+
+        # Stats globales
+        total = Client.objects.count()
+        active = Client.objects.filter(is_active=True).count()
+
+        # Nouveaux clients dans la période
+        new_clients = Client.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).count()
+
+        # Clients actifs (avec factures payées récemment)
+        active_with_invoices = Client.objects.filter(
+            invoices__status='paid',
+            invoices__payments__payment_date__gte=self.start_date,
+            invoices__payments__payment_date__lte=self.end_date
+        ).distinct().count()
+
+        # Top clients par chiffre d'affaires
+        top_clients = Client.objects.filter(
+            invoices__status='paid',
+            invoices__payments__payment_date__gte=self.start_date,
+            invoices__payments__payment_date__lte=self.end_date
+        ).annotate(
+            total_invoices=Count('invoices', distinct=True),
+            total_revenue=Sum('invoices__total_amount', distinct=True)
+        ).order_by('-total_revenue')[:5]
+
+        top_clients_data = [
+            {
+                'id': str(c.id),
+                'name': f"{c.first_name} {c.last_name}" if c.first_name else c.company,
+                'total_invoices': c.total_invoices,
+                'total_revenue': float(c.total_revenue or 0)
+            }
+            for c in top_clients
+        ]
+
+        stats = {
+            'total': total,
+            'active': active,
+            'new_in_period': new_clients,
+            'active_with_revenue': active_with_invoices,
+            'top_clients': top_clients_data
+        }
+
+        # Comparaison avec période précédente
+        if self.compare_previous:
+            previous_new = Client.objects.filter(
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            ).count()
+
+            stats['comparison'] = {
+                'previous_new': previous_new,
+                'change': new_clients - previous_new,
+                'percent_change': ((new_clients - previous_new) / previous_new * 100) if previous_new > 0 else 0
+            }
+
+        return stats
+
+    def get_product_stats(self) -> Dict:
+        """Statistiques détaillées des produits et stock"""
+        from apps.invoicing.models import Product
+
+        # Stats globales
+        total = Product.objects.count()
+        active = Product.objects.filter(is_active=True).count()
+        physical = Product.objects.filter(product_type='physical').count()
+        services = Product.objects.filter(product_type='service').count()
+
+        # Stock
+        low_stock = Product.objects.filter(
+            product_type='physical',
+            stock_quantity__lte=F('low_stock_threshold'),
+            stock_quantity__gt=0
+        ).count()
+
+        out_of_stock = Product.objects.filter(
+            product_type='physical',
+            stock_quantity=0
+        ).count()
+
+        # Valeur du stock
+        stock_value = Product.objects.filter(
+            product_type='physical'
+        ).annotate(
+            value=F('stock_quantity') * F('cost_price')
+        ).aggregate(total=Sum('value'))['total'] or 0
+
+        # Produits les plus vendus (via factures)
+        from apps.invoicing.models import InvoiceItem
+        top_products = Product.objects.filter(
+            invoice_items__invoice__created_at__gte=self.start_date,
+            invoice_items__invoice__created_at__lte=self.end_date,
+            invoice_items__invoice__status='paid'
+        ).annotate(
+            quantity_sold=Sum('invoice_items__quantity'),
+            revenue=Sum(F('invoice_items__quantity') * F('invoice_items__unit_price'))
+        ).order_by('-revenue')[:5]
+
+        top_products_data = [
+            {
+                'id': str(p.id),
+                'name': p.name,
+                'quantity_sold': p.quantity_sold or 0,
+                'revenue': float(p.revenue or 0)
+            }
+            for p in top_products
+        ]
+
+        stats = {
+            'total': total,
+            'active': active,
+            'by_type': {
+                'physical': physical,
+                'service': services
+            },
+            'stock': {
+                'low_stock': low_stock,
+                'out_of_stock': out_of_stock,
+                'total_value': float(stock_value)
+            },
+            'top_products': top_products_data
+        }
+
+        return stats
+
+    def get_financial_stats(self) -> Dict:
+        """Statistiques financières globales"""
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+
+        # Revenus (factures payées)
+        revenue = Invoice.objects.filter(
+            status='paid',
+            payments__payment_date__gte=self.start_date,
+            payments__payment_date__lte=self.end_date
+        ).distinct().aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Dépenses (BCs approuvés/reçus)
+        expenses = PurchaseOrder.objects.filter(
+            status__in=['approved', 'sent', 'received'],
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Profit net
+        net_profit = revenue - expenses
+        profit_margin = (net_profit / revenue * 100) if revenue > 0 else 0
+
+        # Revenus en attente
+        pending_revenue = Invoice.objects.filter(
+            status='sent'
+        ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        stats = {
+            'revenue': float(revenue),
+            'expenses': float(expenses),
+            'net_profit': float(net_profit),
+            'profit_margin': float(profit_margin),
+            'pending_revenue': float(pending_revenue)
+        }
+
+        # Comparaison avec période précédente
+        if self.compare_previous:
+            previous_revenue = Invoice.objects.filter(
+                status='paid',
+                payments__payment_date__gte=self.compare_start_date,
+                payments__payment_date__lt=self.compare_end_date
+            ).distinct().aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            previous_expenses = PurchaseOrder.objects.filter(
+                status__in=['approved', 'sent', 'received'],
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            previous_profit = previous_revenue - previous_expenses
+
+            stats['comparison'] = {
+                'previous_revenue': float(previous_revenue),
+                'previous_expenses': float(previous_expenses),
+                'previous_profit': float(previous_profit),
+                'revenue_change': float(revenue - previous_revenue),
+                'expenses_change': float(expenses - previous_expenses),
+                'profit_change': float(net_profit - previous_profit),
+                'revenue_percent_change': ((revenue - previous_revenue) / previous_revenue * 100) if previous_revenue > 0 else 0,
+                'profit_percent_change': ((net_profit - previous_profit) / previous_profit * 100) if previous_profit != 0 else 0
+            }
+
+        return stats
+
+    def get_performance_metrics(self) -> Dict:
+        """Métriques de performance globales"""
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+
+        # Délai moyen de paiement des factures
+        # Annoter chaque facture avec sa date de paiement la plus récente
+        paid_invoices = Invoice.objects.filter(
+            status='paid',
+            payments__payment_date__gte=self.start_date,
+            payments__payment_date__lte=self.end_date
+        ).annotate(
+            latest_payment_date=Max('payments__payment_date')
+        ).distinct()
+
+        avg_payment_delay = None
+        if paid_invoices.exists():
+            delays = [
+                (inv.latest_payment_date - inv.created_at.date()).days
+                for inv in paid_invoices
+                if inv.latest_payment_date and inv.created_at
+            ]
+            avg_payment_delay = sum(delays) / len(delays) if delays else None
+
+        # Taux de conversion devis -> factures (si module e-sourcing actif)
+        # Pour l'instant, on utilise draft -> paid
+        draft_invoices = Invoice.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date,
+            status='draft'
+        ).count()
+
+        paid_from_period = Invoice.objects.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date,
+            status='paid'
+        ).count()
+
+        total_invoices_period = draft_invoices + paid_from_period
+        conversion_rate = (paid_from_period / total_invoices_period * 100) if total_invoices_period > 0 else 0
+
+        stats = {
+            'avg_payment_delay_days': float(avg_payment_delay) if avg_payment_delay else None,
+            'invoice_conversion_rate': float(conversion_rate)
+        }
+
+        return stats

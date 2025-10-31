@@ -60,7 +60,9 @@ urlpatterns = [
     # Reports endpoints
     path('reports/', include('apps.reports.urls')),
 
+    # Analytics - Dashboard amélioré
+    path('analytics/', include('apps.analytics.api_urls')),
+
     # Keep existing endpoints if they exist
-    # path('analytics/', include('apps.analytics.api_urls')),
     # path('integrations/', include('apps.integrations.api_urls')),
 ]

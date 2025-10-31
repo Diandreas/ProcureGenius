@@ -103,11 +103,17 @@ function ModuleSettings() {
 
             if (settingsResponse.ok) {
                 const settingsData = await settingsResponse.json();
-                console.log('Organization settings loaded:', settingsData); // Debug
+                console.log('User module settings loaded:', settingsData); // Debug
                 setOrganizationSettings(settingsData);
                 setSelectedProfile(settingsData.subscription_type || '');
-            } else if (settingsResponse.status === 403) {
-                enqueueSnackbar('Vous n\'avez pas les permissions pour gérer les paramètres', { variant: 'warning' });
+            } else {
+                console.error('Failed to load module settings:', settingsResponse.status);
+                // Set default values if fetch fails
+                setOrganizationSettings({
+                    subscription_type: 'professional',
+                    enabled_modules: [],
+                });
+                setSelectedProfile('professional');
             }
 
             // Fetch available profile types
@@ -184,18 +190,6 @@ function ModuleSettings() {
         );
     }
 
-    // Check if user has permission to manage settings
-    if (!userPermissions?.can_manage_settings) {
-        return (
-            <Box>
-                <Alert severity="warning">
-                    Vous n'avez pas les permissions nécessaires pour gérer les modules de l'organisation.
-                    Contactez un administrateur.
-                </Alert>
-            </Box>
-        );
-    }
-
     const currentProfile = profileTypes.find(p => p.type === organizationSettings?.subscription_type);
     const totalModules = moduleMetadata.length;
     const enabledModulesCount = organizationSettings?.enabled_modules?.length || 0;
@@ -222,7 +216,7 @@ function ModuleSettings() {
                         Gestion des Modules
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                        Configuration de votre abonnement
+                        Personnalisez vos modules actifs
                     </Typography>
                 </Box>
                 <Button
@@ -587,8 +581,8 @@ function ModuleSettings() {
                         }}
                         icon={<Info />}
                     >
-                        Les modules seront automatiquement activés selon le profil choisi.
-                        Vous pourrez revenir à tout moment.
+                        Vos modules seront automatiquement activés selon le profil choisi.
+                        Vous pourrez changer de profil à tout moment.
                     </Alert>
 
                     <RadioGroup value={selectedProfile} onChange={(e) => setSelectedProfile(e.target.value)}>
@@ -846,20 +840,20 @@ function ModuleSettings() {
 
                     {selectedProfile && selectedProfile !== organizationSettings?.subscription_type && (
                         <Alert
-                            severity="warning"
+                            severity="success"
                             sx={{
                                 mt: 3,
                                 borderRadius: 2,
                                 border: '1px solid',
-                                borderColor: 'warning.light'
+                                borderColor: 'success.light'
                             }}
                         >
                             <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                ⚠️ Attention
+                                ✓ Changement de profil
                             </Typography>
                             <Typography variant="caption">
-                                Cette action modifiera les modules pour <strong>tous les utilisateurs</strong> de l'organisation.
-                                La page se rechargera automatiquement.
+                                Vos modules actifs seront mis à jour selon le nouveau profil.
+                                La page se rechargera automatiquement pour appliquer les changements.
                             </Typography>
                         </Alert>
                     )}

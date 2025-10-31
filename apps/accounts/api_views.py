@@ -329,60 +329,80 @@ def api_profile_types(request):
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def api_organization_settings(request):
-    """Manage organization module settings (admin only)"""
+    """Manage user's personal module settings"""
     user = request.user
-    
-    # Check if user has permission to manage settings
-    permissions, _ = UserPermissions.objects.get_or_create(user=user)
-    if not permissions.can_manage_settings:
-        return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
-    
-    if not user.organization:
-        return Response({'error': 'Aucune organisation associée'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    org = user.organization
-    
+
+    # Get or create user preferences
+    preferences, _ = UserPreferences.objects.get_or_create(user=user)
+
     if request.method == 'GET':
+        # Return user's personal module settings
+        # Determine profile type from enabled modules or use default
+        profile_type = ProfileTypes.PROFESSIONAL  # Default profile
+        enabled_modules_list = []
+
+        if isinstance(preferences.enabled_modules, list):
+            enabled_modules_list = preferences.enabled_modules
+            # Try to match profile type based on modules
+            for ptype, pmodules in PROFILE_METADATA.items():
+                if set(enabled_modules_list) == set(get_modules_for_profile(ptype)):
+                    profile_type = ptype
+                    break
+        elif isinstance(preferences.enabled_modules, dict):
+            profile_type = preferences.enabled_modules.get('profile_type', ProfileTypes.PROFESSIONAL)
+            enabled_modules_list = get_modules_for_profile(profile_type)
+        else:
+            # No modules set, use default
+            enabled_modules_list = get_modules_for_profile(profile_type)
+
         return Response({
-            'subscription_type': org.subscription_type,
-            'enabled_modules': org.get_available_modules(),
+            'subscription_type': profile_type,
+            'enabled_modules': enabled_modules_list,
             'available_profile_types': list(PROFILE_METADATA.keys()),
         })
-    
+
     elif request.method == 'PUT':
         try:
             data = request.data
-            
+
             # Update subscription type if provided
             if 'subscription_type' in data:
                 new_type = data['subscription_type']
                 if new_type in PROFILE_METADATA:
-                    # IMPORTANT: Sauvegarder d'abord le subscription_type
-                    org.subscription_type = new_type
-                    org.save(update_fields=['subscription_type', 'updated_at'])
-                    
-                    # Puis mettre à jour les modules basés sur le nouveau profil
-                    org.update_modules_from_profile()
+                    # Get modules for this profile
+                    modules = get_modules_for_profile(new_type)
+
+                    # Update user preferences with new modules
+                    preferences.enabled_modules = modules
+                    preferences.save()
+
+                    return Response({
+                        'success': True,
+                        'message': 'Vos modules ont été mis à jour',
+                        'subscription_type': new_type,
+                        'enabled_modules': modules,
+                    })
                 else:
                     return Response(
-                        {'error': 'Type d\'abonnement invalide'},
+                        {'error': 'Type de profil invalide'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            
+
             # Allow custom module selection if provided
             elif 'enabled_modules' in data:
-                org.enabled_modules = data['enabled_modules']
-                org.save()
-            
-            # Recharger l'organisation pour avoir les données fraîches
-            org.refresh_from_db()
-            
+                preferences.enabled_modules = data['enabled_modules']
+                preferences.save()
+
+                return Response({
+                    'success': True,
+                    'message': 'Vos modules ont été mis à jour',
+                    'enabled_modules': preferences.enabled_modules,
+                })
+
             return Response({
-                'success': True,
-                'message': 'Paramètres mis à jour',
-                'subscription_type': org.subscription_type,
-                'enabled_modules': org.get_available_modules(),
-            })
+                'error': 'Aucune donnée fournie'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -13,7 +13,8 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Pages
 import Login from './pages/auth/Login';
-import Dashboard from './pages/Dashboard';
+import CustomizableDashboard from './pages/CustomizableDashboard';
+import OldDashboard from './pages/Dashboard';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
 import SupplierForm from './pages/suppliers/SupplierForm';
@@ -438,7 +439,8 @@ function App() {
                     <Route element={<PrivateRoute />}>
                       <Route element={<MainLayout />}>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/dashboard" element={<CustomizableDashboard />} />
+                        <Route path="/dashboard-old" element={<OldDashboard />} />
 
                         {/* Suppliers - Module Protected */}
                         <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
