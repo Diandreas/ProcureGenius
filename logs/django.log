@@ -18986,3 +18986,238 @@ Watching for file changes with StatReloader
 "GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
 "GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 254
 "GET /api/v1/accounts/profile-types/ HTTP/1.1" 200 1451
+D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1609
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 945
+"OPTIONS /api/v1/analytics/widgets/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/layouts/default/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/layouts/default/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widgets/ HTTP/1.1" 200 0
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1325
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1325
+"OPTIONS /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 0
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 573
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 290
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 293
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 651
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 499
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 522
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1667
+"GET /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 290
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 409
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 573
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 651
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 293
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 499
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1667
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 522
+"GET /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 409
+"GET /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 312
+"GET /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 312
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 6226
+"GET /api/v1/suppliers/ HTTP/1.1" 200 6226
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 12850
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 12850
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"GET /api/v1/invoices/ HTTP/1.1" 200 18144
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+"GET /api/v1/products/ HTTP/1.1" 200 10758
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "d:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 564, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (d:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/warehouses/ HTTP/1.1" 500 137932
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "d:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 564, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (d:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"GET /api/v1/warehouses/ HTTP/1.1" 500 137932
+"GET /api/v1/clients/ HTTP/1.1" 200 3435
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 0
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"GET /api/v1/migration/quickbooks/status/ HTTP/1.1" 200 19
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 7554
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 7554
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1728
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1728
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1325
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1325
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 290
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 573
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 651
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 293
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 499
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 522
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1667
+"GET /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 290
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 573
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 651
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 409
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 499
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1667
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 293
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 522
+"GET /api/v1/analytics/widget-data/ai_usage/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 409
+"GET /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 312
+"GET /api/v1/analytics/widget-data/invoices_status/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 312
+"OPTIONS /api/v1/analytics/widget-data/overdue_invoices/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/analytics/widget-data/overdue_invoices/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+Error fetching widget data for overdue_invoices: 'NoneType' object has no attribute 'company'
+Internal Server Error: /api/v1/analytics/widget-data/overdue_invoices/
+"GET /api/v1/analytics/widget-data/overdue_invoices/?period=last_30_days&limit=10&compare=false HTTP/1.1" 500 72
+Error fetching widget data for overdue_invoices: 'NoneType' object has no attribute 'company'
+Internal Server Error: /api/v1/analytics/widget-data/overdue_invoices/
+"GET /api/v1/analytics/widget-data/overdue_invoices/?period=last_30_days&limit=10&compare=false HTTP/1.1" 500 72
+"OPTIONS /api/v1/analytics/layouts/facf96e3-3dc0-47ac-9c66-4f7cef832873/ HTTP/1.1" 200 0
+"PATCH /api/v1/analytics/layouts/facf96e3-3dc0-47ac-9c66-4f7cef832873/ HTTP/1.1" 200 1172

@@ -4,6 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from . import quick_create_views
 from apps.accounts import api_views as accounts_api_views
+from apps.accounts import auth_api_views
 
 app_name = 'api'
 
@@ -20,8 +21,14 @@ router.register(r'purchase-orders', views.PurchaseOrderViewSet)
 router.register(r'invoices', views.InvoiceViewSet)
 
 urlpatterns = [
-    # Authentication
+    # Authentication - Enhanced
     path('auth/token/', obtain_auth_token, name='api_token_auth'),
+    path('auth/register/', auth_api_views.api_register, name='api_register'),
+    path('auth/login/', auth_api_views.api_login, name='api_login'),
+    path('auth/logout/', auth_api_views.api_logout, name='api_logout'),
+    path('auth/verify-email/', auth_api_views.api_verify_email, name='api_verify_email'),
+    path('auth/forgot-password/', auth_api_views.api_forgot_password, name='api_forgot_password'),
+    path('auth/reset-password/', auth_api_views.api_reset_password, name='api_reset_password'),
 
     # Accounts & User management APIs
     path('accounts/profile/', accounts_api_views.api_profile, name='api_profile'),
@@ -62,6 +69,12 @@ urlpatterns = [
 
     # Analytics - Dashboard amélioré
     path('analytics/', include('apps.analytics.api_urls')),
+
+    # Subscriptions - Plans, quotas, billing
+    path('subscriptions/', include('apps.subscriptions.urls')),
+
+    # Core - Currencies and system utilities
+    path('core/', include('apps.core.api_urls')),
 
     # Keep existing endpoints if they exist
     # path('integrations/', include('apps.integrations.api_urls')),

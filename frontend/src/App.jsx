@@ -45,6 +45,9 @@ import ContractDetail from './pages/contracts/ContractDetail';
 import ContractForm from './pages/contracts/ContractForm';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
+import Pricing from './pages/Pricing';
+import Register from './pages/auth/Register';
+import LoginEnhanced from './pages/auth/LoginEnhanced';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -55,6 +58,9 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Onboarding
 import OnboardingWizard from './components/OnboardingWizard';
+
+// AdSense
+import { AdSenseScript } from './components/AdSense';
 
 // Theme configuration - Material Design 3 inspired
 const theme = createTheme({
@@ -423,16 +429,22 @@ function App() {
         <CssBaseline />
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
           <ModuleProvider>
+            {/* Load Google AdSense script */}
+            <AdSenseScript />
+
             {onboardingChecked && (
               <>
                 <Router>
                   <Routes>
                     {/* Public Routes */}
                     <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+                    <Route path="/pricing" element={<Pricing />} />
 
                     {/* Auth Routes */}
                     <Route element={<AuthLayout />}>
-                      <Route path="/login" element={<Login />} />
+                      <Route path="/login" element={<LoginEnhanced />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/login-old" element={<Login />} />
                     </Route>
 
                     {/* Protected Routes */}

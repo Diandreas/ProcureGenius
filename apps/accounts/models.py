@@ -108,6 +108,12 @@ class CustomUser(AbstractUser):
         verbose_name=_("Rôle")
     )
 
+    # Vérification email (pour django-allauth)
+    email_verified = models.BooleanField(
+        default=False,
+        verbose_name=_("Email vérifié")
+    )
+
     class Meta:
         verbose_name = _("Utilisateur")
         verbose_name_plural = _("Utilisateurs")
@@ -220,6 +226,18 @@ class UserPreferences(models.Model):
     notification_settings = models.JSONField(
         default=dict,
         verbose_name=_("Paramètres de notification")
+    )
+    preferred_currency = models.CharField(
+        max_length=3,
+        default='EUR',
+        verbose_name=_("Devise préférée"),
+        help_text=_("Code ISO de la devise préférée (EUR, USD, XOF, etc.)")
+    )
+    preferred_language = models.CharField(
+        max_length=10,
+        default='fr',
+        choices=[('fr', 'Français'), ('en', 'English')],
+        verbose_name=_("Langue préférée")
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -10,14 +10,14 @@ from django.conf.urls.i18n import i18n_patterns
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
-    
+
     # APIs REST
     path('api/v1/', include('apps.api.urls')),
-    
-    # Authentification (allauth désactivé pour développement)
-    # path('accounts/', include('allauth.urls')),
-    path('accounts/', include('apps.accounts.urls')),
-    
+
+    # Authentification
+    path('api/accounts/', include('apps.accounts.urls')),  # API endpoints custom
+    path('accounts/', include('allauth.urls')),  # django-allauth (Google OAuth, email confirmation, etc.)
+
     # Langue
     path('i18n/', include('django.conf.urls.i18n')),
 ]

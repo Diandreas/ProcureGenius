@@ -53,7 +53,8 @@ SHARED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'django.contrib.sites',  # Requis pour django-allauth
+
     # Third party apps
     'rest_framework',
     'rest_framework.authtoken',
@@ -61,16 +62,21 @@ SHARED_APPS = [
     'django_filters',
     'crispy_forms',
     'crispy_bootstrap5',
-    # 'allauth',
-    # 'allauth.account', 
-    # 'allauth.socialaccount',
+
+    # Authentication avec Google OAuth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
     # 'import_export',
     # 'channels',
     # 'django_celery_beat',
     # 'django_celery_results',
-    
+
     # Local shared apps
     'apps.accounts',
+    'apps.subscriptions',  # Système d'abonnement (Free, Standard, Premium)
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -86,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Requis pour django-allauth
 ]
 
 ROOT_URLCONF = 'saas_procurement.urls'
@@ -298,3 +305,62 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+
+# ============================================================
+# DJANGO-ALLAUTH CONFIGURATION
+# ============================================================
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    # Django ModelBackend (email/password classique)
+    'django.contrib.auth.backends.ModelBackend',
+    # django-allauth backend (Google OAuth)
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Site ID pour django.contrib.sites
+SITE_ID = 1
+
+# Configuration allauth générale
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # Utiliser email au lieu de username
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Confirmation email obligatoire
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutes
+
+# Redirection après login/logout
+LOGIN_REDIRECT_URL = '/dashboard'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/login'
+ACCOUNT_LOGOUT_ON_GET = False
+
+# Configuration signup
+ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = False
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-signup pour Google OAuth
+
+# Templates emails
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[ProcureGenius] '
+
+# Configuration Google OAuth
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': os.getenv('GOOGLE_OAUTH_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
+
+# Adapter personnalisé pour gérer la création de UserPreferences et Organization
+SOCIALACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomAccountAdapter'

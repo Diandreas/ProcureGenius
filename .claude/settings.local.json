@@ -1,10 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py makemigrations analytics --name add_dashboard_config_models)",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py runserver)",
       "Bash(npm install:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py check)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py shell -c \"from apps.core.modules import get_modules_for_profile, PROFILE_METADATA; print(''Profils disponibles:''); [print(f''  - {k}: {v[\"\"name\"\"]}'') for k,v in PROFILE_METADATA.items()]; print(''\\nModules pour standard:''); print(get_modules_for_profile(''standard''))\")"
+      "Bash(npx expo install:*)",
+      "Bash(api.ts)",
+      "Bash(\"app/(auth)/login.tsx\")",
+      "Bash(\"app/(auth)/register.tsx\")",
+      "Bash(\"app/(auth)/_layout.tsx\")",
+      "Bash(\"app/index.tsx\")",
+      "Bash(\"(tabs)/_layout.tsx\")",
+      "Bash(\"(tabs)/index.tsx\")",
+      "Bash(\"(tabs)/settings.tsx\")",
+      "Bash(\"index.tsx\")",
+      "Bash(\"[id].tsx\")",
+      "Bash(\"_layout.tsx\")",
+      "Bash(\"MIGRATION_PROGRESS.md\")"
     ],
     "deny": [],
     "ask": []
