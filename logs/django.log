@@ -19221,3 +19221,86 @@ Internal Server Error: /api/v1/analytics/widget-data/overdue_invoices/
 "GET /api/v1/analytics/widget-data/overdue_invoices/?period=last_30_days&limit=10&compare=false HTTP/1.1" 500 72
 "OPTIONS /api/v1/analytics/layouts/facf96e3-3dc0-47ac-9c66-4f7cef832873/ HTTP/1.1" 200 0
 "PATCH /api/v1/analytics/layouts/facf96e3-3dc0-47ac-9c66-4f7cef832873/ HTTP/1.1" 200 1172
+Watching for file changes with StatReloader
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+Unauthorized: /api/v1/clients/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+Unauthorized: /api/v1/products/
+Unauthorized: /api/v1/clients/
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/products/
+"GET /api/v1/products/ HTTP/1.1" 401 58
+Not Found: /api/v1/api/analytics/stats/
+"GET /api/v1/api/analytics/stats/?period=last_30_days&compare=true HTTP/1.1" 404 34668
+Unauthorized: /api/v1/invoices/
+"GET /api/v1/invoices/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/clients/
+"GET /api/v1/clients/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/suppliers/
+"GET /api/v1/suppliers/ HTTP/1.1" 401 58
+Unauthorized: /api/v1/purchase-orders/
+"GET /api/v1/purchase-orders/ HTTP/1.1" 401 58
+Not Found: /api/v1/api/analytics/stats/
+"GET /api/v1/api/analytics/stats/?period=last_30_days&compare=true HTTP/1.1" 404 34668

@@ -20,11 +20,14 @@ import { login, clearError } from '../../store/slices/authSlice';
 import { Colors, Spacing, Shadows } from '../../constants/theme';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { useTranslation } from 'react-i18next';
+import { Mascot } from '../../components';
 
 // Configure Google OAuth
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.auth);
@@ -85,12 +88,17 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Surface style={styles.surface} elevation={3}>
+          {/* Mascot */}
+          <View style={styles.mascotContainer}>
+            <Mascot pose="happy" animation="wave" size={100} />
+          </View>
+
           {/* Header */}
           <Text variant="headlineLarge" style={styles.title}>
-            Bienvenue !
+            {t('auth.welcome')}
           </Text>
           <Text variant="bodyMedium" style={styles.subtitle}>
-            Connectez-vous à votre compte ProcureGenius
+            {t('auth.loginSubtitle')}
           </Text>
 
           {/* Error Alert */}
@@ -109,21 +117,21 @@ export default function LoginScreen() {
             style={styles.googleButton}
             labelStyle={styles.googleButtonLabel}
           >
-            Se connecter avec Google
+            {t('auth.loginWithGoogle')}
           </Button>
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
             <Divider style={styles.divider} />
             <Text variant="bodySmall" style={styles.dividerText}>
-              OU
+              {t('common.or')}
             </Text>
             <Divider style={styles.divider} />
           </View>
 
           {/* Email Field */}
           <TextInput
-            label="Adresse email"
+            label={t('auth.email')}
             value={formData.email}
             onChangeText={(value) => handleChange('email', value)}
             mode="outlined"
@@ -136,7 +144,7 @@ export default function LoginScreen() {
 
           {/* Password Field */}
           <TextInput
-            label="Mot de passe"
+            label={t('auth.password')}
             value={formData.password}
             onChangeText={(value) => handleChange('password', value)}
             mode="outlined"
@@ -157,7 +165,7 @@ export default function LoginScreen() {
           <View style={styles.forgotPasswordContainer}>
             <Link href="/forgot-password" asChild>
               <Text variant="bodySmall" style={styles.link}>
-                Mot de passe oublié ?
+                {t('auth.forgotPassword')}
               </Text>
             </Link>
           </View>
@@ -171,17 +179,17 @@ export default function LoginScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? t('common.loading') : t('auth.login')}
           </Button>
 
           {/* Sign Up Link */}
           <View style={styles.signupContainer}>
             <Text variant="bodySmall" style={styles.signupText}>
-              Pas encore de compte ?{' '}
+              {t('auth.noAccount')}{' '}
             </Text>
             <Link href="/(auth)/register" asChild>
               <Text variant="bodySmall" style={styles.signupLink}>
-                Créer un compte
+                {t('auth.createAccount')}
               </Text>
             </Link>
           </View>
@@ -190,7 +198,7 @@ export default function LoginScreen() {
           <View style={styles.pricingContainer}>
             <Link href="/pricing" asChild>
               <Text variant="bodySmall" style={styles.link}>
-                Voir les plans tarifaires
+                {t('auth.viewPlans')}
               </Text>
             </Link>
           </View>
@@ -215,6 +223,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.surface,
     ...Shadows.lg,
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
   title: {
     textAlign: 'center',

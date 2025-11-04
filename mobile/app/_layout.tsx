@@ -5,6 +5,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import { useColorScheme } from 'react-native';
 import 'react-native-reanimated';
+import '../i18n/config';
 
 import { store } from '../store/store';
 import { lightTheme, darkTheme } from '../constants/theme';

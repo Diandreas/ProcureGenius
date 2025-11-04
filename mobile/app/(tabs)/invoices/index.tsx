@@ -20,10 +20,11 @@ import {
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { invoicesAPI } from '../../services/api';
-import { Colors, Spacing, Shadows } from '../../constants/theme';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setInvoices, setLoading, setError } from '../../store/slices/invoicesSlice';
+import { invoicesAPI } from '../../../services/api';
+import { Colors, Spacing, Shadows } from '../../../constants/theme';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { setInvoices, setLoading, setError } from '../../../store/slices/invoicesSlice';
+import { useTranslation } from 'react-i18next';
 
 interface Invoice {
   id: number;
@@ -36,6 +37,7 @@ interface Invoice {
 }
 
 export default function InvoicesListScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { invoices, loading } = useAppSelector((state) => state.invoices);
@@ -57,7 +59,7 @@ export default function InvoicesListScreen() {
       dispatch(setInvoices(response.data.results || response.data));
       dispatch(setError(null));
     } catch (err: any) {
-      dispatch(setError('Erreur lors du chargement des factures'));
+      dispatch(setError(t('errors.loadingFailed')));
       console.error('Error fetching invoices:', err);
     } finally {
       dispatch(setLoading(false));
@@ -101,11 +103,11 @@ export default function InvoicesListScreen() {
 
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
-      draft: 'Brouillon',
-      sent: 'Envoyée',
-      paid: 'Payée',
-      overdue: 'En retard',
-      cancelled: 'Annulée',
+      draft: t('invoices.draft'),
+      sent: t('invoices.sent'),
+      paid: t('invoices.paid'),
+      overdue: t('invoices.overdue'),
+      cancelled: t('invoices.cancelled'),
     };
     return labels[status] || status;
   };
@@ -208,7 +210,7 @@ export default function InvoicesListScreen() {
               {stats.total}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
-              Total
+              {t('common.total')}
             </Text>
           </Card.Content>
         </Card>
@@ -223,7 +225,7 @@ export default function InvoicesListScreen() {
               {stats.paid}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
-              Payées
+              {t('invoices.paid')}
             </Text>
           </Card.Content>
         </Card>
@@ -238,7 +240,7 @@ export default function InvoicesListScreen() {
               {stats.unpaid}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
-              Envoyées
+              {t('invoices.sent')}
             </Text>
           </Card.Content>
         </Card>
@@ -253,7 +255,7 @@ export default function InvoicesListScreen() {
               {stats.overdue}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
-              En retard
+              {t('invoices.overdue')}
             </Text>
           </Card.Content>
         </Card>
@@ -261,7 +263,7 @@ export default function InvoicesListScreen() {
 
       {/* Search bar */}
       <Searchbar
-        placeholder="Rechercher une facture..."
+        placeholder={t('invoices.searchPlaceholder')}
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={styles.searchBar}
@@ -304,10 +306,10 @@ export default function InvoicesListScreen() {
               color={Colors.disabled}
             />
             <Text variant="titleMedium" style={styles.emptyText}>
-              Aucune facture trouvée
+              {t('invoices.noInvoicesFound')}
             </Text>
             <Text variant="bodySmall" style={styles.emptySubtext}>
-              Commencez par créer votre première facture
+              {t('invoices.createFirstInvoice')}
             </Text>
           </View>
         }
@@ -315,7 +317,7 @@ export default function InvoicesListScreen() {
 
       <FAB
         icon="plus"
-        label="Nouvelle facture"
+        label={t('invoices.newInvoice')}
         style={styles.fab}
         onPress={() => router.push('/invoices/create')}
       />

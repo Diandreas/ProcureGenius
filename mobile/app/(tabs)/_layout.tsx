@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { Colors } from '../../constants/theme';
 
 export default function TabsLayout() {
@@ -26,8 +26,12 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/dashboard.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -36,17 +40,105 @@ export default function TabsLayout() {
         options={{
           title: 'Factures',
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="receipt" size={size} color={color} />
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/bill.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="products"
+        options={{
+          title: 'Produits',
+          headerShown: false,
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/product.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: 'Clients',
+          headerShown: false,
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/user.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="suppliers"
+        options={{
+          title: 'Fournisseurs',
+          headerShown: false,
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/supplier.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="purchase-orders"
+        options={{
+          title: 'Commandes',
+          headerShown: false,
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/purchase-order.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="contracts"
+        options={{
+          title: 'Contrats',
+          headerShown: false,
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="e-sourcing"
+        options={{
+          title: 'E-Sourcing',
+          headerShown: false,
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="ai-assistant"
+        options={{
+          title: 'Assistant IA',
+          headerShown: false,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Paramètres',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog" size={size} color={color} />
+          title: 'Plus',
+          tabBarIcon: ({ size }) => (
+            <Image
+              source={require('../../assets/icon/setting.png')}
+              style={{ width: size, height: size, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
           ),
         }}
       />

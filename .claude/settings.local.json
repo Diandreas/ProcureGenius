@@ -17,7 +17,14 @@
       "Bash(\"index.tsx\")",
       "Bash(\"[id].tsx\")",
       "Bash(\"_layout.tsx\")",
-      "Bash(\"MIGRATION_PROGRESS.md\")"
+      "Bash(\"MIGRATION_PROGRESS.md\")",
+      "Bash(\"create.tsx\")",
+      "Bash(dir:*)",
+      "Bash(npx tsc:*)",
+      "Bash(xcopy:*)",
+      "Bash(copy \"d:\\project\\BFMa\\ProcureGenius\\frontend\\public\\main.png\" \"d:\\project\\BFMa\\ProcureGenius\\mobile\\assets\\main.png\" /Y)",
+      "Bash(copy index.tsx index-old.tsx)",
+      "Bash(copy dashboard-enhanced.tsx index.tsx /Y)"
     ],
     "deny": [],
     "ask": []

@@ -19,10 +19,13 @@ import { Colors, Spacing, Shadows } from '../../constants/theme';
 import { authAPI } from '../../services/api';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { useTranslation } from 'react-i18next';
+import { Mascot } from '../../components';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -68,25 +71,25 @@ export default function RegisterScreen() {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Veuillez entrer une adresse email valide');
+      setError(t('errors.invalidEmail'));
       return false;
     }
 
     // Password strength validation
     if (formData.password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setError(t('errors.passwordTooShort'));
       return false;
     }
 
     // Password match validation
     if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('errors.passwordsDoNotMatch'));
       return false;
     }
 
     // Terms acceptance
     if (!formData.acceptTerms) {
-      setError("Vous devez accepter les conditions d'utilisation");
+      setError(t('errors.mustAcceptTerms'));
       return false;
     }
 
@@ -129,10 +132,10 @@ export default function RegisterScreen() {
         } else if (errors.non_field_errors) {
           setError(errors.non_field_errors[0]);
         } else {
-          setError("Une erreur est survenue lors de l'inscription");
+          setError(t('errors.registrationFailed'));
         }
       } else {
-        setError('Impossible de se connecter au serveur. Veuillez réessayer.');
+        setError(t('errors.connectionError'));
       }
     } finally {
       setLoading(false);
@@ -149,22 +152,26 @@ export default function RegisterScreen() {
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Surface style={styles.surface} elevation={3}>
+            {/* Success Mascot */}
+            <View style={styles.mascotContainer}>
+              <Mascot pose="thumbup" animation="bounce" size={120} />
+            </View>
+
             <Text variant="headlineLarge" style={styles.successTitle}>
-              Inscription réussie !
+              {t('auth.registrationSuccess')}
             </Text>
             <Text variant="bodyMedium" style={styles.successText}>
-              Un email de confirmation a été envoyé à {formData.email}
+              {t('auth.confirmationEmailSent', { email: formData.email })}
             </Text>
             <Text variant="bodySmall" style={styles.successSubtext}>
-              Veuillez vérifier votre boîte de réception et cliquer sur le lien de
-              confirmation.
+              {t('auth.checkInbox')}
             </Text>
             <Button
               mode="contained"
               onPress={() => router.replace('/(auth)/login')}
               style={styles.successButton}
             >
-              Aller à la page de connexion
+              {t('auth.goToLogin')}
             </Button>
           </Surface>
         </ScrollView>
@@ -182,12 +189,17 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Surface style={styles.surface} elevation={3}>
+          {/* Mascot */}
+          <View style={styles.mascotContainer}>
+            <Mascot pose="excited" animation="bounce" size={100} />
+          </View>
+
           {/* Header */}
           <Text variant="headlineLarge" style={styles.title}>
-            Créer un compte
+            {t('auth.createAccount')}
           </Text>
           <Text variant="bodyMedium" style={styles.subtitle}>
-            Rejoignez ProcureGenius aujourd'hui
+            {t('auth.registerSubtitle')}
           </Text>
 
           {/* Error Alert */}
@@ -206,14 +218,14 @@ export default function RegisterScreen() {
             style={styles.googleButton}
             labelStyle={styles.googleButtonLabel}
           >
-            S'inscrire avec Google
+            {t('auth.registerWithGoogle')}
           </Button>
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
             <Divider style={styles.divider} />
             <Text variant="bodySmall" style={styles.dividerText}>
-              OU
+              {t('common.or')}
             </Text>
             <Divider style={styles.divider} />
           </View>
@@ -221,7 +233,7 @@ export default function RegisterScreen() {
           {/* First Name and Last Name */}
           <View style={styles.row}>
             <TextInput
-              label="Prénom"
+              label={t('auth.firstName')}
               value={formData.firstName}
               onChangeText={(value) => handleChange('firstName', value)}
               mode="outlined"
@@ -229,7 +241,7 @@ export default function RegisterScreen() {
               style={[styles.input, styles.halfInput]}
             />
             <TextInput
-              label="Nom"
+              label={t('auth.lastName')}
               value={formData.lastName}
               onChangeText={(value) => handleChange('lastName', value)}
               mode="outlined"
@@ -240,7 +252,7 @@ export default function RegisterScreen() {
 
           {/* Organization Name */}
           <TextInput
-            label="Nom de l'organisation"
+            label={t('auth.organizationName')}
             value={formData.organizationName}
             onChangeText={(value) => handleChange('organizationName', value)}
             mode="outlined"
@@ -250,7 +262,7 @@ export default function RegisterScreen() {
 
           {/* Email */}
           <TextInput
-            label="Adresse email"
+            label={t('auth.email')}
             value={formData.email}
             onChangeText={(value) => handleChange('email', value)}
             mode="outlined"
@@ -263,7 +275,7 @@ export default function RegisterScreen() {
 
           {/* Password */}
           <TextInput
-            label="Mot de passe"
+            label={t('auth.password')}
             value={formData.password}
             onChangeText={(value) => handleChange('password', value)}
             mode="outlined"
@@ -281,7 +293,7 @@ export default function RegisterScreen() {
 
           {/* Confirm Password */}
           <TextInput
-            label="Confirmer le mot de passe"
+            label={t('auth.confirmPassword')}
             value={formData.confirmPassword}
             onChangeText={(value) => handleChange('confirmPassword', value)}
             mode="outlined"
@@ -304,9 +316,9 @@ export default function RegisterScreen() {
               onPress={() => handleChange('acceptTerms', !formData.acceptTerms)}
             />
             <Text variant="bodySmall" style={styles.checkboxLabel}>
-              J'accepte les{' '}
-              <Text style={styles.link}>conditions d'utilisation</Text> et la{' '}
-              <Text style={styles.link}>politique de confidentialité</Text>
+              {t('auth.acceptTermsText')}{' '}
+              <Text style={styles.link}>{t('auth.termsOfService')}</Text> {t('common.and')}{' '}
+              <Text style={styles.link}>{t('auth.privacyPolicy')}</Text>
             </Text>
           </View>
 
@@ -319,17 +331,17 @@ export default function RegisterScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            {loading ? 'Inscription...' : "S'inscrire"}
+            {loading ? t('common.loading') : t('auth.register')}
           </Button>
 
           {/* Sign In Link */}
           <View style={styles.signinContainer}>
             <Text variant="bodySmall" style={styles.signinText}>
-              Vous avez déjà un compte ?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
             </Text>
             <Link href="/(auth)/login" asChild>
               <Text variant="bodySmall" style={styles.signinLink}>
-                Se connecter
+                {t('auth.login')}
               </Text>
             </Link>
           </View>
@@ -354,6 +366,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.surface,
     ...Shadows.lg,
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
   title: {
     textAlign: 'center',

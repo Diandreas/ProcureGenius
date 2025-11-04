@@ -1,7 +1,10 @@
 import { Stack } from 'expo-router';
-import { Colors } from '../../constants/theme';
+import { Colors } from '../../../constants/theme';
+import { useTranslation } from 'react-i18next';
 
 export default function InvoicesLayout() {
+  const { t } = useTranslation();
+
   return (
     <Stack
       screenOptions={{
@@ -17,19 +20,19 @@ export default function InvoicesLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Factures',
+          title: t('invoices.title'),
         }}
       />
       <Stack.Screen
         name="[id]"
         options={{
-          title: 'Détail de la facture',
+          title: t('invoices.invoiceDetail'),
         }}
       />
       <Stack.Screen
         name="create"
         options={{
-          title: 'Nouvelle facture',
+          title: t('invoices.newInvoice'),
           presentation: 'modal',
         }}
       />
