@@ -1,30 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(nul)",
       "Bash(findstr:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" manage.py runserver)",
-      "Bash(npm install:*)",
-      "Bash(npx expo install:*)",
-      "Bash(api.ts)",
-      "Bash(\"app/(auth)/login.tsx\")",
-      "Bash(\"app/(auth)/register.tsx\")",
-      "Bash(\"app/(auth)/_layout.tsx\")",
-      "Bash(\"app/index.tsx\")",
-      "Bash(\"(tabs)/_layout.tsx\")",
-      "Bash(\"(tabs)/index.tsx\")",
-      "Bash(\"(tabs)/settings.tsx\")",
-      "Bash(\"index.tsx\")",
-      "Bash(\"[id].tsx\")",
-      "Bash(\"_layout.tsx\")",
-      "Bash(\"MIGRATION_PROGRESS.md\")",
-      "Bash(\"create.tsx\")",
-      "Bash(dir:*)",
-      "Bash(npx tsc:*)",
-      "Bash(xcopy:*)",
-      "Bash(copy \"d:\\project\\BFMa\\ProcureGenius\\frontend\\public\\main.png\" \"d:\\project\\BFMa\\ProcureGenius\\mobile\\assets\\main.png\" /Y)",
-      "Bash(copy index.tsx index-old.tsx)",
-      "Bash(copy dashboard-enhanced.tsx index.tsx /Y)"
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" \"D:\\project\\BFMa\\ProcureGenius\\manage.py\" shell:*)",
+      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" \"D:\\project\\BFMa\\ProcureGenius\\manage.py\" shell -c \"from apps.accounts.models import User; from apps.invoicing.models import PrintTemplate; u = User.objects.filter(username=''sophie.martin'').first(); print(f''User: {u.username}''); print(f''Organization: {u.organization.name if u.organization else None}''); templates = PrintTemplate.objects.filter(organization=u.organization); print(f''Total templates: {templates.count()}''); [print(f''{t.name} - Logo: {bool(t.header_logo)}'') for t in templates]\")"
     ],
     "deny": [],
     "ask": []

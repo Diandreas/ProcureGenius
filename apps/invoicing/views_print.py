@@ -20,6 +20,14 @@ def print_invoice_view(request, invoice_id):
     if not (request.user == invoice.created_by or request.user.is_staff):
         raise Http404("Facture non trouvée")
 
+    # Récupérer les paramètres de l'organisation
+    from apps.core.models import OrganizationSettings
+    org_settings = None
+    if request.user.organization:
+        org_settings = OrganizationSettings.objects.filter(
+            organization=request.user.organization
+        ).first()
+
     # Récupérer le template et la configuration
     template_obj = PrintTemplate.objects.filter(
         template_type='invoice',
@@ -28,24 +36,37 @@ def print_invoice_view(request, invoice_id):
 
     if not template_obj:
         # Créer un template par défaut si aucun n'existe
+        # Utiliser les paramètres de l'organisation si disponibles
+        header_name = org_settings.company_name if org_settings and org_settings.company_name else "ProcureGenius"
+        header_address = org_settings.company_address if org_settings and org_settings.company_address else "123 Rue de la Technologie\nMontréal, QC H1A 1A1\nCanada"
+        header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else "+1 (514) 123-4567"
+        header_email = org_settings.company_email if org_settings and org_settings.company_email else "contact@procuregenius.com"
+
         template_obj = PrintTemplate.objects.create(
             name="Template par défaut",
             template_type='invoice',
             is_default=True,
-            header_company_name="ProcureGenius",
-            header_address="123 Rue de la Technologie\nMontréal, QC H1A 1A1\nCanada",
-            header_phone="+1 (514) 123-4567",
-            header_email="contact@procuregenius.com",
+            organization=request.user.organization,
+            header_company_name=header_name,
+            header_address=header_address,
+            header_phone=header_phone,
+            header_email=header_email,
             footer_text="Merci de votre confiance",
             footer_conditions="Paiement à 30 jours. Retard de paiement : intérêts de 1,5% par mois."
         )
+
+        # Si il y a un logo dans org_settings, l'assigner au template
+        if org_settings and org_settings.company_logo:
+            template_obj.header_logo = org_settings.company_logo
+            template_obj.save()
 
     config = PrintConfiguration.objects.filter(is_default=True).first()
     if not config:
         # Créer une configuration par défaut
         config = PrintConfiguration.objects.create(
             name="Configuration par défaut",
-            is_default=True
+            is_default=True,
+            organization=request.user.organization
         )
 
     # Enregistrer dans l'historique
@@ -62,6 +83,7 @@ def print_invoice_view(request, invoice_id):
         'invoice': invoice,
         'template': template_obj,
         'config': config,
+        'org_settings': org_settings,
         'auto_print': request.GET.get('auto_print', 'false') == 'true'
     }
 
@@ -226,13 +248,22 @@ def download_invoice_pdf(request, invoice_id):
             raise Http404("Facture non trouvée")
 
         if USE_WEASYPRINT:
+            # Récupérer les paramètres de l'organisation
+            from apps.core.models import OrganizationSettings
+            org_settings = None
+            if request.user.organization:
+                org_settings = OrganizationSettings.objects.filter(
+                    organization=request.user.organization
+                ).first()
+
             # Générer le HTML
             html_content = render_to_string('invoicing/print_invoice.html', {
                 'invoice': invoice,
                 'template': PrintTemplate.objects.filter(
                     template_type='invoice', is_default=True
                 ).first(),
-                'config': PrintConfiguration.objects.filter(is_default=True).first()
+                'config': PrintConfiguration.objects.filter(is_default=True).first(),
+                'org_settings': org_settings
             }, request=request)
 
             # Convertir en PDF

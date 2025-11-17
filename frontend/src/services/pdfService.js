@@ -127,14 +127,143 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 };
 
 // Generate Purchase Order PDF
-export const generatePurchaseOrderPDF = async (purchaseOrderData) => {
+export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTemplate = 'standard') => {
   try {
-    // This would typically call a PDF generation library like jsPDF or make an API call
     console.log('Generating purchase order PDF for:', purchaseOrderData);
 
-    // Placeholder implementation - replace with actual PDF generation
-    const blob = new Blob(['Purchase Order PDF content'], { type: 'application/pdf' });
+    // Try to call backend API for PDF generation
+    try {
+      const token = localStorage.getItem('authToken');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+      const response = await fetch(`${apiUrl}/purchase-orders/${purchaseOrderData.id}/print_pdf/?template=${selectedTemplate}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+        }
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        return blob;
+      }
+    } catch (apiError) {
+      console.warn('Backend PDF generation not available, using fallback:', apiError);
+    }
+
+    // Fallback: Create a simple HTML-based PDF simulation
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bon de Commande ${purchaseOrderData.po_number}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .title { font-size: 24px; color: #2563eb; font-weight: bold; }
+          .po-number { font-size: 18px; margin: 10px 0; }
+          .section { margin: 20px 0; }
+          .section-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #374151; }
+          .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .table th, .table td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+          .table th { background-color: #f9fafb; font-weight: bold; }
+          .totals { text-align: right; margin-top: 20px; }
+          .total-row { margin: 5px 0; }
+          .grand-total { font-size: 16px; font-weight: bold; color: #2563eb; }
+          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #6b7280; }
+          .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+          .status-draft { background-color: #e5e7eb; color: #374151; }
+          .status-pending { background-color: #fef3c7; color: #92400e; }
+          .status-approved { background-color: #d1fae5; color: #065f46; }
+          .status-received { background-color: #dbeafe; color: #1e40af; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">BON DE COMMANDE</div>
+          <div class="po-number">N° ${purchaseOrderData.po_number}</div>
+          <div>Date: ${new Date(purchaseOrderData.order_date).toLocaleDateString('fr-FR')}</div>
+          ${purchaseOrderData.expected_delivery ? `<div>Livraison prévue: ${new Date(purchaseOrderData.expected_delivery).toLocaleDateString('fr-FR')}</div>` : ''}
+          <div style="margin-top: 10px;">
+            <span class="status-badge status-${purchaseOrderData.status || 'draft'}">${
+              purchaseOrderData.status === 'draft' ? 'Brouillon' :
+              purchaseOrderData.status === 'pending' ? 'En attente' :
+              purchaseOrderData.status === 'approved' ? 'Approuvé' :
+              purchaseOrderData.status === 'received' ? 'Reçu' :
+              purchaseOrderData.status
+            }</span>
+          </div>
+        </div>
+
+        ${purchaseOrderData.supplier ? `
+        <div class="section">
+          <div class="section-title">Fournisseur</div>
+          <div><strong>${purchaseOrderData.supplier.name}</strong></div>
+          ${purchaseOrderData.supplier.email ? `<div>Email: ${purchaseOrderData.supplier.email}</div>` : ''}
+          ${purchaseOrderData.supplier.phone ? `<div>Tél: ${purchaseOrderData.supplier.phone}</div>` : ''}
+          ${purchaseOrderData.supplier.address ? `<div>Adresse: ${purchaseOrderData.supplier.address}</div>` : ''}
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-title">Articles commandés</div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Produit</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${purchaseOrderData.items?.map(item => `
+                <tr>
+                  <td>${item.product?.reference || item.product_reference || '-'}</td>
+                  <td>${item.product?.name || item.product_name || 'N/A'}</td>
+                  <td>${item.quantity} ${item.unit || 'unité(s)'}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(item.unit_price)}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(item.total_price || item.quantity * item.unit_price)}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5" style="text-align: center;">Aucun article</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals">
+          <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.subtotal || 0)}</div>
+          ${purchaseOrderData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.tax_amount)}</div>` : ''}
+          ${purchaseOrderData.shipping_cost > 0 ? `<div class="total-row">Frais de livraison: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.shipping_cost)}</div>` : ''}
+          <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.total_amount || 0)}</div>
+        </div>
+
+        ${purchaseOrderData.notes ? `
+        <div class="section">
+          <div class="section-title">Notes</div>
+          <div style="padding: 10px; background-color: #f9fafb; border-radius: 4px;">${purchaseOrderData.notes}</div>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+          <div>Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+          <div>ProcureGenius - Gestion des achats</div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create blob with HTML content that browsers can display
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     return blob;
+
   } catch (error) {
     console.error('Error generating purchase order PDF:', error);
     throw error;

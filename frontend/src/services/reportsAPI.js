@@ -1,66 +1,41 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = 'http://localhost:8000/api/reports';
-
-// Get auth token from localStorage
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Token ${token}` } : {};
-};
-
+// Reports API using centralized axios instance
 export const reportsAPI = {
   // Lister les rapports
-  list: (params = {}) =>
-    axios.get(`${API_URL}/`, {
-      params,
-      headers: getAuthHeaders(),
-    }),
+  list: (params = {}) => api.get('/reports/', { params }),
 
   // Obtenir un rapport
-  get: (id) =>
-    axios.get(`${API_URL}/${id}/`, {
-      headers: getAuthHeaders(),
-    }),
+  get: (id) => api.get(`/reports/${id}/`),
 
   // Télécharger un rapport
   download: (id) =>
-    axios.get(`${API_URL}/${id}/download/`, {
-      headers: getAuthHeaders(),
+    api.get(`/reports/${id}/download/`, {
       responseType: 'blob',
     }),
 
   // Générer un rapport fournisseur
   generateSupplierReport: (supplierId, format = 'pdf', dateStart = null, dateEnd = null) =>
-    axios.post(
-      `${API_URL}/generate_supplier/`,
-      {
-        supplier_id: supplierId,
-        format,
-        date_start: dateStart,
-        date_end: dateEnd,
-      },
-      {
-        headers: getAuthHeaders(),
-      }
-    ),
+    api.post('/reports/generate_supplier/', {
+      supplier_id: supplierId,
+      format,
+      date_start: dateStart,
+      date_end: dateEnd,
+    }),
 
   // Mes rapports récents
-  myReports: () =>
-    axios.get(`${API_URL}/my_reports/`, {
-      headers: getAuthHeaders(),
-    }),
+  myReports: () => api.get('/reports/my_reports/'),
 
   // Templates
-  listTemplates: (params = {}) =>
-    axios.get(`${API_URL}/templates/`, {
-      params,
-      headers: getAuthHeaders(),
-    }),
+  listTemplates: (params = {}) => api.get('/reports/templates/', { params }),
 
-  getTemplate: (id) =>
-    axios.get(`${API_URL}/templates/${id}/`, {
-      headers: getAuthHeaders(),
-    }),
+  getTemplate: (id) => api.get(`/reports/templates/${id}/`),
+
+  createTemplate: (data) => api.post('/reports/templates/', data),
+
+  updateTemplate: (id, data) => api.patch(`/reports/templates/${id}/`, data),
+
+  deleteTemplate: (id) => api.delete(`/reports/templates/${id}/`),
 };
 
 export default reportsAPI;

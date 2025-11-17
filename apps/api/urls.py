@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from . import quick_create_views
+from . import views_settings
 from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
 
@@ -19,6 +20,11 @@ router.register(r'warehouses', views.WarehouseViewSet)
 router.register(r'clients', views.ClientViewSet)
 router.register(r'purchase-orders', views.PurchaseOrderViewSet)
 router.register(r'invoices', views.InvoiceViewSet)
+
+# Settings and Print Templates
+router.register(r'settings', views_settings.OrganizationSettingsViewSet, basename='settings')
+router.register(r'print-templates', views_settings.PrintTemplateViewSet, basename='print-templates')
+router.register(r'print-configurations', views_settings.PrintConfigurationViewSet, basename='print-configurations')
 
 urlpatterns = [
     # Authentication - Enhanced

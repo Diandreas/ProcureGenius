@@ -781,6 +781,14 @@ class PrintTemplate(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='print_templates',
+        verbose_name=_("Organisation"),
+        null=True,  # Temporaire pour la migration
+        blank=True
+    )
     name = models.CharField(max_length=200, verbose_name=_("Nom du template"))
     template_type = models.CharField(max_length=20, choices=TEMPLATE_TYPES, verbose_name=_("Type"))
     is_default = models.BooleanField(default=False, verbose_name=_("Template par défaut"))
@@ -828,9 +836,10 @@ class PrintTemplate(models.Model):
         return f"{self.get_template_type_display()} - {self.name}"
 
     def save(self, *args, **kwargs):
-        # S'assurer qu'il n'y a qu'un seul template par défaut par type
+        # S'assurer qu'il n'y a qu'un seul template par défaut par type et par organisation
         if self.is_default:
             PrintTemplate.objects.filter(
+                organization=self.organization,
                 template_type=self.template_type,
                 is_default=True
             ).exclude(pk=self.pk).update(is_default=False)
@@ -851,6 +860,14 @@ class PrintConfiguration(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='print_configurations',
+        verbose_name=_("Organisation"),
+        null=True,  # Temporaire pour la migration
+        blank=True
+    )
     name = models.CharField(max_length=200, default="Configuration par défaut", verbose_name=_("Nom de la configuration"))
 
     # Configuration papier
@@ -903,9 +920,12 @@ class PrintConfiguration(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # S'assurer qu'il n'y a qu'une seule configuration par défaut
+        # S'assurer qu'il n'y a qu'une seule configuration par défaut par organisation
         if self.is_default:
-            PrintConfiguration.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+            PrintConfiguration.objects.filter(
+                organization=self.organization,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
 
 

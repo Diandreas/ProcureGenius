@@ -122,8 +122,150 @@ class InvoicePDFGenerator:
         return styles
 
     def _build_header(self, invoice, styles):
-        """Construit l'en-tête de la facture"""
+        """Construit l'en-tête de la facture avec logo et informations de l'organisation"""
         elements = []
+
+        # Récupérer les paramètres de l'organisation ET le template d'impression
+        org_settings = None
+        print_template = None
+        organization = None
+
+        try:
+            from apps.core.models import OrganizationSettings
+            from apps.invoicing.models import PrintTemplate
+
+            # Récupérer l'organisation via l'utilisateur créateur
+            if hasattr(invoice, 'created_by') and invoice.created_by:
+                if hasattr(invoice.created_by, 'organization') and invoice.created_by.organization:
+                    organization = invoice.created_by.organization
+                    print(f"✓ Organisation trouvée: {organization.name}")
+
+                    # Récupérer OrganizationSettings
+                    org_settings = OrganizationSettings.objects.filter(
+                        organization=organization
+                    ).first()
+
+                    # Récupérer le PrintTemplate par défaut pour les factures
+                    print_template = PrintTemplate.objects.filter(
+                        organization=organization,
+                        template_type='invoice',
+                        is_default=True
+                    ).first()
+
+                    if print_template:
+                        print(f"✓ PrintTemplate trouvé: {print_template.name}")
+                    else:
+                        print("ℹ Pas de PrintTemplate par défaut, utilisation de OrganizationSettings uniquement")
+                else:
+                    print(f"✗ Utilisateur {invoice.created_by.username} n'a pas d'organisation")
+            else:
+                print("✗ Facture sans created_by")
+        except Exception as e:
+            print(f"✗ Erreur lors de la récupération des paramètres: {e}")
+
+        # Construire l'en-tête avec logo et informations
+        header_data = []
+
+        # Colonne gauche: Logo (priorité au PrintTemplate, puis OrganizationSettings)
+        left_col = []
+        logo_loaded = False
+
+        # Essayer d'abord le logo du PrintTemplate
+        if print_template and print_template.header_logo:
+            try:
+                logo_path = print_template.header_logo.path
+                print(f"✓ Logo du PrintTemplate trouvé: {logo_path}")
+                logo = Image(logo_path, width=50*mm, height=30*mm, kind='proportional')
+                left_col.append(logo)
+                logo_loaded = True
+            except Exception as e:
+                print(f"✗ Erreur lors du chargement du logo PrintTemplate: {e}")
+
+        # Sinon, essayer le logo de OrganizationSettings
+        if not logo_loaded and org_settings and org_settings.company_logo:
+            try:
+                logo_path = org_settings.company_logo.path
+                print(f"✓ Logo OrganizationSettings trouvé: {logo_path}")
+                logo = Image(logo_path, width=50*mm, height=30*mm, kind='proportional')
+                left_col.append(logo)
+                logo_loaded = True
+            except Exception as e:
+                print(f"✗ Erreur lors du chargement du logo OrganizationSettings: {e}")
+
+        if not logo_loaded:
+            print("✗ Aucun logo disponible")
+            print("   → Uploadez un logo dans Paramètres → Général")
+            print("   → OU configurez un PrintTemplate avec un logo")
+            left_col.append(Paragraph("", styles['Normal']))
+
+        # Colonne droite: Informations de l'entreprise
+        # Priorité: PrintTemplate > OrganizationSettings
+        right_col = []
+        company_info = []
+
+        # Nom de l'entreprise
+        company_name = None
+        if print_template and print_template.header_company_name:
+            company_name = print_template.header_company_name
+        elif org_settings and org_settings.company_name:
+            company_name = org_settings.company_name
+
+        if company_name:
+            company_info.append(f"<b><font size=14>{company_name}</font></b>")
+
+        # Adresse
+        address = None
+        if print_template and print_template.header_address:
+            address = print_template.header_address
+        elif org_settings and org_settings.company_address:
+            address = org_settings.company_address
+
+        if address:
+            address = address.replace('\n', '<br/>')
+            company_info.append(address)
+
+        # Téléphone
+        phone = None
+        if print_template and print_template.header_phone:
+            phone = print_template.header_phone
+        elif org_settings and org_settings.company_phone:
+            phone = org_settings.company_phone
+
+        if phone:
+            company_info.append(f"Tél: {phone}")
+
+        # Email
+        email = None
+        if print_template and print_template.header_email:
+            email = print_template.header_email
+        elif org_settings and org_settings.company_email:
+            email = org_settings.company_email
+
+        if email:
+            company_info.append(f"Email: {email}")
+
+        # Site web (uniquement dans PrintTemplate)
+        if print_template and print_template.header_website:
+            company_info.append(f"Web: {print_template.header_website}")
+
+        if company_info:
+            print(f"✓ Informations entreprise: {len(company_info)} lignes")
+            right_col.append(Paragraph("<br/>".join(company_info), styles['Normal']))
+        else:
+            print("✗ Pas d'informations entreprise")
+            right_col.append(Paragraph("", styles['Normal']))
+
+        # Créer une table pour l'en-tête si on a des données
+        if left_col or right_col:
+            header_table = Table([[left_col[0], right_col[0]]],
+                                colWidths=[70*mm, self.content_width-70*mm])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ]))
+            elements.append(header_table)
+            elements.append(Spacer(1, 5*mm))
 
         # Titre principal
         elements.append(Paragraph("FACTURE", styles['InvoiceTitle']))

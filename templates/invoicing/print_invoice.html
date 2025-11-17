@@ -508,20 +508,41 @@
         <!-- En-tête -->
         <header class="invoice-header">
             <div class="company-info">
-                {% if template.header_logo %}
+                {% if org_settings.company_logo %}
+                <img src="{{ org_settings.company_logo.url }}" alt="Logo" class="company-logo">
+                {% elif template.header_logo %}
                 <img src="{{ template.header_logo.url }}" alt="Logo" class="company-logo">
                 {% endif %}
-                <div class="company-name">{{ template.header_company_name }}</div>
+                <div class="company-name">
+                    {% if org_settings.company_name %}
+                        {{ org_settings.company_name }}
+                    {% else %}
+                        {{ template.header_company_name }}
+                    {% endif %}
+                </div>
                 <div class="company-address">
-                    {{ template.header_address|linebreaks }}
-                    {% if template.header_phone %}
-                    <br>Tél: {{ template.header_phone }}
-                    {% endif %}
-                    {% if template.header_email %}
-                    <br>Email: {{ template.header_email }}
-                    {% endif %}
-                    {% if template.header_website %}
-                    <br>Web: {{ template.header_website }}
+                    {% if org_settings %}
+                        {% if org_settings.company_address %}{{ org_settings.company_address|linebreaks }}{% endif %}
+                        {% if org_settings.company_phone %}
+                        <br>Tél: {{ org_settings.company_phone }}
+                        {% endif %}
+                        {% if org_settings.company_email %}
+                        <br>Email: {{ org_settings.company_email }}
+                        {% endif %}
+                        {% if org_settings.company_website %}
+                        <br>Web: {{ org_settings.company_website }}
+                        {% endif %}
+                    {% else %}
+                        {{ template.header_address|linebreaks }}
+                        {% if template.header_phone %}
+                        <br>Tél: {{ template.header_phone }}
+                        {% endif %}
+                        {% if template.header_email %}
+                        <br>Email: {{ template.header_email }}
+                        {% endif %}
+                        {% if template.header_website %}
+                        <br>Web: {{ template.header_website }}
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

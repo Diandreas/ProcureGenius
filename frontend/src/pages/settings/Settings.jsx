@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
+/**
+ * Page Paramètres - Version refactorisée et modulaire
+ *
+ * Responsabilités :
+ * - Navigation entre les différentes sections
+ * - Chargement et sauvegarde des paramètres
+ * - Coordination entre les sections
+ *
+ * Architecture : Container/Presentation pattern
+ * - Ce composant est le container
+ * - Les sections sont les presentations
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
-  CardContent,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Button,
+  Stack,
   Typography,
+  Divider,
   Grid,
   TextField,
   Switch,
@@ -12,1564 +32,1236 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
-  Divider,
-  Tab,
-  Tabs,
-  Alert,
-  Chip,
   Paper,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
+  useMediaQuery,
+  useTheme,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Stack,
-  useMediaQuery,
-  useTheme,
+  Slider,
 } from '@mui/material';
 import {
-  Save,
-  Business,
-  Notifications,
-  Security,
-  Palette,
-  Language,
-  Print,
-  Email,
-  Storage,
-  Backup,
-  Add,
-  Edit,
-  Delete,
-  FileUpload,
-  CloudUpload,
-  ImportExport,
-  People,
+  Business as BusinessIcon,
+  Receipt as BillingIcon,
+  Print as PrintIcon,
+  Notifications as NotificationsIcon,
+  Palette as AppearanceIcon,
+  Security as SecurityIcon,
+  Backup as BackupIcon,
+  Save as SaveIcon,
+  CloudUpload as CloudUploadIcon,
+  Crop as CropIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import QuickBooksConnect from '../../components/QuickBooksConnect';
+import Cropper from 'react-easy-crop';
 
-function TabPanel({ children, value, index, ...other }) {
+// Import API services
+import { settingsAPI } from '../../services/settingsAPI';
+import { printTemplatesAPI } from '../../services/printTemplatesAPI';
+import { printConfigurationsAPI } from '../../services/printConfigurationsAPI';
+
+/**
+ * Helper: Crée un élément Image depuis une URL
+ */
+const createImage = (url) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.src = url;
+  });
+
+/**
+ * Composant principal Settings
+ */
+const Settings = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`settings-tabpanel-${index}`}
-      aria-labelledby={`settings-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: isMobile ? 1.5 : 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-function Settings() {
-  const navigate = useNavigate();
+  // State principal
   const [activeTab, setActiveTab] = useState(0);
-  const [openTaxDialog, setOpenTaxDialog] = useState(false);
-  const [openHeaderDialog, setOpenHeaderDialog] = useState(false);
-  const [headerPreview, setHeaderPreview] = useState(null);
-  const [footerPreview, setFooterPreview] = useState(null);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [settings, setSettings] = useState(null);
+  const [printTemplate, setPrintTemplate] = useState(null);
+  const [printConfiguration, setPrintConfiguration] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Helper function for responsive TextField styling
-  const getTextFieldProps = () => ({
-    size: isMobile ? 'small' : 'medium',
-    sx: {
-      '& .MuiOutlinedInput-root': {
-        borderRadius: 2,
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'primary.main',
-            borderWidth: 2
-          }
-        },
-        '&.Mui-focused': {
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'primary.main',
-            borderWidth: 2
-          }
-        }
-      }
+  // State pour le cropping d'image
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  // Charger les paramètres au montage
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  /**
+   * Charge tous les paramètres depuis le backend
+   */
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+
+      // Charger en parallèle pour optimiser les performances
+      const [orgResponse, templateResponse, configResponse] = await Promise.all([
+        settingsAPI.getAll(),
+        printTemplatesAPI.getDefault().catch(() => ({ data: null })),
+        printConfigurationsAPI.getDefault().catch(() => ({ data: null })),
+      ]);
+
+      setSettings(orgResponse.data);
+      setPrintTemplate(templateResponse.data);
+      setPrintConfiguration(configResponse.data);
+
+      console.log('Paramètres chargés:', {
+        settings: orgResponse.data,
+        template: templateResponse.data,
+        config: configResponse.data,
+      });
+    } catch (error) {
+      console.error('Erreur lors du chargement des paramètres:', error);
+      showSnackbar('Erreur lors du chargement des paramètres', 'error');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
-  // Helper function for responsive FormControl styling
-  const getFormControlProps = () => ({
-    size: isMobile ? 'small' : 'medium',
-    sx: {
-      borderRadius: 2,
-      '& .MuiOutlinedInput-notchedOutline': {
-        transition: 'all 0.2s ease-in-out',
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: 'primary.main',
-        borderWidth: 2
-      },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: 'primary.main',
-        borderWidth: 2
+  /**
+   * Sauvegarde tous les paramètres
+   */
+  const handleSaveAll = async () => {
+    try {
+      setSaving(true);
+
+      const promises = [];
+
+      // Sauvegarder les paramètres d'organisation
+      if (settings) {
+        promises.push(settingsAPI.updateAll(settings));
       }
+
+      // Sauvegarder le template d'impression
+      if (printTemplate && printTemplate.id) {
+        promises.push(printTemplatesAPI.update(printTemplate.id, printTemplate));
+      }
+
+      // Sauvegarder la configuration d'impression
+      if (printConfiguration && printConfiguration.id) {
+        promises.push(printConfigurationsAPI.update(printConfiguration.id, printConfiguration));
+      }
+
+      await Promise.all(promises);
+
+      showSnackbar('Paramètres sauvegardés avec succès ✓', 'success');
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      showSnackbar('Erreur lors de la sauvegarde des paramètres', 'error');
+    } finally {
+      setSaving(false);
     }
-  });
-  const [settings, setSettings] = useState({
-    // Paramètres généraux
-    companyName: 'ProcureGenius Inc.',
-    companyAddress: '123 Rue Principal, Montréal, QC H1A 1A1',
-    companyPhone: '(514) 123-4567',
-    companyEmail: 'contact@procuregenius.com',
-    companyWebsite: 'www.procuregenius.com',
-    companyLogo: '',
-
-    // Paramètres de taxation
-    defaultTaxRate: 15,
-    gstHstRate: 5,
-    qstRate: 9.975,
-    enableTaxCalculation: true,
-
-    // Paramètres de facturation
-    invoicePrefix: 'FAC-',
-    poPrefix: 'BC-',
-    invoiceTerms: 'Net 30',
-    defaultCurrency: 'CAD',
-
-    // Paramètres de notification
-    emailNotifications: true,
-    invoiceReminders: true,
-    lowStockAlerts: true,
-    orderStatusUpdates: true,
-
-    // Paramètres d'affichage
-    theme: 'light',
-    language: 'fr',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '24h',
-
-    // Paramètres de sécurité
-    sessionTimeout: 30,
-    requireStrongPasswords: true,
-    enableTwoFactor: false,
-    loginAttempts: 5,
-
-    // Paramètres d'impression
-    paperSize: 'A4',
-    printMargins: 'normal',
-    includeQRCode: true,
-    printColors: true,
-
-    // Paramètres de sauvegarde
-    autoBackup: true,
-    backupFrequency: 'daily',
-    backupRetention: 30,
-
-    // Paramètres d'en-tête de facture
-    invoiceHeaderType: 'custom', // 'simple', 'custom', 'uploaded'
-    invoiceHeaderTemplate: null,
-    headerWidth: 210, // mm (A4 width)
-    headerHeight: 80, // mm
-    headerBackground: '#ffffff',
-    headerTextColor: '#000000',
-    showCompanyInfo: true,
-    showLogo: true,
-    logoPosition: 'left', // 'left', 'center', 'right'
-    logoSize: 'medium', // 'small', 'medium', 'large'
-
-    // Paramètres de pied de page (footer)
-    invoiceFooterType: 'simple', // 'simple', 'custom', 'uploaded'
-    invoiceFooterTemplate: null,
-    footerHeight: 40, // mm
-    footerBackground: '#f5f5f5',
-    footerTextColor: '#666666',
-    footerText: 'Merci pour votre confiance!',
-    showPaymentInfo: true,
-    showTerms: true,
-  });
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
   };
 
-  const handleSettingChange = (field, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  /**
+   * Met à jour un paramètre d'organisation
+   */
+  const handleUpdateSetting = (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    // Ici vous pourriez ajouter la logique pour sauvegarder les paramètres
-    console.log('Sauvegarde des paramètres:', settings);
-    alert('Paramètres sauvegardés avec succès!');
+  /**
+   * Met à jour un paramètre de template
+   */
+  const handleUpdateTemplate = (key, value) => {
+    setPrintTemplate((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleHeaderUpload = (event) => {
-    const file = event.target.files[0];
+  /**
+   * Met à jour un paramètre de configuration
+   */
+  const handleUpdateConfiguration = (key, value) => {
+    setPrintConfiguration((prev) => ({ ...prev, [key]: value }));
+  };
+
+  /**
+   * Ouvre le modal de cropping avec l'image sélectionnée
+   */
+  const handleFileSelect = (file) => {
     if (file) {
-      // Vérifier le type de fichier
-      if (!file.type.startsWith('image/')) {
-        alert('Veuillez sélectionner un fichier image valide');
-        return;
-      }
-
-      // Vérifier la taille (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Le fichier est trop volumineux (max 5MB)');
-        return;
-      }
-
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Vérifier les proportions recommandées (ratio 2.6:1 pour A4)
-          const ratio = img.width / img.height;
-          if (ratio < 2.0 || ratio > 4.0) {
-            if (!confirm('Les proportions de votre image ne sont pas optimales pour un en-tête de facture (ratio recommandé: 2.6:1). Voulez-vous continuer?')) {
-              return;
-            }
-          }
-
-          setHeaderPreview(e.target.result);
-          handleSettingChange('invoiceHeaderTemplate', e.target.result);
-          handleSettingChange('invoiceHeaderType', 'uploaded');
-        };
-        img.src = e.target.result;
+      reader.onload = () => {
+        setImageToCrop(reader.result);
+        setCropModalOpen(true);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const generateCustomHeader = () => {
-    // Ici vous pourriez ouvrir un éditeur d'en-tête personnalisé
-    setOpenHeaderDialog(true);
+  /**
+   * Callback lors du changement de zone de crop
+   */
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  /**
+   * Crée une image croppée à partir des pixels de crop
+   */
+  const createCroppedImage = async () => {
+    try {
+      const image = await createImage(imageToCrop);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height
+      );
+
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.95);
+      });
+    } catch (error) {
+      console.error('Erreur lors du crop:', error);
+      return null;
+    }
   };
 
-  const resetHeader = () => {
-    setHeaderPreview(null);
-    handleSettingChange('invoiceHeaderTemplate', null);
-    handleSettingChange('invoiceHeaderType', 'simple');
+  /**
+   * Confirme le crop et upload le logo
+   */
+  const handleCropConfirm = async () => {
+    try {
+      const croppedBlob = await createCroppedImage();
+      if (croppedBlob) {
+        const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+
+        const response = await settingsAPI.uploadLogo(file);
+        setSettings((prev) => ({ ...prev, companyLogo: response.data.companyLogo }));
+        showSnackbar('Logo mis à jour avec succès', 'success');
+
+        setCropModalOpen(false);
+        setImageToCrop(null);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'upload du logo:', error);
+      showSnackbar('Erreur lors de l\'upload du logo', 'error');
+    }
   };
 
+  /**
+   * Annule le crop
+   */
+  const handleCropCancel = () => {
+    setCropModalOpen(false);
+    setImageToCrop(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  /**
+   * Affiche un message Snackbar
+   */
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  /**
+   * Ferme le Snackbar
+   */
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // Configuration des onglets
   const tabs = [
-    { label: 'Général', icon: <Business /> },
-    { label: 'Facturation', icon: <Print /> },
-    { label: 'Migration', icon: <ImportExport /> },
-    { label: 'Notifications', icon: <Notifications /> },
-    { label: 'Apparence', icon: <Palette /> },
-    { label: 'Sécurité', icon: <Security /> },
-    { label: 'Sauvegarde', icon: <Backup /> },
+    { label: 'Général', icon: <BusinessIcon /> },
+    { label: 'Facturation', icon: <BillingIcon /> },
+    { label: 'Impression', icon: <PrintIcon /> },
+    { label: 'Notifications', icon: <NotificationsIcon /> },
+    { label: 'Apparence', icon: <AppearanceIcon /> },
+    { label: 'Sécurité', icon: <SecurityIcon /> },
+    { label: 'Sauvegarde', icon: <BackupIcon /> },
+    { label: 'Données', icon: <BackupIcon /> },
   ];
+
+  // Loading state
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Error state
+  if (!settings) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">
+          Impossible de charger les paramètres. Veuillez réessayer.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box p={isMobile ? 1.5 : 3}>
-      {/* Header */}
-      <Box sx={{ mb: isMobile ? 1.5 : 2.5 }}>
-        <Typography variant="h4" sx={{
-          fontSize: { xs: '1.5rem', md: '2.25rem' },
-          fontWeight: 600,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-          color: 'text.primary'
-        }}>
-          Paramètres
-        </Typography>
-        {!isMobile && (
-          <Typography variant="body2" color="text.secondary" sx={{
-            fontSize: '0.875rem',
-            mt: 0.5
-          }}>
-            Configurez votre application selon vos besoins
-          </Typography>
-        )}
-      </Box>
+      <Card
+        sx={{
+          borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Navigation par onglets */}
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          variant={isMobile ? 'scrollable' : 'standard'}
+          scrollButtons={isMobile ? 'auto' : false}
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              minHeight: 64,
+              textTransform: 'none',
+              fontSize: '0.95rem',
+            },
+          }}
+        >
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={isMobile ? '' : tab.label}
+              icon={tab.icon}
+              iconPosition="start"
+            />
+          ))}
+        </Tabs>
 
-      <Card sx={{
-        borderRadius: 3,
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}>
-        <Box sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          background: 'rgba(0,0,0,0.02)'
-        }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant={isMobile ? 'scrollable' : 'standard'}
-            scrollButtons="auto"
-            sx={{
-              '& .MuiTab-root': {
-                minHeight: isMobile ? 48 : 60,
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                fontWeight: 500,
-                textTransform: 'none',
-                transition: 'all 0.2s ease-in-out',
-                px: isMobile ? 1 : 2,
-                py: isMobile ? 0.5 : 1,
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
-                },
-                '&.Mui-selected': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                }
-              }
-            }}
-          >
-            {tabs.map((tab, index) => (
-              <Tab
-                key={index}
-                icon={isMobile ? null : tab.icon}
-                label={isMobile ? tab.label.substring(0, 8) : tab.label}
-                iconPosition="start"
-                sx={{
-                  minHeight: isMobile ? 48 : 60,
-                  fontSize: isMobile ? '0.75rem' : '0.875rem',
-                  px: isMobile ? 1 : 2
-                }}
-              />
-            ))}
-          </Tabs>
-        </Box>
+        {/* Contenu de la section active */}
+        <Box p={isMobile ? 2 : 3}>
+          {/* Section Général */}
+          {activeTab === 0 && (
+            <GeneralSection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+              onFileSelect={handleFileSelect}
+            />
+          )}
 
-        {/* Onglet Général */}
-        <TabPanel value={activeTab} index={0}>
-          <Typography variant="h6" gutterBottom sx={{
-            fontSize: isMobile ? '1rem' : '1.1rem',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            mb: isMobile ? 1 : 2
-          }}>
-            Informations de l'entreprise
-          </Typography>
-          <Grid container spacing={isMobile ? 1.5 : 2.5}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Nom de l'entreprise"
-                value={settings.companyName}
-                onChange={(e) => handleSettingChange('companyName', e.target.value)}
-                {...getTextFieldProps()}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Téléphone"
-                value={settings.companyPhone}
-                onChange={(e) => handleSettingChange('companyPhone', e.target.value)}
-                {...getTextFieldProps()}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={settings.companyEmail}
-                onChange={(e) => handleSettingChange('companyEmail', e.target.value)}
-                {...getTextFieldProps()}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Site web"
-                value={settings.companyWebsite}
-                onChange={(e) => handleSettingChange('companyWebsite', e.target.value)}
-                {...getTextFieldProps()}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Adresse"
-                multiline
-                rows={isMobile ? 2 : 3}
-                value={settings.companyAddress}
-                onChange={(e) => handleSettingChange('companyAddress', e.target.value)}
-                {...getTextFieldProps()}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-                <Button
-                  variant="outlined"
-                  startIcon={<FileUpload />}
-                  component="label"
-                  size="small"
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    px: isMobile ? 1.5 : 2,
-                    py: isMobile ? 0.5 : 1,
-                    fontSize: isMobile ? '0.75rem' : '0.875rem',
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }
-                  }}
-                >
-                  {isMobile ? 'Logo' : 'Télécharger le logo'}
-                  <input type="file" hidden accept="image/*" />
-                </Button>
-                <Typography variant="body2" color="textSecondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
-                  Formats acceptés: PNG, JPG, SVG (max 2MB)
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          {/* Section Facturation */}
+          {activeTab === 1 && (
+            <BillingSection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+            />
+          )}
 
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+          {/* Section Impression */}
+          {activeTab === 2 && (
+            <PrintSection
+              settings={settings}
+              printTemplate={printTemplate}
+              printConfiguration={printConfiguration}
+              onUpdateTemplate={handleUpdateTemplate}
+              onUpdateConfiguration={handleUpdateConfiguration}
+            />
+          )}
 
-          <Typography variant="h6" gutterBottom sx={{
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            mb: 2
-          }}>
-            Paramètres de localisation
-          </Typography>
-          <Grid container spacing={isMobile ? 2 : 2.5}>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth {...getFormControlProps()}>
-                <InputLabel>Langue</InputLabel>
-                <Select
-                  value={settings.language}
-                  onChange={(e) => handleSettingChange('language', e.target.value)}
-                >
-                  <MenuItem value="fr">Français</MenuItem>
-                  <MenuItem value="en">English</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth {...getFormControlProps()}>
-                <InputLabel>Format de date</InputLabel>
-                <Select
-                  value={settings.dateFormat}
-                  onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
-                >
-                  <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
-                  <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
-                  <MenuItem value="YYYY-MM-DD">YYYY-MM-DD</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth {...getFormControlProps()}>
-                <InputLabel>Format d'heure</InputLabel>
-                <Select
-                  value={settings.timeFormat}
-                  onChange={(e) => handleSettingChange('timeFormat', e.target.value)}
-                >
-                  <MenuItem value="24h">24 heures</MenuItem>
-                  <MenuItem value="12h">12 heures (AM/PM)</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </TabPanel>
+          {/* Section Notifications */}
+          {activeTab === 3 && (
+            <NotificationSection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+            />
+          )}
 
-        {/* Onglet Facturation */}
-        <TabPanel value={activeTab} index={1}>
-          <Typography variant="h6" gutterBottom>
-            Numérotation des documents
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Préfixe des factures"
-                value={settings.invoicePrefix}
-                onChange={(e) => handleSettingChange('invoicePrefix', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Préfixe des bons de commande"
-                value={settings.poPrefix}
-                onChange={(e) => handleSettingChange('poPrefix', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Conditions de paiement par défaut"
-                value={settings.invoiceTerms}
-                onChange={(e) => handleSettingChange('invoiceTerms', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Devise par défaut</InputLabel>
-                <Select
-                  value={settings.defaultCurrency}
-                  onChange={(e) => handleSettingChange('defaultCurrency', e.target.value)}
-                >
-                  <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
-                  <MenuItem value="USD">USD - Dollar américain</MenuItem>
-                  <MenuItem value="EUR">EUR - Euro</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+          {/* Section Apparence */}
+          {activeTab === 4 && (
+            <AppearanceSection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+            />
+          )}
 
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+          {/* Section Sécurité */}
+          {activeTab === 5 && (
+            <SecuritySection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+            />
+          )}
 
-          <Typography variant="h6" gutterBottom>
-            Configuration des taxes
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.enableTaxCalculation}
-                    onChange={(e) => handleSettingChange('enableTaxCalculation', e.target.checked)}
-                  />
-                }
-                label="Activer le calcul automatique des taxes"
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Taux TPS/TVH (%)"
-                type="number"
-                value={settings.gstHstRate}
-                onChange={(e) => handleSettingChange('gstHstRate', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Taux TVQ (%)"
-                type="number"
-                value={settings.qstRate}
-                onChange={(e) => handleSettingChange('qstRate', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Taux par défaut (%)"
-                type="number"
-                value={settings.defaultTaxRate}
-                onChange={(e) => handleSettingChange('defaultTaxRate', e.target.value)}
-              />
-            </Grid>
-          </Grid>
+          {/* Section Sauvegarde */}
+          {activeTab === 6 && (
+            <BackupSection
+              settings={settings}
+              onUpdate={handleUpdateSetting}
+            />
+          )}
 
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
+          {/* Section Import/Export/Migration */}
+          {activeTab === 7 && (
+            <DataSection
+              settings={settings}
+              showSnackbar={showSnackbar}
+            />
+          )}
 
-          <Typography variant="h6" gutterBottom>
-            En-tête de facture
-          </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Configurez l'apparence de l'en-tête de vos factures. Ratio recommandé: 2.6:1 (210mm x 80mm pour A4).
-          </Alert>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Type d'en-tête</InputLabel>
-                <Select
-                  value={settings.invoiceHeaderType}
-                  onChange={(e) => handleSettingChange('invoiceHeaderType', e.target.value)}
-                >
-                  <MenuItem value="simple">Simple (texte uniquement)</MenuItem>
-                  <MenuItem value="custom">Personnalisé</MenuItem>
-                  <MenuItem value="uploaded">Image uploadée</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {settings.invoiceHeaderType === 'uploaded' && (
-              <>
-                <Grid item xs={12}>
-                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-                    <Button
-                      variant="outlined"
-                      startIcon={<FileUpload />}
-                      component="label"
-                    >
-                      Télécharger en-tête
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleHeaderUpload}
-                      />
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      onClick={resetHeader}
-                      disabled={!settings.invoiceHeaderTemplate}
-                    >
-                      Supprimer
-                    </Button>
-                  </Box>
-                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Formats acceptés: PNG, JPG, SVG (max 5MB) - Ratio optimal: 2.6:1
-                  </Typography>
-                </Grid>
-
-                {(headerPreview || settings.invoiceHeaderTemplate) && (
-                  <Grid item xs={12}>
-                    <Paper
-                      elevation={2}
-                      sx={{
-                        p: 2,
-                        border: '2px dashed #ddd',
-                        textAlign: 'center',
-                        backgroundColor: '#f9f9f9'
-                      }}
-                    >
-                      <Typography variant="subtitle2" gutterBottom>
-                        Aperçu de l'en-tête
-                      </Typography>
-                      <Box
-                        sx={{
-                          width: '100%',
-                          maxWidth: 600,
-                          height: 150,
-                          border: '1px solid #ddd',
-                          borderRadius: 1,
-                          overflow: 'hidden',
-                          margin: '0 auto',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: settings.headerBackground
-                        }}
-                      >
-                        <img
-                          src={headerPreview || settings.invoiceHeaderTemplate}
-                          alt="Aperçu en-tête"
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            objectFit: 'contain'
-                          }}
-                        />
-                      </Box>
-                    </Paper>
-                  </Grid>
-                )}
-              </>
-            )}
-
-            {settings.invoiceHeaderType === 'custom' && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Position du logo</InputLabel>
-                    <Select
-                      value={settings.logoPosition}
-                      onChange={(e) => handleSettingChange('logoPosition', e.target.value)}
-                    >
-                      <MenuItem value="left">Gauche</MenuItem>
-                      <MenuItem value="center">Centre</MenuItem>
-                      <MenuItem value="right">Droite</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Taille du logo</InputLabel>
-                    <Select
-                      value={settings.logoSize}
-                      onChange={(e) => handleSettingChange('logoSize', e.target.value)}
-                    >
-                      <MenuItem value="small">Petit</MenuItem>
-                      <MenuItem value="medium">Moyen</MenuItem>
-                      <MenuItem value="large">Grand</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur de fond:</Typography>
-                    <input
-                      type="color"
-                      value={settings.headerBackground}
-                      onChange={(e) => handleSettingChange('headerBackground', e.target.value)}
-                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
-                    />
-                    <Typography variant="caption">{settings.headerBackground}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur du texte:</Typography>
-                    <input
-                      type="color"
-                      value={settings.headerTextColor}
-                      onChange={(e) => handleSettingChange('headerTextColor', e.target.value)}
-                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
-                    />
-                    <Typography variant="caption">{settings.headerTextColor}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.showCompanyInfo}
-                        onChange={(e) => handleSettingChange('showCompanyInfo', e.target.checked)}
-                      />
-                    }
-                    label="Afficher les informations de l'entreprise"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.showLogo}
-                        onChange={(e) => handleSettingChange('showLogo', e.target.checked)}
-                      />
-                    }
-                    label="Afficher le logo"
-                  />
-                </Grid>
-
-                {/* Aperçu de l'en-tête personnalisé */}
-                <Grid item xs={12}>
-                  <Paper
-                    elevation={2}
-                    sx={{
-                      p: 2,
-                      border: '2px dashed #ddd',
-                      backgroundColor: '#f9f9f9'
-                    }}
-                  >
-                    <Typography variant="subtitle2" gutterBottom textAlign="center">
-                      Aperçu de l'en-tête personnalisé
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        maxWidth: 600,
-                        height: 120,
-                        border: '1px solid #ddd',
-                        borderRadius: 1,
-                        margin: '0 auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: 2,
-                        backgroundColor: settings.headerBackground,
-                        color: settings.headerTextColor,
-                        position: 'relative'
-                      }}
-                    >
-                      {settings.showLogo && (
-                        <Box
-                          sx={{
-                            width: settings.logoSize === 'small' ? 40 : settings.logoSize === 'medium' ? 60 : 80,
-                            height: settings.logoSize === 'small' ? 40 : settings.logoSize === 'medium' ? 60 : 80,
-                            backgroundColor: '#e0e0e0',
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '10px',
-                            order: settings.logoPosition === 'right' ? 2 : 0,
-                            marginLeft: settings.logoPosition === 'center' ? 'auto' : 0,
-                            marginRight: settings.logoPosition === 'center' ? 'auto' : settings.logoPosition === 'right' ? 0 : 2
-                          }}
-                        >
-                          LOGO
-                        </Box>
-                      )}
-                      {settings.showCompanyInfo && (
-                        <Box
-                          sx={{
-                            flex: 1,
-                            textAlign: settings.logoPosition === 'center' ? 'center' : settings.logoPosition === 'right' ? 'left' : 'right'
-                          }}
-                        >
-                          <Typography variant="h6" sx={{ fontSize: '14px', fontWeight: 'bold' }}>
-                            {settings.companyName}
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontSize: '10px' }}>
-                            {settings.companyEmail} • {settings.companyPhone}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Paper>
-                </Grid>
-              </>
-            )}
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Largeur (mm)"
-                type="number"
-                value={settings.headerWidth}
-                onChange={(e) => handleSettingChange('headerWidth', e.target.value)}
-                helperText="Largeur recommandée: 210mm (A4)"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Hauteur (mm)"
-                type="number"
-                value={settings.headerHeight}
-                onChange={(e) => handleSettingChange('headerHeight', e.target.value)}
-                helperText="Hauteur recommandée: 80mm"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Paramètres d'impression
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Taille du papier</InputLabel>
-                <Select
-                  value={settings.paperSize}
-                  onChange={(e) => handleSettingChange('paperSize', e.target.value)}
-                >
-                  <MenuItem value="A4">A4</MenuItem>
-                  <MenuItem value="Letter">Letter</MenuItem>
-                  <MenuItem value="Legal">Legal</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Marges</InputLabel>
-                <Select
-                  value={settings.printMargins}
-                  onChange={(e) => handleSettingChange('printMargins', e.target.value)}
-                >
-                  <MenuItem value="narrow">Étroites</MenuItem>
-                  <MenuItem value="normal">Normales</MenuItem>
-                  <MenuItem value="wide">Larges</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.includeQRCode}
-                    onChange={(e) => handleSettingChange('includeQRCode', e.target.checked)}
-                  />
-                }
-                label="Inclure le code QR sur les documents"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.printColors}
-                    onChange={(e) => handleSettingChange('printColors', e.target.checked)}
-                  />
-                }
-                label="Impression en couleur"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Pied de page de facture
-          </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Configurez le pied de page qui apparaîtra au bas de vos factures et documents.
-          </Alert>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Type de pied de page</InputLabel>
-                <Select
-                  value={settings.invoiceFooterType}
-                  onChange={(e) => handleSettingChange('invoiceFooterType', e.target.value)}
-                >
-                  <MenuItem value="simple">Simple (texte uniquement)</MenuItem>
-                  <MenuItem value="custom">Personnalisé</MenuItem>
-                  <MenuItem value="uploaded">Image uploadée</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {settings.invoiceFooterType === 'simple' && (
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="Texte du pied de page"
-                  value={settings.footerText}
-                  onChange={(e) => handleSettingChange('footerText', e.target.value)}
-                  placeholder="Merci pour votre confiance! Pour toute question, contactez-nous."
-                />
-              </Grid>
-            )}
-
-            {settings.invoiceFooterType === 'custom' && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur de fond:</Typography>
-                    <input
-                      type="color"
-                      value={settings.footerBackground}
-                      onChange={(e) => handleSettingChange('footerBackground', e.target.value)}
-                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
-                    />
-                    <Typography variant="caption">{settings.footerBackground}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur du texte:</Typography>
-                    <input
-                      type="color"
-                      value={settings.footerTextColor}
-                      onChange={(e) => handleSettingChange('footerTextColor', e.target.value)}
-                      style={{ width: 50, height: 30, border: 'none', borderRadius: 4 }}
-                    />
-                    <Typography variant="caption">{settings.footerTextColor}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={2}
-                    label="Texte personnalisé"
-                    value={settings.footerText}
-                    onChange={(e) => handleSettingChange('footerText', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.showPaymentInfo}
-                        onChange={(e) => handleSettingChange('showPaymentInfo', e.target.checked)}
-                      />
-                    }
-                    label="Afficher les informations de paiement"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.showTerms}
-                        onChange={(e) => handleSettingChange('showTerms', e.target.checked)}
-                      />
-                    }
-                    label="Afficher les conditions générales"
-                  />
-                </Grid>
-              </>
-            )}
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Hauteur du pied de page (mm)"
-                type="number"
-                value={settings.footerHeight}
-                onChange={(e) => handleSettingChange('footerHeight', e.target.value)}
-                helperText="Hauteur recommandée: 40mm"
-              />
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        {/* Onglet Migration */}
-        <TabPanel value={activeTab} index={2}>
-          <Typography variant="h6" gutterBottom sx={{
-            fontSize: isMobile ? '1rem' : '1.1rem',
-            fontWeight: 600,
-            mb: 2
-          }}>
-            Migration depuis vos outils actuels
-          </Typography>
-
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Importez facilement vos données depuis vos systèmes existants ou depuis nos concurrents.
-            Notre assistant d'import supporte Excel, CSV et bientôt QuickBooks.
-          </Alert>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-                Import rapide par type de données
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Card variant="outlined" sx={{
-                p: 2,
-                borderRadius: 2,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Business color="primary" />
-                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Fournisseurs</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Importez votre liste de fournisseurs depuis Excel/CSV
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<CloudUpload />}
-                  onClick={() => navigate('/migration/wizard?type=suppliers')}
-                  fullWidth
-                >
-                  Importer fournisseurs
-                </Button>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Card variant="outlined" sx={{
-                p: 2,
-                borderRadius: 2,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Storage color="primary" />
-                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Produits</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Importez votre catalogue de produits
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<CloudUpload />}
-                  onClick={() => navigate('/migration/wizard?type=products')}
-                  fullWidth
-                >
-                  Importer produits
-                </Button>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Card variant="outlined" sx={{
-                p: 2,
-                borderRadius: 2,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <People color="primary" />
-                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Clients</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Importez votre base de clients
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<CloudUpload />}
-                  onClick={() => navigate('/migration/wizard?type=clients')}
-                  fullWidth
-                >
-                  Importer clients
-                </Button>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Card variant="outlined" sx={{
-                p: 2,
-                borderRadius: 2,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Print color="primary" />
-                  <Typography variant="h6" sx={{ fontSize: '1rem' }}>Factures & BC</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Importez vos factures et bons de commande
-                </Typography>
-                <Box display="flex" gap={1}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => navigate('/migration/wizard?type=invoices')}
-                    fullWidth
-                  >
-                    Factures
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => navigate('/migration/wizard?type=purchase_orders')}
-                    fullWidth
-                  >
-                    Bons de commande
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-            Migration depuis les concurrents
-          </Typography>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: 'primary.50', borderColor: 'primary.main' }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <ImportExport color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                      Vous venez de SAP Ariba, Coupa, ou Procurify?
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Nous facilitons votre transition! Exportez vos données depuis votre plateforme actuelle
-                      en format Excel/CSV, puis utilisez notre assistant d'import ci-dessus.
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => navigate('/migration/jobs')}
-                  >
-                    Voir l'historique
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12}>
-              <QuickBooksConnect />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Box>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-              Besoin d'aide pour la migration?
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Notre équipe peut vous accompagner dans la migration de vos données.
-            </Typography>
-            <Button variant="outlined" startIcon={<Email />} size="small">
-              Contacter le support
-            </Button>
-          </Box>
-        </TabPanel>
-
-        {/* Onglet Notifications */}
-        <TabPanel value={activeTab} index={3}>
-          <Typography variant="h6" gutterBottom>
-            Notifications par email
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemText
-                primary="Notifications générales"
-                secondary="Recevoir les notifications importantes par email"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  checked={settings.emailNotifications}
-                  onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="Rappels de factures"
-                secondary="Rappels automatiques pour les factures en retard"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  checked={settings.invoiceReminders}
-                  onChange={(e) => handleSettingChange('invoiceReminders', e.target.checked)}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="Alertes de stock bas"
-                secondary="Notifications quand les produits sont en rupture"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  checked={settings.lowStockAlerts}
-                  onChange={(e) => handleSettingChange('lowStockAlerts', e.target.checked)}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="Mises à jour des commandes"
-                secondary="Notifications sur les changements de statut des commandes"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  checked={settings.orderStatusUpdates}
-                  onChange={(e) => handleSettingChange('orderStatusUpdates', e.target.checked)}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Configuration email
-          </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Configurez vos paramètres SMTP pour envoyer des emails automatiques.
-          </Alert>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Serveur SMTP"
-                placeholder="smtp.gmail.com"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Port"
-                type="number"
-                placeholder="587"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Email d'expédition"
-                type="email"
-                placeholder="noreply@procuregenius.com"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Mot de passe"
-                type="password"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Switch />}
-                label="Utiliser SSL/TLS"
-              />
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        {/* Onglet Apparence */}
-        <TabPanel value={activeTab} index={4}>
-          <Typography variant="h6" gutterBottom>
-            Thème et couleurs
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Thème</InputLabel>
-                <Select
-                  value={settings.theme}
-                  onChange={(e) => handleSettingChange('theme', e.target.value)}
-                >
-                  <MenuItem value="light">Clair</MenuItem>
-                  <MenuItem value="dark">Sombre</MenuItem>
-                  <MenuItem value="auto">Automatique</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Couleurs personnalisées
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    backgroundColor: '#4F46E5',
-                    borderRadius: 1,
-                    border: '2px solid #e0e0e0'
-                  }}
-                />
-                <Box>
-                  <Typography variant="body2">Couleur principale</Typography>
-                  <Typography variant="caption" color="textSecondary">#4F46E5</Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    backgroundColor: '#10B981',
-                    borderRadius: 1,
-                    border: '2px solid #e0e0e0'
-                  }}
-                />
-                <Box>
-                  <Typography variant="body2">Couleur secondaire</Typography>
-                  <Typography variant="caption" color="textSecondary">#10B981</Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        {/* Onglet Sécurité */}
-        <TabPanel value={activeTab} index={5}>
-          <Typography variant="h6" gutterBottom>
-            Paramètres de sécurité
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Délai d'expiration de session (minutes)"
-                type="number"
-                value={settings.sessionTimeout}
-                onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Tentatives de connexion maximales"
-                type="number"
-                value={settings.loginAttempts}
-                onChange={(e) => handleSettingChange('loginAttempts', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.requireStrongPasswords}
-                    onChange={(e) => handleSettingChange('requireStrongPasswords', e.target.checked)}
-                  />
-                }
-                label="Exiger des mots de passe forts"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.enableTwoFactor}
-                    onChange={(e) => handleSettingChange('enableTwoFactor', e.target.checked)}
-                  />
-                }
-                label="Activer l'authentification à deux facteurs"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Journal d'audit
-          </Typography>
-          <Alert severity="info">
-            Le journal d'audit enregistre toutes les actions importantes effectuées dans le système.
-          </Alert>
-        </TabPanel>
-
-        {/* Onglet Sauvegarde */}
-        <TabPanel value={activeTab} index={6}>
-          <Typography variant="h6" gutterBottom>
-            Sauvegarde automatique
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.autoBackup}
-                    onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
-                  />
-                }
-                label="Activer la sauvegarde automatique"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Fréquence de sauvegarde</InputLabel>
-                <Select
-                  value={settings.backupFrequency}
-                  onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
-                >
-                  <MenuItem value="hourly">Toutes les heures</MenuItem>
-                  <MenuItem value="daily">Quotidienne</MenuItem>
-                  <MenuItem value="weekly">Hebdomadaire</MenuItem>
-                  <MenuItem value="monthly">Mensuelle</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Rétention des sauvegardes (jours)"
-                type="number"
-                value={settings.backupRetention}
-                onChange={(e) => handleSettingChange('backupRetention', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Sauvegarde manuelle
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Button variant="outlined" startIcon={<Backup />}>
-              Créer une sauvegarde maintenant
-            </Button>
-            <Button variant="outlined" startIcon={<Storage />}>
-              Gérer les sauvegardes
-            </Button>
-            <Button variant="outlined">
-              Restaurer depuis une sauvegarde
-            </Button>
-          </Box>
-
-          <Divider sx={{ my: isMobile ? 2 : 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Export des données
-          </Typography>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            L'export des données peut prendre plusieurs minutes selon la taille de votre base de données.
-          </Alert>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Button variant="outlined">
-              Exporter toutes les données
-            </Button>
-            <Button variant="outlined">
-              Exporter les factures
-            </Button>
-            <Button variant="outlined">
-              Exporter les bons de commande
-            </Button>
-            <Button variant="outlined">
-              Exporter les fournisseurs
-            </Button>
-          </Box>
-        </TabPanel>
-
-        <CardContent sx={{
-          background: 'rgba(0,0,0,0.02)',
-          borderTop: '1px solid rgba(0,0,0,0.05)'
-        }}>
-          <Divider sx={{ mb: 2.5, opacity: 0.6 }} />
-          <Box display="flex" justifyContent="flex-end" gap={isMobile ? 1 : 2} flexWrap="wrap">
-            <Button
-              variant="outlined"
-              size="small"
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 500,
-                px: isMobile ? 2 : 3,
-                py: isMobile ? 0.5 : 1,
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }
-              }}
-            >
-              {isMobile ? 'Reset' : 'Réinitialiser'}
-            </Button>
+          {/* Bouton de sauvegarde */}
+          <Box mt={4}>
             <Button
               variant="contained"
-              startIcon={isMobile ? null : <Save />}
-              onClick={handleSave}
-              size="small"
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 500,
-                px: isMobile ? 2 : 3,
-                py: isMobile ? 0.5 : 1,
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
-                }
-              }}
+              size="large"
+              startIcon={<SaveIcon />}
+              onClick={handleSaveAll}
+              disabled={saving}
+              fullWidth={isMobile}
             >
-              {isMobile ? 'Sauvegarder' : 'Sauvegarder les paramètres'}
+              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </Button>
           </Box>
-        </CardContent>
+        </Box>
       </Card>
+
+      {/* Modal de cropping d'image */}
+      <Dialog
+        open={cropModalOpen}
+        onClose={handleCropCancel}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <CropIcon />
+            <Typography variant="h6">Rogner l'image</Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              height: isMobile ? 400 : 500,
+              backgroundColor: '#333',
+            }}
+          >
+            {imageToCrop && (
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={16 / 9}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            )}
+          </Box>
+          <Box sx={{ mt: 3 }}>
+            <Typography gutterBottom>Zoom</Typography>
+            <Slider
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              onChange={(e, value) => setZoom(value)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCropCancel}>Annuler</Button>
+          <Button onClick={handleCropConfirm} variant="contained" startIcon={<SaveIcon />}>
+            Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar pour les notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-}
+};
+
+/**
+ * Section Général - Informations de l'entreprise
+ */
+const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Informations de l'entreprise
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Grid container spacing={3}>
+      {/* Prévisualisation réaliste de l'en-tête */}
+      <Grid item xs={12}>
+        <Paper
+          sx={{
+            p: 3,
+            border: '2px solid #e0e0e0',
+            borderRadius: 1,
+            backgroundColor: '#fff',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mb: 2,
+              textAlign: 'center',
+              color: '#666',
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
+            Aperçu de l'en-tête des documents
+          </Typography>
+          <Box sx={{ borderBottom: '3px solid #0066cc', pb: 2, mb: 2 }}>
+            <Stack direction="row" spacing={3} alignItems="flex-start" justifyContent="space-between">
+              <Box flex={1}>
+                {settings.companyLogo && (
+                  <Box
+                    component="img"
+                    src={settings.companyLogo}
+                    alt="Logo"
+                    sx={{
+                      maxHeight: 60,
+                      maxWidth: 150,
+                      objectFit: 'contain',
+                      mb: 1,
+                    }}
+                  />
+                )}
+                <Typography variant="subtitle1" fontWeight="bold" color="#0066cc" sx={{ mb: 0.5 }}>
+                  {settings.companyName || 'Nom de l\'entreprise'}
+                </Typography>
+                {settings.companyAddress && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'pre-line' }}>
+                    {settings.companyAddress}
+                  </Typography>
+                )}
+                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }} flexWrap="wrap">
+                  {settings.companyPhone && (
+                    <Typography variant="caption" color="text.secondary">
+                      Tél: {settings.companyPhone}
+                    </Typography>
+                  )}
+                  {settings.companyEmail && (
+                    <Typography variant="caption" color="text.secondary">
+                      • Email: {settings.companyEmail}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+              <Box textAlign="right">
+                <Typography variant="h4" fontWeight="bold" color="#0066cc" sx={{ letterSpacing: 1 }}>
+                  FACTURE
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
+                  N° FAC-2025-001
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Date: {new Date().toLocaleDateString('fr-FR')}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontStyle: 'italic' }}>
+            Cet aperçu reflète exactement ce qui apparaîtra sur vos factures et documents
+          </Typography>
+        </Paper>
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Nom de l'entreprise"
+          value={settings.companyName || ''}
+          onChange={(e) => onUpdate('companyName', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Email"
+          type="email"
+          value={settings.companyEmail || ''}
+          onChange={(e) => onUpdate('companyEmail', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Téléphone"
+          value={settings.companyPhone || ''}
+          onChange={(e) => onUpdate('companyPhone', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Site web"
+          value={settings.companyWebsite || ''}
+          onChange={(e) => onUpdate('companyWebsite', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Adresse"
+          multiline
+          rows={3}
+          value={settings.companyAddress || ''}
+          onChange={(e) => onUpdate('companyAddress', e.target.value)}
+        />
+      </Grid>
+
+      {/* Upload du logo avec cropping */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2, border: '2px dashed #ddd' }}>
+          <Stack spacing={2} alignItems="center">
+            <Typography variant="subtitle2">Logo de l'entreprise</Typography>
+            {settings.companyLogo && (
+              <Box
+                component="img"
+                src={settings.companyLogo}
+                alt="Logo"
+                sx={{ maxHeight: 100, maxWidth: 200, objectFit: 'contain' }}
+              />
+            )}
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<CloudUploadIcon />}
+            >
+              Choisir un logo
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    onFileSelect(e.target.files[0]);
+                  }
+                }}
+              />
+            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Vous pourrez rogner l'image avant de l'enregistrer
+            </Typography>
+          </Stack>
+        </Paper>
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Facturation - Taxation et facturation
+ */
+const BillingSection = ({ settings, onUpdate }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Taxation et facturation
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label="Taux TPS/TVH (%)"
+          type="number"
+          value={settings.gstHstRate || 5}
+          onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label="Taux TVQ (%)"
+          type="number"
+          value={settings.qstRate || 9.975}
+          onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label="Taux de taxe par défaut (%)"
+          type="number"
+          value={settings.defaultTaxRate || 15}
+          onChange={(e) => onUpdate('defaultTaxRate', parseFloat(e.target.value))}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.enableTaxCalculation ?? true}
+              onChange={(e) => onUpdate('enableTaxCalculation', e.target.checked)}
+            />
+          }
+          label="Activer le calcul automatique des taxes"
+        />
+      </Grid>
+
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label="Préfixe des factures"
+          value={settings.invoicePrefix || 'FAC-'}
+          onChange={(e) => onUpdate('invoicePrefix', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label="Préfixe des bons de commande"
+          value={settings.poPrefix || 'BC-'}
+          onChange={(e) => onUpdate('poPrefix', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <FormControl fullWidth>
+          <InputLabel>Devise par défaut</InputLabel>
+          <Select
+            value={settings.defaultCurrency || 'CAD'}
+            onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
+          >
+            <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
+            <MenuItem value="USD">USD - Dollar américain</MenuItem>
+            <MenuItem value="EUR">EUR - Euro</MenuItem>
+            <MenuItem value="GBP">GBP - Livre sterling</MenuItem>
+            <MenuItem value="CHF">CHF - Franc suisse</MenuItem>
+            <MenuItem value="JPY">JPY - Yen japonais</MenuItem>
+            <MenuItem value="CNY">CNY - Yuan chinois</MenuItem>
+            <MenuItem value="AUD">AUD - Dollar australien</MenuItem>
+            <MenuItem value="NZD">NZD - Dollar néo-zélandais</MenuItem>
+            <MenuItem value="INR">INR - Roupie indienne</MenuItem>
+            <MenuItem value="BRL">BRL - Real brésilien</MenuItem>
+            <MenuItem value="MXN">MXN - Peso mexicain</MenuItem>
+            <MenuItem value="ZAR">ZAR - Rand sud-africain</MenuItem>
+            <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
+            <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
+            <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
+            <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
+            <MenuItem value="DZD">DZD - Dinar algérien</MenuItem>
+            <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
+            <MenuItem value="KES">KES - Shilling kényan</MenuItem>
+            <MenuItem value="GHS">GHS - Cedi ghanéen</MenuItem>
+            <MenuItem value="EGP">EGP - Livre égyptienne</MenuItem>
+            <MenuItem value="AED">AED - Dirham des Émirats</MenuItem>
+            <MenuItem value="SAR">SAR - Riyal saoudien</MenuItem>
+            <MenuItem value="QAR">QAR - Riyal qatari</MenuItem>
+            <MenuItem value="SEK">SEK - Couronne suédoise</MenuItem>
+            <MenuItem value="NOK">NOK - Couronne norvégienne</MenuItem>
+            <MenuItem value="DKK">DKK - Couronne danoise</MenuItem>
+            <MenuItem value="PLN">PLN - Zloty polonais</MenuItem>
+            <MenuItem value="CZK">CZK - Couronne tchèque</MenuItem>
+            <MenuItem value="HUF">HUF - Forint hongrois</MenuItem>
+            <MenuItem value="RON">RON - Leu roumain</MenuItem>
+            <MenuItem value="TRY">TRY - Livre turque</MenuItem>
+            <MenuItem value="RUB">RUB - Rouble russe</MenuItem>
+            <MenuItem value="SGD">SGD - Dollar de Singapour</MenuItem>
+            <MenuItem value="HKD">HKD - Dollar de Hong Kong</MenuItem>
+            <MenuItem value="KRW">KRW - Won sud-coréen</MenuItem>
+            <MenuItem value="THB">THB - Baht thaïlandais</MenuItem>
+            <MenuItem value="MYR">MYR - Ringgit malaisien</MenuItem>
+            <MenuItem value="IDR">IDR - Roupie indonésienne</MenuItem>
+            <MenuItem value="PHP">PHP - Peso philippin</MenuItem>
+            <MenuItem value="VND">VND - Dong vietnamien</MenuItem>
+            <MenuItem value="ILS">ILS - Shekel israélien</MenuItem>
+            <MenuItem value="CLP">CLP - Peso chilien</MenuItem>
+            <MenuItem value="ARS">ARS - Peso argentin</MenuItem>
+            <MenuItem value="COP">COP - Peso colombien</MenuItem>
+            <MenuItem value="PEN">PEN - Sol péruvien</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Impression - Templates et configurations
+ */
+const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTemplate, onUpdateConfiguration }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Paramètres d'impression
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Alert severity="info" sx={{ mb: 3 }}>
+      Les templates d'impression permettent de personnaliser l'apparence de vos factures et bons de commande.
+    </Alert>
+
+    <Typography variant="subtitle2" gutterBottom>
+      En-tête des documents
+    </Typography>
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Couleur principale"
+          type="color"
+          value={printTemplate?.primaryColor || '#0066cc'}
+          onChange={(e) => onUpdateTemplate('primaryColor', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={printTemplate?.showQrCode ?? true}
+              onChange={(e) => onUpdateTemplate('showQrCode', e.target.checked)}
+            />
+          }
+          label="Afficher le QR code"
+        />
+      </Grid>
+    </Grid>
+
+    <Typography variant="subtitle2" gutterBottom>
+      Configuration du papier
+    </Typography>
+    <Grid container spacing={2}>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Taille du papier</InputLabel>
+          <Select
+            value={printConfiguration?.paperSize || 'A4'}
+            onChange={(e) => onUpdateConfiguration('paperSize', e.target.value)}
+          >
+            <MenuItem value="A4">A4</MenuItem>
+            <MenuItem value="LETTER">Letter</MenuItem>
+            <MenuItem value="LEGAL">Legal</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Orientation</InputLabel>
+          <Select
+            value={printConfiguration?.orientation || 'portrait'}
+            onChange={(e) => onUpdateConfiguration('orientation', e.target.value)}
+          >
+            <MenuItem value="portrait">Portrait</MenuItem>
+            <MenuItem value="landscape">Paysage</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Notifications
+ */
+const NotificationSection = ({ settings, onUpdate }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Notifications
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Stack spacing={2}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={settings.emailNotifications ?? true}
+            onChange={(e) => onUpdate('emailNotifications', e.target.checked)}
+          />
+        }
+        label="Notifications par email"
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={settings.invoiceReminders ?? true}
+            onChange={(e) => onUpdate('invoiceReminders', e.target.checked)}
+          />
+        }
+        label="Rappels de factures"
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={settings.lowStockAlerts ?? true}
+            onChange={(e) => onUpdate('lowStockAlerts', e.target.checked)}
+          />
+        }
+        label="Alertes de stock bas"
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={settings.orderStatusUpdates ?? true}
+            onChange={(e) => onUpdate('orderStatusUpdates', e.target.checked)}
+          />
+        }
+        label="Mises à jour du statut des commandes"
+      />
+    </Stack>
+  </Box>
+);
+
+/**
+ * Section Apparence
+ */
+const AppearanceSection = ({ settings, onUpdate }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Apparence et localisation
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Thème</InputLabel>
+          <Select
+            value={settings.theme || 'light'}
+            onChange={(e) => onUpdate('theme', e.target.value)}
+          >
+            <MenuItem value="light">Clair</MenuItem>
+            <MenuItem value="dark">Sombre</MenuItem>
+            <MenuItem value="auto">Automatique</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Langue</InputLabel>
+          <Select
+            value={settings.language || 'fr'}
+            onChange={(e) => onUpdate('language', e.target.value)}
+          >
+            <MenuItem value="fr">Français</MenuItem>
+            <MenuItem value="en">English</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Format de date</InputLabel>
+          <Select
+            value={settings.dateFormat || 'DD/MM/YYYY'}
+            onChange={(e) => onUpdate('dateFormat', e.target.value)}
+          >
+            <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
+            <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
+            <MenuItem value="YYYY-MM-DD">YYYY-MM-DD</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Format d'heure</InputLabel>
+          <Select
+            value={settings.timeFormat || '24h'}
+            onChange={(e) => onUpdate('timeFormat', e.target.value)}
+          >
+            <MenuItem value="24h">24 heures</MenuItem>
+            <MenuItem value="12h">12 heures (AM/PM)</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Sécurité
+ */
+const SecuritySection = ({ settings, onUpdate }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Sécurité et authentification
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Délai d'expiration de session (minutes)"
+          type="number"
+          value={settings.sessionTimeout || 30}
+          onChange={(e) => onUpdate('sessionTimeout', parseInt(e.target.value))}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Tentatives de connexion max"
+          type="number"
+          value={settings.loginAttempts || 5}
+          onChange={(e) => onUpdate('loginAttempts', parseInt(e.target.value))}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.requireStrongPasswords ?? true}
+              onChange={(e) => onUpdate('requireStrongPasswords', e.target.checked)}
+            />
+          }
+          label="Exiger des mots de passe forts"
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.enableTwoFactor ?? false}
+              onChange={(e) => onUpdate('enableTwoFactor', e.target.checked)}
+            />
+          }
+          label="Authentification à deux facteurs"
+        />
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Sauvegarde
+ */
+const BackupSection = ({ settings, onUpdate }) => (
+  <Box>
+    <Typography variant="h6" gutterBottom>
+      Sauvegardes automatiques
+    </Typography>
+    <Divider sx={{ mb: 3 }} />
+
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.autoBackup ?? true}
+              onChange={(e) => onUpdate('autoBackup', e.target.checked)}
+            />
+          }
+          label="Activer les sauvegardes automatiques"
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth disabled={!settings.autoBackup}>
+          <InputLabel>Fréquence de sauvegarde</InputLabel>
+          <Select
+            value={settings.backupFrequency || 'daily'}
+            onChange={(e) => onUpdate('backupFrequency', e.target.value)}
+          >
+            <MenuItem value="hourly">Toutes les heures</MenuItem>
+            <MenuItem value="daily">Quotidienne</MenuItem>
+            <MenuItem value="weekly">Hebdomadaire</MenuItem>
+            <MenuItem value="monthly">Mensuelle</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Rétention (jours)"
+          type="number"
+          value={settings.backupRetention || 30}
+          onChange={(e) => onUpdate('backupRetention', parseInt(e.target.value))}
+          disabled={!settings.autoBackup}
+        />
+      </Grid>
+    </Grid>
+  </Box>
+);
+
+/**
+ * Section Import/Export et Migration de données
+ */
+const DataSection = ({ settings, showSnackbar }) => {
+  const handleExport = (format) => {
+    showSnackbar(`Export ${format.toUpperCase()} en cours...`, 'info');
+    // TODO: Implémenter l'export réel
+    setTimeout(() => {
+      showSnackbar(`Export ${format.toUpperCase()} terminé avec succès`, 'success');
+    }, 1500);
+  };
+
+  const handleImport = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      showSnackbar(`Import du fichier ${file.name} en cours...`, 'info');
+      // TODO: Implémenter l'import réel
+      setTimeout(() => {
+        showSnackbar('Import terminé avec succès', 'success');
+      }, 1500);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Import / Export et Migration
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+
+      <Grid container spacing={3}>
+        {/* Section Export */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            Exporter mes données
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Exportez toutes vos données (factures, clients, produits, fournisseurs) dans différents formats.
+          </Alert>
+          <Stack direction="row" spacing={2} flexWrap="wrap">
+            <Button
+              variant="outlined"
+              onClick={() => handleExport('json')}
+            >
+              Exporter en JSON
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleExport('csv')}
+            >
+              Exporter en CSV
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleExport('excel')}
+            >
+              Exporter en Excel
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleExport('pdf')}
+            >
+              Rapport PDF complet
+            </Button>
+          </Stack>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+
+        {/* Section Import */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            Importer des données
+          </Typography>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <strong>Attention :</strong> L'import de données remplacera vos données existantes. Assurez-vous d'avoir effectué une sauvegarde avant.
+          </Alert>
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<CloudUploadIcon />}
+          >
+            Choisir un fichier à importer
+            <input
+              type="file"
+              hidden
+              accept=".json,.csv,.xlsx"
+              onChange={handleImport}
+            />
+          </Button>
+          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+            Formats acceptés : JSON, CSV, Excel
+          </Typography>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+
+        {/* Section Migration */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            Migration depuis d'autres systèmes
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Migrez facilement vos données depuis d'autres systèmes de gestion.
+          </Typography>
+          <Stack spacing={2}>
+            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+              <Typography variant="subtitle2" gutterBottom>
+                QuickBooks
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Importez vos factures, clients et produits depuis QuickBooks
+              </Typography>
+              <Button variant="outlined" size="small">
+                Configurer la migration
+              </Button>
+            </Paper>
+
+            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Sage
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Migrez vos données comptables depuis Sage
+              </Typography>
+              <Button variant="outlined" size="small">
+                Configurer la migration
+              </Button>
+            </Paper>
+
+            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Excel / CSV générique
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Importez vos données depuis des fichiers Excel ou CSV
+              </Typography>
+              <Button variant="outlined" size="small">
+                Assistant d'import
+              </Button>
+            </Paper>
+          </Stack>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
 
 export default Settings;
