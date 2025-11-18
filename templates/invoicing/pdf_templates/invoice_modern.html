@@ -1,0 +1,334 @@
+{% load invoice_filters %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture {{ invoice.invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+            color: #2c3e50;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Tables utilisées pour le layout */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* Header avec dégradé simulé */
+        .header-table {
+            width: 100%;
+            background-color: #8b5cf6;
+            margin-bottom: 15px;
+        }
+
+        .header-table td {
+            padding: 20px;
+            color: white;
+        }
+
+        .logo-cell {
+            width: 25%;
+            vertical-align: top;
+        }
+
+        .company-cell {
+            width: 50%;
+            vertical-align: top;
+            text-align: center;
+        }
+
+        .invoice-number-cell {
+            width: 25%;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .logo {
+            max-width: 100px;
+            max-height: 50px;
+            background: white;
+            padding: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .company-name {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .company-details {
+            font-size: 8pt;
+        }
+
+        .invoice-title {
+            font-size: 24pt;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .invoice-number {
+            font-size: 11pt;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            margin-top: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Info boxes */
+        .info-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .info-table td {
+            width: 50%;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            vertical-align: top;
+        }
+
+        .info-title {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #8b5cf6;
+            padding-bottom: 4px;
+        }
+
+        .info-content {
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        /* Items table */
+        .items-title {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 11pt;
+            margin: 15px 0 8px 0;
+            text-transform: uppercase;
+        }
+
+        .items-table {
+            width: 100%;
+            border: 1px solid #8b5cf6;
+            margin-bottom: 15px;
+        }
+
+        .items-table thead {
+            background-color: #8b5cf6;
+            color: white;
+        }
+
+        .items-table thead th {
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 9pt;
+            font-weight: bold;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .items-table thead th:last-child {
+            border-right: none;
+        }
+
+        .items-table tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #e9ecef;
+            border-right: 1px solid #e9ecef;
+            font-size: 9pt;
+        }
+
+        .items-table tbody td:last-child {
+            border-right: none;
+        }
+
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .items-table .text-center {
+            text-align: center;
+        }
+
+        .items-table .text-right {
+            text-align: right;
+        }
+
+        /* Totals */
+        .totals-table {
+            width: 350px;
+            margin-left: auto;
+            margin-top: 15px;
+        }
+
+        .totals-table td {
+            padding: 8px 12px;
+            font-size: 9pt;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .totals-table td:first-child {
+            text-align: left;
+            font-weight: normal;
+        }
+
+        .totals-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .totals-table .grand-total td {
+            background-color: #8b5cf6;
+            color: white;
+            font-size: 13pt;
+            font-weight: bold;
+            padding: 12px;
+            border-bottom: none;
+        }
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 15mm;
+            font-size: 7pt;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                {% if logo_base64 %}
+                <img src="{{ logo_base64 }}" alt="Logo" class="logo">
+                {% endif %}
+            </td>
+            <td class="company-cell">
+                {% if organization.name %}
+                <div class="company-name">{{ organization.name }}</div>
+                <div class="company-details">
+                    {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
+                    {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
+                    {% if organization.email %} • {{ organization.email }}{% endif %}
+                </div>
+                {% endif %}
+            </td>
+            <td class="invoice-number-cell">
+                <div class="invoice-title">FACTURE</div>
+                <div class="invoice-number">
+                    N° {{ invoice.invoice_number }}
+                    {% if invoice.status == 'paid' %}<br>PAYÉE
+                    {% elif invoice.status == 'sent' %}<br>ENVOYÉE
+                    {% elif invoice.status == 'draft' %}<br>BROUILLON
+                    {% elif invoice.status == 'overdue' %}<br>RETARD
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Info Section -->
+    <table class="info-table">
+        <tr>
+            <td>
+                <div class="info-title">DÉTAILS DE LA FACTURE</div>
+                <div class="info-content">
+                    <strong>Titre:</strong> {{ invoice.title|default:"Sans titre" }}<br>
+                    {% if invoice.description %}
+                    <strong>Description:</strong> {{ invoice.description }}<br>
+                    {% endif %}
+                    {% if issue_date %}
+                    <strong>Émission:</strong> {{ issue_date|date:"d/m/Y" }}<br>
+                    {% endif %}
+                    {% if due_date %}
+                    <strong>Échéance:</strong> {{ due_date|date:"d/m/Y" }}
+                    {% endif %}
+                </div>
+            </td>
+            {% if client %}
+            <td>
+                <div class="info-title">INFORMATIONS CLIENT</div>
+                <div class="info-content">
+                    <strong>{{ client.name }}</strong><br>
+                    {% if client.email %}{{ client.email }}<br>{% endif %}
+                    {% if client.address %}{{ client.address }}{% endif %}
+                </div>
+            </td>
+            {% endif %}
+        </tr>
+    </table>
+
+    <!-- Items -->
+    <div class="items-title">Articles facturés</div>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Référence</th>
+                <th style="width: 40%;">Description</th>
+                <th style="width: 10%;" class="text-center">Qté</th>
+                <th style="width: 15%;" class="text-right">Prix unit.</th>
+                <th style="width: 20%;" class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product_reference|default:"-" }}</td>
+                <td>{{ item.description|default:"-" }}</td>
+                <td class="text-center">{{ item.quantity|default:0 }}</td>
+                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} €</td>
+                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} €</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">Aucun article</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <table class="totals-table">
+        <tr>
+            <td>Sous-total:</td>
+            <td>{{ subtotal|floatformat:2 }} €</td>
+        </tr>
+        {% if tax_amount > 0 %}
+        <tr>
+            <td>Taxes:</td>
+            <td>{{ tax_amount|floatformat:2 }} €</td>
+        </tr>
+        {% endif %}
+        <tr class="grand-total">
+            <td>TOTAL</td>
+            <td>{{ total_amount|floatformat:2 }} €</td>
+        </tr>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+        Généré le {% now "d/m/Y à H:i" %} • ProcureGenius - Gestion des factures
+    </div>
+</body>
+</html>

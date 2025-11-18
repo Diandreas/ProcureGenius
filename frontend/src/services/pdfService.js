@@ -4,6 +4,10 @@ export const TEMPLATE_TYPES = {
   INVOICE: 'invoice',
   PURCHASE_ORDER: 'purchase_order',
   RECEIPT: 'receipt',
+  // Template styles
+  CLASSIC: 'classic',
+  MODERN: 'modern',
+  MINIMAL: 'minimal',
 };
 
 // Generate Invoice PDF

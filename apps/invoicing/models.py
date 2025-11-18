@@ -796,7 +796,7 @@ class PrintTemplate(models.Model):
     # Configuration de l'en-tête
     header_logo = models.ImageField(upload_to='print_templates/logos/', blank=True, null=True, verbose_name=_("Logo"))
     header_company_name = models.CharField(max_length=200, default="ProcureGenius", verbose_name=_("Nom de l'entreprise"))
-    header_address = models.TextField(default="", verbose_name=_("Adresse"))
+    header_address = models.TextField(blank=True, default="", verbose_name=_("Adresse"))
     header_phone = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Téléphone"))
     header_email = models.EmailField(blank=True, default="", verbose_name=_("Email"))
     header_website = models.URLField(blank=True, default="", verbose_name=_("Site web"))

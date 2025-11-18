@@ -883,16 +883,24 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'], url_path='pdf')
     def generate_pdf(self, request, pk=None):
-        """Générer un PDF de la facture"""
+        """Générer un PDF de la facture avec WeasyPrint (HTML/CSS)"""
         try:
             from django.http import HttpResponse
-            from .services.pdf_generator import generate_invoice_pdf
 
             invoice = self.get_object()
             template_type = request.query_params.get('template', 'classic')
 
-            # Générer le PDF
-            pdf_buffer = generate_invoice_pdf(invoice, template_type)
+            # Essayer WeasyPrint (HTML/CSS) d'abord
+            try:
+                from .services.pdf_generator_weasy import generate_invoice_pdf_weasy
+                pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type)
+                print(f"✓ PDF généré avec WeasyPrint (template: {template_type})")
+            except Exception as weasy_error:
+                # Fallback sur ReportLab si WeasyPrint échoue
+                print(f"⚠ WeasyPrint erreur: {weasy_error}, utilisation de ReportLab fallback")
+                from .services.pdf_generator import generate_invoice_pdf
+                pdf_buffer = generate_invoice_pdf(invoice, template_type)
+                print(f"✓ PDF généré avec ReportLab fallback (template: {template_type})")
 
             # Créer la réponse HTTP avec le PDF
             response = HttpResponse(
