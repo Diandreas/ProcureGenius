@@ -52,7 +52,7 @@ class InvoicePDFGenerator:
         styles = self._get_styles(template_type)
 
         # Log du template utilisé
-        print(f"🎨 Template utilisé: {template_type}")
+        print(f"[TEMPLATE] Template utilise: {template_type}")
 
         # En-tête
         story.extend(self._build_header(invoice, styles, template_type))
@@ -167,7 +167,7 @@ class InvoicePDFGenerator:
             if hasattr(invoice, 'created_by') and invoice.created_by:
                 if hasattr(invoice.created_by, 'organization') and invoice.created_by.organization:
                     organization = invoice.created_by.organization
-                    print(f"✓ Organisation trouvée: {organization.name}")
+                    print(f"[OK] Organisation trouvee: {organization.name}")
 
                     # Récupérer OrganizationSettings
                     org_settings = OrganizationSettings.objects.filter(
@@ -182,15 +182,15 @@ class InvoicePDFGenerator:
                     ).first()
 
                     if print_template:
-                        print(f"✓ PrintTemplate trouvé: {print_template.name}")
+                        print(f"[OK] PrintTemplate trouve: {print_template.name}")
                     else:
-                        print("ℹ Pas de PrintTemplate par défaut, utilisation de OrganizationSettings uniquement")
+                        print("[INFO] Pas de PrintTemplate par defaut, utilisation de OrganizationSettings uniquement")
                 else:
-                    print(f"✗ Utilisateur {invoice.created_by.username} n'a pas d'organisation")
+                    print(f"[WARN] Utilisateur {invoice.created_by.username} n'a pas d'organisation")
             else:
-                print("✗ Facture sans created_by")
+                print("[WARN] Facture sans created_by")
         except Exception as e:
-            print(f"✗ Erreur lors de la récupération des paramètres: {e}")
+            print(f"[ERROR] Erreur lors de la recuperation des parametres: {e}")
 
         # Récupérer le logo
         logo_image = None
@@ -200,18 +200,18 @@ class InvoicePDFGenerator:
         if print_template and print_template.header_logo:
             try:
                 logo_path = print_template.header_logo.path
-                print(f"✓ Logo du PrintTemplate trouvé: {logo_path}")
+                print(f"[OK] Logo du PrintTemplate trouve: {logo_path}")
                 logo_image = Image(logo_path, width=50*mm, height=30*mm, kind='proportional')
                 logo_loaded = True
             except Exception as e:
-                print(f"✗ Erreur lors du chargement du logo PrintTemplate: {e}")
+                print(f"[ERROR] Erreur lors du chargement du logo PrintTemplate: {e}")
 
         # Sinon, essayer le logo de OrganizationSettings
         if not logo_loaded and org_settings and org_settings.company_logo:
             try:
                 import os
                 logo_path = org_settings.company_logo.path
-                print(f"✓ Logo OrganizationSettings trouvé: {logo_path}")
+                print(f"[OK] Logo OrganizationSettings trouve: {logo_path}")
                 print(f"  Fichier existe: {os.path.exists(logo_path)}")
 
                 if os.path.exists(logo_path):
@@ -219,12 +219,12 @@ class InvoicePDFGenerator:
                     logo_image = Image(logo_path, width=50*mm, height=30*mm, kind='proportional')
                     print(f"  Image créée: {logo_image.drawWidth}x{logo_image.drawHeight}")
                     logo_loaded = True
-                    print(f"✓ Logo ajouté avec succès")
+                    print(f"[OK] Logo ajoute avec succes")
                 else:
-                    print(f"✗ Fichier logo n'existe pas sur le disque!")
+                    print(f"[ERROR] Fichier logo n'existe pas sur le disque!")
             except Exception as e:
                 import traceback
-                print(f"✗ Erreur lors du chargement du logo OrganizationSettings: {e}")
+                print(f"[ERROR] Erreur lors du chargement du logo OrganizationSettings: {e}")
                 traceback.print_exc()
 
         # Récupérer les informations entreprise

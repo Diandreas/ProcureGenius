@@ -215,18 +215,7 @@
             padding: 12px;
         }
 
-        /* Footer */
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 7pt;
-            color: #94a3b8;
-            padding: 10px 15mm;
-            border-top: 1px solid #e5e7eb;
-        }
+        /* Footer - removed fixed positioning to allow QR code footer */
     </style>
 </head>
 <body>
@@ -350,9 +339,31 @@
         </tr>
     </table>
 
-    <!-- Footer -->
-    <div class="footer">
-        Généré le {% now "d/m/Y à H:i" %} | ProcureGenius - Gestion des factures
+    <!-- Footer with QR Code -->
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #2563eb;">
+        <table style="width: 100%;">
+            <tr>
+                {% if qr_code_base64 %}
+                <td style="width: 20%; text-align: center; vertical-align: top;">
+                    <img src="{{ qr_code_base64 }}" alt="QR Code" style="width: 80px; height: 80px; border: 2px solid #2563eb; padding: 5px; background: white;">
+                    <div style="font-size: 6pt; color: #64748b; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                        Vérification
+                    </div>
+                </td>
+                {% endif %}
+                <td style="{% if qr_code_base64 %}width: 80%;{% else %}width: 100%;{% endif %} vertical-align: top; padding-left: 20px;">
+                    <div style="font-size: 8pt; color: #64748b; line-height: 1.6;">
+                        <strong style="color: #2563eb;">{{ organization.name|default:"ProcureGenius" }}</strong><br>
+                        {% if organization.address %}{{ organization.address|linebreaks }}{% endif %}
+                        {% if organization.phone %}Tél: {{ organization.phone }} • {% endif %}
+                        {% if organization.email %}Email: {{ organization.email }}{% endif %}
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #cbd5e1; font-size: 7pt;">
+                            Généré le {% now "d/m/Y à H:i" %} | ProcureGenius - Gestion professionnelle des factures
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>

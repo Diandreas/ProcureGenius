@@ -55,6 +55,11 @@ pandas==2.2.1
 requests==2.31.0
 python-dateutil==2.9.0
 
+# PDF Generation
+WeasyPrint==62.3
+django-weasyprint==2.3.0
+qrcode==7.4.2
+
 # Internationalisation
 django-modeltranslation==0.18.11
 

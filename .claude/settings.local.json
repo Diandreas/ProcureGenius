@@ -1,9 +1,16 @@
 {
   "permissions": {
     "allow": [
+      "Bash(python -m pip install:*)",
+      "Bash(py -m pip install:*)",
+      "Bash(py manage.py check:*)",
+      "Bash(py test_weasyprint_pdf.py:*)",
+      "Bash(py test_reportlab_pdf.py)",
       "Bash(dir:*)",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" \"D:\\project\\BFMa\\ProcureGenius\\manage.py\" shell -c \"import os; files = [''test_invoice_modern.pdf'', ''test_invoice_classic.pdf'', ''test_invoice_minimal.pdf'']; [print(f''{f}: {os.path.getsize(f):,} bytes'') for f in files if os.path.exists(f)]\")",
-      "Bash(\"C:\\Users\\david\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" \"D:\\project\\BFMa\\ProcureGenius\\manage.py\" shell -c \"from apps.invoicing.models import Invoice; from apps.api.services.pdf_generator_weasy import generate_invoice_pdf_weasy; import os; invoice = Invoice.objects.get(invoice_number=''FAC2025100013''); print(f''Facture: {invoice.invoice_number}''); print(f''Client: {invoice.client}''); print(); templates = [''modern'', ''classic'', ''minimal'']; [print(f''Generation PDF {t}...'') or open(f''test_invoice_{t}_v2.pdf'', ''wb'').write(generate_invoice_pdf_weasy(invoice, t).getvalue()) or print(f''  OK {os.path.getsize(f\"\"test_invoice_{t}_v2.pdf\"\")} bytes\\n'') for t in templates]; print(''Test termine!'')\")"
+      "Bash(py -c \"from weasyprint import HTML; print(''WeasyPrint fonctionne parfaitement!'')\")",
+      "Bash(echo:*)",
+      "Bash($env:PATH = \"C:\\Program Files\\GTK3-Runtime Win64\\bin;\" + $env:PATH)",
+      "Bash(py -c \"from weasyprint import HTML; print(''OK'')\")"
     ],
     "deny": [],
     "ask": []
