@@ -92,11 +92,14 @@ else:
             """Sélectionne le template selon le paramètre 'template'"""
             template_type = self.request.GET.get('template', 'modern')
 
-            # Mapping des templates
+            # Mapping des 6 templates disponibles
             template_map = {
                 'classic': 'invoicing/pdf_templates/invoice_classic.html',
                 'modern': 'invoicing/pdf_templates/invoice_modern.html',
                 'minimal': 'invoicing/pdf_templates/invoice_minimal.html',
+                'professional': 'invoicing/pdf_templates/invoice_professional.html',
+                'creative': 'invoicing/pdf_templates/invoice_creative.html',
+                'elegant': 'invoicing/pdf_templates/invoice_elegant.html',
             }
 
             return [template_map.get(template_type, template_map['modern'])]
@@ -114,6 +117,9 @@ else:
             # Ajouter les données d'organisation
             org_data = self._get_organization_data(invoice)
             context['organization'] = org_data
+
+            # Ajouter la couleur de marque
+            context['brand_color'] = org_data.get('brand_color', '#2563eb')
 
             # Ajouter le logo en base64
             context['logo_base64'] = self._get_logo_base64(org_data)
@@ -194,6 +200,7 @@ else:
                 'email': None,
                 'website': None,
                 'logo_path': None,
+                'brand_color': '#2563eb',
             }
 
             try:
@@ -246,13 +253,21 @@ else:
                         elif org_settings and org_settings.company_logo:
                             org_data['logo_path'] = org_settings.company_logo.path
 
+                        # Couleur de marque
+                        if org_settings and hasattr(org_settings, 'brand_color') and org_settings.brand_color:
+                            org_data['brand_color'] = org_settings.brand_color
+
             except Exception as e:
                 print(f"[ERROR] Erreur lors de la recuperation des donnees organisation: {e}")
 
             return org_data
 
         def _get_logo_base64(self, org_data):
-            """Convertit le logo en base64 pour l'inclure dans le HTML"""
+            """
+            Convertit le logo en base64 pour l'inclure dans le HTML
+
+            Support complet des formats d'image: PNG, JPEG, GIF, SVG, WebP
+            """
             if not org_data.get('logo_path'):
                 return None
 
@@ -263,19 +278,27 @@ else:
                         logo_data = f.read()
                         logo_base64 = base64.b64encode(logo_data).decode('utf-8')
 
-                        # Détecter le type MIME
+                        # Détecter le type MIME (support complet des formats image)
                         ext = os.path.splitext(logo_path)[1].lower()
                         mime_types = {
+                            '.png': 'image/png',  # PNG - Priorité 1
                             '.jpg': 'image/jpeg',
                             '.jpeg': 'image/jpeg',
-                            '.png': 'image/png',
                             '.gif': 'image/gif',
                             '.svg': 'image/svg+xml',
+                            '.webp': 'image/webp',
+                            '.bmp': 'image/bmp',
+                            '.ico': 'image/x-icon',
                         }
-                        mime_type = mime_types.get(ext, 'image/jpeg')
+                        mime_type = mime_types.get(ext, 'image/png')  # Défaut PNG
 
+                        print(f"[INFO] Logo charge: {os.path.basename(logo_path)} ({mime_type})")
                         return f"data:{mime_type};base64,{logo_base64}"
+                else:
+                    print(f"[WARN] Fichier logo introuvable: {logo_path}")
             except Exception as e:
                 print(f"[ERROR] Erreur lors de la conversion du logo en base64: {e}")
+                import traceback
+                traceback.print_exc()
 
             return None

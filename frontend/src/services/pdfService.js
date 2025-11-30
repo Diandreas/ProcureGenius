@@ -8,6 +8,9 @@ export const TEMPLATE_TYPES = {
   CLASSIC: 'classic',
   MODERN: 'modern',
   MINIMAL: 'minimal',
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  ELEGANT: 'elegant',
 };
 
 // Generate Invoice PDF

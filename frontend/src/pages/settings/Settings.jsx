@@ -550,7 +550,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
           >
             Aperçu de l'en-tête des documents
           </Typography>
-          <Box sx={{ borderBottom: '3px solid #0066cc', pb: 2, mb: 2 }}>
+          <Box sx={{ borderBottom: `3px solid ${settings.brandColor || '#2563eb'}`, pb: 2, mb: 2 }}>
             <Stack direction="row" spacing={3} alignItems="flex-start" justifyContent="space-between">
               <Box flex={1}>
                 {settings.companyLogo && (
@@ -566,7 +566,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
                     }}
                   />
                 )}
-                <Typography variant="subtitle1" fontWeight="bold" color="#0066cc" sx={{ mb: 0.5 }}>
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5, color: settings.brandColor || '#2563eb' }}>
                   {settings.companyName || 'Nom de l\'entreprise'}
                 </Typography>
                 {settings.companyAddress && (
@@ -588,7 +588,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
                 </Stack>
               </Box>
               <Box textAlign="right">
-                <Typography variant="h4" fontWeight="bold" color="#0066cc" sx={{ letterSpacing: 1 }}>
+                <Typography variant="h4" fontWeight="bold" sx={{ letterSpacing: 1, color: settings.brandColor || '#2563eb' }}>
                   FACTURE
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
@@ -601,7 +601,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
             </Stack>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontStyle: 'italic' }}>
-            Cet aperçu reflète exactement ce qui apparaîtra sur vos factures et documents
+            Cet aperçu reflète exactement ce qui apparaîtra sur vos factures et documents (avec votre couleur de marque)
           </Typography>
         </Paper>
       </Grid>
@@ -681,8 +681,90 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              Vous pourrez rogner l'image avant de l'enregistrer
+              Vous pourrez rogner l'image avant de l'enregistrer. Format PNG recommandé pour transparence.
             </Typography>
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Sélecteur de couleur de marque */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 3, border: '2px solid #e0e0e0', borderRadius: 1 }}>
+          <Stack spacing={2}>
+            <Typography variant="subtitle2" fontWeight={600}>
+              Couleur de marque
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Cette couleur sera utilisée sur vos factures et documents imprimés pour correspondre à votre identité visuelle.
+            </Typography>
+            <Stack direction="row" spacing={3} alignItems="center">
+              <Box>
+                <TextField
+                  type="color"
+                  value={settings.brandColor || '#2563eb'}
+                  onChange={(e) => onUpdate('brandColor', e.target.value)}
+                  sx={{
+                    width: 100,
+                    '& input': {
+                      height: 60,
+                      cursor: 'pointer',
+                      border: '2px solid #ddd',
+                      borderRadius: 1,
+                    }
+                  }}
+                />
+              </Box>
+              <Box flex={1}>
+                <TextField
+                  fullWidth
+                  label="Code couleur"
+                  value={settings.brandColor || '#2563eb'}
+                  onChange={(e) => onUpdate('brandColor', e.target.value)}
+                  placeholder="#2563eb"
+                  helperText="Format: #RRGGBB (exemple: #2563eb pour bleu)"
+                />
+              </Box>
+            </Stack>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                Couleurs prédéfinies :
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {[
+                  { name: 'Bleu', color: '#2563eb' },
+                  { name: 'Violet', color: '#7c3aed' },
+                  { name: 'Vert', color: '#059669' },
+                  { name: 'Rouge', color: '#dc2626' },
+                  { name: 'Orange', color: '#ea580c' },
+                  { name: 'Rose', color: '#db2777' },
+                  { name: 'Indigo', color: '#4f46e5' },
+                  { name: 'Noir', color: '#1f2937' },
+                ].map((preset) => (
+                  <Button
+                    key={preset.color}
+                    size="small"
+                    variant={settings.brandColor === preset.color ? 'contained' : 'outlined'}
+                    onClick={() => onUpdate('brandColor', preset.color)}
+                    sx={{
+                      minWidth: 'auto',
+                      px: 1.5,
+                      py: 0.5,
+                      mb: 1,
+                      borderColor: preset.color,
+                      backgroundColor: settings.brandColor === preset.color ? preset.color : 'transparent',
+                      color: settings.brandColor === preset.color ? 'white' : preset.color,
+                      '&:hover': {
+                        backgroundColor: preset.color,
+                        borderColor: preset.color,
+                        color: 'white',
+                      }
+                    }}
+                  >
+                    {preset.name}
+                  </Button>
+                ))}
+              </Stack>
+            </Box>
           </Stack>
         </Paper>
       </Grid>

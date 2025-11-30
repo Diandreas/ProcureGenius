@@ -44,6 +44,7 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'language',
             'date_format',
             'time_format',
+            'brand_color',
             # Sécurité
             'session_timeout',
             'require_strong_passwords',

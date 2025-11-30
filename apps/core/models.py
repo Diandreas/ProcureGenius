@@ -49,6 +49,14 @@ class OrganizationSettings(models.Model):
         verbose_name=_("Logo")
     )
 
+    # Couleur de marque pour les impressions
+    brand_color = models.CharField(
+        max_length=7,
+        default='#2563eb',
+        verbose_name=_("Couleur principale de la marque"),
+        help_text=_("Couleur utilisée dans les factures et documents (format: #RRGGBB)")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,

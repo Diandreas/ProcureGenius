@@ -10,7 +10,9 @@
       "Bash(py -c \"from weasyprint import HTML; print(''WeasyPrint fonctionne parfaitement!'')\")",
       "Bash(echo:*)",
       "Bash($env:PATH = \"C:\\Program Files\\GTK3-Runtime Win64\\bin;\" + $env:PATH)",
-      "Bash(py -c \"from weasyprint import HTML; print(''OK'')\")"
+      "Bash(py -c \"from weasyprint import HTML; print(''OK'')\")",
+      "Bash(py manage.py makemigrations:*)",
+      "Bash(py manage.py migrate core)"
     ],
     "deny": [],
     "ask": []
