@@ -149,6 +149,21 @@ function PurchaseOrderDetail() {
         enqueueSnackbar('PDF téléchargé avec succès', { variant: 'success' });
       } else if (action === 'preview') {
         openPDFInNewTab(pdfBlob);
+      } else if (action === 'print') {
+        // Ouvrir le PDF dans une nouvelle fenêtre et déclencher l'impression
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const printWindow = window.open(pdfUrl, '_blank');
+
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.print();
+            // Libérer l'URL après impression
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+          };
+          enqueueSnackbar('Fenêtre d\'impression ouverte', { variant: 'success' });
+        } else {
+          enqueueSnackbar('Impossible d\'ouvrir la fenêtre d\'impression', { variant: 'error' });
+        }
       }
 
       setPdfDialogOpen(false);
@@ -560,6 +575,7 @@ function PurchaseOrderDetail() {
                 <MenuItem value={TEMPLATE_TYPES.CLASSIC}>Classique</MenuItem>
                 <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
                 <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>Professionnel</MenuItem>
               </Select>
             </FormControl>
             <Typography variant="body2" color="text.secondary">
@@ -575,9 +591,17 @@ function PurchaseOrderDetail() {
             onClick={() => handleGeneratePDF('preview')}
             variant="outlined"
             disabled={generatingPdf}
-            startIcon={<Print />}
+            startIcon={<PictureAsPdf />}
           >
             Aperçu
+          </Button>
+          <Button
+            onClick={() => handleGeneratePDF('print')}
+            variant="outlined"
+            disabled={generatingPdf}
+            startIcon={<Print />}
+          >
+            Imprimer
           </Button>
           <Button
             onClick={() => handleGeneratePDF('download')}

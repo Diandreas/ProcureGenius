@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bon de Commande {{ po.po_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .page-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 170px;
+            background: {{ brand_color|default:'#2563eb' }};
+            color: white;
+            padding: 18px 15px;
+        }
+
+        .logo-container {
+            margin-bottom: 18px;
+            text-align: center;
+        }
+
+        .logo {
+            max-height: 50px;
+            max-width: 140px;
+            filter: brightness(0) invert(1);
+        }
+
+        .sidebar-section {
+            margin-bottom: 18px;
+        }
+
+        .sidebar-title {
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .sidebar-content {
+            font-size: 8pt;
+            line-height: 1.6;
+        }
+
+        .sidebar-content div {
+            margin: 4px 0;
+        }
+
+        .sidebar-content .label {
+            font-size: 7pt;
+            opacity: 0.7;
+            display: block;
+        }
+
+        .sidebar-content .value {
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 18px 20px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .po-title {
+            font-size: 24pt;
+            font-weight: 300;
+            color: {{ brand_color|default:'#2563eb' }};
+            margin-bottom: 4px;
+        }
+
+        .po-number {
+            font-size: 12pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: {{ brand_color|default:'#2563eb' }};
+            color: white;
+            font-size: 7.5pt;
+            font-weight: 600;
+            border-radius: 3px;
+        }
+
+        .company-info {
+            background: #f8f9fa;
+            border-left: 3px solid {{ brand_color|default:'#2563eb' }};
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+
+        .company-name {
+            font-size: 11pt;
+            font-weight: 700;
+            color: {{ brand_color|default:'#2563eb' }};
+            margin-bottom: 4px;
+        }
+
+        .company-details {
+            font-size: 8pt;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .supplier-section {
+            background: #f8f9fa;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-size: 8pt;
+            font-weight: 700;
+            color: {{ brand_color|default:'#2563eb' }};
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .supplier-content {
+            font-size: 8.5pt;
+            line-height: 1.6;
+        }
+
+        .supplier-content strong {
+            display: block;
+            font-size: 10pt;
+            margin-bottom: 3px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            font-size: 8.5pt;
+        }
+
+        .items-table thead {
+            background: {{ brand_color|default:'#2563eb' }};
+            color: white;
+        }
+
+        .items-table thead th {
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 8pt;
+        }
+
+        .items-table thead th:nth-child(2) {
+            text-align: center;
+        }
+
+        .items-table thead th:nth-child(3),
+        .items-table thead th:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .items-table tbody td {
+            padding: 10px 6px;
+        }
+
+        .items-table tbody td:nth-child(2) {
+            text-align: center;
+        }
+
+        .items-table tbody td:nth-child(3),
+        .items-table tbody td:nth-child(4) {
+            text-align: right;
+        }
+
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .totals-box {
+            width: 260px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 10px;
+            font-size: 8.5pt;
+            background: #f8f9fa;
+            margin-bottom: 1px;
+        }
+
+        .total-row.final {
+            background: {{ brand_color|default:'#2563eb' }};
+            color: white;
+            font-weight: 700;
+            font-size: 10pt;
+            margin-top: 3px;
+        }
+
+        .notes-section {
+            background: #f8f9fa;
+            border-left: 3px solid {{ brand_color|default:'#2563eb' }};
+            padding: 12px 14px;
+            font-size: 8pt;
+            line-height: 1.6;
+            margin-top: 18px;
+        }
+
+        .notes-title {
+            font-size: 8pt;
+            font-weight: 700;
+            color: {{ brand_color|default:'#2563eb' }};
+            margin-bottom: 6px;
+        }
+
+        .qr-footer {
+            text-align: right;
+            margin-top: 18px;
+        }
+
+        .qr-code {
+            width: 65px;
+            height: 65px;
+        }
+
+        .qr-label {
+            font-size: 7pt;
+            color: #666;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Sidebar colorée -->
+        <div class="sidebar">
+            {% if organization.logo_base64 %}
+            <div class="logo-container">
+                <img src="{{ organization.logo_base64 }}" alt="Logo" class="logo">
+            </div>
+            {% endif %}
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Informations</div>
+                <div class="sidebar-content">
+                    <div>
+                        <span class="label">Date création</span>
+                        <span class="value">{{ po.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <div>
+                        <span class="label">Date requise</span>
+                        <span class="value">{{ po.required_date|date:"d/m/Y" }}</span>
+                    </div>
+                    {% if po.expected_delivery_date %}
+                    <div>
+                        <span class="label">Livraison</span>
+                        <span class="value">{{ po.expected_delivery_date|date:"d/m/Y" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Priorité</div>
+                <div class="sidebar-content">
+                    <div class="value">{{ po.get_priority_display }}</div>
+                </div>
+            </div>
+
+            {% if qr_code %}
+            <div class="sidebar-section" style="text-align: center; margin-top: 30px;">
+                <img src="{{ qr_code }}" alt="QR Code" style="width: 80px; height: 80px;">
+                <div style="font-size: 7pt; margin-top: 4px; opacity: 0.8;">Scan QR</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- En-tête -->
+            <div class="header">
+                <div class="po-title">BON DE COMMANDE</div>
+                <div class="po-number">{{ po.po_number }}</div>
+                <div class="status-badge">{{ po.get_status_display }}</div>
+            </div>
+
+            <!-- Informations entreprise -->
+            <div class="company-info">
+                <div class="company-name">{{ organization.name|default:"Votre Entreprise" }}</div>
+                <div class="company-details">
+                    {% if organization.address %}<div>{{ organization.address }}</div>{% endif %}
+                    {% if organization.phone %}<div>Tél: {{ organization.phone }}</div>{% endif %}
+                    {% if organization.email %}<div>Email: {{ organization.email }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Fournisseur -->
+            <div class="supplier-section">
+                <div class="section-title">Fournisseur</div>
+                <div class="supplier-content">
+                    {% if po.supplier %}
+                        <strong>{{ po.supplier.name }}</strong>
+                        {% if po.supplier.email %}<div>{{ po.supplier.email }}</div>{% endif %}
+                        {% if po.supplier.phone %}<div>Tél: {{ po.supplier.phone }}</div>{% endif %}
+                        {% if po.supplier.address %}<div>{{ po.supplier.address }}</div>{% endif %}
+                    {% else %}
+                        <div>Aucun fournisseur spécifié</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tableau des articles -->
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Produit</th>
+                        <th style="width: 15%;">Quantité</th>
+                        <th style="width: 18%;">Prix unitaire</th>
+                        <th style="width: 17%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in po.items.all %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product_name }}</strong>
+                            {% if item.product_reference %}
+                                <br><span style="color: #777; font-size: 7.5pt;">Réf: {{ item.product_reference }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.quantity }} {{ item.unit|default:"unité(s)" }}</td>
+                        <td>{{ item.unit_price }} CAD</td>
+                        <td><strong>{{ item.total_price }} CAD</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totaux -->
+            <div class="totals-section">
+                <div class="totals-box">
+                    <div class="total-row">
+                        <span>Sous-total:</span>
+                        <span>{{ po.subtotal }} CAD</span>
+                    </div>
+                    {% if po.shipping_cost > 0 %}
+                    <div class="total-row">
+                        <span>Frais de livraison:</span>
+                        <span>{{ po.shipping_cost }} CAD</span>
+                    </div>
+                    {% endif %}
+                    {% if po.tax_gst_hst > 0 %}
+                    <div class="total-row">
+                        <span>TPS/TVH:</span>
+                        <span>{{ po.tax_gst_hst }} CAD</span>
+                    </div>
+                    {% endif %}
+                    {% if po.tax_qst > 0 %}
+                    <div class="total-row">
+                        <span>TVQ:</span>
+                        <span>{{ po.tax_qst }} CAD</span>
+                    </div>
+                    {% endif %}
+                    <div class="total-row final">
+                        <span>TOTAL:</span>
+                        <span>{{ po.total_amount }} CAD</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if po.notes %}
+            <div class="notes-section">
+                <div class="notes-title">Notes</div>
+                <div>{{ po.notes }}</div>
+            </div>
+            {% endif %}
+
+            {% if po.special_conditions %}
+            <div class="notes-section" style="margin-top: 10px;">
+                <div class="notes-title">Conditions spéciales</div>
+                <div>{{ po.special_conditions }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

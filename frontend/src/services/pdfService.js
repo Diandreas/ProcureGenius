@@ -9,8 +9,6 @@ export const TEMPLATE_TYPES = {
   MODERN: 'modern',
   MINIMAL: 'minimal',
   PROFESSIONAL: 'professional',
-  CREATIVE: 'creative',
-  ELEGANT: 'elegant',
 };
 
 // Generate Invoice PDF
@@ -21,9 +19,9 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
     // Try to call backend API for PDF generation
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
 
-      const response = await fetch(`${apiUrl}/invoices/${invoiceData.id}/pdf/?template=${selectedTemplate}`, {
+      const response = await fetch(`${baseUrl}/invoicing/${invoiceData.id}/pdf/?template=${selectedTemplate}`, {
         method: 'GET',
         headers: {
           'Authorization': `Token ${token}`,
@@ -141,9 +139,9 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
     // Try to call backend API for PDF generation
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
 
-      const response = await fetch(`${apiUrl}/purchase-orders/${purchaseOrderData.id}/print_pdf/?template=${selectedTemplate}`, {
+      const response = await fetch(`${baseUrl}/purchase-orders/${purchaseOrderData.id}/pdf/?template=${selectedTemplate}`, {
         method: 'GET',
         headers: {
           'Authorization': `Token ${token}`,

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bon de Commande {{ po.po_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+            color: #000;
+        }
+
+        .header {
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #000;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .company-section {
+            flex: 1;
+        }
+
+        .logo {
+            max-height: 40px;
+            max-width: 150px;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .company-details {
+            font-size: 8pt;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .po-section {
+            text-align: right;
+        }
+
+        .po-title {
+            font-size: 32pt;
+            font-weight: 100;
+            letter-spacing: -1px;
+            margin-bottom: 4px;
+        }
+
+        .po-number {
+            font-size: 9pt;
+            font-weight: 400;
+        }
+
+        .info-grid {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            font-size: 8.5pt;
+        }
+
+        .info-column {
+            flex: 1;
+        }
+
+        .info-title {
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .info-line {
+            margin: 4px 0;
+            line-height: 1.6;
+        }
+
+        .info-line .label {
+            color: #666;
+            font-size: 7.5pt;
+            display: inline-block;
+            min-width: 90px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            font-size: 8.5pt;
+        }
+
+        .items-table thead th {
+            border-bottom: 2px solid #000;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .items-table thead th:nth-child(2) {
+            text-align: center;
+        }
+
+        .items-table thead th:nth-child(3),
+        .items-table thead th:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .items-table tbody td {
+            padding: 10px 6px;
+        }
+
+        .items-table tbody td:nth-child(2) {
+            text-align: center;
+        }
+
+        .items-table tbody td:nth-child(3),
+        .items-table tbody td:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table tbody tr:last-child {
+            border-bottom: 2px solid {{ brand_color|default:'#000' }};
+        }
+
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+
+        .totals-box {
+            width: 230px;
+            font-size: 8.5pt;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .total-row.final {
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            font-weight: 700;
+            font-size: 10pt;
+            margin-top: 4px;
+            padding: 8px 0;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 18px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 8pt;
+            line-height: 1.6;
+        }
+
+        .footer-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-content {
+            color: #333;
+        }
+
+        .qr-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .qr-code {
+            width: 60px;
+            height: 60px;
+        }
+
+        .qr-label {
+            font-size: 7pt;
+            color: #666;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête minimal -->
+    <div class="header">
+        <div class="header-row">
+            <div class="company-section">
+                {% if organization.logo_base64 %}
+                    <img src="{{ organization.logo_base64 }}" alt="Logo" class="logo">
+                {% endif %}
+                <div class="company-name">{{ organization.name|default:"Votre Entreprise" }}</div>
+                <div class="company-details">
+                    {% if organization.address %}{{ organization.address }}{% endif %}
+                    {% if organization.phone %}<br>Tél: {{ organization.phone }}{% endif %}
+                    {% if organization.email %} • {{ organization.email }}{% endif %}
+                </div>
+            </div>
+
+            <div class="po-section">
+                <div class="po-title">BC</div>
+                <div class="po-number">{{ po.po_number }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations -->
+    <div class="info-grid">
+        <div class="info-column">
+            <div class="info-title">Fournisseur</div>
+            {% if po.supplier %}
+                <div class="info-line"><strong>{{ po.supplier.name }}</strong></div>
+                {% if po.supplier.email %}<div class="info-line">{{ po.supplier.email }}</div>{% endif %}
+                {% if po.supplier.phone %}<div class="info-line">{{ po.supplier.phone }}</div>{% endif %}
+                {% if po.supplier.address %}<div class="info-line">{{ po.supplier.address }}</div>{% endif %}
+            {% else %}
+                <div class="info-line">Non spécifié</div>
+            {% endif %}
+        </div>
+
+        <div class="info-column">
+            <div class="info-title">Détails</div>
+            <div class="info-line"><span class="label">Date:</span> {{ po.created_at|date:"d/m/Y" }}</div>
+            <div class="info-line"><span class="label">Date requise:</span> {{ po.required_date|date:"d/m/Y" }}</div>
+            {% if po.expected_delivery_date %}
+            <div class="info-line"><span class="label">Livraison:</span> {{ po.expected_delivery_date|date:"d/m/Y" }}</div>
+            {% endif %}
+            <div class="info-line"><span class="label">Statut:</span> {{ po.get_status_display }}</div>
+            <div class="info-line"><span class="label">Priorité:</span> {{ po.get_priority_display }}</div>
+        </div>
+    </div>
+
+    <!-- Articles -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Produit</th>
+                <th style="width: 15%;">Qté</th>
+                <th style="width: 18%;">Prix unit.</th>
+                <th style="width: 17%;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in po.items.all %}
+            <tr>
+                <td>
+                    <strong>{{ item.product_name }}</strong>
+                    {% if item.product_reference %}
+                        <br><span style="color: #666; font-size: 7.5pt;">{{ item.product_reference }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td><strong>{{ item.total_price }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totaux -->
+    <div class="totals-section">
+        <div class="totals-box">
+            <div class="total-row">
+                <span>Sous-total</span>
+                <span>{{ po.subtotal }} CAD</span>
+            </div>
+            {% if po.shipping_cost > 0 %}
+            <div class="total-row">
+                <span>Livraison</span>
+                <span>{{ po.shipping_cost }} CAD</span>
+            </div>
+            {% endif %}
+            {% if po.tax_gst_hst > 0 %}
+            <div class="total-row">
+                <span>TPS/TVH</span>
+                <span>{{ po.tax_gst_hst }} CAD</span>
+            </div>
+            {% endif %}
+            {% if po.tax_qst > 0 %}
+            <div class="total-row">
+                <span>TVQ</span>
+                <span>{{ po.tax_qst }} CAD</span>
+            </div>
+            {% endif %}
+            <div class="total-row final">
+                <span>TOTAL</span>
+                <span>{{ po.total_amount }} CAD</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {% if po.notes or po.special_conditions %}
+    <div class="footer">
+        {% if po.notes %}
+        <div style="margin-bottom: 12px;">
+            <div class="footer-title">Notes</div>
+            <div class="footer-content">{{ po.notes }}</div>
+        </div>
+        {% endif %}
+        {% if po.special_conditions %}
+        <div>
+            <div class="footer-title">Conditions spéciales</div>
+            <div class="footer-content">{{ po.special_conditions }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- QR Code -->
+    {% if qr_code %}
+    <div class="qr-container">
+        <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
+        <div class="qr-label">Vérification</div>
+    </div>
+    {% endif %}
+</body>
+</html>

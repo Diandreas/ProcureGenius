@@ -1178,8 +1178,6 @@ function InvoiceDetail() {
                 <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
                 <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
                 <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>Professionnel</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.CREATIVE}>Créatif</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.ELEGANT}>Élégant</MenuItem>
               </Select>
             </FormControl>
             <Typography variant="body2" color="text.secondary">

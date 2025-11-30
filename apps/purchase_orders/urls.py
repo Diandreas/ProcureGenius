@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views_pdf import PurchaseOrderPDFView
 
 app_name = 'purchase_orders'
 
@@ -10,6 +11,7 @@ urlpatterns = [
     path('<uuid:pk>/', views.purchase_order_detail, name='detail'),
     path('<uuid:pk>/edit/', views.purchase_order_edit, name='edit'),
     path('<uuid:pk>/delete/', views.purchase_order_delete, name='delete'),
+    path('<uuid:pk>/pdf/', PurchaseOrderPDFView.as_view(), name='pdf'),
     path('<uuid:pk>/print/', views.purchase_order_print, name='print'),
     path('<uuid:pk>/print/<str:template>/', views.purchase_order_print, name='print_template'),
     path('print/latest/', views.purchase_order_print_latest, name='print_latest'),
