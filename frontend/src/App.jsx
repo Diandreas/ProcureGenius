@@ -3,9 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarProvider } from 'notistack';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { store } from './store/store';
 import { ModuleProvider } from './contexts/ModuleContext';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n/config';
+import { fetchSettings } from './store/slices/settingsSlice';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -385,6 +388,35 @@ const theme = createTheme({
   },
 });
 
+// Composant pour initialiser les settings
+function AppInitializer({ children }) {
+  const dispatch = useDispatch();
+  const [initialized, setInitialized] = React.useState(false);
+
+  React.useEffect(() => {
+    const initializeApp = async () => {
+      const authToken = localStorage.getItem('authToken');
+      if (authToken) {
+        try {
+          // Charger les settings de l'organisation (incluant la langue)
+          await dispatch(fetchSettings()).unwrap();
+        } catch (error) {
+          console.error('Error loading settings:', error);
+        }
+      }
+      setInitialized(true);
+    };
+
+    initializeApp();
+  }, [dispatch]);
+
+  if (!initialized) {
+    return null; // ou un loader
+  }
+
+  return children;
+}
+
 function App() {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
   const [onboardingChecked, setOnboardingChecked] = React.useState(false);
@@ -425,16 +457,18 @@ function App() {
 
   return (
     <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-          <ModuleProvider>
-            {/* Load Google AdSense script */}
-            <AdSenseScript />
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+            <AppInitializer>
+              <ModuleProvider>
+                {/* Load Google AdSense script */}
+                <AdSenseScript />
 
-            {onboardingChecked && (
-              <>
-                <Router>
+                {onboardingChecked && (
+                  <>
+                    <Router>
                   <Routes>
                     {/* Public Routes */}
                     <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
@@ -525,11 +559,13 @@ function App() {
                   open={showOnboarding}
                   onComplete={handleOnboardingComplete}
                 />
-              </>
-            )}
-          </ModuleProvider>
-        </SnackbarProvider>
-      </ThemeProvider>
+                  </>
+                )}
+              </ModuleProvider>
+            </AppInitializer>
+          </SnackbarProvider>
+        </ThemeProvider>
+      </I18nextProvider>
     </Provider>
   );
 }

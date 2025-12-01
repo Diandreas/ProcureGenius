@@ -9,6 +9,7 @@ import aiChatReducer from './slices/aiChatSlice';
 import eSourcingReducer from './slices/eSourcingSlice';
 import contractsReducer from './slices/contractsSlice';
 import migrationReducer from './slices/migrationSlice';
+import settingsReducer from './slices/settingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,5 +23,6 @@ export const store = configureStore({
     eSourcing: eSourcingReducer,
     contracts: contractsReducer,
     migration: migrationReducer,
+    settings: settingsReducer,
   },
 });

@@ -12,6 +12,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -60,6 +62,9 @@ import { settingsAPI } from '../../services/settingsAPI';
 import { printTemplatesAPI } from '../../services/printTemplatesAPI';
 import { printConfigurationsAPI } from '../../services/printConfigurationsAPI';
 
+// Import Redux
+import { changeLanguage } from '../../store/slices/settingsSlice';
+
 /**
  * Helper: Crée un élément Image depuis une URL
  */
@@ -77,6 +82,8 @@ const createImage = (url) =>
 const Settings = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const dispatch = useDispatch();
+  const { t } = useTranslation(['settings', 'common']);
 
   // State principal
   const [activeTab, setActiveTab] = useState(0);
@@ -124,7 +131,7 @@ const Settings = () => {
       });
     } catch (error) {
       console.error('Erreur lors du chargement des paramètres:', error);
-      showSnackbar('Erreur lors du chargement des paramètres', 'error');
+      showSnackbar(t('settings:loadingError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -156,10 +163,10 @@ const Settings = () => {
 
       await Promise.all(promises);
 
-      showSnackbar('Paramètres sauvegardés avec succès ✓', 'success');
+      showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      showSnackbar('Erreur lors de la sauvegarde des paramètres', 'error');
+      showSnackbar(t('settings:saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -168,8 +175,20 @@ const Settings = () => {
   /**
    * Met à jour un paramètre d'organisation
    */
-  const handleUpdateSetting = (key, value) => {
+  const handleUpdateSetting = async (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+
+    // Si c'est la langue qui change, utiliser l'action Redux qui synchronise avec i18n
+    // et sauvegarder immédiatement
+    if (key === 'language') {
+      try {
+        await dispatch(changeLanguage(value)).unwrap();
+        showSnackbar(t('settings:saveSuccess'), 'success');
+      } catch (error) {
+        console.error('Error changing language:', error);
+        showSnackbar(t('settings:saveError'), 'error');
+      }
+    }
   };
 
   /**
@@ -255,14 +274,14 @@ const Settings = () => {
 
         const response = await settingsAPI.uploadLogo(file);
         setSettings((prev) => ({ ...prev, companyLogo: response.data.companyLogo }));
-        showSnackbar('Logo mis à jour avec succès', 'success');
+        showSnackbar(t('settings:logoUpdateSuccess'), 'success');
 
         setCropModalOpen(false);
         setImageToCrop(null);
       }
     } catch (error) {
       console.error('Erreur lors de l\'upload du logo:', error);
-      showSnackbar('Erreur lors de l\'upload du logo', 'error');
+      showSnackbar(t('settings:logoUploadError'), 'error');
     }
   };
 
@@ -292,14 +311,13 @@ const Settings = () => {
 
   // Configuration des onglets
   const tabs = [
-    { label: 'Général', icon: <BusinessIcon /> },
-    { label: 'Facturation', icon: <BillingIcon /> },
-    { label: 'Impression', icon: <PrintIcon /> },
-    { label: 'Notifications', icon: <NotificationsIcon /> },
-    { label: 'Apparence', icon: <AppearanceIcon /> },
-    { label: 'Sécurité', icon: <SecurityIcon /> },
-    { label: 'Sauvegarde', icon: <BackupIcon /> },
-    { label: 'Données', icon: <BackupIcon /> },
+    { label: t('settings:tabs.general'), icon: <BusinessIcon /> },
+    { label: t('settings:tabs.billing'), icon: <BillingIcon /> },
+    { label: t('settings:tabs.print'), icon: <PrintIcon /> },
+    { label: t('settings:tabs.notifications'), icon: <NotificationsIcon /> },
+    { label: t('settings:tabs.appearance'), icon: <AppearanceIcon /> },
+    { label: t('settings:tabs.security'), icon: <SecurityIcon /> },
+    { label: t('settings:tabs.backup'), icon: <BackupIcon /> },
   ];
 
   // Loading state
@@ -316,7 +334,7 @@ const Settings = () => {
     return (
       <Box p={3}>
         <Alert severity="error">
-          Impossible de charger les paramètres. Veuillez réessayer.
+          {t('settings:errorMessage')}
         </Alert>
       </Box>
     );
@@ -440,7 +458,7 @@ const Settings = () => {
               disabled={saving}
               fullWidth={isMobile}
             >
-              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              {saving ? t('common:labels.loading') : t('settings:buttons.save')}
             </Button>
           </Box>
         </Box>
@@ -482,7 +500,7 @@ const Settings = () => {
             )}
           </Box>
           <Box sx={{ mt: 3 }}>
-            <Typography gutterBottom>Zoom</Typography>
+            <Typography gutterBottom>{t('settings:logo.zoom')}</Typography>
             <Slider
               value={zoom}
               min={1}
@@ -493,9 +511,9 @@ const Settings = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCropCancel}>Annuler</Button>
+          <Button onClick={handleCropCancel}>{t('settings:logo.cancel')}</Button>
           <Button onClick={handleCropConfirm} variant="contained" startIcon={<SaveIcon />}>
-            Confirmer
+            {t('settings:logo.apply')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -518,10 +536,13 @@ const Settings = () => {
 /**
  * Section Général - Informations de l'entreprise
  */
-const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
-  <Box>
+const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
+  const { t } = useTranslation(['settings', 'common']);
+
+  return (
+    <Box>
     <Typography variant="h6" gutterBottom>
-      Informations de l'entreprise
+      {t('settings:general.title')}
     </Typography>
     <Divider sx={{ mb: 3 }} />
 
@@ -548,7 +569,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
               letterSpacing: 1,
             }}
           >
-            Aperçu de l'en-tête des documents
+            {t('settings:general.preview')}
           </Typography>
           <Box sx={{ borderBottom: `3px solid ${settings.brandColor || '#2563eb'}`, pb: 2, mb: 2 }}>
             <Stack direction="row" spacing={3} alignItems="flex-start" justifyContent="space-between">
@@ -567,7 +588,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
                   />
                 )}
                 <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5, color: settings.brandColor || '#2563eb' }}>
-                  {settings.companyName || 'Nom de l\'entreprise'}
+                  {settings.companyName || t('settings:general.companyNamePlaceholder')}
                 </Typography>
                 {settings.companyAddress && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'pre-line' }}>
@@ -577,31 +598,31 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
                 <Stack direction="row" spacing={1} sx={{ mt: 0.5 }} flexWrap="wrap">
                   {settings.companyPhone && (
                     <Typography variant="caption" color="text.secondary">
-                      Tél: {settings.companyPhone}
+                      {t('settings:general.phoneLabel')}: {settings.companyPhone}
                     </Typography>
                   )}
                   {settings.companyEmail && (
                     <Typography variant="caption" color="text.secondary">
-                      • Email: {settings.companyEmail}
+                      • {t('settings:general.emailLabel')}: {settings.companyEmail}
                     </Typography>
                   )}
                 </Stack>
               </Box>
               <Box textAlign="right">
                 <Typography variant="h4" fontWeight="bold" sx={{ letterSpacing: 1, color: settings.brandColor || '#2563eb' }}>
-                  FACTURE
+                  {t('settings:general.invoicePreview')}
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
-                  N° FAC-2025-001
+                  {t('settings:general.invoiceNumber')} FAC-2025-001
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Date: {new Date().toLocaleDateString('fr-FR')}
+                  {t('settings:general.dateLabel')}: {new Date().toLocaleDateString(t('common:locale'))}
                 </Typography>
               </Box>
             </Stack>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontStyle: 'italic' }}>
-            Cet aperçu reflète exactement ce qui apparaîtra sur vos factures et documents (avec votre couleur de marque)
+            {t('settings:general.previewHelper')}
           </Typography>
         </Paper>
       </Grid>
@@ -609,7 +630,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label="Nom de l'entreprise"
+          label={t('settings:general.companyNameLabel')}
+          placeholder={t('settings:general.companyNamePlaceholder')}
           value={settings.companyName || ''}
           onChange={(e) => onUpdate('companyName', e.target.value)}
         />
@@ -617,7 +639,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label="Email"
+          label={t('settings:general.email')}
+          placeholder={t('settings:general.emailPlaceholder')}
           type="email"
           value={settings.companyEmail || ''}
           onChange={(e) => onUpdate('companyEmail', e.target.value)}
@@ -626,7 +649,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label="Téléphone"
+          label={t('settings:general.phone')}
+          placeholder={t('settings:general.phonePlaceholder')}
           value={settings.companyPhone || ''}
           onChange={(e) => onUpdate('companyPhone', e.target.value)}
         />
@@ -634,7 +658,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label="Site web"
+          label={t('settings:general.website')}
+          placeholder={t('settings:general.websitePlaceholder')}
           value={settings.companyWebsite || ''}
           onChange={(e) => onUpdate('companyWebsite', e.target.value)}
         />
@@ -642,7 +667,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12}>
         <TextField
           fullWidth
-          label="Adresse"
+          label={t('settings:general.address')}
+          placeholder={t('settings:general.addressPlaceholder')}
           multiline
           rows={3}
           value={settings.companyAddress || ''}
@@ -654,7 +680,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       <Grid item xs={12}>
         <Paper sx={{ p: 2, border: '2px dashed #ddd' }}>
           <Stack spacing={2} alignItems="center">
-            <Typography variant="subtitle2">Logo de l'entreprise</Typography>
+            <Typography variant="subtitle2">{t('settings:logo.title')}</Typography>
             {settings.companyLogo && (
               <Box
                 component="img"
@@ -668,7 +694,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
               component="label"
               startIcon={<CloudUploadIcon />}
             >
-              Choisir un logo
+              {t('settings:logo.choose')}
               <input
                 type="file"
                 hidden
@@ -681,7 +707,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              Vous pourrez rogner l'image avant de l'enregistrer. Format PNG recommandé pour transparence.
+              {t('settings:logo.helper')}
             </Typography>
           </Stack>
         </Paper>
@@ -692,10 +718,10 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
         <Paper sx={{ p: 3, border: '2px solid #e0e0e0', borderRadius: 1 }}>
           <Stack spacing={2}>
             <Typography variant="subtitle2" fontWeight={600}>
-              Couleur de marque
+              {t('settings:appearance.brandColor')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Cette couleur sera utilisée sur vos factures et documents imprimés pour correspondre à votre identité visuelle.
+              {t('settings:appearance.brandColorHelper')}
             </Typography>
             <Stack direction="row" spacing={3} alignItems="center">
               <Box>
@@ -717,28 +743,28 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
               <Box flex={1}>
                 <TextField
                   fullWidth
-                  label="Code couleur"
+                  label={t('settings:appearance.brandColorCode')}
                   value={settings.brandColor || '#2563eb'}
                   onChange={(e) => onUpdate('brandColor', e.target.value)}
-                  placeholder="#2563eb"
-                  helperText="Format: #RRGGBB (exemple: #2563eb pour bleu)"
+                  placeholder={t('settings:appearance.brandColorCodePlaceholder')}
+                  helperText={t('settings:appearance.brandColorCodeHelper')}
                 />
               </Box>
             </Stack>
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Couleurs prédéfinies :
+                {t('settings:appearance.presetColors')}
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 {[
-                  { name: 'Bleu', color: '#2563eb' },
-                  { name: 'Violet', color: '#7c3aed' },
-                  { name: 'Vert', color: '#059669' },
-                  { name: 'Rouge', color: '#dc2626' },
-                  { name: 'Orange', color: '#ea580c' },
-                  { name: 'Rose', color: '#db2777' },
-                  { name: 'Indigo', color: '#4f46e5' },
-                  { name: 'Noir', color: '#1f2937' },
+                  { name: t('settings:appearance.colors.blue'), color: '#2563eb' },
+                  { name: t('settings:appearance.colors.purple'), color: '#7c3aed' },
+                  { name: t('settings:appearance.colors.green'), color: '#059669' },
+                  { name: t('settings:appearance.colors.red'), color: '#dc2626' },
+                  { name: t('settings:appearance.colors.orange'), color: '#ea580c' },
+                  { name: t('settings:appearance.colors.pink'), color: '#db2777' },
+                  { name: t('settings:appearance.colors.indigo'), color: '#4f46e5' },
+                  { name: t('settings:appearance.colors.black'), color: '#1f2937' },
                 ].map((preset) => (
                   <Button
                     key={preset.color}
@@ -770,23 +796,27 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => (
       </Grid>
     </Grid>
   </Box>
-);
+  );
+};
 
 /**
  * Section Facturation - Taxation et facturation
  */
-const BillingSection = ({ settings, onUpdate }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Taxation et facturation
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const BillingSection = ({ settings, onUpdate }) => {
+  const { t } = useTranslation(['settings', 'common']);
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:billing.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
 
     <Grid container spacing={3}>
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
-          label="Taux TPS/TVH (%)"
+          label={t('settings:billing.gstHstRate')}
           type="number"
           value={settings.gstHstRate || 5}
           onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
@@ -795,7 +825,7 @@ const BillingSection = ({ settings, onUpdate }) => (
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
-          label="Taux TVQ (%)"
+          label={t('settings:billing.qstRate')}
           type="number"
           value={settings.qstRate || 9.975}
           onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
@@ -804,7 +834,7 @@ const BillingSection = ({ settings, onUpdate }) => (
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
-          label="Taux de taxe par défaut (%)"
+          label={t('settings:billing.defaultTaxRate')}
           type="number"
           value={settings.defaultTaxRate || 15}
           onChange={(e) => onUpdate('defaultTaxRate', parseFloat(e.target.value))}
@@ -819,14 +849,14 @@ const BillingSection = ({ settings, onUpdate }) => (
               onChange={(e) => onUpdate('enableTaxCalculation', e.target.checked)}
             />
           }
-          label="Activer le calcul automatique des taxes"
+          label={t('settings:billing.enableTaxCalculation')}
         />
       </Grid>
 
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
-          label="Préfixe des factures"
+          label={t('settings:billing.invoicePrefix')}
           value={settings.invoicePrefix || 'FAC-'}
           onChange={(e) => onUpdate('invoicePrefix', e.target.value)}
         />
@@ -834,14 +864,14 @@ const BillingSection = ({ settings, onUpdate }) => (
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
-          label="Préfixe des bons de commande"
+          label={t('settings:billing.poPrefix')}
           value={settings.poPrefix || 'BC-'}
           onChange={(e) => onUpdate('poPrefix', e.target.value)}
         />
       </Grid>
       <Grid item xs={12} md={4}>
         <FormControl fullWidth>
-          <InputLabel>Devise par défaut</InputLabel>
+          <InputLabel>{t('settings:billing.defaultCurrency')}</InputLabel>
           <Select
             value={settings.defaultCurrency || 'CAD'}
             onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
@@ -898,171 +928,183 @@ const BillingSection = ({ settings, onUpdate }) => (
       </Grid>
     </Grid>
   </Box>
-);
+  );
+};
 
 /**
  * Section Impression - Templates et configurations
  */
-const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTemplate, onUpdateConfiguration }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Paramètres d'impression
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTemplate, onUpdateConfiguration }) => {
+  const { t } = useTranslation(['settings', 'common']);
 
-    <Alert severity="info" sx={{ mb: 3 }}>
-      Les templates d'impression permettent de personnaliser l'apparence de vos factures et bons de commande.
-    </Alert>
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:print.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
 
-    <Typography variant="subtitle2" gutterBottom>
-      En-tête des documents
-    </Typography>
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Couleur principale"
-          type="color"
-          value={printTemplate?.primaryColor || '#0066cc'}
-          onChange={(e) => onUpdateTemplate('primaryColor', e.target.value)}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={printTemplate?.showQrCode ?? true}
-              onChange={(e) => onUpdateTemplate('showQrCode', e.target.checked)}
-            />
-          }
-          label="Afficher le QR code"
-        />
-      </Grid>
-    </Grid>
+      <Alert severity="info" sx={{ mb: 3 }}>
+        {t('settings:print.infoMessage')}
+      </Alert>
 
-    <Typography variant="subtitle2" gutterBottom>
-      Configuration du papier
-    </Typography>
-    <Grid container spacing={2}>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>Taille du papier</InputLabel>
-          <Select
-            value={printConfiguration?.paperSize || 'A4'}
-            onChange={(e) => onUpdateConfiguration('paperSize', e.target.value)}
-          >
-            <MenuItem value="A4">A4</MenuItem>
-            <MenuItem value="LETTER">Letter</MenuItem>
-            <MenuItem value="LEGAL">Legal</MenuItem>
-          </Select>
-        </FormControl>
+      <Typography variant="subtitle2" gutterBottom>
+        {t('settings:print.documentHeader')}
+      </Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:print.primaryColor')}
+            type="color"
+            value={printTemplate?.primaryColor || '#0066cc'}
+            onChange={(e) => onUpdateTemplate('primaryColor', e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={printTemplate?.showQrCode ?? true}
+                onChange={(e) => onUpdateTemplate('showQrCode', e.target.checked)}
+              />
+            }
+            label={t('settings:print.showQrCode')}
+          />
+        </Grid>
       </Grid>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>Orientation</InputLabel>
-          <Select
-            value={printConfiguration?.orientation || 'portrait'}
-            onChange={(e) => onUpdateConfiguration('orientation', e.target.value)}
-          >
-            <MenuItem value="portrait">Portrait</MenuItem>
-            <MenuItem value="landscape">Paysage</MenuItem>
-          </Select>
-        </FormControl>
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t('settings:print.paperConfiguration')}
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>{t('settings:print.paperSize')}</InputLabel>
+            <Select
+              value={printConfiguration?.paperSize || 'A4'}
+              onChange={(e) => onUpdateConfiguration('paperSize', e.target.value)}
+            >
+              <MenuItem value="A4">A4</MenuItem>
+              <MenuItem value="LETTER">Letter</MenuItem>
+              <MenuItem value="LEGAL">Legal</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>{t('settings:print.orientation')}</InputLabel>
+            <Select
+              value={printConfiguration?.orientation || 'portrait'}
+              onChange={(e) => onUpdateConfiguration('orientation', e.target.value)}
+            >
+              <MenuItem value="portrait">{t('settings:print.portrait')}</MenuItem>
+              <MenuItem value="landscape">{t('settings:print.landscape')}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
       </Grid>
-    </Grid>
-  </Box>
-);
+    </Box>
+  );
+};
 
 /**
  * Section Notifications
  */
-const NotificationSection = ({ settings, onUpdate }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Notifications
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const NotificationSection = ({ settings, onUpdate }) => {
+  const { t } = useTranslation(['settings', 'common']);
 
-    <Stack spacing={2}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.emailNotifications ?? true}
-            onChange={(e) => onUpdate('emailNotifications', e.target.checked)}
-          />
-        }
-        label="Notifications par email"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.invoiceReminders ?? true}
-            onChange={(e) => onUpdate('invoiceReminders', e.target.checked)}
-          />
-        }
-        label="Rappels de factures"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.lowStockAlerts ?? true}
-            onChange={(e) => onUpdate('lowStockAlerts', e.target.checked)}
-          />
-        }
-        label="Alertes de stock bas"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.orderStatusUpdates ?? true}
-            onChange={(e) => onUpdate('orderStatusUpdates', e.target.checked)}
-          />
-        }
-        label="Mises à jour du statut des commandes"
-      />
-    </Stack>
-  </Box>
-);
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:notificationsSection.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+
+      <Stack spacing={2}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.emailNotifications ?? true}
+              onChange={(e) => onUpdate('emailNotifications', e.target.checked)}
+            />
+          }
+          label={t('settings:notificationsSection.emailNotifications')}
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.invoiceReminders ?? true}
+              onChange={(e) => onUpdate('invoiceReminders', e.target.checked)}
+            />
+          }
+          label={t('settings:notificationsSection.invoiceReminders')}
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.lowStockAlerts ?? true}
+              onChange={(e) => onUpdate('lowStockAlerts', e.target.checked)}
+            />
+          }
+          label={t('settings:notificationsSection.lowStockAlerts')}
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={settings.orderStatusUpdates ?? true}
+              onChange={(e) => onUpdate('orderStatusUpdates', e.target.checked)}
+            />
+          }
+          label={t('settings:notificationsSection.orderStatusUpdates')}
+        />
+      </Stack>
+    </Box>
+  );
+};
 
 /**
  * Section Apparence
  */
-const AppearanceSection = ({ settings, onUpdate }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Apparence et localisation
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const AppearanceSection = ({ settings, onUpdate }) => {
+  const { t } = useTranslation(['settings', 'common']);
 
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>Thème</InputLabel>
-          <Select
-            value={settings.theme || 'light'}
-            onChange={(e) => onUpdate('theme', e.target.value)}
-          >
-            <MenuItem value="light">Clair</MenuItem>
-            <MenuItem value="dark">Sombre</MenuItem>
-            <MenuItem value="auto">Automatique</MenuItem>
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:appearance.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>{t('settings:appearance.theme')}</InputLabel>
+            <Select
+              value={settings.theme || 'light'}
+              onChange={(e) => onUpdate('theme', e.target.value)}
+            >
+              <MenuItem value="light">{t('settings:appearance.themeLight')}</MenuItem>
+              <MenuItem value="dark">{t('settings:appearance.themeDark')}</MenuItem>
+              <MenuItem value="auto">{t('settings:appearance.themeAuto')}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>{t('settings:general.language')}</InputLabel>
+            <Select
+              value={settings.language || 'fr'}
+              onChange={(e) => onUpdate('language', e.target.value)}
+            >
+              <MenuItem value="fr">{t('settings:general.languageFr')}</MenuItem>
+              <MenuItem value="en">{t('settings:general.languageEn')}</MenuItem>
           </Select>
         </FormControl>
       </Grid>
       <Grid item xs={12} md={6}>
         <FormControl fullWidth>
-          <InputLabel>Langue</InputLabel>
-          <Select
-            value={settings.language || 'fr'}
-            onChange={(e) => onUpdate('language', e.target.value)}
-          >
-            <MenuItem value="fr">Français</MenuItem>
-            <MenuItem value="en">English</MenuItem>
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>Format de date</InputLabel>
+          <InputLabel>{t('settings:appearance.dateFormat')}</InputLabel>
           <Select
             value={settings.dateFormat || 'DD/MM/YYYY'}
             onChange={(e) => onUpdate('dateFormat', e.target.value)}
@@ -1075,144 +1117,170 @@ const AppearanceSection = ({ settings, onUpdate }) => (
       </Grid>
       <Grid item xs={12} md={6}>
         <FormControl fullWidth>
-          <InputLabel>Format d'heure</InputLabel>
+          <InputLabel>{t('settings:appearance.timeFormat')}</InputLabel>
           <Select
             value={settings.timeFormat || '24h'}
             onChange={(e) => onUpdate('timeFormat', e.target.value)}
           >
-            <MenuItem value="24h">24 heures</MenuItem>
-            <MenuItem value="12h">12 heures (AM/PM)</MenuItem>
+            <MenuItem value="24h">{t('settings:appearance.timeFormat24')}</MenuItem>
+            <MenuItem value="12h">{t('settings:appearance.timeFormat12')}</MenuItem>
           </Select>
         </FormControl>
       </Grid>
     </Grid>
   </Box>
-);
+  );
+};
 
 /**
  * Section Sécurité
  */
-const SecuritySection = ({ settings, onUpdate }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Sécurité et authentification
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const SecuritySection = ({ settings, onUpdate }) => {
+  const { t } = useTranslation(['settings', 'common']);
 
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Délai d'expiration de session (minutes)"
-          type="number"
-          value={settings.sessionTimeout || 30}
-          onChange={(e) => onUpdate('sessionTimeout', parseInt(e.target.value))}
-        />
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:security.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:security.sessionTimeoutLabel')}
+            type="number"
+            value={settings.sessionTimeout || 30}
+            onChange={(e) => onUpdate('sessionTimeout', parseInt(e.target.value))}
+            helperText={t('settings:security.sessionTimeoutHelper')}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:security.loginAttemptsLabel')}
+            type="number"
+            value={settings.loginAttempts || 5}
+            onChange={(e) => onUpdate('loginAttempts', parseInt(e.target.value))}
+            helperText={t('settings:security.loginAttemptsHelper')}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.requireStrongPasswords ?? true}
+                onChange={(e) => onUpdate('requireStrongPasswords', e.target.checked)}
+              />
+            }
+            label={t('settings:security.requireStrongPasswordsLabel')}
+          />
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -1 }}>
+            {t('settings:security.requireStrongPasswordsHelper')}
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.enableTwoFactor ?? false}
+                onChange={(e) => onUpdate('enableTwoFactor', e.target.checked)}
+              />
+            }
+            label={t('settings:security.enableTwoFactorLabel')}
+          />
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -1 }}>
+            {t('settings:security.enableTwoFactorHelper')}
+          </Typography>
+        </Grid>
       </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Tentatives de connexion max"
-          type="number"
-          value={settings.loginAttempts || 5}
-          onChange={(e) => onUpdate('loginAttempts', parseInt(e.target.value))}
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.requireStrongPasswords ?? true}
-              onChange={(e) => onUpdate('requireStrongPasswords', e.target.checked)}
-            />
-          }
-          label="Exiger des mots de passe forts"
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.enableTwoFactor ?? false}
-              onChange={(e) => onUpdate('enableTwoFactor', e.target.checked)}
-            />
-          }
-          label="Authentification à deux facteurs"
-        />
-      </Grid>
-    </Grid>
-  </Box>
-);
+    </Box>
+  );
+};
 
 /**
  * Section Sauvegarde
  */
-const BackupSection = ({ settings, onUpdate }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>
-      Sauvegardes automatiques
-    </Typography>
-    <Divider sx={{ mb: 3 }} />
+const BackupSection = ({ settings, onUpdate }) => {
+  const { t } = useTranslation(['settings', 'common']);
 
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.autoBackup ?? true}
-              onChange={(e) => onUpdate('autoBackup', e.target.checked)}
-            />
-          }
-          label="Activer les sauvegardes automatiques"
-        />
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('settings:backup.title')}
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.autoBackup ?? true}
+                onChange={(e) => onUpdate('autoBackup', e.target.checked)}
+              />
+            }
+            label={t('settings:backup.autoBackupLabel')}
+          />
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -1 }}>
+            {t('settings:backup.autoBackupHelper')}
+          </Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth disabled={!settings.autoBackup}>
+            <InputLabel>{t('settings:backup.frequencyLabel')}</InputLabel>
+            <Select
+              value={settings.backupFrequency || 'daily'}
+              onChange={(e) => onUpdate('backupFrequency', e.target.value)}
+            >
+              <MenuItem value="hourly">{t('settings:backup.frequencies.hourly')}</MenuItem>
+              <MenuItem value="daily">{t('settings:backup.frequencies.daily')}</MenuItem>
+              <MenuItem value="weekly">{t('settings:backup.frequencies.weekly')}</MenuItem>
+              <MenuItem value="monthly">{t('settings:backup.frequencies.monthly')}</MenuItem>
+            </Select>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+              {t('settings:backup.frequencyHelper')}
+            </Typography>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:backup.retentionLabel')}
+            type="number"
+            value={settings.backupRetention || 30}
+            onChange={(e) => onUpdate('backupRetention', parseInt(e.target.value))}
+            disabled={!settings.autoBackup}
+            helperText={t('settings:backup.retentionHelper')}
+          />
+        </Grid>
       </Grid>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth disabled={!settings.autoBackup}>
-          <InputLabel>Fréquence de sauvegarde</InputLabel>
-          <Select
-            value={settings.backupFrequency || 'daily'}
-            onChange={(e) => onUpdate('backupFrequency', e.target.value)}
-          >
-            <MenuItem value="hourly">Toutes les heures</MenuItem>
-            <MenuItem value="daily">Quotidienne</MenuItem>
-            <MenuItem value="weekly">Hebdomadaire</MenuItem>
-            <MenuItem value="monthly">Mensuelle</MenuItem>
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Rétention (jours)"
-          type="number"
-          value={settings.backupRetention || 30}
-          onChange={(e) => onUpdate('backupRetention', parseInt(e.target.value))}
-          disabled={!settings.autoBackup}
-        />
-      </Grid>
-    </Grid>
-  </Box>
-);
+    </Box>
+  );
+};
 
 /**
  * Section Import/Export et Migration de données
  */
 const DataSection = ({ settings, showSnackbar }) => {
+  const { t } = useTranslation(['settings', 'common']);
+
   const handleExport = (format) => {
-    showSnackbar(`Export ${format.toUpperCase()} en cours...`, 'info');
+    showSnackbar(t('settings:exportInProgress', { format: format.toUpperCase() }), 'info');
     // TODO: Implémenter l'export réel
     setTimeout(() => {
-      showSnackbar(`Export ${format.toUpperCase()} terminé avec succès`, 'success');
+      showSnackbar(t('settings:exportSuccess', { format: format.toUpperCase() }), 'success');
     }, 1500);
   };
 
   const handleImport = (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      showSnackbar(`Import du fichier ${file.name} en cours...`, 'info');
+      showSnackbar(t('settings:importInProgress', { filename: file.name }), 'info');
       // TODO: Implémenter l'import réel
       setTimeout(() => {
-        showSnackbar('Import terminé avec succès', 'success');
+        showSnackbar(t('settings:importSuccess'), 'success');
       }, 1500);
     }
   };

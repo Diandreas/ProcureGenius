@@ -14,7 +14,9 @@
       "Bash(py manage.py makemigrations:*)",
       "Bash(py manage.py migrate core)",
       "Bash(del:*)",
-      "Bash(py manage.py show_urls)"
+      "Bash(py manage.py show_urls)",
+      "Bash(npm install:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

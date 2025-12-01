@@ -1,10 +1,23 @@
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
+import i18n from '../i18n/config';
+
+// Helper pour obtenir la locale date-fns basée sur la langue actuelle
+const getDateLocale = () => {
+  const currentLang = i18n.language || 'fr';
+  return currentLang.startsWith('en') ? enUS : fr;
+};
+
+// Helper pour obtenir le code locale NumberFormat basé sur la langue actuelle
+const getNumberLocale = () => {
+  const currentLang = i18n.language || 'fr';
+  return currentLang.startsWith('en') ? 'en-CA' : 'fr-CA';
+};
 
 export const formatCurrency = (amount, currency = 'CAD') => {
   // Valider et convertir l'amount
   if (amount === null || amount === undefined || amount === '') {
-    return new Intl.NumberFormat('fr-CA', {
+    return new Intl.NumberFormat(getNumberLocale(), {
       style: 'currency',
       currency: currency,
     }).format(0);
@@ -16,13 +29,13 @@ export const formatCurrency = (amount, currency = 'CAD') => {
   // Vérifier si c'est un nombre valide
   if (isNaN(numAmount)) {
     console.warn(`formatCurrency: Invalid amount "${amount}", defaulting to 0`);
-    return new Intl.NumberFormat('fr-CA', {
+    return new Intl.NumberFormat(getNumberLocale(), {
       style: 'currency',
       currency: currency,
     }).format(0);
   }
 
-  return new Intl.NumberFormat('fr-CA', {
+  return new Intl.NumberFormat(getNumberLocale(), {
     style: 'currency',
     currency: currency,
   }).format(numAmount);
@@ -31,13 +44,13 @@ export const formatCurrency = (amount, currency = 'CAD') => {
 export const formatDate = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'dd MMMM yyyy', { locale: fr });
+  return format(dateObj, 'dd MMMM yyyy', { locale: getDateLocale() });
 };
 
 export const formatDateTime = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'dd MMMM yyyy HH:mm', { locale: fr });
+  return format(dateObj, 'dd MMMM yyyy HH:mm', { locale: getDateLocale() });
 };
 
 export const formatPhoneNumber = (phone) => {
