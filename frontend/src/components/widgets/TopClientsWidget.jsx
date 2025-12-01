@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Award } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const TopClientsWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +26,8 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('messages.error')}</div>;
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -43,7 +45,7 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
             <div key={index} className="list-item">
               <div className="list-item-content">
                 <div className="list-item-title">#{index + 1} {client.name}</div>
-                <div className="list-item-subtitle">{client.total_invoices} facture(s)</div>
+                <div className="list-item-subtitle">{client.total_invoices} {t('widgets.invoices_label', { ns: 'dashboard', defaultValue: 'facture(s)' })}</div>
               </div>
               <div className="list-item-value">{formatCurrency(client.total_revenue)}</div>
             </div>
@@ -52,7 +54,7 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
       ) : (
         <div className="widget-empty">
           <Award size={40} className="widget-empty-icon" />
-          <div className="widget-empty-text">Aucun client</div>
+          <div className="widget-empty-text">{t('widgets.top_clients_empty', { ns: 'dashboard', defaultValue: 'Aucun client' })}</div>
         </div>
       )}
     </>

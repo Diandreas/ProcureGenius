@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, AlertCircle, Info, CheckCircle } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const AlertsWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +26,8 @@ const AlertsWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('messages.error')}</div>;
 
   const getAlertClass = (type) => {
     switch (type) {
@@ -65,7 +67,7 @@ const AlertsWidget = ({ period = 'last_30_days' }) => {
       ) : (
         <div className="widget-empty">
           <CheckCircle size={40} className="widget-empty-icon" />
-          <div className="widget-empty-text">Aucune alerte</div>
+          <div className="widget-empty-text">{t('widgets.alerts_empty', { ns: 'dashboard', defaultValue: 'Aucune alerte' })}</div>
         </div>
       )}
     </>

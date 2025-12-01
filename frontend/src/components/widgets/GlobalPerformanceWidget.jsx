@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const GlobalPerformanceWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +26,12 @@ const GlobalPerformanceWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('messages.error')}</div>;
 
   const metrics = [
-    { label: 'CA Total', value: data.total_revenue || 0, change: data.comparison?.revenue_change },
-    { label: 'Clients', value: data.total_clients || 0, change: data.comparison?.clients_change },
+    { label: t('widgets.global_performance_metrics.total_revenue', { ns: 'dashboard', defaultValue: 'CA Total' }), value: data.total_revenue || 0, change: data.comparison?.revenue_change },
+    { label: t('widgets.global_performance_metrics.clients', { ns: 'dashboard', defaultValue: 'Clients' }), value: data.total_clients || 0, change: data.comparison?.clients_change },
   ];
 
   return (

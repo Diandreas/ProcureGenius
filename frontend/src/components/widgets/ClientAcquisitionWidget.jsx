@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserPlus, TrendingUp } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const ClientAcquisitionWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,8 +24,8 @@ const ClientAcquisitionWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('messages.error')}</div>;
 
   const isPositive = data.comparison?.change > 0;
   const isNegative = data.comparison?.change < 0;
@@ -31,11 +33,11 @@ const ClientAcquisitionWidget = ({ period = 'last_30_days' }) => {
   return (
     <div className="stats-grid">
       <div className="stat-card">
-        <div className="stat-label">Nouveaux Clients</div>
+        <div className="stat-label">{t('widgets.client_acquisition_metrics.new_clients', { ns: 'dashboard', defaultValue: 'Nouveaux Clients' })}</div>
         <div className="stat-value">{data.new_clients || 0}</div>
         {data.comparison && (
           <div className={`stat-change ${isPositive ? 'positive' : isNegative ? 'negative' : ''}`}>
-            {isPositive ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{transform: 'rotate(180deg)'}} />}
+            {isPositive ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{ transform: 'rotate(180deg)' }} />}
             <span>{Math.abs(data.comparison.change || 0).toFixed(1)}%</span>
           </div>
         )}

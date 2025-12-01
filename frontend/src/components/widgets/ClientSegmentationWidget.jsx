@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PieChart } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const ClientSegmentationWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,8 +24,8 @@ const ClientSegmentationWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data || !data.segments) return <div className="chart-placeholder"><PieChart size={32} /><div>Aucune donnée</div></div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data || !data.segments) return <div className="chart-placeholder"><PieChart size={32} /><div>{t('widgets.client_segmentation_empty', { ns: 'dashboard', defaultValue: 'Aucune donnée' })}</div></div>;
 
   return (
     <div className="stats-grid">

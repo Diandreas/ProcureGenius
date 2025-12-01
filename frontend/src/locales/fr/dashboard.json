@@ -1,0 +1,106 @@
+{
+    "title": "Dashboard",
+    "editMode": "Mode Édition",
+    "customize": "Personnaliser",
+    "refresh": "Rafraîchir",
+    "addWidget": "Ajouter Widget",
+    "preview": "Aperçu",
+    "save": "Sauvegarder",
+    "saving": "Sauvegarde...",
+    "saved": "Sauvegardé",
+    "saveSuccess": "Dashboard sauvegardé avec succès!",
+    "saveError": "Erreur lors de la sauvegarde",
+    "confirmSave": "Voulez-vous sauvegarder vos modifications?",
+    "emptyState": {
+        "title": "Votre dashboard est vide",
+        "description": "Commencez par ajouter des widgets pour visualiser vos données",
+        "button": "Ajouter mon premier widget"
+    },
+    "editHint": "Glissez-déposez les widgets pour les réorganiser, tirez les coins pour les redimensionner",
+    "widgetPlaceholder": "Widget \"{{code}}\" en développement",
+    "periods": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "last_7_days": "7 derniers jours",
+        "last_30_days": "30 derniers jours",
+        "last_90_days": "90 derniers jours",
+        "this_month": "Ce mois",
+        "this_year": "Cette année"
+    },
+    "library": {
+        "title": "Bibliothèque de Widgets",
+        "searchPlaceholder": "Rechercher un widget...",
+        "all": "Tous",
+        "noResults": "Aucun widget trouvé",
+        "add": "Ajouter",
+        "added": "Ajouté",
+        "modules": {
+            "global": "Global",
+            "products": "Produits",
+            "clients": "Clients",
+            "invoices": "Factures",
+            "purchase_orders": "Bons de Commande",
+            "ai": "Assistant IA"
+        }
+    },
+    "widgets": {
+        "financial_summary": "Vue Financière Globale",
+        "recent_activity": "Activité Récente",
+        "alerts_notifications": "Alertes et Notifications",
+        "global_performance": "Performance Globale",
+        "products_overview": "Aperçu Stock",
+        "top_selling_products": "Produits les Plus Vendus",
+        "stock_alerts": "Alertes Stock",
+        "margin_analysis": "Analyse Marges",
+        "stock_movements": "Mouvements de Stock",
+        "clients_overview": "Aperçu Clients",
+        "top_clients": "Top Clients",
+        "clients_at_risk": "Clients à Risque",
+        "client_acquisition": "Acquisition Clients",
+        "client_segmentation": "Segmentation Clients",
+        "invoices_overview": "Aperçu Factures",
+        "invoices_status": "Statut Factures",
+        "revenue_chart": "Revenus",
+        "overdue_invoices": "Factures en Retard",
+        "payment_performance": "Performance Paiements",
+        "recent_invoices": "Factures Récentes",
+        "po_overview": "Aperçu Bons de Commande",
+        "po_status": "Statut Bons de Commande",
+        "expenses_chart": "Dépenses Achats",
+        "overdue_po": "BCs en Retard",
+        "supplier_performance": "Performance Fournisseurs",
+        "pending_approvals": "Approbations en Attente",
+        "budget_tracking": "Suivi Budget",
+        "ai_usage": "Utilisation IA",
+        "ai_documents": "Documents Traités",
+        "ai_last_conversation": "Dernière Conversation",
+        "financial_summary_metrics": {
+            "revenue": "Revenus",
+            "expenses": "Dépenses",
+            "net_profit": "Profit Net",
+            "margin": "Marge"
+        },
+        "global_performance_metrics": {
+            "total_revenue": "CA Total",
+            "clients": "Clients"
+        },
+        "clients_overview_metrics": {
+            "total": "Total",
+            "active": "Actifs",
+            "new": "Nouveaux"
+        },
+        "client_acquisition_metrics": {
+            "new_clients": "Nouveaux Clients"
+        },
+        "recent_activity_empty": "Aucune activité",
+        "alerts_empty": "Aucune alerte",
+        "top_clients_empty": "Aucun client",
+        "clients_at_risk_empty": "Aucun client à risque",
+        "client_segmentation_empty": "Aucune donnée",
+        "invoices_label": "facture(s)",
+        "overdue_invoices_label": "facture(s) en retard"
+    },
+    "actions": {
+        "remove": "Supprimer"
+    }
+}

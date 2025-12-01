@@ -63,11 +63,13 @@ import {
   PictureAsPdf,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { invoicesAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 
 function InvoiceDetail() {
+  const { t } = useTranslation(['invoices', 'common']);
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -107,7 +109,7 @@ function InvoiceDetail() {
       const response = await invoicesAPI.get(id);
       setInvoice(response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement de la facture', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.loadInvoiceError'), { variant: 'error' });
       navigate('/invoices');
     } finally {
       setLoading(false);
@@ -119,13 +121,13 @@ function InvoiceDetail() {
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer cette facture ?`)) {
+    if (window.confirm(t('invoices:messages.deleteConfirmation'))) {
       try {
         await invoicesAPI.delete(id);
-        enqueueSnackbar('Facture supprimée avec succès', { variant: 'success' });
+        enqueueSnackbar(t('invoices:messages.invoiceDeletedSuccess'), { variant: 'success' });
         navigate('/invoices');
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('invoices:messages.deleteError'), { variant: 'error' });
       }
     }
   };
@@ -134,10 +136,10 @@ function InvoiceDetail() {
     try {
       const response = await invoicesAPI.send(id);
       setInvoice(response.data);
-      enqueueSnackbar('Facture envoyée avec succès', { variant: 'success' });
+      enqueueSnackbar(t('invoices:messages.invoiceSentSuccess'), { variant: 'success' });
       setSendDialogOpen(false);
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'envoi', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.sendError'), { variant: 'error' });
     }
   };
 
@@ -145,11 +147,11 @@ function InvoiceDetail() {
     try {
       const response = await invoicesAPI.markPaid(id, paymentData);
       setInvoice(response.data);
-      enqueueSnackbar('Facture marquée comme payée', { variant: 'success' });
+      enqueueSnackbar(t('invoices:messages.invoiceMarkedPaidSuccess'), { variant: 'success' });
       setMarkPaidDialogOpen(false);
       setPaymentData({ payment_date: new Date().toISOString().split('T')[0], payment_method: '', notes: '' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors du marquage du paiement', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.markPaidError'), { variant: 'error' });
     }
   };
 
@@ -157,11 +159,11 @@ function InvoiceDetail() {
     try {
       const response = await invoicesAPI.addItem(id, newItem);
       await fetchInvoice(); // Reload to get updated totals
-      enqueueSnackbar('Article ajouté avec succès', { variant: 'success' });
+      enqueueSnackbar(t('invoices:messages.itemAddedSuccess'), { variant: 'success' });
       setAddItemDialogOpen(false);
       setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'ajout de l\'article', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.addItemError'), { variant: 'error' });
     }
   };
 
@@ -172,7 +174,7 @@ function InvoiceDetail() {
 
       if (action === 'download') {
         downloadPDF(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
-        enqueueSnackbar('PDF téléchargé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('invoices:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
         openPDFInNewTab(pdfBlob);
       } else if (action === 'print') {
@@ -186,16 +188,16 @@ function InvoiceDetail() {
             // Libérer l'URL après impression
             setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
           };
-          enqueueSnackbar('Fenêtre d\'impression ouverte', { variant: 'success' });
+          enqueueSnackbar(t('invoices:messages.printWindowOpened'), { variant: 'success' });
         } else {
-          enqueueSnackbar('Impossible d\'ouvrir la fenêtre d\'impression', { variant: 'error' });
+          enqueueSnackbar(t('invoices:messages.cannotOpenPrintWindow'), { variant: 'error' });
         }
       }
 
       setPdfDialogOpen(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.pdfGenerationError'), { variant: 'error' });
     } finally {
       setGeneratingPdf(false);
     }
@@ -258,7 +260,7 @@ function InvoiceDetail() {
           </Box>
           <Chip
             icon={getStatusIcon(isOverdue() ? 'overdue' : invoice.status)}
-            label={isOverdue() ? `${getDaysOverdue()}j retard` : getStatusLabel(invoice.status)}
+            label={isOverdue() ? t('invoices:labels.daysOverdue', { days: getDaysOverdue() }) : getStatusLabel(invoice.status)}
             color={isOverdue() ? 'error' : getStatusColor(invoice.status)}
             size="small"
             sx={{
@@ -388,7 +390,7 @@ function InvoiceDetail() {
   if (!invoice) {
     return (
       <Alert severity="error">
-        Facture introuvable
+        {t('invoices:messages.invoiceNotFound')}
       </Alert>
     );
   }
@@ -421,7 +423,7 @@ function InvoiceDetail() {
               onClick={() => setPdfDialogOpen(true)}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
-              Générer PDF
+              {t('invoices:buttons.generatePdf')}
             </Button>
             <Button
               variant="outlined"
@@ -429,7 +431,7 @@ function InvoiceDetail() {
               onClick={handleEdit}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
-              Modifier
+              {t('invoices:buttons.edit')}
             </Button>
             {invoice.status === 'draft' && (
               <Button
@@ -438,7 +440,7 @@ function InvoiceDetail() {
                 onClick={() => setSendDialogOpen(true)}
                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
               >
-                Envoyer
+                {t('invoices:buttons.send')}
               </Button>
             )}
             {(invoice.status === 'sent' || isOverdue()) && (
@@ -449,7 +451,7 @@ function InvoiceDetail() {
                 color="success"
                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
               >
-                Marquer payée
+                {t('invoices:buttons.markPaid')}
               </Button>
             )}
             <IconButton
@@ -468,11 +470,11 @@ function InvoiceDetail() {
             >
               <MenuItem onClick={() => setAddItemDialogOpen(true)} disabled={invoice.status !== 'draft'}>
                 <Add fontSize="small" sx={{ mr: 1 }} />
-                Ajouter un article
+                {t('invoices:buttons.addItem')}
               </MenuItem>
               <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                 <Delete fontSize="small" sx={{ mr: 1 }} />
-                Supprimer
+                {t('invoices:buttons.delete')}
               </MenuItem>
             </Menu>
           </Box>
@@ -488,7 +490,7 @@ function InvoiceDetail() {
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  Client
+                  {t('invoices:labels.client')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
                   <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
@@ -496,10 +498,10 @@ function InvoiceDetail() {
                   </Avatar>
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {invoice.client.name || 'Client sans nom'}
+                      {invoice.client.name || t('invoices:labels.clientWithoutName')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {invoice.client.email || 'Aucun email'}
+                      {invoice.client.email || t('invoices:labels.noEmail')}
                     </Typography>
                   </Box>
                 </Box>
@@ -510,7 +512,7 @@ function InvoiceDetail() {
                   onClick={() => navigate(`/clients/${invoice.client.id}`)}
                   sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.875rem' }}
                 >
-                  Voir le client
+                  {t('invoices:buttons.viewClient')}
                 </Button>
               </CardContent>
             </Card>
@@ -520,11 +522,11 @@ function InvoiceDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Warning color="warning" fontSize="small" />
                   <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                    Aucun client associé
+                    {t('invoices:labels.noClientAssociated')}
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  Cette facture n'a pas de client associé. Modifiez la facture pour l'ajouter.
+                  {t('invoices:labels.noClientDescription')}
                 </Typography>
               </CardContent>
             </Card>
@@ -542,7 +544,7 @@ function InvoiceDetail() {
               <Stack spacing={0.75}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                    Sous-total
+                    {t('invoices:labels.subtotal')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
                     {formatCurrency(invoice.subtotal || 0)}
@@ -550,7 +552,7 @@ function InvoiceDetail() {
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                    Taxes
+                    {t('invoices:labels.taxes')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
                     {formatCurrency(invoice.tax_amount || 0)}
@@ -559,7 +561,7 @@ function InvoiceDetail() {
                 <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
-                    TOTAL
+                    {t('invoices:labels.total')}
                   </Typography>
                   <Typography variant="h6" sx={{ fontSize: '1.1rem', color: 'white', fontWeight: 800, letterSpacing: '-0.02em' }}>
                     {formatCurrency(invoice.total_amount || 0)}
@@ -573,7 +575,7 @@ function InvoiceDetail() {
           <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
-                Articles ({invoice.items?.length || 0})
+                {t('invoices:labels.itemsCount', { count: invoice.items?.length || 0 })}
               </Typography>
               {invoice.items?.map((item, index) => (
                 <Box key={index} sx={{
@@ -625,7 +627,7 @@ function InvoiceDetail() {
               {(!invoice.items || invoice.items.length === 0) && (
                 <Box sx={{ textAlign: 'center', py: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    Aucun article
+                    {t('invoices:labels.noItems')}
                   </Typography>
                 </Box>
               )}
@@ -636,12 +638,12 @@ function InvoiceDetail() {
           <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
-                Dates
+                {t('invoices:labels.datesLabel')}
               </Typography>
               <Stack spacing={0.5}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                    Création
+                    {t('invoices:labels.creationDate')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                     {formatDate(invoice.created_at)}
@@ -649,7 +651,7 @@ function InvoiceDetail() {
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                    Émission
+                    {t('invoices:labels.issueDate')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                     {formatDate(invoice.issue_date)}
@@ -658,7 +660,7 @@ function InvoiceDetail() {
                 {invoice.due_date && (
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      Échéance
+                      {t('invoices:labels.dueDateShort')}
                     </Typography>
                     <Typography variant="body2" sx={{
                       fontSize: '0.75rem',
@@ -672,7 +674,7 @@ function InvoiceDetail() {
                 {invoice.payment_date && (
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      Paiement
+                      {t('invoices:labels.paymentDate')}
                     </Typography>
                     <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'success.main' }}>
                       {formatDate(invoice.payment_date)}
@@ -691,7 +693,7 @@ function InvoiceDetail() {
             <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                  Informations générales
+                  {t('invoices:labels.generalInformation')}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
@@ -703,7 +705,7 @@ function InvoiceDetail() {
                     <Grid item xs={12}>
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Description
+                          {t('invoices:labels.description')}
                         </Typography>
                         <Typography>{invoice.description}</Typography>
                       </Box>
@@ -718,7 +720,7 @@ function InvoiceDetail() {
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Articles facturés
+                    {t('invoices:labels.billedItems')}
                   </Typography>
                   <Button
                     size="small"
@@ -727,18 +729,18 @@ function InvoiceDetail() {
                     disabled={invoice.status !== 'draft'}
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
-                    Ajouter un article
+                    {t('invoices:buttons.addItem')}
                   </Button>
                 </Box>
                 <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>Référence</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Quantité</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Prix unitaire</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Total</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -757,7 +759,7 @@ function InvoiceDetail() {
                                   }
                                 }}
                                 onClick={() => navigate(`/products/${item.product}`)}
-                                title="Cliquer pour voir les détails du produit"
+                                title={t('invoices:tooltips.clickProductDetails')}
                               >
                                 {item.product_reference || '-'}
                               </Box>
@@ -777,7 +779,7 @@ function InvoiceDetail() {
                                   }
                                 }}
                                 onClick={() => navigate(`/products/${item.product}`)}
-                                title="Cliquer pour voir les détails du produit"
+                                title={t('invoices:tooltips.clickProductDetails')}
                               >
                                 {item.description}
                               </Box>
@@ -794,7 +796,7 @@ function InvoiceDetail() {
                         <TableRow>
                           <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                             <Typography color="text.secondary">
-                              Aucun article dans cette facture
+                              {t('invoices:labels.noItemsInInvoice')}
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -809,7 +811,7 @@ function InvoiceDetail() {
             <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                  Résumé financier
+                  {t('invoices:labels.financialSummary')}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
@@ -818,7 +820,7 @@ function InvoiceDetail() {
                         {formatCurrency(invoice.subtotal || 0)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Sous-total
+                        {t('invoices:labels.subtotal')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -828,7 +830,7 @@ function InvoiceDetail() {
                         {formatCurrency(invoice.tax_amount || 0)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Taxes
+                        {t('invoices:labels.taxes')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -838,7 +840,7 @@ function InvoiceDetail() {
                         {formatCurrency(invoice.total_amount || 0)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Total
+                        {t('invoices:labels.total')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -854,7 +856,7 @@ function InvoiceDetail() {
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Client
+                    {t('invoices:labels.client')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <Avatar sx={{ bgcolor: 'secondary.main' }}>
@@ -862,10 +864,10 @@ function InvoiceDetail() {
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {invoice.client.name || 'Client sans nom'}
+                        {invoice.client.name || t('invoices:labels.clientWithoutName')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {invoice.client.email || 'Aucun email'}
+                        {invoice.client.email || t('invoices:labels.noEmail')}
                       </Typography>
                     </Box>
                   </Box>
@@ -876,7 +878,7 @@ function InvoiceDetail() {
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                     startIcon={<Business />}
                   >
-                    Voir le client
+                    {t('invoices:buttons.viewClient')}
                   </Button>
                 </CardContent>
               </Card>
@@ -889,10 +891,10 @@ function InvoiceDetail() {
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'warning.main' }}>
-                        Aucun client associé
+                        {t('invoices:labels.noClientLinked')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Cette facture n'a pas de client
+                        {t('invoices:labels.noClientLinkedMessage')}
                       </Typography>
                     </Box>
                   </Box>
@@ -903,7 +905,7 @@ function InvoiceDetail() {
                     onClick={handleEdit}
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
-                    Associer un client
+                    {t('invoices:buttons.linkClient')}
                   </Button>
                 </CardContent>
               </Card>
@@ -913,7 +915,7 @@ function InvoiceDetail() {
             <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                  Dates importantes
+                  {t('invoices:labels.importantDates')}
                 </Typography>
                 <List dense>
                   <ListItem>
@@ -921,7 +923,7 @@ function InvoiceDetail() {
                       <CalendarToday color="action" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Date de création"
+                      primary={t('invoices:labels.creationDateLabel')}
                       secondary={formatDate(invoice.created_at)}
                     />
                   </ListItem>
@@ -930,7 +932,7 @@ function InvoiceDetail() {
                       <Send color="info" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Date d'émission"
+                      primary={t('invoices:labels.issueDateLabel')}
                       secondary={formatDate(invoice.issue_date)}
                     />
                   </ListItem>
@@ -940,7 +942,7 @@ function InvoiceDetail() {
                         <Schedule color={isOverdue() ? "error" : "warning"} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Date d'échéance"
+                        primary={t('invoices:labels.dueDateLabel')}
                         secondary={
                           <React.Fragment>
                             <Typography variant="body2" component="span" display="block" color={isOverdue() ? "error" : "inherit"}>
@@ -948,7 +950,7 @@ function InvoiceDetail() {
                             </Typography>
                             {isOverdue() && (
                               <Typography variant="caption" component="span" display="block" color="error">
-                                En retard de {getDaysOverdue()} jours
+                                {t('invoices:messages.overdueMessage', { days: getDaysOverdue() })}
                               </Typography>
                             )}
                           </React.Fragment>
@@ -962,7 +964,7 @@ function InvoiceDetail() {
                         <Payment color="success" />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Date de paiement"
+                        primary={t('invoices:labels.paymentDateLabel')}
                         secondary={formatDate(invoice.payment_date)}
                       />
                     </ListItem>
@@ -972,7 +974,7 @@ function InvoiceDetail() {
                       <Edit color="action" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Dernière modification"
+                      primary={t('invoices:labels.lastUpdate')}
                       secondary={formatDate(invoice.updated_at)}
                     />
                   </ListItem>
@@ -985,19 +987,19 @@ function InvoiceDetail() {
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Informations de paiement
+                    {t('invoices:labels.paymentInfo')}
                   </Typography>
                   <List dense>
                     <ListItem>
                       <ListItemText
-                        primary="Méthode de paiement"
-                        secondary={invoice.payment_method || 'Non spécifié'}
+                        primary={t('invoices:labels.paymentMethod')}
+                        secondary={invoice.payment_method || t('invoices:labels.notSpecified')}
                       />
                     </ListItem>
                     {invoice.payment_reference && (
                       <ListItem>
                         <ListItemText
-                          primary="Référence de paiement"
+                          primary={t('invoices:labels.paymentReference')}
                           secondary={invoice.payment_reference}
                         />
                       </ListItem>
@@ -1012,7 +1014,7 @@ function InvoiceDetail() {
               <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Créé par
+                    {t('invoices:labels.createdBy')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -1036,15 +1038,15 @@ function InvoiceDetail() {
 
       {/* Send Dialog */}
       <Dialog open={sendDialogOpen} onClose={() => setSendDialogOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 600 }}>Envoyer la facture</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>{t('invoices:dialogs.sendInvoice')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Êtes-vous sûr de vouloir envoyer cette facture au client ? Elle ne pourra plus être modifiée.
+            {t('invoices:messages.sendInvoiceConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSendDialogOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
-            Annuler
+            {t('invoices:buttons.cancel')}
           </Button>
           <Button
             onClick={handleSend}
@@ -1052,20 +1054,20 @@ function InvoiceDetail() {
             variant="contained"
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
-            Envoyer
+            {t('invoices:buttons.send')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Mark Paid Dialog */}
       <Dialog open={markPaidDialogOpen} onClose={() => setMarkPaidDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Marquer comme payée</DialogTitle>
+        <DialogTitle>{t('invoices:dialogs.markPaid')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Date de paiement"
+                label={t('invoices:fields.paymentDate')}
                 type="date"
                 value={paymentData.payment_date}
                 onChange={(e) => setPaymentData({ ...paymentData, payment_date: e.target.value })}
@@ -1075,46 +1077,46 @@ function InvoiceDetail() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Méthode de paiement"
+                label={t('invoices:fields.paymentMethod')}
                 value={paymentData.payment_method}
                 onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
-                placeholder="Ex: Virement, Chèque, Espèces..."
+                placeholder={t('invoices:fields.paymentMethodPlaceholder')}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Notes"
+                label={t('invoices:fields.notes')}
                 multiline
                 rows={3}
                 value={paymentData.notes}
                 onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                placeholder="Notes additionnelles..."
+                placeholder={t('invoices:fields.notesPlaceholder')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMarkPaidDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setMarkPaidDialogOpen(false)}>{t('invoices:buttons.cancel')}</Button>
           <Button
             onClick={handleMarkPaid}
             variant="contained"
             color="success"
           >
-            Marquer payée
+            {t('invoices:buttons.markPaid')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add Item Dialog */}
       <Dialog open={addItemDialogOpen} onClose={() => setAddItemDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajouter un article</DialogTitle>
+        <DialogTitle>{t('invoices:dialogs.addItem')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Référence produit"
+                label={t('invoices:fields.productReference')}
                 value={newItem.product_reference}
                 onChange={(e) => setNewItem({ ...newItem, product_reference: e.target.value })}
               />
@@ -1122,7 +1124,7 @@ function InvoiceDetail() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Description"
+                label={t('invoices:columns.description')}
                 required
                 value={newItem.description}
                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
@@ -1131,7 +1133,7 @@ function InvoiceDetail() {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Quantité"
+                label={t('invoices:columns.quantity')}
                 type="number"
                 required
                 value={newItem.quantity}
@@ -1141,7 +1143,7 @@ function InvoiceDetail() {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Prix unitaire"
+                label={t('invoices:columns.unitPrice')}
                 type="number"
                 required
                 value={newItem.unit_price}
@@ -1151,44 +1153,43 @@ function InvoiceDetail() {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddItemDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setAddItemDialogOpen(false)}>{t('invoices:buttons.cancel')}</Button>
           <Button
             onClick={handleAddItem}
             variant="contained"
             disabled={!newItem.description || newItem.quantity <= 0}
           >
-            Ajouter
+            {t('invoices:buttons.add')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* PDF Generation Dialog */}
       <Dialog open={pdfDialogOpen} onClose={() => setPdfDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Générer un PDF de la facture</DialogTitle>
+        <DialogTitle>{t('invoices:dialogs.generatePdf')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Modèle de facture</InputLabel>
+              <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
               <Select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                label="Modèle de facture"
+                label={t('invoices:fields.invoiceTemplate')}
               >
-                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>Classique</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>Professionnel</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
               </Select>
             </FormControl>
             <Typography variant="body2" color="text.secondary">
-              Choisissez le style de votre facture. Le PDF sera généré avec un QR code de vérification.
-              Vous pouvez prévisualiser, télécharger ou imprimer directement la facture.
+              {t('invoices:messages.pdfGenerationHelpText')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPdfDialogOpen(false)}>
-            Annuler
+            {t('invoices:buttons.cancel')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('preview')}
@@ -1196,7 +1197,7 @@ function InvoiceDetail() {
             disabled={generatingPdf}
             startIcon={<Receipt />}
           >
-            Aperçu
+            {t('invoices:buttons.preview')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('print')}
@@ -1205,7 +1206,7 @@ function InvoiceDetail() {
             disabled={generatingPdf}
             startIcon={<Print />}
           >
-            Imprimer
+            {t('invoices:buttons.print')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('download')}
@@ -1213,7 +1214,7 @@ function InvoiceDetail() {
             disabled={generatingPdf}
             startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
           >
-            {generatingPdf ? 'Génération...' : 'Télécharger'}
+            {generatingPdf ? t('invoices:labels.generatingLabel') : t('invoices:buttons.download')}
           </Button>
         </DialogActions>
       </Dialog>

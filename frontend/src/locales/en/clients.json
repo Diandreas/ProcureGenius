@@ -1,0 +1,101 @@
+{
+    "title": "Clients",
+    "newClient": "New Client",
+    "editClient": "Edit Client",
+    "search": {
+        "placeholder": "Search for a client..."
+    },
+    "filters": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "vip": "VIP",
+        "new": "New",
+        "all": "All",
+        "activeFilter": "Active Filter:",
+        "statusLabel": "Status",
+        "paymentTermsLabel": "Payment Terms",
+        "allPaymentTerms": "All"
+    },
+    "tabs": {
+        "info": "Info",
+        "invoices": "Invoices",
+        "products": "Products"
+    },
+    "labels": {
+        "contactPerson": "Contact Person",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "conditions": "Conditions",
+        "paymentTerms": "Payment Terms",
+        "creditLimit": "Credit Limit",
+        "quickActions": "Quick Actions",
+        "createdOn": "Created on",
+        "updatedOn": "Updated on",
+        "systemInfo": "System Information",
+        "generalInfo": "General Information",
+        "contactInfo": "Contact Information",
+        "commercialConditions": "Commercial Conditions",
+        "statusAndOptions": "Status and Options",
+        "name": "Client Name",
+        "legalName": "Legal Name (optional)",
+        "businessNumber": "Business Number (optional)",
+        "billingAddress": "Billing Address",
+        "activeClient": "Active Client",
+        "aiInfo": "AI Information",
+        "aiInfoDescription": "Payment risk scores and behavior patterns will be automatically calculated by AI once the client is created and has a transaction history."
+    },
+    "stats": {
+        "totalRevenue": "Total Revenue",
+        "productsPurchased": "Products Purchased",
+        "averageBasket": "Average Basket"
+    },
+    "actions": {
+        "createInvoice": "Create Invoice",
+        "sendEmail": "Send Email",
+        "call": "Call",
+        "cancel": "Cancel",
+        "create": "Create",
+        "modify": "Modify",
+        "save": "Save"
+    },
+    "tooltips": {
+        "editClient": "Edit Client",
+        "deleteClient": "Delete Client"
+    },
+    "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+    },
+    "messages": {
+        "noClients": "No clients",
+        "noClientsDescription": "No clients match your search criteria.",
+        "loadingError": "Error loading clients",
+        "loadClientError": "Error loading client",
+        "clientDeleted": "Client deleted",
+        "deleteError": "Error deleting client",
+        "clientNotFound": "Client not found",
+        "deleteConfirmation": "Delete {{name}}?",
+        "createSuccess": "Client created successfully",
+        "updateSuccess": "Client updated successfully",
+        "saveError": "Error saving client"
+    },
+    "validation": {
+        "nameRequired": "Name is required",
+        "emailInvalid": "Invalid email",
+        "emailRequired": "Email is required",
+        "phoneRequired": "Phone is required",
+        "contactPersonRequired": "Contact person is required",
+        "billingAddressRequired": "Billing address is required",
+        "paymentTermsRequired": "Payment terms are required",
+        "creditLimitPositive": "Credit limit must be positive"
+    },
+    "paymentTerms": {
+        "net15": "NET 15 - Payment within 15 days",
+        "net30": "NET 30 - Payment within 30 days",
+        "net45": "NET 45 - Payment within 45 days",
+        "net60": "NET 60 - Payment within 60 days",
+        "cash": "CASH - Cash payment",
+        "discount2_10Net30": "2/10 NET 30 - 2% discount if paid within 10 days, otherwise 30 days"
+    }
+}

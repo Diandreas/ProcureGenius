@@ -59,6 +59,7 @@ import {
   PictureAsPdf,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -67,6 +68,7 @@ function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['purchaseOrders', 'common']);
 
   const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +95,7 @@ function PurchaseOrderDetail() {
       const response = await purchaseOrdersAPI.get(id);
       setPurchaseOrder(response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du bon de commande', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.loadingError'), { variant: 'error' });
       navigate('/purchase-orders');
     } finally {
       setLoading(false);
@@ -105,13 +107,13 @@ function PurchaseOrderDetail() {
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ce bon de commande ?`)) {
+    if (window.confirm(t('purchaseOrders:messages.confirmDelete'))) {
       try {
         await purchaseOrdersAPI.delete(id);
-        enqueueSnackbar('Bon de commande supprimé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('purchaseOrders:messages.poDeletedSuccess'), { variant: 'success' });
         navigate('/purchase-orders');
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('purchaseOrders:messages.deleteError'), { variant: 'error' });
       }
     }
   };
@@ -120,10 +122,10 @@ function PurchaseOrderDetail() {
     try {
       const response = await purchaseOrdersAPI.approve(id);
       setPurchaseOrder(response.data);
-      enqueueSnackbar('Bon de commande approuvé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('purchaseOrders:messages.poApprovedSuccess'), { variant: 'success' });
       setApproveDialogOpen(false);
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'approbation', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.approvalError'), { variant: 'error' });
     }
   };
 
@@ -131,11 +133,11 @@ function PurchaseOrderDetail() {
     try {
       const response = await purchaseOrdersAPI.addItem(id, newItem);
       await fetchPurchaseOrder(); // Reload to get updated totals
-      enqueueSnackbar('Article ajouté avec succès', { variant: 'success' });
+      enqueueSnackbar(t('purchaseOrders:messages.itemAddedSuccess'), { variant: 'success' });
       setAddItemDialogOpen(false);
       setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'ajout de l\'article', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.itemAddError'), { variant: 'error' });
     }
   };
 
@@ -146,7 +148,7 @@ function PurchaseOrderDetail() {
 
       if (action === 'download') {
         downloadPDF(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
-        enqueueSnackbar('PDF téléchargé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
         openPDFInNewTab(pdfBlob);
       } else if (action === 'print') {
@@ -160,16 +162,16 @@ function PurchaseOrderDetail() {
             // Libérer l'URL après impression
             setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
           };
-          enqueueSnackbar('Fenêtre d\'impression ouverte', { variant: 'success' });
+          enqueueSnackbar(t('purchaseOrders:messages.printWindowOpened'), { variant: 'success' });
         } else {
-          enqueueSnackbar('Impossible d\'ouvrir la fenêtre d\'impression', { variant: 'error' });
+          enqueueSnackbar(t('purchaseOrders:messages.printWindowError'), { variant: 'error' });
         }
       }
 
       setPdfDialogOpen(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.pdfGenerationError'), { variant: 'error' });
     } finally {
       setGeneratingPdf(false);
     }
@@ -198,7 +200,7 @@ function PurchaseOrderDetail() {
   if (!purchaseOrder) {
     return (
       <Alert severity="error">
-        Bon de commande introuvable
+        {t('purchaseOrders:messages.poNotFound')}
       </Alert>
     );
   }
@@ -227,14 +229,14 @@ function PurchaseOrderDetail() {
             startIcon={<PictureAsPdf />}
             onClick={() => setPdfDialogOpen(true)}
           >
-            Générer PDF
+            {t('purchaseOrders:buttons.generatePDF')}
           </Button>
           <Button
             variant="outlined"
             startIcon={<Edit />}
             onClick={handleEdit}
           >
-            Modifier
+            {t('purchaseOrders:buttons.edit')}
           </Button>
           {purchaseOrder.status === 'draft' && (
             <Button
@@ -243,7 +245,7 @@ function PurchaseOrderDetail() {
               onClick={() => setApproveDialogOpen(true)}
               color="success"
             >
-              Approuver
+              {t('purchaseOrders:buttons.approve')}
             </Button>
           )}
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
@@ -256,11 +258,11 @@ function PurchaseOrderDetail() {
           >
             <MenuItem onClick={() => setAddItemDialogOpen(true)}>
               <Add fontSize="small" sx={{ mr: 1 }} />
-              Ajouter un article
+              {t('purchaseOrders:buttons.addItem')}
             </MenuItem>
             <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
               <Delete fontSize="small" sx={{ mr: 1 }} />
-              Supprimer
+              {t('purchaseOrders:buttons.delete')}
             </MenuItem>
           </Menu>
         </Box>
@@ -273,7 +275,7 @@ function PurchaseOrderDetail() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Informations générales
+                {t('purchaseOrders:labels.generalInformation')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -285,7 +287,7 @@ function PurchaseOrderDetail() {
                   <Grid item xs={12}>
                     <Box>
                       <Typography variant="caption" color="text.secondary">
-                        Description
+                        {t('purchaseOrders:labels.description')}
                       </Typography>
                       <Typography>{purchaseOrder.description}</Typography>
                     </Box>
@@ -300,7 +302,7 @@ function PurchaseOrderDetail() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
-                  Articles commandés
+                  {t('purchaseOrders:labels.orderedItems')}
                 </Typography>
                 <Button
                   size="small"
@@ -308,18 +310,18 @@ function PurchaseOrderDetail() {
                   onClick={() => setAddItemDialogOpen(true)}
                   disabled={purchaseOrder.status !== 'draft'}
                 >
-                  Ajouter un article
+                  {t('purchaseOrders:buttons.addItem')}
                 </Button>
               </Box>
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Référence</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell align="right">Quantité</TableCell>
-                      <TableCell align="right">Prix unitaire</TableCell>
-                      <TableCell align="right">Total</TableCell>
+                      <TableCell>{t('purchaseOrders:columns.reference')}</TableCell>
+                      <TableCell>{t('purchaseOrders:columns.description')}</TableCell>
+                      <TableCell align="right">{t('purchaseOrders:columns.quantity')}</TableCell>
+                      <TableCell align="right">{t('purchaseOrders:columns.unitPrice')}</TableCell>
+                      <TableCell align="right">{t('purchaseOrders:columns.total')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -336,7 +338,7 @@ function PurchaseOrderDetail() {
                       <TableRow>
                         <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                           <Typography color="text.secondary">
-                            Aucun article dans ce bon de commande
+                            {t('purchaseOrders:labels.noItemsInPO')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -351,7 +353,7 @@ function PurchaseOrderDetail() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Résumé financier
+                {t('purchaseOrders:labels.financialSummary')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
@@ -360,7 +362,7 @@ function PurchaseOrderDetail() {
                       {formatCurrency(purchaseOrder.subtotal || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Sous-total
+                      {t('purchaseOrders:labels.subtotal')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -370,7 +372,7 @@ function PurchaseOrderDetail() {
                       {formatCurrency(purchaseOrder.tax_amount || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Taxes
+                      {t('purchaseOrders:labels.taxes')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -380,7 +382,7 @@ function PurchaseOrderDetail() {
                       {formatCurrency(purchaseOrder.total_amount || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total
+                      {t('purchaseOrders:labels.total')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -396,7 +398,7 @@ function PurchaseOrderDetail() {
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Fournisseur
+                  {t('purchaseOrders:labels.supplier')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -416,7 +418,7 @@ function PurchaseOrderDetail() {
                   variant="outlined"
                   onClick={() => navigate(`/suppliers/${purchaseOrder.supplier.id}`)}
                 >
-                  Voir le fournisseur
+                  {t('purchaseOrders:buttons.viewSupplier')}
                 </Button>
               </CardContent>
             </Card>
@@ -426,7 +428,7 @@ function PurchaseOrderDetail() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Dates importantes
+                {t('purchaseOrders:labels.importantDates')}
               </Typography>
               <List dense>
                 <ListItem>
@@ -434,7 +436,7 @@ function PurchaseOrderDetail() {
                     <CalendarToday color="action" />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Date de création"
+                    primary={t('purchaseOrders:labels.creationDate')}
                     secondary={formatDate(purchaseOrder.created_at)}
                   />
                 </ListItem>
@@ -444,7 +446,7 @@ function PurchaseOrderDetail() {
                       <Schedule color="warning" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Date requise"
+                      primary={t('purchaseOrders:labels.requiredDate')}
                       secondary={formatDate(purchaseOrder.required_date)}
                     />
                   </ListItem>
@@ -454,7 +456,7 @@ function PurchaseOrderDetail() {
                     <Edit color="action" />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Dernière modification"
+                    primary={t('purchaseOrders:labels.lastUpdate')}
                     secondary={formatDate(purchaseOrder.updated_at)}
                   />
                 </ListItem>
@@ -467,7 +469,7 @@ function PurchaseOrderDetail() {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Créé par
+                  {t('purchaseOrders:labels.createdBy')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar sx={{ bgcolor: 'secondary.main' }}>
@@ -490,29 +492,29 @@ function PurchaseOrderDetail() {
 
       {/* Approve Dialog */}
       <Dialog open={approveDialogOpen} onClose={() => setApproveDialogOpen(false)}>
-        <DialogTitle>Approuver le bon de commande</DialogTitle>
+        <DialogTitle>{t('purchaseOrders:dialogs.approvePO')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Êtes-vous sûr de vouloir approuver ce bon de commande ? Cette action ne peut pas être annulée.
+            {t('purchaseOrders:messages.confirmApprove')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setApproveDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setApproveDialogOpen(false)}>{t('purchaseOrders:buttons.cancel')}</Button>
           <Button onClick={handleApprove} color="success" variant="contained">
-            Approuver
+            {t('purchaseOrders:buttons.approve')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add Item Dialog */}
       <Dialog open={addItemDialogOpen} onClose={() => setAddItemDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajouter un article</DialogTitle>
+        <DialogTitle>{t('purchaseOrders:dialogs.addItem')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Référence produit"
+                label={t('purchaseOrders:fields.productReference')}
                 value={newItem.product_reference}
                 onChange={(e) => setNewItem({ ...newItem, product_reference: e.target.value })}
               />
@@ -520,7 +522,7 @@ function PurchaseOrderDetail() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Description"
+                label={t('purchaseOrders:fields.itemDescription')}
                 required
                 value={newItem.description}
                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
@@ -529,7 +531,7 @@ function PurchaseOrderDetail() {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Quantité"
+                label={t('purchaseOrders:fields.itemQuantity')}
                 type="number"
                 required
                 value={newItem.quantity}
@@ -539,7 +541,7 @@ function PurchaseOrderDetail() {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Prix unitaire"
+                label={t('purchaseOrders:fields.itemUnitPrice')}
                 type="number"
                 required
                 value={newItem.unit_price}
@@ -549,43 +551,43 @@ function PurchaseOrderDetail() {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddItemDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setAddItemDialogOpen(false)}>{t('purchaseOrders:buttons.cancel')}</Button>
           <Button
             onClick={handleAddItem}
             variant="contained"
             disabled={!newItem.description || newItem.quantity <= 0}
           >
-            Ajouter
+            {t('purchaseOrders:buttons.add')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* PDF Generation Dialog */}
       <Dialog open={pdfDialogOpen} onClose={() => setPdfDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Générer un PDF du bon de commande</DialogTitle>
+        <DialogTitle>{t('purchaseOrders:dialogs.generatePDF')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Modèle de bon de commande</InputLabel>
+              <InputLabel>{t('purchaseOrders:labels.poTemplate')}</InputLabel>
               <Select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                label="Modèle de bon de commande"
+                label={t('purchaseOrders:labels.poTemplate')}
               >
-                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>Classique</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MODERN}>Moderne</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>Minimaliste</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>Professionnel</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('purchaseOrders:templates.classic')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('purchaseOrders:templates.modern')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('purchaseOrders:templates.minimal')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('purchaseOrders:templates.professional')}</MenuItem>
               </Select>
             </FormControl>
             <Typography variant="body2" color="text.secondary">
-              Choisissez le style de votre bon de commande. Le PDF sera généré avec un QR code de vérification.
+              {t('purchaseOrders:messages.pdfStyleInfo')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPdfDialogOpen(false)}>
-            Annuler
+            {t('purchaseOrders:buttons.cancel')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('preview')}
@@ -593,7 +595,7 @@ function PurchaseOrderDetail() {
             disabled={generatingPdf}
             startIcon={<PictureAsPdf />}
           >
-            Aperçu
+            {t('purchaseOrders:buttons.preview')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('print')}
@@ -601,7 +603,7 @@ function PurchaseOrderDetail() {
             disabled={generatingPdf}
             startIcon={<Print />}
           >
-            Imprimer
+            {t('purchaseOrders:buttons.print')}
           </Button>
           <Button
             onClick={() => handleGeneratePDF('download')}
@@ -609,7 +611,7 @@ function PurchaseOrderDetail() {
             disabled={generatingPdf}
             startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
           >
-            {generatingPdf ? 'Génération...' : 'Télécharger'}
+            {generatingPdf ? t('purchaseOrders:labels.generating') : t('purchaseOrders:buttons.download')}
           </Button>
         </DialogActions>
       </Dialog>

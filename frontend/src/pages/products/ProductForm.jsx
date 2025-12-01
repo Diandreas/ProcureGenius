@@ -63,37 +63,11 @@ import {
     Warehouse,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI } from '../../services/api';
 
-// Validation dynamique selon le type de produit
-const getValidationSchema = (productType, hasWarehouses = true) => {
-    const baseSchema = {
-        name: Yup.string().required('Le nom est requis'),
-        reference: Yup.string(),
-        description: Yup.string().required('La description est requise'),
-        price: Yup.number().positive('Le prix doit être positif').required('Le prix est requis'),
-        cost_price: Yup.number().min(0, 'Le coût ne peut pas être négatif'),
-        category_id: Yup.string().nullable(),
-        supplier_id: Yup.string().nullable(),
-    };
-
-    // Ajout des validations spécifiques selon le type
-    if (productType === 'physical') {
-        return Yup.object({
-            ...baseSchema,
-            // Warehouse requis seulement s'il y en a de disponibles
-            warehouse_id: hasWarehouses
-                ? Yup.string().required('L\'entrepôt est requis pour les produits physiques')
-                : Yup.string().nullable(),
-            stock_quantity: Yup.number().min(0, 'Le stock ne peut pas être négatif').required('Le stock est requis'),
-            low_stock_threshold: Yup.number().min(0, 'Le seuil ne peut pas être négatif').required('Requis'),
-        });
-    } else {
-        return Yup.object(baseSchema);
-    }
-};
-
 function ProductForm() {
+    const { t } = useTranslation(['products', 'common']);
     const navigate = useNavigate();
     const { id } = useParams();
     const { enqueueSnackbar } = useSnackbar();
@@ -137,6 +111,34 @@ function ProductForm() {
         is_active: true,
     });
 
+    // Validation dynamique selon le type de produit
+    const getValidationSchema = (productType, hasWarehouses = true) => {
+        const baseSchema = {
+            name: Yup.string().required(t('products:validation.nameRequired')),
+            reference: Yup.string(),
+            description: Yup.string().required(t('products:validation.descriptionRequired')),
+            price: Yup.number().positive(t('products:validation.pricePositive')).required(t('products:validation.priceRequired')),
+            cost_price: Yup.number().min(0, t('products:validation.costNegative')),
+            category_id: Yup.string().nullable(),
+            supplier_id: Yup.string().nullable(),
+        };
+
+        // Ajout des validations spécifiques selon le type
+        if (productType === 'physical') {
+            return Yup.object({
+                ...baseSchema,
+                // Warehouse requis seulement s'il y en a de disponibles
+                warehouse_id: hasWarehouses
+                    ? Yup.string().required(t('products:validation.warehouseRequired'))
+                    : Yup.string().nullable(),
+                stock_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
+                low_stock_threshold: Yup.number().min(0, t('products:validation.thresholdNegative')).required(t('products:validation.thresholdRequired')),
+            });
+        } else {
+            return Yup.object(baseSchema);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [id]);
@@ -177,9 +179,9 @@ function ProductForm() {
                 const warehousesRes = await warehousesAPI.list();
                 setWarehouses(warehousesRes.data.results || warehousesRes.data);
             } catch (error) {
-                console.error('Erreur warehouses:', error);
+                console.error('Error loading warehouses:', error);
                 setWarehouses([]);
-                enqueueSnackbar('Impossible de charger les entrepôts', { variant: 'warning' });
+                enqueueSnackbar(t('products:messages.warehousesLoadError'), { variant: 'warning' });
             }
 
             // Charger le produit si en mode édition
@@ -196,7 +198,7 @@ function ProductForm() {
             }
         } catch (error) {
             console.error('Erreur lors du chargement:', error);
-            enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
+            enqueueSnackbar(t('products:messages.loadingError'), { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -241,10 +243,10 @@ function ProductForm() {
 
             if (isEdit) {
                 await productsAPI.update(id, cleanedValues);
-                enqueueSnackbar('Produit modifié avec succès', { variant: 'success' });
+                enqueueSnackbar(t('products:messages.updateSuccess'), { variant: 'success' });
             } else {
                 await productsAPI.create(cleanedValues);
-                enqueueSnackbar('Produit créé avec succès', { variant: 'success' });
+                enqueueSnackbar(t('products:messages.createSuccess'), { variant: 'success' });
             }
             navigate('/products');
         } catch (error) {
@@ -265,12 +267,12 @@ function ProductForm() {
                 }
 
                 if (errorMessages.length > 0) {
-                    enqueueSnackbar(`Erreur: ${errorMessages.join(' | ')}`, { variant: 'error' });
+                    enqueueSnackbar(`${t('products:messages.saveError')}: ${errorMessages.join(' | ')}`, { variant: 'error' });
                 } else {
-                    enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+                    enqueueSnackbar(t('products:messages.saveError'), { variant: 'error' });
                 }
             } else {
-                enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+                enqueueSnackbar(t('products:messages.saveError'), { variant: 'error' });
             }
         } finally {
             setSubmitting(false);
@@ -288,7 +290,7 @@ function ProductForm() {
     const ProductTypeSelector = ({ value, onChange }) => (
         <Paper elevation={0} sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 2 }}>
             <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
-                Type de produit
+                {t('products:productTypes.title')}
             </Typography>
             <ToggleButtonGroup
                 value={value}
@@ -301,22 +303,22 @@ function ProductForm() {
                 <ToggleButton value="physical" sx={{ justifyContent: 'flex-start', px: 2 }}>
                     <Inventory sx={{ mr: 1 }} />
                     <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">Physique</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">Stock, entrepôt, livraison</Typography>}
+                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.physical')}</Typography>
+                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.physicalDesc')}</Typography>}
                     </Box>
                 </ToggleButton>
                 <ToggleButton value="digital" sx={{ justifyContent: 'flex-start', px: 2 }}>
                     <CloudDownload sx={{ mr: 1 }} />
                     <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">Numérique</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">Téléchargeable, licences</Typography>}
+                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.digital')}</Typography>
+                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.digitalDesc')}</Typography>}
                     </Box>
                 </ToggleButton>
                 <ToggleButton value="service" sx={{ justifyContent: 'flex-start', px: 2 }}>
                     <Build sx={{ mr: 1 }} />
                     <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">Service</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">Prestation, consultation</Typography>}
+                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.service')}</Typography>
+                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.serviceDesc')}</Typography>}
                     </Box>
                 </ToggleButton>
             </ToggleButtonGroup>
@@ -326,14 +328,14 @@ function ProductForm() {
     return (
         <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
             <Typography variant={isMobile ? "h5" : "h4"} fontWeight="bold" sx={{ mb: 3 }}>
-                {isEdit ? 'Modifier le produit' : 'Nouveau produit'}
+                {isEdit ? t('products:editProduct') : t('products:newProduct')}
             </Typography>
 
             {/* Message d'information si modules manquants */}
             {(suppliers.length === 0 || warehouses.length === 0) && (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                    {suppliers.length === 0 && 'Le module Fournisseurs n\'est pas activé. '}
-                    {warehouses.length === 0 && 'Aucun entrepôt disponible. Créez-en un dans les paramètres pour les produits physiques.'}
+                    {suppliers.length === 0 && t('products:messages.missingSupplierModule') + ' '}
+                    {warehouses.length === 0 && t('products:messages.missingWarehouses')}
                 </Alert>
             )}
 
@@ -359,12 +361,12 @@ function ProductForm() {
                                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                                             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
                                                 <Description sx={{ mr: 1 }} />
-                                                Informations générales
+                                                {t('products:labels.generalInfo')}
                                             </Typography>
                                             {!isMobile && (
                                                 <Chip
                                                     size="small"
-                                                    label="Obligatoire"
+                                                    label={t('products:labels.mandatory')}
                                                     color="primary"
                                                     variant="outlined"
                                                 />
@@ -377,7 +379,7 @@ function ProductForm() {
                                                     fullWidth
                                                     size={isMobile ? "small" : "medium"}
                                                     name="name"
-                                                    label="Nom du produit"
+                                                    label={t('products:labels.name')}
                                                     value={values.name}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -392,12 +394,12 @@ function ProductForm() {
                                                     fullWidth
                                                     size={isMobile ? "small" : "medium"}
                                                     name="reference"
-                                                    label="Référence"
+                                                    label={t('products:labels.reference')}
                                                     value={values.reference}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
                                                     error={touched.reference && Boolean(errors.reference)}
-                                                    helperText={touched.reference && errors.reference || "Laissez vide pour générer automatiquement"}
+                                                    helperText={touched.reference && errors.reference || t('products:messages.leaveEmptyForAuto')}
                                                     placeholder="PRD-0001"
                                                 />
                                             </Grid>
@@ -409,7 +411,7 @@ function ProductForm() {
                                                     rows={isMobile ? 3 : 4}
                                                     size={isMobile ? "small" : "medium"}
                                                     name="description"
-                                                    label="Description détaillée"
+                                                    label={t('products:labels.detailedDescription')}
                                                     value={values.description}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -421,16 +423,16 @@ function ProductForm() {
 
                                             <Grid item xs={12} md={6}>
                                                 <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                    <InputLabel>Catégorie</InputLabel>
+                                                    <InputLabel>{t('products:labels.category')}</InputLabel>
                                                     <Select
                                                         name="category_id"
                                                         value={values.category_id}
                                                         onChange={handleChange}
-                                                        label="Catégorie"
+                                                        label={t('products:labels.category')}
                                                         startAdornment={<Category sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                     >
                                                         <MenuItem value="">
-                                                            <em>Non catégorisé</em>
+                                                            <em>{t('products:labels.uncategorized')}</em>
                                                         </MenuItem>
                                                         {categories.map((category) => (
                                                             <MenuItem key={category.id} value={category.id}>
@@ -445,24 +447,24 @@ function ProductForm() {
                                             <Fade in={values.product_type === 'physical'} unmountOnExit>
                                                 <Grid item xs={12} md={6}>
                                                     <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                        <InputLabel>Source d'approvisionnement</InputLabel>
+                                                        <InputLabel>{t('products:labels.sourceType')}</InputLabel>
                                                         <Select
                                                             name="source_type"
                                                             value={values.source_type}
                                                             onChange={handleChange}
-                                                            label="Source d'approvisionnement"
+                                                            label={t('products:labels.sourceType')}
                                                         >
                                                             <MenuItem value="purchased">
                                                                 <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
-                                                                Acheté (fournisseur)
+                                                                {t('products:sourceTypes.purchased')}
                                                             </MenuItem>
                                                             <MenuItem value="manufactured">
                                                                 <Construction sx={{ mr: 1, fontSize: 20 }} />
-                                                                Fabriqué (interne)
+                                                                {t('products:sourceTypes.manufactured')}
                                                             </MenuItem>
                                                             <MenuItem value="resale">
                                                                 <Storefront sx={{ mr: 1, fontSize: 20 }} />
-                                                                Revente
+                                                                {t('products:sourceTypes.resale')}
                                                             </MenuItem>
                                                         </Select>
                                                     </FormControl>
@@ -477,7 +479,7 @@ function ProductForm() {
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                             <AttachMoney sx={{ mr: 1 }} />
-                                            Tarification
+                                            {t('products:labels.pricing')}
                                         </Typography>
 
                                         <Grid container spacing={2}>
@@ -487,9 +489,9 @@ function ProductForm() {
                                                     size={isMobile ? "small" : "medium"}
                                                     name="price"
                                                     label={
-                                                        values.product_type === 'service' ? 'Prix de vente' :
-                                                            values.product_type === 'digital' ? 'Prix par licence' :
-                                                                'Prix de vente'
+                                                        values.product_type === 'service' ? t('products:labels.sellingPrice') :
+                                                            values.product_type === 'digital' ? t('products:labels.pricePerLicense') :
+                                                                t('products:labels.sellingPrice')
                                                     }
                                                     type="number"
                                                     value={values.price}
@@ -509,7 +511,7 @@ function ProductForm() {
                                                     fullWidth
                                                     size={isMobile ? "small" : "medium"}
                                                     name="cost_price"
-                                                    label="Prix d'achat / Coût"
+                                                    label={t('products:labels.costPrice')}
                                                     type="number"
                                                     value={values.cost_price}
                                                     onChange={handleChange}
@@ -532,7 +534,7 @@ function ProductForm() {
                                         <CardContent>
                                             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                                 {values.product_type === 'digital' ? <Cloud sx={{ mr: 1 }} /> : <LocalShipping sx={{ mr: 1 }} />}
-                                                {values.product_type === 'digital' ? 'Distribution numérique' : 'Stock et logistique'}
+                                                {values.product_type === 'digital' ? t('products:labels.digitalDistribution') : t('products:labels.inventoryAndLogistics')}
                                             </Typography>
 
                                             <Grid container spacing={2}>
@@ -544,17 +546,17 @@ function ProductForm() {
                                                         error={touched.supplier_id && Boolean(errors.supplier_id)}
                                                     >
                                                         <InputLabel>
-                                                            {values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur (optionnel)'}
+                                                            {values.product_type === 'digital' ? t('products:labels.publisher') : t('products:labels.supplierOptional')}
                                                         </InputLabel>
                                                         <Select
                                                             name="supplier_id"
                                                             value={values.supplier_id}
                                                             onChange={handleChange}
-                                                            label={values.product_type === 'digital' ? 'Éditeur / Plateforme' : 'Fournisseur (optionnel)'}
+                                                            label={values.product_type === 'digital' ? t('products:labels.publisher') : t('products:labels.supplierOptional')}
                                                             startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                         >
                                                             <MenuItem value="">
-                                                                <em>Aucun fournisseur</em>
+                                                                <em>{t('products:labels.noSupplier')}</em>
                                                             </MenuItem>
                                                             {suppliers.map((supplier) => (
                                                                 <MenuItem key={supplier.id} value={supplier.id}>
@@ -567,7 +569,7 @@ function ProductForm() {
                                                         )}
                                                         {suppliers.length === 0 && (
                                                             <FormHelperText>
-                                                                Module Fournisseurs non activé ou vide
+                                                                {t('products:messages.missingSupplierModule')}
                                                             </FormHelperText>
                                                         )}
                                                     </FormControl>
@@ -582,22 +584,22 @@ function ProductForm() {
                                                             required={warehouses.length > 0}
                                                             error={touched.warehouse_id && Boolean(errors.warehouse_id)}
                                                         >
-                                                            <InputLabel>Entrepôt principal {warehouses.length > 0 ? '' : '(optionnel)'}</InputLabel>
+                                                            <InputLabel>{t('products:labels.warehouseMain')} {warehouses.length > 0 ? '' : t('products:labels.optional')}</InputLabel>
                                                             <Select
                                                                 name="warehouse_id"
                                                                 value={values.warehouse_id}
                                                                 onChange={handleChange}
-                                                                label={`Entrepôt principal ${warehouses.length > 0 ? '' : '(optionnel)'}`}
+                                                                label={`${t('products:labels.warehouseMain')} ${warehouses.length > 0 ? '' : t('products:labels.optional')}`}
                                                                 startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                             >
                                                                 {warehouses.length === 0 ? (
                                                                     <MenuItem value="">
-                                                                        <em>Aucun entrepôt disponible</em>
+                                                                        <em>{t('products:labels.noWarehouseAvailable')}</em>
                                                                     </MenuItem>
                                                                 ) : (
                                                                     <>
                                                                         <MenuItem value="">
-                                                                            <em>Sélectionner un entrepôt</em>
+                                                                            <em>{t('products:labels.selectWarehouse')}</em>
                                                                         </MenuItem>
                                                                         {warehouses.map((warehouse) => (
                                                                             <MenuItem key={warehouse.id} value={warehouse.id}>
@@ -612,7 +614,7 @@ function ProductForm() {
                                                             )}
                                                             {warehouses.length === 0 && (
                                                                 <FormHelperText>
-                                                                    ⚠️ Aucun entrepôt disponible. Le produit sera créé sans entrepôt.
+                                                                    {t('products:messages.noWarehouseAvailable')}
                                                                 </FormHelperText>
                                                             )}
                                                         </FormControl>
@@ -626,7 +628,7 @@ function ProductForm() {
                                                         fullWidth
                                                         size={isMobile ? "small" : "medium"}
                                                         name="stock_quantity"
-                                                        label={values.product_type === 'digital' ? 'Nombre de licences' : 'Quantité en stock'}
+                                                        label={values.product_type === 'digital' ? t('products:labels.licensesCount') : t('products:labels.stockQuantity')}
                                                         type="number"
                                                         value={values.stock_quantity}
                                                         onChange={handleChange}
@@ -647,13 +649,13 @@ function ProductForm() {
                                                             fullWidth
                                                             size={isMobile ? "small" : "medium"}
                                                             name="low_stock_threshold"
-                                                            label="Seuil de stock bas"
+                                                            label={t('products:labels.lowStockThreshold')}
                                                             type="number"
                                                             value={values.low_stock_threshold}
                                                             onChange={handleChange}
                                                             onBlur={handleBlur}
                                                             error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                            helperText={touched.low_stock_threshold && errors.low_stock_threshold || "Alerte si stock <= ce seuil"}
+                                                            helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
                                                             required
                                                         />
                                                     </Grid>
@@ -670,7 +672,7 @@ function ProductForm() {
                                 <Card sx={{ mb: 2 }}>
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom>
-                                            Statut
+                                            {t('products:labels.status')}
                                         </Typography>
                                         <FormControlLabel
                                             control={
@@ -686,12 +688,12 @@ function ProductForm() {
                                                     {values.is_active ? (
                                                         <>
                                                             <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                                            Produit actif
+                                                            {t('products:labels.activeProduct')}
                                                         </>
                                                     ) : (
                                                         <>
                                                             <Warning sx={{ mr: 1, color: 'warning.main' }} />
-                                                            Produit inactif
+                                                            {t('products:labels.inactiveProduct')}
                                                         </>
                                                     )}
                                                 </Box>
@@ -705,14 +707,14 @@ function ProductForm() {
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Image sx={{ mr: 1 }} />
-                                            Image
+                                            {t('products:labels.image')}
                                         </Typography>
 
                                         {values.image && typeof values.image === 'string' && (
                                             <Box sx={{ mb: 2, textAlign: 'center' }}>
                                                 <img
                                                     src={values.image}
-                                                    alt="Produit"
+                                                    alt={t('products:labels.productImage')}
                                                     style={{
                                                         maxWidth: '100%',
                                                         maxHeight: 150,
@@ -730,7 +732,7 @@ function ProductForm() {
                                             component="label"
                                             size={isMobile ? "small" : "medium"}
                                         >
-                                            {values.image ? 'Changer' : 'Ajouter'}
+                                            {values.image ? t('products:actions.change') : t('products:actions.add')}
                                             <input
                                                 type="file"
                                                 hidden
@@ -751,16 +753,16 @@ function ProductForm() {
                                 <Card>
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom>
-                                            Résumé
+                                            {t('products:labels.summary')}
                                         </Typography>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                             <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="caption" color="text.secondary">Type:</Typography>
+                                                <Typography variant="caption" color="text.secondary">{t('products:labels.type')}:</Typography>
                                                 <Chip
                                                     size="small"
                                                     label={
-                                                        values.product_type === 'physical' ? 'Physique' :
-                                                            values.product_type === 'digital' ? 'Numérique' : 'Service'
+                                                        values.product_type === 'physical' ? t('products:productTypes.physical') :
+                                                            values.product_type === 'digital' ? t('products:productTypes.digital') : t('products:productTypes.service')
                                                     }
                                                     color={
                                                         values.product_type === 'physical' ? 'primary' :
@@ -770,14 +772,14 @@ function ProductForm() {
                                             </Box>
                                             {values.price && (
                                                 <Box display="flex" justifyContent="space-between">
-                                                    <Typography variant="caption" color="text.secondary">Prix:</Typography>
+                                                    <Typography variant="caption" color="text.secondary">{t('products:labels.price')}:</Typography>
                                                     <Typography variant="body2" fontWeight="bold">${values.price}</Typography>
                                                 </Box>
                                             )}
                                             {values.stock_quantity && values.product_type !== 'service' && (
                                                 <Box display="flex" justifyContent="space-between">
                                                     <Typography variant="caption" color="text.secondary">
-                                                        {values.product_type === 'digital' ? 'Licences:' : 'Stock:'}
+                                                        {values.product_type === 'digital' ? t('products:labels.licensesCount') : t('products:labels.stockQuantity')}:
                                                     </Typography>
                                                     <Typography variant="body2">{values.stock_quantity}</Typography>
                                                 </Box>
@@ -799,26 +801,26 @@ function ProductForm() {
                                     right: isMobile ? 0 : 'auto',
                                     backgroundColor: isMobile ? 'background.paper' : 'transparent',
                                     p: isMobile ? 2 : 0,
-                                    boxShadow: isMobile ? '0 -2px 10px rgba(0,0,0,0.1)' : 'none',
-                                    zIndex: isMobile ? 1000 : 'auto',
+                                    zIndex: isMobile ? 1000 : 1,
+                                    boxShadow: isMobile ? 4 : 0,
+                                    width: isMobile ? '100%' : 'auto',
+                                    margin: isMobile ? '-16px' : 0,
                                 }}>
                                     <Button
                                         variant="outlined"
                                         startIcon={<Cancel />}
                                         onClick={() => navigate('/products')}
                                         disabled={isSubmitting}
-                                        size={isMobile ? "medium" : "large"}
                                     >
-                                        Annuler
+                                        {t('products:actions.cancel')}
                                     </Button>
                                     <Button
                                         type="submit"
                                         variant="contained"
                                         startIcon={<Save />}
                                         disabled={isSubmitting}
-                                        size={isMobile ? "medium" : "large"}
                                     >
-                                        {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? 'Modifier' : 'Créer')}
+                                        {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
                                     </Button>
                                 </Box>
                             </Grid>
@@ -826,9 +828,6 @@ function ProductForm() {
                     </Form>
                 )}
             </Formik>
-
-            {/* Espaceur pour mobile (éviter que les boutons fixes cachent le contenu) */}
-            {isMobile && <Box sx={{ height: 80 }} />}
         </Box>
     );
 }

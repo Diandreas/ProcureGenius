@@ -80,7 +80,9 @@
     "validationError": "Validation error",
     "permissionDenied": "Permission denied",
     "notFound": "Not found",
-    "sessionExpired": "Session expired"
+    "sessionExpired": "Session expired",
+    "clientCreatedSuccess": "Client created successfully",
+    "productCreatedSuccess": "Product created successfully"
   },
   "validation": {
     "required": "This field is required",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Card,
@@ -20,6 +21,7 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Search,
@@ -34,40 +36,37 @@ import {
   CheckCircle,
   DesignServices,
 } from '@mui/icons-material';
-import { productsAPI, warehousesAPI } from '../../services/api';
+import { useTranslation } from 'react-i18next';
+import { fetchProducts } from '../../store/slices/productsSlice';
+import { warehousesAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Products() {
-  const [products, setProducts] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [warehouseFilter, setWarehouseFilter] = useState('');
-  const [stockFilter, setStockFilter] = useState(''); // Nouveau: filtre de stock
-  const [showFilters, setShowFilters] = useState(false);
+  const { t } = useTranslation(['products', 'common']);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  useEffect(() => {
-    fetchProducts();
-    fetchWarehouses();
-  }, []);
+  // Redux state
+  const { products, loading, error } = useSelector((state) => state.products);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await productsAPI.list();
-      setProducts(response.data.results || response.data);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Local state for warehouses (not in Redux yet)
+  const [warehouses, setWarehouses] = useState([]);
+
+  // Local UI state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [warehouseFilter, setWarehouseFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+    fetchWarehouses();
+  }, [dispatch]);
 
   const fetchWarehouses = async () => {
     try {
@@ -97,12 +96,12 @@ function Products() {
       }
       if (stockFilter === 'low_stock') {
         return product.product_type === 'physical' &&
-               product.stock_quantity > 0 &&
-               product.stock_quantity <= (product.low_stock_threshold || 10);
+          product.stock_quantity > 0 &&
+          product.stock_quantity <= (product.low_stock_threshold || 10);
       }
       if (stockFilter === 'ok') {
         return product.product_type === 'physical' &&
-               product.stock_quantity > (product.low_stock_threshold || 10);
+          product.stock_quantity > (product.low_stock_threshold || 10);
       }
       if (stockFilter === 'services') {
         return product.product_type !== 'physical';
@@ -202,6 +201,7 @@ function Products() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  display: 'block',
                 }}
               >
                 {product.supplier_name}
@@ -235,7 +235,7 @@ function Products() {
               </Typography>
               {product.stock_quantity === 0 && (
                 <Chip
-                  label="Rupture"
+                  label={t('products:stockStatus.outOfStock')}
                   size="small"
                   color="error"
                   sx={{ fontSize: '0.65rem', height: 18 }}
@@ -243,7 +243,7 @@ function Products() {
               )}
               {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
                 <Chip
-                  label="Bas"
+                  label={t('products:stockStatus.low')}
                   size="small"
                   color="warning"
                   sx={{ fontSize: '0.65rem', height: 18 }}
@@ -256,7 +256,7 @@ function Products() {
         {/* Footer */}
         <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
-            label={product.is_active ? 'Actif' : 'Inactif'}
+            label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
             size="small"
             color={product.is_active ? 'success' : 'default'}
             sx={{ fontSize: '0.7rem', height: 20 }}
@@ -275,7 +275,7 @@ function Products() {
     </Card>
   );
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <Box
         display="flex"
@@ -284,6 +284,14 @@ function Products() {
         minHeight="400px"
       >
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{t('products:messages.loadingError')}</Alert>
       </Box>
     );
   }
@@ -310,7 +318,7 @@ function Products() {
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Produits
+          {t('products:title')}
         </Typography>
 
         {/* Stats Cards - Cliquables pour filtrer */}
@@ -341,7 +349,7 @@ function Products() {
                       {inStock}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      En stock
+                      {t('products:filters.inStock')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -375,7 +383,7 @@ function Products() {
                       {lowStock}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Stock bas
+                      {t('products:filters.lowStock')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -409,7 +417,7 @@ function Products() {
                       {outOfStock}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Rupture
+                      {t('products:filters.outOfStock')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -443,7 +451,7 @@ function Products() {
                       {servicesCount}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Services
+                      {t('products:filters.services')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -477,7 +485,7 @@ function Products() {
                       {totalProducts}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Tous
+                      {t('products:filters.all')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -490,21 +498,21 @@ function Products() {
         {stockFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Filtre actif:
+              {t('products:filters.activeFilter')}
             </Typography>
             <Chip
               label={
-                stockFilter === 'ok' ? 'En stock' :
-                stockFilter === 'low_stock' ? 'Stock bas' :
-                stockFilter === 'out_of_stock' ? 'Rupture de stock' :
-                stockFilter === 'services' ? 'Services/Digital' : ''
+                stockFilter === 'ok' ? t('products:filters.inStock') :
+                  stockFilter === 'low_stock' ? t('products:filters.lowStock') :
+                    stockFilter === 'out_of_stock' ? t('products:filters.outOfStock') :
+                      stockFilter === 'services' ? t('products:filters.services') : ''
               }
               onDelete={() => setStockFilter('')}
               color={
                 stockFilter === 'ok' ? 'success' :
-                stockFilter === 'low_stock' ? 'warning' :
-                stockFilter === 'out_of_stock' ? 'error' :
-                stockFilter === 'services' ? 'info' : 'default'
+                  stockFilter === 'low_stock' ? 'warning' :
+                    stockFilter === 'out_of_stock' ? 'error' :
+                      stockFilter === 'services' ? 'info' : 'default'
               }
               size="small"
             />
@@ -520,7 +528,7 @@ function Products() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher un produit..."
+                placeholder={t('products:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -550,42 +558,42 @@ function Products() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('products:filters.statusLabel')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('products:filters.statusLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="available">Disponible</MenuItem>
-                      <MenuItem value="unavailable">Indisponible</MenuItem>
+                      <MenuItem value="">{t('products:filters.all')}</MenuItem>
+                      <MenuItem value="available">{t('products:status.available')}</MenuItem>
+                      <MenuItem value="unavailable">{t('products:status.unavailable')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Catégorie</InputLabel>
+                    <InputLabel>{t('products:filters.categoryLabel')}</InputLabel>
                     <Select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      label="Catégorie"
+                      label={t('products:filters.categoryLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Toutes</MenuItem>
+                      <MenuItem value="">{t('products:filters.allCategories')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Entrepôt</InputLabel>
+                    <InputLabel>{t('products:filters.warehouseLabel')}</InputLabel>
                     <Select
                       value={warehouseFilter}
                       onChange={(e) => setWarehouseFilter(e.target.value)}
-                      label="Entrepôt"
+                      label={t('products:filters.warehouseLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
+                      <MenuItem value="">{t('products:filters.allWarehouses')}</MenuItem>
                       {warehouses.map((warehouse) => (
                         <MenuItem key={warehouse.id} value={warehouse.id}>
                           {warehouse.code}
@@ -603,9 +611,9 @@ function Products() {
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
         <EmptyState
-          title="Aucun produit"
-          description="Aucun produit ne correspond à vos critères de recherche."
-          actionLabel="Nouveau produit"
+          title={t('products:messages.noProducts')}
+          description={t('products:messages.noProductsDescription')}
+          actionLabel={t('products:newProduct')}
           onAction={() => navigate('/products/new')}
         />
       ) : (

@@ -1,0 +1,106 @@
+{
+    "title": "Dashboard",
+    "editMode": "Edit Mode",
+    "customize": "Customize",
+    "refresh": "Refresh",
+    "addWidget": "Add Widget",
+    "preview": "Preview",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveSuccess": "Dashboard saved successfully!",
+    "saveError": "Error saving dashboard",
+    "confirmSave": "Do you want to save your changes?",
+    "emptyState": {
+        "title": "Your dashboard is empty",
+        "description": "Start by adding widgets to visualize your data",
+        "button": "Add my first widget"
+    },
+    "editHint": "Drag and drop widgets to reorganize, drag corners to resize",
+    "widgetPlaceholder": "Widget \"{{code}}\" in development",
+    "periods": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last_7_days": "Last 7 days",
+        "last_30_days": "Last 30 days",
+        "last_90_days": "Last 90 days",
+        "this_month": "This month",
+        "this_year": "This year"
+    },
+    "library": {
+        "title": "Widget Library",
+        "searchPlaceholder": "Search for a widget...",
+        "all": "All",
+        "noResults": "No widgets found",
+        "add": "Add",
+        "added": "Added",
+        "modules": {
+            "global": "Global",
+            "products": "Products",
+            "clients": "Clients",
+            "invoices": "Invoices",
+            "purchase_orders": "Purchase Orders",
+            "ai": "AI Assistant"
+        }
+    },
+    "widgets": {
+        "financial_summary": "Financial Overview",
+        "recent_activity": "Recent Activity",
+        "alerts_notifications": "Alerts & Notifications",
+        "global_performance": "Global Performance",
+        "products_overview": "Stock Overview",
+        "top_selling_products": "Top Selling Products",
+        "stock_alerts": "Stock Alerts",
+        "margin_analysis": "Margin Analysis",
+        "stock_movements": "Stock Movements",
+        "clients_overview": "Clients Overview",
+        "top_clients": "Top Clients",
+        "clients_at_risk": "Clients at Risk",
+        "client_acquisition": "Client Acquisition",
+        "client_segmentation": "Client Segmentation",
+        "invoices_overview": "Invoices Overview",
+        "invoices_status": "Invoices Status",
+        "revenue_chart": "Revenue",
+        "overdue_invoices": "Overdue Invoices",
+        "payment_performance": "Payment Performance",
+        "recent_invoices": "Recent Invoices",
+        "po_overview": "Purchase Orders Overview",
+        "po_status": "Purchase Orders Status",
+        "expenses_chart": "Purchasing Expenses",
+        "overdue_po": "Overdue POs",
+        "supplier_performance": "Supplier Performance",
+        "pending_approvals": "Pending Approvals",
+        "budget_tracking": "Budget Tracking",
+        "ai_usage": "AI Usage",
+        "ai_documents": "Processed Documents",
+        "ai_last_conversation": "Last Conversation",
+        "financial_summary_metrics": {
+            "revenue": "Revenue",
+            "expenses": "Expenses",
+            "net_profit": "Net Profit",
+            "margin": "Margin"
+        },
+        "global_performance_metrics": {
+            "total_revenue": "Total Revenue",
+            "clients": "Clients"
+        },
+        "clients_overview_metrics": {
+            "total": "Total",
+            "active": "Active",
+            "new": "New"
+        },
+        "client_acquisition_metrics": {
+            "new_clients": "New Clients"
+        },
+        "recent_activity_empty": "No activity",
+        "alerts_empty": "No alerts",
+        "top_clients_empty": "No clients",
+        "clients_at_risk_empty": "No clients at risk",
+        "client_segmentation_empty": "No data",
+        "invoices_label": "invoice(s)",
+        "overdue_invoices_label": "overdue invoice(s)"
+    },
+    "actions": {
+        "remove": "Remove"
+    }
+}

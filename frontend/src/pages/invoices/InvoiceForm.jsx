@@ -46,6 +46,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -53,6 +54,7 @@ import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 
 function InvoiceForm() {
+  const { t } = useTranslation(['invoices', 'common']);
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -104,7 +106,7 @@ function InvoiceForm() {
       const response = await clientsAPI.list();
       setClients(response.data.results || []);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement des clients', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.loadClientsError'), { variant: 'error' });
     }
   };
 
@@ -113,7 +115,7 @@ function InvoiceForm() {
       const response = await productsAPI.list();
       setProducts(response.data.results || []);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement des produits', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.loadProductsError'), { variant: 'error' });
     }
   };
 
@@ -133,7 +135,7 @@ function InvoiceForm() {
       });
       setItems(invoice.items || []);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement de la facture', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.loadInvoiceFormError'), { variant: 'error' });
       navigate('/invoices');
     } finally {
       setLoading(false);
@@ -154,7 +156,7 @@ function InvoiceForm() {
 
   // Quick Create handlers
   const handleClientCreated = (result) => {
-    enqueueSnackbar(result.message || 'Client créé avec succès', { variant: 'success' });
+    enqueueSnackbar(result.message || t('common:messages.clientCreatedSuccess'), { variant: 'success' });
     // Ajouter le nouveau client à la liste
     setClients(prev => [...prev, result.data]);
     // Sélectionner automatiquement le nouveau client
@@ -163,7 +165,7 @@ function InvoiceForm() {
   };
 
   const handleProductCreated = (result) => {
-    enqueueSnackbar(result.message || 'Produit créé avec succès', { variant: 'success' });
+    enqueueSnackbar(result.message || t('common:messages.productCreatedSuccess'), { variant: 'success' });
     // Ajouter le nouveau produit à la liste
     setProducts(prev => [...prev, result.data]);
     // Pré-remplir le formulaire d'item avec ce produit
@@ -179,7 +181,7 @@ function InvoiceForm() {
 
   const handleAddItem = () => {
     if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
-      enqueueSnackbar('Veuillez remplir tous les champs requis', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.fillAllRequiredFields'), { variant: 'error' });
       return;
     }
 
@@ -228,17 +230,17 @@ function InvoiceForm() {
     e.preventDefault();
 
     if (!formData.client) {
-      enqueueSnackbar('Veuillez sélectionner un client', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.selectClientRequired'), { variant: 'error' });
       return;
     }
 
     if (!formData.title.trim()) {
-      enqueueSnackbar('Veuillez saisir un titre', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.enterTitleRequired'), { variant: 'error' });
       return;
     }
 
     if (items.length === 0) {
-      enqueueSnackbar('Veuillez ajouter au moins un article', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.addAtLeastOneItem'), { variant: 'error' });
       return;
     }
 
@@ -261,10 +263,10 @@ function InvoiceForm() {
 
       if (isEdit) {
         await invoicesAPI.update(id, payload);
-        enqueueSnackbar('Facture modifiée avec succès', { variant: 'success' });
+        enqueueSnackbar(t('invoices:messages.invoiceUpdatedSuccess'), { variant: 'success' });
       } else {
         await invoicesAPI.create(payload);
-        enqueueSnackbar('Facture créée avec succès', { variant: 'success' });
+        enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
       }
 
       navigate('/invoices');
@@ -272,7 +274,7 @@ function InvoiceForm() {
       console.error('Erreur API:', error);
       console.error('Response data:', error.response?.data);
 
-      let errorMessage = isEdit ? 'Erreur lors de la modification' : 'Erreur lors de la création';
+      let errorMessage = isEdit ? t('invoices:messages.updateError') : t('invoices:messages.creationError');
 
       // Afficher les erreurs de validation détaillées
       if (error.response?.data) {
@@ -395,7 +397,7 @@ function InvoiceForm() {
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 600 }}>
-            {isEdit ? 'Modifier la facture' : 'Nouvelle facture'}
+            {isEdit ? t('invoices:editInvoice') : t('invoices:newInvoice')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -405,7 +407,7 @@ function InvoiceForm() {
             size={isMobile ? 'small' : 'medium'}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
-            Annuler
+            {t('invoices:buttons.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -415,7 +417,7 @@ function InvoiceForm() {
             size={isMobile ? 'small' : 'medium'}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
-            {loading ? 'Enregistrement...' : 'Enregistrer'}
+            {loading ? t('invoices:labels.savingLabel') : t('invoices:buttons.save')}
           </Button>
         </Box>
       </Box>
@@ -427,12 +429,12 @@ function InvoiceForm() {
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  Informations générales
+                  {t('invoices:labels.generalInformation')}
                 </Typography>
                 <Stack spacing={2}>
                   <TextField
                     fullWidth
-                    label="Titre de la facture"
+                    label={t('invoices:labels.invoiceTitleField')}
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
@@ -441,7 +443,7 @@ function InvoiceForm() {
                   />
                   <TextField
                     fullWidth
-                    label="Description"
+                    label={t('invoices:labels.description')}
                     multiline
                     rows={2}
                     value={formData.description}
@@ -453,7 +455,7 @@ function InvoiceForm() {
                     <Grid item xs={6}>
                       <TextField
                         fullWidth
-                        label="Date d'émission"
+                        label={t('invoices:fields.issueDate')}
                         type="date"
                         value={formData.issue_date}
                         onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
@@ -466,7 +468,7 @@ function InvoiceForm() {
                     <Grid item xs={6}>
                       <TextField
                         fullWidth
-                        label="Date d'échéance"
+                        label={t('invoices:labels.dueDateLabel')}
                         type="date"
                         value={formData.due_date}
                         onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
@@ -485,7 +487,7 @@ function InvoiceForm() {
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                    Client
+                    {t('invoices:labels.client')}
                   </Typography>
                   <IconButton
                     size="small"
@@ -536,7 +538,7 @@ function InvoiceForm() {
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                    Articles
+                    {t('invoices:labels.billedItems')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -549,7 +551,7 @@ function InvoiceForm() {
                     size="small"
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
-                    Ajouter
+                    {t('invoices:buttons.add')}
                   </Button>
                 </Box>
                 {items.map((item, index) => (
@@ -557,7 +559,7 @@ function InvoiceForm() {
                 ))}
                 {items.length === 0 && (
                   <Typography color="text.secondary" sx={{ fontSize: '0.875rem', textAlign: 'center', py: 2 }}>
-                    Aucun article ajouté. Cliquez sur "Ajouter" pour commencer.
+                    {t('invoices:messages.noItemsAddedMessage')}
                   </Typography>
                 )}
               </CardContent>
@@ -567,7 +569,7 @@ function InvoiceForm() {
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  Résumé financier
+                  {t('invoices:labels.financialSummary')}
                 </Typography>
                 <Grid container spacing={1}>
                   <Grid item xs={4}>
@@ -576,7 +578,7 @@ function InvoiceForm() {
                         {formatCurrency(calculateSubtotal())}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        Sous-total
+                        {t('invoices:labels.subtotal')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -586,7 +588,7 @@ function InvoiceForm() {
                         {formatCurrency(calculateTaxAmount())}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        TVA ({formData.tax_rate}%)
+                        {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
                       </Typography>
                     </Box>
                   </Grid>
@@ -596,14 +598,14 @@ function InvoiceForm() {
                         {formatCurrency(calculateTotal())}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        Total TTC
+                        {t('invoices:labels.totalTTC')}
                       </Typography>
                     </Box>
                   </Grid>
                 </Grid>
                 <TextField
                   fullWidth
-                  label="Taux de TVA (%)"
+                  label={t('invoices:labels.vatRateField')}
                   type="number"
                   value={formData.tax_rate}
                   onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
@@ -618,20 +620,20 @@ function InvoiceForm() {
             <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  Statut
+                  {t('common:labels.status')}
                 </Typography>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Statut de la facture</InputLabel>
+                  <InputLabel>{t('invoices:labels.invoiceStatusField')}</InputLabel>
                   <Select
                     value={formData.status}
-                    label="Statut de la facture"
+                    label={t('invoices:labels.invoiceStatusField')}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     sx={{ borderRadius: 2 }}
                   >
-                    <MenuItem value="draft">Brouillon</MenuItem>
-                    <MenuItem value="sent">Envoyée</MenuItem>
-                    <MenuItem value="paid">Payée</MenuItem>
-                    <MenuItem value="cancelled">Annulée</MenuItem>
+                    <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
+                    <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                    <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
+                    <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
                   </Select>
                 </FormControl>
               </CardContent>
@@ -645,13 +647,13 @@ function InvoiceForm() {
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Informations générales
+                    {t('invoices:labels.generalInformation')}
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Titre de la facture"
+                        label={t('invoices:labels.invoiceTitleField')}
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         required
@@ -661,7 +663,7 @@ function InvoiceForm() {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Description"
+                        label={t('invoices:labels.description')}
                         multiline
                         rows={3}
                         value={formData.description}
@@ -672,7 +674,7 @@ function InvoiceForm() {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Date d'émission"
+                        label={t('invoices:fields.issueDate')}
                         type="date"
                         value={formData.issue_date}
                         onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
@@ -684,7 +686,7 @@ function InvoiceForm() {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Date d'échéance"
+                        label={t('invoices:labels.dueDateLabel')}
                         type="date"
                         value={formData.due_date}
                         onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
@@ -713,7 +715,7 @@ function InvoiceForm() {
                       }}
                       sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                     >
-                      Ajouter un article
+                      {t('invoices:buttons.addItem')}
                     </Button>
                   </Box>
 
@@ -721,12 +723,12 @@ function InvoiceForm() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>Référence</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>Quantité</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>Prix unitaire</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>Total</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 600 }}>{t('invoices:columns.actions')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -769,7 +771,7 @@ function InvoiceForm() {
                           <TableRow>
                             <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                               <Typography color="text.secondary">
-                                Aucun article ajouté. Cliquez sur "Ajouter un article" pour commencer.
+                                {t('invoices:messages.noItemsDesktopMessage')}
                               </Typography>
                             </TableCell>
                           </TableRow>
@@ -820,7 +822,7 @@ function InvoiceForm() {
                     <Grid item xs={12} sm={3}>
                       <TextField
                         fullWidth
-                        label="Taux de TVA (%)"
+                        label={t('invoices:labels.vatRateField')}
                         type="number"
                         value={formData.tax_rate}
                         onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
@@ -864,7 +866,7 @@ function InvoiceForm() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Sélectionner un client"
+                        label={t('invoices:fields.selectClient')}
                         required
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         InputProps={{
@@ -953,7 +955,7 @@ function InvoiceForm() {
         entityType="client"
         fields={clientFields}
         createFunction={clientsAPI.quickCreate}
-        title="Créer un client rapidement"
+        title={t('invoices:dialogs.quickCreateClient')}
       />
 
       <QuickCreateDialog
@@ -963,7 +965,7 @@ function InvoiceForm() {
         entityType="product"
         fields={getProductFields([], null)}
         createFunction={productsAPI.quickCreate}
-        title="Créer un produit rapidement"
+        title={t('invoices:dialogs.quickCreateProduct')}
       />
     </Box>
   );

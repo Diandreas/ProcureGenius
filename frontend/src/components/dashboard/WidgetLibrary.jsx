@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Plus, Search, Check } from 'lucide-react';
 import '../../styles/WidgetLibrary.css';
 
@@ -6,6 +7,7 @@ import '../../styles/WidgetLibrary.css';
 import * as Icons from 'lucide-react';
 
 const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose }) => {
+  const { t } = useTranslation('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModule, setSelectedModule] = useState('all');
 
@@ -52,12 +54,12 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
 
   // Module labels
   const moduleLabels = {
-    global: 'Global',
-    products: 'Produits',
-    clients: 'Clients',
-    invoices: 'Factures',
-    purchase_orders: 'Bons de Commande',
-    ai: 'Assistant IA'
+    global: t('library.modules.global'),
+    products: t('library.modules.products'),
+    clients: t('library.modules.clients'),
+    invoices: t('library.modules.invoices'),
+    purchase_orders: t('library.modules.purchase_orders'),
+    ai: t('library.modules.ai')
   };
 
   return (
@@ -65,7 +67,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
       <div className="widget-library-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="library-header">
-          <h2>Bibliothèque de Widgets</h2>
+          <h2>{t('library.title')}</h2>
           <button className="close-btn" onClick={onClose}>
             <X size={24} />
           </button>
@@ -77,7 +79,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
             <Search size={18} />
             <input
               type="text"
-              placeholder="Rechercher un widget..."
+              placeholder={t('library.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -88,7 +90,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
               className={`module-filter-btn ${selectedModule === 'all' ? 'active' : ''}`}
               onClick={() => setSelectedModule('all')}
             >
-              Tous
+              {t('library.all')}
             </button>
             {modules.map(module => (
               <button
@@ -106,7 +108,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
         <div className="library-content">
           {Object.keys(filteredWidgets).length === 0 ? (
             <div className="no-results">
-              <p>Aucun widget trouvé</p>
+              <p>{t('library.noResults')}</p>
             </div>
           ) : (
             Object.keys(filteredWidgets).map(module => (
@@ -134,7 +136,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
                           {isAdded ? (
                             <button className="widget-btn widget-btn-added" disabled>
                               <Check size={16} />
-                              Ajouté
+                              {t('library.added')}
                             </button>
                           ) : (
                             <button
@@ -142,7 +144,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
                               onClick={() => onAddWidget(widget.code)}
                             >
                               <Plus size={16} />
-                              Ajouter
+                              {t('library.add')}
                             </button>
                           )}
                         </div>

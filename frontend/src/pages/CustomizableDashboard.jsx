@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Plus, Settings, Save, LayoutGrid, Edit3, Eye, RefreshCw, CheckCircle } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
@@ -77,6 +78,7 @@ const WIDGET_COMPONENTS = {
 };
 
 const CustomizableDashboard = () => {
+  const { t } = useTranslation('dashboard');
   const [layout, setLayout] = useState([]);
   const [currentLayoutId, setCurrentLayoutId] = useState(null);
   const [availableWidgets, setAvailableWidgets] = useState({});
@@ -196,7 +198,7 @@ const CustomizableDashboard = () => {
         await widgetsAPI.patchLayout(currentLayoutId, { layout });
       } else {
         const response = await widgetsAPI.createLayout({
-          name: 'Mon Dashboard',
+          name: t('title'),
           layout,
           is_default: true
         });
@@ -212,7 +214,7 @@ const CustomizableDashboard = () => {
       setTimeout(() => setShowSaveNotification(false), 3000);
     } catch (error) {
       console.error('Error saving layout:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert(t('saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -221,7 +223,7 @@ const CustomizableDashboard = () => {
   // Toggle edit mode
   const toggleEditMode = () => {
     if (isEditMode && hasChanges) {
-      if (window.confirm('Voulez-vous sauvegarder vos modifications?')) {
+      if (window.confirm(t('confirmSave'))) {
         handleSaveLayout();
       } else {
         setIsEditMode(false);
@@ -238,7 +240,7 @@ const CustomizableDashboard = () => {
     if (!Component) {
       return (
         <div className="widget-placeholder">
-          <p>Widget "{widgetCode}" en développement</p>
+          <p>{t('widgetPlaceholder', { code: widgetCode })}</p>
         </div>
       );
     }
@@ -260,9 +262,9 @@ const CustomizableDashboard = () => {
         <div className="toolbar-left">
           <h1 className="dashboard-title">
             <LayoutGrid size={28} />
-            Dashboard
+            {t('title')}
           </h1>
-          {isEditMode && <span className="edit-mode-badge">Mode Édition</span>}
+          {isEditMode && <span className="edit-mode-badge">{t('editMode')}</span>}
         </div>
 
         <div className="toolbar-center">
@@ -272,13 +274,13 @@ const CustomizableDashboard = () => {
             className="period-select"
             disabled={isEditMode}
           >
-            <option value="today">Aujourd'hui</option>
-            <option value="yesterday">Hier</option>
-            <option value="last_7_days">7 derniers jours</option>
-            <option value="last_30_days">30 derniers jours</option>
-            <option value="last_90_days">90 derniers jours</option>
-            <option value="this_month">Ce mois</option>
-            <option value="this_year">Cette année</option>
+            <option value="today">{t('periods.today')}</option>
+            <option value="yesterday">{t('periods.yesterday')}</option>
+            <option value="last_7_days">{t('periods.last_7_days')}</option>
+            <option value="last_30_days">{t('periods.last_30_days')}</option>
+            <option value="last_90_days">{t('periods.last_90_days')}</option>
+            <option value="this_month">{t('periods.this_month')}</option>
+            <option value="this_year">{t('periods.this_year')}</option>
           </select>
         </div>
 
@@ -288,7 +290,7 @@ const CustomizableDashboard = () => {
               <button
                 onClick={() => window.location.reload()}
                 className="toolbar-btn"
-                title="Rafraîchir"
+                title={t('refresh')}
               >
                 <RefreshCw size={18} />
               </button>
@@ -298,7 +300,7 @@ const CustomizableDashboard = () => {
                 className="toolbar-btn toolbar-btn-primary"
               >
                 <Edit3 size={18} />
-                Personnaliser
+                {t('customize')}
               </button>
             </>
           ) : (
@@ -308,7 +310,7 @@ const CustomizableDashboard = () => {
                 className="toolbar-btn toolbar-btn-secondary"
               >
                 <Plus size={18} />
-                Ajouter Widget
+                {t('addWidget')}
               </button>
 
               <button
@@ -316,7 +318,7 @@ const CustomizableDashboard = () => {
                 className="toolbar-btn"
               >
                 <Eye size={18} />
-                Aperçu
+                {t('preview')}
               </button>
 
               <button
@@ -325,7 +327,7 @@ const CustomizableDashboard = () => {
                 className="toolbar-btn toolbar-btn-success"
               >
                 <Save size={18} />
-                {isSaving ? 'Sauvegarde...' : hasChanges ? 'Sauvegarder' : 'Sauvegardé'}
+                {isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}
               </button>
             </>
           )}
@@ -336,7 +338,7 @@ const CustomizableDashboard = () => {
       {isEditMode && (
         <div className="edit-mode-hint">
           <Settings size={20} className="hint-icon" />
-          <span>Glissez-déposez les widgets pour les réorganiser, tirez les coins pour les redimensionner</span>
+          <span>{t('editHint')}</span>
         </div>
       )}
 
@@ -373,8 +375,8 @@ const CustomizableDashboard = () => {
         {layout.length === 0 && (
           <div className="dashboard-empty">
             <LayoutGrid size={80} className="empty-icon" />
-            <h2>Votre dashboard est vide</h2>
-            <p>Commencez par ajouter des widgets pour visualiser vos données</p>
+            <h2>{t('emptyState.title')}</h2>
+            <p>{t('emptyState.description')}</p>
             <button
               onClick={() => {
                 setIsEditMode(true);
@@ -383,7 +385,7 @@ const CustomizableDashboard = () => {
               className="toolbar-btn toolbar-btn-primary toolbar-btn-large"
             >
               <Plus size={20} />
-              Ajouter mon premier widget
+              {t('emptyState.button')}
             </button>
           </div>
         )}
@@ -403,7 +405,7 @@ const CustomizableDashboard = () => {
       {showSaveNotification && (
         <div className="save-notification">
           <CheckCircle size={20} className="icon" />
-          <span>Dashboard sauvegardé avec succès!</span>
+          <span>{t('saveSuccess')}</span>
         </div>
       )}
     </div>

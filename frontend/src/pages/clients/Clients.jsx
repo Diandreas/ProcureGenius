@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Card,
@@ -19,6 +20,7 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Search,
@@ -36,37 +38,31 @@ import {
   Star,
   FiberNew,
 } from '@mui/icons-material';
-import { clientsAPI } from '../../services/api';
+import { useTranslation } from 'react-i18next';
+import { fetchClients } from '../../store/slices/clientsSlice';
 import { formatCurrency } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Clients() {
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { t } = useTranslation(['clients', 'common']);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Redux state
+  const { clients, loading, error } = useSelector((state) => state.clients);
+
+  // Local UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentTermsFilter, setPaymentTermsFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
-  const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    try {
-      setLoading(true);
-      const response = await clientsAPI.list();
-      setClients(response.data.results || response.data);
-    } catch (err) {
-      console.error('Error fetching clients:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchClients());
+  }, [dispatch]);
 
   const handleQuickFilterClick = (filterValue) => {
     if (quickFilter === filterValue) {
@@ -189,6 +185,7 @@ function Clients() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  display: 'block',
                 }}
               >
                 {client.contact_person}
@@ -206,6 +203,7 @@ function Clients() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  display: 'block',
                 }}
               >
                 {client.email}
@@ -266,7 +264,7 @@ function Clients() {
         {/* Footer */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
-            label={client.is_active ? 'Actif' : 'Inactif'}
+            label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
             size="small"
             color={client.is_active ? 'success' : 'default'}
             sx={{ fontSize: '0.7rem', height: 20 }}
@@ -281,7 +279,7 @@ function Clients() {
     </Card>
   );
 
-  if (loading) {
+  if (loading && clients.length === 0) {
     return (
       <Box
         display="flex"
@@ -294,12 +292,20 @@ function Clients() {
     );
   }
 
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{t('clients:messages.loadingError')}</Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Clients
+          {t('clients:title')}
         </Typography>
 
         {/* Stats Cards - Clickable Filters */}
@@ -330,7 +336,7 @@ function Clients() {
                       {activeClients}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Actifs
+                      {t('clients:filters.active')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -364,7 +370,7 @@ function Clients() {
                       {inactiveClients}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Inactifs
+                      {t('clients:filters.inactive')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -398,7 +404,7 @@ function Clients() {
                       {vipClients}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      VIP
+                      {t('clients:filters.vip')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -432,7 +438,7 @@ function Clients() {
                       {newClients}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Nouveaux
+                      {t('clients:filters.new')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -466,7 +472,7 @@ function Clients() {
                       {totalClients}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Tous
+                      {t('clients:filters.all')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -478,20 +484,20 @@ function Clients() {
         {/* Filter Indicator */}
         {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Typography variant="body2" color="text.secondary">{t('clients:filters.activeFilter')}</Typography>
             <Chip
               label={
-                quickFilter === 'active' ? 'Actifs' :
-                quickFilter === 'inactive' ? 'Inactifs' :
-                quickFilter === 'vip' ? 'VIP' :
-                quickFilter === 'new' ? 'Nouveaux (30j)' : ''
+                quickFilter === 'active' ? t('clients:filters.active') :
+                  quickFilter === 'inactive' ? t('clients:filters.inactive') :
+                    quickFilter === 'vip' ? t('clients:filters.vip') :
+                      quickFilter === 'new' ? t('clients:filters.new') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'active' ? 'success' :
-                quickFilter === 'inactive' ? 'error' :
-                quickFilter === 'vip' ? 'secondary' :
-                quickFilter === 'new' ? 'info' : 'primary'
+                  quickFilter === 'inactive' ? 'error' :
+                    quickFilter === 'vip' ? 'secondary' :
+                      quickFilter === 'new' ? 'info' : 'primary'
               }
               size="small"
             />
@@ -507,7 +513,7 @@ function Clients() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher un client..."
+                placeholder={t('clients:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -537,29 +543,29 @@ function Clients() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('clients:filters.statusLabel')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('clients:filters.statusLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="active">Actif</MenuItem>
-                      <MenuItem value="inactive">Inactif</MenuItem>
+                      <MenuItem value="">{t('clients:filters.all')}</MenuItem>
+                      <MenuItem value="active">{t('clients:status.active')}</MenuItem>
+                      <MenuItem value="inactive">{t('clients:status.inactive')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Conditions de paiement</InputLabel>
+                    <InputLabel>{t('clients:filters.paymentTermsLabel')}</InputLabel>
                     <Select
                       value={paymentTermsFilter}
                       onChange={(e) => setPaymentTermsFilter(e.target.value)}
-                      label="Conditions de paiement"
+                      label={t('clients:filters.paymentTermsLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Toutes</MenuItem>
+                      <MenuItem value="">{t('clients:filters.allPaymentTerms')}</MenuItem>
                       <MenuItem value="NET 15">NET 15</MenuItem>
                       <MenuItem value="NET 30">NET 30</MenuItem>
                       <MenuItem value="NET 45">NET 45</MenuItem>
@@ -577,9 +583,9 @@ function Clients() {
       {/* Clients Grid */}
       {filteredClients.length === 0 ? (
         <EmptyState
-          title="Aucun client"
-          description="Aucun client ne correspond à vos critères de recherche."
-          actionLabel="Nouveau client"
+          title={t('clients:messages.noClients')}
+          description={t('clients:messages.noClientsDescription')}
+          actionLabel={t('clients:newClient')}
           onAction={() => navigate('/clients/new')}
         />
       ) : (

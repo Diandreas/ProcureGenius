@@ -37,6 +37,7 @@ import {
   History,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
@@ -44,6 +45,7 @@ import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
 
 function ProductDetail() {
+  const { t } = useTranslation(['products', 'common']);
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -66,7 +68,7 @@ function ProductDetail() {
       const response = await productsAPI.get(id);
       setProduct(response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du produit', { variant: 'error' });
+      enqueueSnackbar(t('products:messages.loadProductError'), { variant: 'error' });
       navigate('/products');
     } finally {
       setLoading(false);
@@ -78,18 +80,18 @@ function ProductDetail() {
       const response = await productsAPI.getStatistics(id);
       setStatistics(response.data);
     } catch (error) {
-      console.error('Erreur statistiques:', error);
+      console.error('Error loading product statistics:', error);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Supprimer ${product.name} ?`)) {
+    if (window.confirm(t('products:messages.deleteConfirmation', { name: product.name }))) {
       try {
         await productsAPI.delete(id);
-        enqueueSnackbar('Produit supprimé', { variant: 'success' });
+        enqueueSnackbar(t('products:messages.productDeleted'), { variant: 'success' });
         navigate('/products');
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('products:messages.deleteError'), { variant: 'error' });
       }
     }
   };
@@ -103,7 +105,7 @@ function ProductDetail() {
   }
 
   if (!product) {
-    return <Alert severity="error">Produit introuvable</Alert>;
+    return <Alert severity="error">{t('products:messages.productNotFound')}</Alert>;
   }
 
   const stockStatus = product.stock_quantity === 0 ? 'error' :
@@ -120,7 +122,7 @@ function ProductDetail() {
           <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
             {product.name}
           </Typography>
-          <Tooltip title="Modifier le produit">
+          <Tooltip title={t('products:tooltips.editProduct')}>
             <IconButton
               onClick={() => navigate(`/products/${id}/edit`)}
               sx={{
@@ -134,7 +136,7 @@ function ProductDetail() {
               <Edit />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Supprimer le produit">
+          <Tooltip title={t('products:tooltips.deleteProduct')}>
             <IconButton
               onClick={handleDelete}
               sx={{
@@ -170,24 +172,24 @@ function ProductDetail() {
       >
         <Tab
           icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={isMobile ? "Info" : "Infos"}
+          label={t('products:tabs.info')}
           iconPosition="start"
         />
         <Tab
           icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label="Factures"
+          label={t('products:tabs.invoices')}
           iconPosition="start"
         />
         <Tab
           icon={<People sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label="Clients"
+          label={t('products:tabs.clients')}
           iconPosition="start"
         />
         {/* Afficher l'onglet Stock uniquement pour les produits physiques */}
         {product?.product_type === 'physical' && (
           <Tab
             icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
-            label={isMobile ? "Stock" : "Mouvements"}
+            label={t('products:tabs.movements')}
             iconPosition="start"
           />
         )}
@@ -218,11 +220,11 @@ function ProductDetail() {
                       {product.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Réf: {product.reference || product.sku}
+                      {t('products:labels.reference')}: {product.reference || product.sku}
                     </Typography>
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                       <Chip
-                        label={product.is_active ? 'Actif' : 'Inactif'}
+                        label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
                         color={product.is_active ? 'success' : 'default'}
                         size="small"
                       />
@@ -244,7 +246,7 @@ function ProductDetail() {
                 {product.description && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle2" fontWeight="600" gutterBottom>
-                      Description
+                      {t('products:labels.description')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {product.description}
@@ -260,7 +262,7 @@ function ProductDetail() {
                         <Business sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Fournisseur
+                            {t('products:labels.supplier')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             {product.supplier_name}
@@ -276,7 +278,7 @@ function ProductDetail() {
                         <Warehouse sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Entrepôt
+                            {t('products:labels.warehouse')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             {product.warehouse_code} - {product.warehouse_name}
@@ -292,10 +294,10 @@ function ProductDetail() {
                         <LocalShipping sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Délai de livraison
+                            {t('products:labels.leadTime')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
-                            {product.lead_time_days} jours
+                            {product.lead_time_days} {t('products:labels.days')}
                           </Typography>
                         </Box>
                       </Box>
@@ -315,7 +317,7 @@ function ProductDetail() {
                       {formatCurrency(product.price)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Prix de vente
+                      {t('products:stats.sellingPrice')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -330,7 +332,7 @@ function ProductDetail() {
                         {formatCurrency(product.cost_price)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Prix d'achat
+                        {t('products:stats.costPrice')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -347,7 +349,7 @@ function ProductDetail() {
                           {statistics.sales_summary.total_invoices || 0}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Factures
+                          {t('products:tabs.invoices')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -361,7 +363,7 @@ function ProductDetail() {
                           {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Ventes totales
+                          {t('products:stats.totalSales')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -380,7 +382,7 @@ function ProductDetail() {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Inventory sx={{ color: 'primary.main' }} />
                     <Typography variant="subtitle1" fontWeight="600">
-                      Stock
+                      {t('products:labels.stock')}
                     </Typography>
                   </Box>
                   <Box
@@ -395,8 +397,8 @@ function ProductDetail() {
                       {product.stock_quantity}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      {product.stock_quantity === 0 ? 'Rupture de stock' :
-                        product.stock_quantity <= 10 ? 'Stock bas' : 'En stock'}
+                      {product.stock_quantity === 0 ? t('products:stockStatus.outOfStock') :
+                        product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -407,12 +409,12 @@ function ProductDetail() {
             <Card sx={{ borderRadius: 1 }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Informations système
+                  {t('products:labels.systemInfo')}
                 </Typography>
                 <Stack spacing={1.5} sx={{ mt: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Créé le
+                      {t('products:labels.createdOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(product.created_at)}
@@ -421,7 +423,7 @@ function ProductDetail() {
                   <Divider />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Modifié le
+                      {t('products:labels.updatedOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(product.updated_at)}
@@ -439,7 +441,7 @@ function ProductDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Receipt color="primary" />
-            Factures
+            {t('products:tabs.invoices')}
           </Typography>
           <ProductInvoicesTable
             invoices={statistics?.recent_invoices}
@@ -453,7 +455,7 @@ function ProductDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <People color="primary" />
-            Clients
+            {t('products:tabs.clients')}
           </Typography>
           <ProductClientsTable
             clients={statistics?.top_clients}

@@ -40,6 +40,7 @@ import {
   Mic,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
@@ -48,6 +49,7 @@ import VoiceRecorder from '../../components/VoiceRecorder';
 
 function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['aiChat', 'common']);
   const location = useLocation();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -69,7 +71,7 @@ function AIChat() {
     // Gérer les messages vocaux entrants depuis la navigation
     if (location.state?.voiceMessage) {
       setMessage(location.state.voiceMessage);
-      enqueueSnackbar('Message vocal transcrit avec succès !', { variant: 'success' });
+      enqueueSnackbar(t('aiChat:messages.voiceTranscribed'), { variant: 'success' });
       // Nettoyer le state pour éviter de réafficher le message
       window.history.replaceState({}, document.title);
     }
@@ -119,7 +121,7 @@ function AIChat() {
       setCurrentConversation(response.data.conversation);
       setDrawerOpen(false);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement de la conversation', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:messages.loadConversationError'), { variant: 'error' });
     }
   };
 
@@ -167,7 +169,7 @@ function AIChat() {
       if (response.data.action_results) {
         response.data.action_results.forEach(result => {
           if (result.result?.success) {
-            enqueueSnackbar(result.result.message || 'Action exécutée avec succès', {
+            enqueueSnackbar(result.result.message || t('aiChat:messages.actionExecutedSuccess'), {
               variant: 'success',
               autoHideDuration: 3000,
             });
@@ -181,7 +183,7 @@ function AIChat() {
       }
     } catch (error) {
       setTypingIndicator(false);
-      enqueueSnackbar('Erreur lors de l\'envoi du message', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:messages.sendMessageError'), { variant: 'error' });
       setMessages(prev => prev.slice(0, -1));
       // Déclencher l'animation d'erreur de la mascotte contextuelle
       window.dispatchEvent(new CustomEvent('mascot-error'));
@@ -197,7 +199,7 @@ function AIChat() {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    enqueueSnackbar('Fonctionnalité de scan en cours de développement', { variant: 'info' });
+    enqueueSnackbar(t('aiChat:messages.scanInDevelopment'), { variant: 'info' });
   };
 
   const getActionIcon = (actionId) => {
@@ -242,7 +244,7 @@ function AIChat() {
       >
         <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight="600">Conversations</Typography>
+            <Typography variant="subtitle1" fontWeight="600">{t('aiChat:drawer.conversations')}</Typography>
             <IconButton onClick={() => setDrawerOpen(false)} size="small">
               <Close fontSize="small" />
             </IconButton>
@@ -312,10 +314,10 @@ function AIChat() {
                 </Box>
 
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Bonjour ! Je suis Procura 👋
+                  {t('aiChat:welcome.greeting')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Je peux vous aider à gérer vos fournisseurs, factures, commandes et plus encore.
+                  {t('aiChat:welcome.description')}
                 </Typography>
 
                 {/* Actions rapides compactes */}
@@ -435,7 +437,7 @@ function AIChat() {
                   >
                     <CircularProgress size={14} />
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                      L'assistant réfléchit...
+                      {t('aiChat:messages.assistantThinking')}
                     </Typography>
                   </Paper>
                 </ListItem>
@@ -460,7 +462,7 @@ function AIChat() {
               fullWidth
               multiline
               maxRows={3}
-              placeholder="Tapez votre message..."
+              placeholder={t('aiChat:input.placeholder')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={(e) => {
@@ -482,7 +484,7 @@ function AIChat() {
                 },
               }}
             />
-            <Tooltip title="Joindre">
+            <Tooltip title={t('aiChat:input.attach')}>
               <span>
                 <input
                   type="file"
@@ -501,7 +503,7 @@ function AIChat() {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Message vocal (en temps réel)">
+            <Tooltip title={t('aiChat:input.voiceMessage')}>
               <span>
                 <IconButton
                   onClick={() => setVoiceRecorderOpen(true)}
@@ -519,7 +521,7 @@ function AIChat() {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Envoyer">
+            <Tooltip title={t('aiChat:input.send')}>
               <span>
                 <IconButton
                   onClick={() => handleSendMessage()}
@@ -549,7 +551,7 @@ function AIChat() {
           <VoiceRecorder
             onVoiceMessage={(transcribedText) => {
               setMessage(transcribedText);
-              enqueueSnackbar('Message vocal transcrit avec succès !', { variant: 'success' });
+              enqueueSnackbar(t('aiChat:messages.voiceTranscribed'), { variant: 'success' });
             }}
             onClose={() => setVoiceRecorderOpen(false)}
           />

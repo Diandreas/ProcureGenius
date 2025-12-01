@@ -1,0 +1,135 @@
+{
+    "title": "Products",
+    "newProduct": "New Product",
+    "editProduct": "Edit Product",
+    "search": {
+        "placeholder": "Search for a product..."
+    },
+    "filters": {
+        "inStock": "In Stock",
+        "lowStock": "Low Stock",
+        "outOfStock": "Out of Stock",
+        "services": "Services",
+        "all": "All",
+        "activeFilter": "Active Filter:",
+        "statusLabel": "Status",
+        "categoryLabel": "Category",
+        "warehouseLabel": "Warehouse",
+        "allCategories": "All",
+        "allWarehouses": "All"
+    },
+    "tabs": {
+        "info": "Info",
+        "invoices": "Invoices",
+        "clients": "Clients",
+        "movements": "Movements",
+        "stock": "Stock"
+    },
+    "labels": {
+        "description": "Description",
+        "supplier": "Supplier",
+        "warehouse": "Warehouse",
+        "leadTime": "Lead Time",
+        "days": "days",
+        "systemInfo": "System Information",
+        "createdOn": "Created on",
+        "updatedOn": "Updated on",
+        "stock": "Stock",
+        "generalInfo": "General Information",
+        "pricing": "Pricing",
+        "inventoryAndLogistics": "Inventory and Logistics",
+        "digitalDistribution": "Digital Distribution",
+        "status": "Status",
+        "image": "Image",
+        "summary": "Summary",
+        "name": "Product Name",
+        "reference": "Reference",
+        "detailedDescription": "Detailed Description",
+        "category": "Category",
+        "sourceType": "Source Type",
+        "sellingPrice": "Selling Price",
+        "pricePerLicense": "Price per License",
+        "costPrice": "Cost Price",
+        "supplierOptional": "Supplier (optional)",
+        "publisher": "Publisher / Platform",
+        "warehouseMain": "Main Warehouse",
+        "stockQuantity": "Stock Quantity",
+        "licensesCount": "Number of Licenses",
+        "lowStockThreshold": "Low Stock Threshold",
+        "activeProduct": "Active Product",
+        "inactiveProduct": "Inactive Product",
+        "mandatory": "Mandatory",
+        "type": "Type",
+        "price": "Price"
+    },
+    "productTypes": {
+        "title": "Product Type",
+        "physical": "Physical",
+        "physicalDesc": "Stock, warehouse, shipping",
+        "digital": "Digital",
+        "digitalDesc": "Downloadable, licenses",
+        "service": "Service",
+        "serviceDesc": "Service, consultation"
+    },
+    "sourceTypes": {
+        "purchased": "Purchased (supplier)",
+        "manufactured": "Manufactured (internal)",
+        "resale": "Resale"
+    },
+    "stats": {
+        "sellingPrice": "Selling Price",
+        "costPrice": "Cost Price",
+        "totalSales": "Total Sales"
+    },
+    "tooltips": {
+        "editProduct": "Edit Product",
+        "deleteProduct": "Delete Product"
+    },
+    "status": {
+        "available": "Available",
+        "unavailable": "Unavailable",
+        "active": "Active",
+        "inactive": "Inactive"
+    },
+    "stockStatus": {
+        "outOfStock": "Out of Stock",
+        "low": "Low"
+    },
+    "messages": {
+        "noProducts": "No products",
+        "noProductsDescription": "No products match your search criteria.",
+        "loadingError": "Error loading products",
+        "loadProductError": "Error loading product",
+        "productDeleted": "Product deleted",
+        "deleteError": "Error deleting product",
+        "productNotFound": "Product not found",
+        "deleteConfirmation": "Delete {{name}}?",
+        "createSuccess": "Product created successfully",
+        "updateSuccess": "Product updated successfully",
+        "saveError": "Error saving product",
+        "missingSupplierModule": "The Suppliers module is not activated.",
+        "missingWarehouses": "No warehouse available. Create one in settings for physical products.",
+        "noWarehouseAvailable": "⚠️ No warehouse available. The product will be created without a warehouse.",
+        "leaveEmptyForAuto": "Leave empty to auto-generate",
+        "alertLowStock": "Alert if stock <= this threshold"
+    },
+    "actions": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "modify": "Modify",
+        "change": "Change",
+        "add": "Add"
+    },
+    "validation": {
+        "nameRequired": "Name is required",
+        "descriptionRequired": "Description is required",
+        "pricePositive": "Price must be positive",
+        "priceRequired": "Price is required",
+        "costNegative": "Cost cannot be negative",
+        "warehouseRequired": "Warehouse is required for physical products",
+        "stockNegative": "Stock cannot be negative",
+        "stockRequired": "Stock is required",
+        "thresholdNegative": "Threshold cannot be negative",
+        "thresholdRequired": "Required"
+    }
+}

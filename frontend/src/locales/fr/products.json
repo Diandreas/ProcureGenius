@@ -1,0 +1,135 @@
+{
+    "title": "Produits",
+    "newProduct": "Nouveau produit",
+    "editProduct": "Modifier le produit",
+    "search": {
+        "placeholder": "Rechercher un produit..."
+    },
+    "filters": {
+        "inStock": "En stock",
+        "lowStock": "Stock bas",
+        "outOfStock": "Rupture",
+        "services": "Services",
+        "all": "Tous",
+        "activeFilter": "Filtre actif:",
+        "statusLabel": "Statut",
+        "categoryLabel": "Catégorie",
+        "warehouseLabel": "Entrepôt",
+        "allCategories": "Toutes",
+        "allWarehouses": "Tous"
+    },
+    "tabs": {
+        "info": "Infos",
+        "invoices": "Factures",
+        "clients": "Clients",
+        "movements": "Mouvements",
+        "stock": "Stock"
+    },
+    "labels": {
+        "description": "Description",
+        "supplier": "Fournisseur",
+        "warehouse": "Entrepôt",
+        "leadTime": "Délai de livraison",
+        "days": "jours",
+        "systemInfo": "Informations système",
+        "createdOn": "Créé le",
+        "updatedOn": "Modifié le",
+        "stock": "Stock",
+        "generalInfo": "Informations générales",
+        "pricing": "Tarification",
+        "inventoryAndLogistics": "Stock et logistique",
+        "digitalDistribution": "Distribution numérique",
+        "status": "Statut",
+        "image": "Image",
+        "summary": "Résumé",
+        "name": "Nom du produit",
+        "reference": "Référence",
+        "detailedDescription": "Description détaillée",
+        "category": "Catégorie",
+        "sourceType": "Source d'approvisionnement",
+        "sellingPrice": "Prix de vente",
+        "pricePerLicense": "Prix par licence",
+        "costPrice": "Prix d'achat / Coût",
+        "supplierOptional": "Fournisseur (optionnel)",
+        "publisher": "Éditeur / Plateforme",
+        "warehouseMain": "Entrepôt principal",
+        "stockQuantity": "Quantité en stock",
+        "licensesCount": "Nombre de licences",
+        "lowStockThreshold": "Seuil de stock bas",
+        "activeProduct": "Produit actif",
+        "inactiveProduct": "Produit inactif",
+        "mandatory": "Obligatoire",
+        "type": "Type",
+        "price": "Prix"
+    },
+    "productTypes": {
+        "title": "Type de produit",
+        "physical": "Physique",
+        "physicalDesc": "Stock, entrepôt, livraison",
+        "digital": "Numérique",
+        "digitalDesc": "Téléchargeable, licences",
+        "service": "Service",
+        "serviceDesc": "Prestation, consultation"
+    },
+    "sourceTypes": {
+        "purchased": "Acheté (fournisseur)",
+        "manufactured": "Fabriqué (interne)",
+        "resale": "Revente"
+    },
+    "stats": {
+        "sellingPrice": "Prix de vente",
+        "costPrice": "Prix d'achat",
+        "totalSales": "Ventes totales"
+    },
+    "tooltips": {
+        "editProduct": "Modifier le produit",
+        "deleteProduct": "Supprimer le produit"
+    },
+    "status": {
+        "available": "Disponible",
+        "unavailable": "Indisponible",
+        "active": "Actif",
+        "inactive": "Inactif"
+    },
+    "stockStatus": {
+        "outOfStock": "Rupture",
+        "low": "Bas"
+    },
+    "messages": {
+        "noProducts": "Aucun produit",
+        "noProductsDescription": "Aucun produit ne correspond à vos critères de recherche.",
+        "loadingError": "Erreur lors du chargement des produits",
+        "loadProductError": "Erreur lors du chargement du produit",
+        "productDeleted": "Produit supprimé",
+        "deleteError": "Erreur lors de la suppression",
+        "productNotFound": "Produit introuvable",
+        "deleteConfirmation": "Supprimer {{name}} ?",
+        "createSuccess": "Produit créé avec succès",
+        "updateSuccess": "Produit modifié avec succès",
+        "saveError": "Erreur lors de l'enregistrement",
+        "missingSupplierModule": "Le module Fournisseurs n'est pas activé.",
+        "missingWarehouses": "Aucun entrepôt disponible. Créez-en un dans les paramètres pour les produits physiques.",
+        "noWarehouseAvailable": "⚠️ Aucun entrepôt disponible. Le produit sera créé sans entrepôt.",
+        "leaveEmptyForAuto": "Laissez vide pour générer automatiquement",
+        "alertLowStock": "Alerte si stock <= ce seuil"
+    },
+    "actions": {
+        "cancel": "Annuler",
+        "create": "Créer",
+        "modify": "Modifier",
+        "change": "Changer",
+        "add": "Ajouter"
+    },
+    "validation": {
+        "nameRequired": "Le nom est requis",
+        "descriptionRequired": "La description est requise",
+        "pricePositive": "Le prix doit être positif",
+        "priceRequired": "Le prix est requis",
+        "costNegative": "Le coût ne peut pas être négatif",
+        "warehouseRequired": "L'entrepôt est requis pour les produits physiques",
+        "stockNegative": "Le stock ne peut pas être négatif",
+        "stockRequired": "Le stock est requis",
+        "thresholdNegative": "Le seuil ne peut pas être négatif",
+        "thresholdRequired": "Requis"
+    }
+}

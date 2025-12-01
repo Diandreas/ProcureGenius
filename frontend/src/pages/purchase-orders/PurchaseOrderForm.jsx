@@ -40,6 +40,7 @@ import {
   Business,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -50,6 +51,7 @@ function PurchaseOrderForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['purchaseOrders', 'common']);
   const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
   const supplierIdFromUrl = searchParams.get('supplier');
@@ -112,7 +114,7 @@ function PurchaseOrderForm() {
       const response = await suppliersAPI.list();
       setSuppliers(response.data.results || response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement des fournisseurs', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.suppliersLoadError'), { variant: 'error' });
     }
   };
 
@@ -123,7 +125,7 @@ function PurchaseOrderForm() {
       const response = await productsAPI.list(params);
       setProducts(response.data.results || response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement des produits', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.productsLoadError'), { variant: 'error' });
     }
   };
 
@@ -142,7 +144,7 @@ function PurchaseOrderForm() {
       const supplier = suppliers.find(s => s.id === supplierIdFromUrl);
       if (supplier) {
         setFormData(prev => ({ ...prev, supplier }));
-        enqueueSnackbar(`Fournisseur ${supplier.name} pré-sélectionné`, { variant: 'info' });
+        enqueueSnackbar(t('purchaseOrders:messages.supplierPreselected', { name: supplier.name }), { variant: 'info' });
       }
     }
   }, [supplierIdFromUrl, suppliers, formData.supplier, isEdit]);
@@ -152,7 +154,7 @@ function PurchaseOrderForm() {
       const response = await warehousesAPI.list();
       setWarehouses(response.data.results || response.data);
     } catch (error) {
-      console.error('Erreur lors du chargement des entrepôts:', error);
+      console.error(t('purchaseOrders:messages.warehousesLoadError'), error);
       setWarehouses([]);
     }
   };
@@ -175,7 +177,7 @@ function PurchaseOrderForm() {
       });
       setItems(po.items || []);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du bon de commande', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.poFormLoadError'), { variant: 'error' });
       navigate('/purchase-orders');
     } finally {
       setLoading(false);
@@ -203,14 +205,14 @@ function PurchaseOrderForm() {
 
   // Quick Create handlers
   const handleSupplierCreated = (result) => {
-    enqueueSnackbar(result.message || 'Fournisseur créé avec succès', { variant: 'success' });
+    enqueueSnackbar(result.message || t('purchaseOrders:messages.supplierCreatedSuccess'), { variant: 'success' });
     setSuppliers(prev => [...prev, result.data]);
     setFormData(prev => ({ ...prev, supplier: result.data }));
     fetchSuppliers();
   };
 
   const handleProductCreated = (result) => {
-    enqueueSnackbar(result.message || 'Produit créé avec succès', { variant: 'success' });
+    enqueueSnackbar(result.message || t('purchaseOrders:messages.productCreatedSuccess'), { variant: 'success' });
     setProducts(prev => [...prev, result.data]);
     setNewItem(prev => ({
       ...prev,
@@ -224,12 +226,12 @@ function PurchaseOrderForm() {
   const handleAddItem = () => {
     // Validation: Un produit doit être sélectionné
     if (!newItem.product) {
-      enqueueSnackbar('Veuillez sélectionner ou créer un produit', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.selectProduct'), { variant: 'error' });
       return;
     }
 
     if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
-      enqueueSnackbar('Veuillez remplir tous les champs requis', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.fillRequiredFields'), { variant: 'error' });
       return;
     }
 
@@ -286,7 +288,7 @@ function PurchaseOrderForm() {
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.supplier || items.length === 0) {
-      enqueueSnackbar('Veuillez remplir tous les champs obligatoires et ajouter au moins un article', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.completeFormValidation'), { variant: 'error' });
       return;
     }
 
@@ -307,16 +309,16 @@ function PurchaseOrderForm() {
 
       if (isEdit) {
         await purchaseOrdersAPI.update(id, payload);
-        enqueueSnackbar('Bon de commande modifié avec succès', { variant: 'success' });
+        enqueueSnackbar(t('purchaseOrders:messages.poUpdatedSuccess'), { variant: 'success' });
       } else {
         const response = await purchaseOrdersAPI.create(payload);
-        enqueueSnackbar('Bon de commande créé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('purchaseOrders:messages.poCreatedSuccess'), { variant: 'success' });
         navigate(`/purchase-orders/${response.data.id}`);
         return;
       }
       navigate(`/purchase-orders/${id}`);
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.savingError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -339,7 +341,7 @@ function PurchaseOrderForm() {
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" fontWeight="bold">
-            {isEdit ? 'Modifier le bon de commande' : 'Nouveau bon de commande'}
+            {isEdit ? t('purchaseOrders:editPO') : t('purchaseOrders:newPO')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -348,7 +350,7 @@ function PurchaseOrderForm() {
             startIcon={<Cancel />}
             onClick={() => navigate('/purchase-orders')}
           >
-            Annuler
+            {t('purchaseOrders:buttons.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -356,7 +358,7 @@ function PurchaseOrderForm() {
             onClick={handleSubmit}
             disabled={saving}
           >
-            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+            {saving ? t('purchaseOrders:labels.saving') : t('purchaseOrders:buttons.save')}
           </Button>
         </Box>
       </Box>
@@ -368,13 +370,13 @@ function PurchaseOrderForm() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Informations générales
+                {t('purchaseOrders:labels.generalInformation')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Numéro de commande"
+                    label={t('purchaseOrders:labels.poNumber')}
                     value={formData.po_number}
                     onChange={(e) => handleInputChange('po_number', e.target.value)}
                     disabled={isEdit}
@@ -382,25 +384,25 @@ function PurchaseOrderForm() {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('purchaseOrders:labels.statusField')}</InputLabel>
                     <Select
                       value={formData.status}
                       onChange={(e) => handleInputChange('status', e.target.value)}
-                      label="Statut"
+                      label={t('purchaseOrders:labels.statusField')}
                     >
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="pending">En attente</MenuItem>
-                      <MenuItem value="approved">Approuvé</MenuItem>
-                      <MenuItem value="sent">Envoyé</MenuItem>
-                      <MenuItem value="received">Reçu</MenuItem>
-                      <MenuItem value="cancelled">Annulé</MenuItem>
+                      <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
+                      <MenuItem value="pending">{t('purchaseOrders:status.pending')}</MenuItem>
+                      <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
+                      <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
+                      <MenuItem value="received">{t('purchaseOrders:status.received')}</MenuItem>
+                      <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Titre *"
+                    label={t('purchaseOrders:labels.titleField')}
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     required
@@ -409,7 +411,7 @@ function PurchaseOrderForm() {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Description"
+                    label={t('purchaseOrders:labels.descriptionField')}
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     multiline
@@ -425,7 +427,7 @@ function PurchaseOrderForm() {
                       onChange={(event, newValue) => handleInputChange('supplier', newValue)}
                       fullWidth
                       renderInput={(params) => (
-                        <TextField {...params} label="Fournisseur *" required />
+                        <TextField {...params} label={t('purchaseOrders:labels.supplierField')} required />
                       )}
                       renderOption={(props, option) => (
                         <Box component="li" {...props}>
@@ -455,7 +457,7 @@ function PurchaseOrderForm() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Date requise"
+                    label={t('purchaseOrders:labels.requiredDateField')}
                     type="date"
                     value={formData.required_date}
                     onChange={(e) => handleInputChange('required_date', e.target.value)}
@@ -465,7 +467,7 @@ function PurchaseOrderForm() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Date de livraison prévue"
+                    label={t('purchaseOrders:labels.expectedDeliveryDate')}
                     type="date"
                     value={formData.expected_delivery_date}
                     onChange={(e) => handleInputChange('expected_delivery_date', e.target.value)}
@@ -480,14 +482,14 @@ function PurchaseOrderForm() {
                     onChange={(event, newValue) => handleInputChange('delivery_warehouse', newValue)}
                     fullWidth
                     renderInput={(params) => (
-                      <TextField {...params} label="Entrepôt de livraison" />
+                      <TextField {...params} label={t('purchaseOrders:labels.deliveryWarehouse')} />
                     )}
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Adresse de livraison"
+                    label={t('purchaseOrders:labels.deliveryAddress')}
                     value={formData.delivery_address}
                     onChange={(e) => handleInputChange('delivery_address', e.target.value)}
                     multiline
@@ -503,7 +505,7 @@ function PurchaseOrderForm() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
-                  Articles commandés
+                  {t('purchaseOrders:labels.orderedItemsForm')}
                 </Typography>
                 <Button
                   startIcon={<Add />}
@@ -511,25 +513,25 @@ function PurchaseOrderForm() {
                   variant="contained"
                   size="small"
                 >
-                  Ajouter un article
+                  {t('purchaseOrders:buttons.addItem')}
                 </Button>
               </Box>
 
               {items.length === 0 ? (
                 <Alert severity="info">
-                  Aucun article ajouté. Cliquez sur "Ajouter un article" pour commencer.
+                  {t('purchaseOrders:messages.noItemsAlert')}
                 </Alert>
               ) : (
                 <TableContainer component={Paper}>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Référence</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell align="right">Quantité</TableCell>
-                        <TableCell align="right">Prix unitaire</TableCell>
-                        <TableCell align="right">Total</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableCell>{t('purchaseOrders:columns.reference')}</TableCell>
+                        <TableCell>{t('purchaseOrders:columns.description')}</TableCell>
+                        <TableCell align="right">{t('purchaseOrders:columns.quantity')}</TableCell>
+                        <TableCell align="right">{t('purchaseOrders:columns.unitPrice')}</TableCell>
+                        <TableCell align="right">{t('purchaseOrders:columns.total')}</TableCell>
+                        <TableCell align="center">{t('purchaseOrders:columns.actions')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -564,20 +566,20 @@ function PurchaseOrderForm() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Résumé financier
+                {t('purchaseOrders:labels.finSummary')}
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Sous-total:</Typography>
+                  <Typography>{t('purchaseOrders:labels.subtotalLabel')}</Typography>
                   <Typography>{formatCurrency(subtotal)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Taxes (15%):</Typography>
+                  <Typography>{t('purchaseOrders:labels.taxesLabel')}</Typography>
                   <Typography>{formatCurrency(taxAmount)}</Typography>
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">Total:</Typography>
+                  <Typography variant="h6">{t('purchaseOrders:labels.totalLabel')}</Typography>
                   <Typography variant="h6" color="primary">
                     {formatCurrency(total)}
                   </Typography>
@@ -591,7 +593,7 @@ function PurchaseOrderForm() {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Fournisseur sélectionné
+                  {t('purchaseOrders:labels.selectedSupplier')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Business color="primary" />
@@ -614,7 +616,7 @@ function PurchaseOrderForm() {
                   variant="outlined"
                   onClick={() => navigate(`/suppliers/${formData.supplier.id}`)}
                 >
-                  Voir le fournisseur
+                  {t('purchaseOrders:buttons.viewSupplier')}
                 </Button>
               </CardContent>
             </Card>
@@ -642,7 +644,7 @@ function PurchaseOrderForm() {
         entityType="supplier"
         fields={supplierFields}
         createFunction={suppliersAPI.quickCreate}
-        title="Créer un fournisseur rapidement"
+        title={t('purchaseOrders:dialogs.quickCreateSupplier')}
       />
 
       <QuickCreateDialog
@@ -652,7 +654,7 @@ function PurchaseOrderForm() {
         entityType="product"
         fields={getProductFields(suppliers, formData.supplier)}
         createFunction={productsAPI.quickCreate}
-        title="Créer un produit rapidement"
+        title={t('purchaseOrders:dialogs.quickCreateProduct')}
         contextData={formData.supplier ? { supplier_id: formData.supplier.id } : {}}
       />
     </Box>

@@ -1,0 +1,24 @@
+{
+  "title": "Assistant IA",
+  "drawer": {
+    "conversations": "Conversations"
+  },
+  "welcome": {
+    "greeting": "Bonjour ! Je suis Procura 👋",
+    "description": "Je peux vous aider à gérer vos fournisseurs, factures, commandes et plus encore."
+  },
+  "messages": {
+    "voiceTranscribed": "Message vocal transcrit avec succès !",
+    "loadConversationError": "Erreur lors du chargement de la conversation",
+    "actionExecutedSuccess": "Action exécutée avec succès",
+    "sendMessageError": "Erreur lors de l'envoi du message",
+    "scanInDevelopment": "Fonctionnalité de scan en cours de développement",
+    "assistantThinking": "L'assistant réfléchit..."
+  },
+  "input": {
+    "placeholder": "Tapez votre message...",
+    "attach": "Joindre",
+    "voiceMessage": "Message vocal (en temps réel)",
+    "send": "Envoyer"
+  }
+}

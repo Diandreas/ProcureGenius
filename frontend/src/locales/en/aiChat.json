@@ -1,0 +1,24 @@
+{
+  "title": "AI Assistant",
+  "drawer": {
+    "conversations": "Conversations"
+  },
+  "welcome": {
+    "greeting": "Hello! I'm Procura 👋",
+    "description": "I can help you manage your suppliers, invoices, orders and more."
+  },
+  "messages": {
+    "voiceTranscribed": "Voice message transcribed successfully!",
+    "loadConversationError": "Error loading conversation",
+    "actionExecutedSuccess": "Action executed successfully",
+    "sendMessageError": "Error sending message",
+    "scanInDevelopment": "Scan feature is currently in development",
+    "assistantThinking": "The assistant is thinking..."
+  },
+  "input": {
+    "placeholder": "Type your message...",
+    "attach": "Attach",
+    "voiceMessage": "Voice message (real-time)",
+    "send": "Send"
+  }
+}

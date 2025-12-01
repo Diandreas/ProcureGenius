@@ -1,0 +1,85 @@
+{
+  "title": "Fournisseurs",
+  "newSupplier": "Nouveau fournisseur",
+  "editSupplier": "Modifier le fournisseur",
+  "search": {
+    "placeholder": "Rechercher un fournisseur..."
+  },
+  "filters": {
+    "active": "Actifs",
+    "inactive": "Inactifs",
+    "local": "Locaux",
+    "international": "Internat.",
+    "internationalFull": "Internationaux",
+    "topRated": "Top Rated (≥4★)",
+    "all": "Tous",
+    "activeFilter": "Filtre actif:",
+    "statusLabel": "Statut"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "pending": "En attente",
+    "blocked": "Bloqué"
+  },
+  "diversity": {
+    "minority": "Minorité",
+    "woman": "Femme",
+    "indigenous": "Autochtone"
+  },
+  "messages": {
+    "noSuppliers": "Aucun fournisseur",
+    "noSuppliersDescription": "Aucun fournisseur ne correspond à vos critères de recherche.",
+    "loadingError": "Erreur lors du chargement des fournisseurs",
+    "supplierDeleted": "Fournisseur supprimé",
+    "deleteError": "Erreur lors de la suppression",
+    "supplierNotFound": "Fournisseur introuvable",
+    "deleteConfirmation": "Supprimer {{name}} ?",
+    "createSuccess": "Fournisseur créé avec succès",
+    "updateSuccess": "Fournisseur modifié avec succès",
+    "saveError": "Erreur lors de l'enregistrement",
+    "statisticsError": "Erreur lors du chargement des statistiques",
+    "reportGenerating": "Génération du rapport {{format}} en cours...",
+    "reportGenerated": "Rapport généré avec succès !",
+    "reportInProgress": "Le rapport est en cours de génération...",
+    "reportError": "Erreur lors de la génération du rapport"
+  },
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "quickActions": "Actions rapides",
+    "newPurchaseOrder": "Nouveau bon de commande",
+    "addProducts": "Ajouter des produits",
+    "generateReport": "Générer un rapport"
+  },
+  "tabs": {
+    "info": "Infos",
+    "orders": "Commandes",
+    "products": "Produits"
+  },
+  "labels": {
+    "local": "Local",
+    "contactPerson": "Personne contact",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "totalSpent": "Total dépensé",
+    "orders": "Commandes",
+    "averageValue": "Valeur moyenne",
+    "diversity": "Diversité",
+    "localSupplier": "Fournisseur local",
+    "minorityOwned": "Propriété minoritaire",
+    "womanOwned": "Propriété féminine",
+    "indigenousOwned": "Entreprise autochtone",
+    "categories": "Catégories",
+    "systemInfo": "Informations système",
+    "createdOn": "Créé le",
+    "modifiedOn": "Modifié le",
+    "purchaseOrders": "Bons de commande",
+    "totalOrders": "{{count}} commande(s) au total",
+    "topProducts": "Produits les plus achetés",
+    "totalProducts": "{{count}} produit(s)",
+    "noOrders": "Aucune commande pour ce fournisseur",
+    "noProducts": "Aucun produit acheté auprès de ce fournisseur"
+  }
+}

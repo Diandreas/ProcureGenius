@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Target } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,37 +30,37 @@ const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
   }, [period]);
 
   if (loading) {
-    return <div className="widget-loading">Chargement...</div>;
+    return <div className="widget-loading">{t('labels.loading')}</div>;
   }
 
   if (!data) {
-    return <div className="widget-error">Erreur de chargement</div>;
+    return <div className="widget-error">{t('messages.loadingError')}</div>;
   }
 
   const metrics = [
     {
-      label: 'Revenus',
+      label: t('widgets.financial_summary_metrics.revenue', { ns: 'dashboard', defaultValue: 'Revenus' }),
       value: data.revenue || 0,
       icon: DollarSign,
       color: '#10b981',
       change: data.comparison?.revenue_percent_change
     },
     {
-      label: 'Dépenses',
+      label: t('widgets.financial_summary_metrics.expenses', { ns: 'dashboard', defaultValue: 'Dépenses' }),
       value: data.expenses || 0,
       icon: PiggyBank,
       color: '#ef4444',
       change: data.comparison?.expenses_change
     },
     {
-      label: 'Profit Net',
+      label: t('widgets.financial_summary_metrics.net_profit', { ns: 'dashboard', defaultValue: 'Profit Net' }),
       value: data.net_profit || 0,
       icon: Target,
       color: '#6366f1',
       change: data.comparison?.profit_percent_change
     },
     {
-      label: 'Marge',
+      label: t('widgets.financial_summary_metrics.margin', { ns: 'dashboard', defaultValue: 'Marge' }),
       value: `${(data.profit_margin || 0).toFixed(1)}%`,
       icon: TrendingUp,
       color: '#f59e0b',

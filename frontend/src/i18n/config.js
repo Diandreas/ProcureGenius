@@ -7,6 +7,16 @@ import commonFr from '../locales/fr/common.json';
 import commonEn from '../locales/en/common.json';
 import settingsFr from '../locales/fr/settings.json';
 import settingsEn from '../locales/en/settings.json';
+import invoicesFr from '../locales/fr/invoices.json';
+import invoicesEn from '../locales/en/invoices.json';
+import purchaseOrdersFr from '../locales/fr/purchaseOrders.json';
+import purchaseOrdersEn from '../locales/en/purchaseOrders.json';
+import clientsFr from '../locales/fr/clients.json';
+import clientsEn from '../locales/en/clients.json';
+import productsFr from '../locales/fr/products.json';
+import productsEn from '../locales/en/products.json';
+import dashboardFr from '../locales/fr/dashboard.json';
+import dashboardEn from '../locales/en/dashboard.json';
 
 // Configuration i18next
 i18n
@@ -17,10 +27,20 @@ i18n
       fr: {
         common: commonFr,
         settings: settingsFr,
+        invoices: invoicesFr,
+        purchaseOrders: purchaseOrdersFr,
+        clients: clientsFr,
+        products: productsFr,
+        dashboard: dashboardFr,
       },
       en: {
         common: commonEn,
         settings: settingsEn,
+        invoices: invoicesEn,
+        purchaseOrders: purchaseOrdersEn,
+        clients: clientsEn,
+        products: productsEn,
+        dashboard: dashboardEn,
       },
     },
 
@@ -48,7 +68,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings'],
+    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard'],
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',

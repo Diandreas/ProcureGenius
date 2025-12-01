@@ -9,11 +9,13 @@ import {
   Search, FilterList, ShoppingCart, AttachMoney, CheckCircle, Schedule, Business,
   Description, HourglassEmpty, Cancel,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function PurchaseOrders() {
+  const { t } = useTranslation(['purchaseOrders', 'common']);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +56,14 @@ function PurchaseOrders() {
   };
 
   const getStatusLabel = (status) => {
-    const labels = { draft: 'Brouillon', sent: 'Envoyé', approved: 'Approuvé', cancelled: 'Annulé' };
+    const labels = {
+      draft: t('purchaseOrders:status.draft'),
+      pending: t('purchaseOrders:status.pending'),
+      sent: t('purchaseOrders:status.sent'),
+      approved: t('purchaseOrders:status.approved'),
+      received: t('purchaseOrders:status.received'),
+      cancelled: t('purchaseOrders:status.cancelled')
+    };
     return labels[status] || status;
   };
 
@@ -179,7 +188,7 @@ function PurchaseOrders() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                Livraison: {formatDate(po.delivery_date)}
+                {t('purchaseOrders:labels.delivery')} {formatDate(po.delivery_date)}
               </Typography>
             </Box>
           )}
@@ -209,7 +218,7 @@ function PurchaseOrders() {
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Bons de commande
+          {t('purchaseOrders:title')}
         </Typography>
 
         {/* Stats Cards - Clickable Filters */}
@@ -240,7 +249,7 @@ function PurchaseOrders() {
                       {draftPOs}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Brouillons
+                      {t('purchaseOrders:filters.drafts')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -274,7 +283,7 @@ function PurchaseOrders() {
                       {pendingPOs}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      En attente
+                      {t('purchaseOrders:filters.pending')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -308,7 +317,7 @@ function PurchaseOrders() {
                       {approvedPOs}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Approuvés
+                      {t('purchaseOrders:filters.approved')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -342,7 +351,7 @@ function PurchaseOrders() {
                       {cancelledPOs}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Annulés
+                      {t('purchaseOrders:filters.cancelled')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -376,7 +385,7 @@ function PurchaseOrders() {
                       {totalPOs}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Tous
+                      {t('purchaseOrders:filters.all')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -388,13 +397,13 @@ function PurchaseOrders() {
         {/* Filter Indicator */}
         {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Typography variant="body2" color="text.secondary">{t('purchaseOrders:filters.activeFilter')}</Typography>
             <Chip
               label={
-                quickFilter === 'draft' ? 'Brouillons' :
-                quickFilter === 'sent' ? 'En attente' :
-                quickFilter === 'approved' ? 'Approuvés' :
-                quickFilter === 'cancelled' ? 'Annulés' : ''
+                quickFilter === 'draft' ? t('purchaseOrders:filters.drafts') :
+                quickFilter === 'sent' ? t('purchaseOrders:filters.pending') :
+                quickFilter === 'approved' ? t('purchaseOrders:filters.approved') :
+                quickFilter === 'cancelled' ? t('purchaseOrders:filters.cancelled') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
@@ -416,7 +425,7 @@ function PurchaseOrders() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher un bon de commande..."
+                placeholder={t('purchaseOrders:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -446,18 +455,18 @@ function PurchaseOrders() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('purchaseOrders:filters.statusLabel')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('purchaseOrders:filters.statusLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="sent">Envoyé</MenuItem>
-                      <MenuItem value="approved">Approuvé</MenuItem>
-                      <MenuItem value="cancelled">Annulé</MenuItem>
+                      <MenuItem value="">{t('purchaseOrders:filters.allStatuses')}</MenuItem>
+                      <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
+                      <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
+                      <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
+                      <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -469,9 +478,9 @@ function PurchaseOrders() {
 
       {filteredPurchaseOrders.length === 0 ? (
         <EmptyState
-          title="Aucun bon de commande"
-          description="Aucun bon de commande ne correspond à vos critères de recherche."
-          actionLabel="Nouveau bon de commande"
+          title={t('purchaseOrders:messages.noPurchaseOrders')}
+          description={t('purchaseOrders:messages.noPOMatchSearch')}
+          actionLabel={t('purchaseOrders:newPO')}
           onAction={() => navigate('/purchase-orders/new')}
         />
       ) : (

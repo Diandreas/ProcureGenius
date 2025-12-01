@@ -30,28 +30,21 @@ import {
     Business,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
 
-const validationSchema = Yup.object({
-    name: Yup.string().required('Le nom est requis'),
-    email: Yup.string().email('Email invalide').required('L\'email est requis'),
-    phone: Yup.string().required('Le téléphone est requis'),
-    contact_person: Yup.string().required('La personne de contact est requise'),
-    billing_address: Yup.string().required('L\'adresse de facturation est requise'),
-    payment_terms: Yup.string().required('Les conditions de paiement sont requises'),
-    credit_limit: Yup.number().positive('La limite de crédit doit être positive').nullable(),
-});
-
-const PAYMENT_TERMS = [
-    { value: 'NET 15', label: 'NET 15 - Paiement sous 15 jours' },
-    { value: 'NET 30', label: 'NET 30 - Paiement sous 30 jours' },
-    { value: 'NET 45', label: 'NET 45 - Paiement sous 45 jours' },
-    { value: 'NET 60', label: 'NET 60 - Paiement sous 60 jours' },
-    { value: 'CASH', label: 'CASH - Paiement comptant' },
-    { value: '2/10 NET 30', label: '2/10 NET 30 - 2% escompte si payé sous 10 jours, sinon 30 jours' },
-];
-
 function ClientForm() {
+    const { t } = useTranslation(['clients', 'common']);
+
+    // Payment terms with translations
+    const getPaymentTerms = () => [
+        { value: 'NET 15', label: t('clients:paymentTerms.net15') },
+        { value: 'NET 30', label: t('clients:paymentTerms.net30') },
+        { value: 'NET 45', label: t('clients:paymentTerms.net45') },
+        { value: 'NET 60', label: t('clients:paymentTerms.net60') },
+        { value: 'CASH', label: t('clients:paymentTerms.cash') },
+        { value: '2/10 NET 30', label: t('clients:paymentTerms.discount2_10Net30') },
+    ];
     const navigate = useNavigate();
     const { id } = useParams();
     const { enqueueSnackbar } = useSnackbar();
@@ -71,6 +64,16 @@ function ClientForm() {
         is_active: true,
     });
 
+    const validationSchema = Yup.object({
+        name: Yup.string().required(t('clients:validation.nameRequired')),
+        email: Yup.string().email(t('clients:validation.emailInvalid')).required(t('clients:validation.emailRequired')),
+        phone: Yup.string().required(t('clients:validation.phoneRequired')),
+        contact_person: Yup.string().required(t('clients:validation.contactPersonRequired')),
+        billing_address: Yup.string().required(t('clients:validation.billingAddressRequired')),
+        payment_terms: Yup.string().required(t('clients:validation.paymentTermsRequired')),
+        credit_limit: Yup.number().positive(t('clients:validation.creditLimitPositive')).nullable(),
+    });
+
     useEffect(() => {
         if (isEdit) {
             fetchClient();
@@ -87,7 +90,7 @@ function ClientForm() {
                 credit_limit: client.credit_limit || '',
             });
         } catch (error) {
-            enqueueSnackbar('Erreur lors du chargement du client', { variant: 'error' });
+            enqueueSnackbar(t('clients:messages.loadClientError'), { variant: 'error' });
             navigate('/clients');
         } finally {
             setLoading(false);
@@ -106,15 +109,15 @@ function ClientForm() {
 
             if (isEdit) {
                 await clientsAPI.update(id, cleanedValues);
-                enqueueSnackbar('Client modifié avec succès', { variant: 'success' });
+                enqueueSnackbar(t('clients:messages.updateSuccess'), { variant: 'success' });
             } else {
                 await clientsAPI.create(cleanedValues);
-                enqueueSnackbar('Client créé avec succès', { variant: 'success' });
+                enqueueSnackbar(t('clients:messages.createSuccess'), { variant: 'success' });
             }
             navigate('/clients');
         } catch (error) {
-            console.error('Erreur lors de l\'enregistrement:', error);
-            enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+            console.error('Error saving client:', error);
+            enqueueSnackbar(t('clients:messages.saveError'), { variant: 'error' });
         } finally {
             setSubmitting(false);
         }
@@ -131,7 +134,7 @@ function ClientForm() {
     return (
         <Box>
             <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-                {isEdit ? 'Modifier le client' : 'Nouveau client'}
+                {isEdit ? t('clients:editClient') : t('clients:newClient')}
             </Typography>
 
             <Formik
@@ -149,7 +152,7 @@ function ClientForm() {
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <Business />
-                                            Informations générales
+                                            {t('clients:labels.generalInfo')}
                                         </Typography>
 
                                         <Grid container spacing={2}>
@@ -157,7 +160,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="name"
-                                                    label="Nom du client"
+                                                    label={t('clients:labels.name')}
                                                     value={values.name}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -171,7 +174,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="legal_name"
-                                                    label="Nom légal (optionnel)"
+                                                    label={t('clients:labels.legalName')}
                                                     value={values.legal_name}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -184,7 +187,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="business_number"
-                                                    label="Numéro d'entreprise (optionnel)"
+                                                    label={t('clients:labels.businessNumber')}
                                                     value={values.business_number}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -201,7 +204,7 @@ function ClientForm() {
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <Person />
-                                            Informations de contact
+                                            {t('clients:labels.contactInfo')}
                                         </Typography>
 
                                         <Grid container spacing={2}>
@@ -209,7 +212,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="contact_person"
-                                                    label="Personne de contact"
+                                                    label={t('clients:labels.contactPerson')}
                                                     value={values.contact_person}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -230,7 +233,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="email"
-                                                    label="Email"
+                                                    label={t('clients:labels.email')}
                                                     type="email"
                                                     value={values.email}
                                                     onChange={handleChange}
@@ -252,7 +255,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="phone"
-                                                    label="Téléphone"
+                                                    label={t('clients:labels.phone')}
                                                     value={values.phone}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -275,7 +278,7 @@ function ClientForm() {
                                                     multiline
                                                     rows={3}
                                                     name="billing_address"
-                                                    label="Adresse de facturation"
+                                                    label={t('clients:labels.billingAddress')}
                                                     value={values.billing_address}
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -293,21 +296,21 @@ function ClientForm() {
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <AttachMoney />
-                                            Conditions commerciales
+                                            {t('clients:labels.commercialConditions')}
                                         </Typography>
 
                                         <Grid container spacing={2}>
                                             <Grid item xs={12} md={6}>
                                                 <FormControl fullWidth required>
-                                                    <InputLabel>Conditions de paiement</InputLabel>
+                                                    <InputLabel>{t('clients:labels.paymentTerms')}</InputLabel>
                                                     <Select
                                                         name="payment_terms"
                                                         value={values.payment_terms}
                                                         onChange={handleChange}
-                                                        label="Conditions de paiement"
+                                                        label={t('clients:labels.paymentTerms')}
                                                         error={touched.payment_terms && Boolean(errors.payment_terms)}
                                                     >
-                                                        {PAYMENT_TERMS.map((term) => (
+                                                        {getPaymentTerms().map((term) => (
                                                             <MenuItem key={term.value} value={term.value}>
                                                                 {term.label}
                                                             </MenuItem>
@@ -320,7 +323,7 @@ function ClientForm() {
                                                 <TextField
                                                     fullWidth
                                                     name="credit_limit"
-                                                    label="Limite de crédit (optionnel)"
+                                                    label={t('clients:labels.creditLimit')}
                                                     type="number"
                                                     value={values.credit_limit}
                                                     onChange={handleChange}
@@ -342,7 +345,7 @@ function ClientForm() {
                                 <Card>
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom>
-                                            Statut et options
+                                            {t('clients:labels.statusAndOptions')}
                                         </Typography>
 
                                         <FormControlLabel
@@ -353,18 +356,16 @@ function ClientForm() {
                                                     onChange={handleChange}
                                                 />
                                             }
-                                            label="Client actif"
+                                            label={t('clients:labels.activeClient')}
                                             sx={{ mb: 2 }}
                                         />
 
                                         <Alert severity="info" sx={{ mt: 2 }}>
                                             <Typography variant="subtitle2" gutterBottom>
-                                                Informations IA
+                                                {t('clients:labels.aiInfo')}
                                             </Typography>
                                             <Typography variant="body2">
-                                                Les scores de risque de paiement et les modèles de comportement
-                                                seront automatiquement calculés par l'IA une fois le client créé
-                                                et qu'il aura un historique de transactions.
+                                                {t('clients:labels.aiInfoDescription')}
                                             </Typography>
                                         </Alert>
                                     </CardContent>
@@ -380,7 +381,7 @@ function ClientForm() {
                                         onClick={() => navigate('/clients')}
                                         disabled={isSubmitting}
                                     >
-                                        Annuler
+                                        {t('clients:actions.cancel')}
                                     </Button>
                                     <Button
                                         type="submit"
@@ -388,7 +389,7 @@ function ClientForm() {
                                         startIcon={<Save />}
                                         disabled={isSubmitting}
                                     >
-                                        {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? 'Modifier' : 'Créer')}
+                                        {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('clients:actions.modify') : t('clients:actions.create'))}
                                     </Button>
                                 </Box>
                             </Grid>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const RecentActivityWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +26,8 @@ const RecentActivityWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data || !data.activities) return <div className="widget-empty"><Activity size={40} className="widget-empty-icon" /><div className="widget-empty-text">Aucune activité</div></div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data || !data.activities) return <div className="widget-empty"><Activity size={40} className="widget-empty-icon" /><div className="widget-empty-text">{t('widgets.recent_activity_empty', { ns: 'dashboard', defaultValue: 'Aucune activité' })}</div></div>;
 
   return (
     <div className="widget-list">

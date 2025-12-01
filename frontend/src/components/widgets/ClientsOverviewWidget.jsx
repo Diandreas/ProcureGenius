@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const ClientsOverviewWidget = ({ period }) => {
+  const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,13 +26,13 @@ const ClientsOverviewWidget = ({ period }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('messages.error')}</div>;
 
   const stats = [
-    { label: 'Total', value: data.total || 0 },
-    { label: 'Actifs', value: data.active || 0 },
-    { label: 'Nouveaux', value: data.new_in_period || 0 }
+    { label: t('widgets.clients_overview_metrics.total', { ns: 'dashboard', defaultValue: 'Total' }), value: data.total || 0 },
+    { label: t('widgets.clients_overview_metrics.active', { ns: 'dashboard', defaultValue: 'Actifs' }), value: data.active || 0 },
+    { label: t('widgets.clients_overview_metrics.new', { ns: 'dashboard', defaultValue: 'Nouveaux' }), value: data.new_in_period || 0 }
   ];
 
   return (

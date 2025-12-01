@@ -37,6 +37,7 @@ import {
   StarBorder,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
@@ -44,6 +45,7 @@ import EmptyState from '../../components/EmptyState';
 function Suppliers() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['suppliers', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -64,7 +66,7 @@ function Suppliers() {
       const response = await suppliersAPI.list();
       setSuppliers(response.data.results || response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement des fournisseurs', { variant: 'error' });
+      enqueueSnackbar(t('suppliers:messages.loadingError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -244,7 +246,7 @@ function Suppliers() {
           )}
           {supplier.is_minority_owned && (
             <Chip
-              label="Minorité"
+              label={t('suppliers:diversity.minority')}
               size="small"
               color="info"
               variant="outlined"
@@ -253,7 +255,7 @@ function Suppliers() {
           )}
           {supplier.is_woman_owned && (
             <Chip
-              label="Femme"
+              label={t('suppliers:diversity.woman')}
               size="small"
               color="secondary"
               variant="outlined"
@@ -262,7 +264,7 @@ function Suppliers() {
           )}
           {supplier.is_indigenous && (
             <Chip
-              label="Autochtone"
+              label={t('suppliers:diversity.indigenous')}
               size="small"
               color="warning"
               variant="outlined"
@@ -292,7 +294,7 @@ function Suppliers() {
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Fournisseurs
+          {t('suppliers:title')}
         </Typography>
 
         {/* Stats Cards - Cliquables pour filtrer */}
@@ -319,7 +321,7 @@ function Suppliers() {
                       {activeSuppliers}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Actifs
+                      {t('suppliers:filters.active')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -349,7 +351,7 @@ function Suppliers() {
                       {inactiveSuppliers}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Inactifs
+                      {t('suppliers:filters.inactive')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -379,7 +381,7 @@ function Suppliers() {
                       {localSuppliers}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Locaux
+                      {t('suppliers:filters.local')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -409,7 +411,7 @@ function Suppliers() {
                       {internationalSuppliers}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Internat.
+                      {t('suppliers:filters.international')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -439,7 +441,7 @@ function Suppliers() {
                       {topRatedSuppliers}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Top Rated
+                      {t('suppliers:filters.topRated')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -451,14 +453,14 @@ function Suppliers() {
         {/* Indicateur de filtre actif */}
         {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Typography variant="body2" color="text.secondary">{t('suppliers:filters.activeFilter')}</Typography>
             <Chip
               label={
-                quickFilter === 'active' ? 'Actifs' :
-                quickFilter === 'inactive' ? 'Inactifs' :
-                quickFilter === 'local' ? 'Locaux' :
-                quickFilter === 'international' ? 'Internationaux' :
-                quickFilter === 'top_rated' ? 'Top Rated (≥4★)' : ''
+                quickFilter === 'active' ? t('suppliers:filters.active') :
+                quickFilter === 'inactive' ? t('suppliers:filters.inactive') :
+                quickFilter === 'local' ? t('suppliers:filters.local') :
+                quickFilter === 'international' ? t('suppliers:filters.internationalFull') :
+                quickFilter === 'top_rated' ? t('suppliers:filters.topRated') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
@@ -482,7 +484,7 @@ function Suppliers() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher un fournisseur..."
+                placeholder={t('suppliers:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -512,18 +514,18 @@ function Suppliers() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('suppliers:filters.statusLabel')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('suppliers:filters.statusLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="active">Actif</MenuItem>
-                      <MenuItem value="pending">En attente</MenuItem>
-                      <MenuItem value="inactive">Inactif</MenuItem>
-                      <MenuItem value="blocked">Bloqué</MenuItem>
+                      <MenuItem value="">{t('suppliers:filters.all')}</MenuItem>
+                      <MenuItem value="active">{t('suppliers:status.active')}</MenuItem>
+                      <MenuItem value="pending">{t('suppliers:status.pending')}</MenuItem>
+                      <MenuItem value="inactive">{t('suppliers:status.inactive')}</MenuItem>
+                      <MenuItem value="blocked">{t('suppliers:status.blocked')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -536,9 +538,9 @@ function Suppliers() {
       {/* Suppliers Grid */}
       {filteredSuppliers.length === 0 ? (
         <EmptyState
-          title="Aucun fournisseur"
-          description="Aucun fournisseur ne correspond à vos critères de recherche."
-          actionLabel="Nouveau fournisseur"
+          title={t('suppliers:messages.noSuppliers')}
+          description={t('suppliers:messages.noSuppliersDescription')}
+          actionLabel={t('suppliers:newSupplier')}
           onAction={() => navigate('/suppliers/new')}
         />
       ) : (

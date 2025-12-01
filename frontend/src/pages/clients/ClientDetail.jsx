@@ -37,12 +37,14 @@ import {
   Info,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import ClientInvoicesTable from '../../components/clients/ClientInvoicesTable';
 import ClientProductsTable from '../../components/clients/ClientProductsTable';
 
 function ClientDetail() {
+  const { t } = useTranslation(['clients', 'common']);
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -65,7 +67,7 @@ function ClientDetail() {
       const response = await clientsAPI.get(id);
       setClient(response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du client', { variant: 'error' });
+      enqueueSnackbar(t('clients:messages.loadClientError'), { variant: 'error' });
       navigate('/clients');
     } finally {
       setLoading(false);
@@ -77,18 +79,18 @@ function ClientDetail() {
       const response = await clientsAPI.getStatistics(id);
       setStatistics(response.data);
     } catch (error) {
-      console.error('Erreur statistiques:', error);
+      console.error('Error loading client statistics:', error);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Supprimer ${client.name} ?`)) {
+    if (window.confirm(t('clients:messages.deleteConfirmation', { name: client.name }))) {
       try {
         await clientsAPI.delete(id);
-        enqueueSnackbar('Client supprimé', { variant: 'success' });
+        enqueueSnackbar(t('clients:messages.clientDeleted'), { variant: 'success' });
         navigate('/clients');
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('clients:messages.deleteError'), { variant: 'error' });
       }
     }
   };
@@ -102,7 +104,7 @@ function ClientDetail() {
   }
 
   if (!client) {
-    return <Alert severity="error">Client introuvable</Alert>;
+    return <Alert severity="error">{t('clients:messages.clientNotFound')}</Alert>;
   }
 
   return (
@@ -116,7 +118,7 @@ function ClientDetail() {
           <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
             {client.name}
           </Typography>
-          <Tooltip title="Modifier le client">
+          <Tooltip title={t('clients:tooltips.editClient')}>
             <IconButton
               onClick={() => navigate(`/clients/${id}/edit`)}
               sx={{
@@ -130,7 +132,7 @@ function ClientDetail() {
               <Edit />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Supprimer le client">
+          <Tooltip title={t('clients:tooltips.deleteClient')}>
             <IconButton
               onClick={handleDelete}
               sx={{
@@ -155,9 +157,9 @@ function ClientDetail() {
         scrollButtons="auto"
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
-        <Tab icon={<Info />} label="Infos" iconPosition="start" />
-        <Tab icon={<Receipt />} label="Factures" iconPosition="start" />
-        <Tab icon={<Inventory />} label="Produits" iconPosition="start" />
+        <Tab icon={<Info />} label={t('clients:tabs.info')} iconPosition="start" />
+        <Tab icon={<Receipt />} label={t('clients:tabs.invoices')} iconPosition="start" />
+        <Tab icon={<Inventory />} label={t('clients:tabs.products')} iconPosition="start" />
       </Tabs>
 
       {/* Tab: Informations */}
@@ -190,7 +192,7 @@ function ClientDetail() {
                     )}
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                       <Chip
-                        label={client.is_active ? 'Actif' : 'Inactif'}
+                        label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
                         color={client.is_active ? 'success' : 'default'}
                         size="small"
                       />
@@ -216,7 +218,7 @@ function ClientDetail() {
                         <Person sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Personne contact
+                            {t('clients:labels.contactPerson')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             {client.contact_person}
@@ -232,7 +234,7 @@ function ClientDetail() {
                         <Email sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Email
+                            {t('clients:labels.email')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             <a href={`mailto:${client.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -250,7 +252,7 @@ function ClientDetail() {
                         <Phone sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Téléphone
+                            {t('clients:labels.phone')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             <a href={`tel:${client.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -268,7 +270,7 @@ function ClientDetail() {
                         <LocationOn sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Adresse
+                            {t('clients:labels.address')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             {client.billing_address}
@@ -292,7 +294,7 @@ function ClientDetail() {
                         {statistics.sales_summary.total_invoices || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Factures
+                        {t('clients:tabs.invoices')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -306,7 +308,7 @@ function ClientDetail() {
                         {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        CA Total
+                        {t('clients:stats.totalRevenue')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -321,7 +323,7 @@ function ClientDetail() {
                           {statistics.sales_summary.unique_products}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Produits achetés
+                          {t('clients:stats.productsPurchased')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -337,7 +339,7 @@ function ClientDetail() {
                           {formatCurrency(statistics.sales_summary.average_invoice_amount)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Panier moyen
+                          {t('clients:stats.averageBasket')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -355,7 +357,7 @@ function ClientDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <CreditCard sx={{ color: 'primary.main' }} />
                   <Typography variant="subtitle1" fontWeight="600">
-                    Conditions
+                    {t('clients:labels.conditions')}
                   </Typography>
                 </Box>
                 <Box
@@ -371,7 +373,7 @@ function ClientDetail() {
                     {client.payment_terms || 'NET 30'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Conditions de paiement
+                    {t('clients:labels.paymentTerms')}
                   </Typography>
                 </Box>
 
@@ -388,7 +390,7 @@ function ClientDetail() {
                       {formatCurrency(client.credit_limit)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Limite de crédit
+                      {t('clients:labels.creditLimit')}
                     </Typography>
                   </Box>
                 )}
@@ -399,7 +401,7 @@ function ClientDetail() {
             <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Actions rapides
+                  {t('clients:labels.quickActions')}
                 </Typography>
                 <Stack spacing={1}>
                   <Button
@@ -409,7 +411,7 @@ function ClientDetail() {
                     onClick={() => navigate(`/invoices/new?client=${id}`)}
                     size="small"
                   >
-                    Créer une facture
+                    {t('clients:actions.createInvoice')}
                   </Button>
                   <Button
                     fullWidth
@@ -419,7 +421,7 @@ function ClientDetail() {
                     disabled={!client.email}
                     size="small"
                   >
-                    Envoyer un email
+                    {t('clients:actions.sendEmail')}
                   </Button>
                   <Button
                     fullWidth
@@ -429,7 +431,7 @@ function ClientDetail() {
                     disabled={!client.phone}
                     size="small"
                   >
-                    Appeler
+                    {t('clients:actions.call')}
                   </Button>
                 </Stack>
               </CardContent>
@@ -439,12 +441,12 @@ function ClientDetail() {
             <Card sx={{ borderRadius: 1 }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Informations système
+                  {t('clients:labels.systemInfo')}
                 </Typography>
                 <Stack spacing={1.5} sx={{ mt: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Créé le
+                      {t('clients:labels.createdOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(client.created_at)}
@@ -453,7 +455,7 @@ function ClientDetail() {
                   <Divider />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Modifié le
+                      {t('clients:labels.updatedOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(client.updated_at)}
@@ -471,7 +473,7 @@ function ClientDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Receipt color="primary" />
-            Factures
+            {t('clients:tabs.invoices')}
           </Typography>
           <ClientInvoicesTable
             invoices={statistics?.recent_invoices}
@@ -485,7 +487,7 @@ function ClientDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Inventory color="primary" />
-            Produits achetés
+            {t('clients:tabs.products')}
           </Typography>
           <ClientProductsTable
             products={statistics?.top_products}

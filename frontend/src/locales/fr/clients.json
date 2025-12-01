@@ -1,0 +1,101 @@
+{
+  "title": "Clients",
+  "newClient": "Nouveau client",
+  "editClient": "Modifier le client",
+  "search": {
+    "placeholder": "Rechercher un client..."
+  },
+  "filters": {
+    "active": "Actifs",
+    "inactive": "Inactifs",
+    "vip": "VIP",
+    "new": "Nouveaux",
+    "all": "Tous",
+    "activeFilter": "Filtre actif:",
+    "statusLabel": "Statut",
+    "paymentTermsLabel": "Conditions de paiement",
+    "allPaymentTerms": "Toutes"
+  },
+  "tabs": {
+    "info": "Infos",
+    "invoices": "Factures",
+    "products": "Produits"
+  },
+  "labels": {
+    "contactPerson": "Personne contact",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "conditions": "Conditions",
+    "paymentTerms": "Conditions de paiement",
+    "creditLimit": "Limite de crédit",
+    "quickActions": "Actions rapides",
+    "createdOn": "Créé le",
+    "updatedOn": "Modifié le",
+    "systemInfo": "Informations système",
+    "generalInfo": "Informations générales",
+    "contactInfo": "Informations de contact",
+    "commercialConditions": "Conditions commerciales",
+    "statusAndOptions": "Statut et options",
+    "name": "Nom du client",
+    "legalName": "Nom légal (optionnel)",
+    "businessNumber": "Numéro d'entreprise (optionnel)",
+    "billingAddress": "Adresse de facturation",
+    "activeClient": "Client actif",
+    "aiInfo": "Informations IA",
+    "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le client créé et qu'il aura un historique de transactions."
+  },
+  "stats": {
+    "totalRevenue": "CA Total",
+    "productsPurchased": "Produits achetés",
+    "averageBasket": "Panier moyen"
+  },
+  "actions": {
+    "createInvoice": "Créer une facture",
+    "sendEmail": "Envoyer un email",
+    "call": "Appeler",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "modify": "Modifier",
+    "save": "Enregistrer"
+  },
+  "tooltips": {
+    "editClient": "Modifier le client",
+    "deleteClient": "Supprimer le client"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "messages": {
+    "noClients": "Aucun client",
+    "noClientsDescription": "Aucun client ne correspond à vos critères de recherche.",
+    "loadingError": "Erreur lors du chargement des clients",
+    "loadClientError": "Erreur lors du chargement du client",
+    "clientDeleted": "Client supprimé",
+    "deleteError": "Erreur lors de la suppression",
+    "clientNotFound": "Client introuvable",
+    "deleteConfirmation": "Supprimer {{name}} ?",
+    "createSuccess": "Client créé avec succès",
+    "updateSuccess": "Client modifié avec succès",
+    "saveError": "Erreur lors de l'enregistrement"
+  },
+  "validation": {
+    "nameRequired": "Le nom est requis",
+    "emailInvalid": "Email invalide",
+    "emailRequired": "L'email est requis",
+    "phoneRequired": "Le téléphone est requis",
+    "contactPersonRequired": "La personne de contact est requise",
+    "billingAddressRequired": "L'adresse de facturation est requise",
+    "paymentTermsRequired": "Les conditions de paiement sont requises",
+    "creditLimitPositive": "La limite de crédit doit être positive"
+  },
+  "paymentTerms": {
+    "net15": "NET 15 - Paiement sous 15 jours",
+    "net30": "NET 30 - Paiement sous 30 jours",
+    "net45": "NET 45 - Paiement sous 45 jours",
+    "net60": "NET 60 - Paiement sous 60 jours",
+    "cash": "CASH - Paiement comptant",
+    "discount2_10Net30": "2/10 NET 30 - 2% escompte si payé sous 10 jours, sinon 30 jours"
+  }
+}

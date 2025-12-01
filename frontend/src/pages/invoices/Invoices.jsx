@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Card,
@@ -35,38 +36,30 @@ import {
   Error,
   Description,
 } from '@mui/icons-material';
-import { invoicesAPI } from '../../services/api';
+import { useTranslation } from 'react-i18next';
+import { fetchInvoices } from '../../store/slices/invoicesSlice';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Invoices() {
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [quickFilter, setQuickFilter] = useState('');
+  const { t } = useTranslation(['invoices', 'common']);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
+  // Redux state
+  const { invoices, loading, error } = useSelector((state) => state.invoices);
 
-  const fetchInvoices = async () => {
-    try {
-      setLoading(true);
-      const response = await invoicesAPI.list();
-      setInvoices(response.data.results || response.data);
-    } catch (err) {
-      setError('Erreur lors du chargement des factures');
-      console.error('Error fetching invoices:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Local UI state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [quickFilter, setQuickFilter] = useState('');
+
+  useEffect(() => {
+    dispatch(fetchInvoices());
+  }, [dispatch]);
 
   const handleQuickFilterClick = (filterValue) => {
     if (quickFilter === filterValue) {
@@ -108,11 +101,11 @@ function Invoices() {
 
   const getStatusLabel = (status) => {
     const labels = {
-      draft: 'Brouillon',
-      sent: 'Envoyée',
-      paid: 'Payée',
-      overdue: 'En retard',
-      cancelled: 'Annulée'
+      draft: t('invoices:status.draft'),
+      sent: t('invoices:status.sent'),
+      paid: t('invoices:status.paid'),
+      overdue: t('invoices:status.overdue'),
+      cancelled: t('invoices:status.cancelled')
     };
     return labels[status] || status;
   };
@@ -225,7 +218,7 @@ function Invoices() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                Échéance: {formatDate(invoice.due_date)}
+                {t('invoices:labels.dueDate')} {formatDate(invoice.due_date)}
               </Typography>
             </Box>
           )}
@@ -244,7 +237,7 @@ function Invoices() {
     </Card>
   );
 
-  if (loading) {
+  if (loading && invoices.length === 0) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
@@ -255,7 +248,7 @@ function Invoices() {
   if (error) {
     return (
       <Box p={3}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">{t('invoices:messages.loadingError')}</Alert>
       </Box>
     );
   }
@@ -265,7 +258,7 @@ function Invoices() {
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Factures
+          {t('invoices:title')}
         </Typography>
 
         {/* Stats Cards - Clickable Filters */}
@@ -296,7 +289,7 @@ function Invoices() {
                       {paidInvoices}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Payées
+                      {t('invoices:filters.paid')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -330,7 +323,7 @@ function Invoices() {
                       {unpaidInvoices}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Impayées
+                      {t('invoices:filters.unpaid')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -364,7 +357,7 @@ function Invoices() {
                       {overdueInvoices}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      En retard
+                      {t('invoices:filters.overdue')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -398,7 +391,7 @@ function Invoices() {
                       {draftInvoices}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Brouillons
+                      {t('invoices:filters.drafts')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -432,7 +425,7 @@ function Invoices() {
                       {totalInvoices}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Toutes
+                      {t('invoices:filters.allInvoices')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -444,20 +437,20 @@ function Invoices() {
         {/* Filter Indicator */}
         {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Typography variant="body2" color="text.secondary">{t('invoices:filters.activeFilter')}</Typography>
             <Chip
               label={
-                quickFilter === 'paid' ? 'Payées' :
-                quickFilter === 'unpaid' ? 'Impayées' :
-                quickFilter === 'overdue' ? 'En retard' :
-                quickFilter === 'draft' ? 'Brouillons' : ''
+                quickFilter === 'paid' ? t('invoices:filters.paid') :
+                  quickFilter === 'unpaid' ? t('invoices:filters.unpaid') :
+                    quickFilter === 'overdue' ? t('invoices:filters.overdue') :
+                      quickFilter === 'draft' ? t('invoices:filters.drafts') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'paid' ? 'success' :
-                quickFilter === 'unpaid' ? 'warning' :
-                quickFilter === 'overdue' ? 'error' :
-                quickFilter === 'draft' ? 'default' : 'primary'
+                  quickFilter === 'unpaid' ? 'warning' :
+                    quickFilter === 'overdue' ? 'error' :
+                      quickFilter === 'draft' ? 'default' : 'primary'
               }
               size="small"
             />
@@ -473,7 +466,7 @@ function Invoices() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher une facture..."
+                placeholder={t('invoices:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -503,19 +496,19 @@ function Invoices() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('invoices:filters.statusLabel')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('invoices:filters.statusLabel')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="sent">Envoyée</MenuItem>
-                      <MenuItem value="paid">Payée</MenuItem>
-                      <MenuItem value="overdue">En retard</MenuItem>
-                      <MenuItem value="cancelled">Annulée</MenuItem>
+                      <MenuItem value="">{t('invoices:filters.all')}</MenuItem>
+                      <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
+                      <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                      <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
+                      <MenuItem value="overdue">{t('invoices:status.overdue')}</MenuItem>
+                      <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -528,9 +521,9 @@ function Invoices() {
       {/* Invoices Grid */}
       {filteredInvoices.length === 0 ? (
         <EmptyState
-          title="Aucune facture"
-          description="Aucune facture ne correspond à vos critères de recherche."
-          actionLabel="Nouvelle facture"
+          title={t('invoices:messages.noInvoices')}
+          description={t('invoices:messages.noInvoicesDescription')}
+          actionLabel={t('invoices:newInvoice')}
           onAction={() => navigate('/invoices/new')}
         />
       ) : (

@@ -1,0 +1,85 @@
+{
+  "title": "Suppliers",
+  "newSupplier": "New Supplier",
+  "editSupplier": "Edit Supplier",
+  "search": {
+    "placeholder": "Search for a supplier..."
+  },
+  "filters": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "local": "Local",
+    "international": "Internat.",
+    "internationalFull": "International",
+    "topRated": "Top Rated (≥4★)",
+    "all": "All",
+    "activeFilter": "Active Filter:",
+    "statusLabel": "Status"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "blocked": "Blocked"
+  },
+  "diversity": {
+    "minority": "Minority",
+    "woman": "Woman",
+    "indigenous": "Indigenous"
+  },
+  "messages": {
+    "noSuppliers": "No suppliers",
+    "noSuppliersDescription": "No suppliers match your search criteria.",
+    "loadingError": "Error loading suppliers",
+    "supplierDeleted": "Supplier deleted",
+    "deleteError": "Error deleting supplier",
+    "supplierNotFound": "Supplier not found",
+    "deleteConfirmation": "Delete {{name}}?",
+    "createSuccess": "Supplier created successfully",
+    "updateSuccess": "Supplier updated successfully",
+    "saveError": "Error saving supplier",
+    "statisticsError": "Error loading statistics",
+    "reportGenerating": "Generating {{format}} report...",
+    "reportGenerated": "Report generated successfully!",
+    "reportInProgress": "The report is being generated...",
+    "reportError": "Error generating report"
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "quickActions": "Quick Actions",
+    "newPurchaseOrder": "New Purchase Order",
+    "addProducts": "Add Products",
+    "generateReport": "Generate Report"
+  },
+  "tabs": {
+    "info": "Info",
+    "orders": "Orders",
+    "products": "Products"
+  },
+  "labels": {
+    "local": "Local",
+    "contactPerson": "Contact Person",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "totalSpent": "Total Spent",
+    "orders": "Orders",
+    "averageValue": "Average Value",
+    "diversity": "Diversity",
+    "localSupplier": "Local Supplier",
+    "minorityOwned": "Minority Owned",
+    "womanOwned": "Woman Owned",
+    "indigenousOwned": "Indigenous Enterprise",
+    "categories": "Categories",
+    "systemInfo": "System Information",
+    "createdOn": "Created On",
+    "modifiedOn": "Modified On",
+    "purchaseOrders": "Purchase Orders",
+    "totalOrders": "{{count}} order(s) total",
+    "topProducts": "Top Products Purchased",
+    "totalProducts": "{{count}} product(s)",
+    "noOrders": "No orders for this supplier",
+    "noProducts": "No products purchased from this supplier"
+  }
+}
