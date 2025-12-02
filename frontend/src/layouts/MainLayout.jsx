@@ -47,6 +47,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import PermanentAIAssistant from '../components/PermanentAIAssistant';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 260;
 
@@ -66,6 +67,7 @@ const menuItems = [
 ];
 
 function MainLayout() {
+  const { t } = useTranslation(['navigation', 'common']);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -76,6 +78,20 @@ function MainLayout() {
 
   // Use module context
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+
+  // Menu items with translations
+  const menuItems = [
+    { text: t('navigation:menu.dashboard'), icon: <IconImage src="/icon/dashboard.png" alt="Dashboard" size={24} />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
+    { text: t('navigation:menu.suppliers'), icon: <IconImage src="/icon/supplier.png" alt="Suppliers" size={24} />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
+    { text: t('navigation:menu.purchaseOrders'), icon: <IconImage src="/icon/purchase-order.png" alt="Purchase Orders" size={24} />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
+    { text: t('navigation:menu.invoices'), icon: <IconImage src="/icon/bill.png" alt="Invoices" size={24} />, path: '/invoices', moduleId: 'invoices', isCore: false },
+    { text: t('navigation:menu.products'), icon: <IconImage src="/icon/product.png" alt="Products" size={24} />, path: '/products', moduleId: 'products', isCore: false },
+    { text: t('navigation:menu.clients'), icon: <IconImage src="/icon/user.png" alt="Clients" size={24} />, path: '/clients', moduleId: 'clients', isCore: false },
+    { text: t('navigation:menu.eSourcing'), icon: <IconImage src="/icon/market.png" alt="E-Sourcing" size={24} />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
+    { text: t('navigation:menu.contracts'), icon: <IconImage src="/icon/contract.png" alt="Contracts" size={24} />, path: '/contracts', moduleId: 'contracts', isCore: false },
+    { text: t('navigation:menu.aiAssistant'), icon: <IconImage src="/icon/ai-assistant.png" alt="AI Assistant" size={24} />, path: '/ai-chat', moduleId: 'dashboard', isCore: true },
+  ];
+
 
   // États pour la gestion des modules
   const [userPermissions, setUserPermissions] = useState(null);
@@ -161,89 +177,89 @@ function MainLayout() {
     switch (currentPath) {
       case '/dashboard':
         return {
-          title: 'Tableau de bord'
+          title: t('navigation:menu.dashboard')
         };
       case '/suppliers':
         return {
-          title: 'Fournisseurs',
+          title: t('navigation:menu.suppliers'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau fournisseur',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newSupplier'),
             icon: <Add />,
             onClick: () => navigate('/suppliers/new')
           }
         };
       case '/purchase-orders':
         return {
-          title: 'Bons de commande',
+          title: t('navigation:menu.purchaseOrders'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau bon de commande',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newPurchaseOrder'),
             icon: <Add />,
             onClick: () => navigate('/purchase-orders/new')
           }
         };
       case '/invoices':
         return {
-          title: 'Factures',
+          title: t('navigation:menu.invoices'),
           action: {
-            label: isMobile ? 'Nouvelle' : 'Nouvelle facture',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newInvoice'),
             icon: <Add />,
             onClick: () => navigate('/invoices/new')
           }
         };
       case '/products':
         return {
-          title: 'Produits',
+          title: t('navigation:menu.products'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau produit',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newProduct'),
             icon: <Add />,
             onClick: () => navigate('/products/new')
           }
         };
       case '/clients':
         return {
-          title: 'Clients',
+          title: t('navigation:menu.clients'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau client',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newClient'),
             icon: <Add />,
             onClick: () => navigate('/clients/new')
           }
         };
       case '/e-sourcing/events':
         return {
-          title: 'E-Sourcing (RFQ)',
+          title: t('navigation:menu.eSourcing'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouvel événement RFQ',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newRfqEvent'),
             icon: <Add />,
             onClick: () => navigate('/e-sourcing/events/new')
           }
         };
       case '/contracts':
         return {
-          title: 'Contrats',
+          title: t('navigation:menu.contracts'),
           action: {
-            label: isMobile ? 'Nouveau' : 'Nouveau contrat',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newContract'),
             icon: <Add />,
             onClick: () => navigate('/contracts/new')
           }
         };
       case '/migration/jobs':
         return {
-          title: 'Import de données',
+          title: t('navigation:topBar.dataImport'),
           action: {
-            label: isMobile ? 'Nouvel import' : 'Nouvel import',
+            label: isMobile ? t('navigation:topBar.newImport') : t('navigation:topBar.newImport'),
             icon: <IconImage src="/icon/migration.png" alt="Import" size={20} />,
             onClick: () => navigate('/migration/wizard')
           }
         };
       case '/migration/wizard':
         return {
-          title: 'Assistant d\'import'
+          title: t('navigation:topBar.importWizard')
         };
       case '/ai-chat':
         return {
-          title: 'Assistant IA',
+          title: t('navigation:menu.aiAssistant'),
           action: {
-            label: isMobile ? 'Nouvelle' : 'Nouvelle conversation',
+            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newConversation'),
             icon: <Add />,
             onClick: () => {
               // Cette action sera gérée par le composant AIChat
@@ -253,7 +269,7 @@ function MainLayout() {
         };
       case '/settings':
         return {
-          title: 'Paramètres'
+          title: t('navigation:menu.settings')
         };
       default:
         // Fallback pour les routes non définies
@@ -339,7 +355,7 @@ function MainLayout() {
               <IconImage src="/icon/setting.png" alt="Modules" size={24} />
             </ListItemIcon>
             <ListItemText
-              primary="Modules"
+              primary={t('navigation:menu.modules')}
               primaryTypographyProps={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
@@ -360,7 +376,7 @@ function MainLayout() {
                 <SupervisorAccount />
               </ListItemIcon>
               <ListItemText
-                primary="Utilisateurs"
+                primary={t('navigation:menu.users')}
                 primaryTypographyProps={{
                   fontSize: '0.875rem',
                   fontWeight: 500,
@@ -381,7 +397,7 @@ function MainLayout() {
               <IconImage src="/icon/setting.png" alt="Settings" size={24} />
             </ListItemIcon>
             <ListItemText
-              primary="Paramètres"
+              primary={t('navigation:menu.settings')}
               primaryTypographyProps={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
@@ -404,7 +420,7 @@ function MainLayout() {
           bgcolor: 'rgba(255, 255, 255, 0.8)',
           backdropFilter: 'blur(20px)',
           color: 'text.primary',
-          borderBottom: '1px solid',
+          borderBottom: '0px ',
           borderColor: 'divider',
         }}
       >
@@ -494,13 +510,13 @@ function MainLayout() {
               <ListItemIcon>
                 <IconImage src="/icon/setting.png" alt="Settings" size={20} />
               </ListItemIcon>
-              <Typography variant="body2">Paramètres</Typography>
+              <Typography variant="body2">{t('navigation:userMenu.settings')}</Typography>
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2 }}>
               <ListItemIcon>
                 <IconImage src="/icon/logout.png" alt="Logout" size={20} />
               </ListItemIcon>
-              <Typography variant="body2">Déconnexion</Typography>
+              <Typography variant="body2">{t('navigation:userMenu.logout')}</Typography>
             </MenuItem>
           </Menu>
         </Toolbar>

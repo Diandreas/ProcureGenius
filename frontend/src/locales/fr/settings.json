@@ -198,5 +198,81 @@
     "reset": "Réinitialiser",
     "apply": "Appliquer",
     "close": "Fermer"
+  },
+  "userManagement": {
+    "title": "Gestion des utilisateurs",
+    "inviteUser": "Inviter un utilisateur",
+    "noUsers": "Aucun utilisateur dans votre organisation pour le moment.",
+    "permissionDenied": "Vous n'avez pas la permission de gérer les utilisateurs",
+    "loadingError": "Erreur lors du chargement des utilisateurs",
+    "roles": {
+      "admin": "Administrateur",
+      "manager": "Gestionnaire",
+      "buyer": "Acheteur",
+      "accountant": "Comptable",
+      "viewer": "Consultation"
+    },
+    "modules": {
+      "dashboard": "Tableau de bord",
+      "suppliers": "Fournisseurs",
+      "purchase-orders": "Bons de commande",
+      "invoices": "Factures",
+      "products": "Produits",
+      "clients": "Clients",
+      "e-sourcing": "E-Sourcing",
+      "contracts": "Contrats"
+    },
+    "table": {
+      "user": "Utilisateur",
+      "email": "Email",
+      "role": "Rôle",
+      "modules": "Modules",
+      "modulesCount": "modules",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Actif",
+      "pending": "En attente",
+      "inactive": "Inactif"
+    },
+    "menu": {
+      "editPermissions": "Modifier les permissions",
+      "deactivate": "Désactiver",
+      "activate": "Activer",
+      "delete": "Supprimer"
+    },
+    "permissions": {
+      "manageUsers": "Gérer les utilisateurs",
+      "manageSettings": "Gérer les paramètres",
+      "viewAnalytics": "Voir les analyses",
+      "approvePurchases": "Approuver les achats"
+    },
+    "inviteDialog": {
+      "title": "Inviter un nouvel utilisateur",
+      "email": "Email",
+      "emailPlaceholder": "utilisateur@entreprise.com",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "role": "Rôle",
+      "emailInfo": "Un email d'invitation sera envoyé à l'utilisateur avec un lien pour créer son mot de passe.",
+      "invite": "Inviter",
+      "inviteSuccess": "Invitation envoyée avec succès",
+      "inviteError": "Erreur lors de l'envoi de l'invitation"
+    },
+    "permissionsDialog": {
+      "title": "Modifier les permissions",
+      "specialPermissions": "Permissions spéciales",
+      "moduleAccess": "Accès aux modules",
+      "saveSuccess": "Permissions mises à jour avec succès",
+      "saveError": "Erreur lors de la mise à jour des permissions"
+    },
+    "deleteDialog": {
+      "title": "Confirmer la désactivation",
+      "confirmMessage": "Êtes-vous sûr de vouloir désactiver l'utilisateur \"{{name}}\" ?",
+      "deactivate": "Désactiver",
+      "deleteSuccess": "Utilisateur désactivé avec succès",
+      "deleteError": "Erreur lors de la désactivation de l'utilisateur"
+    }
   }
 }

@@ -101,6 +101,41 @@
         "overdue_invoices_label": "facture(s) en retard"
     },
     "actions": {
-        "remove": "Supprimer"
+        "remove": "Supprimer",
+        "export": "Exporter",
+        "exportPDF": "Exporter en PDF",
+        "exportExcel": "Exporter en Excel"
+    },
+    "loading": "Chargement de votre tableau de bord...",
+    "error": "Impossible de charger les statistiques",
+    "welcome": {
+        "morning": {
+            "greeting": "Bonjour",
+            "message": "Excellente journée à vous !"
+        },
+        "afternoon": {
+            "greeting": "Bon après-midi",
+            "message": "Continuez sur cette lancée !"
+        },
+        "evening": {
+            "greeting": "Bonsoir",
+            "message": "Bonne fin de journée !"
+        },
+        "night": {
+            "greeting": "Bonne nuit",
+            "message": "Il se fait tard !"
+        }
+    },
+    "stats": {
+        "totalRevenue": "Revenu Total",
+        "expenses": "Dépenses",
+        "unpaidInvoices": "Factures Impayées"
+    },
+    "labels": {
+        "invoices": "Factures",
+        "topClients": "Top 5 Clients",
+        "topSuppliers": "Top 5 Fournisseurs",
+        "noClients": "Aucun client trouvé",
+        "noSuppliers": "Aucun fournisseur trouvé"
     }
 }

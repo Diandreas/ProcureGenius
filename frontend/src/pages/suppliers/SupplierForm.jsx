@@ -30,43 +30,45 @@ import {
   Business,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
-
-const validationSchema = Yup.object({
-  name: Yup.string().required('Le nom est requis'),
-  email: Yup.string().email('Email invalide').required('L\'email est requis'),
-  phone: Yup.string(),
-  contact_person: Yup.string(),
-  address: Yup.string(),
-  city: Yup.string(),
-  province: Yup.string(),
-  status: Yup.string().required('Le statut est requis'),
-  rating: Yup.number().min(0).max(5),
-});
-
-const PROVINCES = [
-  { value: 'QC', label: 'Québec' },
-  { value: 'ON', label: 'Ontario' },
-  { value: 'BC', label: 'Colombie-Britannique' },
-  { value: 'AB', label: 'Alberta' },
-  { value: 'MB', label: 'Manitoba' },
-  { value: 'SK', label: 'Saskatchewan' },
-  { value: 'NS', label: 'Nouvelle-Écosse' },
-  { value: 'NB', label: 'Nouveau-Brunswick' },
-  { value: 'NL', label: 'Terre-Neuve-et-Labrador' },
-  { value: 'PE', label: 'Île-du-Prince-Édouard' },
-  { value: 'NT', label: 'Territoires du Nord-Ouest' },
-  { value: 'YT', label: 'Yukon' },
-  { value: 'NU', label: 'Nunavut' },
-];
 
 function SupplierForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['suppliers', 'common']);
   const isEdit = Boolean(id);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const validationSchema = Yup.object({
+    name: Yup.string().required(t('suppliers:form.validation.nameRequired')),
+    email: Yup.string().email(t('suppliers:form.validation.invalidEmail')).required(t('suppliers:form.validation.emailRequired')),
+    phone: Yup.string(),
+    contact_person: Yup.string(),
+    address: Yup.string(),
+    city: Yup.string(),
+    province: Yup.string(),
+    status: Yup.string().required(t('suppliers:form.validation.statusRequired')),
+    rating: Yup.number().min(0).max(5),
+  });
+
+  const PROVINCES = [
+    { value: 'QC', label: t('suppliers:provinces.QC') },
+    { value: 'ON', label: t('suppliers:provinces.ON') },
+    { value: 'BC', label: t('suppliers:provinces.BC') },
+    { value: 'AB', label: t('suppliers:provinces.AB') },
+    { value: 'MB', label: t('suppliers:provinces.MB') },
+    { value: 'SK', label: t('suppliers:provinces.SK') },
+    { value: 'NS', label: t('suppliers:provinces.NS') },
+    { value: 'NB', label: t('suppliers:provinces.NB') },
+    { value: 'NL', label: t('suppliers:provinces.NL') },
+    { value: 'PE', label: t('suppliers:provinces.PE') },
+    { value: 'NT', label: t('suppliers:provinces.NT') },
+    { value: 'YT', label: t('suppliers:provinces.YT') },
+    { value: 'NU', label: t('suppliers:provinces.NU') },
+  ];
 
   const [loading, setLoading] = useState(false);
   const [initialValues, setInitialValues] = useState({
@@ -102,7 +104,7 @@ function SupplierForm() {
         category_ids: supplier.categories?.map(c => c.id) || [],
       });
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du fournisseur', { variant: 'error' });
+      enqueueSnackbar(t('suppliers:messages.loadingError'), { variant: 'error' });
       navigate('/suppliers');
     } finally {
       setLoading(false);
@@ -113,14 +115,14 @@ function SupplierForm() {
     try {
       if (isEdit) {
         await suppliersAPI.update(id, values);
-        enqueueSnackbar('Fournisseur modifié avec succès', { variant: 'success' });
+        enqueueSnackbar(t('suppliers:messages.updateSuccess'), { variant: 'success' });
       } else {
         await suppliersAPI.create(values);
-        enqueueSnackbar('Fournisseur créé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('suppliers:messages.createSuccess'), { variant: 'success' });
       }
       navigate('/suppliers');
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar(t('suppliers:messages.saveError'), { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -145,13 +147,13 @@ function SupplierForm() {
           lineHeight: 1.2,
           color: 'text.primary'
         }}>
-          {isEdit ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
+          {isEdit ? t('suppliers:form.title.edit') : t('suppliers:form.title.new')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{
           fontSize: '0.875rem',
           mt: 0.5
         }}>
-          {isEdit ? 'Modifiez les informations du fournisseur' : 'Ajoutez un nouveau fournisseur à votre système'}
+          {isEdit ? t('suppliers:form.subtitle.edit') : t('suppliers:form.subtitle.new')}
         </Typography>
       </Box>
 
@@ -181,7 +183,7 @@ function SupplierForm() {
                 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
-                      Informations générales
+                      {t('suppliers:form.sections.generalInfo')}
                     </Typography>
 
                     <Grid container spacing={2}>
@@ -189,7 +191,7 @@ function SupplierForm() {
                         <TextField
                           fullWidth
                           name="name"
-                          label="Nom du fournisseur"
+                          label={t('suppliers:form.fields.supplierName')}
                           value={values.name}
                           onChange={handleChange}
                           onBlur={handleBlur}
@@ -203,7 +205,7 @@ function SupplierForm() {
                         <TextField
                           fullWidth
                           name="contact_person"
-                          label="Personne contact"
+                          label={t('suppliers:form.fields.contactPerson')}
                           value={values.contact_person}
                           onChange={handleChange}
                           onBlur={handleBlur}
@@ -214,17 +216,17 @@ function SupplierForm() {
 
                       <Grid item xs={12} md={6}>
                         <FormControl fullWidth required>
-                          <InputLabel>Statut</InputLabel>
+                          <InputLabel>{t('suppliers:form.fields.status')}</InputLabel>
                           <Select
                             name="status"
                             value={values.status}
                             onChange={handleChange}
-                            label="Statut"
+                            label={t('suppliers:form.fields.status')}
                           >
-                            <MenuItem value="active">Actif</MenuItem>
-                            <MenuItem value="pending">En attente</MenuItem>
-                            <MenuItem value="inactive">Inactif</MenuItem>
-                            <MenuItem value="blocked">Bloqué</MenuItem>
+                            <MenuItem value="active">{t('suppliers:status.active')}</MenuItem>
+                            <MenuItem value="pending">{t('suppliers:status.pending')}</MenuItem>
+                            <MenuItem value="inactive">{t('suppliers:status.inactive')}</MenuItem>
+                            <MenuItem value="blocked">{t('suppliers:status.blocked')}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
@@ -233,7 +235,7 @@ function SupplierForm() {
                         <TextField
                           fullWidth
                           name="email"
-                          label="Email"
+                          label={t('suppliers:form.fields.email')}
                           type="email"
                           value={values.email}
                           onChange={handleChange}
@@ -248,7 +250,7 @@ function SupplierForm() {
                         <TextField
                           fullWidth
                           name="phone"
-                          label="Téléphone"
+                          label={t('suppliers:form.fields.phone')}
                           value={values.phone}
                           onChange={handleChange}
                           onBlur={handleBlur}
@@ -263,7 +265,7 @@ function SupplierForm() {
                           multiline
                           rows={3}
                           name="address"
-                          label="Adresse"
+                          label={t('suppliers:form.fields.address')}
                           value={values.address}
                           onChange={handleChange}
                           onBlur={handleBlur}
@@ -276,7 +278,7 @@ function SupplierForm() {
                         <TextField
                           fullWidth
                           name="city"
-                          label="Ville"
+                          label={t('suppliers:form.fields.city')}
                           value={values.city}
                           onChange={handleChange}
                           onBlur={handleBlur}
@@ -287,14 +289,14 @@ function SupplierForm() {
 
                       <Grid item xs={12} md={6}>
                         <FormControl fullWidth>
-                          <InputLabel>Province</InputLabel>
+                          <InputLabel>{t('suppliers:form.fields.province')}</InputLabel>
                           <Select
                             name="province"
                             value={values.province}
                             onChange={handleChange}
-                            label="Province"
+                            label={t('suppliers:form.fields.province')}
                           >
-                            <MenuItem value="">Aucune</MenuItem>
+                            <MenuItem value="">{t('suppliers:form.fields.none')}</MenuItem>
                             {PROVINCES.map((prov) => (
                               <MenuItem key={prov.value} value={prov.value}>
                                 {prov.label}
@@ -313,7 +315,7 @@ function SupplierForm() {
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
-                      Évaluation
+                      {t('suppliers:form.sections.rating')}
                     </Typography>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -333,7 +335,7 @@ function SupplierForm() {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
-                      Diversité
+                      {t('suppliers:form.sections.diversity')}
                     </Typography>
 
                     <FormControlLabel
@@ -344,7 +346,7 @@ function SupplierForm() {
                           onChange={handleChange}
                         />
                       }
-                      label="Fournisseur local"
+                      label={t('suppliers:labels.localSupplier')}
                     />
 
                     <FormControlLabel
@@ -355,7 +357,7 @@ function SupplierForm() {
                           onChange={handleChange}
                         />
                       }
-                      label="Propriété minoritaire"
+                      label={t('suppliers:labels.minorityOwned')}
                     />
 
                     <FormControlLabel
@@ -366,7 +368,7 @@ function SupplierForm() {
                           onChange={handleChange}
                         />
                       }
-                      label="Propriété féminine"
+                      label={t('suppliers:labels.womanOwned')}
                     />
 
                     <FormControlLabel
@@ -377,7 +379,7 @@ function SupplierForm() {
                           onChange={handleChange}
                         />
                       }
-                      label="Entreprise autochtone"
+                      label={t('suppliers:labels.indigenousOwned')}
                     />
                   </CardContent>
                 </Card>
@@ -404,7 +406,7 @@ function SupplierForm() {
                       }
                     }}
                   >
-                    Annuler
+                    {t('suppliers:form.buttons.cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -424,7 +426,7 @@ function SupplierForm() {
                       }
                     }}
                   >
-                    {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? 'Modifier' : 'Créer')}
+                    {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('suppliers:form.buttons.save') : t('suppliers:form.buttons.create'))}
                   </Button>
                 </Box>
               </Grid>

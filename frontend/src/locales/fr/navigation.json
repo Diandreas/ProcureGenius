@@ -1,0 +1,34 @@
+{
+    "menu": {
+        "dashboard": "Tableau de bord",
+        "suppliers": "Fournisseurs",
+        "purchaseOrders": "Bons de commande",
+        "invoices": "Factures",
+        "products": "Produits",
+        "clients": "Clients",
+        "eSourcing": "E-Sourcing (RFQ)",
+        "contracts": "Contrats",
+        "aiAssistant": "Assistant IA",
+        "modules": "Modules",
+        "users": "Utilisateurs",
+        "settings": "Paramètres"
+    },
+    "topBar": {
+        "newSupplier": "Nouveau fournisseur",
+        "newPurchaseOrder": "Nouveau bon de commande",
+        "newInvoice": "Nouvelle facture",
+        "newProduct": "Nouveau produit",
+        "newClient": "Nouveau client",
+        "newRfqEvent": "Nouvel événement RFQ",
+        "newContract": "Nouveau contrat",
+        "newConversation": "Nouvelle conversation",
+        "newImport": "Nouvel import",
+        "new": "Nouveau",
+        "importWizard": "Assistant d'import",
+        "dataImport": "Import de données"
+    },
+    "userMenu": {
+        "settings": "Paramètres",
+        "logout": "Déconnexion"
+    }
+}

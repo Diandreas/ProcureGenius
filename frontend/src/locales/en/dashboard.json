@@ -101,6 +101,41 @@
         "overdue_invoices_label": "overdue invoice(s)"
     },
     "actions": {
-        "remove": "Remove"
+        "remove": "Remove",
+        "export": "Export",
+        "exportPDF": "Export as PDF",
+        "exportExcel": "Export as Excel"
+    },
+    "loading": "Loading your dashboard...",
+    "error": "Unable to load statistics",
+    "welcome": {
+        "morning": {
+            "greeting": "Good morning",
+            "message": "Have an excellent day!"
+        },
+        "afternoon": {
+            "greeting": "Good afternoon",
+            "message": "Keep up the great work!"
+        },
+        "evening": {
+            "greeting": "Good evening",
+            "message": "Have a nice end of day!"
+        },
+        "night": {
+            "greeting": "Good night",
+            "message": "It's getting late!"
+        }
+    },
+    "stats": {
+        "totalRevenue": "Total Revenue",
+        "expenses": "Expenses",
+        "unpaidInvoices": "Unpaid Invoices"
+    },
+    "labels": {
+        "invoices": "Invoices",
+        "topClients": "Top 5 Clients",
+        "topSuppliers": "Top 5 Suppliers",
+        "noClients": "No clients found",
+        "noSuppliers": "No suppliers found"
     }
 }

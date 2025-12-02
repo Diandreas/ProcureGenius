@@ -81,5 +81,57 @@
     "totalProducts": "{{count}} produit(s)",
     "noOrders": "Aucune commande pour ce fournisseur",
     "noProducts": "Aucun produit acheté auprès de ce fournisseur"
+  },
+  "form": {
+    "title": {
+      "new": "Nouveau fournisseur",
+      "edit": "Modifier le fournisseur"
+    },
+    "subtitle": {
+      "new": "Ajoutez un nouveau fournisseur à votre système",
+      "edit": "Modifiez les informations du fournisseur"
+    },
+    "sections": {
+      "generalInfo": "Informations générales",
+      "rating": "Évaluation",
+      "diversity": "Diversité"
+    },
+    "fields": {
+      "supplierName": "Nom du fournisseur",
+      "contactPerson": "Personne contact",
+      "status": "Statut",
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "province": "Province",
+      "none": "Aucune"
+    },
+    "buttons": {
+      "cancel": "Annuler",
+      "create": "Créer",
+      "save": "Modifier"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "invalidEmail": "Email invalide",
+      "emailRequired": "L'email est requis",
+      "statusRequired": "Le statut est requis"
+    }
+  },
+  "provinces": {
+    "QC": "Québec",
+    "ON": "Ontario",
+    "BC": "Colombie-Britannique",
+    "AB": "Alberta",
+    "MB": "Manitoba",
+    "SK": "Saskatchewan",
+    "NS": "Nouvelle-Écosse",
+    "NB": "Nouveau-Brunswick",
+    "NL": "Terre-Neuve-et-Labrador",
+    "PE": "Île-du-Prince-Édouard",
+    "NT": "Territoires du Nord-Ouest",
+    "YT": "Yukon",
+    "NU": "Nunavut"
   }
 }

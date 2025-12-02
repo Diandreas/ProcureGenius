@@ -54,6 +54,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analyticsAPI';
 import { formatCurrency } from '../utils/formatters';
 import Mascot from '../components/Mascot';
@@ -71,16 +72,18 @@ ChartJS.register(
   ArcElement
 );
 
-const PERIOD_OPTIONS = [
-  { value: 'today', label: "Aujourd'hui" },
-  { value: 'last_7_days', label: '7 jours' },
-  { value: 'last_30_days', label: '30 jours' },
-  { value: 'last_90_days', label: '90 jours' },
-  { value: 'this_month', label: 'Ce mois' },
-  { value: 'this_year', label: 'Cette année' },
-];
-
 function Dashboard() {
+  const { t } = useTranslation(['dashboard', 'common']);
+
+  const PERIOD_OPTIONS = [
+    { value: 'today', label: t('dashboard:periods.today') },
+    { value: 'last_7_days', label: t('dashboard:periods.last_7_days') },
+    { value: 'last_30_days', label: t('dashboard:periods.last_30_days') },
+    { value: 'last_90_days', label: t('dashboard:periods.last_90_days') },
+    { value: 'this_month', label: t('dashboard:periods.this_month') },
+    { value: 'this_year', label: t('dashboard:periods.this_year') },
+  ];
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -99,13 +102,13 @@ function Dashboard() {
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { greeting: 'Bonjour', message: 'Excellente journée à vous !', pose: 'excited' };
+      return { greeting: t('dashboard:welcome.morning.greeting'), message: t('dashboard:welcome.morning.message'), pose: 'excited' };
     } else if (hour >= 12 && hour < 18) {
-      return { greeting: 'Bon après-midi', message: 'Continuez sur cette lancée !', pose: 'reading' };
+      return { greeting: t('dashboard:welcome.afternoon.greeting'), message: t('dashboard:welcome.afternoon.message'), pose: 'reading' };
     } else if (hour >= 18 && hour < 22) {
-      return { greeting: 'Bonsoir', message: 'Bonne fin de journée !', pose: 'happy' };
+      return { greeting: t('dashboard:welcome.evening.greeting'), message: t('dashboard:welcome.evening.message'), pose: 'happy' };
     } else {
-      return { greeting: 'Bonne nuit', message: 'Il se fait tard !', pose: 'thinking' };
+      return { greeting: t('dashboard:welcome.night.greeting'), message: t('dashboard:welcome.night.message'), pose: 'thinking' };
     }
   };
 
@@ -193,13 +196,13 @@ function Dashboard() {
   };
 
   if (loading) {
-    return <LoadingState message="Chargement de votre tableau de bord..." fullScreen />;
+    return <LoadingState message={t('dashboard:loading')} fullScreen />;
   }
 
   if (!stats) {
     return (
       <Box p={3}>
-        <Alert severity="error">Impossible de charger les statistiques</Alert>
+        <Alert severity="error">{t('dashboard:error')}</Alert>
       </Box>
     );
   }
@@ -209,28 +212,28 @@ function Dashboard() {
 
   const statsCards = [
     {
-      title: 'Revenu Total',
+      title: t('dashboard:stats.totalRevenue'),
       value: formatCurrency(financialStats.total_revenue || 0),
       previous: financialStats.previous_revenue,
       icon: <AttachMoney />,
       color: '#10B981',
     },
     {
-      title: 'Dépenses',
+      title: t('dashboard:stats.expenses'),
       value: formatCurrency(financialStats.total_expenses || 0),
       previous: financialStats.previous_expenses,
       icon: <ShoppingCart />,
       color: '#EF4444',
     },
     {
-      title: 'Profit Net',
+      title: t('dashboard:widgets.financial_summary_metrics.net_profit'),
       value: formatCurrency(financialStats.net_profit || 0),
       previous: financialStats.previous_profit,
       icon: <TrendingUp />,
       color: '#3B82F6',
     },
     {
-      title: 'Factures Impayées',
+      title: t('dashboard:stats.unpaidInvoices'),
       value: invoiceStats.unpaid_count || 0,
       total: invoiceStats.total_count || 0,
       icon: <Receipt />,
@@ -245,14 +248,14 @@ function Dashboard() {
       labels: trends.dates || [],
       datasets: [
         {
-          label: 'Factures',
+          label: t('dashboard:labels.invoices'),
           data: trends.invoices || [],
           borderColor: '#10B981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           tension: 0.4,
         },
         {
-          label: 'Bons de commande',
+          label: t('dashboard:library.modules.purchase_orders'),
           data: trends.purchase_orders || [],
           borderColor: '#3B82F6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -339,7 +342,7 @@ function Dashboard() {
                   sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
                   size="small"
                 >
-                  Exporter
+                  {t('dashboard:actions.export')}
                 </Button>
                 <IconButton onClick={fetchDashboardData} sx={{ color: 'white' }} size="small">
                   <Refresh />
@@ -353,11 +356,11 @@ function Dashboard() {
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         <MenuItem onClick={() => handleExport('pdf')}>
           <PictureAsPdf sx={{ mr: 1 }} fontSize="small" />
-          Exporter en PDF
+          {t('dashboard:actions.exportPDF')}
         </MenuItem>
         <MenuItem onClick={() => handleExport('excel')}>
           <TableChart sx={{ mr: 1 }} fontSize="small" />
-          Exporter en Excel
+          {t('dashboard:actions.exportExcel')}
         </MenuItem>
       </Menu>
 
@@ -431,7 +434,7 @@ function Dashboard() {
       <Grid container spacing={2.5}>
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Clients</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
             <List disablePadding>
               {(stats.top_clients || []).map((client, index) => (
                 <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -447,14 +450,14 @@ function Dashboard() {
                 </ListItem>
               ))}
               {(!stats.top_clients || stats.top_clients.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun client trouvé</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>{t('dashboard:labels.noClients')}</Typography>
               )}
             </List>
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Fournisseurs</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topSuppliers')}</Typography>
             <List disablePadding>
               {(stats.top_suppliers || []).map((supplier, index) => (
                 <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -470,7 +473,7 @@ function Dashboard() {
                 </ListItem>
               ))}
               {(!stats.top_suppliers || stats.top_suppliers.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun fournisseur trouvé</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>{t('dashboard:labels.noSuppliers')}</Typography>
               )}
             </List>
           </Paper>

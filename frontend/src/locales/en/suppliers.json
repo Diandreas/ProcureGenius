@@ -81,5 +81,57 @@
     "totalProducts": "{{count}} product(s)",
     "noOrders": "No orders for this supplier",
     "noProducts": "No products purchased from this supplier"
+  },
+  "form": {
+    "title": {
+      "new": "New Supplier",
+      "edit": "Edit Supplier"
+    },
+    "subtitle": {
+      "new": "Add a new supplier to your system",
+      "edit": "Edit supplier information"
+    },
+    "sections": {
+      "generalInfo": "General Information",
+      "rating": "Rating",
+      "diversity": "Diversity"
+    },
+    "fields": {
+      "supplierName": "Supplier Name",
+      "contactPerson": "Contact Person",
+      "status": "Status",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "province": "Province",
+      "none": "None"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "invalidEmail": "Invalid email",
+      "emailRequired": "Email is required",
+      "statusRequired": "Status is required"
+    }
+  },
+  "provinces": {
+    "QC": "Quebec",
+    "ON": "Ontario",
+    "BC": "British Columbia",
+    "AB": "Alberta",
+    "MB": "Manitoba",
+    "SK": "Saskatchewan",
+    "NS": "Nova Scotia",
+    "NB": "New Brunswick",
+    "NL": "Newfoundland and Labrador",
+    "PE": "Prince Edward Island",
+    "NT": "Northwest Territories",
+    "YT": "Yukon",
+    "NU": "Nunavut"
   }
 }

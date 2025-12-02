@@ -198,5 +198,81 @@
     "reset": "Reset",
     "apply": "Apply",
     "close": "Close"
+  },
+  "userManagement": {
+    "title": "User Management",
+    "inviteUser": "Invite User",
+    "noUsers": "No users in your organization yet.",
+    "permissionDenied": "You do not have permission to manage users",
+    "loadingError": "Error loading users",
+    "roles": {
+      "admin": "Administrator",
+      "manager": "Manager",
+      "buyer": "Buyer",
+      "accountant": "Accountant",
+      "viewer": "Viewer"
+    },
+    "modules": {
+      "dashboard": "Dashboard",
+      "suppliers": "Suppliers",
+      "purchase-orders": "Purchase Orders",
+      "invoices": "Invoices",
+      "products": "Products",
+      "clients": "Clients",
+      "e-sourcing": "E-Sourcing",
+      "contracts": "Contracts"
+    },
+    "table": {
+      "user": "User",
+      "email": "Email",
+      "role": "Role",
+      "modules": "Modules",
+      "modulesCount": "modules",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    },
+    "menu": {
+      "editPermissions": "Edit Permissions",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "delete": "Delete"
+    },
+    "permissions": {
+      "manageUsers": "Manage users",
+      "manageSettings": "Manage settings",
+      "viewAnalytics": "View analytics",
+      "approvePurchases": "Approve purchases"
+    },
+    "inviteDialog": {
+      "title": "Invite a New User",
+      "email": "Email",
+      "emailPlaceholder": "user@company.com",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "role": "Role",
+      "emailInfo": "An invitation email will be sent to the user with a link to create their password.",
+      "invite": "Invite",
+      "inviteSuccess": "Invitation sent successfully",
+      "inviteError": "Error sending invitation"
+    },
+    "permissionsDialog": {
+      "title": "Edit Permissions",
+      "specialPermissions": "Special Permissions",
+      "moduleAccess": "Module Access",
+      "saveSuccess": "Permissions updated successfully",
+      "saveError": "Error updating permissions"
+    },
+    "deleteDialog": {
+      "title": "Confirm Deactivation",
+      "confirmMessage": "Are you sure you want to deactivate the user \"{{name}}\"?",
+      "deactivate": "Deactivate",
+      "deleteSuccess": "User deactivated successfully",
+      "deleteError": "Error deactivating user"
+    }
   }
 }

@@ -47,6 +47,7 @@ import {
   Inventory2,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import reportsAPI from '../../services/reportsAPI';
 import { getStatusColor, getStatusLabel, formatDate, parseRating, formatCurrency } from '../../utils/formatters';
@@ -55,6 +56,7 @@ function SupplierDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['suppliers', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -74,7 +76,7 @@ function SupplierDetail() {
       const response = await suppliersAPI.get(id);
       setSupplier(response.data);
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement du fournisseur', { variant: 'error' });
+      enqueueSnackbar(t('suppliers:messages.loadingError'), { variant: 'error' });
       navigate('/suppliers');
     } finally {
       setLoading(false);
@@ -86,31 +88,31 @@ function SupplierDetail() {
       const response = await suppliersAPI.getStatistics(id);
       setStatistics(response.data);
     } catch (error) {
-      console.error('Erreur statistiques:', error);
+      console.error('Error loading supplier statistics:', error);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Supprimer ${supplier.name} ?`)) {
+    if (window.confirm(t('suppliers:messages.deleteConfirmation', { name: supplier.name }))) {
       try {
         await suppliersAPI.delete(id);
-        enqueueSnackbar('Fournisseur supprimé', { variant: 'success' });
+        enqueueSnackbar(t('suppliers:messages.supplierDeleted'), { variant: 'success' });
         navigate('/suppliers');
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('suppliers:messages.deleteError'), { variant: 'error' });
       }
     }
   };
 
   const handleGenerateReport = async (format = 'pdf') => {
     try {
-      enqueueSnackbar(`Génération du rapport ${format.toUpperCase()} en cours...`, { variant: 'info' });
+      enqueueSnackbar(t('suppliers:messages.reportGenerating', { format: format.toUpperCase() }), { variant: 'info' });
 
       const response = await reportsAPI.generateSupplierReport(id, format);
       const report = response.data;
 
       if (report.status === 'completed') {
-        enqueueSnackbar('Rapport généré avec succès!', { variant: 'success' });
+        enqueueSnackbar(t('suppliers:messages.reportGenerated'), { variant: 'success' });
 
         // Télécharger automatiquement
         const downloadResponse = await reportsAPI.download(report.id);
@@ -122,11 +124,11 @@ function SupplierDetail() {
         link.click();
         link.remove();
       } else {
-        enqueueSnackbar('Le rapport est en cours de génération...', { variant: 'info' });
+        enqueueSnackbar(t('suppliers:messages.reportInProgress'), { variant: 'info' });
       }
     } catch (error) {
-      console.error('Erreur génération rapport:', error);
-      enqueueSnackbar('Erreur lors de la génération du rapport', { variant: 'error' });
+      console.error('Error generating report:', error);
+      enqueueSnackbar(t('suppliers:messages.reportError'), { variant: 'error' });
     }
   };
 
@@ -139,7 +141,7 @@ function SupplierDetail() {
   }
 
   if (!supplier) {
-    return <Alert severity="error">Fournisseur introuvable</Alert>;
+    return <Alert severity="error">{t('suppliers:messages.supplierNotFound')}</Alert>;
   }
 
   return (
@@ -160,7 +162,7 @@ function SupplierDetail() {
                 startIcon={<Edit />}
                 onClick={() => navigate(`/suppliers/${id}/edit`)}
               >
-                Modifier
+                {t('suppliers:actions.edit')}
               </Button>
               <Button
                 variant="outlined"
@@ -168,7 +170,7 @@ function SupplierDetail() {
                 startIcon={<Delete />}
                 onClick={handleDelete}
               >
-                Supprimer
+                {t('suppliers:actions.delete')}
               </Button>
             </Stack>
           )}
@@ -182,7 +184,7 @@ function SupplierDetail() {
               onClick={() => navigate(`/suppliers/${id}/edit`)}
               size="small"
             >
-              Modifier
+              {t('suppliers:actions.edit')}
             </Button>
             <Button
               fullWidth
@@ -192,7 +194,7 @@ function SupplierDetail() {
               onClick={handleDelete}
               size="small"
             >
-              Supprimer
+              {t('suppliers:actions.delete')}
             </Button>
           </Stack>
         )}
@@ -202,7 +204,7 @@ function SupplierDetail() {
       <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ p: isMobile ? 2 : 3 }}>
           <Typography variant="h6" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
-            Actions rapides
+            {t('suppliers:actions.quickActions')}
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
@@ -222,7 +224,7 @@ function SupplierDetail() {
                   }
                 }}
               >
-                Nouveau bon de commande
+                {t('suppliers:actions.newPurchaseOrder')}
               </Button>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -242,7 +244,7 @@ function SupplierDetail() {
                   }
                 }}
               >
-                Ajouter des produits
+                {t('suppliers:actions.addProducts')}
               </Button>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -263,7 +265,7 @@ function SupplierDetail() {
                   }
                 }}
               >
-                Générer un rapport
+                {t('suppliers:actions.generateReport')}
               </Button>
             </Grid>
           </Grid>
@@ -278,9 +280,9 @@ function SupplierDetail() {
         scrollButtons="auto"
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
-        <Tab icon={<Info />} label="Infos" iconPosition="start" />
-        <Tab icon={<ShoppingCart />} label="Commandes" iconPosition="start" />
-        <Tab icon={<Inventory />} label="Produits" iconPosition="start" />
+        <Tab icon={<Info />} label={t('suppliers:tabs.info')} iconPosition="start" />
+        <Tab icon={<ShoppingCart />} label={t('suppliers:tabs.orders')} iconPosition="start" />
+        <Tab icon={<Inventory />} label={t('suppliers:tabs.products')} iconPosition="start" />
       </Tabs>
 
       {/* Tab: Informations */}
@@ -321,16 +323,16 @@ function SupplierDetail() {
                         size="small"
                       />
                       {supplier.is_local && (
-                        <Chip label="Local" size="small" color="success" variant="outlined" />
+                        <Chip label={t('suppliers:labels.local')} size="small" color="success" variant="outlined" />
                       )}
                       {supplier.is_minority_owned && (
-                        <Chip label="Minorité" size="small" color="info" variant="outlined" />
+                        <Chip label={t('suppliers:diversity.minority')} size="small" color="info" variant="outlined" />
                       )}
                       {supplier.is_woman_owned && (
-                        <Chip label="Femme" size="small" color="secondary" variant="outlined" />
+                        <Chip label={t('suppliers:diversity.woman')} size="small" color="secondary" variant="outlined" />
                       )}
                       {supplier.is_indigenous && (
-                        <Chip label="Autochtone" size="small" color="warning" variant="outlined" />
+                        <Chip label={t('suppliers:diversity.indigenous')} size="small" color="warning" variant="outlined" />
                       )}
                     </Stack>
                   </Box>
@@ -346,7 +348,7 @@ function SupplierDetail() {
                         <Person sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Personne contact
+                            {t('suppliers:labels.contactPerson')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             {supplier.contact_person}
@@ -362,7 +364,7 @@ function SupplierDetail() {
                         <Email sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Email
+                            {t('suppliers:labels.email')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             <a href={`mailto:${supplier.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -380,7 +382,7 @@ function SupplierDetail() {
                         <Phone sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Téléphone
+                            {t('suppliers:labels.phone')}
                           </Typography>
                           <Typography variant="body2" fontWeight="500">
                             <a href={`tel:${supplier.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -398,7 +400,7 @@ function SupplierDetail() {
                         <LocationOn sx={{ fontSize: 20, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            Adresse
+                            {t('suppliers:labels.address')}
                           </Typography>
                           {supplier.address && (
                             <Typography variant="body2" fontWeight="500">
@@ -427,7 +429,7 @@ function SupplierDetail() {
                         {formatCurrency(statistics.financial_stats.total_spent || 0)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Total dépensé
+                        {t('suppliers:labels.totalSpent')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -441,7 +443,7 @@ function SupplierDetail() {
                         {statistics.financial_stats.total_orders || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Commandes
+                        {t('suppliers:labels.orders')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -455,7 +457,7 @@ function SupplierDetail() {
                         {formatCurrency(statistics.financial_stats.average_order_value || 0)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Valeur moyenne
+                        {t('suppliers:labels.averageValue')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -472,7 +474,7 @@ function SupplierDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Business sx={{ color: 'primary.main' }} />
                   <Typography variant="subtitle1" fontWeight="600">
-                    Diversité
+                    {t('suppliers:labels.diversity')}
                   </Typography>
                 </Box>
                 <List dense>
@@ -480,25 +482,25 @@ function SupplierDetail() {
                     <ListItemIcon>
                       {supplier.is_local ? <CheckCircle color="success" /> : <Block color="disabled" />}
                     </ListItemIcon>
-                    <ListItemText primary="Fournisseur local" />
+                    <ListItemText primary={t('suppliers:labels.localSupplier')} />
                   </ListItem>
                   <ListItem>
                     <ListItemIcon>
                       {supplier.is_minority_owned ? <CheckCircle color="success" /> : <Block color="disabled" />}
                     </ListItemIcon>
-                    <ListItemText primary="Propriété minoritaire" />
+                    <ListItemText primary={t('suppliers:labels.minorityOwned')} />
                   </ListItem>
                   <ListItem>
                     <ListItemIcon>
                       {supplier.is_woman_owned ? <CheckCircle color="success" /> : <Block color="disabled" />}
                     </ListItemIcon>
-                    <ListItemText primary="Propriété féminine" />
+                    <ListItemText primary={t('suppliers:labels.womanOwned')} />
                   </ListItem>
                   <ListItem>
                     <ListItemIcon>
                       {supplier.is_indigenous ? <CheckCircle color="success" /> : <Block color="disabled" />}
                     </ListItemIcon>
-                    <ListItemText primary="Entreprise autochtone" />
+                    <ListItemText primary={t('suppliers:labels.indigenousOwned')} />
                   </ListItem>
                 </List>
               </CardContent>
@@ -509,7 +511,7 @@ function SupplierDetail() {
               <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                    Catégories
+                    {t('suppliers:labels.categories')}
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
                     {supplier.categories.map((category) => (
@@ -529,12 +531,12 @@ function SupplierDetail() {
             <Card sx={{ borderRadius: 1 }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Informations système
+                  {t('suppliers:labels.systemInfo')}
                 </Typography>
                 <Stack spacing={1.5} sx={{ mt: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Créé le
+                      {t('suppliers:labels.createdOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(supplier.created_at)}
@@ -543,7 +545,7 @@ function SupplierDetail() {
                   <Divider />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Modifié le
+                      {t('suppliers:labels.modifiedOn')}
                     </Typography>
                     <Typography variant="body2">
                       {formatDate(supplier.updated_at)}
@@ -561,18 +563,18 @@ function SupplierDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <ShoppingCart color="primary" />
-            Bons de commande
+            {t('suppliers:labels.purchaseOrders')}
           </Typography>
           {statistics?.purchase_orders?.recent && statistics.purchase_orders.recent.length > 0 ? (
             <Card sx={{ borderRadius: 1 }}>
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  {statistics.purchase_orders.total_count} commande(s) au total
+                  {t('suppliers:labels.totalOrders', { count: statistics.purchase_orders.total_count })}
                 </Typography>
               </CardContent>
             </Card>
           ) : (
-            <Alert severity="info">Aucune commande pour ce fournisseur</Alert>
+            <Alert severity="info">{t('suppliers:labels.noOrders')}</Alert>
           )}
         </Box>
       )}
@@ -582,18 +584,18 @@ function SupplierDetail() {
         <Box>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Inventory color="primary" />
-            Produits les plus achetés
+            {t('suppliers:labels.topProducts')}
           </Typography>
           {statistics?.top_products && statistics.top_products.length > 0 ? (
             <Card sx={{ borderRadius: 1 }}>
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  {statistics.top_products.length} produit(s)
+                  {t('suppliers:labels.totalProducts', { count: statistics.top_products.length })}
                 </Typography>
               </CardContent>
             </Card>
           ) : (
-            <Alert severity="info">Aucun produit acheté auprès de ce fournisseur</Alert>
+            <Alert severity="info">{t('suppliers:labels.noProducts')}</Alert>
           )}
         </Box>
       )}

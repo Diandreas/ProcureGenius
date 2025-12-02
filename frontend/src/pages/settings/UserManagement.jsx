@@ -41,76 +41,78 @@ import {
     Cancel,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import Mascot from '../../components/Mascot';
-
-// Modules disponibles
-const AVAILABLE_MODULES = [
-    { id: 'dashboard', name: 'Tableau de bord' },
-    { id: 'suppliers', name: 'Fournisseurs' },
-    { id: 'purchase-orders', name: 'Bons de commande' },
-    { id: 'invoices', name: 'Factures' },
-    { id: 'products', name: 'Produits' },
-    { id: 'clients', name: 'Clients' },
-    { id: 'e-sourcing', name: 'E-Sourcing' },
-    { id: 'contracts', name: 'Contrats' },
-];
-
-// Rôles avec modules suggérés
-const ROLES_CONFIG = {
-    admin: {
-        label: 'Administrateur',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-        permissions: {
-            can_manage_users: true,
-            can_manage_settings: true,
-            can_view_analytics: true,
-            can_approve_purchases: true,
-        },
-    },
-    manager: {
-        label: 'Gestionnaire',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
-        permissions: {
-            can_manage_users: false,
-            can_manage_settings: true,
-            can_view_analytics: true,
-            can_approve_purchases: true,
-        },
-    },
-    buyer: {
-        label: 'Acheteur',
-        modules: ['dashboard', 'suppliers', 'purchase-orders', 'products'],
-        permissions: {
-            can_manage_users: false,
-            can_manage_settings: false,
-            can_view_analytics: true,
-            can_approve_purchases: false,
-        },
-    },
-    accountant: {
-        label: 'Comptable',
-        modules: ['dashboard', 'invoices', 'clients'],
-        permissions: {
-            can_manage_users: false,
-            can_manage_settings: false,
-            can_view_analytics: true,
-            can_approve_purchases: false,
-        },
-    },
-    viewer: {
-        label: 'Consultation',
-        modules: ['dashboard'],
-        permissions: {
-            can_manage_users: false,
-            can_manage_settings: false,
-            can_view_analytics: false,
-            can_approve_purchases: false,
-        },
-    },
-};
 
 function UserManagement() {
     const { enqueueSnackbar } = useSnackbar();
+    const { t } = useTranslation(['settings', 'common']);
+
+    // Modules disponibles
+    const AVAILABLE_MODULES = [
+        { id: 'dashboard', name: t('settings:userManagement.modules.dashboard') },
+        { id: 'suppliers', name: t('settings:userManagement.modules.suppliers') },
+        { id: 'purchase-orders', name: t('settings:userManagement.modules.purchase-orders') },
+        { id: 'invoices', name: t('settings:userManagement.modules.invoices') },
+        { id: 'products', name: t('settings:userManagement.modules.products') },
+        { id: 'clients', name: t('settings:userManagement.modules.clients') },
+        { id: 'e-sourcing', name: t('settings:userManagement.modules.e-sourcing') },
+        { id: 'contracts', name: t('settings:userManagement.modules.contracts') },
+    ];
+
+    // Rôles avec modules suggérés
+    const ROLES_CONFIG = {
+        admin: {
+            label: t('settings:userManagement.roles.admin'),
+            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
+            permissions: {
+                can_manage_users: true,
+                can_manage_settings: true,
+                can_view_analytics: true,
+                can_approve_purchases: true,
+            },
+        },
+        manager: {
+            label: t('settings:userManagement.roles.manager'),
+            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: true,
+                can_view_analytics: true,
+                can_approve_purchases: true,
+            },
+        },
+        buyer: {
+            label: t('settings:userManagement.roles.buyer'),
+            modules: ['dashboard', 'suppliers', 'purchase-orders', 'products'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        accountant: {
+            label: t('settings:userManagement.roles.accountant'),
+            modules: ['dashboard', 'invoices', 'clients'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        viewer: {
+            label: t('settings:userManagement.roles.viewer'),
+            modules: ['dashboard'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: false,
+                can_approve_purchases: false,
+            },
+        },
+    };
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -151,11 +153,11 @@ function UserManagement() {
                 const data = await response.json();
                 setUsers(data.users || []);
             } else if (response.status === 403) {
-                enqueueSnackbar('Vous n\'avez pas la permission de gérer les utilisateurs', { variant: 'error' });
+                enqueueSnackbar(t('settings:userManagement.permissionDenied'), { variant: 'error' });
             }
         } catch (error) {
             console.error('Error fetching users:', error);
-            enqueueSnackbar('Erreur lors du chargement des utilisateurs', { variant: 'error' });
+            enqueueSnackbar(t('settings:userManagement.loadingError'), { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -182,7 +184,7 @@ function UserManagement() {
             });
 
             if (response.ok) {
-                enqueueSnackbar('Utilisateur invité avec succès', { variant: 'success' });
+                enqueueSnackbar(t('settings:userManagement.inviteDialog.inviteSuccess'), { variant: 'success' });
                 setInviteDialogOpen(false);
                 setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer' });
                 fetchUsers();
@@ -191,7 +193,7 @@ function UserManagement() {
             }
         } catch (error) {
             console.error('Error inviting user:', error);
-            enqueueSnackbar('Erreur lors de l\'invitation', { variant: 'error' });
+            enqueueSnackbar(t('settings:userManagement.inviteDialog.inviteError'), { variant: 'error' });
         }
     };
 
@@ -223,7 +225,7 @@ function UserManagement() {
             });
 
             if (response.ok) {
-                enqueueSnackbar('Permissions mises à jour', { variant: 'success' });
+                enqueueSnackbar(t('settings:userManagement.permissionsDialog.saveSuccess'), { variant: 'success' });
                 setPermissionsDialogOpen(false);
                 fetchUsers();
             } else {
@@ -231,7 +233,7 @@ function UserManagement() {
             }
         } catch (error) {
             console.error('Error updating permissions:', error);
-            enqueueSnackbar('Erreur lors de la mise à jour des permissions', { variant: 'error' });
+            enqueueSnackbar(t('settings:userManagement.permissionsDialog.saveError'), { variant: 'error' });
         }
     };
 
@@ -247,7 +249,7 @@ function UserManagement() {
             });
 
             if (response.ok) {
-                enqueueSnackbar('Utilisateur désactivé', { variant: 'success' });
+                enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteSuccess'), { variant: 'success' });
                 setDeleteDialogOpen(false);
                 fetchUsers();
             } else {
@@ -255,7 +257,7 @@ function UserManagement() {
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+            enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteError'), { variant: 'error' });
         }
         handleMenuClose();
     };
@@ -284,10 +286,10 @@ function UserManagement() {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Box>
                     <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                        Gestion des utilisateurs
+                        {t('settings:userManagement.title')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Gérez les membres de votre organisation et leurs permissions
+                        {t('settings:subtitle')}
                     </Typography>
                 </Box>
                 <Button
@@ -295,7 +297,7 @@ function UserManagement() {
                     startIcon={<PersonAdd />}
                     onClick={() => setInviteDialogOpen(true)}
                 >
-                    Inviter un utilisateur
+                    {t('settings:userManagement.inviteUser')}
                 </Button>
             </Box>
 
@@ -308,7 +310,7 @@ function UserManagement() {
                                 {users.length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Utilisateurs total
+                                {t('common:total')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -320,7 +322,7 @@ function UserManagement() {
                                 {users.filter(u => u.is_active).length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Actifs
+                                {t('settings:userManagement.status.active')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -332,7 +334,7 @@ function UserManagement() {
                                 {users.filter(u => u.role === 'admin').length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Administrateurs
+                                {t('settings:userManagement.roles.admin')}s
                             </Typography>
                         </CardContent>
                     </Card>
@@ -344,7 +346,7 @@ function UserManagement() {
                                 {users.filter(u => !u.is_active).length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Désactivés
+                                {t('settings:userManagement.status.inactive')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -357,12 +359,12 @@ function UserManagement() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell>Utilisateur</TableCell>
-                                <TableCell>Email</TableCell>
-                                <TableCell>Rôle</TableCell>
-                                <TableCell>Modules</TableCell>
-                                <TableCell>Statut</TableCell>
-                                <TableCell align="right">Actions</TableCell>
+                                <TableCell>{t('settings:userManagement.table.user')}</TableCell>
+                                <TableCell>{t('settings:userManagement.table.email')}</TableCell>
+                                <TableCell>{t('settings:userManagement.table.role')}</TableCell>
+                                <TableCell>{t('settings:userManagement.table.modules')}</TableCell>
+                                <TableCell>{t('settings:userManagement.table.status')}</TableCell>
+                                <TableCell align="right">{t('settings:userManagement.table.actions')}</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -393,14 +395,14 @@ function UserManagement() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">
-                                            {user.enabled_modules?.length || 0} modules
+                                            {user.enabled_modules?.length || 0} {t('settings:userManagement.table.modulesCount')}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         {user.is_active ? (
-                                            <Chip label="Actif" size="small" color="success" icon={<CheckCircle />} />
+                                            <Chip label={t('settings:userManagement.status.active')} size="small" color="success" icon={<CheckCircle />} />
                                         ) : (
-                                            <Chip label="Inactif" size="small" color="default" icon={<Cancel />} />
+                                            <Chip label={t('settings:userManagement.status.inactive')} size="small" color="default" icon={<Cancel />} />
                                         )}
                                     </TableCell>
                                     <TableCell align="right">
@@ -421,7 +423,7 @@ function UserManagement() {
                     <Box sx={{ textAlign: 'center', py: 6 }}>
                         <Mascot pose="thinking" animation="float" size={80} />
                         <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
-                            Aucun utilisateur
+                            {t('settings:userManagement.noUsers')}
                         </Typography>
                     </Box>
                 )}
@@ -435,7 +437,7 @@ function UserManagement() {
             >
                 <MenuItem onClick={handleEditPermissions}>
                     <Edit fontSize="small" sx={{ mr: 1 }} />
-                    Modifier les permissions
+                    {t('settings:userManagement.menu.editPermissions')}
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
@@ -445,19 +447,19 @@ function UserManagement() {
                     sx={{ color: 'error.main' }}
                 >
                     <Delete fontSize="small" sx={{ mr: 1 }} />
-                    Désactiver
+                    {t('settings:userManagement.menu.deactivate')}
                 </MenuItem>
             </Menu>
 
             {/* Dialog d'invitation */}
             <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Inviter un utilisateur</DialogTitle>
+                <DialogTitle>{t('settings:userManagement.inviteDialog.title')}</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                label="Email"
+                                label={t('settings:userManagement.inviteDialog.email')}
                                 type="email"
                                 value={inviteForm.email}
                                 onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
@@ -466,7 +468,7 @@ function UserManagement() {
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
-                                label="Prénom"
+                                label={t('settings:userManagement.inviteDialog.firstName')}
                                 value={inviteForm.first_name}
                                 onChange={(e) => setInviteForm({ ...inviteForm, first_name: e.target.value })}
                             />
@@ -474,17 +476,17 @@ function UserManagement() {
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
-                                label="Nom"
+                                label={t('settings:userManagement.inviteDialog.lastName')}
                                 value={inviteForm.last_name}
                                 onChange={(e) => setInviteForm({ ...inviteForm, last_name: e.target.value })}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <FormControl fullWidth>
-                                <InputLabel>Rôle</InputLabel>
+                                <InputLabel>{t('settings:userManagement.inviteDialog.role')}</InputLabel>
                                 <Select
                                     value={inviteForm.role}
-                                    label="Rôle"
+                                    label={t('settings:userManagement.inviteDialog.role')}
                                     onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
                                 >
                                     {Object.entries(ROLES_CONFIG).map(([key, config]) => (
@@ -498,25 +500,25 @@ function UserManagement() {
                     </Grid>
 
                     <Alert severity="info" sx={{ mt: 2 }}>
-                        Un email d'invitation sera envoyé à l'utilisateur avec un lien pour créer son mot de passe.
+                        {t('settings:userManagement.inviteDialog.emailInfo')}
                     </Alert>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setInviteDialogOpen(false)}>Annuler</Button>
+                    <Button onClick={() => setInviteDialogOpen(false)}>{t('common:cancel')}</Button>
                     <Button onClick={handleInviteUser} variant="contained">
-                        Inviter
+                        {t('settings:userManagement.inviteDialog.invite')}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* Dialog de permissions */}
             <Dialog open={permissionsDialogOpen} onClose={() => setPermissionsDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Modifier les permissions</DialogTitle>
+                <DialogTitle>{t('settings:userManagement.permissionsDialog.title')}</DialogTitle>
                 <DialogContent>
                     {selectedUser && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-                                Permissions spéciales
+                                {t('settings:userManagement.permissionsDialog.specialPermissions')}
                             </Typography>
                             <FormGroup>
                                 <FormControlLabel
@@ -526,7 +528,7 @@ function UserManagement() {
                                             onChange={(e) => setPermissionsForm({ ...permissionsForm, can_manage_users: e.target.checked })}
                                         />
                                     }
-                                    label="Gérer les utilisateurs"
+                                    label={t('settings:userManagement.permissions.manageUsers')}
                                 />
                                 <FormControlLabel
                                     control={
@@ -535,7 +537,7 @@ function UserManagement() {
                                             onChange={(e) => setPermissionsForm({ ...permissionsForm, can_manage_settings: e.target.checked })}
                                         />
                                     }
-                                    label="Gérer les paramètres"
+                                    label={t('settings:userManagement.permissions.manageSettings')}
                                 />
                                 <FormControlLabel
                                     control={
@@ -544,7 +546,7 @@ function UserManagement() {
                                             onChange={(e) => setPermissionsForm({ ...permissionsForm, can_view_analytics: e.target.checked })}
                                         />
                                     }
-                                    label="Voir les analytics"
+                                    label={t('settings:userManagement.permissions.viewAnalytics')}
                                 />
                                 <FormControlLabel
                                     control={
@@ -553,12 +555,12 @@ function UserManagement() {
                                             onChange={(e) => setPermissionsForm({ ...permissionsForm, can_approve_purchases: e.target.checked })}
                                         />
                                     }
-                                    label="Approuver les achats"
+                                    label={t('settings:userManagement.permissions.approvePurchases')}
                                 />
                             </FormGroup>
 
                             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
-                                Accès aux modules
+                                {t('settings:userManagement.permissionsDialog.moduleAccess')}
                             </Typography>
                             <FormGroup>
                                 {AVAILABLE_MODULES.map((module) => (
@@ -583,25 +585,25 @@ function UserManagement() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setPermissionsDialogOpen(false)}>Annuler</Button>
+                    <Button onClick={() => setPermissionsDialogOpen(false)}>{t('common:cancel')}</Button>
                     <Button onClick={handleSavePermissions} variant="contained">
-                        Enregistrer
+                        {t('common:save')}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* Dialog de suppression */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirmer la désactivation</DialogTitle>
+                <DialogTitle>{t('settings:userManagement.deleteDialog.title')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Êtes-vous sûr de vouloir désactiver l'utilisateur "{selectedUser?.first_name} {selectedUser?.last_name}"?
+                        {t('settings:userManagement.deleteDialog.confirmMessage', { name: `${selectedUser?.first_name} ${selectedUser?.last_name}` })}
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>{t('common:cancel')}</Button>
                     <Button onClick={handleDeleteUser} color="error" variant="contained">
-                        Désactiver
+                        {t('settings:userManagement.deleteDialog.deactivate')}
                     </Button>
                 </DialogActions>
             </Dialog>

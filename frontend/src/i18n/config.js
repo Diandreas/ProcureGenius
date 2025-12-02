@@ -17,6 +17,8 @@ import productsFr from '../locales/fr/products.json';
 import productsEn from '../locales/en/products.json';
 import dashboardFr from '../locales/fr/dashboard.json';
 import dashboardEn from '../locales/en/dashboard.json';
+import navigationFr from '../locales/fr/navigation.json';
+import navigationEn from '../locales/en/navigation.json';
 
 // Configuration i18next
 i18n
@@ -32,6 +34,7 @@ i18n
         clients: clientsFr,
         products: productsFr,
         dashboard: dashboardFr,
+        navigation: navigationFr,
       },
       en: {
         common: commonEn,
@@ -41,6 +44,7 @@ i18n
         clients: clientsEn,
         products: productsEn,
         dashboard: dashboardEn,
+        navigation: navigationEn,
       },
     },
 
@@ -68,7 +72,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard'],
+    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation'],
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',
