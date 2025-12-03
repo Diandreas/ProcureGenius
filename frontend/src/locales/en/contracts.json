@@ -1,0 +1,201 @@
+{
+  "title": "Contracts",
+  "newContract": "New Contract",
+  "search": {
+    "placeholder": "Search by number, title, supplier..."
+  },
+  "filters": {
+    "all": "All",
+    "active": "Active",
+    "expired": "Expired",
+    "pending": "Pending",
+    "archived": "Archived"
+  },
+  "status": {
+    "draft": "Draft",
+    "active": "Active",
+    "expired": "Expired",
+    "pending": "Pending Signature",
+    "archived": "Archived",
+    "terminated": "Terminated"
+  },
+  "labels": {
+    "contractNumber": "Contract N°",
+    "title": "Title",
+    "supplier": "Supplier",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "value": "Value",
+    "status": "Status",
+    "daysRemaining": "days remaining",
+    "daysOverdue": "days overdue",
+    "expiresIn": "Expires in",
+    "expiredSince": "Expired since",
+    "noContracts": "No contracts found",
+    "noContractsDescription": "No contracts match your search criteria.",
+    "totalContracts": "Total",
+    "activeContracts": "Active",
+    "expiringContracts": "Expiring Soon",
+    "expiringSoon": "To Renew",
+    "totalValue": "Total Value"
+  },
+  "form": {
+    "title": {
+      "new": "New Contract",
+      "edit": "Edit Contract"
+    },
+    "fields": {
+      "contractNumber": "Contract Number",
+      "contractTitle": "Contract Title",
+      "supplier": "Supplier",
+      "selectSupplier": "Select a supplier",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "value": "Contract Value",
+      "totalValue": "Total value",
+      "status": "Status",
+      "description": "Description",
+      "terms": "Terms and Conditions",
+      "attachments": "Attachments",
+      "contractType": "Contract type",
+      "paymentTerms": "Payment terms",
+      "autoRenewal": "Auto renewal",
+      "renewalNoticeDays": "Renewal notice days",
+      "alertDaysBeforeExpiry": "Alert days before expiry (days)",
+      "internalNotes": "Internal notes",
+      "generalInfo": "General Information",
+      "datesAndAmounts": "Dates and Amounts",
+      "termsSection": "Terms and conditions",
+      "renewalAndAlerts": "Renewal and alerts",
+      "purchase_contract": "Purchase contract",
+      "service_contract": "Service contract",
+      "maintenance_contract": "Maintenance contract",
+      "lease_contract": "Lease contract",
+      "nda_contract": "Confidentiality agreement",
+      "partnership_contract": "Partnership agreement",
+      "other_contract": "Other",
+      "descriptionPlaceholder": "Describe the purpose and scope of the contract...",
+      "termsPlaceholder": "Detail the terms and conditions...",
+      "paymentTermsPlaceholder": "e.g. Net 30 days",
+      "notesPlaceholder": "Private notes (not visible to supplier)..."
+    },
+    "validation": {
+      "numberRequired": "Contract number is required",
+      "titleRequired": "Title is required",
+      "supplierRequired": "Supplier is required",
+      "startDateRequired": "Start date is required",
+      "endDateRequired": "End date is required",
+      "valueRequired": "Contract value is required",
+      "endDateAfterStart": "End date must be after start date"
+    }
+  },
+  "detail": {
+    "title": "Contract Details",
+    "tabs": {
+      "overview": "Overview",
+      "documents": "Documents",
+      "amendments": "Amendments",
+      "history": "History"
+    },
+    "sections": {
+      "information": "Contract Information",
+      "supplier": "Supplier Information",
+      "dates": "Important Dates",
+      "financial": "Financial Information"
+    },
+    "actions": {
+      "edit": "Edit",
+      "renew": "Renew",
+      "terminate": "Terminate",
+      "archive": "Archive",
+      "download": "Download PDF",
+      "delete": "Delete",
+      "approve": "Approve",
+      "activate": "Activate",
+      "extractClauses": "Extract clauses (AI)"
+    },
+    "sections": {
+      "description": "Description",
+      "terms": "Terms and conditions",
+      "paymentTerms": "Payment terms",
+      "keyInformation": "Key Information",
+      "contractType": "Contract type",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "daysUntilExpiry": "Days until expiry",
+      "totalValue": "Total value",
+      "autoRenewal": "Auto renewal",
+      "purchase": "Purchase",
+      "service": "Service"
+    }
+  },
+  "messages": {
+    "loadingError": "Error loading contracts",
+    "createSuccess": "Contract created successfully",
+    "createError": "Error creating contract",
+    "updateSuccess": "Contract updated successfully",
+    "updateError": "Error updating contract",
+    "deleteSuccess": "Contract deleted successfully",
+    "deleteError": "Error deleting contract",
+    "deleteConfirmation": "Are you sure you want to delete the contract \"{{title}}\"?",
+    "approveSuccess": "Contract approved successfully",
+    "approveError": "Error approving contract",
+    "activateSuccess": "Contract activated successfully",
+    "activateError": "Error activating contract",
+    "terminateSuccess": "Contract terminated successfully",
+    "terminateError": "Error terminating contract",
+    "extractSuccess": "Clauses extracted successfully by AI",
+    "extractError": "Error extracting clauses",
+    "enterContractText": "Please enter the contract text",
+    "verifySuccess": "Clause verified",
+    "verifyError": "Error verifying clause"
+  },
+  "risk": {
+    "low": "Low risk",
+    "medium": "Medium risk",
+    "high": "High risk",
+    "critical": "Critical risk",
+    "notEvaluated": "Not evaluated"
+  },
+  "contractStatus": {
+    "draft": "Draft",
+    "pending_review": "Under Review",
+    "pending_approval": "Pending Approval",
+    "approved": "Approved",
+    "active": "Active",
+    "expiring_soon": "Expiring Soon",
+    "expired": "Expired",
+    "terminated": "Terminated",
+    "renewed": "Renewed"
+  },
+  "clauses": {
+    "title": "Clauses",
+    "extractionIA": "AI Extraction",
+    "noClauses": "No clauses extracted. Use the \"Extract clauses (AI)\" button to analyze the contract.",
+    "verified": "Verified",
+    "aiAnalysis": "AI Analysis:",
+    "recommendations": "Recommendations:",
+    "aiConfidence": "AI Confidence:",
+    "verifyClause": "Verify this clause"
+  },
+  "milestones": {
+    "title": "Milestones",
+    "dueDate": "Due Date",
+    "amount": "Amount",
+    "status": "Status",
+    "pending": "Pending",
+    "completed": "Completed",
+    "delayed": "Delayed",
+    "cancelled": "Cancelled"
+  },
+  "extraction": {
+    "title": "AI Clause Extraction with Mistral",
+    "info": "Paste the complete contract text below. Mistral AI will automatically analyze and extract all important clauses with risk assessment.",
+    "contractText": "Contract text",
+    "placeholder": "Paste the complete contract text here...",
+    "extracting": "Extracting... This may take a few seconds.",
+    "cancel": "Cancel",
+    "extract": "Extract clauses",
+    "extracting_button": "Extracting..."
+  }
+}

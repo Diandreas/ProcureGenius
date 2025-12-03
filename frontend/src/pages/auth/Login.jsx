@@ -13,11 +13,13 @@ import {
 } from '@mui/material';
 import { login, clearError } from '../../store/slices/authSlice';
 import Mascot from '../../components/Mascot';
+import { useTranslation } from 'react-i18next';
 
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const { t } = useTranslation(['auth', 'common']);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -59,9 +61,9 @@ function Login() {
           </Box>
 
           <Typography component="h1" variant="h5" align="center" sx={{ mb: 3 }}>
-            Connexion
+            {t('auth:login.title')}
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
               {error}
@@ -74,7 +76,7 @@ function Login() {
               required
               fullWidth
               id="username"
-              label="Nom d'utilisateur"
+              label={t('auth:login.username')}
               name="username"
               autoComplete="username"
               autoFocus
@@ -86,7 +88,7 @@ function Login() {
               required
               fullWidth
               name="password"
-              label="Mot de passe"
+              label={t('auth:login.password')}
               type="password"
               id="password"
               autoComplete="current-password"
@@ -100,7 +102,7 @@ function Login() {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Se connecter'}
+              {loading ? <CircularProgress size={24} /> : t('auth:login.loginButton')}
             </Button>
           </Box>
         </Paper>

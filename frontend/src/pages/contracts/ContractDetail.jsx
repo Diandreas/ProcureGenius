@@ -57,8 +57,10 @@ import {
 } from '../../store/slices/contractsSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 function ContractDetail() {
+  const { t } = useTranslation(['contracts', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
@@ -77,48 +79,48 @@ function ContractDetail() {
   const handleApprove = async () => {
     try {
       await dispatch(approveContract({ id, notes: '' })).unwrap();
-      enqueueSnackbar('Contrat approuvé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('contracts:messages.approveSuccess'), { variant: 'success' });
       dispatch(fetchContract(id));
     } catch (error) {
-      enqueueSnackbar("Erreur lors de l'approbation", { variant: 'error' });
+      enqueueSnackbar(t('contracts:messages.approveError'), { variant: 'error' });
     }
   };
 
   const handleActivate = async () => {
     try {
       await dispatch(activateContract(id)).unwrap();
-      enqueueSnackbar('Contrat activé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('contracts:messages.activateSuccess'), { variant: 'success' });
       dispatch(fetchContract(id));
     } catch (error) {
-      enqueueSnackbar("Erreur lors de l'activation", { variant: 'error' });
+      enqueueSnackbar(t('contracts:messages.activateError'), { variant: 'error' });
     }
   };
 
   const handleTerminate = async () => {
     try {
       await dispatch(terminateContract(id)).unwrap();
-      enqueueSnackbar('Contrat résilié avec succès', { variant: 'success' });
+      enqueueSnackbar(t('contracts:messages.terminateSuccess'), { variant: 'success' });
       dispatch(fetchContract(id));
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la résiliation', { variant: 'error' });
+      enqueueSnackbar(t('contracts:messages.terminateError'), { variant: 'error' });
     }
   };
 
   const handleExtractClauses = async () => {
     if (!contractText.trim()) {
-      enqueueSnackbar('Veuillez saisir le texte du contrat', { variant: 'warning' });
+      enqueueSnackbar(t('contracts:messages.enterContractText'), { variant: 'warning' });
       return;
     }
 
     setExtracting(true);
     try {
       await dispatch(extractClauses({ id, contractText, language: 'fr' })).unwrap();
-      enqueueSnackbar('Clauses extraites avec succès par l\'IA', { variant: 'success' });
+      enqueueSnackbar(t('contracts:messages.extractSuccess'), { variant: 'success' });
       setExtractDialogOpen(false);
       setContractText('');
       dispatch(fetchContract(id));
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'extraction des clauses', { variant: 'error' });
+      enqueueSnackbar(t('contracts:messages.extractError'), { variant: 'error' });
     } finally {
       setExtracting(false);
     }
@@ -127,22 +129,22 @@ function ContractDetail() {
   const handleVerifyClause = async (clauseId) => {
     try {
       await dispatch(verifyClause(clauseId)).unwrap();
-      enqueueSnackbar('Clause vérifiée', { variant: 'success' });
+      enqueueSnackbar(t('contracts:messages.verifySuccess'), { variant: 'success' });
       dispatch(fetchContract(id));
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la vérification', { variant: 'error' });
+      enqueueSnackbar(t('contracts:messages.verifyError'), { variant: 'error' });
     }
   };
 
   const getRiskChip = (riskLevel) => {
     const riskConfig = {
-      low: { label: 'Risque faible', color: 'success', icon: <Info /> },
-      medium: { label: 'Risque moyen', color: 'warning', icon: <Warning /> },
-      high: { label: 'Risque élevé', color: 'error', icon: <Warning /> },
-      critical: { label: 'Risque critique', color: 'error', icon: <ErrorIcon /> },
+      low: { label: t('contracts:risk.low'), color: 'success', icon: <Info /> },
+      medium: { label: t('contracts:risk.medium'), color: 'warning', icon: <Warning /> },
+      high: { label: t('contracts:risk.high'), color: 'error', icon: <Warning /> },
+      critical: { label: t('contracts:risk.critical'), color: 'error', icon: <ErrorIcon /> },
     };
 
-    const config = riskConfig[riskLevel] || { label: 'Non évalué', color: 'default' };
+    const config = riskConfig[riskLevel] || { label: t('contracts:risk.notEvaluated'), color: 'default' };
     return (
       <Chip
         label={config.label}
@@ -155,15 +157,15 @@ function ContractDetail() {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      draft: { label: 'Brouillon', color: 'default' },
-      pending_review: { label: 'En révision', color: 'info' },
-      pending_approval: { label: 'En attente', color: 'warning' },
-      approved: { label: 'Approuvé', color: 'success' },
-      active: { label: 'Actif', color: 'primary' },
-      expiring_soon: { label: 'Expire bientôt', color: 'warning' },
-      expired: { label: 'Expiré', color: 'error' },
-      terminated: { label: 'Résilié', color: 'error' },
-      renewed: { label: 'Renouvelé', color: 'default' },
+      draft: { label: t('contracts:contractStatus.draft'), color: 'default' },
+      pending_review: { label: t('contracts:contractStatus.pending_review'), color: 'info' },
+      pending_approval: { label: t('contracts:contractStatus.pending_approval'), color: 'warning' },
+      approved: { label: t('contracts:contractStatus.approved'), color: 'success' },
+      active: { label: t('contracts:contractStatus.active'), color: 'primary' },
+      expiring_soon: { label: t('contracts:contractStatus.expiring_soon'), color: 'warning' },
+      expired: { label: t('contracts:contractStatus.expired'), color: 'error' },
+      terminated: { label: t('contracts:contractStatus.terminated'), color: 'error' },
+      renewed: { label: t('contracts:contractStatus.renewed'), color: 'default' },
     };
 
     const config = statusConfig[status] || { label: status, color: 'default' };
@@ -190,7 +192,7 @@ function ContractDetail() {
         onClick={() => navigate('/contracts')}
         sx={{ mb: 2 }}
       >
-        Retour à la liste
+        {t('common:back')}
       </Button>
 
       <Grid container spacing={3}>
@@ -220,14 +222,14 @@ function ContractDetail() {
                       startIcon={<Edit />}
                       onClick={() => navigate(`/contracts/${id}/edit`)}
                     >
-                      Modifier
+                      {t('contracts:detail.actions.edit')}
                     </Button>
                     <Button
                       variant="contained"
                       startIcon={<CheckCircle />}
                       onClick={handleApprove}
                     >
-                      Approuver
+                      {t('contracts:detail.actions.approve')}
                     </Button>
                   </>
                 )}
@@ -238,7 +240,7 @@ function ContractDetail() {
                     startIcon={<PlayArrow />}
                     onClick={handleActivate}
                   >
-                    Activer
+                    {t('contracts:detail.actions.activate')}
                   </Button>
                 )}
 
@@ -249,7 +251,7 @@ function ContractDetail() {
                       startIcon={<Autorenew />}
                       onClick={() => navigate(`/contracts/${id}/renew`)}
                     >
-                      Renouveler
+                      {t('contracts:detail.actions.renew')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -257,7 +259,7 @@ function ContractDetail() {
                       startIcon={<Stop />}
                       onClick={handleTerminate}
                     >
-                      Résilier
+                      {t('contracts:detail.actions.terminate')}
                     </Button>
                   </>
                 )}
@@ -268,7 +270,7 @@ function ContractDetail() {
                   startIcon={<Psychology />}
                   onClick={() => setExtractDialogOpen(true)}
                 >
-                  Extraire les clauses (IA)
+                  {t('contracts:detail.actions.extractClauses')}
                 </Button>
               </Stack>
             </CardContent>
@@ -280,7 +282,7 @@ function ContractDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Description
+                {t('contracts:detail.sections.description')}
               </Typography>
               <Typography variant="body1" paragraph>
                 {currentContract.description}
@@ -289,7 +291,7 @@ function ContractDetail() {
               {currentContract.terms_and_conditions && (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    Termes et conditions
+                    {t('contracts:detail.sections.terms')}
                   </Typography>
                   <Typography variant="body1" paragraph style={{ whiteSpace: 'pre-line' }}>
                     {currentContract.terms_and_conditions}
@@ -300,7 +302,7 @@ function ContractDetail() {
               {currentContract.payment_terms && (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    Conditions de paiement
+                    {t('contracts:detail.sections.paymentTerms')}
                   </Typography>
                   <Typography variant="body1" paragraph>
                     {currentContract.payment_terms}
@@ -316,23 +318,23 @@ function ContractDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Informations clés
+                {t('contracts:detail.sections.keyInformation')}
               </Typography>
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Type de contrat
+                  {t('contracts:detail.sections.contractType')}
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
-                  {currentContract.contract_type === 'purchase' ? 'Achat' :
-                   currentContract.contract_type === 'service' ? 'Service' :
+                  {currentContract.contract_type === 'purchase' ? t('contracts:detail.sections.purchase') :
+                   currentContract.contract_type === 'service' ? t('contracts:detail.sections.service') :
                    currentContract.contract_type}
                 </Typography>
               </Box>
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Date de début
+                  {t('contracts:detail.sections.startDate')}
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {formatDate(currentContract.start_date)}
@@ -341,7 +343,7 @@ function ContractDetail() {
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Date de fin
+                  {t('contracts:detail.sections.endDate')}
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {formatDate(currentContract.end_date)}
@@ -351,7 +353,7 @@ function ContractDetail() {
               {currentContract.days_until_expiry !== null && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Jours avant expiration
+                    {t('contracts:detail.sections.daysUntilExpiry')}
                   </Typography>
                   <Typography
                     variant="h5"
@@ -366,7 +368,7 @@ function ContractDetail() {
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Valeur totale
+                  {t('contracts:detail.sections.totalValue')}
                 </Typography>
                 <Typography variant="h5" color="primary">
                   {parseFloat(currentContract.total_value).toLocaleString()} {currentContract.currency}
@@ -375,7 +377,7 @@ function ContractDetail() {
 
               {currentContract.auto_renewal && (
                 <Alert severity="info" sx={{ mt: 2 }}>
-                  Renouvellement automatique
+                  {t('contracts:detail.sections.autoRenewal')}
                 </Alert>
               )}
             </CardContent>
@@ -388,12 +390,12 @@ function ContractDetail() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
-                  Clauses ({currentContract.clauses?.length || 0})
+                  {t('contracts:clauses.title')} ({currentContract.clauses?.length || 0})
                 </Typography>
                 {currentContract.clauses?.some(c => c.extracted_by_ai) && (
                   <Chip
                     icon={<Psychology />}
-                    label="Extraction IA"
+                    label={t('contracts:clauses.extractionIA')}
                     color="secondary"
                     size="small"
                   />
@@ -402,7 +404,7 @@ function ContractDetail() {
 
               {currentContract.clauses?.length === 0 ? (
                 <Alert severity="info">
-                  Aucune clause extraite. Utilisez le bouton "Extraire les clauses (IA)" pour analyser le contrat.
+                  {t('contracts:clauses.noClauses')}
                 </Alert>
               ) : (
                 currentContract.clauses?.map((clause, index) => (
@@ -419,7 +421,7 @@ function ContractDetail() {
                         </Typography>
                         {clause.risk_level && getRiskChip(clause.risk_level)}
                         {clause.verified && (
-                          <Chip icon={<VerifiedUser />} label="Vérifié" color="success" size="small" />
+                          <Chip icon={<VerifiedUser />} label={t('contracts:clauses.verified')} color="success" size="small" />
                         )}
                       </Box>
                     </AccordionSummary>
@@ -432,7 +434,7 @@ function ContractDetail() {
                         {clause.ai_analysis && (
                           <Alert severity="info" sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
-                              Analyse IA:
+                              {t('contracts:clauses.aiAnalysis')}
                             </Typography>
                             <Typography variant="body2">{clause.ai_analysis}</Typography>
                           </Alert>
@@ -441,7 +443,7 @@ function ContractDetail() {
                         {clause.ai_recommendations && (
                           <Alert severity="warning" sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
-                              Recommandations:
+                              {t('contracts:clauses.recommendations')}
                             </Typography>
                             <Typography variant="body2">{clause.ai_recommendations}</Typography>
                           </Alert>
@@ -450,7 +452,7 @@ function ContractDetail() {
                         {clause.ai_confidence_score && (
                           <Box sx={{ mt: 2 }}>
                             <Typography variant="caption" color="text.secondary">
-                              Confiance IA: {clause.ai_confidence_score}%
+                              {t('contracts:clauses.aiConfidence')} {clause.ai_confidence_score}%
                             </Typography>
                             <LinearProgress
                               variant="determinate"
@@ -468,7 +470,7 @@ function ContractDetail() {
                               startIcon={<VerifiedUser />}
                               onClick={() => handleVerifyClause(clause.id)}
                             >
-                              Vérifier cette clause
+                              {t('contracts:clauses.verifyClause')}
                             </Button>
                           </Box>
                         )}
@@ -487,17 +489,17 @@ function ContractDetail() {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Jalons ({currentContract.milestones.length})
+                  {t('contracts:milestones.title')} ({currentContract.milestones.length})
                 </Typography>
 
                 <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Titre</TableCell>
-                        <TableCell>Date d'échéance</TableCell>
-                        <TableCell>Montant</TableCell>
-                        <TableCell>Statut</TableCell>
+                        <TableCell>{t('contracts:labels.title')}</TableCell>
+                        <TableCell>{t('contracts:milestones.dueDate')}</TableCell>
+                        <TableCell>{t('contracts:milestones.amount')}</TableCell>
+                        <TableCell>{t('contracts:milestones.status')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -513,10 +515,10 @@ function ContractDetail() {
                           <TableCell>
                             <Chip
                               label={
-                                milestone.status === 'pending' ? 'En attente' :
-                                milestone.status === 'completed' ? 'Complété' :
-                                milestone.status === 'delayed' ? 'Retardé' :
-                                'Annulé'
+                                milestone.status === 'pending' ? t('contracts:milestones.pending') :
+                                milestone.status === 'completed' ? t('contracts:milestones.completed') :
+                                milestone.status === 'delayed' ? t('contracts:milestones.delayed') :
+                                t('contracts:milestones.cancelled')
                               }
                               size="small"
                               color={
@@ -547,38 +549,37 @@ function ContractDetail() {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Psychology color="secondary" />
-            Extraction de clauses par IA Mistral
+            {t('contracts:extraction.title')}
           </Box>
         </DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Collez le texte complet du contrat ci-dessous. L'IA Mistral va analyser et extraire automatiquement
-            toutes les clauses importantes avec une évaluation des risques.
+            {t('contracts:extraction.info')}
           </Alert>
 
           <TextField
             fullWidth
             multiline
             rows={12}
-            label="Texte du contrat"
+            label={t('contracts:extraction.contractText')}
             value={contractText}
             onChange={(e) => setContractText(e.target.value)}
             disabled={extracting}
-            placeholder="Collez ici le texte complet du contrat..."
+            placeholder={t('contracts:extraction.placeholder')}
           />
 
           {extracting && (
             <Box sx={{ mt: 2 }}>
               <LinearProgress />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                Extraction en cours... Cela peut prendre quelques secondes.
+                {t('contracts:extraction.extracting')}
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setExtractDialogOpen(false)} disabled={extracting}>
-            Annuler
+            {t('contracts:extraction.cancel')}
           </Button>
           <Button
             onClick={handleExtractClauses}
@@ -587,7 +588,7 @@ function ContractDetail() {
             disabled={extracting || !contractText.trim()}
             startIcon={<Psychology />}
           >
-            {extracting ? 'Extraction...' : 'Extraire les clauses'}
+            {extracting ? t('contracts:extraction.extracting_button') : t('contracts:extraction.extract')}
           </Button>
         </DialogActions>
       </Dialog>

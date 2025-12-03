@@ -28,11 +28,13 @@ import {
 } from '@mui/icons-material';
 import { login, clearError } from '../../store/slices/authSlice';
 import Mascot from '../../components/Mascot';
+import { useTranslation } from 'react-i18next';
 
 function LoginEnhanced() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const { t } = useTranslation(['auth', 'common']);
 
   const [formData, setFormData] = useState({
     email: '',

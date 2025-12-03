@@ -22,6 +22,7 @@ import {
 import { Save, Cancel, ArrowBack } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   fetchContract,
   createContract,
@@ -30,6 +31,7 @@ import {
 import { fetchSuppliers } from '../../store/slices/suppliersSlice';
 
 function ContractForm() {
+  const { t } = useTranslation(['contracts', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
@@ -114,15 +116,15 @@ function ContractForm() {
 
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
-        enqueueSnackbar('Contrat modifié avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:messages.updateSuccess'), { variant: 'success' });
       } else {
         await dispatch(createContract(payload)).unwrap();
-        enqueueSnackbar('Contrat créé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:messages.createSuccess'), { variant: 'success' });
       }
       navigate('/contracts');
     } catch (error) {
       enqueueSnackbar(
-        error.message || 'Erreur lors de l\'enregistrement du contrat',
+        error.message || t('contracts:messages.updateError'),
         { variant: 'error' }
       );
     } finally {
@@ -145,13 +147,13 @@ function ContractForm() {
         onClick={() => navigate('/contracts')}
         sx={{ mb: 2 }}
       >
-        Retour à la liste
+        {t('common:back')}
       </Button>
 
       <Card>
         <CardContent>
           <Typography variant="h5" component="h1" gutterBottom>
-            {isEditMode ? 'Modifier le contrat' : 'Nouveau contrat'}
+            {isEditMode ? t('contracts:form.title.edit') : t('contracts:form.title.new')}
           </Typography>
 
           <Divider sx={{ my: 3 }} />
@@ -161,7 +163,7 @@ function ContractForm() {
               {/* Informations générales */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Informations générales
+                  {t('contracts:form.fields.generalInfo')}
                 </Typography>
               </Grid>
 
@@ -169,30 +171,30 @@ function ContractForm() {
                 <TextField
                   fullWidth
                   required
-                  label="Titre du contrat"
+                  label={t('contracts:form.fields.contractTitle')}
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="Ex: Contrat de service annuel"
+                  placeholder={t('contracts:form.fields.descriptionPlaceholder')}
                 />
               </Grid>
 
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth required>
-                  <InputLabel>Type de contrat</InputLabel>
+                  <InputLabel>{t('contracts:form.fields.contractType')}</InputLabel>
                   <Select
                     name="contract_type"
                     value={formData.contract_type}
                     onChange={handleChange}
-                    label="Type de contrat"
+                    label={t('contracts:form.fields.contractType')}
                   >
-                    <MenuItem value="purchase">Contrat d'achat</MenuItem>
-                    <MenuItem value="service">Contrat de service</MenuItem>
-                    <MenuItem value="maintenance">Contrat de maintenance</MenuItem>
-                    <MenuItem value="lease">Contrat de location</MenuItem>
-                    <MenuItem value="nda">Accord de confidentialité</MenuItem>
-                    <MenuItem value="partnership">Accord de partenariat</MenuItem>
-                    <MenuItem value="other">Autre</MenuItem>
+                    <MenuItem value="purchase">{t('contracts:form.fields.purchase_contract')}</MenuItem>
+                    <MenuItem value="service">{t('contracts:form.fields.service_contract')}</MenuItem>
+                    <MenuItem value="maintenance">{t('contracts:form.fields.maintenance_contract')}</MenuItem>
+                    <MenuItem value="lease">{t('contracts:form.fields.lease_contract')}</MenuItem>
+                    <MenuItem value="nda">{t('contracts:form.fields.nda_contract')}</MenuItem>
+                    <MenuItem value="partnership">{t('contracts:form.fields.partnership_contract')}</MenuItem>
+                    <MenuItem value="other">{t('contracts:form.fields.other_contract')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -206,9 +208,9 @@ function ContractForm() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Fournisseur"
+                      label={t('contracts:form.fields.supplier')}
                       required
-                      placeholder="Sélectionner un fournisseur"
+                      placeholder={t('contracts:form.fields.selectSupplier')}
                     />
                   )}
                 />
@@ -220,11 +222,11 @@ function ContractForm() {
                   required
                   multiline
                   rows={4}
-                  label="Description"
+                  label={t('contracts:form.fields.description')}
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Décrivez l'objet et la portée du contrat..."
+                  placeholder={t('contracts:form.fields.descriptionPlaceholder')}
                 />
               </Grid>
 
@@ -232,7 +234,7 @@ function ContractForm() {
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Dates et montants
+                  {t('contracts:form.fields.datesAndAmounts')}
                 </Typography>
               </Grid>
 
@@ -241,7 +243,7 @@ function ContractForm() {
                   fullWidth
                   required
                   type="date"
-                  label="Date de début"
+                  label={t('contracts:form.fields.startDate')}
                   name="start_date"
                   value={formData.start_date}
                   onChange={handleChange}
@@ -254,7 +256,7 @@ function ContractForm() {
                   fullWidth
                   required
                   type="date"
-                  label="Date de fin"
+                  label={t('contracts:form.fields.endDate')}
                   name="end_date"
                   value={formData.end_date}
                   onChange={handleChange}
@@ -267,7 +269,7 @@ function ContractForm() {
                   fullWidth
                   required
                   type="number"
-                  label="Valeur totale"
+                  label={t('contracts:form.fields.totalValue')}
                   name="total_value"
                   value={formData.total_value}
                   onChange={handleChange}
@@ -280,7 +282,7 @@ function ContractForm() {
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Termes et conditions
+                  {t('contracts:form.fields.termsSection')}
                 </Typography>
               </Grid>
 
@@ -289,22 +291,22 @@ function ContractForm() {
                   fullWidth
                   multiline
                   rows={4}
-                  label="Termes et conditions"
+                  label={t('contracts:form.fields.terms')}
                   name="terms_and_conditions"
                   value={formData.terms_and_conditions}
                   onChange={handleChange}
-                  placeholder="Détaillez les termes et conditions..."
+                  placeholder={t('contracts:form.fields.termsPlaceholder')}
                 />
               </Grid>
 
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Conditions de paiement"
+                  label={t('contracts:form.fields.paymentTerms')}
                   name="payment_terms"
                   value={formData.payment_terms}
                   onChange={handleChange}
-                  placeholder="Ex: Net 30 jours"
+                  placeholder={t('contracts:form.fields.paymentTermsPlaceholder')}
                 />
               </Grid>
 
@@ -312,7 +314,7 @@ function ContractForm() {
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Renouvellement et alertes
+                  {t('contracts:form.fields.renewalAndAlerts')}
                 </Typography>
               </Grid>
 
@@ -325,7 +327,7 @@ function ContractForm() {
                       onChange={handleChange}
                     />
                   }
-                  label="Renouvellement automatique"
+                  label={t('contracts:form.fields.autoRenewal')}
                 />
               </Grid>
 
@@ -333,7 +335,7 @@ function ContractForm() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Jours de préavis pour renouvellement"
+                  label={t('contracts:form.fields.renewalNoticeDays')}
                   name="renewal_notice_days"
                   value={formData.renewal_notice_days}
                   onChange={handleChange}
@@ -345,7 +347,7 @@ function ContractForm() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Alerte avant expiration (jours)"
+                  label={t('contracts:form.fields.alertDaysBeforeExpiry')}
                   name="alert_days_before_expiry"
                   value={formData.alert_days_before_expiry}
                   onChange={handleChange}
@@ -359,11 +361,11 @@ function ContractForm() {
                   fullWidth
                   multiline
                   rows={3}
-                  label="Notes internes"
+                  label={t('contracts:form.fields.internalNotes')}
                   name="internal_notes"
                   value={formData.internal_notes}
                   onChange={handleChange}
-                  placeholder="Notes privées (non visibles par le fournisseur)..."
+                  placeholder={t('contracts:form.fields.notesPlaceholder')}
                 />
               </Grid>
 
@@ -376,7 +378,7 @@ function ContractForm() {
                     startIcon={<Cancel />}
                     onClick={() => navigate('/contracts')}
                   >
-                    Annuler
+                    {t('common:cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -384,7 +386,7 @@ function ContractForm() {
                     startIcon={<Save />}
                     disabled={submitting}
                   >
-                    {submitting ? 'Enregistrement...' : 'Enregistrer'}
+                    {submitting ? t('common:saving') : t('common:save')}
                   </Button>
                 </Stack>
               </Grid>

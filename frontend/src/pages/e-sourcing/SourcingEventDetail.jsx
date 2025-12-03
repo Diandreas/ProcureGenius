@@ -44,12 +44,14 @@ import {
 } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 function SourcingEventDetail() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['eSourcing', 'common']);
 
   const { currentEvent, loading } = useSelector((state) => state.eSourcing);
 
@@ -60,51 +62,72 @@ function SourcingEventDetail() {
   const handlePublish = async () => {
     try {
       await dispatch(publishSourcingEvent(id)).unwrap();
-      enqueueSnackbar('Événement publié avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.publishSuccess'), { variant: 'success' });
       dispatch(fetchSourcingEvent(id));
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la publication', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.publishError'), { variant: 'error' });
     }
   };
 
   const handleClose = async () => {
     try {
       await dispatch(closeSourcingEvent(id)).unwrap();
-      enqueueSnackbar('Événement clôturé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.closeSuccess'), { variant: 'success' });
       dispatch(fetchSourcingEvent(id));
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la clôture', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.closeError'), { variant: 'error' });
     }
   };
 
   const handleCancel = async () => {
     try {
       await dispatch(cancelSourcingEvent(id)).unwrap();
-      enqueueSnackbar('Événement annulé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.cancelSuccess'), { variant: 'success' });
       dispatch(fetchSourcingEvent(id));
     } catch (error) {
-      enqueueSnackbar("Erreur lors de l'annulation", { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.cancelError'), { variant: 'error' });
     }
   };
 
   const handleCopyLink = (publicUrl) => {
     navigator.clipboard.writeText(publicUrl);
-    enqueueSnackbar('Lien copié dans le presse-papiers', { variant: 'success' });
+    enqueueSnackbar(t('eSourcing:messages.linkCopied'), { variant: 'success' });
   };
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      draft: { label: 'Brouillon', color: 'default' },
-      published: { label: 'Publié', color: 'info' },
-      in_progress: { label: 'En cours', color: 'primary' },
-      evaluation: { label: 'Évaluation', color: 'warning' },
-      awarded: { label: 'Attribué', color: 'success' },
-      cancelled: { label: 'Annulé', color: 'error' },
-      closed: { label: 'Clôturé', color: 'default' },
+      draft: { label: t('eSourcing:status.draft'), color: 'default' },
+      published: { label: t('eSourcing:status.published'), color: 'info' },
+      in_progress: { label: t('eSourcing:status.in_progress'), color: 'primary' },
+      evaluation: { label: t('eSourcing:status.evaluation'), color: 'warning' },
+      awarded: { label: t('eSourcing:status.awarded'), color: 'success' },
+      cancelled: { label: t('eSourcing:status.cancelled'), color: 'error' },
+      closed: { label: t('eSourcing:status.closed'), color: 'default' },
     };
 
     const config = statusConfig[status] || { label: status, color: 'default' };
     return <Chip label={config.label} color={config.color} />;
+  };
+
+  const getInvitationStatusLabel = (status) => {
+    const labels = {
+      sent: t('eSourcing:bidStatus.sent'),
+      viewed: t('eSourcing:bidStatus.viewed'),
+      accepted: t('eSourcing:bidStatus.accepted'),
+      declined: t('eSourcing:bidStatus.declined'),
+    };
+    return labels[status] || t('eSourcing:bidStatus.pending');
+  };
+
+  const getBidStatusLabel = (status) => {
+    const labels = {
+      submitted: t('eSourcing:bidStatus.submitted'),
+      under_review: t('eSourcing:bidStatus.under_review'),
+      shortlisted: t('eSourcing:bidStatus.shortlisted'),
+      awarded: t('eSourcing:bidStatus.awarded'),
+      rejected: t('eSourcing:bidStatus.rejected'),
+    };
+    return labels[status] || status;
   };
 
   const formatDate = (dateString) => {
@@ -132,7 +155,7 @@ function SourcingEventDetail() {
         onClick={() => navigate('/e-sourcing/events')}
         sx={{ mb: 2 }}
       >
-        Retour à la liste
+        {t('common:backToList')}
       </Button>
 
       <Grid container spacing={3}>
@@ -146,7 +169,7 @@ function SourcingEventDetail() {
                     {currentEvent.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {currentEvent.event_number} • Créé par {currentEvent.created_by_name}
+                    {currentEvent.event_number} • {t('eSourcing:labels.createdBy')} {currentEvent.created_by_name}
                   </Typography>
                 </Box>
                 <Box>{getStatusChip(currentEvent.status)}</Box>
@@ -158,10 +181,10 @@ function SourcingEventDetail() {
               {currentEvent.public_url && (
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, border: 1, borderColor: 'primary.200' }}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-                    🔗 Lien public de l'événement
+                    🔗 {t('eSourcing:labels.publicEventLink')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Partagez ce lien avec n'importe quel fournisseur pour recevoir des offres :
+                    {t('eSourcing:labels.shareWithSuppliers')}
                   </Typography>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Typography
@@ -188,7 +211,7 @@ function SourcingEventDetail() {
                       startIcon={<ContentCopy />}
                       onClick={() => handleCopyLink(currentEvent.public_url)}
                     >
-                      Copier
+                      {t('common:copy')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -196,7 +219,7 @@ function SourcingEventDetail() {
                       startIcon={<Share />}
                       onClick={() => window.open(currentEvent.public_url, '_blank')}
                     >
-                      Ouvrir
+                      {t('common:open')}
                     </Button>
                   </Stack>
                 </Box>
@@ -210,14 +233,14 @@ function SourcingEventDetail() {
                       startIcon={<Edit />}
                       onClick={() => navigate(`/e-sourcing/events/${id}/edit`)}
                     >
-                      Modifier
+                      {t('common:edit')}
                     </Button>
                     <Button
                       variant="contained"
                       startIcon={<Publish />}
                       onClick={handlePublish}
                     >
-                      Publier
+                      {t('eSourcing:actions.publish')}
                     </Button>
                   </>
                 )}
@@ -229,14 +252,14 @@ function SourcingEventDetail() {
                       startIcon={<CompareArrows />}
                       onClick={() => navigate(`/e-sourcing/events/${id}/compare`)}
                     >
-                      Comparer les soumissions
+                      {t('eSourcing:actions.compareBids')}
                     </Button>
                     <Button
                       variant="outlined"
                       startIcon={<Assessment />}
                       onClick={() => navigate(`/e-sourcing/events/${id}/statistics`)}
                     >
-                      Statistiques
+                      {t('eSourcing:actions.statistics')}
                     </Button>
                   </>
                 )}
@@ -247,7 +270,7 @@ function SourcingEventDetail() {
                     startIcon={<Close />}
                     onClick={handleClose}
                   >
-                    Clôturer
+                    {t('eSourcing:actions.close')}
                   </Button>
                 )}
 
@@ -258,7 +281,7 @@ function SourcingEventDetail() {
                     startIcon={<Cancel />}
                     onClick={handleCancel}
                   >
-                    Annuler
+                    {t('common:cancel')}
                   </Button>
                 )}
               </Stack>
@@ -271,7 +294,7 @@ function SourcingEventDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Description
+                {t('eSourcing:labels.description')}
               </Typography>
               <Typography variant="body1" paragraph>
                 {currentEvent.description}
@@ -280,7 +303,7 @@ function SourcingEventDetail() {
               {currentEvent.requirements && (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    Exigences
+                    {t('eSourcing:labels.requirements')}
                   </Typography>
                   <Typography variant="body1" paragraph style={{ whiteSpace: 'pre-line' }}>
                     {currentEvent.requirements}
@@ -291,7 +314,7 @@ function SourcingEventDetail() {
               {currentEvent.terms_and_conditions && (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    Termes et conditions
+                    {t('eSourcing:labels.termsAndConditions')}
                   </Typography>
                   <Typography variant="body1" paragraph style={{ whiteSpace: 'pre-line' }}>
                     {currentEvent.terms_and_conditions}
@@ -307,12 +330,12 @@ function SourcingEventDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Informations clés
+                {t('eSourcing:labels.keyInformation')}
               </Typography>
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Date limite de soumission
+                  {t('eSourcing:labels.submissionDeadline')}
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {formatDate(currentEvent.submission_deadline)}
@@ -322,7 +345,7 @@ function SourcingEventDetail() {
               {currentEvent.evaluation_deadline && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Date limite d'évaluation
+                    {t('eSourcing:labels.evaluationDeadline')}
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
                     {formatDateOnly(currentEvent.evaluation_deadline)}
@@ -333,7 +356,7 @@ function SourcingEventDetail() {
               {currentEvent.estimated_budget && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Budget estimé
+                    {t('eSourcing:labels.estimatedBudget')}
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
                     {parseFloat(currentEvent.estimated_budget).toLocaleString()} $
@@ -345,7 +368,7 @@ function SourcingEventDetail() {
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Fournisseurs invités
+                  {t('eSourcing:labels.invitedSuppliers')}
                 </Typography>
                 <Typography variant="h4" color="primary">
                   {currentEvent.invitations?.length || 0}
@@ -354,7 +377,7 @@ function SourcingEventDetail() {
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Soumissions reçues
+                  {t('eSourcing:labels.submissionsReceived')}
                 </Typography>
                 <Typography variant="h4" color="success.main">
                   {currentEvent.bids?.length || 0}
@@ -369,19 +392,19 @@ function SourcingEventDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Fournisseurs invités ({currentEvent.invitations?.length || 0})
+                {t('eSourcing:labels.invitedSuppliers')} ({currentEvent.invitations?.length || 0})
               </Typography>
 
               <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Fournisseur</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell>Envoyé le</TableCell>
-                      <TableCell>Soumission</TableCell>
-                      <TableCell align="right">Lien de partage</TableCell>
+                      <TableCell>{t('eSourcing:labels.supplier')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.email')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.status')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.sentOn')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.submission')}</TableCell>
+                      <TableCell align="right">{t('eSourcing:labels.shareLink')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -389,7 +412,7 @@ function SourcingEventDetail() {
                       <TableRow>
                         <TableCell colSpan={6} align="center">
                           <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                            Aucune invitation
+                            {t('eSourcing:labels.noInvitations')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -400,17 +423,7 @@ function SourcingEventDetail() {
                           <TableCell>{invitation.supplier_email}</TableCell>
                           <TableCell>
                             <Chip
-                              label={
-                                invitation.status === 'sent'
-                                  ? 'Envoyé'
-                                  : invitation.status === 'viewed'
-                                  ? 'Vu'
-                                  : invitation.status === 'accepted'
-                                  ? 'Accepté'
-                                  : invitation.status === 'declined'
-                                  ? 'Refusé'
-                                  : 'En attente'
-                              }
+                              label={getInvitationStatusLabel(invitation.status)}
                               size="small"
                               color={
                                 invitation.status === 'accepted'
@@ -424,14 +437,14 @@ function SourcingEventDetail() {
                           <TableCell>{formatDate(invitation.sent_at)}</TableCell>
                           <TableCell>
                             {invitation.has_bid ? (
-                              <Chip label="Soumis" color="success" size="small" />
+                              <Chip label={t('eSourcing:bidStatus.submitted')} color="success" size="small" />
                             ) : (
-                              <Chip label="En attente" size="small" />
+                              <Chip label={t('eSourcing:bidStatus.pending')} size="small" />
                             )}
                           </TableCell>
                           <TableCell align="right">
                             <Stack direction="row" spacing={1} justifyContent="flex-end">
-                              <Tooltip title="Copier le lien">
+                              <Tooltip title={t('common:copy')}>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleCopyLink(invitation.public_url)}
@@ -440,7 +453,7 @@ function SourcingEventDetail() {
                                   <ContentCopy fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Ouvrir le lien">
+                              <Tooltip title={t('common:open')}>
                                 <IconButton
                                   size="small"
                                   onClick={() => window.open(invitation.public_url, '_blank')}
@@ -466,20 +479,20 @@ function SourcingEventDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Soumissions reçues ({currentEvent.bids?.length || 0})
+                {t('eSourcing:labels.submissionsReceived')} ({currentEvent.bids?.length || 0})
               </Typography>
 
               <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Fournisseur</TableCell>
-                      <TableCell>Montant total</TableCell>
-                      <TableCell>Délai (jours)</TableCell>
-                      <TableCell>Score</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell>Soumis le</TableCell>
-                      <TableCell align="right">Actions</TableCell>
+                      <TableCell>{t('eSourcing:labels.supplier')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.totalAmount')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.deliveryTime')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.score')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.status')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.submittedOn')}</TableCell>
+                      <TableCell align="right">{t('common:actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -487,7 +500,7 @@ function SourcingEventDetail() {
                       <TableRow>
                         <TableCell colSpan={7} align="center">
                           <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                            Aucune soumission
+                            {t('eSourcing:labels.noSubmissions')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -506,19 +519,7 @@ function SourcingEventDetail() {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={
-                                bid.status === 'submitted'
-                                  ? 'Soumis'
-                                  : bid.status === 'under_review'
-                                  ? 'En révision'
-                                  : bid.status === 'shortlisted'
-                                  ? 'Présélectionné'
-                                  : bid.status === 'awarded'
-                                  ? 'Retenu'
-                                  : bid.status === 'rejected'
-                                  ? 'Rejeté'
-                                  : bid.status
-                              }
+                              label={getBidStatusLabel(bid.status)}
                               size="small"
                               color={
                                 bid.status === 'awarded'
@@ -533,7 +534,7 @@ function SourcingEventDetail() {
                           </TableCell>
                           <TableCell>{formatDate(bid.submitted_at)}</TableCell>
                           <TableCell align="right">
-                            <Tooltip title="Voir les détails">
+                            <Tooltip title={t('common:viewDetails')}>
                               <IconButton
                                 size="small"
                                 onClick={() => navigate(`/e-sourcing/bids/${bid.id}`)}

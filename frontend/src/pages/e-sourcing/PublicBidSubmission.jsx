@@ -26,11 +26,13 @@ import { useSnackbar } from 'notistack';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 function PublicBidSubmission() {
   const { token } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['eSourcing', 'common']);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -79,7 +81,7 @@ function PublicBidSubmission() {
       setCanSubmit(response.data.can_submit);
       setLoading(false);
     } catch (err) {
-      setError(err.response?.data?.detail || "Impossible de charger l'événement");
+      setError(err.response?.data?.detail || t('eSourcing:publicBid.loadError'));
       setLoading(false);
     }
   };
@@ -129,12 +131,12 @@ function PublicBidSubmission() {
     e.preventDefault();
 
     if (!bidData.terms_accepted) {
-      enqueueSnackbar('Vous devez accepter les termes et conditions', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:publicBid.termsRequired'), { variant: 'error' });
       return;
     }
 
     if (items.some((item) => !item.product_reference || !item.description)) {
-      enqueueSnackbar('Tous les articles doivent avoir une référence et une description', {
+      enqueueSnackbar(t('eSourcing:publicBid.itemsRequired'), {
         variant: 'error',
       });
       return;
@@ -160,7 +162,7 @@ function PublicBidSubmission() {
 
       await axios.post(`/api/v1/e-sourcing/public/${token}/submit/`, payload);
 
-      enqueueSnackbar('Votre offre a été soumise avec succès !', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:publicBid.submitSuccess'), { variant: 'success' });
 
       // Afficher message de succès
       setEvent(null);
@@ -168,7 +170,7 @@ function PublicBidSubmission() {
       setCanSubmit(false);
     } catch (err) {
       enqueueSnackbar(
-        err.response?.data?.message || "Erreur lors de la soumission de l'offre",
+        err.response?.data?.message || t('eSourcing:publicBid.submitError'),
         { variant: 'error' }
       );
     } finally {
@@ -198,13 +200,13 @@ function PublicBidSubmission() {
         <Card sx={{ maxWidth: 600 }}>
           <CardContent>
             <Alert severity="warning">
-              La date limite de soumission pour cet appel d'offres est dépassée.
+              {t('eSourcing:publicBid.deadlinePassed')}
             </Alert>
             <Typography variant="h6" sx={{ mt: 2 }}>
               {event.title}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Date limite : {format(new Date(event.submission_deadline), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+              {t('eSourcing:publicBid.deadline')}: {format(new Date(event.submission_deadline), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
             </Typography>
           </CardContent>
         </Card>
@@ -219,10 +221,10 @@ function PublicBidSubmission() {
           <CardContent>
             <Alert severity="success">
               <Typography variant="h6" gutterBottom>
-                Votre offre a été soumise avec succès ! 🎉
+                {t('eSourcing:publicBid.successTitle')}
               </Typography>
               <Typography variant="body2">
-                Nous avons bien reçu votre soumission. Vous serez contacté par email si votre offre est retenue.
+                {t('eSourcing:publicBid.successMessage')}
               </Typography>
             </Alert>
           </CardContent>
@@ -252,7 +254,7 @@ function PublicBidSubmission() {
             {event.requirements && (
               <>
                 <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Exigences
+                  {t('eSourcing:labels.requirements')}
                 </Typography>
                 <Typography variant="body2" paragraph style={{ whiteSpace: 'pre-line' }}>
                   {event.requirements}
@@ -260,7 +262,7 @@ function PublicBidSubmission() {
               </>
             )}
             <Alert severity="info" sx={{ mt: 2 }}>
-              <strong>Date limite de soumission :</strong>{' '}
+              <strong>{t('eSourcing:publicBid.submissionDeadline')}:</strong>{' '}
               {format(new Date(event.submission_deadline), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
             </Alert>
           </CardContent>
@@ -272,14 +274,14 @@ function PublicBidSubmission() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Vos informations
+                {t('eSourcing:publicBid.yourInformation')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     required
-                    label="Nom de l'entreprise"
+                    label={t('eSourcing:publicBid.companyName')}
                     value={supplierData.supplier_name}
                     onChange={(e) => handleSupplierChange('supplier_name', e.target.value)}
                   />
@@ -289,7 +291,7 @@ function PublicBidSubmission() {
                     fullWidth
                     required
                     type="email"
-                    label="Email"
+                    label={t('eSourcing:labels.email')}
                     value={supplierData.supplier_email}
                     onChange={(e) => handleSupplierChange('supplier_email', e.target.value)}
                   />
@@ -297,7 +299,7 @@ function PublicBidSubmission() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Téléphone"
+                    label={t('eSourcing:publicBid.phone')}
                     value={supplierData.supplier_phone}
                     onChange={(e) => handleSupplierChange('supplier_phone', e.target.value)}
                   />
@@ -305,7 +307,7 @@ function PublicBidSubmission() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Délai de livraison (jours)"
+                    label={t('eSourcing:publicBid.deliveryTimeDays')}
                     type="number"
                     value={bidData.delivery_time_days}
                     onChange={(e) => handleBidChange('delivery_time_days', e.target.value)}
@@ -316,7 +318,7 @@ function PublicBidSubmission() {
                     fullWidth
                     multiline
                     rows={2}
-                    label="Adresse complète"
+                    label={t('eSourcing:publicBid.fullAddress')}
                     value={supplierData.supplier_address}
                     onChange={(e) => handleSupplierChange('supplier_address', e.target.value)}
                   />
@@ -329,9 +331,9 @@ function PublicBidSubmission() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Articles proposés</Typography>
+                <Typography variant="h6">{t('eSourcing:bidDetail.proposedItems')}</Typography>
                 <Button startIcon={<Add />} onClick={addItem} variant="outlined" size="small">
-                  Ajouter un article
+                  {t('eSourcing:publicBid.addItem')}
                 </Button>
               </Box>
 
@@ -339,11 +341,11 @@ function PublicBidSubmission() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Référence *</TableCell>
-                      <TableCell>Description *</TableCell>
-                      <TableCell>Qté *</TableCell>
-                      <TableCell>Prix unit. *</TableCell>
-                      <TableCell>Total</TableCell>
+                      <TableCell>{t('eSourcing:publicBid.reference')} *</TableCell>
+                      <TableCell>{t('eSourcing:labels.description')} *</TableCell>
+                      <TableCell>{t('eSourcing:publicBid.qty')} *</TableCell>
+                      <TableCell>{t('eSourcing:publicBid.unitPrice')} *</TableCell>
+                      <TableCell>{t('common:labels.total')}</TableCell>
                       <TableCell width={50}></TableCell>
                     </TableRow>
                   </TableHead>
@@ -411,18 +413,18 @@ function PublicBidSubmission() {
 
               <Box sx={{ mt: 2, textAlign: 'right' }}>
                 <Typography variant="body1">
-                  <strong>Sous-total :</strong> {subtotal.toFixed(2)} $
+                  <strong>{t('common:labels.subtotal')}:</strong> {subtotal.toFixed(2)} $
                 </Typography>
                 <TextField
                   size="small"
                   type="number"
-                  label="Taxes"
+                  label={t('common:labels.tax')}
                   value={bidData.tax_amount}
                   onChange={(e) => handleBidChange('tax_amount', e.target.value)}
                   sx={{ width: 150, mt: 1 }}
                 />
                 <Typography variant="h6" sx={{ mt: 1 }}>
-                  <strong>Total :</strong> {total.toFixed(2)} $
+                  <strong>{t('common:labels.total')}:</strong> {total.toFixed(2)} $
                 </Typography>
               </Box>
             </CardContent>
@@ -432,7 +434,7 @@ function PublicBidSubmission() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Votre proposition
+                {t('eSourcing:publicBid.yourProposal')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -440,7 +442,7 @@ function PublicBidSubmission() {
                     fullWidth
                     multiline
                     rows={4}
-                    label="Lettre de présentation"
+                    label={t('eSourcing:publicBid.coverLetter')}
                     value={bidData.cover_letter}
                     onChange={(e) => handleBidChange('cover_letter', e.target.value)}
                   />
@@ -450,7 +452,7 @@ function PublicBidSubmission() {
                     fullWidth
                     multiline
                     rows={4}
-                    label="Réponse technique"
+                    label={t('eSourcing:publicBid.technicalResponse')}
                     value={bidData.technical_response}
                     onChange={(e) => handleBidChange('technical_response', e.target.value)}
                   />
@@ -464,7 +466,7 @@ function PublicBidSubmission() {
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Termes et conditions
+                  {t('eSourcing:labels.termsAndConditions')}
                 </Typography>
                 <Typography variant="body2" paragraph style={{ whiteSpace: 'pre-line' }}>
                   {event.terms_and_conditions}
@@ -477,7 +479,7 @@ function PublicBidSubmission() {
                       required
                     />
                   }
-                  label="J'accepte les termes et conditions *"
+                  label={t('eSourcing:publicBid.acceptTerms')}
                 />
               </CardContent>
             </Card>
@@ -491,7 +493,7 @@ function PublicBidSubmission() {
               size="large"
               disabled={submitting || !bidData.terms_accepted}
             >
-              {submitting ? <CircularProgress size={24} /> : 'Soumettre mon offre'}
+              {submitting ? <CircularProgress size={24} /> : t('eSourcing:publicBid.submitBid')}
             </Button>
           </Box>
         </form>

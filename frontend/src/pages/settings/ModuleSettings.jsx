@@ -47,6 +47,7 @@ import {
     Speed,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useModules } from '../../contexts/ModuleContext';
 
 // Module icons map
@@ -64,6 +65,7 @@ const MODULE_ICONS = {
 
 function ModuleSettings() {
     const { enqueueSnackbar } = useSnackbar();
+    const { t } = useTranslation(['settings', 'common']);
     const { moduleMetadata, refreshModules } = useModules();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -131,7 +133,7 @@ function ModuleSettings() {
 
         } catch (error) {
             console.error('Error fetching data:', error);
-            enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
+            enqueueSnackbar(t('settings:moduleSettings.loadingError'), { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -161,7 +163,7 @@ function ModuleSettings() {
                 const data = await response.json();
                 setOrganizationSettings(data);
                 setUpgradeDialogOpen(false);
-                enqueueSnackbar('Type de profil mis à jour avec succès', { variant: 'success' });
+                enqueueSnackbar(t('settings:moduleSettings.updateSuccess'), { variant: 'success' });
 
                 // Refresh modules in context
                 refreshModules();
@@ -176,7 +178,7 @@ function ModuleSettings() {
             }
         } catch (error) {
             console.error('Error updating subscription:', error);
-            enqueueSnackbar(error.message || 'Erreur lors de la mise à jour', { variant: 'error' });
+            enqueueSnackbar(error.message || t('settings:moduleSettings.updateError'), { variant: 'error' });
         } finally {
             setSaving(false);
         }
@@ -213,10 +215,10 @@ function ModuleSettings() {
                         letterSpacing: '-0.02em',
                         fontSize: { xs: '1.5rem', sm: '2rem' }
                     }}>
-                        Gestion des Modules
+                        {t('settings:moduleSettings.title')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                        Personnalisez vos modules actifs
+                        {t('settings:moduleSettings.subtitle')}
                     </Typography>
                 </Box>
                 <Button
@@ -239,7 +241,7 @@ function ModuleSettings() {
                         transition: 'all 0.2s'
                     }}
                 >
-                    Changer
+                    {t('settings:moduleSettings.changeProfile')}
                 </Button>
             </Box>
 
@@ -258,7 +260,7 @@ function ModuleSettings() {
                                 {currentProfile && (
                                     <Chip
                                         icon={<Stars />}
-                                        label="Actif"
+                                        label={t('settings:moduleSettings.active')}
                                         size="small"
                                         sx={{
                                             bgcolor: 'rgba(255,255,255,0.2)',
@@ -276,14 +278,14 @@ function ModuleSettings() {
                                 mb: { xs: 0.5, sm: 1 },
                                 fontSize: { xs: '1.5rem', sm: '2rem' }
                             }}>
-                                {currentProfile?.name || 'Aucun profil'}
+                                {currentProfile?.name || t('settings:moduleSettings.noProfile')}
                             </Typography>
                             <Typography variant="body2" sx={{
                                 opacity: 0.9,
                                 fontSize: { xs: '0.8rem', sm: '0.875rem' },
                                 display: { xs: 'none', sm: 'block' }
                             }}>
-                                {currentProfile?.description || 'Sélectionnez un profil'}
+                                {currentProfile?.description || t('settings:moduleSettings.selectProfile')}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} md={5}>
@@ -292,7 +294,7 @@ function ModuleSettings() {
                                     <Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                                             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                                                Modules
+                                                {t('settings:moduleSettings.modules')}
                                             </Typography>
                                             <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                                                 {enabledModulesCount} / {totalModules}
@@ -318,7 +320,7 @@ function ModuleSettings() {
                                                 {enabledModulesCount}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-                                                Actifs
+                                                {t('settings:moduleSettings.activeModules')}
                                             </Typography>
                                         </Box>
                                         <Divider orientation="vertical" flexItem />
@@ -327,7 +329,7 @@ function ModuleSettings() {
                                                 {totalModules - enabledModulesCount}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-                                                Disponibles
+                                                {t('settings:moduleSettings.available')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -343,7 +345,7 @@ function ModuleSettings() {
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 1.5, sm: 2.5 } }}>
                         <Typography variant="h6" sx={{ fontWeight: 600, flex: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                            Modules Installés
+                            {t('settings:moduleSettings.installedModules')}
                         </Typography>
                         <Chip
                             label={`${enabledModulesCount}`}
@@ -436,7 +438,7 @@ function ModuleSettings() {
                             <Divider sx={{ my: { xs: 2, sm: 3 } }} />
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 1.5, sm: 2 } }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1, color: 'text.secondary', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                                    Non Activés
+                                    {t('settings:moduleSettings.notActivated')}
                                 </Typography>
                                 <Chip
                                     label={`${totalModules - enabledModulesCount}`}
@@ -498,7 +500,7 @@ function ModuleSettings() {
                                                                 display: { xs: 'none', sm: 'block' }
                                                             }}
                                                         >
-                                                            Verrouillé
+                                                            {t('settings:moduleSettings.locked')}
                                                         </Typography>
                                                     </Box>
                                                     <Lock sx={{ color: 'text.disabled', fontSize: { xs: 14, sm: 18 }, display: { xs: 'none', sm: 'block' } }} />
@@ -519,7 +521,7 @@ function ModuleSettings() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             <Stars color="warning" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                             <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                                Fonctionnalités Premium
+                                {t('settings:moduleSettings.premiumFeatures')}
                             </Typography>
                         </Box>
                         <Grid container spacing={0.75}>
@@ -562,10 +564,10 @@ function ModuleSettings() {
             >
                 <DialogTitle sx={{ pb: 1 }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-                        Sélectionner un Profil
+                        {t('settings:moduleSettings.selectProfileTitle')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Choisissez le profil adapté à vos besoins métier
+                        {t('settings:moduleSettings.selectProfileSubtitle')}
                     </Typography>
                 </DialogTitle>
                 <Divider />
@@ -581,8 +583,7 @@ function ModuleSettings() {
                         }}
                         icon={<Info />}
                     >
-                        Vos modules seront automatiquement activés selon le profil choisi.
-                        Vous pourrez changer de profil à tout moment.
+                        {t('settings:moduleSettings.profileInfo')}
                     </Alert>
 
                     <RadioGroup value={selectedProfile} onChange={(e) => setSelectedProfile(e.target.value)}>
@@ -642,7 +643,7 @@ function ModuleSettings() {
                                                         {profile.name}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', lineHeight: 1.2 }}>
-                                                        {profile.modules.length} modules
+                                                        {profile.modules.length} {t('settings:moduleSettings.modulesCount')}
                                                     </Typography>
                                                 </Box>
                                                 {/* Icônes compactes sur mobile */}
@@ -798,7 +799,7 @@ function ModuleSettings() {
                                                         );
                                                     })}
                                                     {profile.modules.length > 4 && (
-                                                        <Tooltip title={`${profile.modules.length - 4} autres modules`} arrow>
+                                                        <Tooltip title={`${profile.modules.length - 4} ${t('settings:moduleSettings.otherModules')}`} arrow>
                                                             <Box sx={{
                                                                 width: { xs: 26, sm: 30 },
                                                                 height: { xs: 26, sm: 30 },
@@ -827,7 +828,7 @@ function ModuleSettings() {
                                                     borderColor: 'divider'
                                                 }}>
                                                     <Typography variant="caption" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, color: 'text.secondary', fontWeight: 600 }}>
-                                                        {profile.modules.length} modules
+                                                        {profile.modules.length} {t('settings:moduleSettings.modulesCount')}
                                                     </Typography>
                                                 </Box>
                                             </CardContent>
@@ -849,11 +850,10 @@ function ModuleSettings() {
                             }}
                         >
                             <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                ✓ Changement de profil
+                                {t('settings:moduleSettings.profileChangeTitle')}
                             </Typography>
                             <Typography variant="caption">
-                                Vos modules actifs seront mis à jour selon le nouveau profil.
-                                La page se rechargera automatiquement pour appliquer les changements.
+                                {t('settings:moduleSettings.profileChangeMessage')}
                             </Typography>
                         </Alert>
                     )}
@@ -869,7 +869,7 @@ function ModuleSettings() {
                             fontWeight: 600
                         }}
                     >
-                        Annuler
+                        {t('settings:moduleSettings.cancel')}
                     </Button>
                     <Button
                         onClick={handleChangeSubscription}
@@ -887,7 +887,7 @@ function ModuleSettings() {
                             }
                         }}
                     >
-                        {saving ? 'Activation en cours...' : 'Activer ce Profil'}
+                        {saving ? t('settings:moduleSettings.activating') : t('settings:moduleSettings.activateProfile')}
                     </Button>
                 </DialogActions>
             </Dialog>

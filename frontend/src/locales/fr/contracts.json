@@ -1,0 +1,201 @@
+{
+  "title": "Contrats",
+  "newContract": "Nouveau Contrat",
+  "search": {
+    "placeholder": "Rechercher par numéro, titre, fournisseur..."
+  },
+  "filters": {
+    "all": "Tous",
+    "active": "Actifs",
+    "expired": "Expirés",
+    "pending": "En attente",
+    "archived": "Archivés"
+  },
+  "status": {
+    "draft": "Brouillon",
+    "active": "Actif",
+    "expired": "Expiré",
+    "pending": "En attente de signature",
+    "archived": "Archivé",
+    "terminated": "Résilié"
+  },
+  "labels": {
+    "contractNumber": "Contrat N°",
+    "title": "Titre",
+    "supplier": "Fournisseur",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "value": "Valeur",
+    "status": "Statut",
+    "daysRemaining": "jours restants",
+    "daysOverdue": "jours de retard",
+    "expiresIn": "Expire dans",
+    "expiredSince": "Expiré depuis",
+    "noContracts": "Aucun contrat trouvé",
+    "noContractsDescription": "Aucun contrat ne correspond à vos critères de recherche.",
+    "totalContracts": "Total",
+    "activeContracts": "Actifs",
+    "expiringContracts": "Expirent Bientôt",
+    "expiringSoon": "À renouveler",
+    "totalValue": "Valeur totale"
+  },
+  "form": {
+    "title": {
+      "new": "Nouveau Contrat",
+      "edit": "Modifier le Contrat"
+    },
+    "fields": {
+      "contractNumber": "Numéro de Contrat",
+      "contractTitle": "Titre du Contrat",
+      "supplier": "Fournisseur",
+      "selectSupplier": "Sélectionner un fournisseur",
+      "startDate": "Date de Début",
+      "endDate": "Date de Fin",
+      "value": "Valeur du Contrat",
+      "totalValue": "Valeur totale",
+      "status": "Statut",
+      "description": "Description",
+      "terms": "Termes et Conditions",
+      "attachments": "Pièces Jointes",
+      "contractType": "Type de contrat",
+      "paymentTerms": "Conditions de paiement",
+      "autoRenewal": "Renouvellement automatique",
+      "renewalNoticeDays": "Jours de préavis pour renouvellement",
+      "alertDaysBeforeExpiry": "Alerte avant expiration (jours)",
+      "internalNotes": "Notes internes",
+      "generalInfo": "Informations générales",
+      "datesAndAmounts": "Dates et montants",
+      "termsSection": "Termes et conditions",
+      "renewalAndAlerts": "Renouvellement et alertes",
+      "purchase_contract": "Contrat d'achat",
+      "service_contract": "Contrat de service",
+      "maintenance_contract": "Contrat de maintenance",
+      "lease_contract": "Contrat de location",
+      "nda_contract": "Accord de confidentialité",
+      "partnership_contract": "Accord de partenariat",
+      "other_contract": "Autre",
+      "descriptionPlaceholder": "Décrivez l'objet et la portée du contrat...",
+      "termsPlaceholder": "Détaillez les termes et conditions...",
+      "paymentTermsPlaceholder": "Ex: Net 30 jours",
+      "notesPlaceholder": "Notes privées (non visibles par le fournisseur)..."
+    },
+    "validation": {
+      "numberRequired": "Le numéro de contrat est requis",
+      "titleRequired": "Le titre est requis",
+      "supplierRequired": "Le fournisseur est requis",
+      "startDateRequired": "La date de début est requise",
+      "endDateRequired": "La date de fin est requise",
+      "valueRequired": "La valeur du contrat est requise",
+      "endDateAfterStart": "La date de fin doit être après la date de début"
+    }
+  },
+  "detail": {
+    "title": "Détails du Contrat",
+    "tabs": {
+      "overview": "Aperçu",
+      "documents": "Documents",
+      "amendments": "Avenants",
+      "history": "Historique"
+    },
+    "sections": {
+      "information": "Informations du Contrat",
+      "supplier": "Informations du Fournisseur",
+      "dates": "Dates Importantes",
+      "financial": "Informations Financières"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "renew": "Renouveler",
+      "terminate": "Résilier",
+      "archive": "Archiver",
+      "download": "Télécharger PDF",
+      "delete": "Supprimer",
+      "approve": "Approuver",
+      "activate": "Activer",
+      "extractClauses": "Extraire les clauses (IA)"
+    },
+    "sections": {
+      "description": "Description",
+      "terms": "Termes et conditions",
+      "paymentTerms": "Conditions de paiement",
+      "keyInformation": "Informations clés",
+      "contractType": "Type de contrat",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "daysUntilExpiry": "Jours avant expiration",
+      "totalValue": "Valeur totale",
+      "autoRenewal": "Renouvellement automatique",
+      "purchase": "Achat",
+      "service": "Service"
+    }
+  },
+  "messages": {
+    "loadingError": "Erreur lors du chargement des contrats",
+    "createSuccess": "Contrat créé avec succès",
+    "createError": "Erreur lors de la création du contrat",
+    "updateSuccess": "Contrat mis à jour avec succès",
+    "updateError": "Erreur lors de la mise à jour du contrat",
+    "deleteSuccess": "Contrat supprimé avec succès",
+    "deleteError": "Erreur lors de la suppression du contrat",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer le contrat \"{{title}}\" ?",
+    "approveSuccess": "Contrat approuvé avec succès",
+    "approveError": "Erreur lors de l'approbation",
+    "activateSuccess": "Contrat activé avec succès",
+    "activateError": "Erreur lors de l'activation",
+    "terminateSuccess": "Contrat résilié avec succès",
+    "terminateError": "Erreur lors de la résiliation",
+    "extractSuccess": "Clauses extraites avec succès par l'IA",
+    "extractError": "Erreur lors de l'extraction des clauses",
+    "enterContractText": "Veuillez saisir le texte du contrat",
+    "verifySuccess": "Clause vérifiée",
+    "verifyError": "Erreur lors de la vérification"
+  },
+  "risk": {
+    "low": "Risque faible",
+    "medium": "Risque moyen",
+    "high": "Risque élevé",
+    "critical": "Risque critique",
+    "notEvaluated": "Non évalué"
+  },
+  "contractStatus": {
+    "draft": "Brouillon",
+    "pending_review": "En révision",
+    "pending_approval": "En attente",
+    "approved": "Approuvé",
+    "active": "Actif",
+    "expiring_soon": "Expire bientôt",
+    "expired": "Expiré",
+    "terminated": "Résilié",
+    "renewed": "Renouvelé"
+  },
+  "clauses": {
+    "title": "Clauses",
+    "extractionIA": "Extraction IA",
+    "noClauses": "Aucune clause extraite. Utilisez le bouton \"Extraire les clauses (IA)\" pour analyser le contrat.",
+    "verified": "Vérifié",
+    "aiAnalysis": "Analyse IA:",
+    "recommendations": "Recommandations:",
+    "aiConfidence": "Confiance IA:",
+    "verifyClause": "Vérifier cette clause"
+  },
+  "milestones": {
+    "title": "Jalons",
+    "dueDate": "Date d'échéance",
+    "amount": "Montant",
+    "status": "Statut",
+    "pending": "En attente",
+    "completed": "Complété",
+    "delayed": "Retardé",
+    "cancelled": "Annulé"
+  },
+  "extraction": {
+    "title": "Extraction de clauses par IA Mistral",
+    "info": "Collez le texte complet du contrat ci-dessous. L'IA Mistral va analyser et extraire automatiquement toutes les clauses importantes avec une évaluation des risques.",
+    "contractText": "Texte du contrat",
+    "placeholder": "Collez ici le texte complet du contrat...",
+    "extracting": "Extraction en cours... Cela peut prendre quelques secondes.",
+    "cancel": "Annuler",
+    "extract": "Extraire les clauses",
+    "extracting_button": "Extraction..."
+  }
+}

@@ -475,7 +475,7 @@ const Settings = () => {
         <DialogTitle>
           <Stack direction="row" alignItems="center" spacing={1}>
             <CropIcon />
-            <Typography variant="h6">Rogner l'image</Typography>
+            <Typography variant="h6">{t('settings:logo.cropImage')}</Typography>
           </Stack>
         </DialogTitle>
         <DialogContent>
@@ -1288,7 +1288,7 @@ const DataSection = ({ settings, showSnackbar }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Import / Export et Migration
+        {t('settings:data.title')}
       </Typography>
       <Divider sx={{ mb: 3 }} />
 
@@ -1296,35 +1296,35 @@ const DataSection = ({ settings, showSnackbar }) => {
         {/* Section Export */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
-            Exporter mes données
+            {t('settings:data.exportSection.title')}
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Exportez toutes vos données (factures, clients, produits, fournisseurs) dans différents formats.
+            {t('settings:data.exportSection.description')}
           </Alert>
           <Stack direction="row" spacing={2} flexWrap="wrap">
             <Button
               variant="outlined"
               onClick={() => handleExport('json')}
             >
-              Exporter en JSON
+              {t('settings:data.exportSection.exportJson')}
             </Button>
             <Button
               variant="outlined"
               onClick={() => handleExport('csv')}
             >
-              Exporter en CSV
+              {t('settings:data.exportSection.exportCsv')}
             </Button>
             <Button
               variant="outlined"
               onClick={() => handleExport('excel')}
             >
-              Exporter en Excel
+              {t('settings:data.exportSection.exportExcel')}
             </Button>
             <Button
               variant="outlined"
               onClick={() => handleExport('pdf')}
             >
-              Rapport PDF complet
+              {t('settings:data.exportSection.exportPdf')}
             </Button>
           </Stack>
         </Grid>
@@ -1336,17 +1336,17 @@ const DataSection = ({ settings, showSnackbar }) => {
         {/* Section Import */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
-            Importer des données
+            {t('settings:data.importSection.title')}
           </Typography>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <strong>Attention :</strong> L'import de données remplacera vos données existantes. Assurez-vous d'avoir effectué une sauvegarde avant.
+            {t('settings:data.importSection.warning')}
           </Alert>
           <Button
             variant="contained"
             component="label"
             startIcon={<CloudUploadIcon />}
           >
-            Choisir un fichier à importer
+            {t('settings:data.importSection.chooseFile')}
             <input
               type="file"
               hidden
@@ -1355,7 +1355,7 @@ const DataSection = ({ settings, showSnackbar }) => {
             />
           </Button>
           <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-            Formats acceptés : JSON, CSV, Excel
+            {t('settings:data.importSection.acceptedFormats')}
           </Typography>
         </Grid>
 
@@ -1366,45 +1366,45 @@ const DataSection = ({ settings, showSnackbar }) => {
         {/* Section Migration */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
-            Migration depuis d'autres systèmes
+            {t('settings:data.migrationSection.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Migrez facilement vos données depuis d'autres systèmes de gestion.
+            {t('settings:data.migrationSection.description')}
           </Typography>
           <Stack spacing={2}>
             <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
               <Typography variant="subtitle2" gutterBottom>
-                QuickBooks
+                {t('settings:data.migrationSection.quickbooks.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Importez vos factures, clients et produits depuis QuickBooks
+                {t('settings:data.migrationSection.quickbooks.description')}
               </Typography>
               <Button variant="outlined" size="small">
-                Configurer la migration
+                {t('settings:data.migrationSection.quickbooks.configure')}
               </Button>
             </Paper>
 
             <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
               <Typography variant="subtitle2" gutterBottom>
-                Sage
+                {t('settings:data.migrationSection.sage.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Migrez vos données comptables depuis Sage
+                {t('settings:data.migrationSection.sage.description')}
               </Typography>
               <Button variant="outlined" size="small">
-                Configurer la migration
+                {t('settings:data.migrationSection.sage.configure')}
               </Button>
             </Paper>
 
             <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
               <Typography variant="subtitle2" gutterBottom>
-                Excel / CSV générique
+                {t('settings:data.migrationSection.generic.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Importez vos données depuis des fichiers Excel ou CSV
+                {t('settings:data.migrationSection.generic.description')}
               </Typography>
               <Button variant="outlined" size="small">
-                Assistant d'import
+                {t('settings:data.migrationSection.generic.configure')}
               </Button>
             </Paper>
           </Stack>

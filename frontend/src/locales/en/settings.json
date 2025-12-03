@@ -187,9 +187,46 @@
     "formats": "PNG, JPG or SVG (max. 2MB)",
     "helper": "You can crop the image before saving it. PNG format recommended for transparency.",
     "cropping": "Image Cropping",
+    "cropImage": "Crop image",
     "zoom": "Zoom",
     "apply": "Apply",
     "cancel": "Cancel"
+  },
+  "data": {
+    "title": "Import / Export and Migration",
+    "exportSection": {
+      "title": "Export my data",
+      "description": "Export all your data (invoices, clients, products, suppliers) in different formats.",
+      "exportJson": "Export as JSON",
+      "exportCsv": "Export as CSV",
+      "exportExcel": "Export as Excel",
+      "exportPdf": "Complete PDF Report"
+    },
+    "importSection": {
+      "title": "Import data",
+      "warning": "Warning: Importing data will replace your existing data. Make sure you have performed a backup beforehand.",
+      "chooseFile": "Choose a file to import",
+      "acceptedFormats": "Accepted formats: JSON, CSV, Excel"
+    },
+    "migrationSection": {
+      "title": "Migration from other systems",
+      "description": "Easily migrate your data from other management systems.",
+      "quickbooks": {
+        "title": "QuickBooks",
+        "description": "Import your invoices, clients and products from QuickBooks",
+        "configure": "Configure migration"
+      },
+      "sage": {
+        "title": "Sage",
+        "description": "Migrate your accounting data from Sage",
+        "configure": "Configure migration"
+      },
+      "generic": {
+        "title": "Excel / Generic CSV",
+        "description": "Import your data from Excel or CSV files",
+        "configure": "Import wizard"
+      }
+    }
   },
   "buttons": {
     "save": "Save Changes",
@@ -274,5 +311,33 @@
       "deleteSuccess": "User deactivated successfully",
       "deleteError": "Error deactivating user"
     }
+  },
+  "moduleSettings": {
+    "title": "Module Management",
+    "subtitle": "Customize your active modules",
+    "changeProfile": "Change",
+    "active": "Active",
+    "activeModules": "Active",
+    "noProfile": "No Profile",
+    "selectProfile": "Select a profile",
+    "modules": "Modules",
+    "modulesCount": "modules",
+    "available": "Available",
+    "installedModules": "Installed Modules",
+    "notActivated": "Not Activated",
+    "locked": "Locked",
+    "premiumFeatures": "Premium Features",
+    "selectProfileTitle": "Select a Profile",
+    "selectProfileSubtitle": "Choose the profile that fits your business needs",
+    "profileInfo": "Your modules will be automatically activated based on the chosen profile. You can change your profile at any time.",
+    "profileChangeTitle": "✓ Profile change",
+    "profileChangeMessage": "Your active modules will be updated according to the new profile. The page will reload automatically to apply the changes.",
+    "updateSuccess": "Profile updated successfully",
+    "updateError": "Error updating profile",
+    "loadingError": "Error loading data",
+    "cancel": "Cancel",
+    "activateProfile": "Activate this Profile",
+    "activating": "Activation in progress...",
+    "otherModules": "other modules"
   }
 }

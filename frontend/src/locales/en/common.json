@@ -1,5 +1,15 @@
 {
   "locale": "en-US",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "copy": "Copy",
+  "open": "Open",
+  "actions": "Actions",
+  "search": "Search...",
+  "backToList": "Back to list",
+  "viewDetails": "View details",
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
@@ -28,7 +38,8 @@
     "clear": "Clear",
     "select": "Select",
     "view": "View",
-    "details": "Details"
+    "details": "Details",
+    "saving": "Saving..."
   },
   "labels": {
     "actions": "Actions",

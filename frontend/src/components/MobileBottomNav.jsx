@@ -1,29 +1,31 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BottomNavigation, BottomNavigationAction, Paper, Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import IconImage from './IconImage';
 
-// Tous les items possibles avec leur module associé (sans IA)
-const allNavigationItems = [
-  { label: 'Tableau', value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
-  { label: 'Fournisseurs', value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
-  { label: 'Commandes', value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
-  { label: 'Factures', value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
-  { label: 'Produits', value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
-  { label: 'Clients', value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
-];
-
-// Item IA (séparé pour le mettre au centre)
-const aiItem = {
-  label: 'IA',
-  value: '/ai-chat',
-  icon: '/icon/ai-assistant.png',
-  moduleId: 'dashboard',
-  isCore: true
-};
-
 function MobileBottomNav({ enabledModules = ['dashboard'] }) {
+  const { t } = useTranslation(['navigation']);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Tous les items possibles avec leur module associé (sans IA)
+  const allNavigationItems = [
+    { label: t('navigation:mobile.dashboard'), value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
+    { label: t('navigation:mobile.suppliers'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
+    { label: t('navigation:mobile.orders'), value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
+    { label: t('navigation:mobile.invoices'), value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
+    { label: t('navigation:mobile.products'), value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
+    { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
+  ];
+
+  // Item IA (séparé pour le mettre au centre)
+  const aiItem = {
+    label: t('navigation:mobile.ai'),
+    value: '/ai-chat',
+    icon: '/icon/ai-assistant.png',
+    moduleId: 'dashboard',
+    isCore: true
+  };
 
   // Filtrer les items : modules core (toujours) + modules activés
   const navigationItems = allNavigationItems.filter(item => {

@@ -187,9 +187,46 @@
     "formats": "PNG, JPG ou SVG (max. 2MB)",
     "helper": "Vous pourrez rogner l'image avant de l'enregistrer. Format PNG recommandé pour transparence.",
     "cropping": "Recadrage de l'image",
+    "cropImage": "Rogner l'image",
     "zoom": "Zoom",
     "apply": "Appliquer",
     "cancel": "Annuler"
+  },
+  "data": {
+    "title": "Import / Export et Migration",
+    "exportSection": {
+      "title": "Exporter mes données",
+      "description": "Exportez toutes vos données (factures, clients, produits, fournisseurs) dans différents formats.",
+      "exportJson": "Exporter en JSON",
+      "exportCsv": "Exporter en CSV",
+      "exportExcel": "Exporter en Excel",
+      "exportPdf": "Rapport PDF complet"
+    },
+    "importSection": {
+      "title": "Importer des données",
+      "warning": "Attention : L'import de données remplacera vos données existantes. Assurez-vous d'avoir effectué une sauvegarde avant.",
+      "chooseFile": "Choisir un fichier à importer",
+      "acceptedFormats": "Formats acceptés : JSON, CSV, Excel"
+    },
+    "migrationSection": {
+      "title": "Migration depuis d'autres systèmes",
+      "description": "Migrez facilement vos données depuis d'autres systèmes de gestion.",
+      "quickbooks": {
+        "title": "QuickBooks",
+        "description": "Importez vos factures, clients et produits depuis QuickBooks",
+        "configure": "Configurer la migration"
+      },
+      "sage": {
+        "title": "Sage",
+        "description": "Migrez vos données comptables depuis Sage",
+        "configure": "Configurer la migration"
+      },
+      "generic": {
+        "title": "Excel / CSV générique",
+        "description": "Importez vos données depuis des fichiers Excel ou CSV",
+        "configure": "Assistant d'import"
+      }
+    }
   },
   "buttons": {
     "save": "Enregistrer les modifications",
@@ -274,5 +311,33 @@
       "deleteSuccess": "Utilisateur désactivé avec succès",
       "deleteError": "Erreur lors de la désactivation de l'utilisateur"
     }
+  },
+  "moduleSettings": {
+    "title": "Gestion des Modules",
+    "subtitle": "Personnalisez vos modules actifs",
+    "changeProfile": "Changer",
+    "active": "Actif",
+    "activeModules": "Actifs",
+    "noProfile": "Aucun profil",
+    "selectProfile": "Sélectionnez un profil",
+    "modules": "Modules",
+    "modulesCount": "modules",
+    "available": "Disponibles",
+    "installedModules": "Modules Installés",
+    "notActivated": "Non Activés",
+    "locked": "Verrouillé",
+    "premiumFeatures": "Fonctionnalités Premium",
+    "selectProfileTitle": "Sélectionner un Profil",
+    "selectProfileSubtitle": "Choisissez le profil adapté à vos besoins métier",
+    "profileInfo": "Vos modules seront automatiquement activés selon le profil choisi. Vous pourrez changer de profil à tout moment.",
+    "profileChangeTitle": "✓ Changement de profil",
+    "profileChangeMessage": "Vos modules actifs seront mis à jour selon le nouveau profil. La page se rechargera automatiquement pour appliquer les changements.",
+    "updateSuccess": "Type de profil mis à jour avec succès",
+    "updateError": "Erreur lors de la mise à jour",
+    "loadingError": "Erreur lors du chargement des données",
+    "cancel": "Annuler",
+    "activateProfile": "Activer ce Profil",
+    "activating": "Activation en cours...",
+    "otherModules": "autres modules"
   }
 }

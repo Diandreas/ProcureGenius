@@ -229,7 +229,7 @@ function InvoiceDetail() {
   const MobileInvoiceInfoCard = ({ invoice }) => (
     <Card sx={{
       mb: 1.5,
-      borderRadius: 2.5,
+      borderRadius: 1,
       background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 252, 0.95))',
       backdropFilter: 'blur(10px)',
       border: '1px solid rgba(200, 200, 220, 0.2)',
@@ -298,7 +298,7 @@ function InvoiceDetail() {
               color: 'primary.main',
               width: 32,
               height: 32,
-              borderRadius: 1.5,
+              borderRadius: 1,
               '&:hover': {
                 bgcolor: 'primary.main',
                 color: 'white',
@@ -318,7 +318,7 @@ function InvoiceDetail() {
               color: 'grey.700',
               width: 32,
               height: 32,
-              borderRadius: 1.5,
+              borderRadius: 1,
               '&:hover': {
                 bgcolor: 'grey.700',
                 color: 'white',
@@ -339,7 +339,7 @@ function InvoiceDetail() {
                 color: 'success.main',
                 width: 32,
                 height: 32,
-                borderRadius: 1.5,
+                borderRadius: 1,
                 '&:hover': {
                   bgcolor: 'success.main',
                   color: 'white',
@@ -361,7 +361,7 @@ function InvoiceDetail() {
                 color: 'warning.main',
                 width: 32,
                 height: 32,
-                borderRadius: 1.5,
+                borderRadius: 1,
                 '&:hover': {
                   bgcolor: 'warning.main',
                   color: 'white',

@@ -28,12 +28,14 @@ import {
   updateSourcingEvent,
 } from '../../store/slices/eSourcingSlice';
 import { fetchSuppliers } from '../../store/slices/suppliersSlice';
+import { useTranslation } from 'react-i18next';
 
 function SourcingEventForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['eSourcing', 'common']);
 
   const { currentEvent, loading } = useSelector((state) => state.eSourcing);
   const { suppliers } = useSelector((state) => state.suppliers);
@@ -113,15 +115,15 @@ function SourcingEventForm() {
 
       if (isEditMode) {
         await dispatch(updateSourcingEvent({ id, data: payload })).unwrap();
-        enqueueSnackbar('Événement modifié avec succès', { variant: 'success' });
+        enqueueSnackbar(t('eSourcing:messages.updateSuccess'), { variant: 'success' });
       } else {
         await dispatch(createSourcingEvent(payload)).unwrap();
-        enqueueSnackbar('Événement créé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('eSourcing:messages.createSuccess'), { variant: 'success' });
       }
       navigate('/e-sourcing/events');
     } catch (error) {
       enqueueSnackbar(
-        error.message || "Erreur lors de l'enregistrement de l'événement",
+        error.message || (isEditMode ? t('eSourcing:messages.updateError') : t('eSourcing:messages.createError')),
         { variant: 'error' }
       );
     } finally {
@@ -144,18 +146,18 @@ function SourcingEventForm() {
         onClick={() => navigate('/e-sourcing/events')}
         sx={{ mb: 2 }}
       >
-        Retour à la liste
+        {t('common:backToList')}
       </Button>
 
       <Card>
         <CardContent>
           <Typography variant="h5" component="h1" gutterBottom>
-            {isEditMode ? 'Modifier' : 'Nouvel'} Événement de Sourcing
+            {isEditMode ? t('eSourcing:form.title.edit') : t('eSourcing:form.title.new')}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             {isEditMode
-              ? "Modifiez les informations de l'événement"
-              : 'Créez un nouvel événement RFQ pour demander des prix'}
+              ? t('eSourcing:form.editDescription')
+              : t('eSourcing:form.createDescription')}
           </Typography>
 
           <Divider sx={{ my: 3 }} />
@@ -165,7 +167,7 @@ function SourcingEventForm() {
               {/* Informations générales */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Informations générales
+                  {t('eSourcing:form.sections.general')}
                 </Typography>
               </Grid>
 
@@ -173,11 +175,11 @@ function SourcingEventForm() {
                 <TextField
                   fullWidth
                   required
-                  label="Titre"
+                  label={t('eSourcing:form.fields.eventTitle')}
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="Ex: Demande de prix pour fournitures de bureau"
+                  placeholder={t('eSourcing:form.placeholders.title')}
                 />
               </Grid>
 
@@ -187,11 +189,11 @@ function SourcingEventForm() {
                   required
                   multiline
                   rows={4}
-                  label="Description"
+                  label={t('eSourcing:labels.description')}
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Décrivez l'objet de cet appel d'offres..."
+                  placeholder={t('eSourcing:form.placeholders.description')}
                 />
               </Grid>
 
@@ -200,11 +202,11 @@ function SourcingEventForm() {
                   fullWidth
                   multiline
                   rows={3}
-                  label="Exigences"
+                  label={t('eSourcing:labels.requirements')}
                   name="requirements"
                   value={formData.requirements}
                   onChange={handleChange}
-                  placeholder="Listez les exigences spécifiques..."
+                  placeholder={t('eSourcing:form.placeholders.requirements')}
                 />
               </Grid>
 
@@ -213,11 +215,11 @@ function SourcingEventForm() {
                   fullWidth
                   multiline
                   rows={3}
-                  label="Termes et conditions"
+                  label={t('eSourcing:labels.termsAndConditions')}
                   name="terms_and_conditions"
                   value={formData.terms_and_conditions}
                   onChange={handleChange}
-                  placeholder="Indiquez les termes et conditions..."
+                  placeholder={t('eSourcing:form.placeholders.termsAndConditions')}
                 />
               </Grid>
 
@@ -225,7 +227,7 @@ function SourcingEventForm() {
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Dates et budget
+                  {t('eSourcing:form.sections.datesAndBudget')}
                 </Typography>
               </Grid>
 
@@ -234,7 +236,7 @@ function SourcingEventForm() {
                   fullWidth
                   required
                   type="datetime-local"
-                  label="Date limite de soumission"
+                  label={t('eSourcing:labels.submissionDeadline')}
                   name="submission_deadline"
                   value={formData.submission_deadline}
                   onChange={handleChange}
@@ -246,7 +248,7 @@ function SourcingEventForm() {
                 <TextField
                   fullWidth
                   type="date"
-                  label="Date limite d'évaluation"
+                  label={t('eSourcing:labels.evaluationDeadline')}
                   name="evaluation_deadline"
                   value={formData.evaluation_deadline}
                   onChange={handleChange}
@@ -258,7 +260,7 @@ function SourcingEventForm() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Budget estimé"
+                  label={t('eSourcing:labels.estimatedBudget')}
                   name="estimated_budget"
                   value={formData.estimated_budget}
                   onChange={handleChange}
@@ -273,7 +275,7 @@ function SourcingEventForm() {
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Fournisseurs à inviter
+                  {t('eSourcing:form.sections.suppliers')}
                 </Typography>
               </Grid>
 
@@ -287,8 +289,8 @@ function SourcingEventForm() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Sélectionner des fournisseurs"
-                      placeholder="Rechercher..."
+                      label={t('eSourcing:form.fields.selectSuppliers')}
+                      placeholder={t('eSourcing:form.placeholders.searchSuppliers')}
                     />
                   )}
                   renderTags={(value, getTagProps) =>
@@ -312,7 +314,7 @@ function SourcingEventForm() {
                     startIcon={<Cancel />}
                     onClick={() => navigate('/e-sourcing/events')}
                   >
-                    Annuler
+                    {t('common:cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -320,7 +322,7 @@ function SourcingEventForm() {
                     startIcon={<Save />}
                     disabled={submitting}
                   >
-                    {submitting ? 'Enregistrement...' : 'Enregistrer'}
+                    {submitting ? t('common:buttons.saving') : t('common:save')}
                   </Button>
                 </Stack>
               </Grid>

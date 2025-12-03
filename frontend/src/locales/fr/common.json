@@ -1,5 +1,15 @@
 {
   "locale": "fr-FR",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "edit": "Modifier",
+  "copy": "Copier",
+  "open": "Ouvrir",
+  "actions": "Actions",
+  "search": "Rechercher...",
+  "backToList": "Retour à la liste",
+  "viewDetails": "Voir les détails",
   "buttons": {
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -28,7 +38,8 @@
     "clear": "Effacer",
     "select": "Sélectionner",
     "view": "Voir",
-    "details": "Détails"
+    "details": "Détails",
+    "saving": "Enregistrement..."
   },
   "labels": {
     "actions": "Actions",

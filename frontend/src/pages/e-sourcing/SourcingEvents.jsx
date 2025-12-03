@@ -65,10 +65,12 @@ import {
 } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 
 function SourcingEvents() {
+  const { t } = useTranslation(['eSourcing', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -128,10 +130,10 @@ function SourcingEvents() {
   const handlePublish = async () => {
     try {
       await dispatch(publishSourcingEvent(selectedEvent.id)).unwrap();
-      enqueueSnackbar('Événement publié avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.publishSuccess'), { variant: 'success' });
       loadEvents();
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la publication', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.publishError'), { variant: 'error' });
     }
     handleMenuClose();
   };
@@ -139,10 +141,10 @@ function SourcingEvents() {
   const handleClose = async () => {
     try {
       await dispatch(closeSourcingEvent(selectedEvent.id)).unwrap();
-      enqueueSnackbar('Événement clôturé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.closeSuccess'), { variant: 'success' });
       loadEvents();
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la clôture', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.closeError'), { variant: 'error' });
     }
     handleMenuClose();
   };
@@ -150,10 +152,10 @@ function SourcingEvents() {
   const handleCancel = async () => {
     try {
       await dispatch(cancelSourcingEvent(selectedEvent.id)).unwrap();
-      enqueueSnackbar('Événement annulé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.cancelSuccess'), { variant: 'success' });
       loadEvents();
     } catch (error) {
-      enqueueSnackbar("Erreur lors de l'annulation", { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.cancelError'), { variant: 'error' });
     }
     handleMenuClose();
   };
@@ -166,11 +168,11 @@ function SourcingEvents() {
   const handleDeleteConfirm = async () => {
     try {
       await dispatch(deleteSourcingEvent(selectedEvent.id)).unwrap();
-      enqueueSnackbar('Événement supprimé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:messages.deleteSuccess'), { variant: 'success' });
       setDeleteDialogOpen(false);
       loadEvents();
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:messages.deleteError'), { variant: 'error' });
     }
   };
 
@@ -186,13 +188,13 @@ function SourcingEvents() {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      draft: { label: 'Brouillon', color: 'default' },
-      published: { label: 'Publié', color: 'info' },
-      in_progress: { label: 'En cours', color: 'primary' },
-      evaluation: { label: 'Évaluation', color: 'warning' },
-      awarded: { label: 'Attribué', color: 'success' },
-      cancelled: { label: 'Annulé', color: 'error' },
-      closed: { label: 'Clôturé', color: 'default' },
+      draft: { label: t('eSourcing:status.draft'), color: 'default' },
+      published: { label: t('eSourcing:status.published'), color: 'info' },
+      in_progress: { label: t('eSourcing:status.in_progress'), color: 'primary' },
+      evaluation: { label: t('eSourcing:status.evaluation'), color: 'warning' },
+      awarded: { label: t('eSourcing:status.awarded'), color: 'success' },
+      cancelled: { label: t('eSourcing:status.cancelled'), color: 'error' },
+      closed: { label: t('eSourcing:status.closed'), color: 'default' },
     };
 
     const config = statusConfig[status] || { label: status, color: 'default' };
@@ -215,11 +217,7 @@ function SourcingEvents() {
     <Box sx={{ p: 3 }}>
       {/* Stats Cards - Clickable Filters */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Événements de Sourcing
-        </Typography>
-
-        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+        <Grid container spacing={isMobile ? 1 : 2}>
           {/* Brouillons */}
           <Grid item xs={6} sm={2.4}>
             <Card
@@ -246,7 +244,7 @@ function SourcingEvents() {
                       {draftEvents}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Brouillons
+                      {t('eSourcing:labels.drafts')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -280,7 +278,7 @@ function SourcingEvents() {
                       {publishedEvents}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Publiés
+                      {t('eSourcing:labels.published')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -314,7 +312,7 @@ function SourcingEvents() {
                       {activeEvents}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      En cours
+                      {t('eSourcing:labels.in_progress')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -348,7 +346,7 @@ function SourcingEvents() {
                       {closedEvents}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Clôturés
+                      {t('eSourcing:labels.closed')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -382,7 +380,7 @@ function SourcingEvents() {
                       {totalEvents}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      Tous
+                      {t('eSourcing:labels.all')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -394,13 +392,13 @@ function SourcingEvents() {
         {/* Filter Indicator */}
         {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">Filtre actif:</Typography>
+            <Typography variant="body2" color="text.secondary">{t('eSourcing:labels.activeFilter')}:</Typography>
             <Chip
               label={
-                quickFilter === 'draft' ? 'Brouillons' :
-                quickFilter === 'published' ? 'Publiés' :
-                quickFilter === 'in_progress' ? 'En cours' :
-                quickFilter === 'closed' ? 'Clôturés' : ''
+                quickFilter === 'draft' ? t('eSourcing:labels.drafts') :
+                quickFilter === 'published' ? t('eSourcing:labels.published') :
+                quickFilter === 'in_progress' ? t('eSourcing:labels.in_progress') :
+                quickFilter === 'closed' ? t('eSourcing:labels.closed') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
@@ -423,13 +421,13 @@ function SourcingEvents() {
               startIcon={<Add />}
               onClick={() => navigate('/e-sourcing/events/new')}
             >
-              Nouvel Événement
+              {t('eSourcing:actions.newEvent')}
             </Button>
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
             <TextField
-              placeholder="Rechercher..."
+              placeholder={t('common:search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -443,33 +441,33 @@ function SourcingEvents() {
             />
 
             <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Statut</InputLabel>
+              <InputLabel>{t('eSourcing:labels.status')}</InputLabel>
               <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                label="Statut"
+                label={t('eSourcing:labels.status')}
                 startAdornment={<FilterList sx={{ ml: 1, mr: -0.5 }} />}
               >
-                <MenuItem value="">Tous</MenuItem>
-                <MenuItem value="draft">Brouillon</MenuItem>
-                <MenuItem value="published">Publié</MenuItem>
-                <MenuItem value="in_progress">En cours</MenuItem>
-                <MenuItem value="evaluation">Évaluation</MenuItem>
-                <MenuItem value="awarded">Attribué</MenuItem>
-                <MenuItem value="cancelled">Annulé</MenuItem>
-                <MenuItem value="closed">Clôturé</MenuItem>
+                <MenuItem value="">{t('eSourcing:labels.all')}</MenuItem>
+                <MenuItem value="draft">{t('eSourcing:status.draft')}</MenuItem>
+                <MenuItem value="published">{t('eSourcing:status.published')}</MenuItem>
+                <MenuItem value="in_progress">{t('eSourcing:status.in_progress')}</MenuItem>
+                <MenuItem value="evaluation">{t('eSourcing:status.evaluation')}</MenuItem>
+                <MenuItem value="awarded">{t('eSourcing:status.awarded')}</MenuItem>
+                <MenuItem value="cancelled">{t('eSourcing:status.cancelled')}</MenuItem>
+                <MenuItem value="closed">{t('eSourcing:status.closed')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
 
           {loading ? (
-            <LoadingState message="Chargement des événements de sourcing..." />
+            <LoadingState message={t('eSourcing:messages.loading')} />
           ) : events.length === 0 ? (
             <EmptyState
-              title="Aucun événement de sourcing"
-              description="Créez votre premier événement RFQ pour comparer les offres de vos fournisseurs et obtenir les meilleurs prix."
+              title={t('eSourcing:messages.noEvents')}
+              description={t('eSourcing:messages.noEventsDescription')}
               mascotPose="thinking"
-              actionLabel="Nouvel événement"
+              actionLabel={t('eSourcing:actions.newEvent')}
               onAction={() => navigate('/e-sourcing/events/new')}
             />
           ) : (
@@ -478,14 +476,14 @@ function SourcingEvents() {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Numéro</TableCell>
-                      <TableCell>Titre</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell>Date limite</TableCell>
-                      <TableCell>Budget estimé</TableCell>
-                      <TableCell align="center">Invitations</TableCell>
-                      <TableCell align="center">Soumissions</TableCell>
-                      <TableCell align="right">Actions</TableCell>
+                      <TableCell>{t('eSourcing:labels.number')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.title')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.status')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.deadline')}</TableCell>
+                      <TableCell>{t('eSourcing:labels.estimatedBudget')}</TableCell>
+                      <TableCell align="center">{t('eSourcing:labels.invitations')}</TableCell>
+                      <TableCell align="center">{t('eSourcing:labels.submissions')}</TableCell>
+                      <TableCell align="right">{t('common:actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -499,7 +497,7 @@ function SourcingEvents() {
                         <TableCell>
                           <Typography variant="body2">{event.title}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Par {event.created_by_name}
+                            {t('eSourcing:labels.by')} {event.created_by_name}
                           </Typography>
                         </TableCell>
                         <TableCell>{getStatusChip(event.status)}</TableCell>
@@ -553,17 +551,17 @@ function SourcingEvents() {
       >
         <MenuItem onClick={handleView}>
           <Visibility fontSize="small" sx={{ mr: 1 }} />
-          Voir les détails
+          {t('eSourcing:actions.viewDetails')}
         </MenuItem>
         {selectedEvent?.status === 'draft' && (
           <>
             <MenuItem onClick={handleEdit}>
               <Edit fontSize="small" sx={{ mr: 1 }} />
-              Modifier
+              {t('common:edit')}
             </MenuItem>
             <MenuItem onClick={handlePublish}>
               <Publish fontSize="small" sx={{ mr: 1 }} />
-              Publier
+              {t('eSourcing:actions.publish')}
             </MenuItem>
           </>
         )}
@@ -571,45 +569,44 @@ function SourcingEvents() {
           <>
             <MenuItem onClick={handleCompareBids}>
               <CompareArrows fontSize="small" sx={{ mr: 1 }} />
-              Comparer les soumissions
+              {t('eSourcing:actions.compareBids')}
             </MenuItem>
             <MenuItem onClick={handleStatistics}>
               <Assessment fontSize="small" sx={{ mr: 1 }} />
-              Statistiques
+              {t('eSourcing:actions.statistics')}
             </MenuItem>
           </>
         )}
         {['published', 'in_progress', 'evaluation'].includes(selectedEvent?.status) && (
           <MenuItem onClick={handleClose}>
             <Close fontSize="small" sx={{ mr: 1 }} />
-            Clôturer
+            {t('eSourcing:actions.close')}
           </MenuItem>
         )}
         {selectedEvent?.status !== 'awarded' && selectedEvent?.status !== 'closed' && (
           <MenuItem onClick={handleCancel}>
             <Cancel fontSize="small" sx={{ mr: 1 }} />
-            Annuler
+            {t('common:cancel')}
           </MenuItem>
         )}
         {selectedEvent?.status === 'draft' && (
           <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
             <Delete fontSize="small" sx={{ mr: 1 }} />
-            Supprimer
+            {t('common:delete')}
           </MenuItem>
         )}
       </Menu>
 
       {/* Dialog de confirmation de suppression */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogTitle>{t('eSourcing:messages.confirmDelete')}</DialogTitle>
         <DialogContent>
-          Êtes-vous sûr de vouloir supprimer l'événement "{selectedEvent?.event_number}" ?
-          Cette action est irréversible.
+          {t('eSourcing:messages.confirmDeleteMessage', { number: selectedEvent?.event_number })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common:cancel')}</Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Supprimer
+            {t('common:delete')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -304,12 +304,8 @@ function Clients() {
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          {t('clients:title')}
-        </Typography>
-
         {/* Stats Cards - Clickable Filters */}
-        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+        <Grid container spacing={isMobile ? 1 : 2}>
           {/* Actifs */}
           <Grid item xs={6} sm={2.4}>
             <Card

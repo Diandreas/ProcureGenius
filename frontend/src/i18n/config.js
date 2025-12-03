@@ -19,6 +19,16 @@ import dashboardFr from '../locales/fr/dashboard.json';
 import dashboardEn from '../locales/en/dashboard.json';
 import navigationFr from '../locales/fr/navigation.json';
 import navigationEn from '../locales/en/navigation.json';
+import suppliersFr from '../locales/fr/suppliers.json';
+import suppliersEn from '../locales/en/suppliers.json';
+import aiChatFr from '../locales/fr/aiChat.json';
+import aiChatEn from '../locales/en/aiChat.json';
+import contractsFr from '../locales/fr/contracts.json';
+import contractsEn from '../locales/en/contracts.json';
+import eSourcingFr from '../locales/fr/eSourcing.json';
+import eSourcingEn from '../locales/en/eSourcing.json';
+import authFr from '../locales/fr/auth.json';
+import authEn from '../locales/en/auth.json';
 
 // Configuration i18next
 i18n
@@ -35,6 +45,11 @@ i18n
         products: productsFr,
         dashboard: dashboardFr,
         navigation: navigationFr,
+        suppliers: suppliersFr,
+        aiChat: aiChatFr,
+        contracts: contractsFr,
+        eSourcing: eSourcingFr,
+        auth: authFr,
       },
       en: {
         common: commonEn,
@@ -45,6 +60,11 @@ i18n
         products: productsEn,
         dashboard: dashboardEn,
         navigation: navigationEn,
+        suppliers: suppliersEn,
+        aiChat: aiChatEn,
+        contracts: contractsEn,
+        eSourcing: eSourcingEn,
+        auth: authEn,
       },
     },
 
@@ -72,7 +92,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation'],
+    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth'],
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',

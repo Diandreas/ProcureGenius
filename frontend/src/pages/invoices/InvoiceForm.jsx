@@ -298,7 +298,7 @@ function InvoiceForm() {
   const MobileItemCard = ({ item, index }) => (
     <Card sx={{
       mb: 1.25,
-      borderRadius: 3,
+      borderRadius: 1,
       background: 'rgba(255, 255, 255, 0.9)',
       backdropFilter: 'blur(12px)',
       border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -405,7 +405,7 @@ function InvoiceForm() {
             variant="outlined"
             onClick={() => navigate('/invoices')}
             size={isMobile ? 'small' : 'medium'}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
           >
             {t('invoices:buttons.cancel')}
           </Button>
@@ -415,7 +415,7 @@ function InvoiceForm() {
             onClick={handleSubmit}
             disabled={loading}
             size={isMobile ? 'small' : 'medium'}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
           >
             {loading ? t('invoices:labels.savingLabel') : t('invoices:buttons.save')}
           </Button>
@@ -426,7 +426,7 @@ function InvoiceForm() {
         {isMobile ? (
           <Box>
             {/* Basic Information Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                   {t('invoices:labels.generalInformation')}
@@ -483,7 +483,7 @@ function InvoiceForm() {
             </Card>
 
             {/* Client Selection Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -534,7 +534,7 @@ function InvoiceForm() {
             </Card>
 
             {/* Items Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -549,7 +549,7 @@ function InvoiceForm() {
                       setItemDialogOpen(true);
                     }}
                     size="small"
-                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
                   >
                     {t('invoices:buttons.add')}
                   </Button>
@@ -566,7 +566,7 @@ function InvoiceForm() {
             </Card>
 
             {/* Financial Summary Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                   {t('invoices:labels.financialSummary')}
@@ -617,7 +617,7 @@ function InvoiceForm() {
             </Card>
 
             {/* Status Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                   {t('common:labels.status')}
@@ -644,7 +644,7 @@ function InvoiceForm() {
             {/* Left Column */}
             <Grid item xs={12} md={8}>
               {/* Basic Information */}
-              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                     {t('invoices:labels.generalInformation')}
@@ -699,7 +699,7 @@ function InvoiceForm() {
               </Card>
 
               {/* Items */}
-              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -713,7 +713,7 @@ function InvoiceForm() {
                         setEditingItemIndex(-1);
                         setItemDialogOpen(true);
                       }}
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                      sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
                     >
                       {t('invoices:buttons.addItem')}
                     </Button>
@@ -783,7 +783,7 @@ function InvoiceForm() {
               </Card>
 
               {/* Financial Summary */}
-              <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                     Résumé financier
@@ -838,7 +838,7 @@ function InvoiceForm() {
             {/* Right Column */}
             <Grid item xs={12} md={4}>
               {/* Client Selection */}
-              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -909,7 +909,7 @@ function InvoiceForm() {
               </Card>
 
               {/* Status */}
-              <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                     Statut

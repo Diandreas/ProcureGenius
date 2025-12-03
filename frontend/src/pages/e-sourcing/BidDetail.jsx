@@ -26,11 +26,13 @@ import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 function BidDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['eSourcing', 'common']);
 
   const [bid, setBid] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ function BidDetail() {
       setEvaluationScore(response.data.evaluation_score || '');
       setEvaluationNotes(response.data.evaluation_notes || '');
     } catch (error) {
-      enqueueSnackbar('Erreur lors du chargement de la soumission', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:bidDetail.loadError'), { variant: 'error' });
       console.error('Error fetching bid:', error);
     } finally {
       setLoading(false);
@@ -67,23 +69,34 @@ function BidDetail() {
         evaluation_score: evaluationScore || null,
         evaluation_notes: evaluationNotes,
       });
-      enqueueSnackbar('Soumission mise à jour avec succès', { variant: 'success' });
+      enqueueSnackbar(t('eSourcing:bidDetail.updateSuccess'), { variant: 'success' });
       fetchBidDetails();
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la mise à jour', { variant: 'error' });
+      enqueueSnackbar(t('eSourcing:bidDetail.updateError'), { variant: 'error' });
       console.error('Error updating bid:', error);
     } finally {
       setUpdating(false);
     }
   };
 
+  const getBidStatusLabel = (status) => {
+    const labels = {
+      submitted: t('eSourcing:bidStatus.submitted'),
+      under_review: t('eSourcing:bidStatus.under_review'),
+      shortlisted: t('eSourcing:bidStatus.shortlisted'),
+      awarded: t('eSourcing:bidStatus.awarded'),
+      rejected: t('eSourcing:bidStatus.rejected'),
+    };
+    return labels[status] || status;
+  };
+
   const getStatusChip = (status) => {
     const statusConfig = {
-      submitted: { label: 'Soumis', color: 'info' },
-      under_review: { label: 'En révision', color: 'warning' },
-      shortlisted: { label: 'Présélectionné', color: 'primary' },
-      awarded: { label: 'Retenu', color: 'success' },
-      rejected: { label: 'Rejeté', color: 'error' },
+      submitted: { label: getBidStatusLabel(status), color: 'info' },
+      under_review: { label: getBidStatusLabel(status), color: 'warning' },
+      shortlisted: { label: getBidStatusLabel(status), color: 'primary' },
+      awarded: { label: getBidStatusLabel(status), color: 'success' },
+      rejected: { label: getBidStatusLabel(status), color: 'error' },
     };
 
     const config = statusConfig[status] || { label: status, color: 'default' };
@@ -110,7 +123,7 @@ function BidDetail() {
         onClick={() => navigate(`/e-sourcing/events/${bid.sourcing_event}`)}
         sx={{ mb: 2 }}
       >
-        Retour à l'événement
+        {t('eSourcing:bidComparison.backToEvent')}
       </Button>
 
       <Grid container spacing={3}>
@@ -121,7 +134,7 @@ function BidDetail() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                 <Box>
                   <Typography variant="h5" component="h1" gutterBottom>
-                    Soumission de {bid.supplier_name}
+                    {t('eSourcing:bidDetail.title', { supplier: bid.supplier_name })}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {bid.supplier_email}
@@ -135,7 +148,7 @@ function BidDetail() {
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="text.secondary">
-                    Montant total
+                    {t('eSourcing:labels.totalAmount')}
                   </Typography>
                   <Typography variant="h4" color="primary" fontWeight="bold">
                     {parseFloat(bid.total_amount).toLocaleString()} $
@@ -144,16 +157,16 @@ function BidDetail() {
 
                 <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="text.secondary">
-                    Délai de livraison
+                    {t('eSourcing:bidDetail.deliveryTime')}
                   </Typography>
                   <Typography variant="h6" fontWeight="medium">
-                    {bid.delivery_time_days || '-'} jours
+                    {bid.delivery_time_days || '-'} {t('eSourcing:bidDetail.days')}
                   </Typography>
                 </Grid>
 
                 <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="text.secondary">
-                    Soumis le
+                    {t('eSourcing:labels.submittedOn')}
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
                     {formatDate(bid.submitted_at)}
@@ -169,13 +182,13 @@ function BidDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Détails de la soumission
+                {t('eSourcing:bidDetail.submissionDetails')}
               </Typography>
 
               {bid.notes && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Notes du fournisseur
+                    {t('eSourcing:bidDetail.supplierNotes')}
                   </Typography>
                   <Typography variant="body2" paragraph style={{ whiteSpace: 'pre-line' }}>
                     {bid.notes}
@@ -186,7 +199,7 @@ function BidDetail() {
               {bid.technical_proposal && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Proposition technique
+                    {t('eSourcing:bidDetail.technicalProposal')}
                   </Typography>
                   <Typography variant="body2" paragraph style={{ whiteSpace: 'pre-line' }}>
                     {bid.technical_proposal}
@@ -197,7 +210,7 @@ function BidDetail() {
               {bid.warranty_terms && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Conditions de garantie
+                    {t('eSourcing:bidDetail.warrantyTerms')}
                   </Typography>
                   <Typography variant="body2" paragraph>
                     {bid.warranty_terms}
@@ -208,7 +221,7 @@ function BidDetail() {
               {bid.payment_terms && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Conditions de paiement
+                    {t('eSourcing:bidDetail.paymentTerms')}
                   </Typography>
                   <Typography variant="body2" paragraph>
                     {bid.payment_terms}
@@ -219,17 +232,17 @@ function BidDetail() {
               <Divider sx={{ my: 3 }} />
 
               <Typography variant="h6" gutterBottom>
-                Articles proposés
+                {t('eSourcing:bidDetail.proposedItems')}
               </Typography>
 
               <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Article</TableCell>
-                      <TableCell align="right">Quantité</TableCell>
-                      <TableCell align="right">Prix unitaire</TableCell>
-                      <TableCell align="right">Total</TableCell>
+                      <TableCell>{t('eSourcing:bidDetail.item')}</TableCell>
+                      <TableCell align="right">{t('eSourcing:bidComparison.quantity')}</TableCell>
+                      <TableCell align="right">{t('eSourcing:bidComparison.unitPrice')}</TableCell>
+                      <TableCell align="right">{t('common:labels.total')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -259,7 +272,7 @@ function BidDetail() {
                     <TableRow>
                       <TableCell colSpan={3} align="right">
                         <Typography variant="subtitle1" fontWeight="bold">
-                          Total
+                          {t('common:labels.total')}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -280,33 +293,33 @@ function BidDetail() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Évaluation
+                {t('eSourcing:bidDetail.evaluation')}
               </Typography>
 
               <Box sx={{ mt: 2 }}>
                 <TextField
                   fullWidth
                   select
-                  label="Statut"
+                  label={t('eSourcing:labels.status')}
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
                   sx={{ mb: 2 }}
                 >
-                  <MenuItem value="submitted">Soumis</MenuItem>
-                  <MenuItem value="under_review">En révision</MenuItem>
-                  <MenuItem value="shortlisted">Présélectionné</MenuItem>
-                  <MenuItem value="awarded">Retenu</MenuItem>
-                  <MenuItem value="rejected">Rejeté</MenuItem>
+                  <MenuItem value="submitted">{getBidStatusLabel('submitted')}</MenuItem>
+                  <MenuItem value="under_review">{getBidStatusLabel('under_review')}</MenuItem>
+                  <MenuItem value="shortlisted">{getBidStatusLabel('shortlisted')}</MenuItem>
+                  <MenuItem value="awarded">{getBidStatusLabel('awarded')}</MenuItem>
+                  <MenuItem value="rejected">{getBidStatusLabel('rejected')}</MenuItem>
                 </TextField>
 
                 <TextField
                   fullWidth
                   type="number"
-                  label="Score d'évaluation"
+                  label={t('eSourcing:bidDetail.evaluationScore')}
                   value={evaluationScore}
                   onChange={(e) => setEvaluationScore(e.target.value)}
                   inputProps={{ min: 0, max: 100, step: 1 }}
-                  helperText="Score sur 100"
+                  helperText={t('eSourcing:bidDetail.scoreOutOf100')}
                   sx={{ mb: 2 }}
                 />
 
@@ -314,7 +327,7 @@ function BidDetail() {
                   fullWidth
                   multiline
                   rows={4}
-                  label="Notes d'évaluation"
+                  label={t('eSourcing:bidDetail.evaluationNotes')}
                   value={evaluationNotes}
                   onChange={(e) => setEvaluationNotes(e.target.value)}
                   sx={{ mb: 2 }}
@@ -327,14 +340,14 @@ function BidDetail() {
                   onClick={handleUpdateBid}
                   disabled={updating}
                 >
-                  Mettre à jour l'évaluation
+                  {t('eSourcing:bidDetail.updateEvaluation')}
                 </Button>
               </Box>
 
               {bid.evaluation_score && (
                 <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Score actuel
+                    {t('eSourcing:bidDetail.currentScore')}
                   </Typography>
                   <Typography variant="h3" color="primary" fontWeight="bold">
                     {bid.evaluation_score}/100

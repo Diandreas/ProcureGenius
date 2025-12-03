@@ -23,11 +23,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { compareBids } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 function BidComparison() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { eventId } = useParams();
+  const { t } = useTranslation(['eSourcing', 'common']);
 
   const { bidComparison, loading } = useSelector((state) => state.eSourcing);
 
@@ -38,6 +40,17 @@ function BidComparison() {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: fr });
+  };
+
+  const getBidStatusLabel = (status) => {
+    const labels = {
+      submitted: t('eSourcing:bidStatus.submitted'),
+      under_review: t('eSourcing:bidStatus.under_review'),
+      shortlisted: t('eSourcing:bidStatus.shortlisted'),
+      awarded: t('eSourcing:bidStatus.awarded'),
+      rejected: t('eSourcing:bidStatus.rejected'),
+    };
+    return labels[status] || status;
   };
 
   // Grouper les items par référence produit
@@ -105,13 +118,13 @@ function BidComparison() {
         onClick={() => navigate(`/e-sourcing/events/${eventId}`)}
         sx={{ mb: 2 }}
       >
-        Retour à l'événement
+        {t('eSourcing:bidComparison.backToEvent')}
       </Button>
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h5" component="h1" gutterBottom>
-            Comparaison des soumissions
+            {t('eSourcing:bidComparison.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {bidComparison.event?.event_number} - {bidComparison.event?.title}
@@ -123,20 +136,20 @@ function BidComparison() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Résumé des soumissions ({bidComparison.bids?.length || 0})
+            {t('eSourcing:bidComparison.submissionsSummary', { count: bidComparison.bids?.length || 0 })}
           </Typography>
 
           <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Fournisseur</TableCell>
-                  <TableCell align="right">Montant total</TableCell>
-                  <TableCell align="center">Délai (jours)</TableCell>
-                  <TableCell align="center">Score</TableCell>
-                  <TableCell>Statut</TableCell>
-                  <TableCell>Soumis le</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('eSourcing:labels.supplier')}</TableCell>
+                  <TableCell align="right">{t('eSourcing:labels.totalAmount')}</TableCell>
+                  <TableCell align="center">{t('eSourcing:labels.deliveryTime')}</TableCell>
+                  <TableCell align="center">{t('eSourcing:labels.score')}</TableCell>
+                  <TableCell>{t('eSourcing:labels.status')}</TableCell>
+                  <TableCell>{t('eSourcing:labels.submittedOn')}</TableCell>
+                  <TableCell align="right">{t('common:labels.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -144,7 +157,7 @@ function BidComparison() {
                   <TableRow>
                     <TableCell colSpan={7} align="center">
                       <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                        Aucune soumission à comparer
+                        {t('eSourcing:bidComparison.noSubmissionsToCompare')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -164,10 +177,10 @@ function BidComparison() {
                           {bid.supplier_name}
                         </Typography>
                         {bid.bid_id === lowestBidId && (
-                          <Chip label="Prix le plus bas" color="success" size="small" sx={{ mt: 0.5 }} />
+                          <Chip label={t('eSourcing:bidComparison.lowestPrice')} color="success" size="small" sx={{ mt: 0.5 }} />
                         )}
                         {bid.bid_id === bestScoreBidId && bid.bid_id !== lowestBidId && (
-                          <Chip label="Meilleur score" color="primary" size="small" sx={{ mt: 0.5 }} />
+                          <Chip label={t('eSourcing:bidComparison.bestScore')} color="primary" size="small" sx={{ mt: 0.5 }} />
                         )}
                       </TableCell>
                       <TableCell align="right">
@@ -197,19 +210,7 @@ function BidComparison() {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            bid.status === 'submitted'
-                              ? 'Soumis'
-                              : bid.status === 'under_review'
-                              ? 'En révision'
-                              : bid.status === 'shortlisted'
-                              ? 'Présélectionné'
-                              : bid.status === 'awarded'
-                              ? 'Retenu'
-                              : bid.status === 'rejected'
-                              ? 'Rejeté'
-                              : bid.status
-                          }
+                          label={getBidStatusLabel(bid.status)}
                           size="small"
                           color={
                             bid.status === 'awarded'
@@ -229,7 +230,7 @@ function BidComparison() {
                           startIcon={<Visibility />}
                           onClick={() => navigate(`/e-sourcing/bids/${bid.bid_id}`)}
                         >
-                          Détails
+                          {t('common:buttons.details')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -246,7 +247,7 @@ function BidComparison() {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Comparaison par article
+              {t('eSourcing:bidComparison.itemComparison')}
             </Typography>
 
             {itemComparison.map((item, index) => (
@@ -259,10 +260,10 @@ function BidComparison() {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Fournisseur</TableCell>
-                        <TableCell align="right">Quantité</TableCell>
-                        <TableCell align="right">Prix unitaire</TableCell>
-                        <TableCell align="right">Prix total</TableCell>
+                        <TableCell>{t('eSourcing:labels.supplier')}</TableCell>
+                        <TableCell align="right">{t('eSourcing:bidComparison.quantity')}</TableCell>
+                        <TableCell align="right">{t('eSourcing:bidComparison.unitPrice')}</TableCell>
+                        <TableCell align="right">{t('eSourcing:bidComparison.totalPrice')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -282,7 +283,7 @@ function BidComparison() {
                               {bidItem.supplier}
                               {isLowest && (
                                 <Chip
-                                  label="Meilleur prix"
+                                  label={t('eSourcing:bidComparison.bestPrice')}
                                   color="success"
                                   size="small"
                                   sx={{ ml: 1 }}

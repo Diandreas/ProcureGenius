@@ -217,12 +217,8 @@ function PurchaseOrders() {
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          {t('purchaseOrders:title')}
-        </Typography>
-
         {/* Stats Cards - Clickable Filters */}
-        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+        <Grid container spacing={isMobile ? 1 : 2}>
           {/* Brouillons */}
           <Grid item xs={6} sm={2.4}>
             <Card

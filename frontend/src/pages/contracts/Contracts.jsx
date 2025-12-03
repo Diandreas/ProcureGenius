@@ -8,11 +8,13 @@ import {
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { contractsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
 
 function Contracts() {
+  const { t } = useTranslation(['contracts', 'common']);
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +46,12 @@ function Contracts() {
   };
 
   const getStatusLabel = (status) => {
-    const labels = { draft: 'Brouillon', active: 'Actif', expired: 'Expiré', cancelled: 'Annulé' };
+    const labels = {
+      draft: t('contracts:status.draft'),
+      active: t('contracts:status.active'),
+      expired: t('contracts:status.expired'),
+      cancelled: t('contracts:status.terminated'),
+    };
     return labels[status] || status;
   };
 
@@ -149,7 +156,7 @@ function Contracts() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                Fin: {formatDate(contract.end_date)}
+                {t('contracts:labels.endDate')}: {formatDate(contract.end_date)}
               </Typography>
             </Box>
           )}
@@ -178,11 +185,7 @@ function Contracts() {
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" gutterBottom>
-          Contrats
-        </Typography>
-
-        <Grid container spacing={isMobile ? 1 : 2} sx={{ mt: 1 }}>
+        <Grid container spacing={isMobile ? 1 : 2}>
           <Grid item xs={6} sm={3}>
             <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
@@ -193,7 +196,7 @@ function Contracts() {
                       {totalContracts}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Total
+                      {t('contracts:labels.totalContracts')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -211,7 +214,7 @@ function Contracts() {
                       {activeContracts}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Actifs
+                      {t('contracts:labels.activeContracts')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -229,7 +232,7 @@ function Contracts() {
                       {expiring}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      À renouveler
+                      {t('contracts:labels.expiringSoon')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -257,7 +260,7 @@ function Contracts() {
                       {formatCurrency(totalValue)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Valeur totale
+                      {t('contracts:labels.totalValue')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -274,7 +277,7 @@ function Contracts() {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Rechercher un contrat..."
+                placeholder={t('contracts:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -304,18 +307,18 @@ function Contracts() {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Statut</InputLabel>
+                    <InputLabel>{t('contracts:labels.status')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Statut"
+                      label={t('contracts:labels.status')}
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">Tous</MenuItem>
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="active">Actif</MenuItem>
-                      <MenuItem value="expired">Expiré</MenuItem>
-                      <MenuItem value="cancelled">Annulé</MenuItem>
+                      <MenuItem value="">{t('contracts:filters.all')}</MenuItem>
+                      <MenuItem value="draft">{t('contracts:status.draft')}</MenuItem>
+                      <MenuItem value="active">{t('contracts:status.active')}</MenuItem>
+                      <MenuItem value="expired">{t('contracts:status.expired')}</MenuItem>
+                      <MenuItem value="cancelled">{t('contracts:status.terminated')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -327,9 +330,9 @@ function Contracts() {
 
       {filteredContracts.length === 0 ? (
         <EmptyState
-          title="Aucun contrat"
-          description="Aucun contrat ne correspond à vos critères de recherche."
-          actionLabel="Nouveau contrat"
+          title={t('contracts:labels.noContracts')}
+          description={t('contracts:labels.noContractsDescription')}
+          actionLabel={t('contracts:newContract')}
           onAction={() => navigate('/contracts/new')}
         />
       ) : (
