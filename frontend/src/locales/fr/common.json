@@ -41,6 +41,8 @@
     "details": "Détails",
     "saving": "Enregistrement..."
   },
+  "success": "Succès",
+  "failed": "Échec",
   "labels": {
     "actions": "Actions",
     "status": "Statut",

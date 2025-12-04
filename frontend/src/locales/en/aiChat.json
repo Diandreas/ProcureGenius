@@ -15,6 +15,27 @@
     "scanInDevelopment": "Scan feature is currently in development",
     "assistantThinking": "The assistant is thinking..."
   },
+  "message": {
+    "thinking": "AI is thinking...",
+    "actionsAvailable": "Available actions:",
+    "processing": "Processing...",
+    "success": "Success",
+    "error": "Error"
+  },
+  "actionResult": {
+    "actionExecuted": "Action executed",
+    "details": "Details:"
+  },
+  "documentUploader": {
+    "unsupportedFileType": "Unsupported file type. Use PNG, JPG or PDF.",
+    "fileTooLarge": "File too large. Maximum size: 10MB.",
+    "analyzeSuccess": "Document analyzed successfully",
+    "uploadError": "Error uploading file",
+    "clickToSelect": "Click to select a document",
+    "allowedFormats": "PNG, JPG, PDF (max 10MB)",
+    "uploadingProgress": "Uploading and analyzing... {{progress}}%",
+    "analyzeDocument": "Analyze document"
+  },
   "input": {
     "placeholder": "Type your message...",
     "attach": "Attach",

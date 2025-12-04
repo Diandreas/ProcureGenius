@@ -29,6 +29,7 @@ import {
   ThumbDown,
 } from '@mui/icons-material';
 import { formatDateTime } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant de message de chat IA avancé avec animations et actions
@@ -39,6 +40,7 @@ function ChatMessage({
   onQuickAction,
   onFeedback,
 }) {
+  const { t } = useTranslation(['aiChat', 'common']);
   const [showActions, setShowActions] = useState(false);
   const [animatingText, setAnimatingText] = useState('');
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
@@ -119,7 +121,7 @@ function ChatMessage({
         <Box />
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-        L'IA réfléchit...
+        {t('aiChat:message.thinking')}
       </Typography>
     </Box>
   );
@@ -178,7 +180,7 @@ function ChatMessage({
         <Card variant="outlined" sx={{ mt: 1, backgroundColor: 'action.hover' }}>
           <CardContent sx={{ py: 1 }}>
             <Typography variant="caption" color="text.secondary" gutterBottom>
-              Actions disponibles :
+              {t('aiChat:message.actionsAvailable')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {message.success_actions.map(renderActionButton)}
@@ -200,7 +202,7 @@ function ChatMessage({
           sx={{ borderRadius: 1 }}
         />
         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-          {message.processing.status || 'Traitement en cours...'}
+          {message.processing.status || t('aiChat:message.processing')}
         </Typography>
       </Box>
     );
@@ -277,7 +279,7 @@ function ChatMessage({
                   <Error color="error" fontSize="small" />
                 )}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {message.status === 'success' ? 'Succès' : 'Erreur'}
+                  {message.status === 'success' ? t('aiChat:message.success') : t('aiChat:message.error')}
                 </Typography>
               </Box>
             )}

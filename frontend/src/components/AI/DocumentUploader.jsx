@@ -15,8 +15,10 @@ import {
   Description,
   CheckCircle,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -31,7 +33,7 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
       if (!allowedTypes.includes(file.type)) {
         setUploadResult({
           success: false,
-          message: 'Type de fichier non supporté. Utilisez PNG, JPG ou PDF.',
+          message: t('aiChat:documentUploader.unsupportedFileType'),
         });
         return;
       }
@@ -40,7 +42,7 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
       if (file.size > 10 * 1024 * 1024) {
         setUploadResult({
           success: false,
-          message: 'Fichier trop volumineux. Taille maximale: 10MB.',
+          message: t('aiChat:documentUploader.fileTooLarge'),
         });
         return;
       }
@@ -81,14 +83,14 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
       if (response.ok) {
         setUploadResult({
           success: true,
-          message: 'Document analysé avec succès',
+          message: t('aiChat:documentUploader.analyzeSuccess'),
           data: result,
         });
         if (onUploadSuccess) {
           onUploadSuccess(result);
         }
       } else {
-        throw new Error(result.error || 'Erreur lors de l\'upload');
+        throw new Error(result.error || t('aiChat:documentUploader.uploadError'));
       }
     } catch (error) {
       setUploadResult({
@@ -140,10 +142,10 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
         >
           <CloudUpload sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
           <Typography variant="body1" gutterBottom>
-            Cliquez pour sélectionner un document
+            {t('aiChat:documentUploader.clickToSelect')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            PNG, JPG, PDF (max 10MB)
+            {t('aiChat:documentUploader.allowedFormats')}
           </Typography>
         </Paper>
       ) : (
@@ -165,7 +167,7 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
             <Box sx={{ mb: 2 }}>
               <LinearProgress variant="determinate" value={uploadProgress} />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                Téléchargement et analyse en cours... {uploadProgress}%
+                {t('aiChat:documentUploader.uploadingProgress', { progress: uploadProgress })}
               </Typography>
             </Box>
           )}
@@ -177,7 +179,7 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
               startIcon={<CloudUpload />}
               onClick={handleUpload}
             >
-              Analyser le document
+              {t('aiChat:documentUploader.analyzeDocument')}
             </Button>
           )}
 

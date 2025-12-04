@@ -132,5 +132,15 @@
     "modern": "Moderne",
     "minimal": "Minimaliste",
     "professional": "Professionnel"
+  },
+  "tabs": {
+    "general": "Informations générales",
+    "items": "Articles",
+    "financial": "Financier"
+  },
+  "tooltips": {
+    "generatePDF": "Générer un PDF du bon de commande",
+    "editPO": "Modifier le bon de commande",
+    "approvePO": "Approuver le bon de commande"
   }
 }

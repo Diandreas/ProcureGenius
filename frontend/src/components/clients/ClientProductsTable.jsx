@@ -20,8 +20,10 @@ import {
 } from '@mui/material';
 import { Inventory, ShoppingCart } from '@mui/icons-material';
 import { formatCurrency } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 function ClientProductsTable({ products, loading }) {
+    const { t } = useTranslation(['clients', 'products', 'common']);
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -43,7 +45,7 @@ function ClientProductsTable({ products, loading }) {
                     <Box textAlign="center" py={4}>
                         <Inventory sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
                         <Typography variant="h6" color="text.secondary">
-                            Aucun produit acheté
+                            {t('clients:messages.noProductsPurchased')}
                         </Typography>
                     </Box>
                 </CardContent>
@@ -91,17 +93,17 @@ function ClientProductsTable({ products, loading }) {
                                     </Avatar>
                                     <Box flexGrow={1}>
                                         <Typography variant="body2" fontWeight="bold">
-                                            {product.product__name || 'Produit non disponible'}
+                                            {product.product__name || t('clients:labels.productUnavailable')}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary">
-                                            Réf: {product.product__reference || 'N/A'}
+                                            {t('clients:labels.ref')}: {product.product__reference || 'N/A'}
                                         </Typography>
                                     </Box>
                                 </Box>
                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                     <Chip
                                         icon={<ShoppingCart />}
-                                        label={`${product.total_quantity} unités`}
+                                        label={t('products:labels.unitsCount', { count: product.total_quantity })}
                                         size="small"
                                         variant="outlined"
                                     />
@@ -123,11 +125,11 @@ function ClientProductsTable({ products, loading }) {
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                        <TableCell sx={{ fontWeight: 600 }}>Produit</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Référence</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Quantité totale</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Nombre d'achats</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Total dépensé</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.product')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.reference')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">{t('clients:table.totalQuantity')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">{t('clients:table.purchaseCount')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">{t('clients:table.totalSpent')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -165,7 +167,7 @@ function ClientProductsTable({ products, loading }) {
                                             <Inventory />
                                         </Avatar>
                                         <Typography variant="body2" fontWeight="medium">
-                                            {product.product__name || 'Produit non disponible'}
+                                            {product.product__name || t('clients:labels.productUnavailable')}
                                         </Typography>
                                     </Box>
                                 </TableCell>

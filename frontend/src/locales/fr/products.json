@@ -60,7 +60,24 @@
         "inactiveProduct": "Produit inactif",
         "mandatory": "Obligatoire",
         "type": "Type",
-        "price": "Prix"
+        "price": "Prix",
+        "noClient": "Aucun client",
+        "qtyShort": "Qté: {{qty}}",
+        "unknownClient": "Client inconnu",
+        "purchaseCount_one": "{{count}} achat",
+        "purchaseCount_other": "{{count}} achats",
+        "unitsCount_one": "{{count}} unité",
+        "unitsCount_other": "{{count}} unités"
+    },
+    "table": {
+        "invoiceNumber": "N° Facture",
+        "client": "Client",
+        "quantity": "Quantité",
+        "amount": "Montant",
+        "date": "Date",
+        "purchaseCount": "Nombre d'achats",
+        "totalQuantity": "Quantité totale",
+        "totalSpent": "Total dépensé"
     },
     "productTypes": {
         "title": "Type de produit",
@@ -111,7 +128,9 @@
         "missingWarehouses": "Aucun entrepôt disponible. Créez-en un dans les paramètres pour les produits physiques.",
         "noWarehouseAvailable": "⚠️ Aucun entrepôt disponible. Le produit sera créé sans entrepôt.",
         "leaveEmptyForAuto": "Laissez vide pour générer automatiquement",
-        "alertLowStock": "Alerte si stock <= ce seuil"
+        "alertLowStock": "Alerte si stock <= ce seuil",
+        "noInvoicesForProduct": "Aucune facture pour ce produit",
+        "noClientsPurchased": "Aucun client n'a encore acheté ce produit"
     },
     "actions": {
         "cancel": "Annuler",

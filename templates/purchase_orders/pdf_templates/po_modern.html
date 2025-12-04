@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% load i18n %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Bon de Commande {{ po.po_number }}</title>
+    <title>{% trans "Purchase Order" %} {{ po.po_number }}</title>
     <style>
         @page {
             size: A4;
@@ -287,15 +287,15 @@
                 {% if organization.logo_base64 %}
                     <img src="{{ organization.logo_base64 }}" alt="Logo" class="logo">
                 {% endif %}
-                <div class="company-name">{{ organization.name|default:"Votre Entreprise" }}</div>
+                <div class="company-name">{% if organization.name %}{{ organization.name }}{% else %}{% trans "Your Company" %}{% endif %}</div>
                 <div class="company-details">
                     {% if organization.address %}{{ organization.address }}{% endif %}
-                    {% if organization.phone %} • Tél: {{ organization.phone }}{% endif %}
+                    {% if organization.phone %} • {% trans "Tel" %}: {{ organization.phone }}{% endif %}
                 </div>
             </div>
 
             <div class="po-section">
-                <div class="po-title">BON DE COMMANDE</div>
+                <div class="po-title">{% trans "PURCHASE ORDER" %}</div>
                 <div class="po-number">{{ po.po_number }}</div>
                 <div class="status-badge">{{ po.get_status_display }}</div>
             </div>
@@ -305,38 +305,38 @@
     <!-- Cartes d'information -->
     <div class="info-grid">
         <div class="info-card">
-            <div class="card-title">Fournisseur</div>
+            <div class="card-title">{% trans "Supplier" %}</div>
             <div class="card-content">
                 {% if po.supplier %}
                     <strong>{{ po.supplier.name }}</strong>
                     {% if po.supplier.email %}<div>{{ po.supplier.email }}</div>{% endif %}
-                    {% if po.supplier.phone %}<div>Tél: {{ po.supplier.phone }}</div>{% endif %}
+                    {% if po.supplier.phone %}<div>{% trans "Tel" %}: {{ po.supplier.phone }}</div>{% endif %}
                     {% if po.supplier.address %}<div>{{ po.supplier.address }}</div>{% endif %}
                 {% else %}
-                    <div>Aucun fournisseur spécifié</div>
+                    <div>{% trans "No supplier specified" %}</div>
                 {% endif %}
             </div>
         </div>
 
         <div class="info-card">
-            <div class="card-title">Informations commande</div>
+            <div class="card-title">{% trans "Order Information" %}</div>
             <div class="card-content">
                 <div class="detail-line">
-                    <span class="label">Date création:</span>
+                    <span class="label">{% trans "Creation Date" %}:</span>
                     <span class="value">{{ po.created_at|date:"d/m/Y" }}</span>
                 </div>
                 <div class="detail-line">
-                    <span class="label">Date requise:</span>
+                    <span class="label">{% trans "Required Date" %}:</span>
                     <span class="value">{{ po.required_date|date:"d/m/Y" }}</span>
                 </div>
                 {% if po.expected_delivery_date %}
                 <div class="detail-line">
-                    <span class="label">Livraison:</span>
+                    <span class="label">{% trans "Delivery" %}:</span>
                     <span class="value">{{ po.expected_delivery_date|date:"d/m/Y" }}</span>
                 </div>
                 {% endif %}
                 <div class="detail-line">
-                    <span class="label">Priorité:</span>
+                    <span class="label">{% trans "Priority" %}:</span>
                     <span class="value">{{ po.get_priority_display }}</span>
                 </div>
             </div>
@@ -347,10 +347,10 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 50%;">Produit</th>
-                <th style="width: 15%;">Quantité</th>
-                <th style="width: 18%;">Prix unitaire</th>
-                <th style="width: 17%;">Total</th>
+                <th style="width: 50%;">{% trans "Product" %}</th>
+                <th style="width: 15%;">{% trans "Quantity" %}</th>
+                <th style="width: 18%;">{% trans "Unit Price" %}</th>
+                <th style="width: 17%;">{% trans "Total" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -359,10 +359,10 @@
                 <td>
                     <div class="product-name">{{ item.product_name }}</div>
                     {% if item.product_reference %}
-                        <div class="product-ref">Réf: {{ item.product_reference }}</div>
+                        <div class="product-ref">{% trans "Ref" %}: {{ item.product_reference }}</div>
                     {% endif %}
                 </td>
-                <td>{{ item.quantity }} {{ item.unit|default:"unité(s)" }}</td>
+                <td>{{ item.quantity }} {% if item.unit %}{{ item.unit }}{% else %}{% trans "unit(s)" %}{% endif %}</td>
                 <td>{{ item.unit_price }} CAD</td>
                 <td><strong>{{ item.total_price }} CAD</strong></td>
             </tr>
@@ -374,29 +374,29 @@
     <div class="totals-section">
         <div class="totals-card">
             <div class="total-row">
-                <span>Sous-total:</span>
+                <span>{% trans "Subtotal" %}:</span>
                 <span>{{ po.subtotal }} CAD</span>
             </div>
             {% if po.shipping_cost > 0 %}
             <div class="total-row">
-                <span>Frais de livraison:</span>
+                <span>{% trans "Shipping Cost" %}:</span>
                 <span>{{ po.shipping_cost }} CAD</span>
             </div>
             {% endif %}
             {% if po.tax_gst_hst > 0 %}
             <div class="total-row">
-                <span>TPS/TVH:</span>
+                <span>{% trans "GST/HST" %}:</span>
                 <span>{{ po.tax_gst_hst }} CAD</span>
             </div>
             {% endif %}
             {% if po.tax_qst > 0 %}
             <div class="total-row">
-                <span>TVQ:</span>
+                <span>{% trans "QST" %}:</span>
                 <span>{{ po.tax_qst }} CAD</span>
             </div>
             {% endif %}
             <div class="total-row final">
-                <span>TOTAL:</span>
+                <span>{% trans "TOTAL" %}:</span>
                 <span>{{ po.total_amount }} CAD</span>
             </div>
         </div>
@@ -408,13 +408,13 @@
         <div style="flex: 1;">
             {% if po.notes %}
             <div class="notes-card">
-                <div class="notes-title">Notes</div>
+                <div class="notes-title">{% trans "Notes" %}</div>
                 <div class="notes-content">{{ po.notes }}</div>
             </div>
             {% endif %}
             {% if po.special_conditions %}
             <div class="notes-card" style="margin-top: 10px;">
-                <div class="notes-title">Conditions spéciales</div>
+                <div class="notes-title">{% trans "Special Conditions" %}</div>
                 <div class="notes-content">{{ po.special_conditions }}</div>
             </div>
             {% endif %}
@@ -424,7 +424,7 @@
         {% if qr_code %}
         <div class="qr-section">
             <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
-            <div class="qr-label">Scanner pour vérifier</div>
+            <div class="qr-label">{% trans "Scan to verify" %}</div>
         </div>
         {% endif %}
     </div>

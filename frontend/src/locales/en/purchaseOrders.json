@@ -132,5 +132,15 @@
     "modern": "Modern",
     "minimal": "Minimal",
     "professional": "Professional"
+  },
+  "tabs": {
+    "general": "General information",
+    "items": "Items",
+    "financial": "Financial"
+  },
+  "tooltips": {
+    "generatePDF": "Generate purchase order PDF",
+    "editPO": "Edit purchase order",
+    "approvePO": "Approve purchase order"
   }
 }

@@ -1,8 +1,8 @@
-{% load invoice_filters %}<!DOCTYPE html>
-<html lang="fr">
+{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Facture {{ invoice.invoice_number }}</title>
+    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
     <style>
         @page {
             size: A4;
@@ -297,23 +297,23 @@
                 <div class="company-name">{{ organization.name }}</div>
                 <div class="company-info">
                     {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                    {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
+                    {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                     {% if organization.email %} • {{ organization.email }}{% endif %}
                 </div>
                 {% endif %}
             </td>
             <td class="header-right">
-                <div class="invoice-badge">FACTURE</div>
+                <div class="invoice-badge">{% trans "INVOICE" %}</div>
                 <div class="invoice-meta">
                     <div class="invoice-number">N° {{ invoice.invoice_number }}</div>
                     {% if invoice.status == 'paid' %}
-                    <div style="color: #10b981; font-weight: 600;">PAYÉE</div>
+                    <div style="color: #10b981; font-weight: 600;">{% trans "PAID" %}</div>
                     {% elif invoice.status == 'sent' %}
-                    <div style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600;">ENVOYÉE</div>
+                    <div style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600;">{% trans "SENT" %}</div>
                     {% elif invoice.status == 'draft' %}
-                    <div style="color: #6b7280; font-weight: 600;">BROUILLON</div>
+                    <div style="color: #6b7280; font-weight: 600;">{% trans "DRAFT" %}</div>
                     {% elif invoice.status == 'overdue' %}
-                    <div style="color: #ef4444; font-weight: 600;">EN RETARD</div>
+                    <div style="color: #ef4444; font-weight: 600;">{% trans "OVERDUE" %}</div>
                     {% endif %}
                 </div>
             </td>
@@ -324,18 +324,18 @@
     <table class="info-cards">
         <tr>
             <td class="card">
-                <div class="card-title">Détails de la facture</div>
+                <div class="card-title">{% trans "Invoice Details" %}</div>
                 <div class="card-content">
-                    <strong>{{ invoice.title|default:"Sans titre" }}</strong><br>
+                    <strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong><br>
                     {% if invoice.description %}{{ invoice.description }}<br>{% endif %}
-                    {% if issue_date %}<strong>Émission:</strong> {{ issue_date|date:"d/m/Y" }}<br>{% endif %}
-                    {% if due_date %}<strong>Échéance:</strong> {{ due_date|date:"d/m/Y" }}{% endif %}
+                    {% if issue_date %}<strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}<br>{% endif %}
+                    {% if due_date %}<strong>{% trans "Due Date" %}:</strong> {{ due_date|date:"d/m/Y" }}{% endif %}
                 </div>
             </td>
             <td style="width: 4%;"></td>
             {% if client %}
             <td class="card">
-                <div class="card-title">Informations client</div>
+                <div class="card-title">{% trans "Client Information" %}</div>
                 <div class="card-content">
                     <strong>{{ client.name }}</strong><br>
                     {% if client.email %}{{ client.email }}<br>{% endif %}
@@ -348,15 +348,15 @@
 
     <!-- Items Section -->
     <div class="items-section">
-        <div class="section-title">Articles et Services</div>
+        <div class="section-title">{% trans "Items and Services" %}</div>
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">Référence</th>
-                    <th style="width: 40%;">Description</th>
-                    <th style="width: 12%;" class="text-center">Quantité</th>
-                    <th style="width: 15%;" class="text-right">Prix Unit.</th>
-                    <th style="width: 18%;" class="text-right">Total</th>
+                    <th style="width: 15%;">{% trans "Reference" %}</th>
+                    <th style="width: 40%;">{% trans "Description" %}</th>
+                    <th style="width: 12%;" class="text-center">{% trans "Quantity" %}</th>
+                    <th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th>
+                    <th style="width: 18%;" class="text-right">{% trans "Total" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -370,7 +370,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">Aucun article</td>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">{% trans "No items" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -381,17 +381,17 @@
     <div class="totals-wrapper">
         <table class="totals-table">
             <tr>
-                <td>Sous-total</td>
+                <td>{% trans "Subtotal" %}</td>
                 <td>{{ subtotal|floatformat:2 }} €</td>
             </tr>
             {% if tax_amount > 0 %}
             <tr>
-                <td>Taxes</td>
+                <td>{% trans "Taxes" %}</td>
                 <td>{{ tax_amount|floatformat:2 }} €</td>
             </tr>
             {% endif %}
             <tr class="grand-total">
-                <td>TOTAL À PAYER</td>
+                <td>{% trans "TOTAL DUE" %}</td>
                 <td>{{ total_amount|floatformat:2 }} €</td>
             </tr>
         </table>
@@ -404,18 +404,18 @@
                 {% if qr_code_base64 %}
                 <td class="footer-qr">
                     <img src="{{ qr_code_base64 }}" alt="QR Code">
-                    <div class="qr-label">Vérification</div>
+                    <div class="qr-label">{% trans "Verification" %}</div>
                 </td>
                 {% endif %}
                 <td class="footer-info">
                     <div class="footer-text">
                         <strong>{{ organization.name|default:"ProcureGenius" }}</strong><br>
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                        {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
+                        {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                     </div>
                     <div class="footer-meta">
-                        Document généré le {% now "d/m/Y à H:i" %} • ProcureGenius - Gestion intelligente des factures
+                        {% trans "Document generated on" %} {% now "d/m/Y à H:i" %} • ProcureGenius - {% trans "Smart invoice management" %}
                     </div>
                 </td>
             </tr>

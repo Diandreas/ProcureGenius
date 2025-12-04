@@ -103,10 +103,10 @@ function LoginEnhanced() {
 
           {/* Header */}
           <Typography component="h1" variant="h4" align="center" sx={{ mb: 1, fontWeight: 700 }}>
-            Bienvenue !
+            {t('auth:login.welcomeBack')}
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Connectez-vous à votre compte ProcureGenius
+            {t('auth:login.subtitle')}
           </Typography>
 
           {/* Error Alert */}
@@ -137,13 +137,13 @@ function LoginEnhanced() {
               },
             }}
           >
-            Se connecter avec Google
+            {t('auth:login.google')}
           </Button>
 
           {/* Divider */}
           <Divider sx={{ my: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              OU
+              {t('auth:login.or')}
             </Typography>
           </Divider>
 
@@ -154,7 +154,7 @@ function LoginEnhanced() {
               required
               fullWidth
               id="email"
-              label="Adresse email"
+              label={t('auth:login.email')}
               name="email"
               autoComplete="email"
               autoFocus
@@ -173,7 +173,7 @@ function LoginEnhanced() {
               required
               fullWidth
               name="password"
-              label="Mot de passe"
+              label={t('auth:login.password')}
               type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
@@ -207,7 +207,7 @@ function LoginEnhanced() {
                 variant="body2"
                 sx={{ textDecoration: 'none' }}
               >
-                Mot de passe oublié ?
+                {t('auth:login.forgotPassword')}
               </Link>
             </Box>
 
@@ -220,19 +220,19 @@ function LoginEnhanced() {
               sx={{ mt: 3, mb: 2, py: 1.5 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Se connecter'}
+              {loading ? <CircularProgress size={24} /> : t('auth:login.signIn')}
             </Button>
 
             {/* Sign Up Link */}
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Pas encore de compte ?{' '}
+                {t('auth:login.noAccount')}{' '}
                 <Link
                   component={RouterLink}
                   to="/register"
                   sx={{ textDecoration: 'none', fontWeight: 600 }}
                 >
-                  Créer un compte
+                  {t('auth:login.signUp')}
                 </Link>
               </Typography>
             </Box>
@@ -245,7 +245,7 @@ function LoginEnhanced() {
                   to="/pricing"
                   sx={{ textDecoration: 'none' }}
                 >
-                  Voir les plans tarifaires
+                  {t('auth:login.viewPricing')}
                 </Link>
               </Typography>
             </Box>

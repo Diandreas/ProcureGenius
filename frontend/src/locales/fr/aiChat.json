@@ -15,6 +15,27 @@
     "scanInDevelopment": "Fonctionnalité de scan en cours de développement",
     "assistantThinking": "L'assistant réfléchit..."
   },
+  "message": {
+    "thinking": "L'IA réfléchit...",
+    "actionsAvailable": "Actions disponibles :",
+    "processing": "Traitement en cours...",
+    "success": "Succès",
+    "error": "Erreur"
+  },
+  "actionResult": {
+    "actionExecuted": "Action exécutée",
+    "details": "Détails :"
+  },
+  "documentUploader": {
+    "unsupportedFileType": "Type de fichier non supporté. Utilisez PNG, JPG ou PDF.",
+    "fileTooLarge": "Fichier trop volumineux. Taille maximale : 10MB.",
+    "analyzeSuccess": "Document analysé avec succès",
+    "uploadError": "Erreur lors de l'upload",
+    "clickToSelect": "Cliquez pour sélectionner un document",
+    "allowedFormats": "PNG, JPG, PDF (max 10MB)",
+    "uploadingProgress": "Téléchargement et analyse en cours... {{progress}}%",
+    "analyzeDocument": "Analyser le document"
+  },
   "input": {
     "placeholder": "Tapez votre message...",
     "attach": "Joindre",

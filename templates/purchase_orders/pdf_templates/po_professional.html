@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% load i18n %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Bon de Commande {{ po.po_number }}</title>
+    <title>{% trans "Purchase Order" %} {{ po.po_number }}</title>
     <style>
         @page {
             size: A4;
@@ -309,32 +309,32 @@
         <div class="main-content">
             <!-- En-tête -->
             <div class="header">
-                <div class="po-title">BON DE COMMANDE</div>
+                <div class="po-title"{% trans "PURCHASE ORDER" %}</div>
                 <div class="po-number">{{ po.po_number }}</div>
                 <div class="status-badge">{{ po.get_status_display }}</div>
             </div>
 
             <!-- Informations entreprise -->
             <div class="company-info">
-                <div class="company-name">{{ organization.name|default:"Votre Entreprise" }}</div>
+                <div class="company-name">{{ organization.name|default:"{% trans "Your Company" %}" }}</div>
                 <div class="company-details">
                     {% if organization.address %}<div>{{ organization.address }}</div>{% endif %}
-                    {% if organization.phone %}<div>Tél: {{ organization.phone }}</div>{% endif %}
+                    {% if organization.phone %}<div>{% trans "Tel" %}: {{ organization.phone }}</div>{% endif %}
                     {% if organization.email %}<div>Email: {{ organization.email }}</div>{% endif %}
                 </div>
             </div>
 
             <!-- Fournisseur -->
             <div class="supplier-section">
-                <div class="section-title">Fournisseur</div>
+                <div class="section-title"{% trans "Supplier" %}</div>
                 <div class="supplier-content">
                     {% if po.supplier %}
                         <strong>{{ po.supplier.name }}</strong>
                         {% if po.supplier.email %}<div>{{ po.supplier.email }}</div>{% endif %}
-                        {% if po.supplier.phone %}<div>Tél: {{ po.supplier.phone }}</div>{% endif %}
+                        {% if po.supplier.phone %}<div>{% trans "Tel" %}: {{ po.supplier.phone }}</div>{% endif %}
                         {% if po.supplier.address %}<div>{{ po.supplier.address }}</div>{% endif %}
                     {% else %}
-                        <div>Aucun fournisseur spécifié</div>
+                        <div>{% trans "No supplier specified" %}</div>
                     {% endif %}
                 </div>
             </div>
@@ -343,10 +343,10 @@
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">Produit</th>
-                        <th style="width: 15%;">Quantité</th>
-                        <th style="width: 18%;">Prix unitaire</th>
-                        <th style="width: 17%;">Total</th>
+                        <th style="width: 50%;"{% trans "Product" %}</th>
+                        <th style="width: 15%;"{% trans "Quantity" %}</th>
+                        <th style="width: 18%;"{% trans "Unit Price" %}</th>
+                        <th style="width: 17%;"{% trans "Total" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -355,7 +355,7 @@
                         <td>
                             <strong>{{ item.product_name }}</strong>
                             {% if item.product_reference %}
-                                <br><span style="color: #777; font-size: 7.5pt;">Réf: {{ item.product_reference }}</span>
+                                <br><span style="color: #777; font-size: 7.5pt;"{% trans "Ref" %}: {{ item.product_reference }}</span>
                             {% endif %}
                         </td>
                         <td>{{ item.quantity }} {{ item.unit|default:"unité(s)" }}</td>
@@ -401,14 +401,14 @@
             <!-- Notes -->
             {% if po.notes %}
             <div class="notes-section">
-                <div class="notes-title">Notes</div>
+                <div class="notes-title"{% trans "Notes" %}</div>
                 <div>{{ po.notes }}</div>
             </div>
             {% endif %}
 
             {% if po.special_conditions %}
             <div class="notes-section" style="margin-top: 10px;">
-                <div class="notes-title">Conditions spéciales</div>
+                <div class="notes-title"{% trans "Special Conditions" %}</div>
                 <div>{{ po.special_conditions }}</div>
             </div>
             {% endif %}

@@ -67,6 +67,23 @@
         "active": "Active",
         "inactive": "Inactive"
     },
+    "table": {
+        "invoiceNumber": "Invoice #",
+        "title": "Title",
+        "status": "Status",
+        "amount": "Amount",
+        "creationDate": "Creation Date",
+        "dueDate": "Due Date",
+        "product": "Product",
+        "reference": "Reference",
+        "totalQuantity": "Total Quantity",
+        "purchaseCount": "Purchase Count",
+        "totalSpent": "Total Spent"
+    },
+    "labels": {
+        "productUnavailable": "Product unavailable",
+        "ref": "Ref"
+    },
     "messages": {
         "noClients": "No clients",
         "noClientsDescription": "No clients match your search criteria.",
@@ -78,7 +95,9 @@
         "deleteConfirmation": "Delete {{name}}?",
         "createSuccess": "Client created successfully",
         "updateSuccess": "Client updated successfully",
-        "saveError": "Error saving client"
+        "saveError": "Error saving client",
+        "noInvoicesForClient": "No invoices for this client",
+        "noProductsPurchased": "No products purchased"
     },
     "validation": {
         "nameRequired": "Name is required",

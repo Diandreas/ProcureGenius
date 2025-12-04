@@ -19,8 +19,10 @@ import {
 } from '@mui/material';
 import { Receipt } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 function ClientInvoicesTable({ invoices, loading }) {
+    const { t } = useTranslation(['clients', 'invoices', 'common']);
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -38,11 +40,11 @@ function ClientInvoicesTable({ invoices, loading }) {
 
     const getStatusLabel = (status) => {
         const labels = {
-            draft: 'Brouillon',
-            sent: 'Envoyée',
-            paid: 'Payée',
-            overdue: 'En retard',
-            cancelled: 'Annulée',
+            draft: t('invoices:status.draft'),
+            sent: t('invoices:status.sent'),
+            paid: t('invoices:status.paid'),
+            overdue: t('invoices:status.overdue'),
+            cancelled: t('invoices:status.cancelled'),
         };
         return labels[status] || status;
     };
@@ -64,7 +66,7 @@ function ClientInvoicesTable({ invoices, loading }) {
                     <Box textAlign="center" py={4}>
                         <Receipt sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
                         <Typography variant="h6" color="text.secondary">
-                            Aucune facture pour ce client
+                            {t('clients:messages.noInvoicesForClient')}
                         </Typography>
                     </Box>
                 </CardContent>
@@ -127,12 +129,12 @@ function ClientInvoicesTable({ invoices, loading }) {
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                        <TableCell sx={{ fontWeight: 600 }}>N° Facture</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Montant</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Date création</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Date échéance</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.invoiceNumber')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.title')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.status')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">{t('clients:table.amount')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.creationDate')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{t('clients:table.dueDate')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>

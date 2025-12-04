@@ -41,6 +41,8 @@
     "details": "Details",
     "saving": "Saving..."
   },
+  "success": "Success",
+  "failed": "Failed",
   "labels": {
     "actions": "Actions",
     "status": "Status",

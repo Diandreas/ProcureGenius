@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% load i18n %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Bon de Commande {{ po.po_number }}</title>
+    <title>{% trans "Purchase Order" %} {{ po.po_number }}</title>
     <style>
         @page {
             size: A4;
@@ -221,10 +221,10 @@
                 {% if organization.logo_base64 %}
                     <img src="{{ organization.logo_base64 }}" alt="Logo" class="logo">
                 {% endif %}
-                <div class="company-name">{{ organization.name|default:"Votre Entreprise" }}</div>
+                <div class="company-name">{% if organization.name %}{{ organization.name }}{% else %}{% trans "Your Company" %}{% endif %}</div>
                 <div class="company-details">
                     {% if organization.address %}{{ organization.address }}{% endif %}
-                    {% if organization.phone %}<br>Tél: {{ organization.phone }}{% endif %}
+                    {% if organization.phone %}<br>{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                     {% if organization.email %} • {{ organization.email }}{% endif %}
                 </div>
             </div>
@@ -239,26 +239,26 @@
     <!-- Informations -->
     <div class="info-grid">
         <div class="info-column">
-            <div class="info-title">Fournisseur</div>
+            <div class="info-title">{% trans "Supplier" %}</div>
             {% if po.supplier %}
                 <div class="info-line"><strong>{{ po.supplier.name }}</strong></div>
                 {% if po.supplier.email %}<div class="info-line">{{ po.supplier.email }}</div>{% endif %}
                 {% if po.supplier.phone %}<div class="info-line">{{ po.supplier.phone }}</div>{% endif %}
                 {% if po.supplier.address %}<div class="info-line">{{ po.supplier.address }}</div>{% endif %}
             {% else %}
-                <div class="info-line">Non spécifié</div>
+                <div class="info-line">{% trans "Not specified" %}</div>
             {% endif %}
         </div>
 
         <div class="info-column">
-            <div class="info-title">Détails</div>
-            <div class="info-line"><span class="label">Date:</span> {{ po.created_at|date:"d/m/Y" }}</div>
-            <div class="info-line"><span class="label">Date requise:</span> {{ po.required_date|date:"d/m/Y" }}</div>
+            <div class="info-title">{% trans "Details" %}</div>
+            <div class="info-line"><span class="label">{% trans "Date" %}:</span> {{ po.created_at|date:"d/m/Y" }}</div>
+            <div class="info-line"><span class="label">{% trans "Required Date" %}:</span> {{ po.required_date|date:"d/m/Y" }}</div>
             {% if po.expected_delivery_date %}
-            <div class="info-line"><span class="label">Livraison:</span> {{ po.expected_delivery_date|date:"d/m/Y" }}</div>
+            <div class="info-line"><span class="label">{% trans "Delivery" %}:</span> {{ po.expected_delivery_date|date:"d/m/Y" }}</div>
             {% endif %}
-            <div class="info-line"><span class="label">Statut:</span> {{ po.get_status_display }}</div>
-            <div class="info-line"><span class="label">Priorité:</span> {{ po.get_priority_display }}</div>
+            <div class="info-line"><span class="label">{% trans "Status" %}:</span> {{ po.get_status_display }}</div>
+            <div class="info-line"><span class="label">{% trans "Priority" %}:</span> {{ po.get_priority_display }}</div>
         </div>
     </div>
 
@@ -266,10 +266,10 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 50%;">Produit</th>
-                <th style="width: 15%;">Qté</th>
-                <th style="width: 18%;">Prix unit.</th>
-                <th style="width: 17%;">Total</th>
+                <th style="width: 50%;">{% trans "Product" %}</th>
+                <th style="width: 15%;">{% trans "Qty" %}</th>
+                <th style="width: 18%;">{% trans "Unit Price" %}</th>
+                <th style="width: 17%;">{% trans "Total" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -293,29 +293,29 @@
     <div class="totals-section">
         <div class="totals-box">
             <div class="total-row">
-                <span>Sous-total</span>
+                <span>{% trans "Subtotal" %}</span>
                 <span>{{ po.subtotal }} CAD</span>
             </div>
             {% if po.shipping_cost > 0 %}
             <div class="total-row">
-                <span>Livraison</span>
+                <span>{% trans "Shipping" %}</span>
                 <span>{{ po.shipping_cost }} CAD</span>
             </div>
             {% endif %}
             {% if po.tax_gst_hst > 0 %}
             <div class="total-row">
-                <span>TPS/TVH</span>
+                <span>{% trans "GST/HST" %}</span>
                 <span>{{ po.tax_gst_hst }} CAD</span>
             </div>
             {% endif %}
             {% if po.tax_qst > 0 %}
             <div class="total-row">
-                <span>TVQ</span>
+                <span>{% trans "QST" %}</span>
                 <span>{{ po.tax_qst }} CAD</span>
             </div>
             {% endif %}
             <div class="total-row final">
-                <span>TOTAL</span>
+                <span>{% trans "TOTAL" %}</span>
                 <span>{{ po.total_amount }} CAD</span>
             </div>
         </div>
@@ -326,13 +326,13 @@
     <div class="footer">
         {% if po.notes %}
         <div style="margin-bottom: 12px;">
-            <div class="footer-title">Notes</div>
+            <div class="footer-title">{% trans "Notes" %}</div>
             <div class="footer-content">{{ po.notes }}</div>
         </div>
         {% endif %}
         {% if po.special_conditions %}
         <div>
-            <div class="footer-title">Conditions spéciales</div>
+            <div class="footer-title">{% trans "Special Conditions" %}</div>
             <div class="footer-content">{{ po.special_conditions }}</div>
         </div>
         {% endif %}

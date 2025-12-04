@@ -1,8 +1,8 @@
-{% load invoice_filters %}<!DOCTYPE html>
-<html lang="fr">
+{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Facture {{ invoice.invoice_number }}</title>
+    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
     <style>
         @page {
             size: A4;
@@ -315,7 +315,7 @@
 
     <!-- Invoice Title -->
     <div class="invoice-header">
-        <div class="invoice-title">Facture</div>
+        <div class="invoice-title">{% trans "Invoice" %}</div>
         <div class="invoice-number">{{ invoice.invoice_number }}</div>
         <div class="accent-line"></div>
     </div>
@@ -325,26 +325,26 @@
         <table class="info-row">
             <tr>
                 <td class="info-col">
-                    <div class="info-label">Détails</div>
+                    <div class="info-label">{% trans "Details" %}</div>
                     <div class="info-content">
-                        <p><strong>{{ invoice.title|default:"Sans titre" }}</strong></p>
+                        <p><strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong></p>
                         {% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}
-                        {% if issue_date %}<p>Date d'émission: {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
-                        {% if due_date %}<p>Échéance: {{ due_date|date:"d/m/Y" }}</p>{% endif %}
+                        {% if issue_date %}<p>{% trans "Issue Date" %}: {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
+                        {% if due_date %}<p>{% trans "Due Date" %}: {{ due_date|date:"d/m/Y" }}</p>{% endif %}
                         {% if invoice.status == 'paid' %}
-                        <p style="color: #10b981; font-weight: 600; margin-top: 8px;">Statut: PAYÉE</p>
+                        <p style="color: #10b981; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "PAID" %}</p>
                         {% elif invoice.status == 'sent' %}
-                        <p style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600; margin-top: 8px;">Statut: ENVOYÉE</p>
+                        <p style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "SENT" %}</p>
                         {% elif invoice.status == 'draft' %}
-                        <p style="color: #666666; font-weight: 600; margin-top: 8px;">Statut: BROUILLON</p>
+                        <p style="color: #666666; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "DRAFT" %}</p>
                         {% elif invoice.status == 'overdue' %}
-                        <p style="color: #ef4444; font-weight: 600; margin-top: 8px;">Statut: EN RETARD</p>
+                        <p style="color: #ef4444; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "OVERDUE" %}</p>
                         {% endif %}
                     </div>
                 </td>
                 {% if client %}
                 <td class="info-col">
-                    <div class="info-label">Facturé à</div>
+                    <div class="info-label">{% trans "Billed To" %}</div>
                     <div class="info-content">
                         <p><strong>{{ client.name }}</strong></p>
                         {% if client.email %}<p>{{ client.email }}</p>{% endif %}
@@ -360,11 +360,11 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 15%;">Référence</th>
-                <th style="width: 42%;">Description</th>
-                <th style="width: 12%;" class="text-center">Qté</th>
-                <th style="width: 15%;" class="text-right">Prix Unit.</th>
-                <th style="width: 16%;" class="text-right">Total</th>
+                <th style="width: 15%;">{% trans "Reference" %}</th>
+                <th style="width: 42%;">{% trans "Description" %}</th>
+                <th style="width: 12%;" class="text-center">{% trans "Qty" %}</th>
+                <th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th>
+                <th style="width: 16%;" class="text-right">{% trans "Total" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -378,7 +378,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align: center; padding: 25px; color: #cccccc;">Aucun article</td>
+                <td colspan="5" style="text-align: center; padding: 25px; color: #cccccc;">{% trans "No items" %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -389,17 +389,17 @@
         <div class="totals-wrapper">
             <table class="totals-table">
                 <tr>
-                    <td>Sous-total</td>
+                    <td>{% trans "Subtotal" %}</td>
                     <td>{{ subtotal|floatformat:2 }} €</td>
                 </tr>
                 {% if tax_amount > 0 %}
                 <tr>
-                    <td>Taxes</td>
+                    <td>{% trans "Taxes" %}</td>
                     <td>{{ tax_amount|floatformat:2 }} €</td>
                 </tr>
                 {% endif %}
                 <tr class="grand-total">
-                    <td>Total</td>
+                    <td>{% trans "Total" %}</td>
                     <td>{{ total_amount|floatformat:2 }} €</td>
                 </tr>
             </table>
@@ -413,18 +413,18 @@
                 {% if qr_code_base64 %}
                 <td class="footer-qr">
                     <img src="{{ qr_code_base64 }}" alt="QR Code">
-                    <div class="qr-caption">Vérification</div>
+                    <div class="qr-caption">{% trans "Verification" %}</div>
                 </td>
                 {% endif %}
                 <td class="footer-details">
                     <div class="footer-company">{{ organization.name|default:"ProcureGenius" }}</div>
                     <div class="footer-info">
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                        {% if organization.phone %}Téléphone: {{ organization.phone }}{% endif %}
+                        {% if organization.phone %}{% trans "Phone" %}: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                     </div>
                     <div class="footer-meta">
-                        Document généré le {% now "d/m/Y" %} • ProcureGenius
+                        {% trans "Document generated on" %} {% now "d/m/Y" %} • ProcureGenius
                     </div>
                 </td>
             </tr>

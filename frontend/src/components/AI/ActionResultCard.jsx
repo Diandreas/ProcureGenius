@@ -8,8 +8,11 @@ import {
   ShoppingCart,
   Business,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const ActionResultCard = ({ result }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
+
   if (!result) return null;
 
   const getIcon = (type) => {
@@ -42,11 +45,11 @@ const ActionResultCard = ({ result }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
           {getIcon(result.action_type)}
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {result.action_name || 'Action exécutée'}
+            {result.action_name || t('aiChat:actionResult.actionExecuted')}
           </Typography>
           <Chip
             icon={result.success ? <CheckCircle /> : <ErrorIcon />}
-            label={result.success ? 'Succès' : 'Échec'}
+            label={result.success ? t('common:success') : t('common:failed')}
             color={getColor(result.success)}
             size="small"
           />
@@ -61,7 +64,7 @@ const ActionResultCard = ({ result }) => {
         {result.data && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Détails:
+              {t('aiChat:actionResult.details')}
             </Typography>
             <Box
               component="pre"

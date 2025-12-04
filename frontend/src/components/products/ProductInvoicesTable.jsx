@@ -19,8 +19,10 @@ import {
 } from '@mui/material';
 import { Receipt, Person } from '@mui/icons-material';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 function ProductInvoicesTable({ invoices, loading }) {
+    const { t } = useTranslation(['products', 'common']);
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -42,7 +44,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                     <Box textAlign="center" py={isMobile ? 2 : 4}>
                         <Receipt sx={{ fontSize: isMobile ? 48 : 60, color: 'text.secondary', mb: isMobile ? 1 : 2 }} />
                         <Typography variant={isMobile ? 'subtitle1' : 'h6'} color="text.secondary">
-                            Aucune facture pour ce produit
+                            {t('products:messages.noInvoicesForProduct')}
                         </Typography>
                     </Box>
                 </CardContent>
@@ -78,7 +80,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 0.3, mt: 0.25 }}>
                                         <Person sx={{ fontSize: 12 }} />
-                                        {invoice.client_name || 'Aucun client'}
+                                        {invoice.client_name || t('products:labels.noClient')}
                                     </Typography>
                                 </Box>
                                 <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.875rem', whiteSpace: 'nowrap', ml: 1 }}>
@@ -87,7 +89,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                             </Box>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <Chip
-                                    label={`Qté: ${invoice.quantity}`}
+                                    label={t('products:labels.qtyShort', { qty: invoice.quantity })}
                                     size="small"
                                     variant="outlined"
                                     sx={{ fontSize: '0.7rem', height: 20, borderRadius: 0.5 }}
@@ -109,11 +111,11 @@ function ProductInvoicesTable({ invoices, loading }) {
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>N° Facture</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>Client</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Quantité</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Montant</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>{t('products:table.invoiceNumber')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>{t('products:table.client')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">{t('products:table.quantity')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">{t('products:table.amount')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>{t('products:table.date')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -144,7 +146,7 @@ function ProductInvoicesTable({ invoices, loading }) {
                                 <Box display="flex" alignItems="center">
                                     <Person sx={{ fontSize: 16, mr: 0.75, color: 'text.secondary' }} />
                                     <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                                        {invoice.client_name || 'Aucun client'}
+                                        {invoice.client_name || t('products:labels.noClient')}
                                     </Typography>
                                 </Box>
                             </TableCell>

@@ -60,7 +60,24 @@
         "inactiveProduct": "Inactive Product",
         "mandatory": "Mandatory",
         "type": "Type",
-        "price": "Price"
+        "price": "Price",
+        "noClient": "No client",
+        "qtyShort": "Qty: {{qty}}",
+        "unknownClient": "Unknown client",
+        "purchaseCount_one": "{{count}} purchase",
+        "purchaseCount_other": "{{count}} purchases",
+        "unitsCount_one": "{{count}} unit",
+        "unitsCount_other": "{{count}} units"
+    },
+    "table": {
+        "invoiceNumber": "Invoice #",
+        "client": "Client",
+        "quantity": "Quantity",
+        "amount": "Amount",
+        "date": "Date",
+        "purchaseCount": "Purchase Count",
+        "totalQuantity": "Total Quantity",
+        "totalSpent": "Total Spent"
     },
     "productTypes": {
         "title": "Product Type",
@@ -111,7 +128,9 @@
         "missingWarehouses": "No warehouse available. Create one in settings for physical products.",
         "noWarehouseAvailable": "⚠️ No warehouse available. The product will be created without a warehouse.",
         "leaveEmptyForAuto": "Leave empty to auto-generate",
-        "alertLowStock": "Alert if stock <= this threshold"
+        "alertLowStock": "Alert if stock <= this threshold",
+        "noInvoicesForProduct": "No invoices for this product",
+        "noClientsPurchased": "No client has purchased this product yet"
     },
     "actions": {
         "cancel": "Cancel",

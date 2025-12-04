@@ -19,8 +19,10 @@ import {
 } from '@mui/material';
 import { Person, ShoppingCart } from '@mui/icons-material';
 import { formatCurrency } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 function ProductClientsTable({ clients, loading }) {
+    const { t } = useTranslation(['products', 'common']);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -41,7 +43,7 @@ function ProductClientsTable({ clients, loading }) {
                     <Box textAlign="center" py={isMobile ? 2 : 4}>
                         <Person sx={{ fontSize: isMobile ? 48 : 60, color: 'text.secondary', mb: isMobile ? 1 : 2 }} />
                         <Typography variant={isMobile ? 'subtitle1' : 'h6'} color="text.secondary">
-                            Aucun client n'a encore acheté ce produit
+                            {t('products:messages.noClientsPurchased')}
                         </Typography>
                     </Box>
                 </CardContent>
@@ -51,7 +53,7 @@ function ProductClientsTable({ clients, loading }) {
 
     const getClientName = (client) => {
         // Le backend renvoie invoice__client__name depuis le modèle Client
-        return client.invoice__client__name || 'Client inconnu';
+        return client.invoice__client__name || t('products:labels.unknownClient');
     };
 
     const getInitials = (name) => {
@@ -100,14 +102,14 @@ function ProductClientsTable({ clients, loading }) {
                                             {clientName}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                            {client.purchase_count} achat{client.purchase_count > 1 ? 's' : ''}
+                                            {t('products:labels.purchaseCount', { count: client.purchase_count })}
                                         </Typography>
                                     </Box>
                                 </Box>
                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                     <Chip
                                         icon={<ShoppingCart sx={{ fontSize: 14 }} />}
-                                        label={`${client.total_quantity} unités`}
+                                        label={t('products:labels.unitsCount', { count: client.total_quantity })}
                                         size="small"
                                         variant="outlined"
                                         sx={{ fontSize: '0.7rem', height: 22, borderRadius: 0.5 }}
@@ -130,10 +132,10 @@ function ProductClientsTable({ clients, loading }) {
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>Client</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Nombre d'achats</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Quantité totale</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">Total dépensé</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }}>{t('products:table.client')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">{t('products:table.purchaseCount')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">{t('products:table.totalQuantity')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', py: 1.25 }} align="right">{t('products:table.totalSpent')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -179,7 +181,7 @@ function ProductClientsTable({ clients, loading }) {
                                 </TableCell>
                                 <TableCell align="right" sx={{ py: 1.25 }}>
                                     <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                                        {client.total_quantity} unités
+                                        {t('products:labels.unitsCount', { count: client.total_quantity })}
                                     </Typography>
                                 </TableCell>
                                 <TableCell align="right" sx={{ py: 1.25 }}>

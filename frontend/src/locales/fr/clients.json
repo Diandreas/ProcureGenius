@@ -67,6 +67,23 @@
     "active": "Actif",
     "inactive": "Inactif"
   },
+  "table": {
+    "invoiceNumber": "N° Facture",
+    "title": "Titre",
+    "status": "Statut",
+    "amount": "Montant",
+    "creationDate": "Date création",
+    "dueDate": "Date échéance",
+    "product": "Produit",
+    "reference": "Référence",
+    "totalQuantity": "Quantité totale",
+    "purchaseCount": "Nombre d'achats",
+    "totalSpent": "Total dépensé"
+  },
+  "labels": {
+    "productUnavailable": "Produit non disponible",
+    "ref": "Réf"
+  },
   "messages": {
     "noClients": "Aucun client",
     "noClientsDescription": "Aucun client ne correspond à vos critères de recherche.",
@@ -78,7 +95,9 @@
     "deleteConfirmation": "Supprimer {{name}} ?",
     "createSuccess": "Client créé avec succès",
     "updateSuccess": "Client modifié avec succès",
-    "saveError": "Erreur lors de l'enregistrement"
+    "saveError": "Erreur lors de l'enregistrement",
+    "noInvoicesForClient": "Aucune facture pour ce client",
+    "noProductsPurchased": "Aucun produit acheté"
   },
   "validation": {
     "nameRequired": "Le nom est requis",
