@@ -344,11 +344,10 @@ const Settings = () => {
     <Box p={isMobile ? 1.5 : 3}>
       <Card
         sx={{
-          borderRadius: 3,
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          borderRadius: 1,
+          background: '#ffffff',
+          border: '1px solid #e0e0e0',
+          boxShadow: 'none',
           overflow: 'hidden',
         }}
       >
@@ -356,15 +355,22 @@ const Settings = () => {
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          variant={isMobile ? 'scrollable' : 'standard'}
-          scrollButtons={isMobile ? 'auto' : false}
+          variant={isMobile ? 'fullWidth' : 'standard'}
+          scrollButtons={false}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
+            minHeight: isMobile ? 48 : 64,
             '& .MuiTab-root': {
-              minHeight: 64,
+              minHeight: isMobile ? 48 : 64,
+              minWidth: isMobile ? 'auto' : 90,
+              padding: isMobile ? '6px 4px' : '12px 16px',
               textTransform: 'none',
               fontSize: '0.95rem',
+            },
+            '& .MuiTab-iconWrapper': {
+              marginBottom: isMobile ? '0 !important' : undefined,
+              marginRight: isMobile ? 0 : undefined,
             },
           }}
         >
@@ -373,7 +379,12 @@ const Settings = () => {
               key={index}
               label={isMobile ? '' : tab.label}
               icon={tab.icon}
-              iconPosition="start"
+              iconPosition={isMobile ? 'top' : 'start'}
+              sx={{
+                '& .MuiSvgIcon-root': {
+                  fontSize: isMobile ? '1.25rem' : '1.5rem',
+                },
+              }}
             />
           ))}
         </Tabs>
@@ -538,6 +549,8 @@ const Settings = () => {
  */
 const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
   const { t } = useTranslation(['settings', 'common']);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Box>
@@ -550,78 +563,133 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
       {/* Prévisualisation réaliste de l'en-tête */}
       <Grid item xs={12}>
         <Paper
+          elevation={0}
           sx={{
-            p: 3,
-            border: '2px solid #e0e0e0',
-            borderRadius: 1,
-            backgroundColor: '#fff',
+            p: isMobile ? 1.5 : 3,
+            border: '1px solid #e0e0e0',
+            borderRadius: 0.5,
+            backgroundColor: '#fafafa',
           }}
         >
           <Typography
             variant="caption"
             sx={{
               display: 'block',
-              mb: 2,
+              mb: isMobile ? 1 : 2,
               textAlign: 'center',
               color: '#666',
               fontWeight: 'bold',
               textTransform: 'uppercase',
               letterSpacing: 1,
+              fontSize: isMobile ? '0.6rem' : '0.75rem',
             }}
           >
             {t('settings:general.preview')}
           </Typography>
-          <Box sx={{ borderBottom: `3px solid ${settings.brandColor || '#2563eb'}`, pb: 2, mb: 2 }}>
-            <Stack direction="row" spacing={3} alignItems="flex-start" justifyContent="space-between">
-              <Box flex={1}>
+          <Box sx={{ borderBottom: `${isMobile ? 2 : 3}px solid ${settings.brandColor || '#2563eb'}`, pb: isMobile ? 1 : 2, mb: isMobile ? 1 : 2 }}>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              spacing={isMobile ? 1 : 3}
+              alignItems={isMobile ? 'center' : 'flex-start'}
+              justifyContent="space-between"
+            >
+              <Box flex={1} sx={{ width: '100%', textAlign: isMobile ? 'center' : 'left' }}>
                 {settings.companyLogo && (
                   <Box
                     component="img"
                     src={settings.companyLogo}
                     alt="Logo"
                     sx={{
-                      maxHeight: 60,
-                      maxWidth: 150,
+                      maxHeight: isMobile ? 30 : 60,
+                      maxWidth: isMobile ? 100 : 150,
                       objectFit: 'contain',
-                      mb: 1,
+                      mb: isMobile ? 0.5 : 1,
+                      mx: isMobile ? 'auto' : 0,
                     }}
                   />
                 )}
-                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5, color: settings.brandColor || '#2563eb' }}>
+                <Typography
+                  variant={isMobile ? 'caption' : 'subtitle1'}
+                  fontWeight="bold"
+                  sx={{ mb: isMobile ? 0.25 : 0.5, color: settings.brandColor || '#2563eb', fontSize: isMobile ? '0.75rem' : undefined }}
+                >
                   {settings.companyName || t('settings:general.companyNamePlaceholder')}
                 </Typography>
                 {settings.companyAddress && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'pre-line' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      display: 'block',
+                      whiteSpace: 'pre-line',
+                      fontSize: isMobile ? '0.6rem' : '0.75rem',
+                      lineHeight: isMobile ? 1.2 : 1.5,
+                    }}
+                  >
                     {settings.companyAddress}
                   </Typography>
                 )}
-                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }} flexWrap="wrap">
+                <Stack
+                  direction={isMobile ? 'column' : 'row'}
+                  spacing={isMobile ? 0.25 : 1}
+                  sx={{ mt: isMobile ? 0.25 : 0.5 }}
+                  flexWrap="wrap"
+                  alignItems={isMobile ? 'center' : 'flex-start'}
+                >
                   {settings.companyPhone && (
-                    <Typography variant="caption" color="text.secondary">
-                      {t('settings:general.phoneLabel')}: {settings.companyPhone}
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.6rem' : '0.75rem' }}>
+                      {isMobile ? 'Tel: ' : t('settings:general.phoneLabel') + ': '}{settings.companyPhone}
                     </Typography>
                   )}
                   {settings.companyEmail && (
-                    <Typography variant="caption" color="text.secondary">
-                      • {t('settings:general.emailLabel')}: {settings.companyEmail}
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.6rem' : '0.75rem' }}>
+                      {!isMobile && '• '}{settings.companyEmail}
                     </Typography>
                   )}
                 </Stack>
               </Box>
-              <Box textAlign="right">
-                <Typography variant="h4" fontWeight="bold" sx={{ letterSpacing: 1, color: settings.brandColor || '#2563eb' }}>
+              <Box
+                textAlign={isMobile ? 'center' : 'right'}
+                sx={{ width: isMobile ? '100%' : 'auto', mt: isMobile ? 1 : 0 }}
+              >
+                <Typography
+                  variant={isMobile ? 'body1' : 'h4'}
+                  fontWeight="bold"
+                  sx={{
+                    letterSpacing: 1,
+                    color: settings.brandColor || '#2563eb',
+                    fontSize: isMobile ? '0.9rem' : undefined,
+                  }}
+                >
                   {t('settings:general.invoicePreview')}
                 </Typography>
-                <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
+                <Typography
+                  variant="body2"
+                  fontWeight="bold"
+                  sx={{ mt: isMobile ? 0.25 : 1, fontSize: isMobile ? '0.7rem' : undefined }}
+                >
                   {t('settings:general.invoiceNumber')} FAC-2025-001
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: isMobile ? '0.6rem' : undefined }}
+                >
                   {t('settings:general.dateLabel')}: {new Date().toLocaleDateString(t('common:locale'))}
                 </Typography>
               </Box>
             </Stack>
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontStyle: 'italic' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: 'block',
+              textAlign: 'center',
+              fontStyle: 'italic',
+              fontSize: isMobile ? '0.6rem' : '0.75rem',
+            }}
+          >
             {t('settings:general.previewHelper')}
           </Typography>
         </Paper>
@@ -678,7 +746,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
 
       {/* Upload du logo avec cropping */}
       <Grid item xs={12}>
-        <Paper sx={{ p: 2, border: '2px dashed #ddd' }}>
+        <Paper elevation={0} sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
           <Stack spacing={2} alignItems="center">
             <Typography variant="subtitle2">{t('settings:logo.title')}</Typography>
             {settings.companyLogo && (
@@ -715,7 +783,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
 
       {/* Sélecteur de couleur de marque */}
       <Grid item xs={12}>
-        <Paper sx={{ p: 3, border: '2px solid #e0e0e0', borderRadius: 1 }}>
+        <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
           <Stack spacing={2}>
             <Typography variant="subtitle2" fontWeight={600}>
               {t('settings:appearance.brandColor')}
@@ -723,16 +791,21 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
             <Typography variant="caption" color="text.secondary">
               {t('settings:appearance.brandColorHelper')}
             </Typography>
-            <Stack direction="row" spacing={3} alignItems="center">
-              <Box>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              spacing={isMobile ? 2 : 3}
+              alignItems={isMobile ? 'stretch' : 'center'}
+            >
+              <Box sx={{ width: isMobile ? '100%' : 'auto' }}>
                 <TextField
                   type="color"
                   value={settings.brandColor || '#2563eb'}
                   onChange={(e) => onUpdate('brandColor', e.target.value)}
+                  fullWidth={isMobile}
                   sx={{
-                    width: 100,
+                    width: isMobile ? '100%' : 100,
                     '& input': {
-                      height: 60,
+                      height: isMobile ? 50 : 60,
                       cursor: 'pointer',
                       border: '2px solid #ddd',
                       borderRadius: 1,
@@ -740,7 +813,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                   }}
                 />
               </Box>
-              <Box flex={1}>
+              <Box flex={1} sx={{ width: '100%' }}>
                 <TextField
                   fullWidth
                   label={t('settings:appearance.brandColorCode')}
@@ -748,6 +821,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                   onChange={(e) => onUpdate('brandColor', e.target.value)}
                   placeholder={t('settings:appearance.brandColorCodePlaceholder')}
                   helperText={t('settings:appearance.brandColorCodeHelper')}
+                  size={isMobile ? 'small' : 'medium'}
                 />
               </Box>
             </Stack>
@@ -755,7 +829,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 {t('settings:appearance.presetColors')}
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
                 {[
                   { name: t('settings:appearance.colors.blue'), color: '#2563eb' },
                   { name: t('settings:appearance.colors.purple'), color: '#7c3aed' },
@@ -768,14 +842,14 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                 ].map((preset) => (
                   <Button
                     key={preset.color}
-                    size="small"
+                    size={isMobile ? 'small' : 'medium'}
                     variant={settings.brandColor === preset.color ? 'contained' : 'outlined'}
                     onClick={() => onUpdate('brandColor', preset.color)}
                     sx={{
                       minWidth: 'auto',
-                      px: 1.5,
-                      py: 0.5,
-                      mb: 1,
+                      px: isMobile ? 1 : 1.5,
+                      py: isMobile ? 0.25 : 0.5,
+                      fontSize: isMobile ? '0.7rem' : '0.875rem',
                       borderColor: preset.color,
                       backgroundColor: settings.brandColor === preset.color ? preset.color : 'transparent',
                       color: settings.brandColor === preset.color ? 'white' : preset.color,
@@ -1372,7 +1446,7 @@ const DataSection = ({ settings, showSnackbar }) => {
             {t('settings:data.migrationSection.description')}
           </Typography>
           <Stack spacing={2}>
-            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
               <Typography variant="subtitle2" gutterBottom>
                 {t('settings:data.migrationSection.quickbooks.title')}
               </Typography>
@@ -1384,7 +1458,7 @@ const DataSection = ({ settings, showSnackbar }) => {
               </Button>
             </Paper>
 
-            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
               <Typography variant="subtitle2" gutterBottom>
                 {t('settings:data.migrationSection.sage.title')}
               </Typography>
@@ -1396,7 +1470,7 @@ const DataSection = ({ settings, showSnackbar }) => {
               </Button>
             </Paper>
 
-            <Paper sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
               <Typography variant="subtitle2" gutterBottom>
                 {t('settings:data.migrationSection.generic.title')}
               </Typography>

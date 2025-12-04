@@ -234,11 +234,23 @@ class OrganizationSettings(models.Model):
         max_length=20,
         default='A4',
         choices=[
-            ('A4', 'A4'),
-            ('Letter', 'Letter'),
-            ('Legal', 'Legal'),
+            ('A4', 'A4 (210 × 297 mm)'),
+            ('Letter', 'Letter (8.5 × 11 in)'),
+            ('Legal', 'Legal (8.5 × 14 in)'),
+            ('A5', 'A5 (148 × 210 mm)'),
+            ('thermal_80', 'Thermique 80mm (Ticket de caisse)'),
+            ('thermal_58', 'Thermique 58mm (Ticket de caisse)'),
         ],
         verbose_name=_("Taille du papier")
+    )
+    paper_orientation = models.CharField(
+        max_length=20,
+        default='portrait',
+        choices=[
+            ('portrait', _('Portrait')),
+            ('landscape', _('Paysage')),
+        ],
+        verbose_name=_("Orientation du papier")
     )
     print_margins = models.CharField(
         max_length=20,
