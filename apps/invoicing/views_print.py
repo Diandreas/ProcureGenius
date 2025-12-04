@@ -37,10 +37,17 @@ def print_invoice_view(request, invoice_id):
     if not template_obj:
         # Créer un template par défaut si aucun n'existe
         # Utiliser les paramètres de l'organisation si disponibles
-        header_name = org_settings.company_name if org_settings and org_settings.company_name else "ProcureGenius"
-        header_address = org_settings.company_address if org_settings and org_settings.company_address else "123 Rue de la Technologie\nMontréal, QC H1A 1A1\nCanada"
-        header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else "+1 (514) 123-4567"
-        header_email = org_settings.company_email if org_settings and org_settings.company_email else "contact@procuregenius.com"
+        # Fallback: utiliser le nom de l'organisation si company_name est vide
+        if org_settings and org_settings.company_name:
+            header_name = org_settings.company_name
+        elif hasattr(request.user, 'organization') and request.user.organization:
+            header_name = request.user.organization.name
+        else:
+            header_name = ""  # Vide au lieu de "ProcureGenius"
+
+        header_address = org_settings.company_address if org_settings and org_settings.company_address else ""
+        header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else ""
+        header_email = org_settings.company_email if org_settings and org_settings.company_email else ""
 
         template_obj = PrintTemplate.objects.create(
             name="Template par défaut",
@@ -99,6 +106,13 @@ def print_purchase_order_view(request, po_id):
     if not (request.user == purchase_order.created_by or request.user.is_staff):
         raise Http404("Bon de commande non trouvé")
 
+    # Récupérer OrganizationSettings
+    org_settings = None
+    if hasattr(request.user, 'organization') and request.user.organization:
+        org_settings = OrganizationSettings.objects.filter(
+            organization=request.user.organization
+        ).first()
+
     # Récupérer le template et la configuration
     template_obj = PrintTemplate.objects.filter(
         template_type='purchase_order',
@@ -107,14 +121,27 @@ def print_purchase_order_view(request, po_id):
 
     if not template_obj:
         # Créer un template par défaut si aucun n'existe
+        # Utiliser les paramètres de l'organisation si disponibles
+        if org_settings and org_settings.company_name:
+            header_name = org_settings.company_name
+        elif hasattr(request.user, 'organization') and request.user.organization:
+            header_name = request.user.organization.name
+        else:
+            header_name = ""
+
+        header_address = org_settings.company_address if org_settings and org_settings.company_address else ""
+        header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else ""
+        header_email = org_settings.company_email if org_settings and org_settings.company_email else ""
+
         template_obj = PrintTemplate.objects.create(
             name="Template BC par défaut",
             template_type='purchase_order',
             is_default=True,
-            header_company_name="ProcureGenius",
-            header_address="123 Rue de la Technologie\nMontréal, QC H1A 1A1\nCanada",
-            header_phone="+1 (514) 123-4567",
-            header_email="contact@procuregenius.com",
+            organization=request.user.organization if hasattr(request.user, 'organization') else None,
+            header_company_name=header_name,
+            header_address=header_address,
+            header_phone=header_phone,
+            header_email=header_email,
             footer_text="Merci de confirmer la réception de cette commande",
             footer_conditions="Livraison selon les termes convenus. Retard de livraison à signaler immédiatement."
         )

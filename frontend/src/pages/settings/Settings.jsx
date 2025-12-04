@@ -416,6 +416,7 @@ const Settings = () => {
               printConfiguration={printConfiguration}
               onUpdateTemplate={handleUpdateTemplate}
               onUpdateConfiguration={handleUpdateConfiguration}
+              onUpdate={handleUpdateSetting}
             />
           )}
 
@@ -1008,7 +1009,7 @@ const BillingSection = ({ settings, onUpdate }) => {
 /**
  * Section Impression - Templates et configurations
  */
-const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTemplate, onUpdateConfiguration }) => {
+const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTemplate, onUpdateConfiguration, onUpdate }) => {
   const { t } = useTranslation(['settings', 'common']);
 
   return (
@@ -1039,8 +1040,8 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
           <FormControlLabel
             control={
               <Switch
-                checked={printTemplate?.showQrCode ?? true}
-                onChange={(e) => onUpdateTemplate('showQrCode', e.target.checked)}
+                checked={settings?.includeQrCode ?? true}
+                onChange={(e) => onUpdate('includeQrCode', e.target.checked)}
               />
             }
             label={t('settings:print.showQrCode')}
@@ -1051,17 +1052,20 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
       <Typography variant="subtitle2" gutterBottom>
         {t('settings:print.paperConfiguration')}
       </Typography>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>{t('settings:print.paperSize')}</InputLabel>
             <Select
-              value={printConfiguration?.paperSize || 'A4'}
-              onChange={(e) => onUpdateConfiguration('paperSize', e.target.value)}
+              value={settings?.paperSize || 'A4'}
+              onChange={(e) => onUpdate('paperSize', e.target.value)}
             >
-              <MenuItem value="A4">A4</MenuItem>
-              <MenuItem value="LETTER">Letter</MenuItem>
-              <MenuItem value="LEGAL">Legal</MenuItem>
+              <MenuItem value="A4">A4 (210 × 297 mm)</MenuItem>
+              <MenuItem value="Letter">Letter (8.5 × 11 in)</MenuItem>
+              <MenuItem value="Legal">Legal (8.5 × 14 in)</MenuItem>
+              <MenuItem value="A5">A5 (148 × 210 mm)</MenuItem>
+              <MenuItem value="thermal_80">Thermique 80mm (Ticket de caisse)</MenuItem>
+              <MenuItem value="thermal_58">Thermique 58mm (Ticket de caisse)</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -1069,13 +1073,43 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
           <FormControl fullWidth>
             <InputLabel>{t('settings:print.orientation')}</InputLabel>
             <Select
-              value={printConfiguration?.orientation || 'portrait'}
-              onChange={(e) => onUpdateConfiguration('orientation', e.target.value)}
+              value={settings?.paperOrientation || 'portrait'}
+              onChange={(e) => onUpdate('paperOrientation', e.target.value)}
             >
               <MenuItem value="portrait">{t('settings:print.portrait')}</MenuItem>
               <MenuItem value="landscape">{t('settings:print.landscape')}</MenuItem>
             </Select>
           </FormControl>
+        </Grid>
+      </Grid>
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t('settings:print.additionalOptions')}
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings?.printColors ?? true}
+                onChange={(e) => onUpdate('printColors', e.target.checked)}
+              />
+            }
+            label={t('settings:print.printColors')}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:print.printMargins')}
+            type="number"
+            value={settings?.printMargins || 12}
+            onChange={(e) => onUpdate('printMargins', parseInt(e.target.value))}
+            helperText={t('settings:print.printMarginsHelper')}
+            InputProps={{
+              endAdornment: <span>mm</span>
+            }}
+          />
         </Grid>
       </Grid>
     </Box>

@@ -17,7 +17,8 @@
       "Bash(py manage.py show_urls)",
       "Bash(npm install:*)",
       "Bash(npx eslint:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ls -la \"D:\\project\\BFMa\\ProcureGenius\\apps\\invoicing\\management\"\" 2>/dev/null || echo \"Directory does not exist \")"
     ],
     "deny": [],
     "ask": []

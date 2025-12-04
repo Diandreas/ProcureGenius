@@ -118,6 +118,11 @@ else:
             # Ajouter la couleur de marque
             context['brand_color'] = org_data.get('brand_color', '#2563eb')
 
+            # Ajouter les paramètres d'impression
+            context['paper_size'] = org_data.get('paper_size', 'A4')
+            context['paper_orientation'] = org_data.get('paper_orientation', 'portrait')
+            context['print_margins'] = org_data.get('print_margins', 12)
+
             # Ajouter le QR code en base64
             context['qr_code'] = self._generate_qr_code(po)
 
@@ -180,6 +185,9 @@ else:
                 'logo_path': None,
                 'logo_base64': None,
                 'brand_color': '#2563eb',
+                'paper_size': 'A4',
+                'paper_orientation': 'portrait',
+                'print_margins': 12,
             }
 
             try:
@@ -195,11 +203,24 @@ else:
                         ).first()
 
                         if org_settings:
-                            org_data['name'] = org_settings.company_name
-                            org_data['address'] = org_settings.company_address
-                            org_data['phone'] = org_settings.company_phone
-                            org_data['email'] = org_settings.company_email
-                            org_data['website'] = org_settings.company_website
+                            # Récupérer les données seulement si elles ne sont pas vides
+                            if org_settings.company_name and org_settings.company_name.strip():
+                                org_data['name'] = org_settings.company_name
+                            else:
+                                # Fallback: utiliser le nom de l'organisation
+                                org_data['name'] = organization.name if organization.name else None
+
+                            if org_settings.company_address and org_settings.company_address.strip():
+                                org_data['address'] = org_settings.company_address
+
+                            if org_settings.company_phone and org_settings.company_phone.strip():
+                                org_data['phone'] = org_settings.company_phone
+
+                            if org_settings.company_email and org_settings.company_email.strip():
+                                org_data['email'] = org_settings.company_email
+
+                            if hasattr(org_settings, 'company_website') and org_settings.company_website and org_settings.company_website.strip():
+                                org_data['website'] = org_settings.company_website
 
                             # Logo
                             if org_settings.company_logo:
@@ -209,6 +230,17 @@ else:
                             # Couleur de marque
                             if hasattr(org_settings, 'brand_color') and org_settings.brand_color:
                                 org_data['brand_color'] = org_settings.brand_color
+
+                            # Paramètres d'impression
+                            if hasattr(org_settings, 'paper_size') and org_settings.paper_size:
+                                org_data['paper_size'] = org_settings.paper_size
+                            if hasattr(org_settings, 'paper_orientation') and org_settings.paper_orientation:
+                                org_data['paper_orientation'] = org_settings.paper_orientation
+                            if hasattr(org_settings, 'print_margins') and org_settings.print_margins:
+                                org_data['print_margins'] = org_settings.print_margins
+                        else:
+                            # Si pas d'OrganizationSettings, utiliser le nom de l'organisation
+                            org_data['name'] = organization.name if organization.name else None
 
             except Exception as e:
                 print(f"[ERROR] Erreur lors de la recuperation des donnees organisation: {e}")

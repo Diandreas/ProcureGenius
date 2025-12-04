@@ -5,8 +5,16 @@
     <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
     <style>
         @page {
-            size: A4;
-            margin: 12mm;
+            {% if paper_size == 'thermal_80' %}
+            size: 80mm 297mm;
+            margin: {{ print_margins|default:5 }}mm;
+            {% elif paper_size == 'thermal_58' %}
+            size: 58mm 297mm;
+            margin: {{ print_margins|default:3 }}mm;
+            {% else %}
+            size: {{ paper_size|default:'A4' }} {{ paper_orientation|default:'portrait' }};
+            margin: {{ print_margins|default:12 }}mm;
+            {% endif %}
         }
 
         body {
@@ -409,13 +417,13 @@
                 {% endif %}
                 <td class="footer-info">
                     <div class="footer-text">
-                        <strong>{{ organization.name|default:"ProcureGenius" }}</strong><br>
+                        {% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
                         {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                     </div>
                     <div class="footer-meta">
-                        {% trans "Document generated on" %} {% now "d/m/Y à H:i" %} • ProcureGenius - {% trans "Smart invoice management" %}
+                        {% trans "Document generated on" %} {% now "d/m/Y à H:i" %}
                     </div>
                 </td>
             </tr>

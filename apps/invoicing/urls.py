@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views_pdf import InvoicePDFView
+from .views_debug import debug_organization_data
 
 app_name = 'invoicing'
 
@@ -24,4 +25,7 @@ urlpatterns = [
     path('print/template/<str:template>/', views.invoice_print_template, name='invoice_print_template'),
     path('<uuid:pk>/print/', views.invoice_print, name='invoice_print'),
     path('<uuid:pk>/print/<str:template>/', views.invoice_print, name='invoice_print_template'),
+
+    # Debug URL (temporaire)
+    path('debug/organization/', debug_organization_data, name='debug_organization'),
 ]

@@ -49,6 +49,58 @@ class OrganizationSettings(models.Model):
         verbose_name=_("Logo")
     )
 
+    # Identifiants légaux et fiscaux (Conformité Cameroun & OHADA)
+    company_niu = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("NIU (Numéro Identifiant Unique)"),
+        help_text=_("Obligatoire au Cameroun - Identifiant fiscal unique")
+    )
+    company_tax_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro de contribuable"),
+        help_text=_("Numéro d'identification fiscale")
+    )
+    company_rc_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro de Registre de Commerce (RC)"),
+        help_text=_("Numéro d'immatriculation au registre de commerce")
+    )
+    company_rccm_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro RCCM"),
+        help_text=_("Registre du Commerce et du Crédit Mobilier (OHADA)")
+    )
+    company_vat_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro de TVA"),
+        help_text=_("Numéro de TVA intracommunautaire (si applicable)")
+    )
+
+    # Informations bancaires (OHADA & UE 2030)
+    company_bank_name = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Nom de la banque"),
+        help_text=_("Nom de la banque de domiciliation")
+    )
+    company_bank_account = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_("Numéro de compte bancaire"),
+        help_text=_("Numéro de compte ou IBAN")
+    )
+    company_bank_swift = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("Code SWIFT/BIC"),
+        help_text=_("Code d'identification de la banque (transactions internationales)")
+    )
+
     # Couleur de marque pour les impressions
     brand_color = models.CharField(
         max_length=7,

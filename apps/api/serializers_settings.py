@@ -45,6 +45,12 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'date_format',
             'time_format',
             'brand_color',
+            # Impression
+            'paper_size',
+            'paper_orientation',
+            'print_margins',
+            'include_qr_code',
+            'print_colors',
             # Sécurité
             'session_timeout',
             'require_strong_passwords',
