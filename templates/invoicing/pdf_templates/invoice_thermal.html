@@ -158,6 +158,19 @@
             {% if organization.address %}{{ organization.address }}<br>{% endif %}
             {% if organization.phone %}Tel: {{ organization.phone }}<br>{% endif %}
             {% if organization.email %}Email: {{ organization.email }}<br>{% endif %}
+            {# Affichage conditionnel selon la région fiscale #}
+            {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                {% if organization.niu %}NIU: {{ organization.niu }}<br>{% endif %}
+                {% if organization.rc_number %}RC: {{ organization.rc_number }}<br>{% elif organization.rccm_number %}RCCM: {{ organization.rccm_number }}<br>{% endif %}
+            {% elif organization.tax_region == 'eu' %}
+                {% if organization.vat_number %}{% trans "VAT" %}: {{ organization.vat_number }}<br>{% endif %}
+            {% elif organization.tax_region == 'canada' %}
+                {% if organization.neq %}NEQ: {{ organization.neq }}<br>{% endif %}
+                {% if organization.gst_number %}TPS/TVH: {{ organization.gst_number }}<br>{% endif %}
+                {% if organization.qst_number %}TVQ: {{ organization.qst_number }}<br>{% endif %}
+            {% elif organization.tax_region == 'usa' %}
+                {% if organization.tax_number %}TIN: {{ organization.tax_number }}<br>{% endif %}
+            {% endif %}
         </div>
     </div>
 
@@ -190,7 +203,7 @@
                 {% endif %}
             </div>
             <div class="item-qty">{{ item.quantity|floatformat:0 }}</div>
-            <div class="item-price">{{ item.total_price|floatformat:2 }} CAD</div>
+            <div class="item-price">{{ item.total_price|floatformat:2 }} {{ organization.currency|default:"CAD" }}</div>
         </div>
         {% if item.detailed_description %}
         <div style="font-size: 6.5pt; color: #666; padding-left: 3px; margin-top: -2px;">
@@ -204,17 +217,17 @@
     <div class="totals-section">
         <div class="total-line">
             <span>Sous-total:</span>
-            <span>{{ subtotal|floatformat:2 }} CAD</span>
+            <span>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
         {% if tax_amount > 0 %}
         <div class="total-line">
             <span>Taxes:</span>
-            <span>{{ tax_amount|floatformat:2 }} CAD</span>
+            <span>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
         {% endif %}
         <div class="total-line final">
             <span>TOTAL:</span>
-            <span>{{ total_amount|floatformat:2 }} CAD</span>
+            <span>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
     </div>
 

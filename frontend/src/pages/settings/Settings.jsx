@@ -869,6 +869,190 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
           </Stack>
         </Paper>
       </Grid>
+
+      {/* Section Informations légales et fiscales */}
+      <Grid item xs={12}>
+        <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
+          {t('settings:general.legalInfo')}
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+      </Grid>
+
+      {/* Région fiscale */}
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>{t('settings:general.taxRegion')}</InputLabel>
+          <Select
+            value={settings.taxRegion || 'international'}
+            onChange={(e) => onUpdate('taxRegion', e.target.value)}
+            label={t('settings:general.taxRegion')}
+          >
+            <MenuItem value="international">{t('settings:general.taxRegions.international')}</MenuItem>
+            <MenuItem value="cameroon">{t('settings:general.taxRegions.cameroon')}</MenuItem>
+            <MenuItem value="ohada">{t('settings:general.taxRegions.ohada')}</MenuItem>
+            <MenuItem value="canada">{t('settings:general.taxRegions.canada')}</MenuItem>
+            <MenuItem value="usa">{t('settings:general.taxRegions.usa')}</MenuItem>
+            <MenuItem value="eu">{t('settings:general.taxRegions.eu')}</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+
+      {/* Devise par défaut */}
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>{t('settings:general.defaultCurrency')}</InputLabel>
+          <Select
+            value={settings.defaultCurrency || 'CAD'}
+            onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
+            label={t('settings:general.defaultCurrency')}
+          >
+            <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
+            <MenuItem value="USD">USD - Dollar américain</MenuItem>
+            <MenuItem value="EUR">EUR - Euro</MenuItem>
+            <MenuItem value="GBP">GBP - Livre sterling</MenuItem>
+            <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
+            <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
+            <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
+            <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
+            <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+
+      {/* Identifiants fiscaux Cameroun/OHADA */}
+      {(settings.taxRegion === 'cameroon' || settings.taxRegion === 'ohada') && (
+        <>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.niu')}
+              placeholder="Ex: M123456789"
+              value={settings.companyNiu || ''}
+              onChange={(e) => onUpdate('companyNiu', e.target.value)}
+              helperText={t('settings:general.niuHelper')}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.rcNumber')}
+              placeholder="Ex: RC/YDE/2024/A/123"
+              value={settings.companyRcNumber || ''}
+              onChange={(e) => onUpdate('companyRcNumber', e.target.value)}
+              helperText={t('settings:general.rcHelper')}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.rccmNumber')}
+              placeholder="Ex: RCCM/YDE/2024/A/123"
+              value={settings.companyRccmNumber || ''}
+              onChange={(e) => onUpdate('companyRccmNumber', e.target.value)}
+              helperText={t('settings:general.rccmHelper')}
+            />
+          </Grid>
+        </>
+      )}
+
+      {/* Identifiants fiscaux Canada */}
+      {settings.taxRegion === 'canada' && (
+        <>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.neq')}
+              placeholder="Ex: 1234567890"
+              value={settings.companyNeq || ''}
+              onChange={(e) => onUpdate('companyNeq', e.target.value)}
+              helperText={t('settings:general.neqHelper')}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.gstNumber')}
+              placeholder="Ex: 123456789 RT0001"
+              value={settings.companyGstNumber || ''}
+              onChange={(e) => onUpdate('companyGstNumber', e.target.value)}
+              helperText={t('settings:general.gstHelper')}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('settings:general.qstNumber')}
+              placeholder="Ex: 1234567890 TQ0001"
+              value={settings.companyQstNumber || ''}
+              onChange={(e) => onUpdate('companyQstNumber', e.target.value)}
+              helperText={t('settings:general.qstHelper')}
+            />
+          </Grid>
+        </>
+      )}
+
+      {/* Identifiants fiscaux USA */}
+      {settings.taxRegion === 'usa' && (
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:general.taxNumber')}
+            placeholder="Ex: 12-3456789"
+            value={settings.companyTaxNumber || ''}
+            onChange={(e) => onUpdate('companyTaxNumber', e.target.value)}
+            helperText={t('settings:general.taxNumberHelper')}
+          />
+        </Grid>
+      )}
+
+      {/* Identifiants fiscaux UE */}
+      {settings.taxRegion === 'eu' && (
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label={t('settings:general.vatNumber')}
+            placeholder="Ex: FR12345678901"
+            value={settings.companyVatNumber || ''}
+            onChange={(e) => onUpdate('companyVatNumber', e.target.value)}
+            helperText={t('settings:general.vatHelper')}
+          />
+        </Grid>
+      )}
+
+      {/* Coordonnées bancaires */}
+      <Grid item xs={12}>
+        <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, mb: 1 }}>
+          {t('settings:general.bankInfo')}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label={t('settings:general.bankName')}
+          placeholder={t('settings:general.bankNamePlaceholder')}
+          value={settings.companyBankName || ''}
+          onChange={(e) => onUpdate('companyBankName', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label={t('settings:general.bankAccount')}
+          placeholder={t('settings:general.bankAccountPlaceholder')}
+          value={settings.companyBankAccount || ''}
+          onChange={(e) => onUpdate('companyBankAccount', e.target.value)}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label={t('settings:general.bankSwift')}
+          placeholder={t('settings:general.bankSwiftPlaceholder')}
+          value={settings.companyBankSwift || ''}
+          onChange={(e) => onUpdate('companyBankSwift', e.target.value)}
+          helperText={t('settings:general.bankSwiftHelper')}
+        />
+      </Grid>
     </Grid>
   </Box>
   );

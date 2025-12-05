@@ -220,12 +220,19 @@ else:
                 'paper_size': 'A4',
                 'paper_orientation': 'portrait',
                 'print_margins': 12,
+                # Région fiscale et devise
+                'tax_region': 'international',
+                'currency': 'CAD',  # Devise par défaut
                 # Identifiants légaux et fiscaux
                 'niu': None,
                 'tax_number': None,
                 'rc_number': None,
                 'rccm_number': None,
                 'vat_number': None,
+                # Canada/Québec
+                'gst_number': None,  # TPS/TVH
+                'qst_number': None,  # TVQ
+                'neq': None,  # NEQ Québec
                 # Informations bancaires
                 'bank_name': None,
                 'bank_account': None,
@@ -322,6 +329,12 @@ else:
                             if hasattr(org_settings, 'print_margins') and org_settings.print_margins:
                                 org_data['print_margins'] = org_settings.print_margins
 
+                            # Région fiscale et devise
+                            if hasattr(org_settings, 'tax_region') and org_settings.tax_region:
+                                org_data['tax_region'] = org_settings.tax_region
+                            if hasattr(org_settings, 'default_currency') and org_settings.default_currency:
+                                org_data['currency'] = org_settings.default_currency
+
                             # Identifiants légaux et fiscaux
                             if hasattr(org_settings, 'company_niu') and org_settings.company_niu and org_settings.company_niu.strip():
                                 org_data['niu'] = org_settings.company_niu
@@ -333,6 +346,14 @@ else:
                                 org_data['rccm_number'] = org_settings.company_rccm_number
                             if hasattr(org_settings, 'company_vat_number') and org_settings.company_vat_number and org_settings.company_vat_number.strip():
                                 org_data['vat_number'] = org_settings.company_vat_number
+
+                            # Canada/Québec
+                            if hasattr(org_settings, 'company_gst_number') and org_settings.company_gst_number and org_settings.company_gst_number.strip():
+                                org_data['gst_number'] = org_settings.company_gst_number
+                            if hasattr(org_settings, 'company_qst_number') and org_settings.company_qst_number and org_settings.company_qst_number.strip():
+                                org_data['qst_number'] = org_settings.company_qst_number
+                            if hasattr(org_settings, 'company_neq') and org_settings.company_neq and org_settings.company_neq.strip():
+                                org_data['neq'] = org_settings.company_neq
 
                             # Informations bancaires
                             if hasattr(org_settings, 'company_bank_name') and org_settings.company_bank_name and org_settings.company_bank_name.strip():

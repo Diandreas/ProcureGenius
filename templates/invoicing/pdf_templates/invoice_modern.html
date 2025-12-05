@@ -307,6 +307,20 @@
                     {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
                     {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                     {% if organization.email %} • {{ organization.email }}{% endif %}
+                    <br>
+                    {# Affichage conditionnel selon la région fiscale #}
+                    {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                        {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }} • {% endif %}
+                        {% if organization.rc_number %}<strong>RC:</strong> {{ organization.rc_number }}{% elif organization.rccm_number %}<strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
+                    {% elif organization.tax_region == 'eu' %}
+                        {% if organization.vat_number %}<strong>{% trans "TVA" %}:</strong> {{ organization.vat_number }}{% endif %}
+                    {% elif organization.tax_region == 'canada' %}
+                        {% if organization.neq %}<strong>NEQ:</strong> {{ organization.neq }}<br>{% endif %}
+                        {% if organization.gst_number %}<strong>TPS/TVH:</strong> {{ organization.gst_number }}{% endif %}
+                        {% if organization.qst_number %} • <strong>TVQ:</strong> {{ organization.qst_number }}{% endif %}
+                    {% elif organization.tax_region == 'usa' %}
+                        {% if organization.tax_number %}<strong>TIN:</strong> {{ organization.tax_number }}{% endif %}
+                    {% endif %}
                 </div>
                 {% endif %}
             </td>
@@ -421,6 +435,10 @@
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
                         {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
+                        {# Coordonnées bancaires (optionnel) #}
+                        {% if organization.bank_account %}
+                            <br><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }} • {% trans "Account" %}: {{ organization.bank_account }}
+                        {% endif %}
                     </div>
                     <div class="footer-meta">
                         {% trans "Document generated on" %} {% now "d/m/Y à H:i" %}

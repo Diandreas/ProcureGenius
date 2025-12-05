@@ -49,6 +49,22 @@ class OrganizationSettings(models.Model):
         verbose_name=_("Logo")
     )
 
+    # Région fiscale (pour adapter l'affichage des champs obligatoires)
+    tax_region = models.CharField(
+        max_length=20,
+        default='international',
+        choices=[
+            ('cameroon', _('Cameroun (OHADA)')),
+            ('ohada', _('OHADA (Afrique francophone)')),
+            ('eu', _('Union Européenne')),
+            ('usa', _('États-Unis')),
+            ('canada', _('Canada')),
+            ('international', _('International (champs universels)')),
+        ],
+        verbose_name=_("Région fiscale"),
+        help_text=_("Détermine les champs obligatoires selon la législation locale")
+    )
+
     # Identifiants légaux et fiscaux (Conformité Cameroun & OHADA)
     company_niu = models.CharField(
         max_length=50,
@@ -79,6 +95,26 @@ class OrganizationSettings(models.Model):
         blank=True,
         verbose_name=_("Numéro de TVA"),
         help_text=_("Numéro de TVA intracommunautaire (si applicable)")
+    )
+
+    # Identifiants fiscaux Canada/Québec
+    company_gst_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro TPS/TVH (GST/HST)"),
+        help_text=_("Numéro d'inscription TPS/TVH (obligatoire au Canada si > 30 000$ CA/an)")
+    )
+    company_qst_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Numéro TVQ (QST)"),
+        help_text=_("Numéro d'inscription TVQ (obligatoire au Québec si > 30 000$ CA/an)")
+    )
+    company_neq = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("NEQ (Numéro d'entreprise du Québec)"),
+        help_text=_("Numéro d'entreprise du Québec - Obligatoire pour les entreprises québécoises")
     )
 
     # Informations bancaires (OHADA & UE 2030)

@@ -1,24 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -m pip install:*)",
-      "Bash(py -m pip install:*)",
-      "Bash(py manage.py check:*)",
-      "Bash(py test_weasyprint_pdf.py:*)",
-      "Bash(py test_reportlab_pdf.py)",
-      "Bash(dir:*)",
-      "Bash(py -c \"from weasyprint import HTML; print(''WeasyPrint fonctionne parfaitement!'')\")",
-      "Bash(echo:*)",
-      "Bash($env:PATH = \"C:\\Program Files\\GTK3-Runtime Win64\\bin;\" + $env:PATH)",
-      "Bash(py -c \"from weasyprint import HTML; print(''OK'')\")",
-      "Bash(py manage.py makemigrations:*)",
-      "Bash(py manage.py migrate core)",
-      "Bash(del:*)",
-      "Bash(py manage.py show_urls)",
-      "Bash(npm install:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npm run build:*)",
-      "Bash(ls -la \"D:\\project\\BFMa\\ProcureGenius\\apps\\invoicing\\management\"\" 2>/dev/null || echo \"Directory does not exist \")"
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

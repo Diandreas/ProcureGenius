@@ -317,6 +317,20 @@
         <div class="company-tagline">
             {% if organization.phone %}{{ organization.phone }}{% endif %}
             {% if organization.email %} • {{ organization.email }}{% endif %}
+            <br>
+            {# Affichage conditionnel selon la région fiscale #}
+            {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                {% if organization.niu %}NIU: {{ organization.niu }} • {% endif %}
+                {% if organization.rc_number %}RC: {{ organization.rc_number }}{% elif organization.rccm_number %}RCCM: {{ organization.rccm_number }}{% endif %}
+            {% elif organization.tax_region == 'eu' %}
+                {% if organization.vat_number %}{% trans "VAT" %}: {{ organization.vat_number }}{% endif %}
+            {% elif organization.tax_region == 'canada' %}
+                {% if organization.neq %}NEQ: {{ organization.neq }} • {% endif %}
+                {% if organization.gst_number %}GST/HST: {{ organization.gst_number }}{% endif %}
+                {% if organization.qst_number %} • QST: {{ organization.qst_number }}{% endif %}
+            {% elif organization.tax_region == 'usa' %}
+                {% if organization.tax_number %}TIN: {{ organization.tax_number }}{% endif %}
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -381,8 +395,8 @@
                 <td>{{ item.product_reference|default:"—" }}</td>
                 <td>{{ item.description|default:"—" }}</td>
                 <td class="text-center">{{ item.quantity|default:0 }}</td>
-                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} €</td>
-                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} €</td>
+                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -398,17 +412,17 @@
             <table class="totals-table">
                 <tr>
                     <td>{% trans "Subtotal" %}</td>
-                    <td>{{ subtotal|floatformat:2 }} €</td>
+                    <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                 </tr>
                 {% if tax_amount > 0 %}
                 <tr>
                     <td>{% trans "Taxes" %}</td>
-                    <td>{{ tax_amount|floatformat:2 }} €</td>
+                    <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                 </tr>
                 {% endif %}
                 <tr class="grand-total">
                     <td>{% trans "Total" %}</td>
-                    <td>{{ total_amount|floatformat:2 }} €</td>
+                    <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                 </tr>
             </table>
         </div>
@@ -430,6 +444,10 @@
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
                         {% if organization.phone %}{% trans "Phone" %}: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
+                        {# Coordonnées bancaires (optionnel) #}
+                        {% if organization.bank_account %}
+                            <br><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %} • {% endif %}{% trans "Account" %}: {{ organization.bank_account }}
+                        {% endif %}
                     </div>
                     <div class="footer-meta">
                         {% trans "Document generated on" %} {% now "d/m/Y" %}

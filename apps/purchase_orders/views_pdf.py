@@ -188,6 +188,23 @@ else:
                 'paper_size': 'A4',
                 'paper_orientation': 'portrait',
                 'print_margins': 12,
+                # Région fiscale et devise
+                'tax_region': 'international',
+                'currency': 'CAD',  # Devise par défaut
+                # Identifiants légaux et fiscaux
+                'niu': None,
+                'tax_number': None,
+                'rc_number': None,
+                'rccm_number': None,
+                'vat_number': None,
+                # Canada/Québec
+                'gst_number': None,  # TPS/TVH
+                'qst_number': None,  # TVQ
+                'neq': None,  # NEQ Québec
+                # Informations bancaires
+                'bank_name': None,
+                'bank_account': None,
+                'bank_swift': None,
             }
 
             try:
@@ -238,6 +255,40 @@ else:
                                 org_data['paper_orientation'] = org_settings.paper_orientation
                             if hasattr(org_settings, 'print_margins') and org_settings.print_margins:
                                 org_data['print_margins'] = org_settings.print_margins
+
+                            # Région fiscale et devise
+                            if hasattr(org_settings, 'tax_region') and org_settings.tax_region:
+                                org_data['tax_region'] = org_settings.tax_region
+                            if hasattr(org_settings, 'default_currency') and org_settings.default_currency:
+                                org_data['currency'] = org_settings.default_currency
+
+                            # Identifiants fiscaux
+                            if hasattr(org_settings, 'company_niu') and org_settings.company_niu and org_settings.company_niu.strip():
+                                org_data['niu'] = org_settings.company_niu
+                            if hasattr(org_settings, 'company_tax_number') and org_settings.company_tax_number and org_settings.company_tax_number.strip():
+                                org_data['tax_number'] = org_settings.company_tax_number
+                            if hasattr(org_settings, 'company_rc_number') and org_settings.company_rc_number and org_settings.company_rc_number.strip():
+                                org_data['rc_number'] = org_settings.company_rc_number
+                            if hasattr(org_settings, 'company_rccm_number') and org_settings.company_rccm_number and org_settings.company_rccm_number.strip():
+                                org_data['rccm_number'] = org_settings.company_rccm_number
+                            if hasattr(org_settings, 'company_vat_number') and org_settings.company_vat_number and org_settings.company_vat_number.strip():
+                                org_data['vat_number'] = org_settings.company_vat_number
+
+                            # Canada/Québec
+                            if hasattr(org_settings, 'company_gst_number') and org_settings.company_gst_number and org_settings.company_gst_number.strip():
+                                org_data['gst_number'] = org_settings.company_gst_number
+                            if hasattr(org_settings, 'company_qst_number') and org_settings.company_qst_number and org_settings.company_qst_number.strip():
+                                org_data['qst_number'] = org_settings.company_qst_number
+                            if hasattr(org_settings, 'company_neq') and org_settings.company_neq and org_settings.company_neq.strip():
+                                org_data['neq'] = org_settings.company_neq
+
+                            # Informations bancaires
+                            if hasattr(org_settings, 'company_bank_name') and org_settings.company_bank_name and org_settings.company_bank_name.strip():
+                                org_data['bank_name'] = org_settings.company_bank_name
+                            if hasattr(org_settings, 'company_bank_account') and org_settings.company_bank_account and org_settings.company_bank_account.strip():
+                                org_data['bank_account'] = org_settings.company_bank_account
+                            if hasattr(org_settings, 'company_bank_swift') and org_settings.company_bank_swift and org_settings.company_bank_swift.strip():
+                                org_data['bank_swift'] = org_settings.company_bank_swift
                         else:
                             # Si pas d'OrganizationSettings, utiliser le nom de l'organisation
                             org_data['name'] = organization.name if organization.name else None

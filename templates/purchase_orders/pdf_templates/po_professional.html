@@ -329,6 +329,19 @@
                     {% if organization.address %}<div>{{ organization.address }}</div>{% endif %}
                     {% if organization.phone %}<div>{% trans "Tel" %}: {{ organization.phone }}</div>{% endif %}
                     {% if organization.email %}<div>Email: {{ organization.email }}</div>{% endif %}
+                    {# Affichage conditionnel selon la région fiscale #}
+                    {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                        {% if organization.niu %}<div>NIU: {{ organization.niu }}</div>{% endif %}
+                        {% if organization.rc_number %}<div>RC: {{ organization.rc_number }}</div>{% elif organization.rccm_number %}<div>RCCM: {{ organization.rccm_number }}</div>{% endif %}
+                    {% elif organization.tax_region == 'eu' %}
+                        {% if organization.vat_number %}<div>{% trans "VAT" %}: {{ organization.vat_number }}</div>{% endif %}
+                    {% elif organization.tax_region == 'canada' %}
+                        {% if organization.neq %}<div>NEQ: {{ organization.neq }}</div>{% endif %}
+                        {% if organization.gst_number %}<div>GST/HST: {{ organization.gst_number }}</div>{% endif %}
+                        {% if organization.qst_number %}<div>QST: {{ organization.qst_number }}</div>{% endif %}
+                    {% elif organization.tax_region == 'usa' %}
+                        {% if organization.tax_number %}<div>TIN: {{ organization.tax_number }}</div>{% endif %}
+                    {% endif %}
                 </div>
             </div>
 
@@ -367,8 +380,8 @@
                             {% endif %}
                         </td>
                         <td>{{ item.quantity }} {{ item.unit|default:"unité(s)" }}</td>
-                        <td>{{ item.unit_price }} CAD</td>
-                        <td><strong>{{ item.total_price }} CAD</strong></td>
+                        <td>{{ item.unit_price }} {{ organization.currency|default:"CAD" }}</td>
+                        <td><strong>{{ item.total_price }} {{ organization.currency|default:"CAD" }}</strong></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -379,29 +392,29 @@
                 <div class="totals-box">
                     <div class="total-row">
                         <span>Sous-total:</span>
-                        <span>{{ po.subtotal }} CAD</span>
+                        <span>{{ po.subtotal }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                     {% if po.shipping_cost > 0 %}
                     <div class="total-row">
                         <span>Frais de livraison:</span>
-                        <span>{{ po.shipping_cost }} CAD</span>
+                        <span>{{ po.shipping_cost }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                     {% endif %}
                     {% if po.tax_gst_hst > 0 %}
                     <div class="total-row">
                         <span>TPS/TVH:</span>
-                        <span>{{ po.tax_gst_hst }} CAD</span>
+                        <span>{{ po.tax_gst_hst }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                     {% endif %}
                     {% if po.tax_qst > 0 %}
                     <div class="total-row">
                         <span>TVQ:</span>
-                        <span>{{ po.tax_qst }} CAD</span>
+                        <span>{{ po.tax_qst }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                     {% endif %}
                     <div class="total-row final">
                         <span>TOTAL:</span>
-                        <span>{{ po.total_amount }} CAD</span>
+                        <span>{{ po.total_amount }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                 </div>
             </div>

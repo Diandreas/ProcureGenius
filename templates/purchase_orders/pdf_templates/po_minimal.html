@@ -234,6 +234,19 @@
                     {% if organization.address %}{{ organization.address }}{% endif %}
                     {% if organization.phone %}<br>{% trans "Tel" %}: {{ organization.phone }}{% endif %}
                     {% if organization.email %} • {{ organization.email }}{% endif %}
+                    {# Affichage conditionnel selon la région fiscale #}
+                    {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                        {% if organization.niu %}<br>NIU: {{ organization.niu }}{% endif %}
+                        {% if organization.rc_number %} • RC: {{ organization.rc_number }}{% elif organization.rccm_number %} • RCCM: {{ organization.rccm_number }}{% endif %}
+                    {% elif organization.tax_region == 'eu' %}
+                        {% if organization.vat_number %}<br>{% trans "VAT" %}: {{ organization.vat_number }}{% endif %}
+                    {% elif organization.tax_region == 'canada' %}
+                        {% if organization.neq %}<br>NEQ: {{ organization.neq }}{% endif %}
+                        {% if organization.gst_number %} • GST/HST: {{ organization.gst_number }}{% endif %}
+                        {% if organization.qst_number %} • QST: {{ organization.qst_number }}{% endif %}
+                    {% elif organization.tax_region == 'usa' %}
+                        {% if organization.tax_number %}<br>TIN: {{ organization.tax_number }}{% endif %}
+                    {% endif %}
                 </div>
             </div>
 
@@ -302,29 +315,29 @@
         <div class="totals-box">
             <div class="total-row">
                 <span>{% trans "Subtotal" %}</span>
-                <span>{{ po.subtotal }} CAD</span>
+                <span>{{ po.subtotal }} {{ organization.currency|default:"CAD" }}</span>
             </div>
             {% if po.shipping_cost > 0 %}
             <div class="total-row">
                 <span>{% trans "Shipping" %}</span>
-                <span>{{ po.shipping_cost }} CAD</span>
+                <span>{{ po.shipping_cost }} {{ organization.currency|default:"CAD" }}</span>
             </div>
             {% endif %}
             {% if po.tax_gst_hst > 0 %}
             <div class="total-row">
                 <span>{% trans "GST/HST" %}</span>
-                <span>{{ po.tax_gst_hst }} CAD</span>
+                <span>{{ po.tax_gst_hst }} {{ organization.currency|default:"CAD" }}</span>
             </div>
             {% endif %}
             {% if po.tax_qst > 0 %}
             <div class="total-row">
                 <span>{% trans "QST" %}</span>
-                <span>{{ po.tax_qst }} CAD</span>
+                <span>{{ po.tax_qst }} {{ organization.currency|default:"CAD" }}</span>
             </div>
             {% endif %}
             <div class="total-row final">
                 <span>{% trans "TOTAL" %}</span>
-                <span>{{ po.total_amount }} CAD</span>
+                <span>{{ po.total_amount }} {{ organization.currency|default:"CAD" }}</span>
             </div>
         </div>
     </div>

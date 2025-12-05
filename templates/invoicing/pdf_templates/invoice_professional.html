@@ -367,6 +367,19 @@
                         {% if organization.email %}
                         <p>{{ organization.email }}</p>
                         {% endif %}
+                        {# Affichage conditionnel selon la région fiscale #}
+                        {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                            {% if organization.niu %}<p><strong>NIU:</strong> {{ organization.niu }}</p>{% endif %}
+                            {% if organization.rc_number %}<p><strong>RC:</strong> {{ organization.rc_number }}</p>{% elif organization.rccm_number %}<p><strong>RCCM:</strong> {{ organization.rccm_number }}</p>{% endif %}
+                        {% elif organization.tax_region == 'eu' %}
+                            {% if organization.vat_number %}<p><strong>{% trans "VAT" %}:</strong> {{ organization.vat_number }}</p>{% endif %}
+                        {% elif organization.tax_region == 'canada' %}
+                            {% if organization.neq %}<p><strong>NEQ:</strong> {{ organization.neq }}</p>{% endif %}
+                            {% if organization.gst_number %}<p><strong>GST/HST:</strong> {{ organization.gst_number }}</p>{% endif %}
+                            {% if organization.qst_number %}<p><strong>QST:</strong> {{ organization.qst_number }}</p>{% endif %}
+                        {% elif organization.tax_region == 'usa' %}
+                            {% if organization.tax_number %}<p><strong>TIN:</strong> {{ organization.tax_number }}</p>{% endif %}
+                        {% endif %}
                     </div>
                 </div>
 
@@ -448,8 +461,8 @@
                                 <td>{{ item.product_reference|default:"-" }}</td>
                                 <td>{{ item.description|default:"-" }}</td>
                                 <td class="text-center">{{ item.quantity|default:0 }}</td>
-                                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} €</td>
-                                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} €</td>
+                                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -465,17 +478,17 @@
                     <table class="totals-table">
                         <tr>
                             <td>{% trans "Subtotal" %}</td>
-                            <td>{{ subtotal|floatformat:2 }} €</td>
+                            <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                         </tr>
                         {% if tax_amount > 0 %}
                         <tr>
                             <td>{% trans "Taxes" %}</td>
-                            <td>{{ tax_amount|floatformat:2 }} €</td>
+                            <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                         </tr>
                         {% endif %}
                         <tr class="total-row">
                             <td>{% trans "Total Due" %}</td>
-                            <td>{{ total_amount|floatformat:2 }} €</td>
+                            <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                         </tr>
                     </table>
                 </div>
@@ -487,6 +500,12 @@
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}
                         {% if organization.phone %} • {% trans "Tel" %}: {{ organization.phone }}{% endif %}
                     </p>
+                    {# Coordonnées bancaires (optionnel) #}
+                    {% if organization.bank_account %}
+                    <p>
+                        <strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %} • {% endif %}{% trans "Account" %}: {{ organization.bank_account }}
+                    </p>
+                    {% endif %}
                     <div class="footer-meta">
                         {% trans "Document generated on" %} {% now "d/m/Y à H:i" %}
                     </div>
