@@ -4,11 +4,37 @@ import { authAPI } from '../../services/api';
 // Async thunks
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials) => {
-    const response = await authAPI.login(credentials);
-    const { token } = response.data;
-    localStorage.setItem('authToken', token);
-    return { token, user: credentials.username }; // TODO: Get user data from API
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await authAPI.login(credentials);
+      const { token } = response.data;
+      localStorage.setItem('authToken', token);
+      return { token, user: credentials.username }; // TODO: Get user data from API
+    } catch (error) {
+      // Extract meaningful error message from response
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        // Handle different error formats from Django REST Framework
+        if (errorData.non_field_errors) {
+          return rejectWithValue('Email ou mot de passe incorrect');
+        }
+        if (errorData.detail) {
+          return rejectWithValue(errorData.detail);
+        }
+        if (errorData.error) {
+          return rejectWithValue(errorData.error);
+        }
+        // Generic error from validation
+        const firstError = Object.values(errorData)[0];
+        if (Array.isArray(firstError)) {
+          return rejectWithValue(firstError[0]);
+        }
+        if (typeof firstError === 'string') {
+          return rejectWithValue(firstError);
+        }
+      }
+      return rejectWithValue('Erreur de connexion. Veuillez réessayer.');
+    }
   }
 );
 
@@ -50,7 +76,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload || action.error?.message || 'Erreur de connexion';
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {

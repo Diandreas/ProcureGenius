@@ -86,20 +86,27 @@ def api_register(request):
             # Create free subscription
             try:
                 free_plan = SubscriptionPlan.objects.get(code='free')
+                from django.utils import timezone
+                from datetime import timedelta
+                # Set proper date fields required by Subscription model
                 Subscription.objects.create(
                     organization=organization,
                     plan=free_plan,
                     billing_period='monthly',
                     status='active',  # Free plan is immediately active
+                    current_period_start=timezone.now(),
+                    current_period_end=timezone.now() + timedelta(days=365*10),  # Free plan never expires
                 )
             except SubscriptionPlan.DoesNotExist:
                 # If plans not yet created, skip subscription creation
-                pass
+                # This is OK for free tier, organization will still work
+                import logging
+                logging.getLogger(__name__).warning("Free subscription plan not found, skipping subscription creation")
 
             # UserPreferences and UserPermissions are created automatically by signals
 
             # Generate auth token
-            token, _ = Token.objects.get_or_create(user=user)
+            token, created = Token.objects.get_or_create(user=user)
 
             # TODO: Send email verification email
             # send_email_verification(user)
