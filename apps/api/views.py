@@ -13,6 +13,7 @@ from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory
 from apps.accounts.models import Client
 from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules
+from apps.core.organization_mixin import OrganizationFilterMixin, OrganizationClientFilterMixin
 
 from .serializers import (
     SupplierSerializer, SupplierCategorySerializer, SupplierProductSerializer,
@@ -30,20 +31,24 @@ class SupplierCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = SupplierCategorySerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.SUPPLIERS
+    # NOTE: SupplierCategory is a global model shared across organizations
+    # No organization filter needed
 
 
-class SupplierViewSet(viewsets.ModelViewSet):
+class SupplierViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les fournisseurs"""
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.SUPPLIERS
+    organization_field = 'organization'
     filterset_fields = ['status', 'province', 'is_local', 'is_active']
     search_fields = ['name', 'contact_person', 'email', 'city']
     ordering_fields = ['name', 'rating', 'created_at']
     ordering = ['name']
     
     def get_queryset(self):
+        # First apply organization filter
         queryset = super().get_queryset()
         
         # Filtre par catégorie
@@ -162,18 +167,20 @@ class SupplierViewSet(viewsets.ModelViewSet):
         return response
 
 
-class SupplierProductViewSet(viewsets.ModelViewSet):
+class SupplierProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les relations Fournisseur-Produit"""
     queryset = SupplierProduct.objects.all()
     serializer_class = SupplierProductSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.SUPPLIERS
+    organization_field = 'supplier__organization'
     filterset_fields = ['supplier', 'product', 'is_preferred', 'is_active']
     search_fields = ['supplier__name', 'product__name', 'supplier_reference']
     ordering_fields = ['created_at', 'supplier_price', 'lead_time_days']
     ordering = ['-is_preferred', 'supplier__name']
 
     def get_queryset(self):
+        # First apply organization filter
         queryset = super().get_queryset()
 
         # Filtre par fournisseur
@@ -217,18 +224,20 @@ class SupplierProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.PRODUCTS
+    organization_field = 'organization'  # Product has organization FK
     filterset_fields = ['is_active', 'product_type']
     search_fields = ['name', 'reference', 'description']
     ordering_fields = ['name', 'price', 'stock_quantity']
     ordering = ['name']
 
     def get_queryset(self):
+        # First apply organization filter
         queryset = super().get_queryset()
 
         # Filtre par fournisseur (via la relation SupplierProduct)
@@ -551,12 +560,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         })
 
 
-class ClientViewSet(viewsets.ModelViewSet):
+class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les clients"""
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.CLIENTS
+    organization_field = 'organization'  # Client has organization FK
     filterset_fields = ['is_active']
     search_fields = ['name', 'email', 'contact_person']
     ordering_fields = ['name', 'created_at']
@@ -688,18 +698,20 @@ class ClientViewSet(viewsets.ModelViewSet):
         })
 
 
-class PurchaseOrderViewSet(viewsets.ModelViewSet):
+class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les bons de commande"""
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.PURCHASE_ORDERS
+    organization_field = 'created_by__organization'  # Filter via user's org
     filterset_fields = ['status', 'supplier', 'created_by']
     search_fields = ['po_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'required_date']
     ordering = ['-created_at']
     
     def get_queryset(self):
+        # First apply organization filter
         queryset = super().get_queryset()
         
         # Filtre par dates
@@ -772,18 +784,20 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
         return Response({'message': 'PDF generation not implemented yet'})
 
 
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les factures"""
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.INVOICES
+    organization_field = 'created_by__organization'  # Filter via user's org
     filterset_fields = ['status', 'client', 'created_by']
     search_fields = ['invoice_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'due_date']
     ordering = ['-created_at']
     
     def get_queryset(self):
+        # First apply organization filter
         queryset = super().get_queryset()
         
         # Filtre par dates
@@ -938,83 +952,98 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
 class DashboardStatsView(APIView):
     """Vue pour les statistiques du tableau de bord"""
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         from apps.core.modules import get_user_accessible_modules
         from datetime import datetime
 
+        # Get user's organization
+        user = request.user
+        organization = getattr(user, 'organization', None)
+
+        if not organization:
+            return Response({
+                'enabled_modules': [],
+                'error': 'No organization assigned to user'
+            }, status=status.HTTP_403_FORBIDDEN)
+
         # Récupérer les modules accessibles par l'utilisateur
-        user_modules = get_user_accessible_modules(request.user) if request.user.is_authenticated else []
+        user_modules = get_user_accessible_modules(user)
 
         # Initialiser les stats
         stats = {
             'enabled_modules': user_modules,
         }
 
-        # Stats Fournisseurs (si module actif)
+        # Stats Fournisseurs (si module actif) - FILTERED BY ORGANIZATION
         if Modules.SUPPLIERS in user_modules:
-            stats['total_suppliers'] = Supplier.objects.count()
-            stats['active_suppliers'] = Supplier.objects.filter(status='active').count()
-            stats['inactive_suppliers'] = Supplier.objects.filter(status='inactive').count()
+            suppliers = Supplier.objects.filter(organization=organization)
+            stats['total_suppliers'] = suppliers.count()
+            stats['active_suppliers'] = suppliers.filter(status='active').count()
+            stats['inactive_suppliers'] = suppliers.filter(status='inactive').count()
             stats['suppliers_by_rating'] = {
-                '5_stars': Supplier.objects.filter(rating=5).count(),
-                '4_stars': Supplier.objects.filter(rating=4).count(),
-                '3_stars': Supplier.objects.filter(rating=3).count(),
-                'below_3': Supplier.objects.filter(rating__lt=3).count(),
+                '5_stars': suppliers.filter(rating=5).count(),
+                '4_stars': suppliers.filter(rating=4).count(),
+                '3_stars': suppliers.filter(rating=3).count(),
+                'below_3': suppliers.filter(rating__lt=3).count(),
             }
 
-        # Stats Bons de commande (si module actif)
+        # Stats Bons de commande (si module actif) - FILTERED BY ORGANIZATION
         if Modules.PURCHASE_ORDERS in user_modules:
-            stats['total_purchase_orders'] = PurchaseOrder.objects.count()
-            stats['pending_purchase_orders'] = PurchaseOrder.objects.filter(
+            purchase_orders = PurchaseOrder.objects.filter(created_by__organization=organization)
+            stats['total_purchase_orders'] = purchase_orders.count()
+            stats['pending_purchase_orders'] = purchase_orders.filter(
                 status__in=['draft', 'pending']
             ).count()
-            stats['approved_purchase_orders'] = PurchaseOrder.objects.filter(status='approved').count()
-            stats['received_purchase_orders'] = PurchaseOrder.objects.filter(status='received').count()
-            stats['total_expenses'] = PurchaseOrder.objects.filter(
+            stats['approved_purchase_orders'] = purchase_orders.filter(status='approved').count()
+            stats['received_purchase_orders'] = purchase_orders.filter(status='received').count()
+            stats['total_expenses'] = purchase_orders.filter(
                 status__in=['approved', 'sent', 'received']
             ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-        # Stats Factures (si module actif)
+        # Stats Factures (si module actif) - FILTERED BY ORGANIZATION
         if Modules.INVOICES in user_modules:
-            stats['total_invoices'] = Invoice.objects.count()
-            stats['unpaid_invoices'] = Invoice.objects.filter(status='sent').count()
-            stats['paid_invoices'] = Invoice.objects.filter(status='paid').count()
-            stats['overdue_invoices'] = Invoice.objects.filter(status='overdue').count()
-            stats['draft_invoices'] = Invoice.objects.filter(status='draft').count()
-            stats['total_revenue'] = Invoice.objects.filter(
+            invoices = Invoice.objects.filter(created_by__organization=organization)
+            stats['total_invoices'] = invoices.count()
+            stats['unpaid_invoices'] = invoices.filter(status='sent').count()
+            stats['paid_invoices'] = invoices.filter(status='paid').count()
+            stats['overdue_invoices'] = invoices.filter(status='overdue').count()
+            stats['draft_invoices'] = invoices.filter(status='draft').count()
+            stats['total_revenue'] = invoices.filter(
                 status='paid'
             ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-            stats['pending_revenue'] = Invoice.objects.filter(
+            stats['pending_revenue'] = invoices.filter(
                 status='sent'
             ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-        # Stats Produits (si module actif)
+        # Stats Produits (si module actif) - FILTERED BY ORGANIZATION
         if Modules.PRODUCTS in user_modules:
-            stats['total_products'] = Product.objects.count()
-            stats['active_products'] = Product.objects.filter(is_active=True).count()
-            stats['low_stock_products'] = Product.objects.filter(
+            products = Product.objects.filter(organization=organization)
+            stats['total_products'] = products.count()
+            stats['active_products'] = products.filter(is_active=True).count()
+            stats['low_stock_products'] = products.filter(
                 product_type='physical',
                 stock_quantity__lte=F('low_stock_threshold')
             ).count()
-            stats['out_of_stock_products'] = Product.objects.filter(
+            stats['out_of_stock_products'] = products.filter(
                 product_type='physical',
                 stock_quantity=0
             ).count()
-            stats['total_stock_value'] = Product.objects.filter(
+            stats['total_stock_value'] = products.filter(
                 product_type='physical'
             ).aggregate(
                 total=Sum(F('stock_quantity') * F('cost_price'))
             )['total'] or 0
 
-        # Stats Clients (si module actif)
+        # Stats Clients (si module actif) - FILTERED BY ORGANIZATION
         if Modules.CLIENTS in user_modules:
-            stats['total_clients'] = Client.objects.count()
-            stats['active_clients'] = Client.objects.filter(is_active=True).count()
+            clients = Client.objects.filter(organization=organization)
+            stats['total_clients'] = clients.count()
+            stats['active_clients'] = clients.filter(is_active=True).count()
             # Clients avec au moins une facture payée dans les 3 derniers mois
             three_months_ago = timezone.now() - timedelta(days=90)
-            stats['recent_active_clients'] = Client.objects.filter(
+            stats['recent_active_clients'] = clients.filter(
                 invoices__status='paid',
                 invoices__paid_date__gte=three_months_ago
             ).distinct().count()
@@ -1031,8 +1060,9 @@ class DashboardStatsView(APIView):
         sixty_days_ago = timezone.now() - timedelta(days=60)
 
         if Modules.INVOICES in user_modules:
-            recent_invoices_count = Invoice.objects.filter(created_at__gte=thirty_days_ago).count()
-            previous_invoices_count = Invoice.objects.filter(
+            invoices = Invoice.objects.filter(created_by__organization=organization)
+            recent_invoices_count = invoices.filter(created_at__gte=thirty_days_ago).count()
+            previous_invoices_count = invoices.filter(
                 created_at__gte=sixty_days_ago,
                 created_at__lt=thirty_days_ago
             ).count()
@@ -1043,8 +1073,9 @@ class DashboardStatsView(APIView):
             }
 
         if Modules.PURCHASE_ORDERS in user_modules:
-            recent_po_count = PurchaseOrder.objects.filter(created_at__gte=thirty_days_ago).count()
-            previous_po_count = PurchaseOrder.objects.filter(
+            purchase_orders = PurchaseOrder.objects.filter(created_by__organization=organization)
+            recent_po_count = purchase_orders.filter(created_at__gte=thirty_days_ago).count()
+            previous_po_count = purchase_orders.filter(
                 created_at__gte=sixty_days_ago,
                 created_at__lt=thirty_days_ago
             ).count()
@@ -1060,41 +1091,62 @@ class DashboardStatsView(APIView):
 
 class RecentActivityView(APIView):
     """Vue pour l'activité récente"""
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
-    
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         try:
+            # Get user's organization
+            user = request.user
+            organization = getattr(user, 'organization', None)
+
+            if not organization:
+                return Response({
+                    'recent_suppliers': [],
+                    'recent_purchase_orders': [],
+                    'recent_invoices': [],
+                    'error': 'No organization assigned to user'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             # Derniers 7 jours
             since = timezone.now() - timedelta(days=7)
-            
+
             recent_data = {
                 'recent_suppliers': [],
                 'recent_purchase_orders': [],
                 'recent_invoices': [],
             }
-            
-            # Essayer de récupérer les données récentes
+
+            # Essayer de récupérer les données récentes - FILTERED BY ORGANIZATION
             try:
-                recent_suppliers = Supplier.objects.filter(created_at__gte=since).order_by('-created_at')[:5]
+                recent_suppliers = Supplier.objects.filter(
+                    organization=organization,
+                    created_at__gte=since
+                ).order_by('-created_at')[:5]
                 recent_data['recent_suppliers'] = SupplierSerializer(recent_suppliers, many=True).data
             except Exception as e:
                 print(f"Erreur suppliers: {e}")
                 recent_data['recent_suppliers'] = []
-            
+
             try:
-                recent_orders = PurchaseOrder.objects.filter(created_at__gte=since).order_by('-created_at')[:5]
+                recent_orders = PurchaseOrder.objects.filter(
+                    created_by__organization=organization,
+                    created_at__gte=since
+                ).order_by('-created_at')[:5]
                 recent_data['recent_purchase_orders'] = PurchaseOrderSerializer(recent_orders, many=True).data
             except Exception as e:
                 print(f"Erreur purchase orders: {e}")
                 recent_data['recent_purchase_orders'] = []
-            
+
             try:
-                recent_invoices = Invoice.objects.filter(created_at__gte=since).order_by('-created_at')[:5]
+                recent_invoices = Invoice.objects.filter(
+                    created_by__organization=organization,
+                    created_at__gte=since
+                ).order_by('-created_at')[:5]
                 recent_data['recent_invoices'] = InvoiceSerializer(recent_invoices, many=True).data
             except Exception as e:
                 print(f"Erreur invoices: {e}")
                 recent_data['recent_invoices'] = []
-            
+
             return Response(recent_data)
         except Exception as e:
             print(f"Erreur générale RecentActivityView: {e}")

@@ -51,6 +51,7 @@ import MigrationWizard from './pages/migration/MigrationWizard';
 import Pricing from './pages/Pricing';
 import Register from './pages/auth/Register';
 import LoginEnhanced from './pages/auth/LoginEnhanced';
+import OnboardingSetup from './pages/auth/OnboardingSetup';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -58,9 +59,6 @@ import ModuleRoute from './components/guards/ModuleRoute';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
-
-// Onboarding
-import OnboardingWizard from './components/OnboardingWizard';
 
 // AdSense
 import { AdSenseScript } from './components/AdSense';
@@ -441,18 +439,19 @@ function App() {
 
       if (response.ok) {
         const data = await response.json();
-        setShowOnboarding(!data.preferences?.onboarding_completed);
+        const needsOnboarding = !data.preferences?.onboarding_completed;
+
+        // If user needs onboarding and is not already on the onboarding page
+        if (needsOnboarding && window.location.pathname !== '/onboarding') {
+          window.location.href = '/onboarding';
+          return;
+        }
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
     } finally {
       setOnboardingChecked(true);
     }
-  };
-
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    window.location.reload(); // Recharger pour mettre à jour la navigation
   };
 
   return (
@@ -478,7 +477,11 @@ function App() {
                     <Route element={<AuthLayout />}>
                       <Route path="/login" element={<LoginEnhanced />} />
                       <Route path="/register" element={<Register />} />
-                      <Route path="/login-old" element={<Login />} />
+                    </Route>
+
+                    {/* Onboarding - Protected but accessible without onboarding_completed */}
+                    <Route element={<PrivateRoute />}>
+                      <Route path="/onboarding" element={<OnboardingSetup />} />
                     </Route>
 
                     {/* Protected Routes */}
@@ -553,12 +556,6 @@ function App() {
                   {/* PWA Install Prompt */}
                   <PWAInstallPrompt />
                 </Router>
-
-                {/* Onboarding Wizard */}
-                <OnboardingWizard
-                  open={showOnboarding}
-                  onComplete={handleOnboardingComplete}
-                />
                   </>
                 )}
               </ModuleProvider>

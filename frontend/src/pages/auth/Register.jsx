@@ -4,6 +4,8 @@
  */
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setAuthenticated } from '../../store/slices/authSlice';
 import {
   Box,
   Paper,
@@ -35,6 +37,7 @@ import api from '../../services/api';
 
 function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -109,12 +112,34 @@ function Register() {
         organization_name: formData.organizationName,
       });
 
-      setSuccess(true);
+      // Auto-login: Save the token returned from registration
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        // Store user info if available
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
 
-      // Show success message and redirect after delay
-      setTimeout(() => {
-        navigate('/login?registered=true');
-      }, 2000);
+        // Update Redux state to mark user as authenticated
+        dispatch(setAuthenticated({
+          token: response.data.token,
+          user: response.data.user
+        }));
+
+        // Redirect to onboarding setup
+        if (response.data.requires_onboarding) {
+          navigate('/onboarding');
+        } else {
+          // Fallback: redirect to dashboard if onboarding already completed
+          navigate('/dashboard');
+        }
+      } else {
+        // Fallback: show success and redirect to login
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/login?registered=true');
+        }, 2000);
+      }
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -123,9 +148,11 @@ function Register() {
         // Handle validation errors from backend
         const errors = err.response.data;
         if (errors.email) {
-          setError(errors.email[0]);
-        } else if (errors.password1) {
-          setError(errors.password1[0]);
+          setError(Array.isArray(errors.email) ? errors.email[0] : errors.email);
+        } else if (errors.password) {
+          setError(Array.isArray(errors.password) ? errors.password[0] : errors.password);
+        } else if (errors.error) {
+          setError(errors.error);
         } else if (errors.non_field_errors) {
           setError(errors.non_field_errors[0]);
         } else {

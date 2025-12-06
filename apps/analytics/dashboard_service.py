@@ -25,6 +25,7 @@ class DashboardStatsService:
             compare_previous: Si True, compare avec la période précédente
         """
         self.user = user
+        self.organization = getattr(user, 'organization', None)
         self.end_date = end_date or timezone.now()
 
         # Calcul de la date de début
@@ -93,29 +94,35 @@ class DashboardStatsService:
         """Statistiques détaillées des fournisseurs"""
         from apps.suppliers.models import Supplier
 
-        # Stats de base
-        total = Supplier.objects.count()
-        active = Supplier.objects.filter(is_active=True, status='active').count()
+        # Si pas d'organisation, retourner des stats vides
+        if not self.organization:
+            return {'total': 0, 'active': 0, 'inactive': 0, 'new_in_period': 0, 'by_rating': {}, 'top_suppliers': []}
 
-        # Stats de la période
+        # Stats de base - FILTERED BY ORGANIZATION
+        total = Supplier.objects.filter(organization=self.organization).count()
+        active = Supplier.objects.filter(organization=self.organization, is_active=True, status='active').count()
+
+        # Stats de la période - FILTERED BY ORGANIZATION
         period_suppliers = Supplier.objects.filter(
+            organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
         )
         new_suppliers = period_suppliers.count()
 
-        # Par note
+        # Par note - FILTERED BY ORGANIZATION
         by_rating = {
-            '5_stars': Supplier.objects.filter(rating=5).count(),
-            '4_stars': Supplier.objects.filter(rating=4).count(),
-            '3_stars': Supplier.objects.filter(rating=3).count(),
-            'below_3': Supplier.objects.filter(rating__lt=3, rating__gte=0).count(),
-            'no_rating': Supplier.objects.filter(Q(rating__isnull=True) | Q(rating=0)).count(),
+            '5_stars': Supplier.objects.filter(organization=self.organization, rating=5).count(),
+            '4_stars': Supplier.objects.filter(organization=self.organization, rating=4).count(),
+            '3_stars': Supplier.objects.filter(organization=self.organization, rating=3).count(),
+            'below_3': Supplier.objects.filter(organization=self.organization, rating__lt=3, rating__gte=0).count(),
+            'no_rating': Supplier.objects.filter(organization=self.organization).filter(Q(rating__isnull=True) | Q(rating=0)).count(),
         }
 
-        # Top fournisseurs par volume de commandes
+        # Top fournisseurs par volume de commandes - FILTERED BY ORGANIZATION
         from apps.purchase_orders.models import PurchaseOrder
         top_suppliers = Supplier.objects.filter(
+            organization=self.organization,
             purchaseorder__created_at__gte=self.start_date,
             purchaseorder__created_at__lte=self.end_date
         ).annotate(
@@ -142,9 +149,10 @@ class DashboardStatsService:
             'top_suppliers': top_suppliers_data,
         }
 
-        # Comparaison avec période précédente
+        # Comparaison avec période précédente - FILTERED BY ORGANIZATION
         if self.compare_previous:
             previous_new = Supplier.objects.filter(
+                organization=self.organization,
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             ).count()
@@ -160,21 +168,26 @@ class DashboardStatsService:
         """Statistiques détaillées des bons de commande"""
         from apps.purchase_orders.models import PurchaseOrder
 
-        # Stats globales
-        total = PurchaseOrder.objects.count()
+        # Si pas d'organisation, retourner des stats vides
+        if not self.organization:
+            return {'total': 0, 'by_status': {}, 'period': {'count': 0, 'total_amount': 0, 'average_amount': 0, 'daily_trend': []}}
 
-        # Par statut
+        # Stats globales - FILTERED BY ORGANIZATION
+        total = PurchaseOrder.objects.filter(created_by__organization=self.organization).count()
+
+        # Par statut - FILTERED BY ORGANIZATION
         by_status = {
-            'draft': PurchaseOrder.objects.filter(status='draft').count(),
-            'pending': PurchaseOrder.objects.filter(status='pending').count(),
-            'approved': PurchaseOrder.objects.filter(status='approved').count(),
-            'sent': PurchaseOrder.objects.filter(status='sent').count(),
-            'received': PurchaseOrder.objects.filter(status='received').count(),
-            'cancelled': PurchaseOrder.objects.filter(status='cancelled').count(),
+            'draft': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='draft').count(),
+            'pending': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='pending').count(),
+            'approved': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='approved').count(),
+            'sent': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='sent').count(),
+            'received': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='received').count(),
+            'cancelled': PurchaseOrder.objects.filter(created_by__organization=self.organization, status='cancelled').count(),
         }
 
-        # Stats de la période
+        # Stats de la période - FILTERED BY ORGANIZATION
         period_pos = PurchaseOrder.objects.filter(
+            created_by__organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
         )
@@ -215,9 +228,10 @@ class DashboardStatsService:
             }
         }
 
-        # Comparaison avec période précédente
+        # Comparaison avec période précédente - FILTERED BY ORGANIZATION
         if self.compare_previous:
             previous_pos = PurchaseOrder.objects.filter(
+                created_by__organization=self.organization,
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             )
@@ -239,20 +253,25 @@ class DashboardStatsService:
         """Statistiques détaillées des factures"""
         from apps.invoicing.models import Invoice
 
-        # Stats globales
-        total = Invoice.objects.count()
+        # Si pas d'organisation, retourner des stats vides
+        if not self.organization:
+            return {'total': 0, 'by_status': {}, 'period': {'count': 0, 'total_amount': 0, 'paid_amount': 0, 'pending_amount': 0, 'payment_rate': 0, 'daily_trend': []}}
 
-        # Par statut
+        # Stats globales - FILTERED BY ORGANIZATION
+        total = Invoice.objects.filter(created_by__organization=self.organization).count()
+
+        # Par statut - FILTERED BY ORGANIZATION
         by_status = {
-            'draft': Invoice.objects.filter(status='draft').count(),
-            'sent': Invoice.objects.filter(status='sent').count(),
-            'paid': Invoice.objects.filter(status='paid').count(),
-            'overdue': Invoice.objects.filter(status='overdue').count(),
-            'cancelled': Invoice.objects.filter(status='cancelled').count(),
+            'draft': Invoice.objects.filter(created_by__organization=self.organization, status='draft').count(),
+            'sent': Invoice.objects.filter(created_by__organization=self.organization, status='sent').count(),
+            'paid': Invoice.objects.filter(created_by__organization=self.organization, status='paid').count(),
+            'overdue': Invoice.objects.filter(created_by__organization=self.organization, status='overdue').count(),
+            'cancelled': Invoice.objects.filter(created_by__organization=self.organization, status='cancelled').count(),
         }
 
-        # Stats de la période
+        # Stats de la période - FILTERED BY ORGANIZATION
         period_invoices = Invoice.objects.filter(
+            created_by__organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
         )
@@ -300,9 +319,10 @@ class DashboardStatsService:
             }
         }
 
-        # Comparaison avec période précédente
+        # Comparaison avec période précédente - FILTERED BY ORGANIZATION
         if self.compare_previous:
             previous_invoices = Invoice.objects.filter(
+                created_by__organization=self.organization,
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             )
@@ -327,25 +347,32 @@ class DashboardStatsService:
         from apps.accounts.models import Client
         from apps.invoicing.models import Invoice
 
-        # Stats globales
-        total = Client.objects.count()
-        active = Client.objects.filter(is_active=True).count()
+        # Si pas d'organisation, retourner des stats vides
+        if not self.organization:
+            return {'total': 0, 'active': 0, 'new_in_period': 0, 'active_with_revenue': 0, 'top_clients': []}
 
-        # Nouveaux clients dans la période
+        # Stats globales - FILTERED BY ORGANIZATION
+        total = Client.objects.filter(organization=self.organization).count()
+        active = Client.objects.filter(organization=self.organization, is_active=True).count()
+
+        # Nouveaux clients dans la période - FILTERED BY ORGANIZATION
         new_clients = Client.objects.filter(
+            organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
         ).count()
 
-        # Clients actifs (avec factures payées récemment)
+        # Clients actifs (avec factures payées récemment) - FILTERED BY ORGANIZATION
         active_with_invoices = Client.objects.filter(
+            organization=self.organization,
             invoices__status='paid',
             invoices__payments__payment_date__gte=self.start_date,
             invoices__payments__payment_date__lte=self.end_date
         ).distinct().count()
 
-        # Top clients par chiffre d'affaires
+        # Top clients par chiffre d'affaires - FILTERED BY ORGANIZATION
         top_clients = Client.objects.filter(
+            organization=self.organization,
             invoices__status='paid',
             invoices__payments__payment_date__gte=self.start_date,
             invoices__payments__payment_date__lte=self.end_date
@@ -372,9 +399,10 @@ class DashboardStatsService:
             'top_clients': top_clients_data
         }
 
-        # Comparaison avec période précédente
+        # Comparaison avec période précédente - FILTERED BY ORGANIZATION
         if self.compare_previous:
             previous_new = Client.objects.filter(
+                organization=self.organization,
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             ).count()

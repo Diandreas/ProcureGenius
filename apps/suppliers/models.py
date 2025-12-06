@@ -46,6 +46,14 @@ class Supplier(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='suppliers',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
     name = models.CharField(max_length=200, verbose_name=_("Nom du fournisseur"))
     contact_person = models.CharField(max_length=100, blank=True, verbose_name=_("Personne contact"))
     email = models.EmailField(verbose_name=_("Email"))

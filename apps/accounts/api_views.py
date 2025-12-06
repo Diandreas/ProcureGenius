@@ -326,83 +326,88 @@ def api_profile_types(request):
     return Response({'profiles': profiles})
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'POST', 'PUT'])
 @permission_classes([IsAuthenticated])
 def api_organization_settings(request):
-    """Manage user's personal module settings"""
+    """Manage organization settings (company info, logo, tax settings)"""
+    from apps.core.models import OrganizationSettings
+
     user = request.user
 
-    # Get or create user preferences
-    preferences, _ = UserPreferences.objects.get_or_create(user=user)
+    if not user.organization:
+        return Response(
+            {'error': 'No organization assigned to user'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Get or create organization settings
+    org_settings, _ = OrganizationSettings.objects.get_or_create(
+        organization=user.organization
+    )
 
     if request.method == 'GET':
-        # Return user's personal module settings
-        # Determine profile type from enabled modules or use default
-        profile_type = ProfileTypes.PROFESSIONAL  # Default profile
-        enabled_modules_list = []
-
-        if isinstance(preferences.enabled_modules, list):
-            enabled_modules_list = preferences.enabled_modules
-            # Try to match profile type based on modules
-            for ptype, pmodules in PROFILE_METADATA.items():
-                if set(enabled_modules_list) == set(get_modules_for_profile(ptype)):
-                    profile_type = ptype
-                    break
-        elif isinstance(preferences.enabled_modules, dict):
-            profile_type = preferences.enabled_modules.get('profile_type', ProfileTypes.PROFESSIONAL)
-            enabled_modules_list = get_modules_for_profile(profile_type)
-        else:
-            # No modules set, use default
-            enabled_modules_list = get_modules_for_profile(profile_type)
-
+        # Return organization settings
         return Response({
-            'subscription_type': profile_type,
-            'enabled_modules': enabled_modules_list,
-            'available_profile_types': list(PROFILE_METADATA.keys()),
+            'company_name': org_settings.company_name,
+            'company_address': org_settings.company_address,
+            'company_phone': org_settings.company_phone,
+            'company_email': org_settings.company_email,
+            'company_website': org_settings.company_website,
+            'company_logo': org_settings.company_logo.url if org_settings.company_logo else None,
+            'tax_region': org_settings.tax_region,
+            'company_niu': org_settings.company_niu,
+            'company_rc_number': org_settings.company_rc_number,
+            'company_rccm_number': org_settings.company_rccm_number,
+            'company_tax_number': org_settings.company_tax_number,
+            'company_vat_number': org_settings.company_vat_number,
+            'company_gst_number': org_settings.company_gst_number,
+            'company_qst_number': org_settings.company_qst_number,
+            'company_neq': org_settings.company_neq,
+            'default_currency': org_settings.default_currency,
+            'default_tax_rate': float(org_settings.default_tax_rate),
         })
 
-    elif request.method == 'PUT':
+    elif request.method in ['POST', 'PUT']:
         try:
-            data = request.data
+            # Update organization settings
+            # Handle text fields
+            text_fields = [
+                'company_name', 'company_address', 'company_phone', 'company_email',
+                'company_website', 'tax_region', 'company_niu', 'company_rc_number',
+                'company_rccm_number', 'company_tax_number', 'company_vat_number',
+                'company_gst_number', 'company_qst_number', 'company_neq',
+                'default_currency'
+            ]
 
-            # Update subscription type if provided
-            if 'subscription_type' in data:
-                new_type = data['subscription_type']
-                if new_type in PROFILE_METADATA:
-                    # Get modules for this profile
-                    modules = get_modules_for_profile(new_type)
+            for field in text_fields:
+                if field in request.data:
+                    setattr(org_settings, field, request.data[field])
 
-                    # Update user preferences with new modules
-                    preferences.enabled_modules = modules
-                    preferences.save()
+            # Handle numeric fields
+            if 'default_tax_rate' in request.data:
+                org_settings.default_tax_rate = float(request.data['default_tax_rate'])
 
-                    return Response({
-                        'success': True,
-                        'message': 'Vos modules ont été mis à jour',
-                        'subscription_type': new_type,
-                        'enabled_modules': modules,
-                    })
-                else:
-                    return Response(
-                        {'error': 'Type de profil invalide'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            # Handle logo upload
+            if 'company_logo' in request.FILES:
+                org_settings.company_logo = request.FILES['company_logo']
 
-            # Allow custom module selection if provided
-            elif 'enabled_modules' in data:
-                preferences.enabled_modules = data['enabled_modules']
-                preferences.save()
-
-                return Response({
-                    'success': True,
-                    'message': 'Vos modules ont été mis à jour',
-                    'enabled_modules': preferences.enabled_modules,
-                })
+            org_settings.save()
 
             return Response({
-                'error': 'Aucune donnée fournie'
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'success': True,
+                'message': 'Paramètres de l\'organisation mis à jour',
+                'company_logo': org_settings.company_logo.url if org_settings.company_logo else None,
+            })
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    # Fallback pour les méthodes non gérées (ne devrait jamais arriver)
+    return Response(
+        {'error': 'Méthode non supportée'},
+        status=status.HTTP_405_METHOD_NOT_ALLOWED
+    )
 

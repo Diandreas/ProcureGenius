@@ -104,6 +104,7 @@ def api_register(request):
                 logging.getLogger(__name__).warning("Free subscription plan not found, skipping subscription creation")
 
             # UserPreferences and UserPermissions are created automatically by signals
+            # DO NOT mark onboarding as completed - user will go through setup wizard
 
             # Generate auth token
             token, created = Token.objects.get_or_create(user=user)
@@ -112,7 +113,7 @@ def api_register(request):
             # send_email_verification(user)
 
             return Response({
-                'message': _('Inscription réussie! Un email de confirmation a été envoyé.'),
+                'message': _('Inscription réussie! Configurons votre espace de travail.'),
                 'user': {
                     'id': str(user.id),
                     'email': user.email,
@@ -124,7 +125,8 @@ def api_register(request):
                     },
                 },
                 'token': token.key,
-                'email_verification_required': True,
+                'email_verification_required': False,
+                'requires_onboarding': True,  # Frontend will redirect to /onboarding
             }, status=status.HTTP_201_CREATED)
 
     except Exception as e:

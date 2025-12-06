@@ -56,7 +56,9 @@ function LoginEnhanced() {
       password: formData.password
     }));
     if (login.fulfilled.match(result)) {
-      navigate('/dashboard');
+      // Force full page reload to ensure all state is initialized properly
+      // This ensures ModuleContext loads correct modules and menu updates
+      window.location.href = '/dashboard';
     }
   };
 
