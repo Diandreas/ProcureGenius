@@ -140,6 +140,19 @@ function OnboardingWizard({ open, onComplete }) {
                 }),
             });
 
+            // Sync with Organization Settings
+            await fetch('/api/v1/accounts/organization/settings/', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
+                },
+                body: JSON.stringify({
+                    subscription_type: formData.selectedProfile,
+                    enabled_modules: enabledModules,
+                }),
+            });
+
             if (response.ok) {
                 enqueueSnackbar('Configuration terminée avec succès!', { variant: 'success' });
                 onComplete(enabledModules);

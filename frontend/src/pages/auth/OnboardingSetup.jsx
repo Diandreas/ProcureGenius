@@ -169,6 +169,9 @@ function OnboardingSetup() {
         if (formData.companyVatNumber) settingsFormData.append('company_vat_number', formData.companyVatNumber);
       }
 
+      // Add enabled_modules to sync with Organization
+      settingsFormData.append('enabled_modules', JSON.stringify(formData.selectedModules));
+
       // Use correct endpoint for organization settings
       await api.post('/accounts/organization/settings/', settingsFormData, {
         headers: {

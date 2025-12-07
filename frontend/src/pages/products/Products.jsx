@@ -35,12 +35,36 @@ import {
   Error,
   CheckCircle,
   DesignServices,
+  Build,
+  CloudDownload,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { warehousesAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
+
+// Product type visual configuration
+const TYPE_CONFIG = {
+  physical: {
+    color: '#2196F3',
+    icon: Inventory,
+    label: 'Physique',
+    bgColor: 'rgba(33, 150, 243, 0.1)'
+  },
+  service: {
+    color: '#4CAF50',
+    icon: Build,
+    label: 'Service',
+    bgColor: 'rgba(76, 175, 80, 0.1)'
+  },
+  digital: {
+    color: '#9C27B0',
+    icon: CloudDownload,
+    label: 'Digital',
+    bgColor: 'rgba(156, 39, 176, 0.1)'
+  },
+};
 
 function Products() {
   const { t } = useTranslation(['products', 'common']);
@@ -112,23 +136,29 @@ function Products() {
     return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus && matchesStock;
   });
 
-  const ProductCard = ({ product }) => (
-    <Card
-      onClick={() => navigate(`/products/${product.id}`)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-        },
-      }}
-    >
+  const ProductCard = ({ product }) => {
+    const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
+    const TypeIcon = typeConfig.icon;
+
+    return (
+      <Card
+        onClick={() => navigate(`/products/${product.id}`)}
+        sx={{
+          cursor: 'pointer',
+          height: '100%',
+          borderRadius: 1,
+          borderLeft: `4px solid ${typeConfig.color}`,
+          backgroundColor: typeConfig.bgColor,
+          border: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 0.2s',
+          '&:hover': {
+            borderColor: typeConfig.color,
+            boxShadow: 2,
+            transform: 'translateY(-2px)',
+          },
+        }}
+      >
       <CardContent sx={{ p: 2 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
@@ -138,11 +168,11 @@ function Products() {
             sx={{
               width: isMobile ? 48 : 56,
               height: isMobile ? 48 : 56,
-              bgcolor: 'primary.main',
+              bgcolor: typeConfig.color,
               borderRadius: 1,
             }}
           >
-            <Inventory />
+            <TypeIcon />
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
@@ -227,28 +257,44 @@ function Products() {
             </Box>
           )}
 
-          {product.stock_quantity !== null && product.stock_quantity !== undefined && (
+          {product.product_type === 'physical' ? (
+            product.stock_quantity !== null && product.stock_quantity !== undefined && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Inventory sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  Stock: {product.stock_quantity}
+                </Typography>
+                {product.stock_quantity === 0 && (
+                  <Chip
+                    label={t('products:stockStatus.outOfStock')}
+                    size="small"
+                    color="error"
+                    sx={{ fontSize: '0.65rem', height: 18 }}
+                  />
+                )}
+                {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
+                  <Chip
+                    label={t('products:stockStatus.low')}
+                    size="small"
+                    color="warning"
+                    sx={{ fontSize: '0.65rem', height: 18 }}
+                  />
+                )}
+              </Box>
+            )
+          ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Inventory sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                Stock: {product.stock_quantity}
-              </Typography>
-              {product.stock_quantity === 0 && (
-                <Chip
-                  label={t('products:stockStatus.outOfStock')}
-                  size="small"
-                  color="error"
-                  sx={{ fontSize: '0.65rem', height: 18 }}
-                />
-              )}
-              {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
-                <Chip
-                  label={t('products:stockStatus.low')}
-                  size="small"
-                  color="warning"
-                  sx={{ fontSize: '0.65rem', height: 18 }}
-                />
-              )}
+              <TypeIcon sx={{ fontSize: 16, color: typeConfig.color }} />
+              <Chip
+                label={typeConfig.label}
+                size="small"
+                sx={{
+                  backgroundColor: typeConfig.color,
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  height: 20
+                }}
+              />
             </Box>
           )}
         </Stack>
@@ -273,7 +319,8 @@ function Products() {
         </Box>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   if (loading && products.length === 0) {
     return (

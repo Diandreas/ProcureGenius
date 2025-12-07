@@ -35,6 +35,8 @@ import {
   TrendingUp,
   Info,
   History,
+  Build,
+  CloudDownload,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +45,28 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
+
+// Configuration des types de produits (harmonisé avec ProductCard)
+const TYPE_CONFIG = {
+  physical: {
+    color: '#2196F3',
+    icon: Inventory,
+    label: 'Physique',
+    bgColor: 'rgba(33, 150, 243, 0.1)'
+  },
+  service: {
+    color: '#4CAF50',
+    icon: Build,
+    label: 'Service',
+    bgColor: 'rgba(76, 175, 80, 0.1)'
+  },
+  digital: {
+    color: '#9C27B0',
+    icon: CloudDownload,
+    label: 'Digital',
+    bgColor: 'rgba(156, 39, 176, 0.1)'
+  },
+};
 
 function ProductDetail() {
   const { t } = useTranslation(['products', 'common']);
@@ -110,6 +134,10 @@ function ProductDetail() {
 
   const stockStatus = product.stock_quantity === 0 ? 'error' :
     product.stock_quantity <= 10 ? 'warning' : 'success';
+
+  // Configuration du type de produit
+  const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
+  const TypeIcon = typeConfig.icon;
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
@@ -198,9 +226,16 @@ function ProductDetail() {
       {/* Tab: Informations */}
       {activeTab === 0 && (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Card principale */}
+          {/* Card principale - Harmonisée avec ProductCard */}
           <Grid item xs={12} md={8}>
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            <Card
+              sx={{
+                borderRadius: 1,
+                mb: isMobile ? 2 : 3,
+                borderLeft: `4px solid ${typeConfig.color}`,
+                backgroundColor: typeConfig.bgColor,
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                   <Avatar
@@ -209,11 +244,11 @@ function ProductDetail() {
                     sx={{
                       width: isMobile ? 80 : 100,
                       height: isMobile ? 80 : 100,
-                      bgcolor: 'primary.main',
+                      bgcolor: typeConfig.color,
                       borderRadius: 1,
                     }}
                   >
-                    <Inventory sx={{ fontSize: isMobile ? 40 : 48 }} />
+                    <TypeIcon sx={{ fontSize: isMobile ? 40 : 48, color: 'white' }} />
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>
@@ -222,7 +257,18 @@ function ProductDetail() {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {t('products:labels.reference')}: {product.reference || product.sku}
                     </Typography>
-                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+                      {/* Badge TYPE avec couleur et icône */}
+                      <Chip
+                        icon={<TypeIcon sx={{ color: 'white !important' }} />}
+                        label={typeConfig.label}
+                        size="small"
+                        sx={{
+                          backgroundColor: typeConfig.color,
+                          color: 'white',
+                          fontWeight: 600,
+                        }}
+                      />
                       <Chip
                         label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
                         color={product.is_active ? 'success' : 'default'}

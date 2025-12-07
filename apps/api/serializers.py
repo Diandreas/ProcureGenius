@@ -143,6 +143,36 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'last_sale_date', 'active_contracts_count'
         ]
     
+    def validate(self, attrs):
+        """Validation stricte des produits selon leur type"""
+        product_type = attrs.get('product_type', getattr(self.instance, 'product_type', 'physical'))
+
+        # Services/digital ne peuvent pas avoir de stock
+        if product_type in ['service', 'digital']:
+            if attrs.get('stock_quantity', 0) != 0:
+                raise serializers.ValidationError({
+                    'stock_quantity': 'Les services/produits digitaux ne gèrent pas de stock'
+                })
+            if attrs.get('low_stock_threshold', 0) != 0:
+                raise serializers.ValidationError({
+                    'low_stock_threshold': 'Les services/produits digitaux ne gèrent pas de stock'
+                })
+            if attrs.get('warehouse'):
+                raise serializers.ValidationError({
+                    'warehouse': 'Pas de warehouse pour services/digitaux'
+                })
+
+        # Physiques doivent avoir warehouse si disponible
+        elif product_type == 'physical':
+            from apps.invoicing.models import Warehouse
+            if not attrs.get('warehouse') and not getattr(self.instance, 'warehouse', None):
+                if Warehouse.objects.exists():
+                    raise serializers.ValidationError({
+                        'warehouse': 'Warehouse requis pour produits physiques'
+                    })
+
+        return attrs
+
     def get_warehouse_location(self, obj):
         if obj.warehouse:
             return f"{obj.warehouse.city}, {obj.warehouse.province}"

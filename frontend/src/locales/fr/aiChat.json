@@ -41,5 +41,22 @@
     "attach": "Joindre",
     "voiceMessage": "Message vocal (en temps réel)",
     "send": "Envoyer"
+  },
+  "quickActions": {
+    "title": "Actions rapides",
+    "createSupplier": "Créer fournisseur",
+    "searchSupplier": "Rechercher fournisseur",
+    "createInvoice": "Créer facture",
+    "createPurchaseOrder": "Bon de commande",
+    "viewStatistics": "Statistiques",
+    "monthlyReport": "Rapport mensuel",
+    "prompts": {
+      "createSupplier": "Je veux créer un nouveau fournisseur",
+      "searchSupplier": "Recherche un fournisseur",
+      "createInvoice": "Je veux créer une nouvelle facture",
+      "createPurchaseOrder": "Je veux créer un bon de commande",
+      "viewStatistics": "Affiche-moi les statistiques",
+      "monthlyReport": "Génère un rapport mensuel"
+    }
   }
 }

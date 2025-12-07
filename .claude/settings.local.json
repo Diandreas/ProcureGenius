@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(findstr:*)",
-      "Bash(python manage.py shell:*)"
+      "Bash(python manage.py shell:*)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(.venv\\Scripts\\python.exe:*)",
+      "Bash(.venv/Scripts/python.exe:*)"
     ],
     "deny": [],
     "ask": []

@@ -155,10 +155,14 @@ class Product(models.Model):
 
         # Les services et produits digitaux ne doivent pas avoir de gestion de stock
         if self.product_type in ['service', 'digital']:
-            # Réinitialiser les champs de stock pour les services
             if self.stock_quantity != 0 or self.low_stock_threshold != 0:
-                self.stock_quantity = 0
-                self.low_stock_threshold = 0
+                raise ValidationError(
+                    f'Les {self.get_product_type_display()} ne gèrent pas de stock'
+                )
+            if self.warehouse:
+                raise ValidationError(
+                    f'Pas de warehouse pour {self.get_product_type_display()}'
+                )
 
     def save(self, *args, **kwargs):
         # Validation avant sauvegarde

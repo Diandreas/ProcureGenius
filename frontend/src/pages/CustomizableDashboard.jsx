@@ -89,6 +89,7 @@ const CustomizableDashboard = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSaveNotification, setShowSaveNotification] = useState(false);
+  const [gridKey, setGridKey] = useState(0);
 
   // Load available widgets
   useEffect(() => {
@@ -107,40 +108,59 @@ const CustomizableDashboard = () => {
 
   // Load default layout
   useEffect(() => {
+    const createDefaultLayout = async (defaultLayoutConfig) => {
+      console.log('📝 Creating default layout in database...');
+      try {
+        const response = await widgetsAPI.createLayout({
+          name: 'Mon tableau de bord',
+          is_default: true,
+          layout: defaultLayoutConfig,
+        });
+        if (response.success && response.data) {
+          console.log('✅ Default layout created:', response.data.id);
+          setCurrentLayoutId(response.data.id);
+          return true;
+        }
+      } catch (error) {
+        console.error('❌ Error creating default layout:', error);
+      }
+      return false;
+    };
+
     const loadDefaultLayout = async () => {
       setIsLoading(true);
       try {
         const response = await widgetsAPI.getDefaultLayout();
+        console.log('📊 Loaded layout response:', response);
+
         if (response.success && response.data) {
-          setLayout(response.data.layout || []);
-          setCurrentLayoutId(response.data.id);
+          const layoutData = response.data;
+          console.log(`✅ Layout ID: ${layoutData.id}, Widgets: ${layoutData.layout?.length || 0}`);
+          setLayout(layoutData.layout || []);
+          setCurrentLayoutId(layoutData.id);
         } else {
-          // No default layout, show all widgets
+          console.log('⚠️ No default layout found, creating one...');
+          // Layout minimal par défaut - ne pas submerger l'utilisateur
           const defaultLayout = [
             { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-            { i: 'invoices_overview', x: 0, y: 2, w: 2, h: 2 },
-            { i: 'po_overview', x: 2, y: 2, w: 2, h: 2 },
-            { i: 'clients_overview', x: 0, y: 4, w: 2, h: 2 },
-            { i: 'products_overview', x: 2, y: 4, w: 2, h: 2 },
-            { i: 'revenue_chart', x: 0, y: 6, w: 3, h: 2 },
-            { i: 'alerts_notifications', x: 3, y: 6, w: 1, h: 2 },
-            { i: 'top_clients', x: 0, y: 8, w: 4, h: 2 },
+            { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
+            { i: 'recent_activity', x: 2, y: 2, w: 2, h: 2 },
           ];
           setLayout(defaultLayout);
+          // Créer le layout dans la BD pour le persister
+          await createDefaultLayout(defaultLayout);
         }
       } catch (error) {
-        console.error('Error loading default layout:', error);
-        // Show all widgets on error too
-        setLayout([
+        console.error('❌ Error loading default layout:', error);
+        // Layout minimal même en cas d'erreur
+        const fallbackLayout = [
           { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-          { i: 'invoices_overview', x: 0, y: 2, w: 2, h: 2 },
-          { i: 'po_overview', x: 2, y: 2, w: 2, h: 2 },
-          { i: 'clients_overview', x: 0, y: 4, w: 2, h: 2 },
-          { i: 'products_overview', x: 2, y: 4, w: 2, h: 2 },
-          { i: 'revenue_chart', x: 0, y: 6, w: 3, h: 2 },
-          { i: 'alerts_notifications', x: 3, y: 6, w: 1, h: 2 },
-          { i: 'top_clients', x: 0, y: 8, w: 4, h: 2 },
-        ]);
+          { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
+          { i: 'recent_activity', x: 2, y: 2, w: 2, h: 2 },
+        ];
+        setLayout(fallbackLayout);
+        // Tenter de créer le layout même après erreur
+        await createDefaultLayout(fallbackLayout);
       } finally {
         setIsLoading(false);
       }
@@ -158,6 +178,12 @@ const CustomizableDashboard = () => {
 
   // Add widget to dashboard
   const handleAddWidget = (widgetCode) => {
+    // Check if widget already exists
+    if (layout.some(item => item.i === widgetCode)) {
+      alert(t('widgetAlreadyExists'));
+      return;
+    }
+
     const widget = Object.values(availableWidgets)
       .flat()
       .find(w => w.code === widgetCode);
@@ -186,8 +212,16 @@ const CustomizableDashboard = () => {
 
   // Remove widget from dashboard
   const handleRemoveWidget = (widgetCode) => {
-    setLayout(layout.filter(item => item.i !== widgetCode));
+    console.log('🗑️ Removing widget:', widgetCode);
+
+    setLayout(prevLayout => {
+      const newLayout = prevLayout.filter(item => item.i !== widgetCode);
+      console.log('✅ New layout:', newLayout);
+      return [...newLayout]; // Force new array (immutability)
+    });
+
     setHasChanges(true);
+    setGridKey(prev => prev + 1); // Force re-render
   };
 
   // Save layout
@@ -345,8 +379,9 @@ const CustomizableDashboard = () => {
       {/* Grid Layout */}
       <div className="dashboard-content">
         <ResponsiveGridLayout
+          key={gridKey}
           className="dashboard-grid"
-          layouts={{ lg: layout }}
+          layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 4, md: 3, sm: 2, xs: 1, xxs: 1 }}
           rowHeight={150}
@@ -357,6 +392,7 @@ const CustomizableDashboard = () => {
           preventCollision={false}
           margin={[12, 12]}
           containerPadding={[0, 0]}
+          draggableHandle=".widget-drag-handle"
         >
           {layout.map((item) => (
             <div key={item.i} className="dashboard-grid-item">

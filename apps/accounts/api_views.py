@@ -365,6 +365,8 @@ def api_organization_settings(request):
             'company_neq': org_settings.company_neq,
             'default_currency': org_settings.default_currency,
             'default_tax_rate': float(org_settings.default_tax_rate),
+            'enabled_modules': user.organization.enabled_modules or [],
+            'subscription_type': user.organization.subscription_type,
         })
 
     elif request.method in ['POST', 'PUT']:
@@ -392,6 +394,28 @@ def api_organization_settings(request):
                 org_settings.company_logo = request.FILES['company_logo']
 
             org_settings.save()
+
+            # Update Organization model fields (subscription_type, enabled_modules)
+            organization = user.organization
+            if organization:
+                org_updated = False
+                if 'subscription_type' in request.data:
+                    organization.subscription_type = request.data['subscription_type']
+                    # Auto-update modules based on profile if not explicitly provided
+                    if 'enabled_modules' not in request.data:
+                        organization.update_modules_from_profile()
+                    org_updated = True
+                
+                if 'enabled_modules' in request.data:
+                    import json
+                    # FormData sends as string, need to parse JSON
+                    modules_data = request.data['enabled_modules']
+                    modules = json.loads(modules_data) if isinstance(modules_data, str) else modules_data
+                    organization.enabled_modules = modules
+                    org_updated = True
+                
+                if org_updated:
+                    organization.save()
 
             return Response({
                 'success': True,

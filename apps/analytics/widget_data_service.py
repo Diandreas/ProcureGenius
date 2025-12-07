@@ -105,6 +105,7 @@ class WidgetDataService:
 
         # Overdue invoices
         overdue_invoices = Invoice.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status__in=['sent', 'overdue'],
             due_date__lt=timezone.now().date()
         ).count()
@@ -118,6 +119,7 @@ class WidgetDataService:
 
         # Low stock
         low_stock = Product.objects.filter(
+            organization=self.stats_service.organization,
             product_type='physical',
             stock_quantity__lte=models.F('low_stock_threshold'),
             stock_quantity__gt=0
@@ -132,6 +134,7 @@ class WidgetDataService:
 
         # Out of stock
         out_of_stock = Product.objects.filter(
+            organization=self.stats_service.organization,
             product_type='physical',
             stock_quantity=0
         ).count()
@@ -145,6 +148,7 @@ class WidgetDataService:
 
         # Pending approvals
         pending_po = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status='pending'
         ).count()
         if pending_po > 0:
@@ -185,6 +189,7 @@ class WidgetDataService:
         from django.db.models import F
 
         low_stock = Product.objects.filter(
+            organization=self.stats_service.organization,
             product_type='physical',
             stock_quantity__lte=F('low_stock_threshold'),
             stock_quantity__gt=0,
@@ -192,6 +197,7 @@ class WidgetDataService:
         ).values('id', 'name', 'stock_quantity', 'low_stock_threshold')[:10]
 
         out_of_stock = Product.objects.filter(
+            organization=self.stats_service.organization,
             product_type='physical',
             stock_quantity=0,
             is_active=True
@@ -215,7 +221,9 @@ class WidgetDataService:
         """Recent stock movements"""
         from apps.invoicing.models import StockMovement
 
-        movements = StockMovement.objects.select_related(
+        movements = StockMovement.objects.filter(
+            product__organization=self.stats_service.organization
+        ).select_related(
             'product', 'created_by'
         ).order_by('-created_at')[:limit]
 
@@ -254,6 +262,7 @@ class WidgetDataService:
         from django.db.models import Count, Sum
 
         clients = Client.objects.filter(
+            organization=self.stats_service.organization,
             invoices__status__in=['sent', 'overdue'],
             invoices__due_date__lt=timezone.now().date()
         ).annotate(
@@ -313,6 +322,7 @@ class WidgetDataService:
         from django.utils import timezone
 
         invoices = Invoice.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status__in=['sent', 'overdue'],
             due_date__lt=timezone.now().date()
         ).select_related('client').order_by('due_date')[:10]
@@ -344,7 +354,9 @@ class WidgetDataService:
         """Recent invoices"""
         from apps.invoicing.models import Invoice
 
-        invoices = Invoice.objects.select_related('client').order_by('-created_at')[:limit]
+        invoices = Invoice.objects.filter(
+            created_by__organization=self.stats_service.organization
+        ).select_related('client').order_by('-created_at')[:limit]
 
         return {
             'invoices': [
@@ -387,6 +399,7 @@ class WidgetDataService:
         from django.utils import timezone
 
         pos = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status__in=['approved', 'sent'],
             required_date__lt=timezone.now().date()
         ).select_related('supplier').order_by('required_date')[:10]
@@ -417,6 +430,7 @@ class WidgetDataService:
         from apps.purchase_orders.models import PurchaseOrder
 
         pos = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status='pending'
         ).select_related('supplier', 'created_by').order_by('-created_at')[:10]
 
@@ -440,6 +454,7 @@ class WidgetDataService:
         from django.db.models import Sum
 
         total_spent = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
             status__in=['approved', 'sent', 'received'],
             created_at__gte=self.start_date,
             created_at__lte=self.end_date

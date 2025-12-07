@@ -36,6 +36,9 @@ import {
     Fade,
     Slide,
     FormHelperText,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
 } from '@mui/material';
 import {
     Save,
@@ -355,7 +358,7 @@ function ProductForm() {
                                     <ProductTypeSelector value={values.product_type} onChange={handleChange} />
                                 </Box>
 
-                                {/* Informations générales */}
+                                {/* Informations générales - ESSENTIELLES UNIQUEMENT */}
                                 <Card sx={{ mb: 3 }}>
                                     <CardContent>
                                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -420,56 +423,6 @@ function ProductForm() {
                                                     required
                                                 />
                                             </Grid>
-
-                                            <Grid item xs={12} md={6}>
-                                                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                    <InputLabel>{t('products:labels.category')}</InputLabel>
-                                                    <Select
-                                                        name="category_id"
-                                                        value={values.category_id}
-                                                        onChange={handleChange}
-                                                        label={t('products:labels.category')}
-                                                        startAdornment={<Category sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                    >
-                                                        <MenuItem value="">
-                                                            <em>{t('products:labels.uncategorized')}</em>
-                                                        </MenuItem>
-                                                        {categories.map((category) => (
-                                                            <MenuItem key={category.id} value={category.id}>
-                                                                {category.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </Grid>
-
-                                            {/* Champs conditionnels selon le type */}
-                                            <Fade in={values.product_type === 'physical'} unmountOnExit>
-                                                <Grid item xs={12} md={6}>
-                                                    <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                        <InputLabel>{t('products:labels.sourceType')}</InputLabel>
-                                                        <Select
-                                                            name="source_type"
-                                                            value={values.source_type}
-                                                            onChange={handleChange}
-                                                            label={t('products:labels.sourceType')}
-                                                        >
-                                                            <MenuItem value="purchased">
-                                                                <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
-                                                                {t('products:sourceTypes.purchased')}
-                                                            </MenuItem>
-                                                            <MenuItem value="manufactured">
-                                                                <Construction sx={{ mr: 1, fontSize: 20 }} />
-                                                                {t('products:sourceTypes.manufactured')}
-                                                            </MenuItem>
-                                                            <MenuItem value="resale">
-                                                                <Storefront sx={{ mr: 1, fontSize: 20 }} />
-                                                                {t('products:sourceTypes.resale')}
-                                                            </MenuItem>
-                                                        </Select>
-                                                    </FormControl>
-                                                </Grid>
-                                            </Fade>
                                         </Grid>
                                     </CardContent>
                                 </Card>
@@ -528,55 +481,129 @@ function ProductForm() {
                                     </CardContent>
                                 </Card>
 
-                                {/* Inventaire et logistique - Seulement pour produits physiques et numériques */}
-                                <Collapse in={values.product_type !== 'service'} timeout="auto">
-                                    <Card sx={{ mb: 3 }}>
-                                        <CardContent>
-                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                                {values.product_type === 'digital' ? <Cloud sx={{ mr: 1 }} /> : <LocalShipping sx={{ mr: 1 }} />}
-                                                {values.product_type === 'digital' ? t('products:labels.digitalDistribution') : t('products:labels.inventoryAndLogistics')}
-                                            </Typography>
+                                {/* Badge type visible pour non-physiques */}
+                                {values.product_type !== 'physical' && (
+                                    <Alert severity="info" sx={{ mb: 2 }}>
+                                        Type: {values.product_type === 'service' ? 'Service' : 'Produit Digital'}
+                                        {' - '}Aucune gestion de stock nécessaire
+                                    </Alert>
+                                )}
 
-                                            <Grid container spacing={2}>
-                                                {/* Fournisseur/Éditeur - Afficher toujours, vide si non disponible */}
-                                                <Grid item xs={12} md={6}>
-                                                    <FormControl
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        error={touched.supplier_id && Boolean(errors.supplier_id)}
+                                {/* DÉTAILS AVANCÉS - Accordion pour ne pas surcharger */}
+                                <Accordion defaultExpanded={false} sx={{ mb: 3 }}>
+                                    <AccordionSummary expandIcon={<ExpandMore />}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Info sx={{ mr: 1, color: 'primary.main' }} />
+                                            <Typography variant="h6">Détails avancés</Typography>
+                                            <Chip
+                                                label="Optionnel"
+                                                size="small"
+                                                sx={{ ml: 2 }}
+                                                variant="outlined"
+                                                color="default"
+                                            />
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Grid container spacing={2}>
+                                            {/* Catégorie - Tous types */}
+                                            <Grid item xs={12} md={6}>
+                                                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                                                    <InputLabel>{t('products:labels.category')}</InputLabel>
+                                                    <Select
+                                                        name="category_id"
+                                                        value={values.category_id}
+                                                        onChange={handleChange}
+                                                        label={t('products:labels.category')}
+                                                        startAdornment={<Category sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
                                                     >
-                                                        <InputLabel>
-                                                            {values.product_type === 'digital' ? t('products:labels.publisher') : t('products:labels.supplierOptional')}
-                                                        </InputLabel>
-                                                        <Select
-                                                            name="supplier_id"
-                                                            value={values.supplier_id}
-                                                            onChange={handleChange}
-                                                            label={values.product_type === 'digital' ? t('products:labels.publisher') : t('products:labels.supplierOptional')}
-                                                            startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                        >
-                                                            <MenuItem value="">
-                                                                <em>{t('products:labels.noSupplier')}</em>
+                                                        <MenuItem value="">
+                                                            <em>{t('products:labels.uncategorized')}</em>
+                                                        </MenuItem>
+                                                        {categories.map((category) => (
+                                                            <MenuItem key={category.id} value={category.id}>
+                                                                {category.name}
                                                             </MenuItem>
-                                                            {suppliers.map((supplier) => (
-                                                                <MenuItem key={supplier.id} value={supplier.id}>
-                                                                    {supplier.name}
-                                                                </MenuItem>
-                                                            ))}
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+
+                                            {/* Type de source - Seulement pour physiques */}
+                                            {values.product_type === 'physical' && (
+                                                <Grid item xs={12} md={6}>
+                                                    <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                                                        <InputLabel>{t('products:labels.sourceType')}</InputLabel>
+                                                        <Select
+                                                            name="source_type"
+                                                            value={values.source_type}
+                                                            onChange={handleChange}
+                                                            label={t('products:labels.sourceType')}
+                                                        >
+                                                            <MenuItem value="purchased">
+                                                                <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
+                                                                {t('products:sourceTypes.purchased')}
+                                                            </MenuItem>
+                                                            <MenuItem value="manufactured">
+                                                                <Construction sx={{ mr: 1, fontSize: 20 }} />
+                                                                {t('products:sourceTypes.manufactured')}
+                                                            </MenuItem>
+                                                            <MenuItem value="resale">
+                                                                <Storefront sx={{ mr: 1, fontSize: 20 }} />
+                                                                {t('products:sourceTypes.resale')}
+                                                            </MenuItem>
                                                         </Select>
-                                                        {touched.supplier_id && errors.supplier_id && (
-                                                            <FormHelperText>{errors.supplier_id}</FormHelperText>
-                                                        )}
-                                                        {suppliers.length === 0 && (
-                                                            <FormHelperText>
-                                                                {t('products:messages.missingSupplierModule')}
-                                                            </FormHelperText>
-                                                        )}
                                                     </FormControl>
                                                 </Grid>
+                                            )}
 
-                                                {/* Entrepôt - Seulement pour produits physiques */}
-                                                {values.product_type === 'physical' && (
+                                            {/* Fournisseur - Tous types */}
+                                            <Grid item xs={12} md={6}>
+                                                <FormControl
+                                                    fullWidth
+                                                    size={isMobile ? "small" : "medium"}
+                                                    error={touched.supplier_id && Boolean(errors.supplier_id)}
+                                                >
+                                                    <InputLabel>
+                                                        {t('products:labels.supplierOptional')}
+                                                    </InputLabel>
+                                                    <Select
+                                                        name="supplier_id"
+                                                        value={values.supplier_id}
+                                                        onChange={handleChange}
+                                                        label={t('products:labels.supplierOptional')}
+                                                        startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>{t('products:labels.noSupplier')}</em>
+                                                        </MenuItem>
+                                                        {suppliers.map((supplier) => (
+                                                            <MenuItem key={supplier.id} value={supplier.id}>
+                                                                {supplier.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                    {touched.supplier_id && errors.supplier_id && (
+                                                        <FormHelperText>{errors.supplier_id}</FormHelperText>
+                                                    )}
+                                                    {suppliers.length === 0 && (
+                                                        <FormHelperText>
+                                                            {t('products:messages.missingSupplierModule')}
+                                                        </FormHelperText>
+                                                    )}
+                                                </FormControl>
+                                            </Grid>
+
+                                            {/* SECTION STOCK - Seulement pour produits physiques */}
+                                            {values.product_type === 'physical' && (
+                                                <>
+                                                    <Grid item xs={12}>
+                                                        <Divider sx={{ my: 1 }}>
+                                                            <Chip label="Gestion de stock" icon={<LocalShipping />} size="small" />
+                                                        </Divider>
+                                                    </Grid>
+
+                                                    {/* Entrepôt */}
                                                     <Grid item xs={12} md={6}>
                                                         <FormControl
                                                             fullWidth
@@ -619,31 +646,28 @@ function ProductForm() {
                                                             )}
                                                         </FormControl>
                                                     </Grid>
-                                                )}
 
+                                                    {/* Stock */}
+                                                    <Grid item xs={12} md={6}>
+                                                        <TextField
+                                                            fullWidth
+                                                            size={isMobile ? "small" : "medium"}
+                                                            name="stock_quantity"
+                                                            label={t('products:labels.stockQuantity')}
+                                                            type="number"
+                                                            value={values.stock_quantity}
+                                                            onChange={handleChange}
+                                                            onBlur={handleBlur}
+                                                            error={touched.stock_quantity && Boolean(errors.stock_quantity)}
+                                                            helperText={touched.stock_quantity && errors.stock_quantity}
+                                                            required
+                                                            InputProps={{
+                                                                startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
+                                                            }}
+                                                        />
+                                                    </Grid>
 
-                                                {/* Stock / Licences */}
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="stock_quantity"
-                                                        label={values.product_type === 'digital' ? t('products:labels.licensesCount') : t('products:labels.stockQuantity')}
-                                                        type="number"
-                                                        value={values.stock_quantity}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                        helperText={touched.stock_quantity && errors.stock_quantity}
-                                                        required={values.product_type === 'physical'}
-                                                        InputProps={{
-                                                            startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
-                                                        }}
-                                                    />
-                                                </Grid>
-
-                                                {/* Seuil stock bas - Seulement pour produits physiques */}
-                                                {values.product_type === 'physical' && (
+                                                    {/* Seuil stock bas */}
                                                     <Grid item xs={12} md={6}>
                                                         <TextField
                                                             fullWidth
@@ -659,11 +683,11 @@ function ProductForm() {
                                                             required
                                                         />
                                                     </Grid>
-                                                )}
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-                                </Collapse>
+                                                </>
+                                            )}
+                                        </Grid>
+                                    </AccordionDetails>
+                                </Accordion>
                             </Grid>
 
                             {/* Sidebar */}
@@ -699,53 +723,6 @@ function ProductForm() {
                                                 </Box>
                                             }
                                         />
-                                    </CardContent>
-                                </Card>
-
-                                {/* Image du produit */}
-                                <Card sx={{ mb: 2 }}>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Image sx={{ mr: 1 }} />
-                                            {t('products:labels.image')}
-                                        </Typography>
-
-                                        {values.image && typeof values.image === 'string' && (
-                                            <Box sx={{ mb: 2, textAlign: 'center' }}>
-                                                <img
-                                                    src={values.image}
-                                                    alt={t('products:labels.productImage')}
-                                                    style={{
-                                                        maxWidth: '100%',
-                                                        maxHeight: 150,
-                                                        objectFit: 'cover',
-                                                        borderRadius: 8,
-                                                    }}
-                                                />
-                                            </Box>
-                                        )}
-
-                                        <Button
-                                            fullWidth
-                                            variant="outlined"
-                                            startIcon={<Upload />}
-                                            component="label"
-                                            size={isMobile ? "small" : "medium"}
-                                        >
-                                            {values.image ? t('products:actions.change') : t('products:actions.add')}
-                                            <input
-                                                type="file"
-                                                hidden
-                                                accept="image/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        // TODO: Implement file upload
-                                                        console.log('File:', file);
-                                                    }
-                                                }}
-                                            />
-                                        </Button>
                                     </CardContent>
                                 </Card>
 

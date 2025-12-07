@@ -35,7 +35,6 @@ import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
 import AIChat from './pages/ai-chat/AIChat';
 import Settings from './pages/settings/Settings';
-import ModuleSettings from './pages/settings/ModuleSettings';
 import UserManagement from './pages/settings/UserManagement';
 import SourcingEvents from './pages/e-sourcing/SourcingEvents';
 import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
@@ -544,7 +543,6 @@ function App() {
 
                         {/* Settings */}
                         <Route path="/settings" element={<Settings />} />
-                        <Route path="/settings/modules" element={<ModuleSettings />} />
                         <Route path="/settings/users" element={<UserManagement />} />
                       </Route>
                     </Route>

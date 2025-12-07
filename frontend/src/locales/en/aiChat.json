@@ -41,5 +41,22 @@
     "attach": "Attach",
     "voiceMessage": "Voice message (real-time)",
     "send": "Send"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "createSupplier": "Create supplier",
+    "searchSupplier": "Search supplier",
+    "createInvoice": "Create invoice",
+    "createPurchaseOrder": "Purchase order",
+    "viewStatistics": "Statistics",
+    "monthlyReport": "Monthly report",
+    "prompts": {
+      "createSupplier": "I want to create a new supplier",
+      "searchSupplier": "Search for a supplier",
+      "createInvoice": "I want to create a new invoice",
+      "createPurchaseOrder": "I want to create a purchase order",
+      "viewStatistics": "Show me the statistics",
+      "monthlyReport": "Generate a monthly report"
+    }
   }
 }

@@ -67,7 +67,9 @@ class DashboardLayoutViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Only return layouts for the current user
-        return DashboardLayout.objects.filter(user=self.request.user)
+        queryset = DashboardLayout.objects.filter(user=self.request.user)
+        logger.info(f"🔍 User {self.request.user.id} ({self.request.user.username}) has {queryset.count()} layouts")
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:

@@ -311,7 +311,7 @@ def create_user_preferences_and_permissions(sender, instance, created, **kwargs)
         UserPermissions.objects.get_or_create(
             user=instance,
             defaults={
-                'module_access': default_modules,
+                'module_access': [],  # Liste vide = pas de restriction, utilise les modules de l'organisation
                 **default_permissions
             }
         )

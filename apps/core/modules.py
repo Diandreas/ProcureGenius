@@ -276,8 +276,14 @@ def get_user_accessible_modules(user):
     try:
         user_permissions = user.permissions
         user_modules = user_permissions.module_access or []
-        # Intersection of org and user modules
-        accessible = list(set(org_modules) & set(user_modules))
+
+        # Si l'utilisateur n'a pas de restrictions individuelles (liste vide),
+        # utiliser tous les modules de l'organisation
+        if not user_modules:
+            accessible = org_modules
+        else:
+            # Sinon, faire l'intersection (restriction)
+            accessible = list(set(org_modules) & set(user_modules))
     except:
         # If no permissions set, use org modules
         accessible = org_modules

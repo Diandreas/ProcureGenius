@@ -8,43 +8,46 @@ import {
   BarChart,
   Assessment,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const QuickActionsPanel = ({ onActionClick, disabled = false }) => {
+  const { t } = useTranslation('aiChat');
+
   const quickActions = [
     {
-      label: 'Créer fournisseur',
+      label: t('quickActions.createSupplier'),
       icon: <AddBusiness />,
-      prompt: 'Je veux créer un nouveau fournisseur',
+      prompt: t('quickActions.prompts.createSupplier'),
       color: 'primary',
     },
     {
-      label: 'Rechercher fournisseur',
+      label: t('quickActions.searchSupplier'),
       icon: <Search />,
-      prompt: 'Recherche un fournisseur',
+      prompt: t('quickActions.prompts.searchSupplier'),
       color: 'info',
     },
     {
-      label: 'Créer facture',
+      label: t('quickActions.createInvoice'),
       icon: <Receipt />,
-      prompt: 'Je veux créer une nouvelle facture',
+      prompt: t('quickActions.prompts.createInvoice'),
       color: 'success',
     },
     {
-      label: 'Bon de commande',
+      label: t('quickActions.createPurchaseOrder'),
       icon: <ShoppingCart />,
-      prompt: 'Je veux créer un bon de commande',
+      prompt: t('quickActions.prompts.createPurchaseOrder'),
       color: 'warning',
     },
     {
-      label: 'Statistiques',
+      label: t('quickActions.viewStatistics'),
       icon: <BarChart />,
-      prompt: 'Affiche-moi les statistiques',
+      prompt: t('quickActions.prompts.viewStatistics'),
       color: 'secondary',
     },
     {
-      label: 'Rapport mensuel',
+      label: t('quickActions.monthlyReport'),
       icon: <Assessment />,
-      prompt: 'Génère un rapport mensuel',
+      prompt: t('quickActions.prompts.monthlyReport'),
       color: 'error',
     },
   ];
@@ -52,7 +55,7 @@ const QuickActionsPanel = ({ onActionClick, disabled = false }) => {
   return (
     <Box>
       <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5 }}>
-        Actions rapides
+        {t('quickActions.title')}
       </Typography>
       <Grid container spacing={1}>
         {quickActions.map((action, index) => (

@@ -11,6 +11,7 @@
     "saveSuccess": "Dashboard sauvegardé avec succès!",
     "saveError": "Erreur lors de la sauvegarde",
     "confirmSave": "Voulez-vous sauvegarder vos modifications?",
+    "widgetAlreadyExists": "Ce widget est déjà sur votre tableau de bord",
     "emptyState": {
         "title": "Votre dashboard est vide",
         "description": "Commencez par ajouter des widgets pour visualiser vos données",

@@ -419,26 +419,32 @@ class DashboardStatsService:
         """Statistiques détaillées des produits et stock"""
         from apps.invoicing.models import Product
 
+        if not self.organization:
+            return {'total': 0, 'active': 0, 'by_type': {}, 'stock': {}, 'top_products': []}
+
         # Stats globales
-        total = Product.objects.count()
-        active = Product.objects.filter(is_active=True).count()
-        physical = Product.objects.filter(product_type='physical').count()
-        services = Product.objects.filter(product_type='service').count()
+        total = Product.objects.filter(organization=self.organization).count()
+        active = Product.objects.filter(organization=self.organization, is_active=True).count()
+        physical = Product.objects.filter(organization=self.organization, product_type='physical').count()
+        services = Product.objects.filter(organization=self.organization, product_type='service').count()
 
         # Stock
         low_stock = Product.objects.filter(
+            organization=self.organization,
             product_type='physical',
             stock_quantity__lte=F('low_stock_threshold'),
             stock_quantity__gt=0
         ).count()
 
         out_of_stock = Product.objects.filter(
+            organization=self.organization,
             product_type='physical',
             stock_quantity=0
         ).count()
 
         # Valeur du stock
         stock_value = Product.objects.filter(
+            organization=self.organization,
             product_type='physical'
         ).annotate(
             value=F('stock_quantity') * F('cost_price')
@@ -447,6 +453,7 @@ class DashboardStatsService:
         # Produits les plus vendus (via factures)
         from apps.invoicing.models import InvoiceItem
         top_products = Product.objects.filter(
+            organization=self.organization,
             invoice_items__invoice__created_at__gte=self.start_date,
             invoice_items__invoice__created_at__lte=self.end_date,
             invoice_items__invoice__status='paid'
@@ -487,8 +494,12 @@ class DashboardStatsService:
         from apps.invoicing.models import Invoice
         from apps.purchase_orders.models import PurchaseOrder
 
+        if not self.organization:
+            return {'revenue': 0, 'expenses': 0, 'net_profit': 0, 'profit_margin': 0, 'pending_revenue': 0}
+
         # Revenus (factures payées)
         revenue = Invoice.objects.filter(
+            created_by__organization=self.organization,
             status='paid',
             payments__payment_date__gte=self.start_date,
             payments__payment_date__lte=self.end_date
@@ -496,6 +507,7 @@ class DashboardStatsService:
 
         # Dépenses (BCs approuvés/reçus)
         expenses = PurchaseOrder.objects.filter(
+            created_by__organization=self.organization,
             status__in=['approved', 'sent', 'received'],
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
@@ -507,6 +519,7 @@ class DashboardStatsService:
 
         # Revenus en attente
         pending_revenue = Invoice.objects.filter(
+            created_by__organization=self.organization,
             status='sent'
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
