@@ -387,8 +387,8 @@
                     <td>{{ item.product_reference|default:"-" }}</td>
                     <td>{{ item.description|default:"-" }}</td>
                     <td class="text-center">{{ item.quantity|default:0 }}</td>
-                    <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} €</td>
-                    <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} €</td>
+                    <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                    <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -404,17 +404,17 @@
         <table class="totals-table">
             <tr>
                 <td>{% trans "Subtotal" %}</td>
-                <td>{{ subtotal|floatformat:2 }} €</td>
+                <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% if tax_amount > 0 %}
             <tr>
                 <td>{% trans "Taxes" %}</td>
-                <td>{{ tax_amount|floatformat:2 }} €</td>
+                <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% endif %}
             <tr class="grand-total">
                 <td>{% trans "TOTAL DUE" %}</td>
-                <td>{{ total_amount|floatformat:2 }} €</td>
+                <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
         </table>
     </div>

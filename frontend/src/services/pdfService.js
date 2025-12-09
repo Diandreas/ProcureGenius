@@ -16,6 +16,19 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
   try {
     console.log('Generating invoice PDF for:', invoiceData);
 
+    // Récupérer la devise de l'organisation
+    let organizationCurrency = 'CAD'; // Devise par défaut
+    try {
+      const api = (await import('./api')).default;
+      const settingsResponse = await api.get('/accounts/organization/settings/');
+      organizationCurrency = settingsResponse.data.defaultCurrency || 
+                            settingsResponse.data.default_currency || 
+                            'CAD';
+      console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
+    } catch (error) {
+      console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
+    }
+
     // Try to call backend API for PDF generation
     try {
       const token = localStorage.getItem('authToken');
@@ -99,8 +112,8 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
                   <td>${item.product_reference || '-'}</td>
                   <td>${item.description}</td>
                   <td>${item.quantity}</td>
-                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(item.unit_price)}</td>
-                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(item.total_price)}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(item.unit_price)}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(item.total_price)}</td>
                 </tr>
               `).join('') || '<tr><td colspan="5" style="text-align: center;">Aucun article</td></tr>'}
             </tbody>
@@ -108,9 +121,9 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
         </div>
 
         <div class="totals">
-          <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(invoiceData.subtotal || 0)}</div>
-          ${invoiceData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(invoiceData.tax_amount)}</div>` : ''}
-          <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(invoiceData.total_amount || 0)}</div>
+          <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.subtotal || 0)}</div>
+          ${invoiceData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.tax_amount)}</div>` : ''}
+          <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.total_amount || 0)}</div>
         </div>
 
         <div class="footer">
@@ -135,6 +148,20 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTemplate = 'standard') => {
   try {
     console.log('Generating purchase order PDF for:', purchaseOrderData);
+
+    // Récupérer la devise de l'organisation
+    let organizationCurrency = 'CAD'; // Devise par défaut
+    try {
+      const api = (await import('./api')).default;
+      const settingsResponse = await api.get('/accounts/organization/settings/');
+      organizationCurrency = settingsResponse.data.defaultCurrency || 
+                            settingsResponse.data.default_currency || 
+                            purchaseOrderData.currency || 
+                            'CAD';
+      console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
+    } catch (error) {
+      console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
+    }
 
     // Try to call backend API for PDF generation
     try {
@@ -235,8 +262,8 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
                   <td>${item.product?.reference || item.product_reference || '-'}</td>
                   <td>${item.product?.name || item.product_name || 'N/A'}</td>
                   <td>${item.quantity} ${item.unit || 'unité(s)'}</td>
-                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(item.unit_price)}</td>
-                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(item.total_price || item.quantity * item.unit_price)}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(item.unit_price)}</td>
+                  <td>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(item.total_price || item.quantity * item.unit_price)}</td>
                 </tr>
               `).join('') || '<tr><td colspan="5" style="text-align: center;">Aucun article</td></tr>'}
             </tbody>
@@ -244,10 +271,10 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
         </div>
 
         <div class="totals">
-          <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.subtotal || 0)}</div>
-          ${purchaseOrderData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.tax_amount)}</div>` : ''}
-          ${purchaseOrderData.shipping_cost > 0 ? `<div class="total-row">Frais de livraison: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.shipping_cost)}</div>` : ''}
-          <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: purchaseOrderData.currency || 'EUR' }).format(purchaseOrderData.total_amount || 0)}</div>
+          <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(purchaseOrderData.subtotal || 0)}</div>
+          ${purchaseOrderData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(purchaseOrderData.tax_amount)}</div>` : ''}
+          ${purchaseOrderData.shipping_cost > 0 ? `<div class="total-row">Frais de livraison: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(purchaseOrderData.shipping_cost)}</div>` : ''}
+          <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(purchaseOrderData.total_amount || 0)}</div>
         </div>
 
         ${purchaseOrderData.notes ? `

@@ -168,6 +168,7 @@ def print_purchase_order_view(request, po_id):
         'purchase_order': purchase_order,
         'template': template_obj,
         'config': config,
+        'org_settings': org_settings,
         'auto_print': request.GET.get('auto_print', 'false') == 'true'
     }
 

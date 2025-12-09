@@ -631,8 +631,8 @@
                             <div>{{ item.description }}</div>
                         </td>
                         <td class="quantity-cell">{{ item.quantity }}</td>
-                        <td class="price-cell">{{ item.unit_price|floatformat:2 }} CAD</td>
-                        <td class="price-cell">{{ item.total_price|floatformat:2 }} CAD</td>
+                        <td class="price-cell">{{ item.unit_price|floatformat:2 }} {{ org_settings.default_currency|default:"CAD" }}</td>
+                        <td class="price-cell">{{ item.total_price|floatformat:2 }} {{ org_settings.default_currency|default:"CAD" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -650,17 +650,17 @@
             <table class="totals-table">
                 <tr>
                     <td class="label">Sous-total:</td>
-                    <td class="amount">{{ invoice.subtotal|floatformat:2 }} CAD</td>
+                    <td class="amount">{{ invoice.subtotal|floatformat:2 }} {{ org_settings.default_currency|default:"CAD" }}</td>
                 </tr>
                 {% if invoice.tax_amount %}
                 <tr>
                     <td class="label">Taxes:</td>
-                    <td class="amount">{{ invoice.tax_amount|floatformat:2 }} CAD</td>
+                    <td class="amount">{{ invoice.tax_amount|floatformat:2 }} {{ org_settings.default_currency|default:"CAD" }}</td>
                 </tr>
                 {% endif %}
                 <tr class="total-final">
                     <td class="label">TOTAL:</td>
-                    <td class="amount">{{ invoice.total_amount|floatformat:2 }} CAD</td>
+                    <td class="amount">{{ invoice.total_amount|floatformat:2 }} {{ org_settings.default_currency|default:"CAD" }}</td>
                 </tr>
             </table>
         </section>

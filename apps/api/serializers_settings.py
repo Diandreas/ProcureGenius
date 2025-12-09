@@ -24,6 +24,19 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'company_email',
             'company_website',
             'companyLogo',
+            # Région fiscale
+            'tax_region',
+            # Identifiants fiscaux (Cameroun/OHADA)
+            'company_niu',
+            'company_rc_number',
+            'company_rccm_number',
+            'company_tax_number',
+            # Identifiants fiscaux (Canada/Québec)
+            'company_neq',
+            'company_gst_number',
+            'company_qst_number',
+            # Identifiants fiscaux (UE/USA)
+            'company_vat_number',
             # Taxation
             'default_tax_rate',
             'gst_hst_rate',

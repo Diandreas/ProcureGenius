@@ -303,8 +303,8 @@
                     {% endif %}
                 </td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.unit_price }}</td>
-                <td><strong>{{ item.total_price }}</strong></td>
+                <td>{{ item.unit_price }} {{ organization.currency|default:"CAD" }}</td>
+                <td><strong>{{ item.total_price }} {{ organization.currency|default:"CAD" }}</strong></td>
             </tr>
             {% endfor %}
         </tbody>

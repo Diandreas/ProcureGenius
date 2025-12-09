@@ -127,12 +127,28 @@ const Settings = () => {
         printConfigurationsAPI.getDefault().catch(() => ({ data: null })),
       ]);
 
-      setSettings(orgResponse.data);
+      // Normaliser les données pour s'assurer que tous les champs sont présents
+      const normalizedSettings = {
+        ...orgResponse.data,
+        // S'assurer que taxRegion est présent (peut être tax_region depuis l'API)
+        taxRegion: orgResponse.data.taxRegion || orgResponse.data.tax_region || 'international',
+        // Normaliser les champs fiscaux
+        companyNiu: orgResponse.data.companyNiu || orgResponse.data.company_niu || '',
+        companyRcNumber: orgResponse.data.companyRcNumber || orgResponse.data.company_rc_number || '',
+        companyRccmNumber: orgResponse.data.companyRccmNumber || orgResponse.data.company_rccm_number || '',
+        companyTaxNumber: orgResponse.data.companyTaxNumber || orgResponse.data.company_tax_number || '',
+        companyNeq: orgResponse.data.companyNeq || orgResponse.data.company_neq || '',
+        companyGstNumber: orgResponse.data.companyGstNumber || orgResponse.data.company_gst_number || '',
+        companyQstNumber: orgResponse.data.companyQstNumber || orgResponse.data.company_qst_number || '',
+        companyVatNumber: orgResponse.data.companyVatNumber || orgResponse.data.company_vat_number || '',
+      };
+
+      setSettings(normalizedSettings);
       setPrintTemplate(templateResponse.data);
       setPrintConfiguration(configResponse.data);
 
       console.log('Paramètres chargés:', {
-        settings: orgResponse.data,
+        settings: normalizedSettings,
         template: templateResponse.data,
         config: configResponse.data,
       });
@@ -155,7 +171,22 @@ const Settings = () => {
 
       // Sauvegarder les paramètres d'organisation
       if (settings) {
-        promises.push(settingsAPI.updateAll(settings));
+        // S'assurer que tous les champs sont inclus, même ceux qui sont vides
+        const settingsToSave = {
+          ...settings,
+          // Inclure explicitement tous les champs fiscaux pour éviter qu'ils soient ignorés
+          taxRegion: settings.taxRegion || 'international',
+          companyNiu: settings.companyNiu || '',
+          companyRcNumber: settings.companyRcNumber || '',
+          companyRccmNumber: settings.companyRccmNumber || '',
+          companyTaxNumber: settings.companyTaxNumber || '',
+          companyNeq: settings.companyNeq || '',
+          companyGstNumber: settings.companyGstNumber || '',
+          companyQstNumber: settings.companyQstNumber || '',
+          companyVatNumber: settings.companyVatNumber || '',
+        };
+        console.log('💾 Sauvegarde des paramètres:', settingsToSave);
+        promises.push(settingsAPI.updateAll(settingsToSave));
       }
 
       // Sauvegarder le template d'impression
@@ -178,6 +209,9 @@ const Settings = () => {
         console.log('💰 Événement de changement de devise déclenché:', settings.defaultCurrency);
       }
 
+      // Recharger les paramètres après sauvegarde pour s'assurer que tout est à jour
+      await loadSettings();
+      
       showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
