@@ -69,7 +69,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI } from '../../services/api';
-import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 
 function PurchaseOrderDetail() {
@@ -77,6 +78,7 @@ function PurchaseOrderDetail() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

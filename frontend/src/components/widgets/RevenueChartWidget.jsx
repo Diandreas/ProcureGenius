@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, BarChart3 } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
+import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
 
 const RevenueChartWidget = ({ period = 'last_30_days' }) => {
+  const { format: formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,14 +28,6 @@ const RevenueChartWidget = ({ period = 'last_30_days' }) => {
 
   if (loading) return <div className="widget-loading">Chargement...</div>;
   if (!data) return <div className="widget-error">Erreur</div>;
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0
-    }).format(value);
-  };
 
   return (
     <>

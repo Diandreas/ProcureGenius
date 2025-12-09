@@ -50,13 +50,15 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import reportsAPI from '../../services/reportsAPI';
-import { getStatusColor, getStatusLabel, formatDate, parseRating, formatCurrency } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate, parseRating } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 
 function SupplierDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['suppliers', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

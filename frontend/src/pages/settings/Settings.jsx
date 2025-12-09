@@ -170,6 +170,14 @@ const Settings = () => {
 
       await Promise.all(promises);
 
+      // Si la devise a changé, déclencher un événement pour rafraîchir tous les composants
+      if (settings?.defaultCurrency) {
+        window.dispatchEvent(new CustomEvent('currency-changed', { 
+          detail: { currency: settings.defaultCurrency } 
+        }));
+        console.log('💰 Événement de changement de devise déclenché:', settings.defaultCurrency);
+      }
+
       showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
@@ -193,6 +201,21 @@ const Settings = () => {
         showSnackbar(t('settings:saveSuccess'), 'success');
       } catch (error) {
         console.error('Error changing language:', error);
+        showSnackbar(t('settings:saveError'), 'error');
+      }
+    }
+
+    // Si c'est la devise qui change, sauvegarder immédiatement et déclencher l'événement
+    if (key === 'defaultCurrency') {
+      try {
+        await settingsAPI.updateAll({ ...settings, [key]: value });
+        window.dispatchEvent(new CustomEvent('currency-changed', { 
+          detail: { currency: value } 
+        }));
+        console.log('💰 Devise mise à jour et événement déclenché:', value);
+        showSnackbar(t('settings:saveSuccess'), 'success');
+      } catch (error) {
+        console.error('Error updating currency:', error);
         showSnackbar(t('settings:saveError'), 'error');
       }
     }

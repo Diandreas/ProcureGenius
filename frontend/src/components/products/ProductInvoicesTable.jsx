@@ -18,11 +18,13 @@ import {
     useMediaQuery,
 } from '@mui/material';
 import { Receipt, Person } from '@mui/icons-material';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
 
 function ProductInvoicesTable({ invoices, loading }) {
     const { t } = useTranslation(['products', 'common']);
+    const { format: formatCurrency } = useCurrency();
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));

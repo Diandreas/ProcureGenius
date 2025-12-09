@@ -25,7 +25,7 @@ import {
   canAddProductToInvoice,
   filterProductsByType,
 } from '../../utils/productHelpers';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -51,6 +51,7 @@ function ProductSelectionDialog({
   onCreateProduct,
   editingItemIndex,
 }) {
+  const { format: formatCurrency } = useCurrency();
   const [tabValue, setTabValue] = useState(0);
   const [stockError, setStockError] = useState('');
 

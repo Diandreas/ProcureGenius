@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Award } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
+import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
 
 const TopClientsWidget = ({ period = 'last_30_days' }) => {
   const { t } = useTranslation(['common', 'dashboard']);
+  const { format: formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,14 +30,6 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
 
   if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
   if (!data) return <div className="widget-error">{t('messages.error')}</div>;
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0
-    }).format(value);
-  };
 
   return (
     <>

@@ -38,11 +38,13 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { fetchInvoices } from '../../store/slices/invoicesSlice';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 
 function Invoices() {
   const { t } = useTranslation(['invoices', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();

@@ -41,7 +41,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
@@ -70,6 +71,7 @@ const TYPE_CONFIG = {
 
 function ProductDetail() {
   const { t } = useTranslation(['products', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();

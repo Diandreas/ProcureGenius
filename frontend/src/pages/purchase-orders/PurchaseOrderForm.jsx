@@ -42,7 +42,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI } from '../../services/api';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
@@ -52,6 +52,7 @@ function PurchaseOrderForm() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
   const supplierIdFromUrl = searchParams.get('supplier');

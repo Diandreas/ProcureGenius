@@ -40,11 +40,12 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { fetchClients } from '../../store/slices/clientsSlice';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 
 function Clients() {
   const { t } = useTranslation(['clients', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();

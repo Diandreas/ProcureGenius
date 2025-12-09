@@ -11,11 +11,13 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 
 function PurchaseOrders() {
   const { t } = useTranslation(['purchaseOrders', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

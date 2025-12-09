@@ -35,7 +35,8 @@ import {
   ReportProblem,
 } from '@mui/icons-material';
 import { productsAPI } from '../services/api';
-import { formatDate, formatCurrency } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
+import useCurrency from '../hooks/useCurrency';
 import { useSnackbar } from 'notistack';
 
 const LOSS_REASONS = [

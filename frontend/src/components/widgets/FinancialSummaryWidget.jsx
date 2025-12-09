@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Target } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
+import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
 
 const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
   const { t } = useTranslation(['common', 'dashboard']);
+  const { format: formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,14 +69,6 @@ const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
       isPercentage: true
     }
   ];
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0
-    }).format(value);
-  };
 
   return (
     <div className="stats-grid">

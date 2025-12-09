@@ -10,11 +10,13 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { contractsAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 
 function Contracts() {
   const { t } = useTranslation(['contracts', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

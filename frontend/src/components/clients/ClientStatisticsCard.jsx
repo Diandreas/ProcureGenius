@@ -19,9 +19,10 @@ import {
     PendingActions,
     CheckCircle,
 } from '@mui/icons-material';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 
 function ClientStatisticsCard({ statistics, loading }) {
+    const { format: formatCurrency } = useCurrency();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

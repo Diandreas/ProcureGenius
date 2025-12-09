@@ -41,7 +41,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { warehousesAPI } from '../../services/api';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 
 // Product type visual configuration
@@ -68,6 +68,7 @@ const TYPE_CONFIG = {
 
 function Products() {
   const { t } = useTranslation(['products', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();

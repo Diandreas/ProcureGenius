@@ -19,9 +19,11 @@ import {
     People,
     Schedule,
 } from '@mui/icons-material';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 
 function ProductStatisticsCard({ statistics, loading }) {
+    const { format: formatCurrency } = useCurrency();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

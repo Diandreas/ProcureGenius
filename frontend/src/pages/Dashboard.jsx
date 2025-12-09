@@ -56,7 +56,7 @@ import {
 } from 'chart.js';
 import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analyticsAPI';
-import { formatCurrency } from '../utils/formatters';
+import useCurrency from '../hooks/useCurrency';
 import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
 
@@ -74,6 +74,7 @@ ChartJS.register(
 
 function Dashboard() {
   const { t } = useTranslation(['dashboard', 'common']);
+  const { format: formatCurrency } = useCurrency();
 
   const PERIOD_OPTIONS = [
     { value: 'today', label: t('dashboard:periods.today') },

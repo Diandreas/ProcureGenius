@@ -65,11 +65,13 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { invoicesAPI } from '../../services/api';
-import { getStatusColor, getStatusLabel, formatDate, formatCurrency } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 
 function InvoiceDetail() {
   const { t } = useTranslation(['invoices', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();

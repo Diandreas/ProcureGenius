@@ -55,7 +55,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { analyticsAPI } from '../services/analyticsAPI';
-import { formatCurrency } from '../utils/formatters';
+import useCurrency from '../hooks/useCurrency';
 import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
 
@@ -81,6 +81,7 @@ const PERIOD_OPTIONS = [
 ];
 
 function DashboardEnhanced() {
+  const { format: formatCurrency } = useCurrency();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);

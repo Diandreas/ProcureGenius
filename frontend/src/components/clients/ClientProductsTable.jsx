@@ -19,11 +19,12 @@ import {
     Avatar,
 } from '@mui/material';
 import { Inventory, ShoppingCart } from '@mui/icons-material';
-import { formatCurrency } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
 
 function ClientProductsTable({ products, loading }) {
     const { t } = useTranslation(['clients', 'products', 'common']);
+    const { format: formatCurrency } = useCurrency();
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));

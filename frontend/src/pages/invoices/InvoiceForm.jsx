@@ -48,13 +48,15 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 
 function InvoiceForm() {
   const { t } = useTranslation(['invoices', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();

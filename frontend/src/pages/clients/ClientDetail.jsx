@@ -39,12 +39,14 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
+import useCurrency from '../../hooks/useCurrency';
 import ClientInvoicesTable from '../../components/clients/ClientInvoicesTable';
 import ClientProductsTable from '../../components/clients/ClientProductsTable';
 
 function ClientDetail() {
   const { t } = useTranslation(['clients', 'common']);
+  const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
