@@ -40,6 +40,8 @@ import {
   CloudUpload,
   Lock,
   SupervisorAccount,
+  Tune,
+  Refresh,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
@@ -73,11 +75,25 @@ function MainLayout() {
   const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [dashboardPeriod, setDashboardPeriod] = useState('last_30_days');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Use module context
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+
+  // Listen for dashboard period changes
+  useEffect(() => {
+    const handlePeriodChange = (event) => {
+      if (event.detail?.period) {
+        setDashboardPeriod(event.detail.period);
+      }
+    };
+    window.addEventListener('dashboard-period-change', handlePeriodChange);
+    return () => {
+      window.removeEventListener('dashboard-period-change', handlePeriodChange);
+    };
+  }, []);
 
   // Menu items with translations
   const menuItems = [
@@ -177,7 +193,28 @@ function MainLayout() {
     switch (currentPath) {
       case '/dashboard':
         return {
-          title: t('navigation:menu.dashboard')
+          title: t('navigation:menu.dashboard'),
+          periodControls: true,
+          currentPeriod: dashboardPeriod,
+          onPeriodChange: (newPeriod) => {
+            setDashboardPeriod(newPeriod);
+            window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period: newPeriod } }));
+          },
+          onRefresh: () => {
+            window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+          },
+          actions: [
+            {
+              label: '',
+              icon: <Tune />,
+              onClick: () => {
+                // Dispatch event to activate edit mode in CustomizableDashboard
+                window.dispatchEvent(new CustomEvent('dashboard-edit-mode', { detail: { activate: true } }));
+              },
+              isIconOnly: true,
+              tooltip: t('navigation:topBar.customizeDashboard', 'Personnaliser le tableau de bord')
+            }
+          ]
         };
       case '/suppliers':
         return {
@@ -274,24 +311,42 @@ function MainLayout() {
       default:
         // Fallback pour les routes non définies
         return {
-          title: 'ProcureGenius'
+          title: 'Procura'
         };
     }
   };
 
-  const contextualActions = useMemo(() => getContextualActions(), [location.pathname, isMobile]);
+  const contextualActions = useMemo(() => getContextualActions(), [location.pathname, isMobile, dashboardPeriod]);
 
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar sx={{ px: 2.5, py: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
+            component="img"
+            src="/main.png"
+            alt="Procura"
+            onError={(e) => {
+              // Fallback si le logo n'existe pas
+              e.target.style.display = 'none';
+              if (e.target.nextSibling) {
+                e.target.nextSibling.style.display = 'flex';
+              }
+            }}
+            sx={{
+              width: 36,
+              height: 36,
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+          <Box
             sx={{
               width: 36,
               height: 36,
               borderRadius: 2,
               background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-              display: 'flex',
+              display: 'none',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
@@ -299,10 +354,10 @@ function MainLayout() {
               fontSize: '1.125rem',
             }}
           >
-            PG
+            P
           </Box>
           <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>
-            ProcureGenius
+            Procura
           </Typography>
         </Box>
       </Toolbar>
@@ -343,26 +398,6 @@ function MainLayout() {
       </Box>
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => navigate('/settings/modules')}
-            sx={{
-              minHeight: 44,
-              px: 2,
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <IconImage src="/icon/setting.png" alt="Modules" size={24} />
-            </ListItemIcon>
-            <ListItemText
-              primary={t('navigation:menu.modules')}
-              primaryTypographyProps={{
-                fontSize: '0.875rem',
-                fontWeight: 500,
-              }}
-            />
-          </ListItemButton>
-        </ListItem>
         {userPermissions?.can_manage_users && (
           <ListItem disablePadding>
             <ListItemButton
@@ -425,43 +460,172 @@ function MainLayout() {
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
-              {contextualActions?.title || 'ProcureGenius'}
+              {contextualActions?.title || 'Procura'}
             </Typography>
           </Box>
-          {contextualActions?.action && (
-            <Button
-              variant="contained"
-              startIcon={contextualActions.action.icon}
-              onClick={contextualActions.action.onClick}
-              size="small"
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 500,
-                px: isMobile ? 1.5 : 2,
-                py: 0.5,
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                mr: 2,
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.01)',
-                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
-                }
-              }}
-            >
-              {contextualActions.action.label}
-            </Button>
+          {/* Period controls for dashboard */}
+          {contextualActions?.periodControls && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
+              <Button
+                size="small"
+                onClick={() => contextualActions.onPeriodChange('last_7_days')}
+                variant={contextualActions.currentPeriod === 'last_7_days' ? 'contained' : 'outlined'}
+                sx={{ 
+                  minWidth: 'auto', 
+                  px: 1.25, 
+                  py: 0.5,
+                  fontSize: '0.7rem',
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                7j
+              </Button>
+              <Button
+                size="small"
+                onClick={() => contextualActions.onPeriodChange('last_30_days')}
+                variant={contextualActions.currentPeriod === 'last_30_days' ? 'contained' : 'outlined'}
+                sx={{ 
+                  minWidth: 'auto', 
+                  px: 1.25, 
+                  py: 0.5,
+                  fontSize: '0.7rem',
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                30j
+              </Button>
+              <Button
+                size="small"
+                onClick={() => contextualActions.onPeriodChange('this_month')}
+                variant={contextualActions.currentPeriod === 'this_month' ? 'contained' : 'outlined'}
+                sx={{ 
+                  minWidth: 'auto', 
+                  px: 1.25, 
+                  py: 0.5,
+                  fontSize: '0.7rem',
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                Mois
+              </Button>
+              <Tooltip title="Actualiser">
+                <IconButton
+                  onClick={contextualActions.onRefresh}
+                  size="small"
+                  sx={{
+                    ml: 0.5,
+                    color: 'text.secondary',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                    }
+                  }}
+                >
+                  <Refresh fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
+          {/* Actions */}
+          {contextualActions?.actions?.map((action, index) => (
+            action.isIconOnly ? (
+              <Tooltip key={index} title={action.tooltip || action.label}>
+                <IconButton
+                  onClick={action.onClick}
+                  size="small"
+                  sx={{
+                    mr: index < (contextualActions.actions?.length || 0) - 1 ? 1 : 2,
+                    color: 'text.secondary',
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                      transform: 'scale(1.05)',
+                    }
+                  }}
+                >
+                  {action.icon}
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Button
+                key={index}
+                variant="contained"
+                startIcon={action.icon}
+                onClick={action.onClick}
+                size="small"
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  px: isMobile ? 1.5 : 2,
+                  py: 0.5,
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  mr: index < (contextualActions.actions?.length || 0) - 1 ? 1 : 2,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'scale(1.01)',
+                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
+                  }
+                }}
+              >
+                {action.label}
+              </Button>
+            )
+          ))}
+          {/* Legacy action support */}
+          {contextualActions?.action && !contextualActions?.actions && (
+            contextualActions.action.isIconOnly ? (
+              <Tooltip title={contextualActions.action.tooltip || contextualActions.action.label}>
+                <IconButton
+                  onClick={contextualActions.action.onClick}
+                  size="small"
+                  sx={{
+                    mr: 2,
+                    color: 'text.secondary',
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                      transform: 'scale(1.05)',
+                    }
+                  }}
+                >
+                  {contextualActions.action.icon}
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Button
+                variant="contained"
+                startIcon={contextualActions.action.icon}
+                onClick={contextualActions.action.onClick}
+                size="small"
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  px: isMobile ? 1.5 : 2,
+                  py: 0.5,
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  mr: 2,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'scale(1.01)',
+                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
+                  }
+                }}
+              >
+                {contextualActions.action.label}
+              </Button>
+            )
           )}
           <IconButton
             onClick={handleMenuClick}

@@ -17,13 +17,6 @@ import {
   Alert,
   Button,
   IconButton,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Stack,
   CircularProgress,
 } from '@mui/material';
@@ -35,11 +28,6 @@ import {
   Receipt,
   AttachMoney,
   People,
-  GetApp,
-  DateRange,
-  PictureAsPdf,
-  TableChart,
-  Refresh,
 } from '@mui/icons-material';
 import { Line, Doughnut } from 'react-chartjs-2';
 import {
@@ -57,7 +45,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analyticsAPI';
 import useCurrency from '../hooks/useCurrency';
-import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
 
 ChartJS.register(
@@ -87,15 +74,8 @@ function Dashboard() {
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [period, setPeriod] = useState('last_30_days');
   const [compare, setCompare] = useState(true);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [customDateDialog, setCustomDateDialog] = useState(false);
-  const [customDates, setCustomDates] = useState({
-    start_date: '',
-    end_date: '',
-  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -119,6 +99,29 @@ function Dashboard() {
     fetchDashboardData();
   }, [period, compare]);
 
+  // Listen for period changes from top nav bar
+  useEffect(() => {
+    const handlePeriodChange = (event) => {
+      if (event.detail?.period) {
+        setPeriod(event.detail.period);
+      }
+    };
+    const handleRefresh = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('dashboard-period-change', handlePeriodChange);
+    window.addEventListener('dashboard-refresh', handleRefresh);
+    return () => {
+      window.removeEventListener('dashboard-period-change', handlePeriodChange);
+      window.removeEventListener('dashboard-refresh', handleRefresh);
+    };
+  }, []);
+
+  // Notify top nav bar of current period
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period } }));
+  }, [period]);
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -126,11 +129,6 @@ function Dashboard() {
         period,
         compare: compare.toString(),
       };
-
-      if (period === 'custom' && customDates.start_date && customDates.end_date) {
-        params.start_date = customDates.start_date;
-        params.end_date = customDates.end_date;
-      }
 
       const response = await analyticsAPI.getStats(params);
       setStats(response.data.data);
@@ -143,44 +141,6 @@ function Dashboard() {
 
   const handlePeriodChange = (newPeriod) => {
     setPeriod(newPeriod);
-  };
-
-  const handleCustomDateApply = () => {
-    setPeriod('custom');
-    setCustomDateDialog(false);
-  };
-
-  const handleExport = async (format) => {
-    try {
-      setExporting(true);
-      setAnchorEl(null);
-
-      const params = {
-        period,
-        compare: compare.toString(),
-      };
-
-      if (period === 'custom' && customDates.start_date && customDates.end_date) {
-        params.start_date = customDates.start_date;
-        params.end_date = customDates.end_date;
-      }
-
-      const response = format === 'pdf'
-        ? await analyticsAPI.exportPDF(params)
-        : await analyticsAPI.exportExcel(params);
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `dashboard_stats.${format === 'pdf' ? 'pdf' : 'xlsx'}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error exporting dashboard:', error);
-    } finally {
-      setExporting(false);
-    }
   };
 
   const formatComparison = (value, previousValue) => {
@@ -288,83 +248,6 @@ function Dashboard() {
 
   return (
     <Box p={isMobile ? 2 : 3}>
-      {/* En-tête */}
-      <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 1 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {!isMobile && <Box sx={{ mr: 3 }}><Mascot pose={welcome.pose} animation="wave" size={80} /></Box>}
-                <Box>
-                  <Typography variant={isMobile ? 'h5' : 'h4'} sx={{ fontWeight: 700, mb: 0.5 }}>
-                    {welcome.greeting} ! 👋
-                  </Typography>
-                  <Typography variant="body1" sx={{ opacity: 0.95 }}>
-                    {welcome.message} Voici un aperçu de votre activité.
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" sx={{ gap: 1 }}>
-                {PERIOD_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    size="small"
-                    onClick={() => handlePeriodChange(option.value)}
-                    variant={period === option.value ? 'contained' : 'outlined'}
-                    sx={{
-                      color: 'white',
-                      borderColor: 'rgba(255,255,255,0.3)',
-                      bgcolor: period === option.value ? 'rgba(255,255,255,0.3)' : 'transparent',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                      minWidth: 'auto',
-                      px: 1.5,
-                    }}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<DateRange />}
-                  onClick={() => setCustomDateDialog(true)}
-                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
-                  size="small"
-                >
-                  Personnalisé
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <GetApp />}
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  disabled={exporting}
-                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
-                  size="small"
-                >
-                  {t('dashboard:actions.export')}
-                </Button>
-                <IconButton onClick={fetchDashboardData} sx={{ color: 'white' }} size="small">
-                  <Refresh />
-                </IconButton>
-              </Stack>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        <MenuItem onClick={() => handleExport('pdf')}>
-          <PictureAsPdf sx={{ mr: 1 }} fontSize="small" />
-          {t('dashboard:actions.exportPDF')}
-        </MenuItem>
-        <MenuItem onClick={() => handleExport('excel')}>
-          <TableChart sx={{ mr: 1 }} fontSize="small" />
-          {t('dashboard:actions.exportExcel')}
-        </MenuItem>
-      </Menu>
-
       {/* Stats Cards */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         {statsCards.map((stat, index) => {
@@ -415,86 +298,63 @@ function Dashboard() {
         })}
       </Grid>
 
-      {/* Charts */}
+      {/* Graphique simplifié */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
-            <Line data={lineChartData} options={{ responsive: true, plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true } } }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>État des factures</Typography>
-            <Doughnut data={donutData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances</Typography>
+            <Line 
+              data={lineChartData} 
+              options={{ 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { 
+                  legend: { position: 'top', align: 'end' },
+                  tooltip: { mode: 'index', intersect: false }
+                }, 
+                scales: { 
+                  y: { beginAtZero: true },
+                  x: { grid: { display: false } }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+              }} 
+              style={{ height: '300px' }}
+            />
           </Paper>
         </Grid>
       </Grid>
 
-      {/* Top Lists */}
-      <Grid container spacing={2.5}>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
-            <List disablePadding>
-              {(stats.top_clients || []).map((client, index) => (
-                <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1 }}>
-                      <People />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={client.name} secondary={`${client.invoice_count} facture(s)`} primaryTypographyProps={{ fontWeight: 500 }} />
-                  <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(client.total_revenue)}
-                  </Typography>
-                </ListItem>
-              ))}
-              {(!stats.top_clients || stats.top_clients.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>{t('dashboard:labels.noClients')}</Typography>
-              )}
-            </List>
-          </Paper>
+      {/* Top Clients seulement */}
+      {stats.top_clients && stats.top_clients.length > 0 && (
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
+              <List disablePadding>
+                {(stats.top_clients || []).slice(0, 5).map((client, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < Math.min(4, (stats.top_clients?.length || 0) - 1) ? '1px solid' : 'none', borderColor: 'divider' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1, width: 36, height: 36 }}>
+                        <People fontSize="small" />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText 
+                      primary={client.name} 
+                      secondary={`${client.invoice_count} facture(s)`} 
+                      primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
+                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                    />
+                    <Typography variant="body1" color="primary" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                      {formatCurrency(client.total_revenue)}
+                    </Typography>
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topSuppliers')}</Typography>
-            <List disablePadding>
-              {(stats.top_suppliers || []).map((supplier, index) => (
-                <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', borderRadius: 1 }}>
-                      <Business />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={supplier.name} secondary={`${supplier.purchase_order_count} BC`} primaryTypographyProps={{ fontWeight: 500 }} />
-                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(supplier.total_spent)}
-                  </Typography>
-                </ListItem>
-              ))}
-              {(!stats.top_suppliers || stats.top_suppliers.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>{t('dashboard:labels.noSuppliers')}</Typography>
-              )}
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
+      )}
 
-      {/* Dialog */}
-      <Dialog open={customDateDialog} onClose={() => setCustomDateDialog(false)}>
-        <DialogTitle>Sélectionner une période personnalisée</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2, minWidth: 300 }}>
-            <TextField label="Date de début" type="date" value={customDates.start_date} onChange={(e) => setCustomDates({ ...customDates, start_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
-            <TextField label="Date de fin" type="date" value={customDates.end_date} onChange={(e) => setCustomDates({ ...customDates, end_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCustomDateDialog(false)}>Annuler</Button>
-          <Button onClick={handleCustomDateApply} variant="contained" disabled={!customDates.start_date || !customDates.end_date}>Appliquer</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

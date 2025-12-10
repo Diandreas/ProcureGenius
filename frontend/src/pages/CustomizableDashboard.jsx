@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { Plus, Settings, Save, LayoutGrid, Edit3, Eye, RefreshCw, CheckCircle } from 'lucide-react';
+import { Plus, Settings, Save, LayoutGrid, Eye, CheckCircle } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import * as widgetsAPI from '../services/widgetsAPI';
@@ -106,6 +106,42 @@ const CustomizableDashboard = () => {
     loadWidgets();
   }, []);
 
+  // Listen for edit mode activation from top nav bar
+  useEffect(() => {
+    const handleEditModeActivation = (event) => {
+      if (event.detail?.activate) {
+        setIsEditMode(true);
+      }
+    };
+    window.addEventListener('dashboard-edit-mode', handleEditModeActivation);
+    return () => {
+      window.removeEventListener('dashboard-edit-mode', handleEditModeActivation);
+    };
+  }, []);
+
+  // Listen for period changes from top nav bar
+  useEffect(() => {
+    const handlePeriodChange = (event) => {
+      if (event.detail?.period) {
+        setPeriod(event.detail.period);
+      }
+    };
+    const handleRefresh = () => {
+      window.location.reload();
+    };
+    window.addEventListener('dashboard-period-change', handlePeriodChange);
+    window.addEventListener('dashboard-refresh', handleRefresh);
+    return () => {
+      window.removeEventListener('dashboard-period-change', handlePeriodChange);
+      window.removeEventListener('dashboard-refresh', handleRefresh);
+    };
+  }, []);
+
+  // Notify top nav bar of current period
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period } }));
+  }, [period]);
+
   // Load default layout
   useEffect(() => {
     const createDefaultLayout = async (defaultLayoutConfig) => {
@@ -140,11 +176,11 @@ const CustomizableDashboard = () => {
           setCurrentLayoutId(layoutData.id);
         } else {
           console.log('⚠️ No default layout found, creating one...');
-          // Layout minimal par défaut - ne pas submerger l'utilisateur
+          // Layout minimal par défaut - seulement les widgets essentiels
           const defaultLayout = [
             { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-            { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
-            { i: 'recent_activity', x: 2, y: 2, w: 2, h: 2 },
+            { i: 'recent_activity', x: 0, y: 2, w: 2, h: 2 },
+            { i: 'alerts_notifications', x: 2, y: 2, w: 2, h: 2 },
           ];
           setLayout(defaultLayout);
           // Créer le layout dans la BD pour le persister
@@ -155,8 +191,8 @@ const CustomizableDashboard = () => {
         // Layout minimal même en cas d'erreur
         const fallbackLayout = [
           { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-          { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
-          { i: 'recent_activity', x: 2, y: 2, w: 2, h: 2 },
+          { i: 'recent_activity', x: 0, y: 2, w: 2, h: 2 },
+          { i: 'alerts_notifications', x: 2, y: 2, w: 2, h: 2 },
         ];
         setLayout(fallbackLayout);
         // Tenter de créer le layout même après erreur
@@ -291,88 +327,38 @@ const CustomizableDashboard = () => {
 
   return (
     <div className="customizable-dashboard">
-      {/* Toolbar */}
-      <div className={`dashboard-toolbar ${isEditMode ? 'edit-mode' : ''}`}>
-        <div className="toolbar-left">
-          <h1 className="dashboard-title">
-            <LayoutGrid size={28} />
-            {t('title')}
-          </h1>
-          {isEditMode && <span className="edit-mode-badge">{t('editMode')}</span>}
-        </div>
-
-        <div className="toolbar-center">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="period-select"
-            disabled={isEditMode}
-          >
-            <option value="today">{t('periods.today')}</option>
-            <option value="yesterday">{t('periods.yesterday')}</option>
-            <option value="last_7_days">{t('periods.last_7_days')}</option>
-            <option value="last_30_days">{t('periods.last_30_days')}</option>
-            <option value="last_90_days">{t('periods.last_90_days')}</option>
-            <option value="this_month">{t('periods.this_month')}</option>
-            <option value="this_year">{t('periods.this_year')}</option>
-          </select>
-        </div>
-
-        <div className="toolbar-right">
-          {!isEditMode ? (
-            <>
-              <button
-                onClick={() => window.location.reload()}
-                className="toolbar-btn"
-                title={t('refresh')}
-              >
-                <RefreshCw size={18} />
-              </button>
-
-              <button
-                onClick={toggleEditMode}
-                className="toolbar-btn toolbar-btn-primary"
-              >
-                <Edit3 size={18} />
-                {t('customize')}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsLibraryOpen(true)}
-                className="toolbar-btn toolbar-btn-secondary"
-              >
-                <Plus size={18} />
-                {t('addWidget')}
-              </button>
-
-              <button
-                onClick={toggleEditMode}
-                className="toolbar-btn"
-              >
-                <Eye size={18} />
-                {t('preview')}
-              </button>
-
-              <button
-                onClick={handleSaveLayout}
-                disabled={isSaving || !hasChanges}
-                className="toolbar-btn toolbar-btn-success"
-              >
-                <Save size={18} />
-                {isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Edit mode hint */}
       {isEditMode && (
-        <div className="edit-mode-hint">
+        <div className="edit-mode-hint" style={{ marginBottom: '16px', padding: '12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Settings size={20} className="hint-icon" />
           <span>{t('editHint')}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setIsLibraryOpen(true)}
+              className="toolbar-btn toolbar-btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+            >
+              <Plus size={16} />
+              {t('addWidget')}
+            </button>
+            <button
+              onClick={toggleEditMode}
+              className="toolbar-btn"
+              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+            >
+              <Eye size={16} />
+              {t('preview')}
+            </button>
+            <button
+              onClick={handleSaveLayout}
+              disabled={isSaving || !hasChanges}
+              className="toolbar-btn toolbar-btn-success"
+              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+            >
+              <Save size={16} />
+              {isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}
+            </button>
+          </div>
         </div>
       )}
 
