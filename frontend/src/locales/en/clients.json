@@ -93,6 +93,8 @@
         "deleteError": "Error deleting client",
         "clientNotFound": "Client not found",
         "deleteConfirmation": "Delete {{name}}?",
+        "deleteWarningTitle": "⚠️ Warning: Permanent Deletion",
+        "deleteWarningMessage": "Are you sure you want to delete the client \"{{name}}\"?\n\n❌ ALL INVOICES ASSOCIATED WITH THIS CLIENT WILL ALSO BE PERMANENTLY DELETED.\n\nThis action cannot be undone.",
         "createSuccess": "Client created successfully",
         "updateSuccess": "Client updated successfully",
         "saveError": "Error saving client",

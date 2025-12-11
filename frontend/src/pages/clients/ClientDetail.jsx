@@ -19,6 +19,11 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -57,6 +62,7 @@ function ClientDetail() {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchClient();
@@ -85,15 +91,22 @@ function ClientDetail() {
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm(t('clients:messages.deleteConfirmation', { name: client.name }))) {
-      try {
-        await clientsAPI.delete(id);
-        enqueueSnackbar(t('clients:messages.clientDeleted'), { variant: 'success' });
-        navigate('/clients');
-      } catch (error) {
-        enqueueSnackbar(t('clients:messages.deleteError'), { variant: 'error' });
-      }
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteDialogOpen(false);
+    try {
+      await clientsAPI.delete(id);
+      enqueueSnackbar(t('clients:messages.clientDeleted'), { variant: 'success' });
+      navigate('/clients');
+    } catch (error) {
+      enqueueSnackbar(t('clients:messages.deleteError'), { variant: 'error' });
     }
   };
 
@@ -136,7 +149,7 @@ function ClientDetail() {
           </Tooltip>
           <Tooltip title={t('clients:tooltips.deleteClient')}>
             <IconButton
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               sx={{
                 color: 'error.main',
                 '&:hover': {
@@ -497,6 +510,65 @@ function ClientDetail() {
           />
         </Box>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          id="delete-dialog-title"
+          sx={{
+            color: 'error.main',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          {t('clients:messages.deleteWarningTitle')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="delete-dialog-description"
+            sx={{
+              whiteSpace: 'pre-line',
+              color: 'text.primary',
+              fontSize: '1rem'
+            }}
+          >
+            {t('clients:messages.deleteWarningMessage', { name: client?.name })}
+          </DialogContentText>
+          {statistics?.sales_summary?.total_invoices > 0 && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              <Typography variant="body2" fontWeight="bold">
+                {statistics.sales_summary.total_invoices} facture(s) seront supprimée(s)
+              </Typography>
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            variant="outlined"
+            autoFocus
+          >
+            {t('clients:actions.cancel')}
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            startIcon={<Delete />}
+          >
+            Supprimer définitivement
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

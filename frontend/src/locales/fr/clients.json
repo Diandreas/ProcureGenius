@@ -93,6 +93,8 @@
     "deleteError": "Erreur lors de la suppression",
     "clientNotFound": "Client introuvable",
     "deleteConfirmation": "Supprimer {{name}} ?",
+    "deleteWarningTitle": "⚠️ Attention : Suppression définitive",
+    "deleteWarningMessage": "Êtes-vous sûr de vouloir supprimer le client \"{{name}}\" ?\n\n❌ TOUTES LES FACTURES ASSOCIÉES À CE CLIENT SERONT ÉGALEMENT SUPPRIMÉES DÉFINITIVEMENT.\n\nCette action est irréversible.",
     "createSuccess": "Client créé avec succès",
     "updateSuccess": "Client modifié avec succès",
     "saveError": "Erreur lors de l'enregistrement",

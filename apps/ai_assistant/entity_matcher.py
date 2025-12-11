@@ -1,239 +1,474 @@
 """
-Système générique de recherche d'entités similaires
-Permet de détecter les doublons potentiels avant création
+Système ultra-robuste de recherche d'entités similaires avec matching multi-algorithme
+Tolère les fautes d'orthographe, variations de noms, ordre des mots, etc.
 """
-from django.db.models import Q
-from difflib import SequenceMatcher
+from typing import List, Tuple, Dict, Any
 import re
+import unicodedata
+
+# Import des bibliothèques de fuzzy matching
+try:
+    from fuzzywuzzy import fuzz
+    from rapidfuzz import fuzz as rapid_fuzz
+    import jellyfish
+    FUZZY_AVAILABLE = True
+except ImportError:
+    FUZZY_AVAILABLE = False
+    print("⚠️ WARNING: Fuzzy matching libraries not installed. Install with:")
+    print("pip install fuzzywuzzy python-Levenshtein jellyfish rapidfuzz")
 
 
-class EntityMatcher:
-    """Classe pour rechercher des entités similaires"""
+class EnhancedEntityMatcher:
+    """
+    Matcher d'entités ultra-robuste utilisant plusieurs algorithmes.
+    Gère les fautes de frappe, variations, similarités phonétiques, etc.
+    """
 
-    def __init__(self, threshold=0.75):
+    # Seuils de correspondance pour différents algorithmes
+    THRESHOLDS = {
+        'exact': 100,
+        'high': 90,
+        'medium': 75,
+        'low': 60
+    }
+
+    # Poids des algorithmes pour l'agrégation des scores
+    ALGORITHM_WEIGHTS = {
+        'levenshtein': 0.25,
+        'jaro_winkler': 0.20,
+        'token_sort': 0.25,
+        'token_set': 0.15,
+        'phonetic': 0.15
+    }
+
+    # Suffixes d'entreprise courants
+    COMPANY_SUFFIXES = {
+        'incorporated', 'inc', 'corporation', 'corp', 'company', 'co',
+        'limited', 'ltd', 'llc', 'sarl', 'sa', 'sas', 'gmbh',
+        'plc', 'pty', 'ag', 'nv', 'bv', 'eurl', 'srl', 'snc'
+    }
+
+    def __init__(self, threshold=0.60):
         """
         Args:
-            threshold: Seuil de similarité (0-1). 0.75 = 75% de similarité
+            threshold: Seuil de similarité minimum (0-1). Défaut: 0.60 (60%)
         """
         self.threshold = threshold
 
-    def normalize_string(self, text):
-        """Normalise une chaîne pour la comparaison"""
+    def normalize_text(self, text: str) -> str:
+        """
+        Normalisation avancée de texte pour le matching.
+        """
         if not text:
-            return ""
-        # Minuscules, suppression accents, caractères spéciaux
-        text = text.lower().strip()
-        text = re.sub(r'[^a-z0-9\s]', '', text)
-        text = re.sub(r'\s+', ' ', text)
+            return ''
+
+        # Convertir en minuscules
+        text = text.lower()
+
+        # Supprimer les accents avec normalisation Unicode
+        text = ''.join(
+            c for c in unicodedata.normalize('NFD', text)
+            if unicodedata.category(c) != 'Mn'
+        )
+
+        # Supprimer les espaces multiples
+        text = ' '.join(text.split())
+
         return text
 
-    def calculate_similarity(self, str1, str2):
-        """Calcule la similarité entre deux chaînes (0-1)"""
-        str1_norm = self.normalize_string(str1)
-        str2_norm = self.normalize_string(str2)
-
-        if not str1_norm or not str2_norm:
-            return 0.0
-
-        return SequenceMatcher(None, str1_norm, str2_norm).ratio()
-
-    def find_similar_suppliers(self, name, email=None, phone=None, exclude_id=None):
+    def normalize_company_name(self, name: str) -> str:
         """
-        Recherche des fournisseurs similaires
+        Normalise les noms d'entreprise en supprimant les suffixes légaux.
+        Exemple: "ABC Corporation Inc." -> "abc"
+        """
+        normalized = self.normalize_text(name)
 
-        Args:
-            name: Nom du fournisseur
-            email: Email (optionnel)
-            phone: Téléphone (optionnel)
-            exclude_id: ID à exclure de la recherche
+        # Supprimer la ponctuation
+        normalized = re.sub(r'[^\w\s]', ' ', normalized)
+
+        # Diviser en tokens
+        tokens = normalized.split()
+
+        # Supprimer les suffixes courants
+        filtered_tokens = [
+            t for t in tokens
+            if t not in self.COMPANY_SUFFIXES
+        ]
+
+        return ' '.join(filtered_tokens) if filtered_tokens else normalized
+
+    def normalize_phone(self, phone: str) -> str:
+        """
+        Normalise les numéros de téléphone pour la comparaison.
+        Supprime tous les caractères non-numériques.
+        """
+        if not phone:
+            return ''
+
+        # Garder seulement les chiffres
+        digits = re.sub(r'\D', '', phone)
+
+        # Pour les numéros français, supprimer le code pays
+        if digits.startswith('33'):
+            digits = '0' + digits[2:]
+        elif digits.startswith('+33'):
+            digits = '0' + digits[3:]
+
+        return digits
+
+    def calculate_multi_algorithm_score(
+        self,
+        str1: str,
+        str2: str,
+        use_phonetic: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Calcule la similarité en utilisant plusieurs algorithmes.
 
         Returns:
-            Liste de tuples (supplier, similarity_score, match_reason)
+            {
+                'levenshtein': 0.85,
+                'jaro_winkler': 0.90,
+                'token_sort': 0.88,
+                'token_set': 0.92,
+                'phonetic': 0.80,
+                'weighted_average': 0.87,
+                'confidence': 'high'
+            }
+        """
+        if not str1 or not str2:
+            return {'weighted_average': 0.0, 'confidence': 'none'}
+
+        # Normaliser les entrées
+        norm1 = self.normalize_text(str1)
+        norm2 = self.normalize_text(str2)
+
+        scores = {}
+
+        if FUZZY_AVAILABLE:
+            # 1. Distance de Levenshtein (bon pour les fautes de frappe)
+            scores['levenshtein'] = fuzz.ratio(norm1, norm2) / 100.0
+
+            # 2. Jaro-Winkler (bon pour les variations de noms)
+            try:
+                scores['jaro_winkler'] = jellyfish.jaro_winkler_similarity(norm1, norm2)
+            except:
+                scores['jaro_winkler'] = 0.0
+
+            # 3. Token Sort Ratio (indépendant de l'ordre)
+            scores['token_sort'] = fuzz.token_sort_ratio(norm1, norm2) / 100.0
+
+            # 4. Token Set Ratio (gère les correspondances partielles)
+            scores['token_set'] = fuzz.token_set_ratio(norm1, norm2) / 100.0
+
+            # 5. Matching phonétique (noms qui sonnent pareil)
+            if use_phonetic:
+                try:
+                    # Metaphone pour noms anglais/français
+                    metaphone1 = jellyfish.metaphone(norm1)
+                    metaphone2 = jellyfish.metaphone(norm2)
+                    scores['phonetic'] = 1.0 if metaphone1 == metaphone2 else 0.0
+
+                    # Soundex comme secours
+                    if scores['phonetic'] == 0.0:
+                        soundex1 = jellyfish.soundex(norm1)
+                        soundex2 = jellyfish.soundex(norm2)
+                        scores['phonetic'] = 0.8 if soundex1 == soundex2 else 0.0
+                except:
+                    scores['phonetic'] = 0.0
+            else:
+                scores['phonetic'] = 0.0
+        else:
+            # Fallback sur difflib si bibliothèques non disponibles
+            from difflib import SequenceMatcher
+            ratio = SequenceMatcher(None, norm1, norm2).ratio()
+            scores = {
+                'levenshtein': ratio,
+                'jaro_winkler': ratio,
+                'token_sort': ratio,
+                'token_set': ratio,
+                'phonetic': 0.0
+            }
+
+        # Calculer la moyenne pondérée
+        weighted_avg = sum(
+            scores[algo] * self.ALGORITHM_WEIGHTS.get(algo, 0)
+            for algo in scores
+        )
+
+        # Déterminer le niveau de confiance
+        if weighted_avg >= 0.90:
+            confidence = 'very_high'
+        elif weighted_avg >= 0.75:
+            confidence = 'high'
+        elif weighted_avg >= 0.60:
+            confidence = 'medium'
+        else:
+            confidence = 'low'
+
+        return {
+            **scores,
+            'weighted_average': weighted_avg,
+            'confidence': confidence
+        }
+
+    def find_similar_clients(
+        self,
+        first_name: str,
+        last_name: str = '',
+        email: str = None,
+        company: str = None,
+        phone: str = None,
+        exclude_id: str = None,
+        min_score: float = None
+    ) -> List[Tuple[Any, float, Dict]]:
+        """
+        Recherche avancée de clients similaires avec matching multi-algorithme.
+
+        Returns:
+            Liste de (client, score, match_details) triée par score décroissant
+        """
+        from apps.accounts.models import Client
+
+        if min_score is None:
+            min_score = self.threshold
+
+        candidates = Client.objects.all()
+        if exclude_id:
+            candidates = candidates.exclude(id=exclude_id)
+
+        matches = []
+
+        for client in candidates:
+            match_details = {
+                'matched_on': [],
+                'scores': {},
+                'algorithms': {}
+            }
+
+            best_score = 0.0
+
+            # 1. CORRESPONDANCES EXACTES (100% confiance)
+            if email and client.email:
+                if self.normalize_text(email) == self.normalize_text(client.email):
+                    match_details['matched_on'].append('email_exact')
+                    best_score = 1.0
+
+            if phone and client.phone:
+                norm_phone1 = self.normalize_phone(phone)
+                norm_phone2 = self.normalize_phone(client.phone)
+                if norm_phone1 and norm_phone2 and norm_phone1 == norm_phone2:
+                    match_details['matched_on'].append('phone_exact')
+                    best_score = max(best_score, 1.0)
+
+            # 2. MATCHING FLOU SUR LE NOM
+            if first_name or company:
+                # Essayer de matcher sur le nom
+                if first_name:
+                    full_name = f"{first_name} {last_name}".strip()
+                    client_name = client.name
+
+                    name_scores = self.calculate_multi_algorithm_score(
+                        full_name, client_name, use_phonetic=True
+                    )
+
+                    if name_scores['weighted_average'] >= min_score:
+                        match_details['matched_on'].append('name_fuzzy')
+                        match_details['scores']['name'] = name_scores['weighted_average']
+                        match_details['algorithms']['name'] = name_scores
+                        best_score = max(best_score, name_scores['weighted_average'])
+
+                # Essayer de matcher sur le nom d'entreprise (alias pour nom)
+                if company:
+                    # Normaliser les noms d'entreprise (supprimer suffixes légaux)
+                    norm_company1 = self.normalize_company_name(company)
+                    norm_company2 = self.normalize_company_name(client.name)
+
+                    company_scores = self.calculate_multi_algorithm_score(
+                        norm_company1, norm_company2, use_phonetic=False
+                    )
+
+                    if company_scores['weighted_average'] >= min_score:
+                        match_details['matched_on'].append('company_fuzzy')
+                        match_details['scores']['company'] = company_scores['weighted_average']
+                        match_details['algorithms']['company'] = company_scores
+                        best_score = max(best_score, company_scores['weighted_average'])
+
+            # Inclure seulement si le score atteint le seuil
+            if best_score >= min_score:
+                matches.append((client, best_score, match_details))
+
+        # Trier par score décroissant
+        matches.sort(key=lambda x: x[1], reverse=True)
+
+        return matches
+
+    def find_similar_suppliers(
+        self,
+        name: str,
+        email: str = None,
+        phone: str = None,
+        exclude_id: str = None,
+        min_score: float = None
+    ) -> List[Tuple[Any, float, Dict]]:
+        """
+        Recherche avancée de fournisseurs similaires avec matching multi-algorithme.
         """
         from apps.suppliers.models import Supplier
 
-        results = []
+        if min_score is None:
+            min_score = self.threshold
 
-        # Recherche par email exact
-        if email:
-            exact_email = Supplier.objects.filter(email__iexact=email)
-            if exclude_id:
-                exact_email = exact_email.exclude(id=exclude_id)
-
-            for supplier in exact_email:
-                results.append((supplier, 1.0, 'email_exact'))
-
-        # Recherche par téléphone exact
-        if phone:
-            # Normaliser le téléphone (enlever espaces, tirets, etc.)
-            phone_clean = re.sub(r'[^\d+]', '', phone)
-
-            all_suppliers = Supplier.objects.all()
-            if exclude_id:
-                all_suppliers = all_suppliers.exclude(id=exclude_id)
-
-            for supplier in all_suppliers:
-                if supplier.phone:
-                    supplier_phone_clean = re.sub(r'[^\d+]', '', supplier.phone)
-                    if phone_clean == supplier_phone_clean:
-                        results.append((supplier, 1.0, 'phone_exact'))
-
-        # Recherche par nom similaire
-        all_suppliers = Supplier.objects.all()
+        candidates = Supplier.objects.all()
         if exclude_id:
-            all_suppliers = all_suppliers.exclude(id=exclude_id)
+            candidates = candidates.exclude(id=exclude_id)
 
-        for supplier in all_suppliers:
-            # Éviter les doublons déjà trouvés
-            if any(s[0].id == supplier.id for s in results):
-                continue
+        matches = []
 
-            similarity = self.calculate_similarity(name, supplier.name)
+        for supplier in candidates:
+            match_details = {
+                'matched_on': [],
+                'scores': {},
+                'algorithms': {}
+            }
 
-            if similarity >= self.threshold:
-                results.append((supplier, similarity, 'name_similar'))
+            best_score = 0.0
 
-        # Trier par score de similarité décroissant
-        results.sort(key=lambda x: x[1], reverse=True)
+            # 1. CORRESPONDANCES EXACTES (100% confiance)
+            if email and supplier.email:
+                if self.normalize_text(email) == self.normalize_text(supplier.email):
+                    match_details['matched_on'].append('email_exact')
+                    best_score = 1.0
 
-        return results
+            if phone and supplier.phone:
+                norm_phone1 = self.normalize_phone(phone)
+                norm_phone2 = self.normalize_phone(supplier.phone)
+                if norm_phone1 and norm_phone2 and norm_phone1 == norm_phone2:
+                    match_details['matched_on'].append('phone_exact')
+                    best_score = max(best_score, 1.0)
 
-    def find_similar_clients(self, first_name, last_name=None, email=None, company=None, exclude_id=None):
+            # 2. MATCHING FLOU SUR LE NOM
+            if name and supplier.name:
+                # Normaliser les noms d'entreprise (supprimer suffixes légaux)
+                norm_name1 = self.normalize_company_name(name)
+                norm_name2 = self.normalize_company_name(supplier.name)
+
+                name_scores = self.calculate_multi_algorithm_score(
+                    norm_name1, norm_name2, use_phonetic=False
+                )
+
+                if name_scores['weighted_average'] >= min_score:
+                    match_details['matched_on'].append('name_fuzzy')
+                    match_details['scores']['name'] = name_scores['weighted_average']
+                    match_details['algorithms']['name'] = name_scores
+                    best_score = max(best_score, name_scores['weighted_average'])
+
+            # Inclure seulement si le score atteint le seuil
+            if best_score >= min_score:
+                matches.append((supplier, best_score, match_details))
+
+        # Trier par score décroissant
+        matches.sort(key=lambda x: x[1], reverse=True)
+
+        return matches
+
+    def find_similar_products(
+        self,
+        name: str,
+        reference: str = None,
+        barcode: str = None,
+        exclude_id: str = None,
+        min_score: float = None
+    ) -> List[Tuple[Any, float, Dict]]:
         """
-        Recherche des clients similaires
-
-        Args:
-            first_name: Prénom
-            last_name: Nom (optionnel)
-            email: Email (optionnel)
-            company: Société (optionnel)
-            exclude_id: ID à exclure
-
-        Returns:
-            Liste de tuples (client, similarity_score, match_reason)
-        """
-        from apps.accounts.models import CustomUser
-
-        results = []
-
-        # Recherche par email exact
-        if email:
-            exact_email = CustomUser.objects.filter(email__iexact=email)
-            if exclude_id:
-                exact_email = exact_email.exclude(id=exclude_id)
-
-            for client in exact_email:
-                results.append((client, 1.0, 'email_exact'))
-
-        # Recherche par nom complet similaire
-        full_name = f"{first_name} {last_name}" if last_name else first_name
-
-        all_clients = CustomUser.objects.all()
-        if exclude_id:
-            all_clients = all_clients.exclude(id=exclude_id)
-
-        for client in all_clients:
-            # Éviter les doublons
-            if any(c[0].id == client.id for c in results):
-                continue
-
-            client_full_name = client.get_full_name() or client.username
-            similarity = self.calculate_similarity(full_name, client_full_name)
-
-            if similarity >= self.threshold:
-                results.append((client, similarity, 'name_similar'))
-
-        # Recherche par société similaire
-        if company:
-            for client in all_clients:
-                if any(c[0].id == client.id for c in results):
-                    continue
-
-                if client.company:
-                    similarity = self.calculate_similarity(company, client.company)
-                    if similarity >= self.threshold:
-                        results.append((client, similarity, 'company_similar'))
-
-        # Trier par score
-        results.sort(key=lambda x: x[1], reverse=True)
-
-        return results
-
-    def find_similar_products(self, name, reference=None, barcode=None, exclude_id=None):
-        """
-        Recherche des produits similaires
-
-        Args:
-            name: Nom du produit
-            reference: Référence (optionnel)
-            barcode: Code-barres (optionnel)
-            exclude_id: ID à exclure
-
-        Returns:
-            Liste de tuples (product, similarity_score, match_reason)
+        Recherche avancée de produits similaires avec matching multi-algorithme.
         """
         from apps.invoicing.models import Product
 
-        results = []
+        if min_score is None:
+            min_score = self.threshold
 
-        # Recherche par référence exacte
-        if reference:
-            exact_ref = Product.objects.filter(reference__iexact=reference)
-            if exclude_id:
-                exact_ref = exact_ref.exclude(id=exclude_id)
-
-            for product in exact_ref:
-                results.append((product, 1.0, 'reference_exact'))
-
-        # Recherche par code-barres exact
-        if barcode:
-            exact_barcode = Product.objects.filter(barcode=barcode)
-            if exclude_id:
-                exact_barcode = exact_barcode.exclude(id=exclude_id)
-
-            for product in exact_barcode:
-                results.append((product, 1.0, 'barcode_exact'))
-
-        # Recherche par nom similaire
-        all_products = Product.objects.all()
+        candidates = Product.objects.all()
         if exclude_id:
-            all_products = all_products.exclude(id=exclude_id)
+            candidates = candidates.exclude(id=exclude_id)
 
-        for product in all_products:
-            if any(p[0].id == product.id for p in results):
-                continue
+        matches = []
 
-            similarity = self.calculate_similarity(name, product.name)
+        for product in candidates:
+            match_details = {
+                'matched_on': [],
+                'scores': {},
+                'algorithms': {}
+            }
 
-            if similarity >= self.threshold:
-                results.append((product, similarity, 'name_similar'))
+            best_score = 0.0
 
-        results.sort(key=lambda x: x[1], reverse=True)
+            # 1. CORRESPONDANCES EXACTES (100% confiance)
+            if reference and product.reference:
+                if self.normalize_text(reference) == self.normalize_text(product.reference):
+                    match_details['matched_on'].append('reference_exact')
+                    best_score = 1.0
 
-        return results
+            if barcode and product.barcode:
+                if self.normalize_text(barcode) == self.normalize_text(product.barcode):
+                    match_details['matched_on'].append('barcode_exact')
+                    best_score = max(best_score, 1.0)
 
-    def format_match_reason(self, reason):
-        """Formate la raison de la correspondance en français"""
-        reasons = {
-            'email_exact': 'Email identique',
-            'phone_exact': 'Téléphone identique',
-            'name_similar': 'Nom similaire',
-            'company_similar': 'Société similaire',
-            'reference_exact': 'Référence identique',
-            'barcode_exact': 'Code-barres identique',
-        }
-        return reasons.get(reason, 'Correspondance trouvée')
+            # 2. MATCHING FLOU SUR LE NOM
+            if name and product.name:
+                name_scores = self.calculate_multi_algorithm_score(
+                    name, product.name, use_phonetic=False
+                )
 
-    def create_similarity_message(self, entity_type, similar_entities):
+                if name_scores['weighted_average'] >= min_score:
+                    match_details['matched_on'].append('name_fuzzy')
+                    match_details['scores']['name'] = name_scores['weighted_average']
+                    match_details['algorithms']['name'] = name_scores
+                    best_score = max(best_score, name_scores['weighted_average'])
+
+            # Inclure seulement si le score atteint le seuil
+            if best_score >= min_score:
+                matches.append((product, best_score, match_details))
+
+        # Trier par score décroissant
+        matches.sort(key=lambda x: x[1], reverse=True)
+
+        return matches
+
+    def format_match_reason(self, match_details: Dict) -> str:
         """
-        Crée un message formaté pour l'IA décrivant les entités similaires
+        Formate les raisons de correspondance en français pour affichage.
+        """
+        matched_on = match_details.get('matched_on', [])
+        scores = match_details.get('scores', {})
+
+        if 'email_exact' in matched_on:
+            return "Email identique (100%)"
+        elif 'phone_exact' in matched_on:
+            return "Téléphone identique (100%)"
+        elif 'reference_exact' in matched_on:
+            return "Référence identique (100%)"
+        elif 'barcode_exact' in matched_on:
+            return "Code-barres identique (100%)"
+        elif 'name_fuzzy' in matched_on:
+            score = scores.get('name', 0) * 100
+            return f"Nom similaire ({score:.0f}%)"
+        elif 'company_fuzzy' in matched_on:
+            score = scores.get('company', 0) * 100
+            return f"Nom d'entreprise similaire ({score:.0f}%)"
+        else:
+            return "Correspondance partielle"
+
+    def create_similarity_message(self, entity_type: str, similar_entities: List) -> str:
+        """
+        Crée un message formaté pour l'IA décrivant les entités similaires.
 
         Args:
             entity_type: Type d'entité ('supplier', 'client', 'product')
-            similar_entities: Liste de tuples (entity, score, reason)
+            similar_entities: Liste de tuples (entity, score, match_details)
 
         Returns:
-            str: Message formaté
+            str: Message formaté en français
         """
         if not similar_entities:
             return None
@@ -248,7 +483,7 @@ class EntityMatcher:
 
         message = f"⚠️ **Attention**: J'ai trouvé {len(similar_entities)} {entity_name}(s) similaire(s) :\n\n"
 
-        for i, (entity, score, reason) in enumerate(similar_entities[:3], 1):  # Max 3
+        for i, (entity, score, match_details) in enumerate(similar_entities[:3], 1):  # Max 3
             if entity_type == 'supplier':
                 entity_info = f"**{entity.name}**"
                 if entity.email:
@@ -259,7 +494,7 @@ class EntityMatcher:
                 entity_info = f"**{entity.get_full_name() or entity.username}**"
                 if entity.email:
                     entity_info += f" - {entity.email}"
-                if entity.company:
+                if hasattr(entity, 'company') and entity.company:
                     entity_info += f" ({entity.company})"
             elif entity_type == 'product':
                 entity_info = f"**{entity.name}**"
@@ -269,7 +504,7 @@ class EntityMatcher:
                 entity_info = str(entity)
 
             similarity_percent = int(score * 100)
-            reason_text = self.format_match_reason(reason)
+            reason_text = self.format_match_reason(match_details)
 
             message += f"{i}. {entity_info}\n"
             message += f"   - Similarité: {similarity_percent}%\n"
@@ -280,5 +515,5 @@ class EntityMatcher:
         return message
 
 
-# Instance globale
-entity_matcher = EntityMatcher(threshold=0.75)
+# Instance globale avec seuil à 60% (plus permissif pour détecter plus de correspondances)
+entity_matcher = EnhancedEntityMatcher(threshold=0.60)

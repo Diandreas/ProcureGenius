@@ -1,12 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(findstr:*)",
-      "Bash(python manage.py shell:*)",
-      "Bash(dir:*)",
-      "Bash(cat:*)",
-      "Bash(.venv\\Scripts\\python.exe:*)",
-      "Bash(.venv/Scripts/python.exe:*)"
+      "Bash(Stop-Process -Force)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

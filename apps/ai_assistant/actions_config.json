@@ -168,6 +168,40 @@
       ]
     },
 
+    "create_client": {
+      "name": "Créer un client",
+      "description": "Crée un nouveau client dans le système",
+      "icon": "person_add",
+      "category": "clients",
+      "required_params": ["name"],
+      "optional_params": ["email", "phone", "address", "contact_person", "payment_terms", "tax_id"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Client '{name}' créé avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/clients/{id}",
+          "label": "Voir le client"
+        },
+        {
+          "type": "quick_action",
+          "label": "Créer une facture",
+          "action": "create_invoice",
+          "params": {"client_name": "{name}"}
+        },
+        {
+          "type": "refresh_data",
+          "target": "clients_list"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait les informations du client : nom (obligatoire), email, téléphone, adresse, personne de contact, conditions de paiement",
+        "confirm": "Voulez-vous créer le client '{name}' avec ces informations ?"
+      }
+    },
+
     "search_invoice": {
       "name": "Rechercher une facture",
       "description": "Recherche des factures",
@@ -281,6 +315,25 @@
       "ai_prompts": {
         "extract": "Détermine la période : aujourd'hui, cette semaine, ce mois, cette année",
         "results": "Voici les statistiques pour {period}"
+      }
+    },
+
+    "search_entity": {
+      "name": "Rechercher une entité",
+      "description": "Recherche des clients, fournisseurs ou produits avec correspondance floue qui tolère les fautes d'orthographe",
+      "icon": "search",
+      "category": "search",
+      "required_params": ["entity_type", "query"],
+      "optional_params": ["min_score"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "search_results"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Type d'entité : client, supplier, ou product. Requête de recherche (peut contenir des fautes). Score minimum optionnel (0.0-1.0, défaut: 0.60)",
+        "results": "Résultats de recherche pour '{query}' ({count} trouvé(s))"
       }
     },
 

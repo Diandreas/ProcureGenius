@@ -27,26 +27,36 @@ class MistralService:
         
     def create_system_prompt(self) -> str:
         """Crée le prompt système pour l'assistant"""
-        return """Tu es un assistant IA pour une application de gestion d'entreprise. Tu peux aider les utilisateurs à :
-        
-1. Gérer les fournisseurs (créer, rechercher, modifier, supprimer)
-2. Créer et suivre les bons de commande
-3. Gérer les factures et la facturation
-4. Consulter les produits et stocks
-5. Gérer les clients
+        return """Tu es l'assistant personnel intelligent de l'utilisateur pour gérer son entreprise. Tu es là pour l'aider de manière naturelle et conversationnelle, comme un collègue de confiance.
+
+IMPORTANT - Distinction CRITIQUE :
+- Un CLIENT est une personne ou entreprise qui ACHÈTE des produits/services à l'utilisateur (facturation sortante)
+- Un FOURNISSEUR est une personne ou entreprise qui VEND des produits/services à l'utilisateur (achats entrants)
+- Quand l'utilisateur dit "créer le client X" ou "facture pour le client X", utilise TOUJOURS create_client, JAMAIS create_supplier
+- Quand l'utilisateur dit "créer le fournisseur X" ou "commande au fournisseur X", utilise create_supplier
+
+Tu peux aider avec :
+1. Gérer les CLIENTS (créer, rechercher, modifier, supprimer) - pour les personnes/entreprises qui achètent chez l'utilisateur
+2. Gérer les FOURNISSEURS (créer, rechercher, modifier, supprimer) - pour les personnes/entreprises qui vendent à l'utilisateur
+3. Créer et suivre les bons de commande (pour commander aux fournisseurs)
+4. Gérer les factures (pour facturer les clients)
+5. Consulter les produits et stocks
 6. Analyser les données et statistiques
 
-Tu peux exécuter des actions dans le système en retournant des commandes JSON structurées.
+IMPORTANT - Isolation des données :
+- Toutes les actions (recherche, liste, création) sont automatiquement filtrées par l'organisation de l'utilisateur connecté
+- Tu ne vois et ne manipules QUE les données de l'entreprise de l'utilisateur actuel
+- Ne mentionne jamais ce filtrage, c'est transparent pour l'utilisateur
 
-Format des commandes :
-{
-    "action": "create_supplier" | "search_supplier" | "create_invoice" | etc.,
-    "params": {
-        // Paramètres spécifiques à l'action
-    }
-}
+Style de communication :
+- Sois naturel, amical et conversationnel, comme si tu étais un assistant personnel
+- Utilise "je" et "tu" pour créer une relation plus humaine
+- Montre de l'enthousiasme quand tu accomplis des tâches
+- Si tu as besoin de clarifications, pose des questions simples et directes
+- Quand tu exécutes une action avec succès, propose des actions de suivi utiles
+- Si une erreur survient, explique-la simplement et propose une solution
 
-Réponds toujours en français et sois professionnel mais amical."""
+Réponds toujours en français de manière naturelle et engageante."""
 
     def _define_tools(self) -> List[Dict]:
         """Définit tous les tools/functions disponibles pour Mistral"""
@@ -201,6 +211,26 @@ Réponds toujours en français et sois professionnel mais amical."""
                             "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
                         },
                         "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_client",
+                    "description": "Crée un nouveau client (personne ou entreprise qui achète des produits/services à l'utilisateur). IMPORTANT: Utilise cette fonction pour créer des clients, PAS create_supplier.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Nom du client (obligatoire)"},
+                            "email": {"type": "string", "description": "Adresse email du client"},
+                            "phone": {"type": "string", "description": "Numéro de téléphone"},
+                            "address": {"type": "string", "description": "Adresse complète"},
+                            "contact_person": {"type": "string", "description": "Nom de la personne de contact"},
+                            "payment_terms": {"type": "string", "description": "Conditions de paiement (ex: Net 30, Net 60)"},
+                            "tax_id": {"type": "string", "description": "Numéro de taxe/TVA"}
+                        },
+                        "required": ["name"]
                     }
                 }
             },
@@ -739,20 +769,37 @@ Réponds toujours en français et sois professionnel mais amical."""
 
             # Si l'IA a décidé d'appeler des fonctions
             if message_response.tool_calls:
-                result['tool_calls'] = [
-                    {
-                        'id': tool_call.id,
-                        'function': tool_call.function.name,
-                        'arguments': json.loads(tool_call.function.arguments)
-                    }
-                    for tool_call in message_response.tool_calls
-                ]
+                tool_calls_list = []
+                for tool_call in message_response.tool_calls:
+                    try:
+                        # Parser les arguments JSON
+                        arguments = {}
+                        if tool_call.function.arguments:
+                            try:
+                                arguments = json.loads(tool_call.function.arguments)
+                            except json.JSONDecodeError as e:
+                                logger.warning(f"Failed to parse tool call arguments: {e}")
+                                # Essayer de récupérer au moins le nom de la fonction
+                                arguments = {}
+                        
+                        tool_calls_list.append({
+                            'id': tool_call.id,
+                            'function': tool_call.function.name,
+                            'arguments': arguments
+                        })
+                    except Exception as e:
+                        logger.error(f"Error processing tool call: {e}")
+                        # Continuer avec les autres tool calls
+                        continue
+                
+                result['tool_calls'] = tool_calls_list
 
                 # Si pas de contenu textuel, générer un message par défaut
                 if not result['response']:
                     # Créer un message descriptif basé sur les tool_calls
                     action_descriptions = {
                         'create_supplier': "Je vais créer le fournisseur",
+                        'create_client': "Je vais créer le client",
                         'create_invoice': "Je vais créer la facture",
                         'create_purchase_order': "Je vais créer le bon de commande",
                         'create_product': "Je vais créer le produit",
@@ -763,9 +810,19 @@ Réponds toujours en français et sois professionnel mais amical."""
                         'get_stats': "Je récupère les statistiques",
                         'get_latest_invoice': "Je récupère les dernières factures",
                         'search_invoice': "Je recherche les factures",
+                        'search_purchase_order': "Je recherche les bons de commande",
+                        'update_supplier': "Je modifie le fournisseur",
+                        'update_client': "Je modifie le client",
+                        'update_invoice': "Je modifie la facture",
+                        'update_purchase_order': "Je modifie le bon de commande",
                         'update_product': "Je modifie le produit",
+                        'delete_supplier': "Je supprime le fournisseur",
+                        'delete_client': "Je supprime le client",
+                        'delete_invoice': "Je supprime la facture",
+                        'delete_purchase_order': "Je supprime le bon de commande",
                         'delete_product': "Je supprime le produit",
                         'add_invoice_items': "J'ajoute des articles à la facture",
+                        'add_po_items': "J'ajoute des articles au bon de commande",
                         'send_invoice': "J'envoie la facture",
                         'send_purchase_order': "J'envoie le bon de commande",
                         'adjust_stock': "J'ajuste le stock",
@@ -882,6 +939,43 @@ Réponds toujours en français et sois professionnel mais amical."""
             }
 
 
+class AsyncSafeUserContext:
+    """
+    Helper to pre-fetch user data synchronously for safe async access.
+
+    This class solves the "You cannot call this from an async context" error
+    by extracting all user attributes that might trigger lazy-loading database
+    queries before entering an async context.
+    """
+
+    @staticmethod
+    def from_user(user) -> Dict[str, Any]:
+        """
+        Extract user data synchronously before entering async context.
+
+        Args:
+            user: Django User object from sync context
+
+        Returns:
+            Dict with all necessary user attributes pre-fetched
+
+        Example:
+            user_context = AsyncSafeUserContext.from_user(request.user)
+            result = await executor.execute(action, params, user_context)
+        """
+        return {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'is_superuser': user.is_superuser,
+            # Pre-fetch the organization to avoid lazy-loading
+            'organization': getattr(user, 'organization', None),
+            'organization_id': getattr(user, 'organization_id', None),
+            # Additional user attributes that might be accessed
+            'role': getattr(user, 'role', None),
+        }
+
+
 class ActionExecutor:
     """Exécute les actions demandées par l'IA"""
     
@@ -896,6 +990,7 @@ class ActionExecutor:
             'get_stats': self.get_stats,
             'search_client': self.search_client,
             'list_clients': self.list_clients,
+            'create_client': self.create_client,
             'get_latest_invoice': self.get_latest_invoice,
             'add_invoice_items': self.add_invoice_items,
             'send_invoice': self.send_invoice,
@@ -920,43 +1015,101 @@ class ActionExecutor:
             'get_report_status': self.get_report_status,
             'delete_report': self.delete_report,
             'undo_last_action': self.undo_last_action,
+            'search_entity': self.search_entity,
         }
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
         """Exécute une action avec les paramètres donnés"""
-        # Valider l'action et ses paramètres
-        is_valid, errors = action_manager.validate_action_params(action, params)
-        if not is_valid:
+        # Normaliser params si nécessaire
+        if not isinstance(params, dict):
+            logger.warning(f"Params is not a dict: {type(params)} - {params}")
+            if isinstance(params, list):
+                params = {}
+            else:
+                try:
+                    import json
+                    if isinstance(params, str):
+                        params = json.loads(params)
+                    else:
+                        params = {}
+                except:
+                    params = {}
+
+        # User should already be converted to dict in the calling code (views.py)
+        # to avoid "You cannot call this from an async context" errors
+        if not isinstance(user, dict):
+            # If user is not a dict, it means the calling code didn't convert it
+            # This should not happen - log a warning and try to provide a helpful error
+            logger.error(f"execute() received user object instead of dict. This will cause async context errors. "
+                        f"Convert user to dict using AsyncSafeUserContext.from_user() before calling execute().")
             return {
                 'success': False,
-                'error': '; '.join(errors)
+                'error': 'Configuration error: user context not properly initialized'
             }
 
+        user_context = user
+
+        # Vérifier d'abord si l'action existe dans les handlers
         if action not in self.actions:
             return {
                 'success': False,
-                'error': f"Action '{action}' non reconnue"
+                'error': f"Action '{action}' non reconnue. Actions disponibles: {', '.join(sorted(self.actions.keys()))}"
             }
+        
+        # Valider l'action et ses paramètres (mais ne pas bloquer si la config n'existe pas)
+        is_valid, errors = action_manager.validate_action_params(action, params)
+        if not is_valid:
+            # Si l'action existe dans les handlers mais pas dans la config, on continue quand même
+            # mais on log un avertissement
+            config = action_manager.get_action_config(action)
+            if not config:
+                logger.warning(f"Action '{action}' exécutée sans configuration dans actions_config.json")
+            else:
+                # Si la config existe mais les params sont invalides, on retourne l'erreur
+                return {
+                    'success': False,
+                    'error': '; '.join(errors)
+                }
 
         try:
             handler = self.actions[action]
-            result = await handler(params, user)
+            result = await handler(params, user_context)
+
+            # S'assurer que le résultat est un dict
+            if not isinstance(result, dict):
+                logger.error(f"Handler returned non-dict result: {type(result)}")
+                return {
+                    'success': False,
+                    'error': 'Le handler a retourné un format invalide'
+                }
 
             # Si l'action a réussi, générer les actions de suivi
             if result.get('success'):
                 success_actions = action_manager.generate_success_actions(action, result.get('data', {}))
-                result['success_actions'] = success_actions
+                if success_actions:
+                    result['success_actions'] = success_actions
 
             return result
         except Exception as e:
+            import traceback
             logger.error(f"Action execution error: {e}")
+            logger.error(traceback.format_exc())
             return {
                 'success': False,
                 'error': str(e)
             }
     
-    async def create_supplier(self, params: Dict, user) -> Dict:
-        """Crée un nouveau fournisseur après vérification des doublons"""
+    async def create_supplier(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Crée un nouveau fournisseur après vérification des doublons
+
+        Args:
+            params: Paramètres de création du fournisseur
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, message, et data
+        """
         from apps.suppliers.models import Supplier
         from asgiref.sync import sync_to_async
         from .entity_matcher import entity_matcher
@@ -965,6 +1118,7 @@ class ActionExecutor:
             name = params.get('name')
             email = params.get('email', '')
             phone = params.get('phone', '')
+            organization = user_context.get('organization')
 
             # Vérifier les doublons potentiels
             @sync_to_async
@@ -979,23 +1133,28 @@ class ActionExecutor:
 
             # Si des fournisseurs similaires sont trouvés
             if similar_suppliers:
-                # Retourner les similarités pour confirmation
-                return {
-                    'success': False,
-                    'error': 'similar_entities_found',
-                    'similar_entities': [
-                        {
-                            'id': str(supplier.id),
-                            'name': supplier.name,
-                            'email': supplier.email,
-                            'phone': supplier.phone,
-                            'similarity': score,
-                            'reason': entity_matcher.format_match_reason(reason)
-                        }
-                        for supplier, score, reason in similar_suppliers[:3]
-                    ],
-                    'message': entity_matcher.create_similarity_message('supplier', similar_suppliers)
-                }
+                # Filtrer par organisation si nécessaire
+                if organization:
+                    similar_suppliers = [(s, sc, r) for s, sc, r in similar_suppliers if s.organization == organization]
+                
+                if similar_suppliers:
+                    # Retourner les similarités pour confirmation
+                    return {
+                        'success': False,
+                        'error': 'similar_entities_found',
+                        'similar_entities': [
+                            {
+                                'id': str(supplier.id),
+                                'name': supplier.name,
+                                'email': supplier.email,
+                                'phone': supplier.phone,
+                                'similarity': score,
+                                'reason': entity_matcher.format_match_reason(reason)
+                            }
+                            for supplier, score, reason in similar_suppliers[:3]
+                        ],
+                        'message': entity_matcher.create_similarity_message('supplier', similar_suppliers)
+                    }
 
             # Aucun doublon, créer le fournisseur
             @sync_to_async
@@ -1007,6 +1166,7 @@ class ActionExecutor:
                     phone=phone,
                     address=params.get('address', ''),
                     city=params.get('city', ''),
+                    organization=organization,
                     status='pending'
                 )
 
@@ -1020,7 +1180,8 @@ class ActionExecutor:
                     'name': supplier.name,
                     'contact_person': supplier.contact_person,
                     'email': supplier.email,
-                    'entity_type': 'supplier'
+                    'entity_type': 'supplier',
+                    'url': f'/suppliers/{supplier.id}'
                 }
             }
         except Exception as e:
@@ -1032,39 +1193,93 @@ class ActionExecutor:
                 'error': str(e)
             }
     
-    async def search_supplier(self, params: Dict, user) -> Dict:
-        """Recherche des fournisseurs"""
-        from apps.suppliers.models import Supplier
-        from django.db.models import Q
+    async def search_supplier(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Recherche des fournisseurs avec fuzzy matching ultra-robuste.
+        Gère les fautes d'orthographe et variations automatiquement.
+        """
+        from .entity_matcher import entity_matcher
         from asgiref.sync import sync_to_async
 
         @sync_to_async
         def search_suppliers_sync():
             query = params.get('query', '')
-            suppliers = Supplier.objects.filter(
-                Q(name__icontains=query) |
-                Q(contact_person__icontains=query) |
-                Q(email__icontains=query)
-            )[:5]  # Limiter à 5 résultats
+            min_score = params.get('min_score', 0.60)
+            limit = params.get('limit', 10)
+            organization = user_context.get('organization')
 
-            return [{
-                'id': str(s.id),
-                'name': s.name,
-                'contact': s.contact_person,
-                'email': s.email,
-                'status': s.status
-            } for s in suppliers]
+            if not query:
+                return []
+
+            # Utiliser le fuzzy matching
+            matches = entity_matcher.find_similar_suppliers(
+                name=query,
+                min_score=min_score
+            )
+
+            # Filtrer par organisation
+            if organization:
+                matches = [(s, score, details) for s, score, details in matches if s.organization == organization]
+            elif not user_context.get('is_superuser', False):
+                matches = []
+
+            return [
+                {
+                    'id': str(supplier.id),
+                    'name': supplier.name,
+                    'contact': supplier.contact_person or '',
+                    'email': supplier.email or '',
+                    'phone': supplier.phone or '',
+                    'status': supplier.status,
+                    'score': score * 100,
+                    'match_reason': entity_matcher.format_match_reason(details),
+                    'url': f'/suppliers/{supplier.id}'
+                }
+                for supplier, score, details in matches[:limit]
+            ]
 
         results = await search_suppliers_sync()
+
+        # Construire un message détaillé
+        if results:
+            message = f"J'ai trouvé {len(results)} fournisseur(s) correspondant à '{params.get('query')}' :\n\n"
+
+            for i, result in enumerate(results, 1):
+                message += f"**{i}. {result['name']}**"
+                message += f" [Voir](/suppliers/{result['id']})\n"
+
+                if result.get('email'):
+                    message += f"   - Email: {result['email']}\n"
+                if result.get('phone'):
+                    message += f"   - Téléphone: {result['phone']}\n"
+                if result.get('contact'):
+                    message += f"   - Contact: {result['contact']}\n"
+                if result.get('status'):
+                    message += f"   - Statut: {result['status']}\n"
+
+                # Score de correspondance
+                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+        else:
+            message = f"Aucun fournisseur trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
             'data': results,
-            'count': len(results)
+            'count': len(results),
+            'message': message
         }
     
-    async def create_invoice(self, params: Dict, user) -> Dict:
-        """Crée une nouvelle facture avec entity matching pour clients et produits"""
+    async def create_invoice(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Crée une nouvelle facture avec entity matching pour clients et produits
+
+        Args:
+            params: Paramètres de création de la facture
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, message, et data
+        """
         from apps.invoicing.models import Invoice, InvoiceItem, Product
         from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
@@ -1075,6 +1290,8 @@ class ActionExecutor:
         try:
             @sync_to_async
             def create_invoice_sync():
+                organization = user_context.get('organization')
+                
                 # 1. TROUVER OU CRÉER CLIENT avec entity matching
                 client_name = params.get('client_name')
                 client_email = params.get('client_email', '')
@@ -1088,11 +1305,40 @@ class ActionExecutor:
                     company=client_name
                 )
 
-                if similar_clients:
-                    # Utiliser le premier client similaire (meilleur match)
-                    client = similar_clients[0][0]
+                # Filtrer par organisation DANS le contexte sync
+                if similar_clients and organization:
+                    similar_clients = [(c, s, r) for c, s, r in similar_clients if c.organization == organization]
+
+                # IMPORTANT: Ne PAS auto-sélectionner - demander confirmation à l'utilisateur
+                if similar_clients and not params.get('force_create_client', False):
+                    # RETOURNER ERREUR POUR CONFIRMATION
+                    return {
+                        'success': False,
+                        'error': 'similar_entities_found',
+                        'entity_type': 'client',
+                        'similar_entities': [
+                            {
+                                'id': str(c.id),
+                                'name': c.name,
+                                'email': c.email or '',
+                                'phone': c.phone or '',
+                                'similarity': score * 100,  # Convertir en pourcentage
+                                'reason': entity_matcher.format_match_reason(reason)
+                            }
+                            for c, score, reason in similar_clients[:3]  # Top 3 matches
+                        ],
+                        'message': f'Client similaire trouvé : "{similar_clients[0][0].name}" ({int(similar_clients[0][1]*100)}% de similarité). Voulez-vous utiliser le client existant ou en créer un nouveau ?',
+                        'suggested_action': {
+                            'use_existing': str(similar_clients[0][0].id),  # Best match ID
+                            'create_new': 'force_create_client'
+                        }
+                    }
+                elif similar_clients and params.get('use_existing_client_id'):
+                    # Utiliser le client existant spécifié par l'utilisateur
+                    client_id = params.get('use_existing_client_id')
+                    client = Client.objects.get(id=client_id, organization=organization)
                 else:
-                    # Créer nouveau client
+                    # Créer nouveau client (pas de match OU force_create_client=True)
                     client = Client.objects.create(
                         name=client_name,
                         email=client_email,
@@ -1100,6 +1346,7 @@ class ActionExecutor:
                         contact_person=params.get('contact_person', ''),
                         address=params.get('client_address', ''),
                         payment_terms=params.get('payment_terms', 'Net 30'),
+                        organization=organization,
                         is_active=True
                     )
 
@@ -1125,6 +1372,11 @@ class ActionExecutor:
                 else:
                     due_date = (datetime.now() + timedelta(days=30)).date()
 
+                # Get user object for created_by field
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                user = User.objects.get(id=user_context.get('id'))
+
                 invoice = Invoice.objects.create(
                     title=title,
                     client=client,
@@ -1149,6 +1401,10 @@ class ActionExecutor:
                             reference=product_ref if product_ref else None
                         )
 
+                        # Filtrer par organisation DANS le contexte sync
+                        if similar_products and organization:
+                            similar_products = [(p, s, r) for p, s, r in similar_products if p.organization == organization]
+
                         product = None
                         if similar_products:
                             # Utiliser produit existant
@@ -1160,7 +1416,12 @@ class ActionExecutor:
                                 reference=product_ref or f"PROD-{Product.objects.count() + 1:04d}",
                                 product_type='service',
                                 price=Decimal(str(item_data.get('unit_price', 0))),
-                                is_active=True
+                                organization=organization,
+                                is_active=True,
+                                # Les services ne gèrent pas de stock - mettre à 0 explicitement
+                                stock_quantity=0,
+                                low_stock_threshold=0,
+                                warehouse=None
                             )
 
                         # Créer l'item facture
@@ -1180,10 +1441,15 @@ class ActionExecutor:
                 return {
                     'id': str(invoice.id),
                     'invoice_number': invoice.invoice_number,
-                    'client_name': client.name
+                    'client_name': client.name,
+                    'url': f'/invoices/{invoice.id}'
                 }
 
             result = await create_invoice_sync()
+
+            # Si c'est une erreur (similar_entities_found), retourner directement
+            if isinstance(result, dict) and result.get('success') == False:
+                return result
 
             return {
                 'success': True,
@@ -1202,7 +1468,7 @@ class ActionExecutor:
                 'error': str(e)
             }
     
-    async def search_invoice(self, params: Dict, user) -> Dict:
+    async def search_invoice(self, params: Dict, user_context: Dict) -> Dict:
         """Recherche des factures"""
         from apps.invoicing.models import Invoice
         from django.db.models import Q
@@ -1213,6 +1479,7 @@ class ActionExecutor:
             query = params.get('query', '')
             status_filter = params.get('status')
             limit = params.get('limit', 5)
+            organization = user_context.get('organization')
 
             invoices_qs = Invoice.objects.filter(
                 Q(invoice_number__icontains=query) |
@@ -1222,6 +1489,12 @@ class ActionExecutor:
                 Q(client__email__icontains=query) |
                 Q(client__contact_person__icontains=query)
             )
+
+            # Filtrer par organisation de l'utilisateur
+            if organization:
+                invoices_qs = invoices_qs.filter(created_by__organization=organization)
+            elif not user_context.get('is_superuser', False):
+                invoices_qs = invoices_qs.filter(created_by_id=user_context.get('id'))
 
             if status_filter:
                 invoices_qs = invoices_qs.filter(status=status_filter)
@@ -1235,7 +1508,8 @@ class ActionExecutor:
                 'client_name': i.client.name if i.client else 'N/A',
                 'total_amount': float(i.total_amount),
                 'status': i.status,
-                'due_date': str(i.due_date) if i.due_date else None
+                'due_date': str(i.due_date) if i.due_date else None,
+                'url': f'/invoices/{i.id}'
             } for i in invoices]
 
         results = await search_invoices_sync()
@@ -1244,11 +1518,20 @@ class ActionExecutor:
             'success': True,
             'data': results,
             'count': len(results),
-            'message': f"J'ai trouvé {len(results)} facture(s)"
+            'message': f"J'ai trouvé {len(results)} facture(s)" if results else f"Aucune facture trouvée pour '{params.get('query', '')}'"
         }
     
-    async def create_purchase_order(self, params: Dict, user) -> Dict:
-        """Crée un bon de commande avec entity matching pour fournisseur et produits"""
+    async def create_purchase_order(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Crée un bon de commande avec entity matching pour fournisseur et produits
+
+        Args:
+            params: Paramètres de création du bon de commande
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, message, et data
+        """
         from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
         from apps.suppliers.models import Supplier
         from apps.invoicing.models import Product
@@ -1260,6 +1543,8 @@ class ActionExecutor:
         try:
             @sync_to_async
             def create_po_sync():
+                organization = user_context.get('organization')
+                
                 # 1. TROUVER OU CRÉER FOURNISSEUR avec entity matching
                 supplier_name = params.get('supplier_name')
                 supplier_email = params.get('supplier_email', '')
@@ -1272,15 +1557,45 @@ class ActionExecutor:
                     phone=supplier_phone if supplier_phone else None
                 )
 
-                if similar_suppliers:
-                    # Utiliser fournisseur existant
-                    supplier = similar_suppliers[0][0]
+                # Filtrer par organisation si nécessaire
+                if similar_suppliers and organization:
+                    similar_suppliers = [(s, sc, r) for s, sc, r in similar_suppliers if s.organization == organization]
+
+                # IMPORTANT: Ne PAS auto-sélectionner - demander confirmation à l'utilisateur
+                if similar_suppliers and not params.get('force_create_supplier', False):
+                    # RETOURNER ERREUR POUR CONFIRMATION
+                    return {
+                        'success': False,
+                        'error': 'similar_entities_found',
+                        'entity_type': 'supplier',
+                        'similar_entities': [
+                            {
+                                'id': str(s.id),
+                                'name': s.name,
+                                'email': s.email or '',
+                                'phone': s.phone or '',
+                                'similarity': score * 100,  # Convertir en pourcentage
+                                'reason': entity_matcher.format_match_reason(reason)
+                            }
+                            for s, score, reason in similar_suppliers[:3]  # Top 3 matches
+                        ],
+                        'message': f'Fournisseur similaire trouvé : "{similar_suppliers[0][0].name}" ({int(similar_suppliers[0][1]*100)}% de similarité). Voulez-vous utiliser le fournisseur existant ou en créer un nouveau ?',
+                        'suggested_action': {
+                            'use_existing': str(similar_suppliers[0][0].id),  # Best match ID
+                            'create_new': 'force_create_supplier'
+                        }
+                    }
+                elif similar_suppliers and params.get('use_existing_supplier_id'):
+                    # Utiliser le fournisseur existant spécifié par l'utilisateur
+                    supplier_id = params.get('use_existing_supplier_id')
+                    supplier = Supplier.objects.get(id=supplier_id, organization=organization)
                 else:
-                    # Créer nouveau fournisseur
+                    # Créer nouveau fournisseur (pas de match OU force_create_supplier=True)
                     supplier = Supplier.objects.create(
                         name=supplier_name,
                         email=supplier_email,
                         phone=supplier_phone,
+                        organization=organization,
                         status='pending',
                         is_active=True
                     )
@@ -1304,6 +1619,11 @@ class ActionExecutor:
                             delivery_date = (datetime.now() + timedelta(days=30)).date()
                 else:
                     delivery_date = (datetime.now() + timedelta(days=30)).date()
+
+                # Get user object for created_by field
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                user = User.objects.get(id=user_context.get('id'))
 
                 # Créer le bon de commande
                 po = PurchaseOrder.objects.create(
@@ -1329,6 +1649,10 @@ class ActionExecutor:
                             reference=product_ref if product_ref else None
                         )
 
+                        # Filtrer par organisation DANS le contexte sync
+                        if similar_products and organization:
+                            similar_products = [(p, s, r) for p, s, r in similar_products if p.organization == organization]
+
                         product = None
                         if similar_products:
                             # Utiliser produit existant
@@ -1341,6 +1665,7 @@ class ActionExecutor:
                                 product_type='physical',
                                 cost_price=Decimal(str(item_data.get('unit_price', 0))),
                                 price=Decimal(str(item_data.get('unit_price', 0))) * Decimal('1.3'),  # Marge 30%
+                                organization=organization,
                                 stock_quantity=0,
                                 low_stock_threshold=10,
                                 is_active=True
@@ -1363,7 +1688,8 @@ class ActionExecutor:
                 return {
                     'id': str(po.id),
                     'po_number': po.po_number,
-                    'supplier_name': supplier.name
+                    'supplier_name': supplier.name,
+                    'url': f'/purchase-orders/{po.id}'
                 }
 
             result = await create_po_sync()
@@ -1385,7 +1711,7 @@ class ActionExecutor:
                 'error': str(e)
             }
     
-    async def search_purchase_order(self, params: Dict, user) -> Dict:
+    async def search_purchase_order(self, params: Dict, user_context: Dict) -> Dict:
         """Recherche des bons de commande"""
         from apps.purchase_orders.models import PurchaseOrder
         from django.db.models import Q
@@ -1395,13 +1721,22 @@ class ActionExecutor:
         def search_pos_sync():
             query = params.get('query', '')
             limit = params.get('limit', 5)
+            organization = user_context.get('organization')
 
-            pos = PurchaseOrder.objects.filter(
+            pos_qs = PurchaseOrder.objects.filter(
                 Q(po_number__icontains=query) |
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
                 Q(supplier__name__icontains=query)
-            ).order_by('-created_at')[:limit]
+            )
+
+            # Filtrer par organisation de l'utilisateur
+            if organization:
+                pos_qs = pos_qs.filter(created_by__organization=organization)
+            elif not user_context.get('is_superuser', False):
+                pos_qs = pos_qs.filter(created_by_id=user_context.get('id'))
+
+            pos = pos_qs.order_by('-created_at')[:limit]
 
             return [{
                 'id': str(po.id),
@@ -1410,7 +1745,8 @@ class ActionExecutor:
                 'supplier_name': po.supplier.name if po.supplier else 'N/A',
                 'total_amount': float(po.total_amount),
                 'status': po.status,
-                'delivery_date': str(po.delivery_date) if po.delivery_date else None
+                'delivery_date': str(po.delivery_date) if po.delivery_date else None,
+                'url': f'/purchase-orders/{po.id}'
             } for po in pos]
 
         results = await search_pos_sync()
@@ -1419,11 +1755,198 @@ class ActionExecutor:
             'success': True,
             'data': results,
             'count': len(results),
-            'message': f"J'ai trouvé {len(results)} bon(s) de commande"
+            'message': f"J'ai trouvé {len(results)} bon(s) de commande" if results else f"Aucun bon de commande trouvé pour '{params.get('query', '')}'"
         }
-    
-    async def get_stats(self, params: Dict, user) -> Dict:
-        """Récupère les statistiques"""
+
+    async def search_entity(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Recherche des entités en utilisant le matching flou ultra-robuste.
+        Gère les fautes d'orthographe et variations automatiquement.
+
+        Args:
+            params: {
+                'entity_type': 'client' | 'supplier' | 'product',
+                'query': 'Texte de recherche (peut contenir des fautes)',
+                'min_score': Score minimum de similarité (0.0-1.0, défaut: 0.60)
+            }
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, results (top 10 matches avec scores de confiance)
+        """
+        from .entity_matcher import entity_matcher
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_sync():
+            entity_type = params.get('entity_type')
+            query = params.get('query')
+            min_score = params.get('min_score', 0.60)
+            organization = user_context.get('organization')
+
+            if not entity_type or not query:
+                return []
+
+            entity_names = {
+                'client': 'clients',
+                'supplier': 'fournisseurs',
+                'product': 'produits'
+            }
+
+            if entity_type == 'client':
+                matches = entity_matcher.find_similar_clients(
+                    first_name=query,
+                    last_name='',
+                    company=query,
+                    min_score=min_score
+                )
+                # Filtrer par organisation
+                if organization:
+                    matches = [(c, score, details) for c, score, details in matches if c.organization == organization]
+
+                return [
+                    {
+                        'id': str(client.id),
+                        'name': client.name,
+                        'email': client.email or '',
+                        'phone': client.phone or '',
+                        'score': score * 100,  # Pourcentage
+                        'match_reason': entity_matcher.format_match_reason(details),
+                        'confidence': details.get('algorithms', {}).get('name', {}).get('confidence', 'low')
+                    }
+                    for client, score, details in matches[:10]  # Top 10 résultats
+                ]
+
+            elif entity_type == 'supplier':
+                matches = entity_matcher.find_similar_suppliers(
+                    name=query,
+                    min_score=min_score
+                )
+                # Filtrer par organisation
+                if organization:
+                    matches = [(s, score, details) for s, score, details in matches if s.organization == organization]
+
+                return [
+                    {
+                        'id': str(supplier.id),
+                        'name': supplier.name,
+                        'email': supplier.email or '',
+                        'phone': supplier.phone or '',
+                        'score': score * 100,  # Pourcentage
+                        'match_reason': entity_matcher.format_match_reason(details),
+                        'confidence': details.get('algorithms', {}).get('name', {}).get('confidence', 'low')
+                    }
+                    for supplier, score, details in matches[:10]  # Top 10 résultats
+                ]
+
+            elif entity_type == 'product':
+                matches = entity_matcher.find_similar_products(
+                    name=query,
+                    min_score=min_score
+                )
+                # Filtrer par organisation
+                if organization:
+                    matches = [(p, score, details) for p, score, details in matches if p.organization == organization]
+
+                return [
+                    {
+                        'id': str(product.id),
+                        'name': product.name,
+                        'reference': product.reference or '',
+                        'price': float(product.price),
+                        'score': score * 100,  # Pourcentage
+                        'match_reason': entity_matcher.format_match_reason(details),
+                        'confidence': details.get('algorithms', {}).get('name', {}).get('confidence', 'low')
+                    }
+                    for product, score, details in matches[:10]  # Top 10 résultats
+                ]
+
+            return []
+
+        results = await search_sync()
+
+        entity_names = {
+            'client': 'clients',
+            'supplier': 'fournisseurs',
+            'product': 'produits'
+        }
+        entity_name = entity_names.get(params.get('entity_type'), 'entités')
+
+        # Formater un message détaillé avec les résultats
+        if results:
+            logger.info(f"[search_entity] Found {len(results)} results for query '{params.get('query')}'")
+            logger.info(f"[search_entity] Results: {results}")
+
+            message = f"J'ai trouvé {len(results)} {entity_name} correspondant à '{params.get('query')}' :\n\n"
+
+            # Déterminer l'URL de base selon le type d'entité
+            url_base = {
+                'client': '/clients',
+                'supplier': '/suppliers',
+                'product': '/products'
+            }.get(params.get('entity_type'), '')
+
+            try:
+                for i, result in enumerate(results[:10], 1):  # Max 10 résultats
+                    logger.info(f"[search_entity] Processing result {i}: {result.get('name')}")
+                    message += f"**{i}. {result['name']}**"
+
+                    # Ajouter lien cliquable
+                    if url_base:
+                        message += f" [Voir]({url_base}/{result['id']})"
+
+                    message += f"\n"
+
+                    # Ajouter détails selon le type
+                    if params.get('entity_type') == 'client':
+                        if result.get('email'):
+                            message += f"   - Email: {result['email']}\n"
+                        if result.get('phone'):
+                            message += f"   - Téléphone: {result['phone']}\n"
+                        if result.get('company'):
+                            message += f"   - Entreprise: {result['company']}\n"
+                    elif params.get('entity_type') == 'supplier':
+                        if result.get('email'):
+                            message += f"   - Email: {result['email']}\n"
+                        if result.get('phone'):
+                            message += f"   - Téléphone: {result['phone']}\n"
+                    elif params.get('entity_type') == 'product':
+                        if result.get('reference'):
+                            message += f"   - Référence: {result['reference']}\n"
+                        if result.get('price'):
+                            message += f"   - Prix: {result['price']}€\n"
+
+                    # Score de correspondance
+                    message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+
+                logger.info(f"[search_entity] Final message length: {len(message)} chars")
+            except Exception as e:
+                logger.error(f"[search_entity] Error building message: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        else:
+            message = f"Aucun {entity_name[:-1]} trouvé pour '{params.get('query')}'"
+
+        logger.info(f"[search_entity] Returning message: {message[:200]}...")
+
+        return {
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'message': message
+        }
+
+    async def get_stats(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Récupère les statistiques
+
+        Args:
+            params: Paramètres de la requête
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, message, et data
+        """
         from apps.suppliers.models import Supplier
         from apps.invoicing.models import Invoice
         from apps.purchase_orders.models import PurchaseOrder
@@ -1433,19 +1956,40 @@ class ActionExecutor:
 
         @sync_to_async
         def get_stats_sync():
+            organization = user_context.get('organization')
+            user_id = user_context.get('id')
+            is_superuser = user_context.get('is_superuser', False)
+
+            # Filtrer par organisation si l'utilisateur en a une
+            if organization:
+                suppliers_qs = Supplier.objects.filter(organization=organization)
+                clients_qs = Client.objects.filter(organization=organization, is_active=True)
+                invoices_qs = Invoice.objects.filter(created_by__organization=organization)
+                pos_qs = PurchaseOrder.objects.filter(created_by__organization=organization)
+            elif is_superuser:
+                suppliers_qs = Supplier.objects.all()
+                clients_qs = Client.objects.filter(is_active=True)
+                invoices_qs = Invoice.objects.all()
+                pos_qs = PurchaseOrder.objects.all()
+            else:
+                suppliers_qs = Supplier.objects.none()
+                clients_qs = Client.objects.none()
+                invoices_qs = Invoice.objects.filter(created_by_id=user_id)
+                pos_qs = PurchaseOrder.objects.filter(created_by_id=user_id)
+            
             return {
-                'total_suppliers': Supplier.objects.count(),
-                'active_suppliers': Supplier.objects.filter(status='active').count(),
-                'total_clients': Client.objects.filter(is_active=True).count(),
-                'total_invoices': Invoice.objects.count(),
-                'paid_invoices': Invoice.objects.filter(status='paid').count(),
-                'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
-                'overdue_invoices': Invoice.objects.filter(status='overdue').count(),
-                'total_revenue': Invoice.objects.filter(status='paid').aggregate(
+                'total_suppliers': suppliers_qs.count(),
+                'active_suppliers': suppliers_qs.filter(status='active').count(),
+                'total_clients': clients_qs.count(),
+                'total_invoices': invoices_qs.count(),
+                'paid_invoices': invoices_qs.filter(status='paid').count(),
+                'unpaid_invoices': invoices_qs.filter(status='sent').count(),
+                'overdue_invoices': invoices_qs.filter(status='overdue').count(),
+                'total_revenue': float(invoices_qs.filter(status='paid').aggregate(
                     Sum('total_amount')
-                )['total_amount__sum'] or 0,
-                'total_purchase_orders': PurchaseOrder.objects.count(),
-                'pending_purchase_orders': PurchaseOrder.objects.filter(status='sent').count()
+                )['total_amount__sum'] or 0),
+                'total_purchase_orders': pos_qs.count(),
+                'pending_purchase_orders': pos_qs.filter(status='sent').count()
             }
 
         stats = await get_stats_sync()
@@ -1453,49 +1997,86 @@ class ActionExecutor:
         return {
             'success': True,
             'data': stats,
-            'message': f"Statistiques récupérées: {stats['total_invoices']} factures, {stats['total_suppliers']} fournisseurs, {stats['total_clients']} clients"
+            'message': f"Statistiques récupérées: {stats['total_invoices']} facture(s), {stats['total_suppliers']} fournisseur(s), {stats['total_clients']} client(s)"
         }
 
-    async def search_client(self, params: Dict, user) -> Dict:
-        """Recherche des clients par nom, email ou contact"""
-        from apps.accounts.models import Client
-        from django.db.models import Q
+    async def search_client(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Recherche des clients avec fuzzy matching ultra-robuste.
+        Gère les fautes d'orthographe et variations automatiquement.
+        """
+        from .entity_matcher import entity_matcher
         from asgiref.sync import sync_to_async
 
         @sync_to_async
         def search_clients_sync():
             query = params.get('query', '')
-            limit = params.get('limit', 5)
+            min_score = params.get('min_score', 0.60)
+            limit = params.get('limit', 10)
+            organization = user_context.get('organization')
 
-            # Chercher dans les clients
-            clients = Client.objects.filter(
-                Q(name__icontains=query) |
-                Q(email__icontains=query) |
-                Q(contact_person__icontains=query) |
-                Q(phone__icontains=query)
-            ).filter(
-                is_active=True
-            )[:limit]
+            if not query:
+                return []
 
-            return [{
-                'id': str(c.id),
-                'name': c.name,
-                'email': c.email,
-                'phone': c.phone or '',
-                'contact_person': c.contact_person or '',
-                'payment_terms': c.payment_terms
-            } for c in clients]
+            # Utiliser le fuzzy matching
+            matches = entity_matcher.find_similar_clients(
+                first_name=query,
+                last_name='',
+                company=query,
+                min_score=min_score
+            )
+
+            # Filtrer par organisation
+            if organization:
+                matches = [(c, score, details) for c, score, details in matches if c.organization == organization]
+            elif not user_context.get('is_superuser', False):
+                matches = []
+
+            return [
+                {
+                    'id': str(client.id),
+                    'name': client.name,
+                    'email': client.email or '',
+                    'phone': client.phone or '',
+                    'contact_person': client.contact_person or '',
+                    'payment_terms': client.payment_terms,
+                    'score': score * 100,
+                    'match_reason': entity_matcher.format_match_reason(details),
+                    'url': f'/clients/{client.id}'
+                }
+                for client, score, details in matches[:limit]
+            ]
 
         results = await search_clients_sync()
+
+        # Construire un message détaillé
+        if results:
+            message = f"J'ai trouvé {len(results)} client(s) correspondant à '{params.get('query')}' :\n\n"
+
+            for i, result in enumerate(results, 1):
+                message += f"**{i}. {result['name']}**"
+                message += f" [Voir](/clients/{result['id']})\n"
+
+                if result.get('email'):
+                    message += f"   - Email: {result['email']}\n"
+                if result.get('phone'):
+                    message += f"   - Téléphone: {result['phone']}\n"
+                if result.get('contact_person'):
+                    message += f"   - Contact: {result['contact_person']}\n"
+
+                # Score de correspondance
+                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+        else:
+            message = f"Aucun client trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
             'data': results,
             'count': len(results),
-            'message': f"J'ai trouvé {len(results)} client(s)"
+            'message': message
         }
 
-    async def list_clients(self, params: Dict, user) -> Dict:
+    async def list_clients(self, params: Dict, user_context: Dict) -> Dict:
         """Liste tous les clients de l'entreprise"""
         from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
@@ -1503,11 +2084,19 @@ class ActionExecutor:
         @sync_to_async
         def list_clients_sync():
             limit = params.get('limit', 10)
+            organization = user_context.get('organization')
 
-            # Récupérer tous les clients actifs
-            clients = Client.objects.filter(
-                is_active=True
-            ).order_by('-created_at')[:limit]
+            # Récupérer tous les clients actifs de l'organisation de l'utilisateur
+            clients_qs = Client.objects.filter(is_active=True)
+
+            # Filtrer par organisation si l'utilisateur en a une
+            if organization:
+                clients_qs = clients_qs.filter(organization=organization)
+            elif not user_context.get('is_superuser', False):
+                # Si pas d'organisation et pas superuser, retourner vide
+                clients_qs = clients_qs.none()
+
+            clients = clients_qs.order_by('-created_at')[:limit]
 
             return [{
                 'id': str(c.id),
@@ -1525,10 +2114,110 @@ class ActionExecutor:
             'success': True,
             'data': results,
             'count': len(results),
-            'message': f"Voici les {len(results)} derniers clients"
+            'message': f"Voici les {len(results)} dernier(s) client(s)" if results else "Aucun client trouvé"
         }
 
-    async def get_latest_invoice(self, params: Dict, user) -> Dict:
+    async def create_client(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Crée un nouveau client après vérification des doublons
+
+        Args:
+            params: Paramètres de création du client
+            user_context: Contexte utilisateur (dict with id, organization, etc.)
+
+        Returns:
+            Dict avec success, message, et data
+        """
+        from apps.accounts.models import Client
+        from asgiref.sync import sync_to_async
+        from .entity_matcher import entity_matcher
+
+        try:
+            name = params.get('name')
+            email = params.get('email', '')
+            phone = params.get('phone', '')
+            organization = user_context.get('organization')
+
+            if not name:
+                return {
+                    'success': False,
+                    'error': 'Le nom du client est obligatoire'
+                }
+
+            # Vérifier les doublons potentiels
+            @sync_to_async
+            def check_similar():
+                matches = entity_matcher.find_similar_clients(
+                    first_name=name,
+                    last_name='',
+                    email=email if email else None,
+                    company=name
+                )
+                # Filtrer par organisation DANS le contexte sync
+                if organization and matches:
+                    matches = [(c, s, r) for c, s, r in matches if c.organization == organization]
+                return matches
+
+            similar_clients = await check_similar()
+
+            # Si des clients similaires sont trouvés
+            if similar_clients:
+                    return {
+                        'success': False,
+                        'error': 'similar_entities_found',
+                        'similar_entities': [
+                            {
+                                'id': str(client.id),
+                                'name': client.name,
+                                'email': client.email,
+                                'phone': client.phone,
+                                'similarity': score,
+                                'reason': entity_matcher.format_match_reason(reason)
+                            }
+                            for client, score, reason in similar_clients[:3]
+                        ],
+                        'message': entity_matcher.create_similarity_message('client', similar_clients)
+                    }
+
+            # Aucun doublon, créer le client
+            @sync_to_async
+            def create_client_sync():
+                return Client.objects.create(
+                    name=name,
+                    email=email,
+                    phone=phone,
+                    address=params.get('address', ''),
+                    contact_person=params.get('contact_person', ''),
+                    payment_terms=params.get('payment_terms', 'Net 30'),
+                    tax_id=params.get('tax_id', ''),
+                    organization=organization,
+                    is_active=True
+                )
+
+            client = await create_client_sync()
+
+            return {
+                'success': True,
+                'message': f"Client '{client.name}' créé avec succès",
+                'data': {
+                    'id': str(client.id),
+                    'name': client.name,
+                    'email': client.email,
+                    'phone': client.phone,
+                    'entity_type': 'client',
+                    'url': f'/clients/{client.id}'
+                }
+            }
+        except Exception as e:
+            import traceback
+            logger.error(f"Error creating client: {e}")
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    async def get_latest_invoice(self, params: Dict, user_context: Dict) -> Dict:
         """Récupère la ou les dernière(s) facture(s) créée(s)"""
         from apps.invoicing.models import Invoice
         from django.db.models import Q
@@ -1538,8 +2227,15 @@ class ActionExecutor:
         def get_latest_invoices_sync():
             limit = params.get('limit', 1)
             client_name = params.get('client_name')
+            organization = user_context.get('organization')
 
             invoices_qs = Invoice.objects.all()
+
+            # Filtrer par organisation de l'utilisateur
+            if organization:
+                invoices_qs = invoices_qs.filter(created_by__organization=organization)
+            elif not user_context.get('is_superuser', False):
+                invoices_qs = invoices_qs.filter(created_by_id=user_context.get('id'))
 
             # Filtrer par client si spécifié (utilise le modèle Client)
             if client_name:
@@ -1560,7 +2256,8 @@ class ActionExecutor:
                 'total_amount': float(i.total_amount),
                 'status': i.status,
                 'created_at': str(i.created_at.date()) if i.created_at else None,
-                'due_date': str(i.due_date) if i.due_date else None
+                'due_date': str(i.due_date) if i.due_date else None,
+                'url': f'/invoices/{i.id}'
             } for i in invoices]
 
         results = await get_latest_invoices_sync()
@@ -1580,7 +2277,7 @@ class ActionExecutor:
             'message': f"Voici {'la dernière facture' if len(results) == 1 else f'les {len(results)} dernières factures'}"
         }
 
-    async def add_invoice_items(self, params: Dict, user) -> Dict:
+    async def add_invoice_items(self, params: Dict, user_context: Dict) -> Dict:
         """Ajoute des items à une facture existante"""
         from apps.invoicing.models import Invoice, InvoiceItem, Product
         from asgiref.sync import sync_to_async
@@ -1673,7 +2370,7 @@ class ActionExecutor:
                 'error': f"Erreur lors de l'ajout des items: {str(e)}"
             }
 
-    async def send_invoice(self, params: Dict, user) -> Dict:
+    async def send_invoice(self, params: Dict, user_context: Dict) -> Dict:
         """Envoie une facture par email au client"""
         from apps.invoicing.models import Invoice
         from apps.api.services.email_service import InvoiceEmailService
@@ -1750,7 +2447,7 @@ class ActionExecutor:
                 'error': f"Erreur lors de l'envoi de la facture: {str(e)}"
             }
 
-    async def add_po_items(self, params: Dict, user) -> Dict:
+    async def add_po_items(self, params: Dict, user_context: Dict) -> Dict:
         """Ajoute des items à un bon de commande existant"""
         from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
         from apps.invoicing.models import Product
@@ -1844,7 +2541,7 @@ class ActionExecutor:
                 'error': f"Erreur lors de l'ajout des items: {str(e)}"
             }
 
-    async def send_purchase_order(self, params: Dict, user) -> Dict:
+    async def send_purchase_order(self, params: Dict, user_context: Dict) -> Dict:
         """Envoie un bon de commande par email au fournisseur"""
         from apps.purchase_orders.models import PurchaseOrder
         from django.core.mail import EmailMessage
@@ -1994,7 +2691,7 @@ ProcureGenius
                 'error': f"Erreur lors de l'envoi du bon de commande: {str(e)}"
             }
 
-    async def update_supplier(self, params: Dict, user) -> Dict:
+    async def update_supplier(self, params: Dict, user_context: Dict) -> Dict:
         """Modifie un fournisseur existant"""
         from apps.suppliers.models import Supplier
         from asgiref.sync import sync_to_async
@@ -2060,7 +2757,7 @@ ProcureGenius
             logger.error(f"Error updating supplier: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def update_invoice(self, params: Dict, user) -> Dict:
+    async def update_invoice(self, params: Dict, user_context: Dict) -> Dict:
         """Modifie une facture existante"""
         from apps.invoicing.models import Invoice
         from asgiref.sync import sync_to_async
@@ -2129,7 +2826,7 @@ ProcureGenius
             logger.error(f"Error updating invoice: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def update_purchase_order(self, params: Dict, user) -> Dict:
+    async def update_purchase_order(self, params: Dict, user_context: Dict) -> Dict:
         """Modifie un bon de commande"""
         from apps.purchase_orders.models import PurchaseOrder
         from asgiref.sync import sync_to_async
@@ -2192,7 +2889,7 @@ ProcureGenius
             logger.error(f"Error updating PO: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def update_client(self, params: Dict, user) -> Dict:
+    async def update_client(self, params: Dict, user_context: Dict) -> Dict:
         """Modifie un client"""
         from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
@@ -2254,7 +2951,7 @@ ProcureGenius
             logger.error(f"Error updating client: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_supplier(self, params: Dict, user) -> Dict:
+    async def delete_supplier(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime un fournisseur (soft delete)"""
         from apps.suppliers.models import Supplier
         from apps.purchase_orders.models import PurchaseOrder
@@ -2306,7 +3003,7 @@ ProcureGenius
             logger.error(f"Error deleting supplier: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_invoice(self, params: Dict, user) -> Dict:
+    async def delete_invoice(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime une facture"""
         from apps.invoicing.models import Invoice
         from asgiref.sync import sync_to_async
@@ -2349,7 +3046,7 @@ ProcureGenius
             logger.error(f"Error deleting invoice: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_purchase_order(self, params: Dict, user) -> Dict:
+    async def delete_purchase_order(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime un bon de commande"""
         from apps.purchase_orders.models import PurchaseOrder
         from asgiref.sync import sync_to_async
@@ -2392,7 +3089,7 @@ ProcureGenius
             logger.error(f"Error deleting PO: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_client(self, params: Dict, user) -> Dict:
+    async def delete_client(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime un client (soft delete)"""
         from apps.accounts.models import Client
         from apps.invoicing.models import Invoice
@@ -2443,7 +3140,7 @@ ProcureGenius
             logger.error(f"Error deleting client: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def undo_last_action(self, params: Dict, user) -> Dict:
+    async def undo_last_action(self, params: Dict, user_context: Dict) -> Dict:
         """Annule la dernière action effectuée"""
         from apps.ai_assistant.models import ActionHistory
         from apps.suppliers.models import Supplier
@@ -2451,9 +3148,15 @@ ProcureGenius
         from apps.purchase_orders.models import PurchaseOrder
         from apps.accounts.models import Client
         from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
 
         @sync_to_async
         def undo_sync():
+            user_id = user_context.get('id')
+            user = User.objects.get(id=user_id)
+
             # Récupérer la dernière action annulable
             last_action = ActionHistory.objects.filter(
                 user=user,
@@ -2540,7 +3243,7 @@ ProcureGenius
 
     # ========== PRODUITS MODULE ==========
 
-    async def create_product(self, params: Dict, user) -> Dict:
+    async def create_product(self, params: Dict, user_context: Dict) -> Dict:
         """Crée un nouveau produit avec entity matching pour éviter les doublons"""
         from apps.invoicing.models import Product
         from .entity_matcher import entity_matcher
@@ -2595,9 +3298,13 @@ ProcureGenius
                     'low_stock_threshold': params.get('low_stock_threshold', 10),
                     'supplier_reference': params.get('supplier_reference', '')
                 })
-            else:  # service
+            else:  # service or digital
                 product_data.update({
-                    'price': Decimal(str(params.get('price', 0)))
+                    'price': Decimal(str(params.get('price', 0))),
+                    # Les services ne gèrent pas de stock
+                    'stock_quantity': 0,
+                    'low_stock_threshold': 0,
+                    'warehouse': None
                 })
 
             product = Product.objects.create(**product_data)
@@ -2651,58 +3358,91 @@ ProcureGenius
             logger.error(f"Error creating product: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def search_product(self, params: Dict, user) -> Dict:
-        """Recherche des produits par nom, référence ou code-barres"""
-        from apps.invoicing.models import Product
-        from django.db.models import Q
+    async def search_product(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Recherche des produits avec fuzzy matching ultra-robuste.
+        Gère les fautes d'orthographe et variations automatiquement.
+        """
+        from .entity_matcher import entity_matcher
         from asgiref.sync import sync_to_async
 
         @sync_to_async
         def search_products_sync():
             query = params.get('query', '')
+            min_score = params.get('min_score', 0.60)
             product_type = params.get('product_type')
             limit = params.get('limit', 10)
+            organization = user_context.get('organization')
 
-            # Construire la requête
-            q_filter = Q()
-            if query:
-                q_filter = (
-                    Q(name__icontains=query) |
-                    Q(reference__icontains=query) |
-                    Q(barcode__icontains=query) |
-                    Q(description__icontains=query)
-                )
+            if not query:
+                return []
 
-            products = Product.objects.filter(q_filter)
+            # Utiliser le fuzzy matching
+            matches = entity_matcher.find_similar_products(
+                name=query,
+                min_score=min_score
+            )
+
+            # Filtrer par organisation
+            if organization:
+                matches = [(p, score, details) for p, score, details in matches if p.organization == organization]
+            elif not user_context.get('is_superuser', False):
+                matches = []
 
             # Filtrer par type si spécifié
             if product_type in ['service', 'physical']:
-                products = products.filter(product_type=product_type)
+                matches = [(p, score, details) for p, score, details in matches if p.product_type == product_type]
 
-            products = products[:limit]
-
-            return [{
-                'id': str(p.id),
-                'name': p.name,
-                'reference': p.reference or '',
-                'barcode': p.barcode or '',
-                'product_type': p.product_type,
-                'description': p.description or '',
-                'price': float(p.price) if p.price else 0,
-                'stock_quantity': p.stock_quantity if p.product_type == 'physical' else None,
-                'low_stock_threshold': p.low_stock_threshold if p.product_type == 'physical' else None
-            } for p in products]
+            return [
+                {
+                    'id': str(product.id),
+                    'name': product.name,
+                    'reference': product.reference or '',
+                    'barcode': product.barcode or '',
+                    'product_type': product.product_type,
+                    'description': product.description or '',
+                    'price': float(product.price) if product.price else 0,
+                    'stock_quantity': product.stock_quantity if product.product_type == 'physical' else None,
+                    'low_stock_threshold': product.low_stock_threshold if product.product_type == 'physical' else None,
+                    'score': score * 100,
+                    'match_reason': entity_matcher.format_match_reason(details)
+                }
+                for product, score, details in matches[:limit]
+            ]
 
         results = await search_products_sync()
+
+        # Construire un message détaillé
+        if results:
+            message = f"J'ai trouvé {len(results)} produit(s) correspondant à '{params.get('query')}' :\n\n"
+
+            for i, result in enumerate(results, 1):
+                message += f"**{i}. {result['name']}**"
+                message += f" [Voir](/products/{result['id']})\n"
+
+                if result.get('reference'):
+                    message += f"   - Référence: {result['reference']}\n"
+                if result.get('product_type'):
+                    type_label = 'Service' if result['product_type'] == 'service' else 'Produit physique'
+                    message += f"   - Type: {type_label}\n"
+                if result.get('price'):
+                    message += f"   - Prix: {result['price']}€\n"
+                if result.get('stock_quantity') is not None:
+                    message += f"   - Stock: {result['stock_quantity']}\n"
+
+                # Score de correspondance
+                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+        else:
+            message = f"Aucun produit trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
             'data': results,
             'count': len(results),
-            'message': f"J'ai trouvé {len(results)} produit(s)"
+            'message': message
         }
 
-    async def update_product(self, params: Dict, user) -> Dict:
+    async def update_product(self, params: Dict, user_context: Dict) -> Dict:
         """Modifie un produit existant"""
         from apps.invoicing.models import Product
         from asgiref.sync import sync_to_async
@@ -2780,7 +3520,7 @@ ProcureGenius
             logger.error(f"Error updating product: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_product(self, params: Dict, user) -> Dict:
+    async def delete_product(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime un produit (hard delete si pas de dépendances)"""
         from apps.invoicing.models import Product, InvoiceItem
         from apps.purchase_orders.models import PurchaseOrderItem
@@ -2842,7 +3582,7 @@ ProcureGenius
 
     # ========== STOCK MANAGEMENT MODULE ==========
 
-    async def adjust_stock(self, params: Dict, user) -> Dict:
+    async def adjust_stock(self, params: Dict, user_context: Dict) -> Dict:
         """Ajuste le stock d'un produit physique (ajout ou retrait)"""
         from apps.invoicing.models import Product
         from apps.invoicing.stock_alerts import check_stock_after_movement
@@ -2945,7 +3685,7 @@ ProcureGenius
             logger.error(f"Error adjusting stock: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def get_stock_alerts(self, params: Dict, user) -> Dict:
+    async def get_stock_alerts(self, params: Dict, user_context: Dict) -> Dict:
         """Récupère les produits avec des alertes de stock (stock bas ou rupture)"""
         from apps.invoicing.models import Product
         from apps.invoicing.stock_alerts import StockAlertService
@@ -3015,15 +3755,21 @@ ProcureGenius
 
     # ========== REPORTS MODULE ==========
 
-    async def generate_report(self, params: Dict, user) -> Dict:
+    async def generate_report(self, params: Dict, user_context: Dict) -> Dict:
         """Génère un rapport (PDF, Excel ou CSV)"""
         from apps.reports.models import Report
         from apps.reports.services import SupplierReportService
         from asgiref.sync import sync_to_async
         from datetime import datetime
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
 
         @sync_to_async
         def generate_report_sync():
+            user_id = user_context.get('id')
+            user = User.objects.get(id=user_id)
+
             report_type = params.get('report_type')
             format = params.get('format', 'pdf')  # pdf, xlsx, csv
 
@@ -3111,14 +3857,20 @@ ProcureGenius
             logger.error(f"Error generating report: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def search_report(self, params: Dict, user) -> Dict:
+    async def search_report(self, params: Dict, user_context: Dict) -> Dict:
         """Recherche des rapports générés"""
         from apps.reports.models import Report
         from django.db.models import Q
         from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
 
         @sync_to_async
         def search_reports_sync():
+            user_id = user_context.get('id')
+            user = User.objects.get(id=user_id)
+
             report_type = params.get('report_type')
             format = params.get('format')
             status = params.get('status')
@@ -3162,13 +3914,19 @@ ProcureGenius
             logger.error(f"Error searching reports: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def get_report_status(self, params: Dict, user) -> Dict:
+    async def get_report_status(self, params: Dict, user_context: Dict) -> Dict:
         """Récupère le statut d'un rapport en cours de génération"""
         from apps.reports.models import Report
         from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
 
         @sync_to_async
         def get_status_sync():
+            user_id = user_context.get('id')
+            user = User.objects.get(id=user_id)
+
             report_id = params.get('report_id')
             if not report_id:
                 raise ValueError("report_id est requis")
@@ -3211,14 +3969,20 @@ ProcureGenius
             logger.error(f"Error getting report status: {e}")
             return {'success': False, 'error': f"Erreur: {str(e)}"}
 
-    async def delete_report(self, params: Dict, user) -> Dict:
+    async def delete_report(self, params: Dict, user_context: Dict) -> Dict:
         """Supprime un rapport généré"""
         from apps.reports.models import Report
         from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
         import os
+
+        User = get_user_model()
 
         @sync_to_async
         def delete_report_sync():
+            user_id = user_context.get('id')
+            user = User.objects.get(id=user_id)
+
             report_id = params.get('report_id')
             if not report_id:
                 raise ValueError("report_id est requis")

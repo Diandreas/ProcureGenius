@@ -49,7 +49,138 @@ class ChatView(APIView):
                 role='user',
                 content=user_message
             )
-            
+
+            # NOUVEAU: Vérifier si c'est une réponse à une confirmation en attente
+            last_assistant_msg = Message.objects.filter(
+                conversation=conversation,
+                role='assistant'
+            ).order_by('-created_at').first()
+
+            pending_confirmation = None
+            if last_assistant_msg and last_assistant_msg.metadata:
+                action_results_metadata = last_assistant_msg.metadata.get('action_results', [])
+                for result in action_results_metadata:
+                    if result.get('pending_confirmation'):
+                        pending_confirmation = result['pending_confirmation']
+                        break
+
+            # Détecter les intentions de confirmation dans le message utilisateur
+            user_message_lower = user_message.lower().strip()
+            confirmation_detected = None
+
+            if pending_confirmation:
+                # Mots-clés pour "utiliser l'existant"
+                if any(keyword in user_message_lower for keyword in ['utilise', 'utiliser', 'existant', 'premier', '1', 'recommandé', 'ok', 'oui', 'yes']):
+                    confirmation_detected = 'use_existing'
+                # Mots-clés pour "créer nouveau"
+                elif any(keyword in user_message_lower for keyword in ['créer', 'créé', 'nouveau', 'new', 'force', '2', 'quand même']):
+                    confirmation_detected = 'force_create'
+                # Mots-clés pour "annuler"
+                elif any(keyword in user_message_lower for keyword in ['annuler', 'annule', 'cancel', 'non', 'no', '3', 'stop']):
+                    confirmation_detected = 'cancel'
+
+            # Si une confirmation est détectée, exécuter l'action directement
+            if confirmation_detected and pending_confirmation:
+                logger.info(f"Confirmation detected: {confirmation_detected} for action: {pending_confirmation['action']}")
+
+                from .services import ActionExecutor, AsyncSafeUserContext
+                executor = ActionExecutor()
+                user_context = AsyncSafeUserContext.from_user(request.user)
+
+                action_result = None
+                final_response = ""
+
+                if confirmation_detected == 'cancel':
+                    # Annulation
+                    final_response = "✓ Opération annulée."
+                    action_result = {
+                        'success': True,
+                        'message': 'Opération annulée par l\'utilisateur'
+                    }
+                else:
+                    # Récupérer les paramètres originaux
+                    import json
+                    original_params = pending_confirmation.get('original_params', {})
+
+                    # S'assurer que original_params est un dict
+                    if isinstance(original_params, str):
+                        try:
+                            original_params = json.loads(original_params)
+                        except:
+                            logger.error(f"Failed to parse original_params: {original_params}")
+                            original_params = {}
+                    elif not isinstance(original_params, dict):
+                        logger.error(f"original_params is not a dict: {type(original_params)}")
+                        original_params = {}
+
+                    # Ajouter les paramètres de confirmation selon le choix
+                    choice_params = pending_confirmation.get('choices', {}).get(confirmation_detected, {})
+
+                    # S'assurer que choice_params est un dict
+                    if choice_params is None:
+                        choice_params = {}
+                    elif isinstance(choice_params, str):
+                        try:
+                            choice_params = json.loads(choice_params)
+                        except:
+                            logger.error(f"Failed to parse choice_params: {choice_params}")
+                            choice_params = {}
+
+                    # Fusionner les paramètres
+                    confirmed_params = {**original_params, **choice_params}
+
+                    logger.info(f"Executing action {pending_confirmation['action']} with confirmed params: {confirmed_params}")
+
+                    # Exécuter l'action avec les paramètres confirmés
+                    action_result = async_to_sync(executor.execute)(
+                        action=pending_confirmation['action'],
+                        params=confirmed_params,
+                        user=user_context
+                    )
+
+                    # Formater la réponse
+                    if action_result.get('success'):
+                        message = action_result.get('message', 'Action exécutée avec succès')
+
+                        # Messages spécifiques selon le type de confirmation
+                        entity_type = pending_confirmation.get('entity_type', 'entité')
+                        entity_names = {
+                            'client': 'client',
+                            'supplier': 'fournisseur',
+                            'product': 'produit'
+                        }
+                        entity_name = entity_names.get(entity_type, 'entité')
+
+                        if confirmation_detected == 'use_existing':
+                            final_response = f"✓ Parfait ! J'ai utilisé le {entity_name} existant.\n\n{message}"
+                        else:  # force_create
+                            final_response = f"✓ D'accord ! J'ai créé un nouveau {entity_name}.\n\n{message}"
+
+                        # Ajouter un lien si disponible
+                        data = action_result.get('data', {})
+                        if isinstance(data, dict) and data.get('url'):
+                            final_response += f" [Voir les détails]({data['url']})"
+                    else:
+                        error = action_result.get('error', 'Erreur inconnue')
+                        final_response = f"✗ Désolé, une erreur s'est produite : {error}"
+
+                # Sauvegarder la réponse
+                ai_msg = Message.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content=final_response,
+                    metadata={'action_results': [{'result': action_result}]} if action_result else None
+                )
+
+                conversation.last_message_at = timezone.now()
+                conversation.save()
+
+                return Response({
+                    'conversation_id': str(conversation.id),
+                    'message': MessageSerializer(ai_msg).data,
+                    'action_result': action_result
+                }, status=status.HTTP_200_OK)
+
             # Récupérer l'historique de la conversation
             history = Message.objects.filter(
                 conversation=conversation
@@ -71,16 +202,41 @@ class ChatView(APIView):
             final_response = result['response']
 
             if result.get('tool_calls'):
-                from .services import ActionExecutor
+                from .services import ActionExecutor, AsyncSafeUserContext
                 executor = ActionExecutor()
+
+                # IMPORTANT: Convert user to safe dict BEFORE entering async context
+                # This prevents "You cannot call this from an async context" errors
+                user_context = AsyncSafeUserContext.from_user(request.user)
 
                 for tool_call in result['tool_calls']:
                     try:
+                        # Normaliser les arguments - peut être un dict ou une liste
+                        arguments = tool_call.get('arguments', {})
+                        if isinstance(arguments, list):
+                            # Si c'est une liste, essayer de la convertir en dict
+                            if len(arguments) == 1 and isinstance(arguments[0], dict):
+                                arguments = arguments[0]
+                            else:
+                                # Sinon, créer un dict vide et logger un avertissement
+                                logger.warning(f"Arguments is a list, converting to dict: {arguments}")
+                                arguments = {}
+                        elif not isinstance(arguments, dict):
+                            # Si ce n'est ni une liste ni un dict, essayer de parser comme JSON string
+                            import json
+                            try:
+                                if isinstance(arguments, str):
+                                    arguments = json.loads(arguments)
+                                else:
+                                    arguments = {}
+                            except:
+                                arguments = {}
+
                         # Utiliser async_to_sync au lieu de créer un event loop
                         action_result = async_to_sync(executor.execute)(
-                            action=tool_call['function'],
-                            params=tool_call['arguments'],
-                            user=request.user
+                            action=tool_call.get('function', tool_call.get('name', '')),
+                            params=arguments,
+                            user=user_context
                         )
 
                         action_results.append({
@@ -89,11 +245,91 @@ class ChatView(APIView):
                             'result': action_result
                         })
 
-                        # Ajouter le résultat à la réponse finale
+                        # Ajouter le résultat à la réponse finale de manière plus naturelle
+                        # S'assurer que action_result est un dict
+                        if not isinstance(action_result, dict):
+                            logger.error(f"Action result is not a dict: {type(action_result)} - {action_result}")
+                            action_result = {'success': False, 'error': 'Format de réponse invalide'}
+                        
                         if action_result.get('success'):
-                            final_response += f"\n\n✓ {action_result.get('message', 'Action exécutée avec succès')}"
+                            message = action_result.get('message', 'Action exécutée avec succès')
+                            # Ajouter un lien si disponible
+                            data = action_result.get('data', {})
+                            if isinstance(data, dict) and data.get('url'):
+                                message += f" [Voir les détails]({data['url']})"
+                            final_response += f"\n\n✓ {message}"
                         else:
-                            final_response += f"\n\n✗ Erreur: {action_result.get('error', 'Erreur inconnue')}"
+                            error = action_result.get('error', 'Erreur inconnue')
+                            # Gestion améliorée des entités similaires trouvées
+                            if 'similar_entities_found' in str(error):
+                                similar = action_result.get('similar_entities', [])
+                                entity_type = action_result.get('entity_type', 'entité')
+                                suggested = action_result.get('suggested_action', {})
+
+                                entity_names = {
+                                    'client': 'client',
+                                    'supplier': 'fournisseur',
+                                    'product': 'produit'
+                                }
+                                entity_name = entity_names.get(entity_type, 'entité')
+
+                                # Format response avec options claires
+                                final_response += f"\n\n⚠️ **Attention**: J'ai trouvé {len(similar)} {entity_name}(s) similaire(s) :\n\n"
+
+                                for i, entity in enumerate(similar, 1):
+                                    final_response += f"**{i}. {entity['name']}**\n"
+                                    if entity.get('email'):
+                                        final_response += f"   - Email: {entity['email']}\n"
+                                    if entity.get('phone'):
+                                        final_response += f"   - Téléphone: {entity['phone']}\n"
+                                    final_response += f"   - Similarité: {int(entity['similarity'])}%\n"
+                                    final_response += f"   - Raison: {entity['reason']}\n\n"
+
+                                final_response += f"\n**Comment souhaitez-vous procéder ?**\n"
+                                final_response += f"• Pour utiliser **{similar[0]['name']}** (recommandé), dites : *\"utiliser l'existant\"*\n"
+                                final_response += f"• Pour créer quand même un nouveau {entity_name}, dites : *\"créer nouveau\"*\n"
+                                final_response += f"• Pour annuler, dites : *\"annuler\"*"
+
+                                # Ajouter les boutons d'action dans les métadonnées pour le frontend
+                                action_results[-1]['action_buttons'] = [
+                                    {
+                                        'label': f"✓ Utiliser {similar[0]['name']}",
+                                        'action': 'use_existing',
+                                        'style': 'primary',
+                                        'params': {
+                                            f'use_existing_{entity_type}_id': suggested.get('use_existing'),
+                                            'force_create': False
+                                        }
+                                    },
+                                    {
+                                        'label': f"+ Créer nouveau {entity_name}",
+                                        'action': 'force_create',
+                                        'style': 'secondary',
+                                        'params': {
+                                            f'force_create_{entity_type}': True
+                                        }
+                                    },
+                                    {
+                                        'label': "✗ Annuler",
+                                        'action': 'cancel',
+                                        'style': 'danger'
+                                    }
+                                ]
+
+                                # Stocker le contexte de confirmation pour la suite
+                                action_results[-1]['pending_confirmation'] = {
+                                    'action': tool_call['function']['name'],
+                                    'original_params': tool_call['function']['arguments'],
+                                    'entity_type': entity_type,
+                                    'suggested_entity_id': suggested.get('use_existing'),
+                                    'choices': {
+                                        'use_existing': {f'use_existing_{entity_type}_id': suggested.get('use_existing')},
+                                        'force_create': {f'force_create_{entity_type}': True},
+                                        'cancel': None
+                                    }
+                                }
+                            else:
+                                final_response += f"\n\n✗ Désolé, une erreur s'est produite : {error}"
 
                     except Exception as e:
                         logger.error(f"Tool call execution error: {e}")
@@ -119,14 +355,17 @@ class ChatView(APIView):
             # Exécuter l'action legacy si nécessaire (compatibilité)
             action_result = None
             if result.get('action'):
-                from .services import ActionExecutor
+                from .services import ActionExecutor, AsyncSafeUserContext
                 executor = ActionExecutor()
+
+                # IMPORTANT: Convert user to safe dict BEFORE entering async context
+                user_context = AsyncSafeUserContext.from_user(request.user)
 
                 # Utiliser async_to_sync au lieu de créer un event loop
                 action_result = async_to_sync(executor.execute)(
                     action=result['action']['action'],
                     params=result['action']['params'],
-                    user=request.user
+                    user=user_context
                 )
 
                 # Ajouter le résultat de l'action à la conversation
@@ -346,16 +585,34 @@ class DocumentAnalysisView(APIView):
             )
     
     def _auto_create_entity(self, document_type, data, user):
-        """Crée automatiquement une entité basée sur les données extraites"""
+        """Crée automatiquement une entité basée sur les données extraites avec entity matching"""
         try:
             if document_type == 'invoice':
                 from apps.invoicing.models import Invoice, Client, InvoiceItem
-                
-                # Trouver ou créer le client
+                from .entity_matcher import entity_matcher
+                import logging
+                logger = logging.getLogger(__name__)
+
+                # Trouver ou créer le client avec entity matching amélioré
                 client_name = data.get('client_name', 'Client inconnu')
-                client = Client.objects.filter(name=client_name).first()
-                if not client:
-                    client = Client.objects.create(name=client_name)
+                client_email = data.get('client_email')
+
+                # Utiliser le matching amélioré
+                similar_clients = entity_matcher.find_similar_clients(
+                    first_name=client_name,
+                    last_name='',
+                    email=client_email if client_email else None,
+                    company=client_name
+                )
+
+                if similar_clients:
+                    # Utiliser le meilleur match pour l'auto-création
+                    client = similar_clients[0][0]
+                    logger.info(f"Auto-selected existing client: {client.name} (similarity: {similar_clients[0][1]*100:.0f}%)")
+                else:
+                    # Créer seulement si aucun similaire trouvé
+                    client = Client.objects.create(name=client_name, email=client_email)
+                    logger.info(f"Auto-created new client: {client_name}")
                 
                 # Créer la facture
                 invoice = Invoice.objects.create(
@@ -384,12 +641,34 @@ class DocumentAnalysisView(APIView):
                 
             elif document_type == 'purchase_order':
                 from apps.purchase_orders.models import PurchaseOrder, Supplier
-                
-                # Similaire pour les bons de commande
+                from .entity_matcher import entity_matcher
+                import logging
+                logger = logging.getLogger(__name__)
+
+                # Trouver ou créer le fournisseur avec entity matching amélioré
                 supplier_name = data.get('supplier_name', 'Fournisseur inconnu')
-                supplier = Supplier.objects.filter(name=supplier_name).first()
-                if not supplier:
-                    supplier = Supplier.objects.create(name=supplier_name)
+                supplier_email = data.get('supplier_email')
+                supplier_phone = data.get('supplier_phone')
+
+                # Utiliser le matching amélioré
+                similar_suppliers = entity_matcher.find_similar_suppliers(
+                    name=supplier_name,
+                    email=supplier_email if supplier_email else None,
+                    phone=supplier_phone if supplier_phone else None
+                )
+
+                if similar_suppliers:
+                    # Utiliser le meilleur match pour l'auto-création
+                    supplier = similar_suppliers[0][0]
+                    logger.info(f"Auto-selected existing supplier: {supplier.name} (similarity: {similar_suppliers[0][1]*100:.0f}%)")
+                else:
+                    # Créer seulement si aucun similaire trouvé
+                    supplier = Supplier.objects.create(
+                        name=supplier_name,
+                        email=supplier_email,
+                        phone=supplier_phone
+                    )
+                    logger.info(f"Auto-created new supplier: {supplier_name}")
                 
                 po = PurchaseOrder.objects.create(
                     title=f"BC {data.get('po_number', '')}",
