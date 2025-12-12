@@ -48,10 +48,11 @@ class EnhancedEntityMatcher:
         'plc', 'pty', 'ag', 'nv', 'bv', 'eurl', 'srl', 'snc'
     }
 
-    def __init__(self, threshold=0.60):
+    def __init__(self, threshold=0.50):
         """
         Args:
-            threshold: Seuil de similarité minimum (0-1). Défaut: 0.60 (60%)
+            threshold: Seuil de similarité minimum (0-1). Défaut: 0.50 (50%)
+            Réduit de 0.60 pour capturer "Gérard" vs "Gérard Dupont" (57%)
         """
         self.threshold = threshold
 

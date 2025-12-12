@@ -38,6 +38,20 @@ export const login = createAsyncThunk(
   }
 );
 
+export const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await authAPI.googleLogin(token);
+      const { token: authToken } = response.data;
+      localStorage.setItem('authToken', authToken);
+      return { token: authToken, user: response.data.user || 'Google User' };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Google login failed');
+    }
+  }
+);
+
 export const logout = createAsyncThunk(
   'auth/logout',
   async () => {
@@ -82,6 +96,21 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error?.message || 'Erreur de connexion';
+      })
+      // Google Login
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.token = action.payload.token;
+        state.user = action.payload.user;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error?.message || 'Erreur de connexion Google';
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {

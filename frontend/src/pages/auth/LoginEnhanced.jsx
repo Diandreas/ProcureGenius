@@ -3,6 +3,7 @@
  * Supports both email/password and Google OAuth authentication
  */
 import React, { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -26,7 +27,7 @@ import {
   Email as EmailIcon,
   Lock as LockIcon,
 } from '@mui/icons-material';
-import { login, clearError } from '../../store/slices/authSlice';
+import { login, googleLogin, clearError } from '../../store/slices/authSlice';
 import Mascot from '../../components/Mascot';
 import { useTranslation } from 'react-i18next';
 
@@ -62,12 +63,17 @@ function LoginEnhanced() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Redirect to Django allauth Google OAuth endpoint
-    // The user will be redirected back to /accounts/google/login/callback/
-    // and allauth will handle the rest
-    window.location.href = '/accounts/google/login/';
-  };
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const result = await dispatch(googleLogin(tokenResponse.access_token));
+      if (googleLogin.fulfilled.match(result)) {
+        window.location.href = '/dashboard';
+      }
+    },
+    onError: () => {
+      console.error('Login Failed');
+    },
+  });
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

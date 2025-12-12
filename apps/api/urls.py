@@ -35,6 +35,7 @@ urlpatterns = [
     path('auth/verify-email/', auth_api_views.api_verify_email, name='api_verify_email'),
     path('auth/forgot-password/', auth_api_views.api_forgot_password, name='api_forgot_password'),
     path('auth/reset-password/', auth_api_views.api_reset_password, name='api_reset_password'),
+    path('auth/google/', auth_api_views.api_google_login, name='api_google_login'),
 
     # Accounts & User management APIs
     path('accounts/profile/', accounts_api_views.api_profile, name='api_profile'),

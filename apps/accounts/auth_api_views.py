@@ -13,6 +13,9 @@ from django.db import transaction
 
 from .models import CustomUser, Organization, UserPreferences
 from apps.subscriptions.models import SubscriptionPlan, Subscription
+import requests
+from django.utils import timezone
+from datetime import timedelta
 
 
 @api_view(['POST'])
@@ -268,3 +271,104 @@ def api_reset_password(request):
     """
     # TODO: Implement password reset logic
     pass
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_google_login(request):
+    """
+    Login with Google Access Token
+    
+    POST /api/accounts/google/
+    
+    Body:
+        {
+            "token": "google_access_token"
+        }
+    """
+    token = request.data.get('token')
+    if not token:
+        return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Verify token with Google
+        google_response = requests.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers={'Authorization': f'Bearer {token}'}
+        )
+        
+        if google_response.status_code != 200:
+            return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        google_data = google_response.json()
+        email = google_data.get('email')
+        
+        if not email:
+             return Response({'error': 'Email not found in Google data'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if user exists
+        user = CustomUser.objects.filter(email=email).first()
+        
+        if not user:
+            # Create new user
+            with transaction.atomic():
+                # Create organization (using email domain or default)
+                org_name = f"Organization {google_data.get('given_name', 'User')}"
+                organization = Organization.objects.create(
+                    name=org_name,
+                    subscription_type='free'
+                )
+                
+                user = CustomUser.objects.create_user(
+                    username=email,
+                    email=email,
+                    first_name=google_data.get('given_name', ''),
+                    last_name=google_data.get('family_name', ''),
+                    organization=organization,
+                    role='admin',
+                    email_verified=True,
+                    password=CustomUser.objects.make_random_password()
+                )
+                
+                # Create free subscription
+                try:
+                    free_plan = SubscriptionPlan.objects.get(code='free')
+                    Subscription.objects.create(
+                        organization=organization,
+                        plan=free_plan,
+                        billing_period='monthly',
+                        status='active',
+                        current_period_start=timezone.now(),
+                        current_period_end=timezone.now() + timedelta(days=365*10),
+                    )
+                except SubscriptionPlan.DoesNotExist:
+                    pass
+
+        # Generate token
+        token, _ = Token.objects.get_or_create(user=user)
+        
+        # Get preferences
+        preferences = UserPreferences.objects.filter(user=user).first()
+        
+        return Response({
+            'token': token.key,
+            'user': {
+                'id': str(user.id),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'organization': {
+                    'id': str(user.organization.id) if user.organization else None,
+                    'name': user.organization.name if user.organization else None,
+                },
+                'preferences': {
+                    'currency': preferences.preferred_currency if preferences else 'EUR',
+                    'language': preferences.preferred_language if preferences else 'fr',
+                    'onboarding_completed': preferences.onboarding_completed if preferences else False,
+                }
+            }
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

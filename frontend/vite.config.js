@@ -19,6 +19,9 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       }
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     }
   },
   build: {

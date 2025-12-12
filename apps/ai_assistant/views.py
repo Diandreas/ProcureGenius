@@ -233,8 +233,22 @@ class ChatView(APIView):
                                 arguments = {}
 
                         # Utiliser async_to_sync au lieu de créer un event loop
+                        # Récupérer le nom de la fonction correctement
+                        # Dans services.py, tool_call est structuré comme:
+                        # {'id': '...', 'function': 'nom_fonction', 'arguments': {...}}
+                        function_name = tool_call.get('function', '')
+
+                        # Si 'function' n'existe pas, essayer 'name'
+                        if not function_name:
+                            function_name = tool_call.get('name', '')
+
+                        if not function_name:
+                            logger.error(f"Cannot extract function name from tool_call: {tool_call}")
+
+                        logger.info(f"Executing function: {function_name} with params: {arguments}")
+
                         action_result = async_to_sync(executor.execute)(
-                            action=tool_call.get('function', tool_call.get('name', '')),
+                            action=function_name,
                             params=arguments,
                             user=user_context
                         )
@@ -285,10 +299,13 @@ class ChatView(APIView):
                                     final_response += f"   - Similarité: {int(entity['similarity'])}%\n"
                                     final_response += f"   - Raison: {entity['reason']}\n\n"
 
-                                final_response += f"\n**Comment souhaitez-vous procéder ?**\n"
-                                final_response += f"• Pour utiliser **{similar[0]['name']}** (recommandé), dites : *\"utiliser l'existant\"*\n"
-                                final_response += f"• Pour créer quand même un nouveau {entity_name}, dites : *\"créer nouveau\"*\n"
-                                final_response += f"• Pour annuler, dites : *\"annuler\"*"
+                                final_response += f"\n**Comment souhaitez-vous procéder ?**\n\n"
+                                final_response += f"**1️⃣ Utiliser {similar[0]['name']}** (recommandé)\n"
+                                final_response += f"   → Tapez: `1` ou `utiliser l'existant`\n\n"
+                                final_response += f"**2️⃣ Créer un nouveau {entity_name}**\n"
+                                final_response += f"   → Tapez: `2` ou `créer nouveau`\n\n"
+                                final_response += f"**3️⃣ Annuler**\n"
+                                final_response += f"   → Tapez: `3` ou `annuler`"
 
                                 # Ajouter les boutons d'action dans les métadonnées pour le frontend
                                 action_results[-1]['action_buttons'] = [
@@ -317,9 +334,10 @@ class ChatView(APIView):
                                 ]
 
                                 # Stocker le contexte de confirmation pour la suite
+                                # Note: tool_call['function'] est le nom (string), tool_call['arguments'] sont les params (dict)
                                 action_results[-1]['pending_confirmation'] = {
-                                    'action': tool_call['function']['name'],
-                                    'original_params': tool_call['function']['arguments'],
+                                    'action': tool_call['function'],  # Nom de la fonction directement
+                                    'original_params': arguments,  # Arguments déjà parsés plus haut
                                     'entity_type': entity_type,
                                     'suggested_entity_id': suggested.get('use_existing'),
                                     'choices': {

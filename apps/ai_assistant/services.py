@@ -15,19 +15,36 @@ logger = logging.getLogger(__name__)
 
 class MistralService:
     """Service pour interagir avec l'API Mistral AI"""
-    
+
+    # Cache key constant pour le system prompt
+    SYSTEM_PROMPT_CACHE_KEY = 'mistral_system_prompt_v1'
+    SYSTEM_PROMPT_TTL = 86400  # 24h
+
     def __init__(self):
         api_key = getattr(settings, 'MISTRAL_API_KEY', os.getenv('MISTRAL_API_KEY'))
         if not api_key:
             raise ValueError("MISTRAL_API_KEY not configured")
-        
+
         self.client = Mistral(api_key=api_key)
         self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
         self.tools = self._define_tools()
-        
+        self._system_prompt_cached = None
+
     def create_system_prompt(self) -> str:
-        """Crée le prompt système pour l'assistant"""
-        return """Tu es l'assistant personnel intelligent de l'utilisateur pour gérer son entreprise. Tu es là pour l'aider de manière naturelle et conversationnelle, comme un collègue de confiance.
+        """Crée le prompt système pour l'assistant (avec cache Redis)"""
+        # Vérifier cache mémoire d'instance
+        if self._system_prompt_cached:
+            return self._system_prompt_cached
+
+        # Vérifier cache Redis
+        cached = cache.get(self.SYSTEM_PROMPT_CACHE_KEY)
+        if cached:
+            self._system_prompt_cached = cached
+            logger.debug("System prompt loaded from Redis cache")
+            return cached
+
+        # Générer le prompt
+        prompt = """Tu es l'assistant personnel intelligent de l'utilisateur pour gérer son entreprise. Tu es là pour l'aider de manière naturelle et conversationnelle, comme un collègue de confiance.
 
 IMPORTANT - Distinction CRITIQUE :
 - Un CLIENT est une personne ou entreprise qui ACHÈTE des produits/services à l'utilisateur (facturation sortante)
@@ -58,6 +75,58 @@ Style de communication :
 
 Réponds toujours en français de manière naturelle et engageante."""
 
+        # Cacher dans Redis ET instance
+        cache.set(self.SYSTEM_PROMPT_CACHE_KEY, prompt, self.SYSTEM_PROMPT_TTL)
+        self._system_prompt_cached = prompt
+        logger.debug("System prompt generated and cached")
+
+        return prompt
+
+    def _compress_conversation_history(self, messages: List[Dict], max_recent: int = 4) -> List[Dict]:
+        """
+        Compresse l'historique en gardant les messages récents complets
+        et en résumant les plus anciens pour économiser des tokens.
+
+        Args:
+            messages: Liste des messages de conversation
+            max_recent: Nombre de messages récents à garder complets (défaut: 4 = 2 paires user/assistant)
+
+        Returns:
+            Liste compressée de messages
+        """
+        if len(messages) <= max_recent:
+            return messages
+
+        # Garder les N derniers messages complets
+        recent_messages = messages[-max_recent:]
+
+        # Résumer les messages anciens
+        old_messages = messages[:-max_recent]
+        if old_messages:
+            # Compter les types d'actions dans les anciens messages
+            actions_mentioned = []
+            for msg in old_messages:
+                content = msg.get('content', '')
+                if content:
+                    # Extraire les mots-clés d'actions
+                    keywords = ['créer', 'créé', 'facture', 'client', 'fournisseur', 'commande', 'produit', 'chercher', 'modifier', 'supprimer']
+                    for keyword in keywords:
+                        if keyword in content.lower() and keyword not in actions_mentioned:
+                            actions_mentioned.append(keyword)
+                            if len(actions_mentioned) >= 3:  # Limiter à 3 mots-clés
+                                break
+
+            summary_text = f"[Contexte: {len(old_messages)} messages précédents"
+            if actions_mentioned:
+                summary_text += f" concernant {', '.join(actions_mentioned[:3])}"
+            summary_text += "]"
+
+            return [
+                {"role": "system", "content": summary_text}
+            ] + recent_messages
+
+        return recent_messages
+
     def _define_tools(self) -> List[Dict]:
         """Définit tous les tools/functions disponibles pour Mistral"""
         return [
@@ -69,7 +138,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "name": {"type": "string", "description": "Nom du fournisseur (obligatoire)"},
+                            "name": {"type": "string", "description": "Nom COMPLET du fournisseur (obligatoire). Ex: 'Gérard Dupont' ou 'Acme Corporation', pas juste 'Gérard'"},
                             "contact_person": {"type": "string", "description": "Nom de la personne de contact"},
                             "email": {"type": "string", "description": "Adresse email du fournisseur"},
                             "phone": {"type": "string", "description": "Numéro de téléphone"},
@@ -222,7 +291,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "name": {"type": "string", "description": "Nom du client (obligatoire)"},
+                            "name": {"type": "string", "description": "Nom COMPLET du client (obligatoire). Ex: 'Gérard Dupont' ou 'Entreprise Martin', pas juste 'Gérard'"},
                             "email": {"type": "string", "description": "Adresse email du client"},
                             "phone": {"type": "string", "description": "Numéro de téléphone"},
                             "address": {"type": "string", "description": "Adresse complète"},
@@ -734,9 +803,10 @@ Réponds toujours en français de manière naturelle et engageante."""
                 {"role": "system", "content": self.create_system_prompt()}
             ]
 
-            # Ajouter l'historique si disponible
+            # Ajouter l'historique si disponible (compressé)
             if conversation_history:
-                for msg in conversation_history[-10:]:
+                compressed = self._compress_conversation_history(conversation_history, max_recent=4)
+                for msg in compressed:
                     messages.append({
                         "role": msg.get('role', 'user'),
                         "content": msg.get('content', '') if msg.get('content') else None,
@@ -753,7 +823,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                 tools=self.tools,
                 tool_choice="auto",
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=500  # Réduit de 1500 pour économiser tokens
             )
 
             # Extraire la réponse
@@ -852,7 +922,148 @@ Réponds toujours en français de manière naturelle et engageante."""
                 'error': str(e),
                 'error_details': error_details
             }
-    
+
+    async def process_user_request(self, user_message: str, user_context: Dict) -> Dict[str, Any]:
+        """
+        Orchestration complète: chat → détection tool_calls → exécution → réponse finale
+
+        Args:
+            user_message: Message de l'utilisateur
+            user_context: Contexte contenant user_id, conversation_history, etc.
+
+        Returns:
+            Dict avec message, action, résultats, métriques (tokens, temps)
+        """
+        import time
+        from django.contrib.auth import get_user_model
+        from asgiref.sync import sync_to_async
+
+        start_time = time.time()
+        total_tokens = 0
+
+        try:
+            # 1. Récupérer le user et créer le contexte safe
+            user_id = user_context.get('user_id')
+            conversation_history = user_context.get('conversation_history', [])
+
+            User = get_user_model()
+
+            @sync_to_async
+            def get_user_safe():
+                user = User.objects.get(id=user_id)
+                return AsyncSafeUserContext.from_user(user)
+
+            user_dict = await get_user_safe()
+
+            # 2. Premier appel IA pour analyser l'intention
+            chat_response = await self.chat(
+                message=user_message,
+                conversation_history=conversation_history,
+                user_context=user_context
+            )
+
+            # Tracer les tokens utilisés
+            usage = chat_response.get('usage', {})
+            if usage:
+                total_tokens += usage.get('total_tokens', 0)
+
+            # 3. Si pas de tool_calls, retourner directement la réponse
+            tool_calls = chat_response.get('tool_calls')
+            if not tool_calls:
+                return {
+                    'message': chat_response.get('response', ''),
+                    'action': None,
+                    'action_result': None,
+                    'tokens': total_tokens,
+                    'response_time': int((time.time() - start_time) * 1000),
+                    'success': True
+                }
+
+            # 4. Exécuter les tool_calls
+            executor = ActionExecutor()
+            action_results = []
+
+            for tool_call in tool_calls:
+                function_name = tool_call.get('function')
+                arguments = tool_call.get('arguments', {})
+
+                logger.info(f"Executing tool: {function_name} with args: {arguments}")
+
+                try:
+                    result = await executor.execute(
+                        action=function_name,
+                        params=arguments,
+                        user=user_dict
+                    )
+
+                    action_results.append({
+                        'tool_call_id': tool_call.get('id'),
+                        'function': function_name,
+                        'result': result
+                    })
+                except Exception as e:
+                    logger.error(f"Error executing {function_name}: {e}")
+                    action_results.append({
+                        'tool_call_id': tool_call.get('id'),
+                        'function': function_name,
+                        'result': {
+                            'success': False,
+                            'error': str(e)
+                        }
+                    })
+
+            # 5. Construire message de résultats pour l'IA
+            result_messages = []
+            for ar in action_results:
+                if ar['result'].get('success'):
+                    msg = ar['result'].get('message', 'Succès')
+                    result_messages.append(f"✓ {ar['function']}: {msg}")
+                else:
+                    error = ar['result'].get('error', 'Erreur inconnue')
+                    result_messages.append(f"✗ {ar['function']}: {error}")
+
+            # 6. Second appel IA pour générer réponse finale naturelle
+            final_message = "Résultats des actions:\n" + "\n".join(result_messages)
+
+            # Construire l'historique pour le second appel
+            updated_history = conversation_history + [
+                {'role': 'user', 'content': user_message},
+                {'role': 'assistant', 'content': chat_response.get('response', ''), 'tool_calls': tool_calls}
+            ]
+
+            final_response = await self.chat(
+                message=final_message,
+                conversation_history=updated_history,
+                user_context=user_context
+            )
+
+            # Tracer les tokens du second appel
+            final_usage = final_response.get('usage', {})
+            if final_usage:
+                total_tokens += final_usage.get('total_tokens', 0)
+
+            return {
+                'message': final_response.get('response', ''),
+                'action': tool_calls[0].get('function') if tool_calls else None,
+                'action_result': action_results,
+                'tokens': total_tokens,
+                'response_time': int((time.time() - start_time) * 1000),
+                'model': self.model,
+                'success': True
+            }
+
+        except Exception as e:
+            logger.error(f"Error in process_user_request: {e}", exc_info=True)
+            return {
+                'message': f"Désolé, une erreur est survenue: {str(e)}",
+                'action': None,
+                'action_result': None,
+                'tokens': total_tokens,
+                'response_time': int((time.time() - start_time) * 1000),
+                'error': str(e),
+                'success': False
+            }
+
     def analyze_document(self, text: str, document_type: str) -> Dict[str, Any]:
         """
         Analyse un document scanné pour extraire les informations

@@ -45,6 +45,7 @@ export const authAPI = {
     return Promise.resolve();
   },
   getProfile: () => api.get('/auth/profile/'),
+  googleLogin: (token) => api.post('/auth/google/', { token }),
 };
 
 // Suppliers API
