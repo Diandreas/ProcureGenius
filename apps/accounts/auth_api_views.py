@@ -192,6 +192,7 @@ def api_login(request):
             'last_name': user.last_name,
             'role': user.role,
             'email_verified': user.email_verified,
+            'has_usable_password': user.has_usable_password(),
             'organization': {
                 'id': str(user.organization.id) if user.organization else None,
                 'name': user.organization.name if user.organization else None,
@@ -358,6 +359,7 @@ def api_google_login(request):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'role': user.role,
+                'has_usable_password': user.has_usable_password(),
                 'organization': {
                     'id': str(user.organization.id) if user.organization else None,
                     'name': user.organization.name if user.organization else None,

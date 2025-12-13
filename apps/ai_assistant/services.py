@@ -17,7 +17,7 @@ class MistralService:
     """Service pour interagir avec l'API Mistral AI"""
 
     # Cache key constant pour le system prompt
-    SYSTEM_PROMPT_CACHE_KEY = 'mistral_system_prompt_v1'
+    SYSTEM_PROMPT_CACHE_KEY = 'mistral_system_prompt_v2'  # Incrémenté pour invalider cache
     SYSTEM_PROMPT_TTL = 86400  # 24h
 
     def __init__(self):
@@ -51,6 +51,13 @@ IMPORTANT - Distinction CRITIQUE :
 - Un FOURNISSEUR est une personne ou entreprise qui VEND des produits/services à l'utilisateur (achats entrants)
 - Quand l'utilisateur dit "créer le client X" ou "facture pour le client X", utilise TOUJOURS create_client, JAMAIS create_supplier
 - Quand l'utilisateur dit "créer le fournisseur X" ou "commande au fournisseur X", utilise create_supplier
+
+WORKFLOW AUTOMATIQUE - IMPORTANT :
+- Quand l'utilisateur demande "crée une facture pour le client X", appelle DIRECTEMENT create_invoice avec le nom du client
+- N'utilise PAS search_client avant create_invoice - la fonction create_invoice gère automatiquement la recherche/création du client
+- Si le client n'existe pas, il sera créé automatiquement
+- Si un client similaire existe, une confirmation sera demandée à l'utilisateur
+- Même logique pour create_purchase_order avec les fournisseurs
 
 Tu peux aider avec :
 1. Gérer les CLIENTS (créer, rechercher, modifier, supprimer) - pour les personnes/entreprises qui achètent chez l'utilisateur
@@ -175,7 +182,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                 "type": "function",
                 "function": {
                     "name": "create_invoice",
-                    "description": "Crée une nouvelle facture pour un client",
+                    "description": "Crée une nouvelle facture pour un client. IMPORTANT: Appelle DIRECTEMENT cette fonction avec le nom du client - elle gère automatiquement la recherche/création du client. N'utilise PAS search_client avant.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -258,7 +265,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                 "type": "function",
                 "function": {
                     "name": "search_client",
-                    "description": "Recherche des clients par nom, prénom, email ou entreprise",
+                    "description": "Recherche et LISTE des clients par nom, email ou entreprise. Utilise cette fonction UNIQUEMENT quand l'utilisateur demande explicitement de chercher/lister des clients. N'utilise PAS cette fonction avant create_invoice.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -830,11 +837,17 @@ Réponds toujours en français de manière naturelle et engageante."""
             choice = response.choices[0]
             message_response = choice.message
 
+            # Extraire les tokens utilisés
+            tokens_used = 0
+            if hasattr(response, 'usage') and response.usage:
+                tokens_used = response.usage.total_tokens
+
             result = {
                 'success': True,
                 'response': message_response.content if message_response.content else "",
                 'tool_calls': None,
-                'finish_reason': choice.finish_reason
+                'finish_reason': choice.finish_reason,
+                'tokens_used': tokens_used
             }
 
             # Si l'IA a décidé d'appeler des fonctions
@@ -923,6 +936,68 @@ Réponds toujours en français de manière naturelle et engageante."""
                 'error_details': error_details
             }
 
+    def _parse_confirmation_response(self, user_message: str, pending_confirmation: Dict = None) -> Dict:
+        """
+        Parse la réponse de l'utilisateur à une demande de confirmation.
+
+        Args:
+            user_message: Message de l'utilisateur ("1", "2", "utiliser existant", etc.)
+            pending_confirmation: Contexte de confirmation (action, params, options)
+
+        Returns:
+            Dict avec action à exécuter et paramètres mis à jour, ou None si pas une confirmation
+        """
+        if not pending_confirmation:
+            return None
+
+        message_lower = user_message.lower().strip()
+
+        # Parser les réponses numériques ou textuelles
+        selected_option = None
+
+        if message_lower in ['1', '1️⃣', 'utiliser', 'utiliser existant', 'use existing', 'existing']:
+            selected_option = 'use_existing'
+        elif message_lower in ['2', '2️⃣', 'créer', 'créer nouveau', 'create new', 'force create']:
+            selected_option = 'force_create'
+        elif message_lower in ['3', '3️⃣', 'annuler', 'cancel']:
+            selected_option = 'cancel'
+
+        if not selected_option:
+            return None
+
+        # Annuler l'action
+        if selected_option == 'cancel':
+            return {
+                'cancel': True,
+                'message': 'Action annulée.'
+            }
+
+        # Récupérer les paramètres originaux
+        original_params = pending_confirmation.get('original_params', {})
+        options = pending_confirmation.get('options', [])
+
+        # Trouver l'option correspondante
+        matched_option = next((opt for opt in options if opt['id'] == selected_option), None)
+
+        if not matched_option:
+            return None
+
+        # Modifier les paramètres selon l'option
+        if selected_option == 'use_existing':
+            # Utiliser l'entité existante
+            original_params['use_existing_client_id'] = matched_option.get('client_id')
+            original_params['use_existing_supplier_id'] = matched_option.get('supplier_id')
+        elif selected_option == 'force_create':
+            # Forcer la création
+            original_params['force_create_client'] = True
+            original_params['force_create_supplier'] = True
+
+        return {
+            'action': pending_confirmation.get('action'),
+            'params': original_params,
+            'selected_option': selected_option
+        }
+
     async def process_user_request(self, user_message: str, user_context: Dict) -> Dict[str, Any]:
         """
         Orchestration complète: chat → détection tool_calls → exécution → réponse finale
@@ -942,6 +1017,51 @@ Réponds toujours en français de manière naturelle et engageante."""
         total_tokens = 0
 
         try:
+            # 0. Vérifier si c'est une réponse à une confirmation en attente
+            pending_confirmation = user_context.get('pending_confirmation')
+            if pending_confirmation:
+                parsed_response = self._parse_confirmation_response(user_message, pending_confirmation)
+
+                if parsed_response:
+                    if parsed_response.get('cancel'):
+                        return {
+                            'message': parsed_response['message'],
+                            'action': None,
+                            'action_result': None,
+                            'tokens': 0,
+                            'response_time': int((time.time() - start_time) * 1000),
+                            'success': True
+                        }
+
+                    # Ré-exécuter l'action avec les paramètres mis à jour
+                    user_id = user_context.get('user_id')
+
+                    User = get_user_model()
+
+                    @sync_to_async
+                    def get_user_safe():
+                        user = User.objects.get(id=user_id)
+                        return AsyncSafeUserContext.from_user(user)
+
+                    user_dict = await get_user_safe()
+                    executor = ActionExecutor()
+
+                    result = await executor.execute(
+                        action=parsed_response['action'],
+                        params=parsed_response['params'],
+                        user=user_dict
+                    )
+
+                    return {
+                        'message': result.get('message', 'Action exécutée'),
+                        'action': parsed_response['action'],
+                        'action_result': [result],
+                        'tokens': 0,
+                        'response_time': int((time.time() - start_time) * 1000),
+                        'success': result.get('success', False),
+                        'data': result.get('data')
+                    }
+
             # 1. Récupérer le user et créer le contexte safe
             user_id = user_context.get('user_id')
             conversation_history = user_context.get('conversation_history', [])
@@ -1353,13 +1473,14 @@ class ActionExecutor:
                     return {
                         'success': False,
                         'error': 'similar_entities_found',
+                        'entity_type': 'supplier',
                         'similar_entities': [
                             {
                                 'id': str(supplier.id),
                                 'name': supplier.name,
                                 'email': supplier.email,
                                 'phone': supplier.phone,
-                                'similarity': score,
+                                'similarity': int(score * 100),
                                 'reason': entity_matcher.format_match_reason(reason)
                             }
                             for supplier, score, reason in similar_suppliers[:3]
@@ -1509,57 +1630,79 @@ class ActionExecutor:
                 client_phone = params.get('client_phone', '')
 
                 # Entity matching pour clients
-                similar_clients = entity_matcher.find_similar_clients(
-                    first_name=client_name,
-                    last_name='',
-                    email=client_email if client_email else None,
-                    company=client_name
-                )
+                client = None
+                client_created = False
 
-                # Filtrer par organisation DANS le contexte sync
-                if similar_clients and organization:
-                    similar_clients = [(c, s, r) for c, s, r in similar_clients if c.organization == organization]
-
-                # IMPORTANT: Ne PAS auto-sélectionner - demander confirmation à l'utilisateur
-                if similar_clients and not params.get('force_create_client', False):
-                    # RETOURNER ERREUR POUR CONFIRMATION
-                    return {
-                        'success': False,
-                        'error': 'similar_entities_found',
-                        'entity_type': 'client',
-                        'similar_entities': [
-                            {
-                                'id': str(c.id),
-                                'name': c.name,
-                                'email': c.email or '',
-                                'phone': c.phone or '',
-                                'similarity': score * 100,  # Convertir en pourcentage
-                                'reason': entity_matcher.format_match_reason(reason)
-                            }
-                            for c, score, reason in similar_clients[:3]  # Top 3 matches
-                        ],
-                        'message': f'Client similaire trouvé : "{similar_clients[0][0].name}" ({int(similar_clients[0][1]*100)}% de similarité). Voulez-vous utiliser le client existant ou en créer un nouveau ?',
-                        'suggested_action': {
-                            'use_existing': str(similar_clients[0][0].id),  # Best match ID
-                            'create_new': 'force_create_client'
-                        }
-                    }
-                elif similar_clients and params.get('use_existing_client_id'):
-                    # Utiliser le client existant spécifié par l'utilisateur
+                # Si un client_id est fourni directement, l'utiliser
+                if params.get('use_existing_client_id'):
                     client_id = params.get('use_existing_client_id')
                     client = Client.objects.get(id=client_id, organization=organization)
                 else:
-                    # Créer nouveau client (pas de match OU force_create_client=True)
-                    client = Client.objects.create(
-                        name=client_name,
-                        email=client_email,
-                        phone=client_phone,
-                        contact_person=params.get('contact_person', ''),
-                        address=params.get('client_address', ''),
-                        payment_terms=params.get('payment_terms', 'Net 30'),
-                        organization=organization,
-                        is_active=True
+                    # Rechercher clients similaires
+                    similar_clients = entity_matcher.find_similar_clients(
+                        first_name=client_name,
+                        last_name='',
+                        email=client_email if client_email else None,
+                        company=client_name
                     )
+
+                    # Filtrer par organisation DANS le contexte sync
+                    if similar_clients and organization:
+                        similar_clients = [(c, s, r) for c, s, r in similar_clients if c.organization == organization]
+
+                    # STRATÉGIE: Demander confirmation SI match trouvé ET pas de force_create
+                    if similar_clients and not params.get('force_create_client', False):
+                        # RETOURNER POUR CONFIRMATION avec boutons cliquables
+                        return {
+                            'success': False,
+                            'requires_confirmation': True,
+                            'error': 'similar_entities_found',
+                            'entity_type': 'client',
+                            'similar_entities': [
+                                {
+                                    'id': str(c.id),
+                                    'name': c.name,
+                                    'email': c.email or '',
+                                    'phone': c.phone or '',
+                                    'similarity': int(score * 100),
+                                    'reason': entity_matcher.format_match_reason(reason)
+                                }
+                                for c, score, reason in similar_clients[:3]  # Top 3
+                            ],
+                            'message': f'Client similaire trouvé : "{similar_clients[0][0].name}" ({int(similar_clients[0][1]*100)}% de similarité).',
+                            'pending_confirmation': {
+                                'action': 'create_invoice',
+                                'original_params': params,
+                                'options': [
+                                    {
+                                        'id': 'use_existing',
+                                        'label': f'Utiliser {similar_clients[0][0].name}',
+                                        'client_id': str(similar_clients[0][0].id)
+                                    },
+                                    {
+                                        'id': 'force_create',
+                                        'label': 'Créer un nouveau client quand même'
+                                    },
+                                    {
+                                        'id': 'cancel',
+                                        'label': 'Annuler'
+                                    }
+                                ]
+                            }
+                        }
+                    else:
+                        # CRÉATION AUTOMATIQUE: Aucun match OU force_create_client=True
+                        client = Client.objects.create(
+                            name=client_name,
+                            email=client_email,
+                            phone=client_phone,
+                            contact_person=params.get('contact_person', ''),
+                            address=params.get('client_address', ''),
+                            payment_terms=params.get('payment_terms', 'Net 30'),
+                            organization=organization,
+                            is_active=True
+                        )
+                        client_created = True
 
                 # Créer la facture
                 title = params.get('title', f'Facture pour {client_name}')
@@ -1653,6 +1796,7 @@ class ActionExecutor:
                     'id': str(invoice.id),
                     'invoice_number': invoice.invoice_number,
                     'client_name': client.name,
+                    'client_created': client_created,
                     'url': f'/invoices/{invoice.id}'
                 }
 
@@ -1662,9 +1806,15 @@ class ActionExecutor:
             if isinstance(result, dict) and result.get('success') == False:
                 return result
 
+            # Message avec info sur création client
+            message_parts = []
+            if result.get('client_created'):
+                message_parts.append(f"✓ Client '{result.get('client_name', 'Inconnu')}' créé automatiquement")
+            message_parts.append(f"✓ Facture '{result.get('invoice_number', 'N/A')}' créée pour {result.get('client_name', 'Inconnu')}")
+
             return {
                 'success': True,
-                'message': f"Facture '{result['invoice_number']}' créée avec succès pour {result['client_name']}",
+                'message': "\n".join(message_parts),
                 'data': {
                     **result,
                     'entity_type': 'invoice'
@@ -1777,6 +1927,7 @@ class ActionExecutor:
                     # RETOURNER ERREUR POUR CONFIRMATION
                     return {
                         'success': False,
+                        'requires_confirmation': True,
                         'error': 'similar_entities_found',
                         'entity_type': 'supplier',
                         'similar_entities': [
@@ -1785,15 +1936,22 @@ class ActionExecutor:
                                 'name': s.name,
                                 'email': s.email or '',
                                 'phone': s.phone or '',
-                                'similarity': score * 100,  # Convertir en pourcentage
+                                'similarity': int(score * 100),  # Convertir en pourcentage int
                                 'reason': entity_matcher.format_match_reason(reason)
                             }
                             for s, score, reason in similar_suppliers[:3]  # Top 3 matches
                         ],
                         'message': f'Fournisseur similaire trouvé : "{similar_suppliers[0][0].name}" ({int(similar_suppliers[0][1]*100)}% de similarité). Voulez-vous utiliser le fournisseur existant ou en créer un nouveau ?',
-                        'suggested_action': {
-                            'use_existing': str(similar_suppliers[0][0].id),  # Best match ID
-                            'create_new': 'force_create_supplier'
+                        'pending_confirmation': {
+                            'action': 'create_purchase_order',
+                            'original_params': params,
+                            'entity_type': 'supplier',
+                            'suggested_entity_id': str(similar_suppliers[0][0].id),
+                            'choices': {
+                                'use_existing': {'use_existing_supplier_id': str(similar_suppliers[0][0].id)},
+                                'force_create': {'force_create_supplier': True},
+                                'cancel': None
+                            }
                         }
                     }
                 elif similar_suppliers and params.get('use_existing_supplier_id'):
@@ -1836,14 +1994,35 @@ class ActionExecutor:
                 User = get_user_model()
                 user = User.objects.get(id=user_context.get('id'))
 
+                # Générer le numéro de BC
+                year = datetime.now().year
+                month = datetime.now().month
+                last_po = PurchaseOrder.objects.filter(
+                    po_number__startswith=f"BC{year}{month:02d}"
+                ).order_by('-po_number').first()
+
+                if last_po:
+                    try:
+                        last_number = int(last_po.po_number[-4:])
+                        next_number = last_number + 1
+                    except ValueError:
+                        next_number = 1
+                else:
+                    next_number = 1
+
+                po_number = f"BC{year}{month:02d}{next_number:04d}"
+
                 # Créer le bon de commande
                 po = PurchaseOrder.objects.create(
+                    po_number=po_number,
                     supplier=supplier,
                     title=f"BC {supplier.name}",
                     description=description,
                     created_by=user,
-                    delivery_date=delivery_date,
+                    required_date=delivery_date,
+                    expected_delivery_date=delivery_date,
                     total_amount=total_amount,
+                    subtotal=total_amount,
                     status='draft'
                 )
 
@@ -1905,6 +2084,10 @@ class ActionExecutor:
 
             result = await create_po_sync()
 
+            # Si c'est une erreur (similar_entities_found), retourner directement
+            if isinstance(result, dict) and result.get('success') == False:
+                return result
+
             return {
                 'success': True,
                 'message': f"Bon de commande '{result['po_number']}' créé avec succès",
@@ -1956,7 +2139,7 @@ class ActionExecutor:
                 'supplier_name': po.supplier.name if po.supplier else 'N/A',
                 'total_amount': float(po.total_amount),
                 'status': po.status,
-                'delivery_date': str(po.delivery_date) if po.delivery_date else None,
+                'delivery_date': str(po.expected_delivery_date) if po.expected_delivery_date else None,
                 'url': f'/purchase-orders/{po.id}'
             } for po in pos]
 
@@ -2376,13 +2559,14 @@ class ActionExecutor:
                     return {
                         'success': False,
                         'error': 'similar_entities_found',
+                        'entity_type': 'client',
                         'similar_entities': [
                             {
                                 'id': str(client.id),
                                 'name': client.name,
                                 'email': client.email,
                                 'phone': client.phone,
-                                'similarity': score,
+                                'similarity': int(score * 100),
                                 'reason': entity_matcher.format_match_reason(reason)
                             }
                             for client, score, reason in similar_clients[:3]
@@ -2558,7 +2742,7 @@ class ActionExecutor:
 
             return {
                 'success': True,
-                'message': f"{result['items_added']} item(s) ajouté(s) à la facture {result['invoice_number']}. Nouveau total: {result['new_total']}$",
+                'message': f"{result.get('items_added', 0)} item(s) ajouté(s) à la facture {result.get('invoice_number', 'N/A')}. Nouveau total: {result.get('new_total', 0)}$",
                 'data': {
                     **result,
                     'entity_type': 'invoice'
@@ -2635,7 +2819,7 @@ class ActionExecutor:
 
             return {
                 'success': True,
-                'message': f"Facture {result['invoice_number']} envoyée avec succès à {result['sent_to']}",
+                'message': f"Facture {result.get('invoice_number', 'N/A')} envoyée avec succès à {result.get('sent_to', '?')}",
                 'data': {
                     **result,
                     'entity_type': 'invoice'
@@ -2729,7 +2913,7 @@ class ActionExecutor:
 
             return {
                 'success': True,
-                'message': f"{result['items_added']} item(s) ajouté(s) au BC {result['po_number']}. Nouveau total: {result['new_total']}$",
+                'message': f"{result.get('items_added', 0)} item(s) ajouté(s) au BC {result.get('po_number', 'N/A')}. Nouveau total: {result.get('new_total', 0)}$",
                 'data': {
                     **result,
                     'entity_type': 'purchase_order'
@@ -2815,7 +2999,7 @@ class ActionExecutor:
                         <p>Bonjour <strong>{supplier_name}</strong>,</p>
                         <p>Veuillez trouver ci-dessous notre bon de commande <strong>{purchase_order.po_number}</strong>.</p>
                         <p><strong>Montant total:</strong> {purchase_order.total_amount}$</p>
-                        <p><strong>Date de livraison souhaitée:</strong> {purchase_order.delivery_date.strftime('%d/%m/%Y') if purchase_order.delivery_date else 'À définir'}</p>
+                        <p><strong>Date de livraison souhaitée:</strong> {purchase_order.expected_delivery_date.strftime('%d/%m/%Y') if purchase_order.expected_delivery_date else 'À définir'}</p>
                         {items_html}
                         <p>Pour toute question, n'hésitez pas à nous contacter.</p>
                         <div class="footer">
@@ -2841,7 +3025,7 @@ Bonjour {supplier_name},
 Veuillez trouver ci-dessous notre bon de commande {purchase_order.po_number}.
 
 Montant total: {purchase_order.total_amount}$
-Date de livraison souhaitée: {purchase_order.delivery_date.strftime('%d/%m/%Y') if purchase_order.delivery_date else 'À définir'}
+Date de livraison souhaitée: {purchase_order.expected_delivery_date.strftime('%d/%m/%Y') if purchase_order.expected_delivery_date else 'À définir'}
 {items_text}
 
 Pour toute question, n'hésitez pas à nous contacter.
@@ -2879,7 +3063,7 @@ ProcureGenius
 
             return {
                 'success': True,
-                'message': f"Bon de commande {result['po_number']} envoyé avec succès à {result['sent_to']}",
+                'message': f"Bon de commande {result.get('po_number', 'N/A')} envoyé avec succès à {result.get('sent_to', '?')}",
                 'data': {
                     **result,
                     'entity_type': 'purchase_order'
@@ -3016,8 +3200,8 @@ ProcureGenius
 
         try:
             result = await update_invoice_sync()
-            message = f"Facture '{result['invoice_number']}' modifiée"
-            if result['was_sent']:
+            message = f"Facture '{result.get('invoice_number', 'N/A')}' modifiée"
+            if result.get('was_sent'):
                 message += " (déjà envoyée)"
             return {
                 'success': True,
@@ -3068,7 +3252,7 @@ ProcureGenius
             if 'status' in params:
                 po.status = params['status']
             if 'delivery_date' in params:
-                po.delivery_date = datetime.strptime(params['delivery_date'], '%Y-%m-%d').date()
+                po.expected_delivery_date = datetime.strptime(params['delivery_date'], '%Y-%m-%d').date()
             if 'notes' in params:
                 po.notes = params['notes']
 
@@ -3084,10 +3268,10 @@ ProcureGenius
             result = await update_po_sync()
             return {
                 'success': True,
-                'message': f"BC '{result['po_number']}' modifié",
+                'message': f"BC '{result.get('po_number', 'N/A')}' modifié",
                 'data': {
-                    'id': result['id'],
-                    'po_number': result['po_number'],
+                    'id': result.get('id'),
+                    'po_number': result.get('po_number'),
                     'entity_type': 'purchase_order',
                     'previous_state': result['previous_state']
                 }
@@ -3243,9 +3427,9 @@ ProcureGenius
             result = await delete_invoice_sync()
             return {
                 'success': True,
-                'message': f"Facture '{result['invoice_number']}' supprimée",
+                'message': f"Facture '{result.get('invoice_number', 'N/A')}' supprimée",
                 'data': {
-                    'invoice_number': result['invoice_number'],
+                    'invoice_number': result.get('invoice_number'),
                     'entity_type': 'invoice'
                 }
             }
@@ -3286,9 +3470,9 @@ ProcureGenius
             result = await delete_po_sync()
             return {
                 'success': True,
-                'message': f"BC '{result['po_number']}' supprimé",
+                'message': f"BC '{result.get('po_number', 'N/A')}' supprimé",
                 'data': {
-                    'po_number': result['po_number'],
+                    'po_number': result.get('po_number'),
                     'entity_type': 'purchase_order'
                 }
             }
@@ -3506,8 +3690,7 @@ ProcureGenius
                     'cost_price': Decimal(str(params.get('cost_price', 0))),
                     'price': Decimal(str(params.get('price', 0))),
                     'stock_quantity': params.get('stock_quantity', 0),
-                    'low_stock_threshold': params.get('low_stock_threshold', 10),
-                    'supplier_reference': params.get('supplier_reference', '')
+                    'low_stock_threshold': params.get('low_stock_threshold', 10)
                 })
             else:  # service or digital
                 product_data.update({

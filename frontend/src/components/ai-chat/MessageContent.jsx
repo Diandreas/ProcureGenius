@@ -12,8 +12,9 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const MessageContent = ({ content, actionResults }) => {
+const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }) => {
   const navigate = useNavigate();
+  const [buttonsDisabled, setButtonsDisabled] = React.useState(false);
 
   // Composants markdown compacts
   const components = {
@@ -142,6 +143,16 @@ const MessageContent = ({ content, actionResults }) => {
           const data = result.result?.data || {};
           const entityType = data.entity_type;
 
+          // DEBUG: Log pour comprendre la structure des données
+          console.log('🔍 DEBUG actionResult:', {
+            index,
+            isSuccess,
+            entityType,
+            hasId: !!data.id,
+            fullResult: result,
+            fullData: data
+          });
+
           const getEntityUrl = () => {
             switch (entityType) {
               case 'supplier':
@@ -256,14 +267,28 @@ const MessageContent = ({ content, actionResults }) => {
                       >
                         Modifier
                       </Button>
-                      {entityType === 'invoice' && (
-                        <IconButton
+                      {(entityType === 'invoice' || entityType === 'purchase_order') && (
+                        <Button
                           size="small"
-                          onClick={() => window.open(`/api/v1/invoices/${data.id}/pdf/`, '_blank')}
-                          sx={{ p: 0.5 }}
+                          variant="outlined"
+                          color="success"
+                          startIcon={<GetApp sx={{ fontSize: 14 }} />}
+                          onClick={() => {
+                            const pdfUrl = entityType === 'invoice'
+                              ? `/api/invoices/${data.id}/pdf/`
+                              : `/api/purchase-orders/${data.id}/pdf/`;
+                            window.open(pdfUrl, '_blank');
+                          }}
+                          sx={{
+                            textTransform: 'none',
+                            fontSize: '0.75rem',
+                            py: 0.5,
+                            px: 1.5,
+                            minHeight: 28,
+                          }}
                         >
-                          <GetApp sx={{ fontSize: 16 }} />
-                        </IconButton>
+                          PDF
+                        </Button>
                       )}
                     </Box>
                   )}
@@ -310,12 +335,54 @@ const MessageContent = ({ content, actionResults }) => {
     );
   };
 
+  // Rendu des boutons d'action cliquables
+  const renderActionButtons = () => {
+    if (!actionButtons || actionButtons.length === 0) return null;
+
+    const buttonStyleMap = {
+      primary: { variant: 'contained', color: 'primary' },
+      secondary: { variant: 'outlined', color: 'primary' },
+      danger: { variant: 'outlined', color: 'error' },
+    };
+
+    return (
+      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {actionButtons.map((btn, index) => {
+          const styleConfig = buttonStyleMap[btn.style] || buttonStyleMap.primary;
+
+          return (
+            <Button
+              key={index}
+              variant={styleConfig.variant}
+              color={styleConfig.color}
+              size="small"
+              disabled={buttonsDisabled}
+              onClick={() => {
+                setButtonsDisabled(true);
+                onButtonClick && onButtonClick(index);
+              }}
+              sx={{
+                textTransform: 'none',
+                fontSize: '0.875rem',
+                px: 2,
+                py: 0.75,
+              }}
+            >
+              {btn.label}
+            </Button>
+          );
+        })}
+      </Box>
+    );
+  };
+
   return (
     <Box>
       <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
         {content}
       </ReactMarkdown>
       {renderActionResults()}
+      {renderActionButtons()}
     </Box>
   );
 };

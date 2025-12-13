@@ -213,6 +213,13 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             'action_result': ai_response.get('action_result')
         }
 
+        # Ajouter pending_confirmation si présent dans action_result
+        if ai_response.get('action_result'):
+            for result in ai_response['action_result']:
+                if result.get('result', {}).get('pending_confirmation'):
+                    metadata['pending_confirmation'] = result['result']['pending_confirmation']
+                    break
+
         return Message.objects.create(
             conversation=conversation,
             role='assistant',
@@ -228,12 +235,19 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         # Construire le contexte
         conversation = Conversation.objects.get(id=self.conversation_id)
 
+        # Récupérer le dernier message assistant pour pending_confirmation
+        last_assistant_msg = conversation.messages.filter(role='assistant').order_by('-created_at').first()
+        pending_confirmation = None
+        if last_assistant_msg and last_assistant_msg.metadata:
+            pending_confirmation = last_assistant_msg.metadata.get('pending_confirmation')
+
         user_context = {
             'user_id': self.user.id,
             'conversation_history': [
                 {'role': msg.role, 'content': msg.content}
                 for msg in conversation.messages.order_by('created_at')[-10:]
-            ]
+            ],
+            'pending_confirmation': pending_confirmation
         }
 
         return ai_service.process_user_request(user_message, user_context)

@@ -258,7 +258,7 @@ function Dashboard() {
 
           return (
             <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
+              <Card sx={{ borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', boxShadow: 'none', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, transform: 'translateY(-2px)' } }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
                     <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 48, height: 48, borderRadius: 1 }}>
@@ -301,46 +301,47 @@ function Dashboard() {
       {/* Graphique simplifié */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200' }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances</Typography>
-            <Line 
-              data={lineChartData} 
-              options={{ 
-                responsive: true, 
+            <Line
+              data={lineChartData}
+              options={{
+                responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
+                plugins: {
                   legend: { position: 'top', align: 'end' },
                   tooltip: { mode: 'index', intersect: false }
-                }, 
-                scales: { 
+                },
+                scales: {
                   y: { beginAtZero: true },
                   x: { grid: { display: false } }
                 },
                 interaction: { mode: 'nearest', axis: 'x', intersect: false }
-              }} 
+              }}
               style={{ height: '300px' }}
             />
           </Paper>
         </Grid>
       </Grid>
 
-      {/* Top Clients seulement */}
-      {stats.top_clients && stats.top_clients.length > 0 && (
-        <Grid container spacing={2.5}>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
+      {/* Top Clients, Activité Récente et Alertes */}
+      <Grid container spacing={2.5}>
+        {/* Top Clients */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
+            {stats.top_clients && stats.top_clients.length > 0 ? (
               <List disablePadding>
                 {(stats.top_clients || []).slice(0, 5).map((client, index) => (
-                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < Math.min(4, (stats.top_clients?.length || 0) - 1) ? '1px solid' : 'none', borderColor: 'divider' }}>
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < Math.min(4, (stats.top_clients?.length || 0) - 1) ? '1px solid' : 'none', borderColor: 'grey.100' }}>
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1, width: 36, height: 36 }}>
+                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: '4px', width: 36, height: 36 }}>
                         <People fontSize="small" />
                       </Avatar>
                     </ListItemAvatar>
-                    <ListItemText 
-                      primary={client.name} 
-                      secondary={`${client.invoice_count} facture(s)`} 
+                    <ListItemText
+                      primary={client.name}
+                      secondary={`${client.invoice_count} facture(s)`}
                       primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
                       secondaryTypographyProps={{ fontSize: '0.75rem' }}
                     />
@@ -350,10 +351,66 @@ function Dashboard() {
                   </ListItem>
                 ))}
               </List>
-            </Paper>
-          </Grid>
+            ) : (
+              <Typography variant="body2" color="text.secondary">Aucune donnée disponible</Typography>
+            )}
+          </Paper>
         </Grid>
-      )}
+
+        {/* Activité Récente */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Activité Récente</Typography>
+            {stats.recent_activity && stats.recent_activity.length > 0 ? (
+              <List disablePadding>
+                {stats.recent_activity.map((activity, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < stats.recent_activity.length - 1 ? '1px solid' : 'none', borderColor: 'grey.100' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'info.light', color: 'info.main', borderRadius: '4px', width: 36, height: 36 }}>
+                        <TrendingUp fontSize="small" />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={activity.description}
+                      secondary={new Date(activity.date).toLocaleDateString()}
+                      primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
+                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary">Aucune activité récente</Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Alertes */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Alertes</Typography>
+            {stats.alerts && stats.alerts.length > 0 ? (
+              <List disablePadding>
+                {stats.alerts.map((alert, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < stats.alerts.length - 1 ? '1px solid' : 'none', borderColor: 'grey.100' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: alert.type === 'warning' ? 'warning.light' : 'error.light', color: alert.type === 'warning' ? 'warning.main' : 'error.main', borderRadius: '4px', width: 36, height: 36 }}>
+                        <TrendingDown fontSize="small" />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={alert.message}
+                      primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary">Aucune alerte</Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
 
     </Box>
   );

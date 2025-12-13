@@ -81,7 +81,7 @@ class ChatView(APIView):
 
             # Si une confirmation est détectée, exécuter l'action directement
             if confirmation_detected and pending_confirmation:
-                logger.info(f"Confirmation detected: {confirmation_detected} for action: {pending_confirmation['action']}")
+                logger.info(f"Confirmation detected: {confirmation_detected} for action: {pending_confirmation.get('action', 'unknown')}")
 
                 from .services import ActionExecutor, AsyncSafeUserContext
                 executor = ActionExecutor()
@@ -129,11 +129,11 @@ class ChatView(APIView):
                     # Fusionner les paramètres
                     confirmed_params = {**original_params, **choice_params}
 
-                    logger.info(f"Executing action {pending_confirmation['action']} with confirmed params: {confirmed_params}")
+                    logger.info(f"Executing action {pending_confirmation.get('action', 'unknown')} with confirmed params: {confirmed_params}")
 
                     # Exécuter l'action avec les paramètres confirmés
                     action_result = async_to_sync(executor.execute)(
-                        action=pending_confirmation['action'],
+                        action=pending_confirmation.get('action', 'unknown'),
                         params=confirmed_params,
                         user=user_context
                     )
@@ -178,7 +178,8 @@ class ChatView(APIView):
                 return Response({
                     'conversation_id': str(conversation.id),
                     'message': MessageSerializer(ai_msg).data,
-                    'action_result': action_result
+                    'action_results': [{'result': action_result}] if action_result else None,
+                    'action_buttons': None
                 }, status=status.HTTP_200_OK)
 
             # Récupérer l'historique de la conversation
@@ -278,7 +279,9 @@ class ChatView(APIView):
                             if 'similar_entities_found' in str(error):
                                 similar = action_result.get('similar_entities', [])
                                 entity_type = action_result.get('entity_type', 'entité')
-                                suggested = action_result.get('suggested_action', {})
+
+                                # Extraire l'ID de l'entité suggérée depuis similar_entities
+                                suggested_entity_id = similar[0].get('id') if similar else None
 
                                 entity_names = {
                                     'client': 'client',
@@ -291,30 +294,26 @@ class ChatView(APIView):
                                 final_response += f"\n\n⚠️ **Attention**: J'ai trouvé {len(similar)} {entity_name}(s) similaire(s) :\n\n"
 
                                 for i, entity in enumerate(similar, 1):
-                                    final_response += f"**{i}. {entity['name']}**\n"
+                                    final_response += f"**{i}. {entity.get('name', 'N/A')}**\n"
                                     if entity.get('email'):
                                         final_response += f"   - Email: {entity['email']}\n"
                                     if entity.get('phone'):
                                         final_response += f"   - Téléphone: {entity['phone']}\n"
-                                    final_response += f"   - Similarité: {int(entity['similarity'])}%\n"
-                                    final_response += f"   - Raison: {entity['reason']}\n\n"
+                                    final_response += f"   - Similarité: {int(entity.get('similarity', 0))}%\n"
+                                    final_response += f"   - Raison: {entity.get('reason', 'Non spécifiée')}\n\n"
 
-                                final_response += f"\n**Comment souhaitez-vous procéder ?**\n\n"
-                                final_response += f"**1️⃣ Utiliser {similar[0]['name']}** (recommandé)\n"
-                                final_response += f"   → Tapez: `1` ou `utiliser l'existant`\n\n"
-                                final_response += f"**2️⃣ Créer un nouveau {entity_name}**\n"
-                                final_response += f"   → Tapez: `2` ou `créer nouveau`\n\n"
-                                final_response += f"**3️⃣ Annuler**\n"
-                                final_response += f"   → Tapez: `3` ou `annuler`"
+                                # Ne plus afficher le texte "tapez 1/2/3" - les boutons sont gérés par le frontend
+                                final_response += f"\n⚠️ **Attention**: Un {entity_name} similaire existe déjà.\n\n"
+                                final_response += f"**Choisissez une option ci-dessous:**"
 
                                 # Ajouter les boutons d'action dans les métadonnées pour le frontend
                                 action_results[-1]['action_buttons'] = [
                                     {
-                                        'label': f"✓ Utiliser {similar[0]['name']}",
+                                        'label': f"✓ Utiliser {similar[0].get('name', 'entité')}",
                                         'action': 'use_existing',
                                         'style': 'primary',
                                         'params': {
-                                            f'use_existing_{entity_type}_id': suggested.get('use_existing'),
+                                            f'use_existing_{entity_type}_id': suggested_entity_id,
                                             'force_create': False
                                         }
                                     },
@@ -339,9 +338,9 @@ class ChatView(APIView):
                                     'action': tool_call['function'],  # Nom de la fonction directement
                                     'original_params': arguments,  # Arguments déjà parsés plus haut
                                     'entity_type': entity_type,
-                                    'suggested_entity_id': suggested.get('use_existing'),
+                                    'suggested_entity_id': suggested_entity_id,
                                     'choices': {
-                                        'use_existing': {f'use_existing_{entity_type}_id': suggested.get('use_existing')},
+                                        'use_existing': {f'use_existing_{entity_type}_id': suggested_entity_id},
                                         'force_create': {f'force_create_{entity_type}': True},
                                         'cancel': None
                                     }
@@ -400,14 +399,27 @@ class ChatView(APIView):
             # Mettre à jour la conversation
             conversation.last_message_at = timezone.now()
             conversation.save()
-            
+
+            # Extraire action_buttons depuis action_results pour le frontend
+            action_buttons = None
+            if action_results:
+                for action_res in action_results:
+                    if 'action_buttons' in action_res:
+                        action_buttons = action_res['action_buttons']
+                        break
+
+            # Format de réponse compatible avec le frontend (chat_interface.html)
             response_data = {
+                'status': 'success',
                 'conversation_id': str(conversation.id),
-                'message': MessageSerializer(ai_msg).data,
+                'ai_response': final_response,  # Le contenu du message pour affichage
+                'message': MessageSerializer(ai_msg).data,  # Serialized pour compatibilité
+                'tokens_used': result.get('tokens_used', 0),
                 'action_result': action_result,
-                'action_results': action_results if action_results else None
+                'action_results': action_results if action_results else None,
+                'action_buttons': action_buttons  # Boutons cliquables
             }
-            
+
             return Response(response_data, status=status.HTTP_200_OK)
             
         except Conversation.DoesNotExist:

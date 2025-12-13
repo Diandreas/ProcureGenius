@@ -59,7 +59,14 @@ function LoginEnhanced() {
     if (login.fulfilled.match(result)) {
       // Force full page reload to ensure all state is initialized properly
       // This ensures ModuleContext loads correct modules and menu updates
-      window.location.href = '/dashboard';
+      const user = result.payload.user;
+      const onboardingCompleted = user?.preferences?.onboarding_completed;
+
+      if (onboardingCompleted === false) {
+        window.location.href = '/onboarding';
+      } else {
+        window.location.href = '/dashboard';
+      }
     }
   };
 
@@ -67,7 +74,14 @@ function LoginEnhanced() {
     onSuccess: async (tokenResponse) => {
       const result = await dispatch(googleLogin(tokenResponse.access_token));
       if (googleLogin.fulfilled.match(result)) {
-        window.location.href = '/dashboard';
+        const user = result.payload.user;
+        const onboardingCompleted = user?.preferences?.onboarding_completed;
+
+        if (onboardingCompleted === false) {
+          window.location.href = '/onboarding';
+        } else {
+          window.location.href = '/dashboard';
+        }
       }
     },
     onError: () => {

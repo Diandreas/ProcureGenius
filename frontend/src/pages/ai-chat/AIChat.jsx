@@ -157,6 +157,7 @@ function AIChat() {
       const aiMessage = {
         ...response.data.message,
         action_results: response.data.action_results || [],
+        action_buttons: response.data.action_buttons || null,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -405,6 +406,12 @@ function AIChat() {
                     <MessageContent
                       content={msg.content}
                       actionResults={msg.action_results}
+                      actionButtons={msg.action_buttons}
+                      onButtonClick={(buttonIndex) => {
+                        // Envoyer "1", "2", ou "3" selon le bouton cliqué
+                        const responseMap = { 0: '1', 1: '2', 2: '3' };
+                        handleSendMessage(responseMap[buttonIndex] || '1');
+                      }}
                     />
                     <Typography
                       variant="caption"

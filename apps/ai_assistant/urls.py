@@ -6,6 +6,7 @@ app_name = 'ai_assistant'
 urlpatterns = [
     # Chat endpoints
     path('chat/', views.ChatView.as_view(), name='chat'),
+    path('process-message/', views.ChatView.as_view(), name='process_message'),  # Alias pour compatibilité template
     path('conversations/', views.ConversationListView.as_view(), name='conversations'),
     path('conversations/<uuid:conversation_id>/', views.ConversationDetailView.as_view(), name='conversation_detail'),
     

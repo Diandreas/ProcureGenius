@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Drawer,
@@ -472,9 +472,9 @@ function MainLayout() {
                 size="small"
                 onClick={() => contextualActions.onPeriodChange('last_7_days')}
                 variant={contextualActions.currentPeriod === 'last_7_days' ? 'contained' : 'outlined'}
-                sx={{ 
-                  minWidth: 'auto', 
-                  px: 1.25, 
+                sx={{
+                  minWidth: 'auto',
+                  px: 1.25,
                   py: 0.5,
                   fontSize: '0.7rem',
                   borderRadius: 1.5,
@@ -488,9 +488,9 @@ function MainLayout() {
                 size="small"
                 onClick={() => contextualActions.onPeriodChange('last_30_days')}
                 variant={contextualActions.currentPeriod === 'last_30_days' ? 'contained' : 'outlined'}
-                sx={{ 
-                  minWidth: 'auto', 
-                  px: 1.25, 
+                sx={{
+                  minWidth: 'auto',
+                  px: 1.25,
                   py: 0.5,
                   fontSize: '0.7rem',
                   borderRadius: 1.5,
@@ -504,9 +504,9 @@ function MainLayout() {
                 size="small"
                 onClick={() => contextualActions.onPeriodChange('this_month')}
                 variant={contextualActions.currentPeriod === 'this_month' ? 'contained' : 'outlined'}
-                sx={{ 
-                  minWidth: 'auto', 
-                  px: 1.25, 
+                sx={{
+                  minWidth: 'auto',
+                  px: 1.25,
                   py: 0.5,
                   fontSize: '0.7rem',
                   borderRadius: 1.5,
@@ -648,7 +648,21 @@ function MainLayout() {
                 boxShadow: '0 2px 8px rgba(30, 64, 175, 0.15)',
               }}
             >
-              U
+              {useSelector((state) => {
+                const user = state.auth.user;
+                const orgName = user?.organization?.name;
+
+                if (orgName) {
+                  // Prend les 2 premières lettres du nom de l'organisation
+                  return orgName.substring(0, 2).toUpperCase();
+                }
+
+                // Fallback: Initiales utilisateur ou Email
+                if (user?.first_name && user?.last_name) {
+                  return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+                }
+                return user?.email?.[0]?.toUpperCase() || 'P';
+              })}
             </Avatar>
           </IconButton>
           <Menu

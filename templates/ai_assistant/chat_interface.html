@@ -396,11 +396,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <small><strong>{% trans "Action exécutée" %}:</strong> ${metadata.action_result.message || ''}</small>
                             </div>
                         ` : ''}
+                        ${metadata.action_buttons ? `
+                            <div class="mt-3 d-flex gap-2 flex-wrap">
+                                ${metadata.action_buttons.map((btn, idx) => `
+                                    <button class="btn btn-${btn.style || 'primary'} btn-sm"
+                                            onclick="handleActionButton('${idx}', '${btn.label}', '${btn.action}', '${JSON.stringify(btn.params || {}).replace(/'/g, "\\'")}')">
+                                        ${btn.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
         }
-        
+
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -426,7 +436,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 addMessage('assistant', data.ai_response, {
                     tokens: data.tokens_used,
-                    action_result: data.action_result
+                    action_result: data.action_result,
+                    action_buttons: data.action_buttons
                 });
                 
                 // Gérer les résultats d'action
@@ -476,6 +487,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Gérer les boutons d'action
+    window.handleActionButton = function(buttonIndex, label, action, paramsJson) {
+        // Parser les paramètres
+        let params = {};
+        try {
+            params = JSON.parse(paramsJson);
+        } catch(e) {
+            console.error('Failed to parse params:', e);
+        }
+
+        // Extraire le texte simple du label (enlever les caractères spéciaux)
+        const simplifiedLabel = label.replace(/[✓⚠️]/g, '').trim();
+
+        // Envoyer le message correspondant à l'action
+        let responseMessage = '';
+        if (action === 'use_existing' || simplifiedLabel.includes('Utiliser')) {
+            responseMessage = '1';
+        } else if (action === 'force_create' || simplifiedLabel.includes('Créer')) {
+            responseMessage = '2';
+        } else if (action === 'cancel' || simplifiedLabel.includes('Annuler')) {
+            responseMessage = '3';
+        }
+
+        // Désactiver tous les boutons d'action après le clic
+        document.querySelectorAll('.message.assistant button').forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
+
+        // Ajouter un message pour montrer ce que l'utilisateur a choisi
+        addMessage('user', `✓ ${simplifiedLabel}`);
+
+        // Traiter la réponse
+        if (responseMessage) {
+            messageInput.value = responseMessage;
+            setTimeout(() => {
+                processAIMessage(responseMessage);
+            }, 300);
+        }
+    };
+
     // Fonctions globales pour les suggestions
     window.sendSuggestion = function(suggestion) {
         messageInput.value = suggestion;

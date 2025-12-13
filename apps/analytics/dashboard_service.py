@@ -88,7 +88,119 @@ class DashboardStatsService:
         # Performance globale
         stats['performance'] = self.get_performance_metrics()
 
+        # Alertes et Activité Récente
+        stats['alerts'] = self.get_alerts()
+        stats['recent_activity'] = self.get_recent_activity()
+
         return stats
+
+    def get_alerts(self) -> List[Dict]:
+        """Génère les alertes pour le dashboard"""
+        alerts = []
+        
+        if not self.organization:
+            return alerts
+
+        from apps.invoicing.models import Invoice, Product
+        
+        # 1. Factures en retard
+        overdue_count = Invoice.objects.filter(
+            created_by__organization=self.organization,
+            status='overdue'
+        ).count()
+        
+        if overdue_count > 0:
+            alerts.append({
+                'type': 'error',
+                'message': f"{overdue_count} facture(s) en retard de paiement",
+                'action_link': '/invoices?status=overdue'
+            })
+
+        # 2. Stock faible
+        low_stock_count = Product.objects.filter(
+            organization=self.organization,
+            product_type='physical',
+            stock_quantity__lte=F('low_stock_threshold'),
+            stock_quantity__gt=0
+        ).count()
+        
+        if low_stock_count > 0:
+            alerts.append({
+                'type': 'warning',
+                'message': f"{low_stock_count} produit(s) en stock faible",
+                'action_link': '/products?status=low_stock'
+            })
+
+        # 3. Rupture de stock
+        out_of_stock_count = Product.objects.filter(
+            organization=self.organization,
+            product_type='physical',
+            stock_quantity=0
+        ).count()
+        
+        if out_of_stock_count > 0:
+            alerts.append({
+                'type': 'error',
+                'message': f"{out_of_stock_count} produit(s) en rupture de stock",
+                'action_link': '/products?status=out_of_stock'
+            })
+
+        return alerts
+
+    def get_recent_activity(self) -> List[Dict]:
+        """Récupère l'activité récente (créations)"""
+        activity = []
+        
+        if not self.organization:
+            return activity
+
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+        from apps.accounts.models import Client
+        
+        # Récupérer les 5 derniers de chaque type
+        recent_invoices = Invoice.objects.filter(
+            created_by__organization=self.organization
+        ).select_related('client').order_by('-created_at')[:5]
+        
+        recent_orders = PurchaseOrder.objects.filter(
+            created_by__organization=self.organization
+        ).select_related('supplier').order_by('-created_at')[:5]
+        
+        recent_clients = Client.objects.filter(
+            organization=self.organization
+        ).order_by('-created_at')[:5]
+
+        # Formater
+        for inv in recent_invoices:
+            client_name = f"{inv.client.first_name} {inv.client.last_name}" if inv.client.first_name else inv.client.company
+            activity.append({
+                'type': 'invoice',
+                'description': f"Facture #{inv.invoice_number} créée pour {client_name}",
+                'date': inv.created_at,
+                'link': f"/invoices/{inv.id}"
+            })
+            
+        for po in recent_orders:
+            activity.append({
+                'type': 'order',
+                'description': f"Commande #{po.order_number} créée pour {po.supplier.name}",
+                'date': po.created_at,
+                'link': f"/purchase-orders/{po.id}"
+            })
+            
+        for client in recent_clients:
+            name = f"{client.first_name} {client.last_name}" if client.first_name else client.company
+            activity.append({
+                'type': 'client',
+                'description': f"Nouveau client ajouté : {name}",
+                'date': client.created_at,
+                'link': f"/clients/{client.id}"
+            })
+
+        # Trier par date décroissante et prendre les 10 premiers
+        activity.sort(key=lambda x: x['date'], reverse=True)
+        return activity[:10]
 
     def get_supplier_stats(self) -> Dict:
         """Statistiques détaillées des fournisseurs"""

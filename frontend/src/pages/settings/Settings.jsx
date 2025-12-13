@@ -203,15 +203,15 @@ const Settings = () => {
 
       // Si la devise a changé, déclencher un événement pour rafraîchir tous les composants
       if (settings?.defaultCurrency) {
-        window.dispatchEvent(new CustomEvent('currency-changed', { 
-          detail: { currency: settings.defaultCurrency } 
+        window.dispatchEvent(new CustomEvent('currency-changed', {
+          detail: { currency: settings.defaultCurrency }
         }));
         console.log('💰 Événement de changement de devise déclenché:', settings.defaultCurrency);
       }
 
       // Recharger les paramètres après sauvegarde pour s'assurer que tout est à jour
       await loadSettings();
-      
+
       showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
@@ -243,8 +243,8 @@ const Settings = () => {
     if (key === 'defaultCurrency') {
       try {
         await settingsAPI.updateAll({ ...settings, [key]: value });
-        window.dispatchEvent(new CustomEvent('currency-changed', { 
-          detail: { currency: value } 
+        window.dispatchEvent(new CustomEvent('currency-changed', {
+          detail: { currency: value }
         }));
         console.log('💰 Devise mise à jour et événement déclenché:', value);
         showSnackbar(t('settings:saveSuccess'), 'success');
@@ -1308,12 +1308,14 @@ const AppearanceSection = ({ settings, onUpdate }) => {
  */
 const ProfileSection = ({ settings, onUpdate }) => {
   const { t } = useTranslation(['settings', 'common']);
+  const user = useSelector((state) => state.auth.user);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
   const [showPasswords, setShowPasswords] = useState(false);
+  const hasPassword = user?.has_usable_password; // Assuming backend sends this flag
 
   const handlePasswordChange = (field, value) => {
     setPasswordData(prev => ({ ...prev, [field]: value }));
@@ -1336,22 +1338,50 @@ const ProfileSection = ({ settings, onUpdate }) => {
       <Divider sx={{ mb: 3 }} />
 
       <Grid container spacing={3}>
-        {/* Changement de mot de passe */}
+        {/* Informations personnelles */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-            Modifier le mot de passe
+            Informations personnelles
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            type={showPasswords ? 'text' : 'password'}
-            label="Mot de passe actuel"
-            value={passwordData.currentPassword}
-            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+            label="Email"
+            value={user?.email || ''}
+            disabled
+            helperText="L'adresse email est gérée via votre compte"
           />
         </Grid>
+
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+        </Grid>
+
+        {/* Changement de mot de passe */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+            {hasPassword ? 'Modifier le mot de passe' : 'Créer un mot de passe'}
+          </Typography>
+          {!hasPassword && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Vous êtes connecté via Google. Vous pouvez créer un mot de passe pour vous connecter également avec votre email.
+            </Alert>
+          )}
+        </Grid>
+
+        {hasPassword && (
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              type={showPasswords ? 'text' : 'password'}
+              label="Mot de passe actuel"
+              value={passwordData.currentPassword}
+              onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+            />
+          </Grid>
+        )}
 
         <Grid item xs={12} md={4}>
           <TextField
@@ -1387,9 +1417,9 @@ const ProfileSection = ({ settings, onUpdate }) => {
             <Button
               variant="contained"
               onClick={handleSubmitPassword}
-              disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+              disabled={(hasPassword && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword}
             >
-              Changer le mot de passe
+              {hasPassword ? 'Changer le mot de passe' : 'Créer le mot de passe'}
             </Button>
           </Stack>
         </Grid>
