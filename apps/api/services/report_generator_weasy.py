@@ -570,7 +570,7 @@ class ReportPDFGenerator:
 
     # ===== INVOICES REPORT =====
     def generate_invoices_report(self, invoices, user=None, date_start=None, date_end=None):
-        """Générer un rapport PDF pour plusieurs factures"""
+        """Générer un rapport PDF avancé pour plusieurs factures avec statistiques complètes"""
         if not self.weasyprint_available:
             raise ImportError("WeasyPrint n'est pas disponible")
         
@@ -578,95 +578,153 @@ class ReportPDFGenerator:
             org_data = self._get_organization_data(user)
         except Exception as e:
             print(f"Erreur récupération données organisation: {e}")
-            import traceback
-            traceback.print_exc()
             org_data = {}
         
-        # Convertir QuerySet en liste pour éviter les problèmes
-        # Précharger les relations avant la conversion
+        # Convertir QuerySet en liste et précharger relations
         try:
             if hasattr(invoices, 'select_related'):
-                try:
-                    invoices = invoices.select_related('client', 'created_by')
-                except Exception as e:
-                    print(f"Erreur select_related: {e}")
+                invoices = invoices.select_related('client', 'created_by').prefetch_related('payments')
             invoices_list = list(invoices)
         except Exception as e:
             print(f"Erreur conversion QuerySet: {e}")
-            import traceback
-            traceback.print_exc()
             invoices_list = []
         
-        # Statistiques globales avec gestion d'erreurs
-        total_amount = 0
-        total_count = 0
-        avg_amount = 0
-        by_status = []
+        from collections import defaultdict
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
         
-        try:
-            if invoices_list:
-                total_amount = 0
-                total_count = len(invoices_list)
-                for inv in invoices_list:
-                    try:
-                        amount = float(getattr(inv, 'total_amount', 0) or 0)
-                        total_amount += amount
-                    except (ValueError, TypeError) as e:
-                        print(f"Erreur conversion montant facture {getattr(inv, 'id', 'unknown')}: {e}")
-                        continue
-                
-                avg_amount = total_amount / total_count if total_count > 0 else 0
-                
-                # Par statut
-                try:
-                    from collections import defaultdict
-                    status_dict = defaultdict(lambda: {'count': 0, 'total': 0})
-                    for inv in invoices_list:
-                        try:
-                            status = getattr(inv, 'status', 'unknown') or 'unknown'
-                            amount = float(getattr(inv, 'total_amount', 0) or 0)
-                            status_dict[status]['count'] += 1
-                            status_dict[status]['total'] += amount
-                        except Exception as e:
-                            print(f"Erreur traitement facture {getattr(inv, 'id', 'unknown')}: {e}")
-                            continue
-                    # Calculate percentage for each status
-                    by_status = []
-                    for k, v in status_dict.items():
-                        percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
-                        by_status.append({
-                            'status': k,
-                            'count': v['count'],
-                            'total': v['total'],
-                            'percentage': percentage
-                        })
-                except Exception as e:
-                    print(f"Erreur calcul par statut: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    by_status = []
-        except Exception as e:
-            print(f"Erreur calcul statistiques: {e}")
-            import traceback
-            traceback.print_exc()
+        # === 1. VUE D'ENSEMBLE ===
+        total_count = len(invoices_list)
+        total_amount = sum(float(getattr(inv, 'total_amount', 0) or 0) for inv in invoices_list)
+        avg_amount = total_amount / total_count if total_count > 0 else 0
+        
+        # === 2. RÉPARTITION PAR STATUT ===
+        status_dict = defaultdict(lambda: {'count': 0, 'total': 0})
+        overdue_amount = 0
+        pending_amount = 0
+        paid_amount = 0
+        
+        for inv in invoices_list:
+            status = getattr(inv, 'status', 'unknown') or 'unknown'
+            amount = float(getattr(inv, 'total_amount', 0) or 0)
+            status_dict[status]['count'] += 1
+            status_dict[status]['total'] += amount
+            
+            if status == 'overdue':
+                overdue_amount += amount
+            elif status == 'sent':
+                pending_amount += amount
+            elif status == 'paid':
+                paid_amount += amount
+        
+        by_status = []
+        for k, v in status_dict.items():
+            percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
+            by_status.append({'status': k, 'count': v['count'], 'total': v['total'], 'percentage': percentage})
+        by_status.sort(key=lambda x: x['total'], reverse=True)
+        
+        # === 3. TOP 10 CLIENTS PAR CA ===
+        client_dict = defaultdict(lambda: {'name': '', 'total': 0, 'count': 0})
+        for inv in invoices_list:
+            client = getattr(inv, 'client', None)
+            if client:
+                client_name = getattr(client, 'name', 'Client inconnu')
+                amount = float(getattr(inv, 'total_amount', 0) or 0)
+                client_dict[client_name]['name'] = client_name
+                client_dict[client_name]['total'] += amount
+                client_dict[client_name]['count'] += 1
+        
+        top_clients = sorted(client_dict.values(), key=lambda x: x['total'], reverse=True)[:10]
+        for client in top_clients:
+            client['percentage'] = (client['total'] / total_amount * 100) if total_amount > 0 else 0
+        
+        # === 4. PARETO 80/20 ===
+        top_20_percent_count = max(1, int(len(client_dict) * 0.2))
+        all_clients_sorted = sorted(client_dict.values(), key=lambda x: x['total'], reverse=True)
+        top_20_percent_revenue = sum(c['total'] for c in all_clients_sorted[:top_20_percent_count])
+        pareto_percentage = (top_20_percent_revenue / total_amount * 100) if total_amount > 0 else 0
+        
+        # === 5. ÉVOLUTION MENSUELLE (6 derniers mois) ===
+        now = timezone.now()
+        monthly_evolution = []
+        for i in range(5, -1, -1):
+            month_date = now - relativedelta(months=i)
+            month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if i == 0:
+                month_end = now
+            else:
+                month_end = (month_start + relativedelta(months=1)) - timedelta(seconds=1)
+            
+            month_invoices = [inv for inv in invoices_list 
+                            if month_start <= getattr(inv, 'created_at', now) <= month_end]
+            month_total = sum(float(getattr(inv, 'total_amount', 0) or 0) for inv in month_invoices)
+            month_count = len(month_invoices)
+            
+            monthly_evolution.append({
+                'month': month_date.strftime('%b %Y'),
+                'total': month_total,
+                'count': month_count
+            })
+        
+        # === 6. ÉVOLUTION VS MOIS DERNIER ===
+        current_month_total = monthly_evolution[-1]['total'] if monthly_evolution else 0
+        previous_month_total = monthly_evolution[-2]['total'] if len(monthly_evolution) > 1 else 0
+        evolution_percentage = 0
+        if previous_month_total > 0:
+            evolution_percentage = ((current_month_total - previous_month_total) / previous_month_total) * 100
+        
+        # === 7. ALERTES ===
+        today = timezone.now().date()
+        overdue_count = sum(1 for inv in invoices_list if getattr(inv, 'status', '') == 'overdue')
+        due_soon_count = sum(1 for inv in invoices_list 
+                            if getattr(inv, 'status', '') in ['sent', 'draft'] 
+                            and getattr(inv, 'due_date', None)
+                            and today <= getattr(inv, 'due_date') < today + timedelta(days=7))
+        due_30_days = sum(1 for inv in invoices_list 
+                         if getattr(inv, 'status', '') in ['sent', 'overdue']
+                         and getattr(inv, 'due_date', None)
+                         and getattr(inv, 'due_date') < today - timedelta(days=30))
+        
+        # === 8. TAUX DE PAIEMENT ===
+        payment_rate = (paid_amount / total_amount * 100) if total_amount > 0 else 0
+        overdue_rate = (overdue_amount / total_amount * 100) if total_amount > 0 else 0
         
         # QR Code
         try:
-            qr_data = f"Invoices Report | Count: {total_count} | Total: {total_amount}"
+            qr_data = f"Invoices Report | Count: {total_count} | Total: {total_amount:.2f}"
             qr_code = self._generate_qr_code(qr_data)
         except Exception as e:
             print(f"Erreur génération QR code: {e}")
             qr_code = None
         
         context = {
-            'invoices': invoices_list,
+            'invoices': invoices_list[:50],  # Limiter à 50 pour le PDF
             'organization': org_data or {},
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
+            # Vue d'ensemble
             'total_amount': total_amount,
             'total_count': total_count,
             'avg_amount': avg_amount,
+            'evolution_percentage': evolution_percentage,
+            # Analyse financière
+            'paid_amount': paid_amount,
+            'pending_amount': pending_amount,
+            'overdue_amount': overdue_amount,
+            'payment_rate': payment_rate,
+            'overdue_rate': overdue_rate,
             'by_status': by_status,
+            # Clients
+            'top_clients': top_clients,
+            'pareto_count': top_20_percent_count,
+            'pareto_percentage': pareto_percentage,
+            # Évolution
+            'monthly_evolution': monthly_evolution,
+            # Alertes
+            'overdue_count': overdue_count,
+            'due_soon_count': due_soon_count,
+            'due_30_days': due_30_days,
+            # Dates
             'date_start': date_start,
             'date_end': date_end,
             'generated_at': datetime.now(),
@@ -689,7 +747,7 @@ class ReportPDFGenerator:
 
     # ===== PURCHASE ORDERS REPORT =====
     def generate_purchase_orders_report(self, purchase_orders, user=None, date_start=None, date_end=None):
-        """Générer un rapport PDF pour plusieurs bons de commande"""
+        """Générer un rapport PDF avancé pour plusieurs bons de commande"""
         if not self.weasyprint_available:
             raise ImportError("WeasyPrint n'est pas disponible")
         
@@ -697,89 +755,103 @@ class ReportPDFGenerator:
             org_data = self._get_organization_data(user)
         except Exception as e:
             print(f"Erreur récupération données organisation: {e}")
-            import traceback
-            traceback.print_exc()
             org_data = {}
         
-        # Convertir QuerySet en liste pour éviter les problèmes
+        # Convertir QuerySet en liste
         try:
             purchase_orders_list = list(purchase_orders)
         except Exception as e:
             print(f"Erreur conversion QuerySet: {e}")
-            import traceback
-            traceback.print_exc()
             purchase_orders_list = []
         
-        # Statistiques globales avec gestion d'erreurs
-        total_amount = 0
-        total_count = 0
-        avg_amount = 0
-        by_status = []
-        by_supplier = []
+        from collections import defaultdict
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
         
-        try:
-            if purchase_orders_list:
-                total_amount = sum(float(po.total_amount or 0) for po in purchase_orders_list)
-                total_count = len(purchase_orders_list)
-                avg_amount = total_amount / total_count if total_count > 0 else 0
-                
-                # Par statut
-                try:
-                    from collections import defaultdict
-                    status_dict = defaultdict(lambda: {'count': 0, 'total': 0})
-                    for po in purchase_orders_list:
-                        po_status = getattr(po, 'status', 'unknown')
-                        amount = float(po.total_amount or 0)
-                        status_dict[po_status]['count'] += 1
-                        status_dict[po_status]['total'] += amount
-                    # Calculate percentage for each status
-                    by_status = []
-                    for k, v in status_dict.items():
-                        percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
-                        by_status.append({
-                            'status': k,
-                            'count': v['count'],
-                            'total': v['total'],
-                            'percentage': percentage
-                        })
-                    by_status.sort(key=lambda x: x['total'], reverse=True)
-                except Exception as e:
-                    print(f"Erreur calcul par statut: {e}")
-                    by_status = []
-                
-                # Par fournisseur (top 10)
-                try:
-                    supplier_dict = defaultdict(lambda: {'count': 0, 'total': 0, 'name': ''})
-                    for po in purchase_orders_list:
-                        supplier = getattr(po, 'supplier', None)
-                        supplier_name = getattr(supplier, 'name', 'Unknown') if supplier else 'Unknown'
-                        amount = float(po.total_amount or 0)
-                        supplier_dict[supplier_name]['count'] += 1
-                        supplier_dict[supplier_name]['total'] += amount
-                        supplier_dict[supplier_name]['name'] = supplier_name
-                    # Calculate percentage for each supplier
-                    by_supplier = []
-                    for k, v in supplier_dict.items():
-                        percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
-                        by_supplier.append({
-                            'supplier__name': v['name'],
-                            'count': v['count'],
-                            'total': v['total'],
-                            'percentage': percentage
-                        })
-                    by_supplier.sort(key=lambda x: x['total'], reverse=True)
-                    by_supplier = by_supplier[:10]
-                except Exception as e:
-                    print(f"Erreur calcul par fournisseur: {e}")
-                    by_supplier = []
-        except Exception as e:
-            print(f"Erreur calcul statistiques: {e}")
-            import traceback
-            traceback.print_exc()
+        total_count = len(purchase_orders_list)
+        total_amount = sum(float(po.total_amount or 0) for po in purchase_orders_list)
+        avg_amount = total_amount / total_count if total_count > 0 else 0
+        
+        # Par statut
+        status_dict = defaultdict(lambda: {'count': 0, 'total': 0})
+        approved_count = 0
+        received_count = 0
+        cancelled_count = 0
+        pending_approval_count = 0
+        overdue_count = 0
+        today = timezone.now().date()
+        
+        for po in purchase_orders_list:
+            po_status = getattr(po, 'status', 'unknown')
+            amount = float(po.total_amount or 0)
+            status_dict[po_status]['count'] += 1
+            status_dict[po_status]['total'] += amount
+            
+            if po_status == 'approved':
+                approved_count += 1
+            elif po_status == 'received':
+                received_count += 1
+            elif po_status == 'cancelled':
+                cancelled_count += 1
+            elif po_status == 'draft':
+                pending_approval_count += 1
+            
+            # Vérifier les retards
+            required_date = getattr(po, 'required_date', None)
+            if required_date and required_date < today and po_status not in ['received', 'cancelled']:
+                overdue_count += 1
+        
+        by_status = []
+        for k, v in status_dict.items():
+            percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
+            by_status.append({'status': k, 'count': v['count'], 'total': v['total'], 'percentage': percentage})
+        by_status.sort(key=lambda x: x['total'], reverse=True)
+        
+        # Performance rates
+        approval_rate = (approved_count / total_count * 100) if total_count > 0 else 0
+        reception_rate = (received_count / total_count * 100) if total_count > 0 else 0
+        cancellation_rate = (cancelled_count / total_count * 100) if total_count > 0 else 0
+        
+        # Top fournisseurs
+        supplier_dict = defaultdict(lambda: {'count': 0, 'total': 0, 'name': ''})
+        for po in purchase_orders_list:
+            supplier = getattr(po, 'supplier', None)
+            supplier_name = getattr(supplier, 'name', 'Non spécifié') if supplier else 'Non spécifié'
+            amount = float(po.total_amount or 0)
+            supplier_dict[supplier_name]['count'] += 1
+            supplier_dict[supplier_name]['total'] += amount
+            supplier_dict[supplier_name]['name'] = supplier_name
+        
+        top_suppliers = []
+        for k, v in supplier_dict.items():
+            percentage = (v['total'] / total_amount * 100) if total_amount > 0 else 0
+            top_suppliers.append({'name': v['name'], 'count': v['count'], 'total': v['total'], 'percentage': percentage})
+        top_suppliers.sort(key=lambda x: x['total'], reverse=True)
+        
+        # Concentration (top 5)
+        top5_total = sum(s['total'] for s in top_suppliers[:5])
+        top5_percentage = (top5_total / total_amount * 100) if total_amount > 0 else 0
+        concentration_risk = top5_percentage > 70
+        
+        # Évolution vs mois dernier
+        now = timezone.now()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month_start = (current_month_start - relativedelta(months=1))
+        previous_month_end = current_month_start - timedelta(seconds=1)
+        
+        current_month_total = sum(float(po.total_amount or 0) for po in purchase_orders_list 
+                                 if getattr(po, 'created_at', None) and getattr(po, 'created_at') >= current_month_start)
+        previous_month_total = sum(float(po.total_amount or 0) for po in purchase_orders_list 
+                                  if getattr(po, 'created_at', None) 
+                                  and previous_month_start <= getattr(po, 'created_at') <= previous_month_end)
+        
+        evolution_percentage = 0
+        if previous_month_total > 0:
+            evolution_percentage = ((current_month_total - previous_month_total) / previous_month_total) * 100
         
         # QR Code
         try:
-            qr_data = f"Purchase Orders Report | Count: {total_count} | Total: {total_amount}"
+            qr_data = f"Purchase Orders Report | Count: {total_count} | Total: {total_amount:.2f}"
             qr_code = self._generate_qr_code(qr_data)
         except Exception as e:
             print(f"Erreur génération QR code: {e}")
@@ -790,11 +862,27 @@ class ReportPDFGenerator:
             'organization': org_data or {},
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
+            # Vue d'ensemble
             'total_amount': total_amount,
             'total_count': total_count,
             'avg_amount': avg_amount,
+            'evolution_percentage': evolution_percentage,
+            # Performance
+            'approval_rate': approval_rate,
+            'reception_rate': reception_rate,
+            'cancellation_rate': cancellation_rate,
+            'received_count': received_count,
+            # Fournisseurs
+            'top_suppliers': top_suppliers,
+            'concentration_risk': concentration_risk,
+            'top5_percentage': top5_percentage,
+            # Répartition
             'by_status': by_status,
-            'by_supplier': by_supplier,
+            'by_supplier': top_suppliers[:10],
+            # Alertes
+            'overdue_count': overdue_count,
+            'pending_approval_count': pending_approval_count,
+            # Dates
             'date_start': date_start,
             'date_end': date_end,
             'generated_at': datetime.now(),
@@ -817,7 +905,7 @@ class ReportPDFGenerator:
 
     # ===== CLIENTS REPORT =====
     def generate_clients_report(self, clients, user=None, date_start=None, date_end=None):
-        """Générer un rapport PDF pour plusieurs clients"""
+        """Générer un rapport PDF avancé pour plusieurs clients"""
         if not self.weasyprint_available:
             raise ImportError("WeasyPrint n'est pas disponible")
         
@@ -825,73 +913,131 @@ class ReportPDFGenerator:
             org_data = self._get_organization_data(user)
         except Exception as e:
             print(f"Erreur récupération données organisation: {e}")
-            import traceback
-            traceback.print_exc()
             org_data = {}
         
-        # Convertir QuerySet en liste
         try:
             clients_list = list(clients)
         except Exception as e:
             print(f"Erreur conversion QuerySet: {e}")
-            import traceback
-            traceback.print_exc()
             clients_list = []
         
-        # Statistiques globales
-        total_clients = len(clients_list)
-        total_sales = 0
-        total_invoices = 0
-        by_status = []
+        from collections import defaultdict
+        from django.utils import timezone
         
-        try:
-            if clients_list:
-                from collections import defaultdict
-                status_dict = defaultdict(lambda: {'count': 0, 'total_sales': 0})
+        total_count = len(clients_list)
+        active_count = sum(1 for c in clients_list if getattr(c, 'is_active', True))
+        active_percentage = (active_count / total_count * 100) if total_count > 0 else 0
+        
+        # Calculer CA total et créer enrichissement
+        clients_enriched = []
+        total_revenue = 0
+        new_clients_count = 0
+        payment_issues_count = 0
+        payment_issues_amount = 0
+        inactive_90_count = 0
+        today = timezone.now()
+        days_90_ago = today - timedelta(days=90)
+        current_month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        active_this_month_count = 0
+        
+        for client in clients_list:
+            try:
+                invoices = getattr(client, 'invoices', None)
+                if invoices:
+                    client_invoices = invoices.all()
+                    client_revenue = sum(float(inv.total_amount or 0) for inv in client_invoices)
+                    invoice_count = client_invoices.count()
+                    
+                    # Client actif ce mois
+                    if any(getattr(inv, 'created_at', None) and getattr(inv, 'created_at') >= current_month_start for inv in client_invoices):
+                        active_this_month_count += 1
+                    
+                    # Problèmes paiement
+                    overdue_invoices = [inv for inv in client_invoices if getattr(inv, 'status', '') == 'overdue']
+                    if overdue_invoices:
+                        payment_issues_count += 1
+                        payment_issues_amount += sum(float(inv.total_amount or 0) for inv in overdue_invoices)
+                    
+                    # Inactif 90j+
+                    last_invoice = max((getattr(inv, 'created_at', None) for inv in client_invoices if getattr(inv, 'created_at', None)), default=None)
+                    if last_invoice and last_invoice < days_90_ago:
+                        inactive_90_count += 1
+                else:
+                    client_revenue = 0
+                    invoice_count = 0
                 
-                for client in clients_list:
-                    try:
-                        invoices = getattr(client, 'invoices', None)
-                        if invoices:
-                            client_sales = sum(float(inv.total_amount or 0) for inv in invoices.all())
-                            client_invoices_count = invoices.count()
-                        else:
-                            client_sales = 0
-                            client_invoices_count = 0
-                        
-                        total_sales += client_sales
-                        total_invoices += client_invoices_count
-                        
-                        client_status = getattr(client, 'status', 'active')
-                        status_dict[client_status]['count'] += 1
-                        status_dict[client_status]['total_sales'] += client_sales
-                    except Exception as e:
-                        print(f"Erreur traitement client {client.id}: {e}")
+                total_revenue += client_revenue
                 
-                by_status = [{'status': k, 'count': v['count'], 'total_sales': v['total_sales']} for k, v in status_dict.items()]
-        except Exception as e:
-            print(f"Erreur calcul statistiques clients: {e}")
-            import traceback
-            traceback.print_exc()
+                # Nouveau client ce mois
+                if getattr(client, 'created_at', None) and getattr(client, 'created_at') >= current_month_start:
+                    new_clients_count += 1
+                
+                # Enrichir
+                client.total_revenue = client_revenue
+                client.invoice_count = invoice_count
+                clients_enriched.append(client)
+            except Exception as e:
+                print(f"Erreur traitement client {client.id}: {e}")
+        
+        avg_basket = total_revenue / total_count if total_count > 0 else 0
+        active_clients_percentage = (active_this_month_count / total_count * 100) if total_count > 0 else 0
+        
+        # Top 10 clients
+        top_clients = sorted(clients_enriched, key=lambda x: getattr(x, 'total_revenue', 0), reverse=True)[:10]
+        top_clients_data = []
+        for client in top_clients:
+            invoice_count = getattr(client, 'invoice_count', 0)
+            total_rev = getattr(client, 'total_revenue', 0)
+            avg = total_rev / invoice_count if invoice_count > 0 else 0
+            top_clients_data.append({
+                'name': getattr(client, 'name', 'Client inconnu'),
+                'invoice_count': invoice_count,
+                'total_revenue': total_rev,
+                'avg_basket': avg
+            })
+        
+        # Pareto 80/20
+        vip_count = max(1, int(total_count * 0.2))
+        sorted_clients = sorted(clients_enriched, key=lambda x: getattr(x, 'total_revenue', 0), reverse=True)
+        vip_revenue = sum(getattr(c, 'total_revenue', 0) for c in sorted_clients[:vip_count])
+        vip_percentage = (vip_revenue / total_revenue * 100) if total_revenue > 0 else 0
+        
+        inactive_percentage = (inactive_90_count / total_count * 100) if total_count > 0 else 0
         
         # QR Code
         try:
-            qr_data = f"Clients Report | Count: {total_clients} | Total Sales: {total_sales}"
+            qr_data = f"Clients Report | Count: {total_count} | Revenue: {total_revenue:.2f}"
             qr_code = self._generate_qr_code(qr_data)
         except Exception as e:
             print(f"Erreur génération QR code: {e}")
             qr_code = None
         
         context = {
-            'clients': clients_list,
+            'clients': clients_enriched,
             'organization': org_data or {},
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
-            'total_clients': total_clients,
-            'total_sales': total_sales,
-            'total_invoices': total_invoices,
-            'avg_sales': total_sales / total_clients if total_clients > 0 else 0,
-            'by_status': by_status,
+            # Vue d'ensemble
+            'total_count': total_count,
+            'active_count': active_count,
+            'active_percentage': active_percentage,
+            'total_revenue': total_revenue,
+            'avg_basket': avg_basket,
+            'active_clients_this_month': active_this_month_count,
+            'active_clients_percentage': active_clients_percentage,
+            # Segmentation
+            'vip_count': vip_count,
+            'vip_revenue': vip_revenue,
+            'vip_percentage': vip_percentage,
+            'inactive_count': inactive_90_count,
+            'inactive_percentage': inactive_percentage,
+            # Top clients
+            'top_clients': top_clients_data,
+            # Alertes
+            'payment_issues_count': payment_issues_count,
+            'payment_issues_amount': payment_issues_amount,
+            'new_clients_count': new_clients_count,
+            # Dates
             'date_start': date_start,
             'date_end': date_end,
             'generated_at': datetime.now(),
@@ -914,7 +1060,7 @@ class ReportPDFGenerator:
 
     # ===== PRODUCTS REPORT =====
     def generate_products_report(self, products, user=None, date_start=None, date_end=None):
-        """Générer un rapport PDF pour plusieurs produits"""
+        """Générer un rapport PDF avancé pour plusieurs produits"""
         if not self.weasyprint_available:
             raise ImportError("WeasyPrint n'est pas disponible")
         
@@ -922,71 +1068,102 @@ class ReportPDFGenerator:
             org_data = self._get_organization_data(user)
         except Exception as e:
             print(f"Erreur récupération données organisation: {e}")
-            import traceback
-            traceback.print_exc()
             org_data = {}
         
-        # Convertir QuerySet en liste
         try:
             products_list = list(products)
         except Exception as e:
             print(f"Erreur conversion QuerySet: {e}")
-            import traceback
-            traceback.print_exc()
             products_list = []
         
-        # Statistiques globales
-        total_products = len(products_list)
-        total_stock = 0
-        total_value = 0
-        by_category = []
+        from collections import defaultdict
         
-        try:
-            if products_list:
-                from collections import defaultdict
-                category_dict = defaultdict(lambda: {'count': 0, 'total_stock': 0, 'total_value': 0})
+        total_count = len(products_list)
+        active_count = sum(1 for p in products_list if getattr(p, 'is_active', True))
+        active_percentage = (active_count / total_count * 100) if total_count > 0 else 0
+        
+        # Stock et marges
+        stock_value = 0
+        total_margin = 0
+        margin_count = 0
+        out_of_stock_count = 0
+        low_stock_count = 0
+        no_sales_count = 0
+        dormant_stock_value = 0
+        
+        # Pour Top products (simulé car pas d'InvoiceItem accessible ici facilement)
+        products_enriched = []
+        
+        for product in products_list:
+            product_type = getattr(product, 'product_type', 'physical')
+            price = float(getattr(product, 'price', 0) or 0)
+            cost_price = float(getattr(product, 'cost_price', 0) or 0)
+            stock_qty = float(getattr(product, 'stock_quantity', 0) or 0)
+            low_threshold = float(getattr(product, 'low_stock_threshold', 5) or 5)
+            
+            # Valeur stock (physiques seulement)
+            if product_type == 'physical':
+                stock_value += stock_qty * cost_price
                 
-                for product in products_list:
-                    try:
-                        stock = float(getattr(product, 'stock_quantity', 0) or 0)
-                        price = float(getattr(product, 'sale_price', 0) or 0)
-                        value = stock * price
-                        
-                        total_stock += stock
-                        total_value += value
-                        
-                        category = getattr(product, 'category', None)
-                        category_name = getattr(category, 'name', 'Sans catégorie') if category else 'Sans catégorie'
-                        category_dict[category_name]['count'] += 1
-                        category_dict[category_name]['total_stock'] += stock
-                        category_dict[category_name]['total_value'] += value
-                    except Exception as e:
-                        print(f"Erreur traitement produit {product.id}: {e}")
-                
-                by_category = [{'category': k, 'count': v['count'], 'total_stock': v['total_stock'], 'total_value': v['total_value']} for k, v in category_dict.items()]
-        except Exception as e:
-            print(f"Erreur calcul statistiques produits: {e}")
-            import traceback
-            traceback.print_exc()
+                # Alertes stock
+                if stock_qty == 0:
+                    out_of_stock_count += 1
+                elif stock_qty <= low_threshold:
+                    low_stock_count += 1
+            
+            # Marge
+            if cost_price > 0 and price > 0:
+                margin = ((price - cost_price) / price) * 100
+                total_margin += margin
+                margin_count += 1
+            
+            products_enriched.append(product)
+        
+        avg_margin = total_margin / margin_count if margin_count > 0 else 0
+        rotation_rate = 3.0  # Valeur par défaut (nécessiterait historique ventes)
+        
+        # Top 10 produits (par prix pour simulation, idéalement par CA réel)
+        top_products = sorted(products_enriched, key=lambda x: float(getattr(x, 'price', 0) or 0) * float(getattr(x, 'stock_quantity', 0) or 0), reverse=True)[:10]
+        top_products_data = []
+        for product in top_products:
+            qty = float(getattr(product, 'stock_quantity', 0) or 0)
+            price = float(getattr(product, 'price', 0) or 0)
+            revenue = qty * price
+            top_products_data.append({
+                'name': getattr(product, 'name', 'Produit inconnu'),
+                'quantity_sold': int(qty),
+                'revenue': revenue,
+                'percentage': (revenue / stock_value * 100) if stock_value > 0 else 0
+            })
         
         # QR Code
         try:
-            qr_data = f"Products Report | Count: {total_products} | Total Value: {total_value}"
+            qr_data = f"Products Report | Count: {total_count} | Stock Value: {stock_value:.2f}"
             qr_code = self._generate_qr_code(qr_data)
         except Exception as e:
             print(f"Erreur génération QR code: {e}")
             qr_code = None
         
         context = {
-            'products': products_list,
+            'products': products_enriched,
             'organization': org_data or {},
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
-            'total_products': total_products,
-            'total_stock': total_stock,
-            'total_value': total_value,
-            'avg_value': total_value / total_products if total_products > 0 else 0,
-            'by_category': by_category,
+            # Vue d'ensemble
+            'total_count': total_count,
+            'active_count': active_count,
+            'active_percentage': active_percentage,
+            'stock_value': stock_value,
+            'avg_margin': avg_margin,
+            'rotation_rate': rotation_rate,
+            # Top products
+            'top_products': top_products_data,
+            # Alertes stock
+            'out_of_stock_count': out_of_stock_count,
+            'low_stock_count': low_stock_count,
+            'no_sales_count': no_sales_count,
+            'dormant_stock_value': dormant_stock_value,
+            # Dates
             'date_start': date_start,
             'date_end': date_end,
             'generated_at': datetime.now(),
@@ -1003,6 +1180,185 @@ class ReportPDFGenerator:
             return buffer
         except Exception as e:
             print(f"Erreur génération PDF produits: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+
+    def generate_suppliers_report(self, suppliers, user=None, date_start=None, date_end=None):
+        """Générer un rapport PDF avancé pour plusieurs fournisseurs"""
+        if not self.weasyprint_available:
+            raise ImportError("WeasyPrint n'est pas disponible")
+        
+        try:
+            org_data = self._get_organization_data(user)
+        except Exception as e:
+            print(f"Erreur récupération données organisation: {e}")
+            org_data = {}
+        
+        try:
+            suppliers_list = list(suppliers)
+        except Exception as e:
+            print(f"Erreur conversion QuerySet: {e}")
+            suppliers_list = []
+        
+        from collections import defaultdict
+        from django.utils import timezone
+        
+        total_count = len(suppliers_list)
+        active_count = sum(1 for s in suppliers_list if getattr(s, 'is_active', True))
+        active_percentage = (active_count / total_count * 100) if total_count > 0 else 0
+        
+        # Calculer volume et notes
+        total_volume = 0
+        total_rating = 0
+        rating_count = 0
+        local_count = 0
+        minority_count = 0
+        women_count = 0
+        indigenous_count = 0
+        inactive_count = 0
+        excellent_count = 0
+        good_count = 0
+        poor_count = 0
+        
+        suppliers_enriched = []
+        today = timezone.now()
+        days_90_ago = today - timedelta(days=90)
+        
+        for supplier in suppliers_list:
+            # Volume d'achats
+            try:
+                from apps.purchase_orders.models import PurchaseOrder
+                pos = PurchaseOrder.objects.filter(supplier=supplier)
+                supplier_volume = sum(float(po.total_amount or 0) for po in pos)
+                po_count = pos.count()
+                total_volume += supplier_volume
+                
+                # Inactif si pas de PO depuis 90j
+                recent_pos = pos.filter(created_at__gte=days_90_ago)
+                if not recent_pos.exists():
+                    inactive_count += 1
+            except:
+                supplier_volume = 0
+                po_count = 0
+            
+            # Notes
+            rating = float(getattr(supplier, 'rating', 0) or 0)
+            if rating > 0:
+                total_rating += rating
+                rating_count += 1
+                
+                if rating >= 4.5:
+                    excellent_count += 1
+                elif rating >= 3.5:
+                    good_count += 1
+                else:
+                    poor_count += 1
+            
+            # Diversité
+            if getattr(supplier, 'is_local', False):
+                local_count += 1
+            if getattr(supplier, 'is_minority_owned', False):
+                minority_count += 1
+            if getattr(supplier, 'is_woman_owned', False):
+                women_count += 1
+            if getattr(supplier, 'is_indigenous', False):
+                indigenous_count += 1
+            
+            supplier.volume = supplier_volume
+            supplier.po_count = po_count
+            suppliers_enriched.append(supplier)
+        
+        avg_rating = total_rating / rating_count if rating_count > 0 else 0
+        
+        # Pourcentages diversité
+        local_percentage = (local_count / total_count * 100) if total_count > 0 else 0
+        minority_percentage = (minority_count / total_count * 100) if total_count > 0 else 0
+        women_percentage = (women_count / total_count * 100) if total_count > 0 else 0
+        indigenous_percentage = (indigenous_count / total_count * 100) if total_count > 0 else 0
+        
+        # Pourcentages performance
+        excellent_percentage = (excellent_count / total_count * 100) if total_count > 0 else 0
+        good_percentage = (good_count / total_count * 100) if total_count > 0 else 0
+        poor_percentage = (poor_count / total_count * 100) if total_count > 0 else 0
+        
+        # Top 10 fournisseurs
+        top_suppliers = sorted(suppliers_enriched, key=lambda x: getattr(x, 'volume', 0), reverse=True)[:10]
+        top_suppliers_data = []
+        for supplier in top_suppliers:
+            volume = getattr(supplier, 'volume', 0)
+            percentage = (volume / total_volume * 100) if total_volume > 0 else 0
+            top_suppliers_data.append({
+                'name': getattr(supplier, 'name', 'Fournisseur inconnu'),
+                'rating': getattr(supplier, 'rating', 0),
+                'po_count': getattr(supplier, 'po_count', 0),
+                'volume': volume,
+                'percentage': percentage
+            })
+        
+        # Concentration (top 5)
+        top5_volume = sum(getattr(s, 'volume', 0) for s in top_suppliers[:5])
+        top5_percentage = (top5_volume / total_volume * 100) if total_volume > 0 else 0
+        concentration_risk = top5_percentage > 70
+        
+        # QR Code
+        try:
+            qr_data = f"Suppliers Report | Count: {total_count} | Volume: {total_volume:.2f}"
+            qr_code = self._generate_qr_code(qr_data)
+        except Exception as e:
+            print(f"Erreur génération QR code: {e}")
+            qr_code = None
+        
+        context = {
+            'suppliers': suppliers_enriched,
+            'organization': org_data or {},
+            'logo_base64': self._get_logo_base64(org_data),
+            'qr_code_base64': qr_code,
+            # Vue d'ensemble
+            'total_count': total_count,
+            'active_count': active_count,
+            'active_percentage': active_percentage,
+            'total_volume': total_volume,
+            'avg_rating': avg_rating,
+            # Performance par note
+            'excellent_count': excellent_count,
+            'excellent_percentage': excellent_percentage,
+            'good_count': good_count,
+            'good_percentage': good_percentage,
+            'poor_count': poor_count,
+            'poor_percentage': poor_percentage,
+            # Top suppliers
+            'top_suppliers': top_suppliers_data,
+            'concentration_risk': concentration_risk,
+            'top5_percentage': top5_percentage,
+            # Diversité
+            'local_count': local_count,
+            'local_percentage': local_percentage,
+            'minority_count': minority_count,
+            'minority_percentage': minority_percentage,
+            'women_count': women_count,
+            'women_percentage': women_percentage,
+            'indigenous_count': indigenous_count,
+            'indigenous_percentage': indigenous_percentage,
+            # Alertes
+            'inactive_count': inactive_count,
+            # Dates
+            'date_start': date_start,
+            'date_end': date_end,
+            'generated_at': datetime.now(),
+        }
+        
+        template_name = 'reports/pdf/suppliers_report.html'
+        try:
+            html_string = render_to_string(template_name, context)
+            html = self.HTML(string=html_string, base_url=settings.BASE_DIR)
+            pdf_bytes = html.write_pdf()
+            
+            buffer = BytesIO(pdf_bytes)
+            buffer.seek(0)
+            return buffer
+        except Exception as e:
+            print(f"Erreur génération PDF fournisseurs: {e}")
             import traceback
             traceback.print_exc()
             raise

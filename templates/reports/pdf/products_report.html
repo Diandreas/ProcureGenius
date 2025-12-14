@@ -2,62 +2,53 @@
 
 {% block title %}Rapport des Produits{% endblock %}
 
-{% block report_title %}Rapport des Produits{% endblock %}
+{% block report_title %}📦 Rapport des Produits{% endblock %}
 {% block report_subtitle %}
     {% if date_start or date_end %}
         Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
     {% endif %}
-    • {{ total_products }} produit(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+    • {{ total_count }} produit(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
 {% endblock %}
 
 {% block content %}
-<!-- Statistiques Globales -->
-<div class="stats-grid">
+
+<div class="stats-grid" style="margin-bottom: 15px;">
     <div class="stat-card primary">
-        <div class="label">Nombre de Produits</div>
-        <div class="value">{{ total_products }}</div>
-        <div class="subvalue">Produit(s)</div>
+        <div class="label">Total Produits</div>
+        <div class="value">{{ total_count }}</div>
+        <div class="subvalue">{{ active_count }} actifs ({{ active_percentage|floatformat:0 }}%)</div>
     </div>
-    
     <div class="stat-card success">
-        <div class="label">Stock Total</div>
-        <div class="value">{{ total_stock|floatformat:0 }}</div>
-        <div class="subvalue">Unités</div>
-    </div>
-    
-    <div class="stat-card warning">
-        <div class="label">Valeur Totale</div>
-        <div class="value">{{ total_value|floatformat:2 }}</div>
+        <div class="label">Valeur Stock</div>
+        <div class="value">{{ stock_value|floatformat:2 }}</div>
         <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
     </div>
-    
-    <div class="stat-card info">
-        <div class="label">Valeur Moyenne</div>
-        <div class="value">{{ avg_value|floatformat:2 }}</div>
-        <div class="subvalue">Par produit</div>
+    <div class="stat-card warning">
+        <div class="label">Marge Moyenne</div>
+        <div class="value">{{ avg_margin|floatformat:1 }}%</div>
+        <div class="subvalue">Rentabilité</div>
+    </div>
+    <div class="stat-card {% if rotation_rate >= 3 %}success{% else %}warning{% endif %}">
+        <div class="label">Taux Rotation</div>
+        <div class="value">{{ rotation_rate|floatformat:1 }}</div>
+        <div class="subvalue">Par an</div>
     </div>
 </div>
 
-<!-- Répartition par Catégorie -->
-{% if by_category %}
-<div class="section">
-    <h2 class="section-title">Répartition par Catégorie</h2>
-    <table>
+{% if top_products %}
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">🏆 Top 10 Produits (CA)</h2>
+    <table style="font-size: 10px;">
         <thead>
-            <tr>
-                <th>Catégorie</th>
-                <th class="text-center">Nombre</th>
-                <th class="text-right">Stock Total</th>
-                <th class="text-right">Valeur Totale</th>
-            </tr>
+            <tr><th style="width: 45%;">Produit</th><th class="text-center" style="width: 15%;">Qté</th><th class="text-right" style="width: 25%;">CA</th><th class="text-right" style="width: 15%;">%</th></tr>
         </thead>
         <tbody>
-            {% for cat in by_category %}
+            {% for product in top_products|slice:":10" %}
             <tr>
-                <td><strong>{{ cat.category }}</strong></td>
-                <td class="text-center">{{ cat.count }}</td>
-                <td class="text-right">{{ cat.total_stock|floatformat:0 }}</td>
-                <td class="text-right">{{ cat.total_value|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td><strong>{{ product.name|truncatewords:5 }}</strong></td>
+                <td class="text-center">{{ product.quantity_sold }}</td>
+                <td class="text-right">{{ product.revenue|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ product.percentage|floatformat:1 }}%</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -65,47 +56,99 @@
 </div>
 {% endif %}
 
-<!-- Liste des Produits -->
-<div class="section">
-    <h2 class="section-title">Liste des Produits</h2>
-    <table>
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">📊 État du Stock (Physiques)</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
+        <div style="background: #ffebee; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #c62828;">🔴 Ruptures</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ out_of_stock_count }}</div>
+        </div>
+        <div style="background: #fff3e0; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #ef6c00;">⚠️ Stock Bas</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ low_stock_count }}</div>
+        </div>
+        <div style="background: #f5f5f5; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #666;">💤 Sans Vente</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ no_sales_count }}</div>
+        </div>
+    </div>
+</div>
+
+{% if out_of_stock_count > 0 or low_stock_count > 0 or dormant_stock_value > 0 %}
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">⚠️ Alertes Stock</h2>
+    <div style="font-size: 10px;">
+        {% if out_of_stock_count > 0 %}
+        <div style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
+            <strong style="color: #c62828;">🔴 {{ out_of_stock_count }} produit(s) en rupture</strong>
+            <div style="color: #666; margin-top: 3px;">→ Réapprovisionnement urgent</div>
+        </div>
+        {% endif %}
+        {% if low_stock_count > 0 %}
+        <div style="background: #fff3e0; padding: 8px; margin-bottom: 5px; border-left: 3px solid #ef6c00; border-radius: 3px;">
+            <strong style="color: #ef6c00;">⚠️ {{ low_stock_count }} produit(s) en stock bas</strong>
+            <div style="color: #666; margin-top: 3px;">→ Commander prochainement</div>
+        </div>
+        {% endif %}
+        {% if dormant_stock_value > 0 %}
+        <div style="background: #f5f5f5; padding: 8px; border-left: 3px solid #666; border-radius: 3px;">
+            <strong style="color: #666;">💤 Stock dormant: {{ dormant_stock_value|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>
+            <div style="color: #666; margin-top: 3px;">→ {{ no_sales_count }} produits sans vente (180j+)</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- LISTE DES PRODUITS (ESSENTIEL - GARDÉ) -->
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">📋 Liste des Produits</h2>
+    <table style="font-size: 10px;">
         <thead>
             <tr>
                 <th>Nom</th>
                 <th>Référence</th>
-                <th class="text-right">Prix</th>
-                <th class="text-center">Stock</th>
                 <th class="text-center">Type</th>
+                <th class="text-right">Prix</th>
+                <th class="text-right">Stock</th>
+                <th class="text-center">Statut</th>
             </tr>
         </thead>
         <tbody>
             {% for product in products %}
             <tr>
-                <td><strong>{{ product.name|default:"-" }}</strong></td>
-                <td>{{ product.sku|default:product.reference|default:"-" }}</td>
-                <td class="text-right">{{ product.sale_price|floatformat:2|default:"0.00" }} {{ organization.currency|default:"CAD" }}</td>
-                <td class="text-center">
+                <td><strong>{{ product.name|truncatewords:4 }}</strong></td>
+                <td>{{ product.reference|default:"-" }}</td>
+                <td class="text-center">{{ product.get_product_type_display|default:"-" }}</td>
+                <td class="text-right">{{ product.price|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">
                     {% if product.product_type == 'physical' %}
-                        {{ product.stock_quantity|default:0|floatformat:0 }}
-                    {% else %}
-                        <span class="badge info">Service</span>
-                    {% endif %}
+                        {{ product.stock_quantity }}
+                    {% else %}-{% endif %}
                 </td>
                 <td class="text-center">
-                    {% if product.product_type == 'physical' %}
-                        <span class="badge primary">Physique</span>
-                    {% else %}
-                        <span class="badge warning">Service</span>
-                    {% endif %}
+                    {% if product.is_active %}<span class="badge success">Actif</span>
+                    {% else %}<span class="badge info">Inactif</span>{% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">Aucun produit trouvé</td>
+                <td colspan="6" style="text-align: center; color: #999;">Aucun produit</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-{% endblock %}
 
+<div class="highlight-box" style="font-size: 10px;">
+    <strong style="font-size: 11px;">📝 Résumé Exécutif</strong>
+    <div style="margin-top: 6px; line-height: 1.5;">
+        <strong>{{ total_count }} produits</strong> ({{ active_count }} actifs).
+        Valeur stock: <strong>{{ stock_value|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>.
+        Marge moyenne: <strong>{{ avg_margin|floatformat:1 }}%</strong>.
+        {% if out_of_stock_count > 0 %}⚠️ {{ out_of_stock_count }} ruptures.{% endif %}
+        {% if low_stock_count > 0 %}⚠️ {{ low_stock_count }} en stock bas.{% endif %}
+    </div>
+</div>
+
+{% endblock %}

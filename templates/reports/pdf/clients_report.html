@@ -2,60 +2,69 @@
 
 {% block title %}Rapport des Clients{% endblock %}
 
-{% block report_title %}Rapport des Clients{% endblock %}
+{% block report_title %}👥 Rapport des Clients{% endblock %}
 {% block report_subtitle %}
     {% if date_start or date_end %}
         Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
     {% endif %}
-    • {{ total_clients }} client(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+    • {{ total_count }} client(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
 {% endblock %}
 
 {% block content %}
-<!-- Statistiques Globales -->
-<div class="stats-grid">
+
+<div class="stats-grid" style="margin-bottom: 15px;">
     <div class="stat-card primary">
-        <div class="label">Nombre de Clients</div>
-        <div class="value">{{ total_clients }}</div>
-        <div class="subvalue">Client(s)</div>
+        <div class="label">Total Clients</div>
+        <div class="value">{{ total_count }}</div>
+        <div class="subvalue">{{ active_count }} actifs ({{ active_percentage|floatformat:0 }}%)</div>
     </div>
-    
     <div class="stat-card success">
-        <div class="label">Ventes Totales</div>
-        <div class="value">{{ total_sales|floatformat:2 }}</div>
+        <div class="label">CA Total</div>
+        <div class="value">{{ total_revenue|floatformat:2 }}</div>
         <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
     </div>
-    
     <div class="stat-card warning">
-        <div class="label">Factures Total</div>
-        <div class="value">{{ total_invoices }}</div>
-        <div class="subvalue">Facture(s)</div>
+        <div class="label">Panier Moyen</div>
+        <div class="value">{{ avg_basket|floatformat:2 }}</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
     </div>
-    
-    <div class="stat-card info">
-        <div class="label">Ventes Moyennes</div>
-        <div class="value">{{ avg_sales|floatformat:2 }}</div>
-        <div class="subvalue">Par client</div>
+    <div class="stat-card {% if active_clients_percentage >= 50 %}success{% else %}warning{% endif %}">
+        <div class="label">Clients Actifs</div>
+        <div class="value">{{ active_clients_this_month }}</div>
+        <div class="subvalue">{{ active_clients_percentage|floatformat:0 }}% ce mois</div>
     </div>
 </div>
 
-<!-- Répartition par Statut -->
-{% if by_status %}
-<div class="section">
-    <h2 class="section-title">Répartition par Statut</h2>
-    <table>
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">🎯 Segmentation (Pareto 80/20)</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
+        <div style="background: #e8f5e9; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #2e7d32;">👑 VIP (Top 20%)</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ vip_count }} clients</div>
+            <div style="color: #666;">{{ vip_revenue|floatformat:2 }} {{ organization.currency|default:"CAD" }} ({{ vip_percentage|floatformat:0 }}%)</div>
+        </div>
+        <div style="background: #fff3e0; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #ef6c00;">💤 Inactifs (90j+)</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ inactive_count }} clients</div>
+            <div style="color: #666;">{{ inactive_percentage|floatformat:0 }}% du total</div>
+        </div>
+    </div>
+</div>
+
+{% if top_clients %}
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">👑 Top 10 Clients (CA)</h2>
+    <table style="font-size: 10px;">
         <thead>
-            <tr>
-                <th>Statut</th>
-                <th class="text-center">Nombre</th>
-                <th class="text-right">Ventes Totales</th>
-            </tr>
+            <tr><th style="width: 40%;">Client</th><th class="text-center" style="width: 15%;">Factures</th><th class="text-right" style="width: 25%;">CA</th><th class="text-right" style="width: 20%;">Panier Moy.</th></tr>
         </thead>
         <tbody>
-            {% for stat in by_status %}
+            {% for client in top_clients|slice:":10" %}
             <tr>
-                <td><strong>{{ stat.status|title }}</strong></td>
-                <td class="text-center">{{ stat.count }}</td>
-                <td class="text-right">{{ stat.total_sales|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td><strong>{{ client.name|truncatewords:5 }}</strong></td>
+                <td class="text-center">{{ client.invoice_count }}</td>
+                <td class="text-right">{{ client.total_revenue|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ client.avg_basket|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -63,39 +72,74 @@
 </div>
 {% endif %}
 
-<!-- Liste des Clients -->
-<div class="section">
-    <h2 class="section-title">Liste des Clients</h2>
-    <table>
+{% if payment_issues_count > 0 or inactive_count > 0 or new_clients_count > 0 %}
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">⚠️ Alertes & Opportunités</h2>
+    <div style="font-size: 10px;">
+        {% if payment_issues_count > 0 %}
+        <div style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
+            <strong style="color: #c62828;">⚠️ {{ payment_issues_count }} client(s) avec retards de paiement</strong>
+            <div style="color: #666; margin-top: 3px;">→ {{ payment_issues_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }} en retard</div>
+        </div>
+        {% endif %}
+        {% if inactive_count > 0 %}
+        <div style="background: #fff3e0; padding: 8px; margin-bottom: 5px; border-left: 3px solid #ef6c00; border-radius: 3px;">
+            <strong style="color: #ef6c00;">💤 {{ inactive_count }} client(s) inactifs depuis 90+ jours</strong>
+            <div style="color: #666; margin-top: 3px;">→ Opportunité de réactivation</div>
+        </div>
+        {% endif %}
+        {% if new_clients_count > 0 %}
+        <div style="background: #e3f2fd; padding: 8px; border-left: 3px solid #1565c0; border-radius: 3px;">
+            <strong style="color: #1565c0;">✨ {{ new_clients_count }} nouveau(x) client(s) ce mois</strong>
+            <div style="color: #666; margin-top: 3px;">→ Surveiller la satisfaction initiale</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- LISTE DES CLIENTS (ESSENTIEL - GARDÉ) -->
+<div class="section" style="margin-bottom: 15px;">
+    <h2 class="section-title">📋 Liste des Clients</h2>
+    <table style="font-size: 10px;">
         <thead>
             <tr>
                 <th>Nom</th>
                 <th>Email</th>
-                <th>Contact</th>
+                <th>Téléphone</th>
                 <th class="text-center">Statut</th>
+                <th class="text-right">CA Total</th>
             </tr>
         </thead>
         <tbody>
             {% for client in clients %}
             <tr>
-                <td><strong>{{ client.name|default:"-" }}</strong></td>
+                <td><strong>{{ client.name|truncatewords:4 }}</strong></td>
                 <td>{{ client.email|default:"-" }}</td>
-                <td>{{ client.contact_person|default:"-" }}</td>
+                <td>{{ client.phone|default:"-" }}</td>
                 <td class="text-center">
-                    {% if client.is_active %}
-                        <span class="badge success">Actif</span>
-                    {% else %}
-                        <span class="badge error">Inactif</span>
-                    {% endif %}
+                    {% if client.is_active %}<span class="badge success">Actif</span>
+                    {% else %}<span class="badge info">Inactif</span>{% endif %}
                 </td>
+                <td class="text-right">{{ client.total_revenue|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="text-center">Aucun client trouvé</td>
+                <td colspan="5" style="text-align: center; color: #999;">Aucun client</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-{% endblock %}
 
+<div class="highlight-box" style="font-size: 10px;">
+    <strong style="font-size: 11px;">📝 Résumé Exécutif</strong>
+    <div style="margin-top: 6px; line-height: 1.5;">
+        <strong>{{ total_count }} clients</strong> dont {{ active_count }} actifs ({{ active_percentage|floatformat:0 }}%).
+        CA total: <strong>{{ total_revenue|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>.
+        <strong>Concentration:</strong> Les {{ vip_count }} meilleurs clients (20%) = {{ vip_percentage|floatformat:0 }}% du CA.
+        {% if payment_issues_count > 0 %}⚠️ {{ payment_issues_count }} clients avec retards.{% endif %}
+    </div>
+</div>
+
+{% endblock %}
