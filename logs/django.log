@@ -55615,3 +55615,88 @@ AttributeError: 'Product' object has no attribute 'unit'
 "GET /api/v1/clients/export_csv/ HTTP/1.1" 200 84
 Forbidden: /api/v1/suppliers/export_csv/
 "GET /api/v1/suppliers/export_csv/ HTTP/1.1" 403 68
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+D:\project\BFMa\ProcureGenius\apps\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 960
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 960
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 905
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /media/organization/logos/logo_WeDDKaf.jpg HTTP/1.1" 304 0
+"GET /api/v1/products/export_csv/ HTTP/1.1" 200 157
+Forbidden: /api/v1/suppliers/export_csv/
+"GET /api/v1/suppliers/export_csv/ HTTP/1.1" 403 68
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1461
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 612
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/clients/ HTTP/1.1" 200 458
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/clients/ HTTP/1.1" 200 458
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/invoices/ HTTP/1.1" 200 4155
+"GET /api/v1/invoices/ HTTP/1.1" 200 4155
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1416
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 6507
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 1416
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1965
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 325
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 393
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 286
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 286
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 280
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/analytics/widget-data/client_acquisition/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 345
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/analytics/widget-data/clients_at_risk/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 273
+"GET /api/v1/analytics/widget-data/client_segmentation/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 291
+"GET /api/v1/analytics/widget-data/recent_activity/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 1965
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/margin_analysis/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 339
+"GET /api/v1/analytics/widget-data/global_performance/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 325
+"GET /api/v1/analytics/widget-data/stock_movements/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 280
+"GET /api/v1/analytics/widget-data/stock_alerts/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 286
+"GET /api/v1/analytics/widget-data/top_selling_products/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 286
+"GET /api/v1/analytics/widget-data/products_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 393
+"GET /api/v1/analytics/widget-data/top_clients/?period=last_30_days&limit=5&compare=false HTTP/1.1" 200 263
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647
+"GET /api/v1/analytics/widget-data/clients_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 401
+"GET /api/v1/analytics/widget-data/clients_at_risk/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 273
+"GET /api/v1/analytics/widget-data/client_acquisition/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 345
+"GET /api/v1/analytics/widget-data/client_segmentation/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 291
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 647

@@ -69,6 +69,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
 import Cropper from 'react-easy-crop';
+import { useModules } from '../../contexts/ModuleContext';
 
 // Import API services
 import { settingsAPI } from '../../services/settingsAPI';
@@ -1355,6 +1356,7 @@ const DataSection = ({ settings, showSnackbar }) => {
   const { t } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
   const [exporting, setExporting] = useState(false);
+  const { hasModule } = useModules();
 
   // Types d'import disponibles
   const importTypes = [
@@ -1402,9 +1404,16 @@ const DataSection = ({ settings, showSnackbar }) => {
       showSnackbar(`Export ${type} terminé avec succès !`, 'success');
     } catch (error) {
       console.error(`Erreur export ${type}:`, error);
-      const errorMessage = error.response?.status === 403
-        ? 'Vous n\'avez pas les permissions nécessaires pour exporter'
-        : `Erreur lors de l'export ${type}`;
+      let errorMessage = `Erreur lors de l'export ${type}`;
+
+      if (error.response?.status === 403) {
+        errorMessage = 'Vous n\'avez pas les permissions nécessaires pour exporter. Vérifiez que le module correspondant est activé.';
+      } else if (error.response?.status === 500) {
+        errorMessage = `Erreur serveur lors de l'export ${type}. Veuillez réessayer ou contacter le support.`;
+      } else if (error.response?.status) {
+        errorMessage = `Erreur ${error.response.status} lors de l'export ${type}`;
+      }
+
       showSnackbar(errorMessage, 'error');
     } finally {
       setExporting(false);
@@ -1515,30 +1524,36 @@ const DataSection = ({ settings, showSnackbar }) => {
         </Typography>
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          <Button
-            variant="outlined"
-            startIcon={exporting ? <CircularProgress size={16} /> : <LocalShippingIcon />}
-            onClick={handleExportSuppliers}
-            disabled={exporting}
-          >
-            Exporter Fournisseurs (CSV)
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={exporting ? <CircularProgress size={16} /> : <PeopleIcon />}
-            onClick={handleExportClients}
-            disabled={exporting}
-          >
-            Exporter Clients (CSV)
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={exporting ? <CircularProgress size={16} /> : <InventoryIcon />}
-            onClick={handleExportProducts}
-            disabled={exporting}
-          >
-            Exporter Produits (CSV)
-          </Button>
+          {hasModule('suppliers') && (
+            <Button
+              variant="outlined"
+              startIcon={exporting ? <CircularProgress size={16} /> : <LocalShippingIcon />}
+              onClick={handleExportSuppliers}
+              disabled={exporting}
+            >
+              Exporter Fournisseurs (CSV)
+            </Button>
+          )}
+          {hasModule('clients') && (
+            <Button
+              variant="outlined"
+              startIcon={exporting ? <CircularProgress size={16} /> : <PeopleIcon />}
+              onClick={handleExportClients}
+              disabled={exporting}
+            >
+              Exporter Clients (CSV)
+            </Button>
+          )}
+          {hasModule('products') && (
+            <Button
+              variant="outlined"
+              startIcon={exporting ? <CircularProgress size={16} /> : <InventoryIcon />}
+              onClick={handleExportProducts}
+              disabled={exporting}
+            >
+              Exporter Produits (CSV)
+            </Button>
+          )}
         </Stack>
       </Box>
 

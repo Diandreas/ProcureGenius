@@ -151,17 +151,23 @@ class SupplierViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="suppliers.csv"'
         
         writer = csv.writer(response)
-        writer.writerow(['Name', 'Contact', 'Email', 'Phone', 'City', 'Status', 'Rating'])
+        writer.writerow(['Name', 'Contact', 'Email', 'Phone', 'City', 'Province', 'Status', 'Rating'])
         
         for supplier in self.get_queryset():
+            try:
+                status_display = supplier.get_status_display() if hasattr(supplier, 'get_status_display') else supplier.status
+            except:
+                status_display = supplier.status or ''
+            
             writer.writerow([
-                supplier.name,
-                supplier.contact_person,
-                supplier.email,
-                supplier.phone,
-                supplier.city,
-                supplier.get_status_display(),
-                supplier.rating
+                supplier.name or '',
+                supplier.contact_person or '',
+                supplier.email or '',
+                supplier.phone or '',
+                supplier.city or '',
+                supplier.province or '',
+                status_display,
+                str(supplier.rating) if supplier.rating else '0'
             ])
         
         return response
@@ -283,16 +289,21 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="products.csv"'
         
         writer = csv.writer(response)
-        writer.writerow(['Name', 'Reference', 'Type', 'Price', 'Stock Quantity', 'Unit', 'Description', 'Active'])
+        writer.writerow(['Name', 'Reference', 'Type', 'Price', 'Cost Price', 'Stock Quantity', 'Description', 'Active'])
         
         for product in self.get_queryset():
+            try:
+                product_type_display = product.get_product_type_display() if hasattr(product, 'get_product_type_display') else product.product_type
+            except:
+                product_type_display = product.product_type or ''
+            
             writer.writerow([
-                product.name,
+                product.name or '',
                 product.reference or '',
-                product.get_product_type_display() if hasattr(product, 'get_product_type_display') else product.product_type,
+                product_type_display,
                 str(product.price) if product.price else '',
-                str(product.stock_quantity) if hasattr(product, 'stock_quantity') else '',
-                product.unit or '',
+                str(product.cost_price) if hasattr(product, 'cost_price') and product.cost_price else '',
+                str(product.stock_quantity) if hasattr(product, 'stock_quantity') else '0',
                 product.description or '',
                 'Oui' if product.is_active else 'Non'
             ])
@@ -737,7 +748,7 @@ class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         
         for client in self.get_queryset():
             writer.writerow([
-                client.name,
+                client.name or '',
                 client.contact_person or '',
                 client.email or '',
                 client.phone or '',
