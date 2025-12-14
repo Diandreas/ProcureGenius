@@ -59,7 +59,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Stratégie pour l'API
+  // Ne pas intercepter les requêtes POST/PUT/DELETE/PATCH - laisser passer directement au réseau
   if (url.pathname.startsWith('/api/')) {
+    // Pour les requêtes de modification (POST, PUT, DELETE, PATCH), ne pas intercepter
+    // Laisser le navigateur gérer directement pour éviter les problèmes de cache
+    if (request.method !== 'GET') {
+      return; // Laisser passer la requête sans interception
+    }
+    // Pour les GET, utiliser la stratégie network-first avec cache
     event.respondWith(networkFirstStrategy(request));
     return;
   }
@@ -113,6 +120,14 @@ async function networkFirstStrategy(request) {
     return networkResponse;
   } catch (error) {
     console.error('Erreur réseau, utilisation du cache:', error);
+    
+    // Pour les requêtes non-GET vers l'API, laisser passer l'erreur réseau native
+    // Ne pas retourner de 503 car cela masque les vraies erreurs du serveur
+    if (request.url.includes('/api/') && request.method !== 'GET') {
+      // Re-lancer l'erreur pour que le navigateur la gère normalement
+      throw error;
+    }
+    
     // Ne chercher dans le cache que pour les requêtes GET
     if (request.method === 'GET') {
       const cachedResponse = await cache.match(request);
@@ -121,8 +136,8 @@ async function networkFirstStrategy(request) {
       }
     }
 
-    // Pour les requêtes API, retourner une erreur JSON
-    if (request.url.includes('/api/')) {
+    // Pour les requêtes API GET, retourner une erreur JSON seulement si vraiment offline
+    if (request.url.includes('/api/') && request.method === 'GET') {
       return new Response(
         JSON.stringify({ error: 'Offline', message: 'Vous êtes hors ligne' }),
         {

@@ -24,6 +24,8 @@ class ExcelCSVImporter:
         self.success_count = 0
         self.error_count = 0
         self.skipped_count = 0
+        # Récupérer l'organisation de l'utilisateur qui a créé le job
+        self.organization = job.created_by.organization if job.created_by else None
 
     def read_file(self) -> pd.DataFrame:
         """Lit le fichier Excel ou CSV"""
@@ -139,11 +141,19 @@ class ExcelCSVImporter:
             try:
                 mapped_data = self.apply_field_mapping(row)
 
-                # Vérifie les doublons
+                # Ajouter l'organisation si disponible
+                if self.organization:
+                    mapped_data['organization'] = self.organization
+
+                # Vérifie les doublons (filtrer par organisation aussi)
                 if self.job.skip_duplicates:
-                    existing = Supplier.objects.filter(
-                        email=mapped_data.get('email')
-                    ).first()
+                    filter_kwargs = {}
+                    if mapped_data.get('email'):
+                        filter_kwargs['email'] = mapped_data.get('email')
+                    if self.organization:
+                        filter_kwargs['organization'] = self.organization
+                    
+                    existing = Supplier.objects.filter(**filter_kwargs).first()
 
                     if existing:
                         if self.job.update_existing:
@@ -182,18 +192,30 @@ class ExcelCSVImporter:
             try:
                 mapped_data = self.apply_field_mapping(row)
 
+                # Ajouter l'organisation si disponible
+                if self.organization:
+                    mapped_data['organization'] = self.organization
+
                 # Gère la relation avec le fournisseur
                 supplier_name = mapped_data.pop('supplier', None)
                 if supplier_name:
-                    supplier = Supplier.objects.filter(name=supplier_name).first()
+                    # Filtrer le fournisseur par organisation aussi
+                    filter_kwargs = {'name': supplier_name}
+                    if self.organization:
+                        filter_kwargs['organization'] = self.organization
+                    supplier = Supplier.objects.filter(**filter_kwargs).first()
                     if supplier:
                         mapped_data['supplier'] = supplier
 
-                # Vérifie les doublons
+                # Vérifie les doublons (filtrer par organisation aussi)
                 if self.job.skip_duplicates:
-                    existing = Product.objects.filter(
-                        sku=mapped_data.get('sku')
-                    ).first()
+                    filter_kwargs = {}
+                    if mapped_data.get('sku'):
+                        filter_kwargs['sku'] = mapped_data.get('sku')
+                    if self.organization:
+                        filter_kwargs['organization'] = self.organization
+                    
+                    existing = Product.objects.filter(**filter_kwargs).first()
 
                     if existing:
                         if self.job.update_existing:
@@ -230,11 +252,19 @@ class ExcelCSVImporter:
             try:
                 mapped_data = self.apply_field_mapping(row)
 
-                # Vérifie les doublons
+                # Ajouter l'organisation si disponible
+                if self.organization:
+                    mapped_data['organization'] = self.organization
+
+                # Vérifie les doublons (filtrer par organisation aussi)
                 if self.job.skip_duplicates:
-                    existing = Client.objects.filter(
-                        email=mapped_data.get('email')
-                    ).first()
+                    filter_kwargs = {}
+                    if mapped_data.get('email'):
+                        filter_kwargs['email'] = mapped_data.get('email')
+                    if self.organization:
+                        filter_kwargs['organization'] = self.organization
+                    
+                    existing = Client.objects.filter(**filter_kwargs).first()
 
                     if existing:
                         if self.job.update_existing:

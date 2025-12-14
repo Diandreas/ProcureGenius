@@ -67,7 +67,7 @@ import {
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { suppliersAPI } from '../../services/api';
+import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
 import Cropper from 'react-easy-crop';
 
 // Import API services
@@ -1381,32 +1381,40 @@ const DataSection = ({ settings, showSnackbar }) => {
     },
   ];
 
-  // Export réel des fournisseurs
-  const handleExportSuppliers = async () => {
+  // Export générique
+  const handleExport = async (type, apiMethod, filename) => {
     try {
       setExporting(true);
-      showSnackbar('Export en cours...', 'info');
+      showSnackbar(`Export ${type} en cours...`, 'info');
 
-      const response = await suppliersAPI.exportCSV();
+      const response = await apiMethod();
 
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `fournisseurs_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      showSnackbar('Export terminé avec succès !', 'success');
+      showSnackbar(`Export ${type} terminé avec succès !`, 'success');
     } catch (error) {
-      console.error('Erreur export:', error);
-      showSnackbar('Erreur lors de l\'export', 'error');
+      console.error(`Erreur export ${type}:`, error);
+      const errorMessage = error.response?.status === 403
+        ? 'Vous n\'avez pas les permissions nécessaires pour exporter'
+        : `Erreur lors de l'export ${type}`;
+      showSnackbar(errorMessage, 'error');
     } finally {
       setExporting(false);
     }
   };
+
+  // Handlers spécifiques
+  const handleExportSuppliers = () => handleExport('fournisseurs', suppliersAPI.exportCSV, 'fournisseurs');
+  const handleExportClients = () => handleExport('clients', clientsAPI.exportCSV, 'clients');
+  const handleExportProducts = () => handleExport('produits', productsAPI.exportCSV, 'produits');
 
   return (
     <Box>
@@ -1514,6 +1522,22 @@ const DataSection = ({ settings, showSnackbar }) => {
             disabled={exporting}
           >
             Exporter Fournisseurs (CSV)
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={exporting ? <CircularProgress size={16} /> : <PeopleIcon />}
+            onClick={handleExportClients}
+            disabled={exporting}
+          >
+            Exporter Clients (CSV)
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={exporting ? <CircularProgress size={16} /> : <InventoryIcon />}
+            onClick={handleExportProducts}
+            disabled={exporting}
+          >
+            Exporter Produits (CSV)
           </Button>
         </Stack>
       </Box>

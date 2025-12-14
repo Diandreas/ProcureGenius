@@ -17,6 +17,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
+    // Ne pas écraser le Content-Type si déjà défini (pour FormData notamment)
+    // Si pas de Content-Type défini et que ce n'est pas FormData, utiliser JSON par défaut
+    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
     return config;
   },
   (error) => {
@@ -99,6 +104,7 @@ export const productsAPI = {
   adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
   getStatistics: (id) => api.get(`/products/${id}/statistics/`),
+  exportCSV: () => api.get('/products/export_csv/', { responseType: 'blob' }),
   quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 
@@ -128,6 +134,7 @@ export const clientsAPI = {
   update: (id, data) => api.patch(`/clients/${id}/`, data),
   delete: (id) => api.delete(`/clients/${id}/`),
   getStatistics: (id) => api.get(`/clients/${id}/statistics/`),
+  exportCSV: () => api.get('/clients/export_csv/', { responseType: 'blob' }),
   quickCreate: (data) => api.post('/quick-create/client/', data),
 };
 
@@ -259,8 +266,14 @@ export const eSourcingAPI = {
 
 // Data Migration API
 export const migrationAPI = {
-  list: (params) => api.get('/migration/jobs/', { params }),
-  get: (id) => api.get(`/migration/jobs/${id}/`),
+  list: (params) => {
+    console.log('📋 Liste des jobs - URL:', `${api.defaults.baseURL}/migration/jobs/`);
+    return api.get('/migration/jobs/', { params });
+  },
+  get: (id) => {
+    console.log('📄 Get job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/`);
+    return api.get(`/migration/jobs/${id}/`);
+  },
   create: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
@@ -275,14 +288,57 @@ export const migrationAPI = {
         }
       }
     });
+
+    // Log pour debug
+    console.log('📤 Création job - URL:', `${api.defaults.baseURL}/migration/jobs/`);
+    console.log('📤 FormData keys:', Array.from(formData.keys()));
+
     return api.post('/migration/jobs/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+    }).catch((error) => {
+      console.error('❌ Erreur API create:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw error;
     });
   },
-  preview: (id) => api.post(`/migration/jobs/${id}/preview/`),
-  configure: (id, config) => api.post(`/migration/jobs/${id}/configure/`, config),
-  start: (id) => api.post(`/migration/jobs/${id}/start/`),
-  cancel: (id) => api.post(`/migration/jobs/${id}/cancel/`),
+  preview: (id) => {
+    console.log('📊 Preview job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/preview/`);
+    return api.post(`/migration/jobs/${id}/preview/`, {}, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+  configure: (id, config) => {
+    console.log('⚙️ Configure job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/configure/`);
+    console.log('⚙️ Config data:', config);
+    return api.post(`/migration/jobs/${id}/configure/`, config, {
+      headers: { 'Content-Type': 'application/json' }
+    }).catch((error) => {
+      console.error('❌ Erreur API configure:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.config?.headers,
+      });
+      throw error;
+    });
+  },
+  start: (id) => {
+    console.log('🚀 Start job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/start/`);
+    return api.post(`/migration/jobs/${id}/start/`, {}, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+  cancel: (id) => api.post(`/migration/jobs/${id}/cancel/`, {}, {
+    headers: { 'Content-Type': 'application/json' }
+  }),
   logs: (id) => api.get(`/migration/jobs/${id}/logs/`),
 };
 

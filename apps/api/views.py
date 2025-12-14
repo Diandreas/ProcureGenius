@@ -273,6 +273,32 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Export des produits en CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="products.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Reference', 'Type', 'Price', 'Stock Quantity', 'Unit', 'Description', 'Active'])
+        
+        for product in self.get_queryset():
+            writer.writerow([
+                product.name,
+                product.reference or '',
+                product.get_product_type_display() if hasattr(product, 'get_product_type_display') else product.product_type,
+                str(product.price) if product.price else '',
+                str(product.stock_quantity) if hasattr(product, 'stock_quantity') else '',
+                product.unit or '',
+                product.description or '',
+                'Oui' if product.is_active else 'Non'
+            ])
+        
+        return response
+
     @action(detail=True, methods=['get'])
     def stock_movements(self, request, pk=None):
         """Historique des mouvements de stock pour un produit"""
@@ -696,6 +722,31 @@ class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 'tax_id': client.tax_id,
             },
         })
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Export des clients en CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="clients.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Contact Person', 'Email', 'Phone', 'Address', 'Payment Terms', 'Active'])
+        
+        for client in self.get_queryset():
+            writer.writerow([
+                client.name,
+                client.contact_person or '',
+                client.email or '',
+                client.phone or '',
+                client.address or '',
+                client.payment_terms or '',
+                'Oui' if client.is_active else 'Non'
+            ])
+        
+        return response
 
 
 class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):

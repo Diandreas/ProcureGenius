@@ -515,13 +515,25 @@ const DataImportPage = () => {
                 update_existing: updateExisting,
             };
 
+            console.log('📤 Création du job avec:', { ...jobData, source_file: uploadedFile?.name });
+
             const result = await dispatch(createMigrationJob(jobData)).unwrap();
+            console.log('✅ Job créé:', result);
+            console.log('✅ Job ID:', result.id);
+
+            // Vérifier que l'ID existe
+            if (!result.id) {
+                throw new Error('L\'ID du job n\'a pas été retourné par le serveur. Réponse: ' + JSON.stringify(result));
+            }
 
             // Attendre puis prévisualiser
             await new Promise(resolve => setTimeout(resolve, 500));
-            await dispatch(previewMigrationData(result.id)).unwrap();
+            console.log('📊 Génération de l\'aperçu pour job:', result.id);
+            const previewResult = await dispatch(previewMigrationData(result.id)).unwrap();
+            console.log('✅ Aperçu généré:', previewResult);
 
             // Configurer le mapping
+            console.log('⚙️ Configuration du mapping:', fieldMapping);
             await dispatch(configureMigration({
                 id: result.id,
                 config: {
@@ -530,14 +542,41 @@ const DataImportPage = () => {
                     update_existing: updateExisting,
                 },
             })).unwrap();
+            console.log('✅ Mapping configuré');
 
             // Démarrer l'import
+            console.log('🚀 Démarrage de l\'import');
             await dispatch(startMigration(result.id)).unwrap();
+            console.log('✅ Import démarré');
 
             setActiveStep(4);
         } catch (err) {
-            console.error('Erreur import:', err);
-            setImportError(err.message || 'Erreur lors de l\'import');
+            console.error('❌ Erreur import complète:', err);
+            console.error('❌ Détails:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                statusText: err.response?.statusText,
+                url: err.config?.url,
+            });
+
+            // Message d'erreur plus détaillé
+            let errorMessage = 'Erreur lors de l\'import';
+            if (err.response?.status === 503 || (err.response?.data?.error === 'Offline')) {
+                errorMessage = 'Le service worker a intercepté la requête. Veuillez rafraîchir la page (Ctrl+F5) pour mettre à jour le service worker, ou désactivez-le temporairement dans les DevTools (Application > Service Workers > Unregister).';
+            } else if (err.response?.status === 404) {
+                errorMessage = 'Endpoint non trouvé. Vérifiez que le serveur backend est démarré et que l\'URL est correcte.';
+            } else if (err.response?.status === 400) {
+                errorMessage = err.response?.data?.message || err.response?.data?.error || 'Données invalides. Vérifiez le format du fichier.';
+            } else if (err.response?.status === 401) {
+                errorMessage = 'Non autorisé. Veuillez vous reconnecter.';
+            } else if (err.response?.data) {
+                errorMessage = err.response.data.message || err.response.data.error || JSON.stringify(err.response.data);
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setImportError(errorMessage);
         } finally {
             setLocalLoading(false);
         }

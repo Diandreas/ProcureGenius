@@ -75,10 +75,13 @@ class MigrationJobCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MigrationJob
         fields = [
+            'id',  # Ajouter l'ID pour que le frontend puisse l'utiliser
             'name', 'source_type', 'entity_type', 'source_file',
             'file_encoding', 'delimiter', 'has_header',
-            'skip_duplicates', 'update_existing'
+            'skip_duplicates', 'update_existing', 'status',
+            'created_at'
         ]
+        read_only_fields = ['id', 'status', 'created_at']
 
     def create(self, validated_data):
         user = self.context['request'].user

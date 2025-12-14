@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 from django.db import models
 from .models import MigrationJob, MigrationLog
@@ -54,7 +54,7 @@ class MigrationJobViewSet(viewsets.ModelViewSet):
             return MigrationJobCreateSerializer
         return MigrationJobDetailSerializer
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def preview(self, request, pk=None):
         """Génère un aperçu des données et retourne les champs disponibles"""
         job = self.get_object()
@@ -94,7 +94,7 @@ class MigrationJobViewSet(viewsets.ModelViewSet):
                 'message': f'Erreur: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def configure(self, request, pk=None):
         """Configure le mapping des champs"""
         job = self.get_object()
@@ -115,7 +115,7 @@ class MigrationJobViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def start(self, request, pk=None):
         """Démarre l'import"""
         job = self.get_object()
@@ -150,7 +150,7 @@ class MigrationJobViewSet(viewsets.ModelViewSet):
                 'message': f'Erreur lors de l\'import: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def cancel(self, request, pk=None):
         """Annule le job"""
         job = self.get_object()
