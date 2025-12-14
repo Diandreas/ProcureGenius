@@ -8,15 +8,25 @@ const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
   const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await widgetsAPI.getWidgetData('clients_at_risk', { period });
-        if (response.success) setData(response.data);
+        if (response.success) {
+          setData(response.data);
+        } else {
+          setError('Failed to load data');
+        }
       } catch (error) {
         console.error('Error:', error);
+        setError(error.response?.status === 500 
+          ? 'Erreur serveur. Veuillez réessayer plus tard.' 
+          : 'Erreur lors du chargement des données');
+        setData(null);
       } finally {
         setLoading(false);
       }
@@ -25,7 +35,8 @@ const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
   }, [period]);
 
   if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
-  if (!data || !data.clients) return <div className="widget-empty"><AlertCircle size={40} className="widget-empty-icon" /><div className="widget-empty-text">{t('widgets.clients_at_risk_empty', { ns: 'dashboard', defaultValue: 'Aucun client à risque' })}</div></div>;
+  if (error) return <div className="widget-error"><AlertCircle size={20} className="widget-error-icon" /><div className="widget-error-text">{error}</div></div>;
+  if (!data || !data.clients || data.clients.length === 0) return <div className="widget-empty"><AlertCircle size={40} className="widget-empty-icon" /><div className="widget-empty-text">{t('widgets.clients_at_risk_empty', { ns: 'dashboard', defaultValue: 'Aucun client à risque' })}</div></div>;
 
   return (
     <>

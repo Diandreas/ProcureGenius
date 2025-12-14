@@ -271,9 +271,6 @@ class PurchaseOrderItem(models.Model):
             })
 
     def save(self, *args, **kwargs):
-        # Validation avant sauvegarde
-        self.full_clean()
-
         # Synchroniser avec product si défini
         if self.product:
             self.product_reference = self.product.reference
@@ -282,7 +279,12 @@ class PurchaseOrderItem(models.Model):
             if not self.unit_price or self.unit_price == 0:
                 self.unit_price = self.product.cost_price or self.product.price
 
+        # Calculer le prix total AVANT la validation (car le champ est requis)
         self.total_price = self.quantity * self.unit_price
+
+        # Validation avant sauvegarde
+        self.full_clean()
+
         super().save(*args, **kwargs)
         # Recalculer les totaux du bon de commande
         self.purchase_order.recalculate_totals()

@@ -172,6 +172,38 @@
   color: #64748b;
 }
 
+/* Loading State */
+.widget-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Error State */
+.widget-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  color: #ef4444;
+  gap: 8px;
+}
+
+.widget-error-icon {
+  color: #ef4444;
+  margin-bottom: 4px;
+}
+
+.widget-error-text {
+  font-size: 13px;
+  color: #ef4444;
+}
+
 /* Chart Placeholder */
 .chart-placeholder {
   display: flex;

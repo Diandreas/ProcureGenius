@@ -15,16 +15,6 @@ WIDGETS_REGISTRY = {
         'icon': 'DollarSign',
         'component': 'FinancialSummaryWidget'
     },
-    'recent_activity': {
-        'code': 'recent_activity',
-        'name': 'Activité Récente',
-        'description': 'Feed des dernières activités',
-        'module': 'global',
-        'type': 'timeline',
-        'default_size': {'w': 2, 'h': 2},
-        'icon': 'Activity',
-        'component': 'RecentActivityWidget'
-    },
     'alerts_notifications': {
         'code': 'alerts_notifications',
         'name': 'Alertes et Notifications',
@@ -34,6 +24,16 @@ WIDGETS_REGISTRY = {
         'default_size': {'w': 1, 'h': 2},
         'icon': 'Bell',
         'component': 'AlertsWidget'
+    },
+    'recent_activity': {
+        'code': 'recent_activity',
+        'name': 'Activité Récente',
+        'description': 'Feed des dernières activités',
+        'module': 'global',
+        'type': 'timeline',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Activity',
+        'component': 'RecentActivityWidget'
     },
     'global_performance': {
         'code': 'global_performance',

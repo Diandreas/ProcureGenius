@@ -30,7 +30,8 @@ export const previewMigrationData = createAsyncThunk(
   'migration/preview',
   async (id) => {
     const response = await migrationAPI.preview(id);
-    return response.data;
+    // Le backend retourne { status: 'success', data: {...} }
+    return response.data.data || response.data;
   }
 );
 
@@ -38,7 +39,8 @@ export const configureMigration = createAsyncThunk(
   'migration/configure',
   async ({ id, config }) => {
     const response = await migrationAPI.configure(id, config);
-    return response.data;
+    // Le backend retourne { status: 'success', data: {...} }
+    return response.data.data || response.data;
   }
 );
 
@@ -46,7 +48,8 @@ export const startMigration = createAsyncThunk(
   'migration/start',
   async (id) => {
     const response = await migrationAPI.start(id);
-    return response.data;
+    // Le backend retourne { status: 'success', data: {...} }
+    return response.data.data || response.data;
   }
 );
 
@@ -119,10 +122,11 @@ const migrationSlice = createSlice({
       })
       .addCase(previewMigrationData.fulfilled, (state, action) => {
         state.loading = false;
-        state.previewData = action.payload.preview;
+        // Le backend retourne preview_rows, pas preview
+        state.previewData = action.payload.preview_rows || action.payload.preview;
         state.availableFields = action.payload.available_fields;
         if (state.currentJob) {
-          state.currentJob.preview_data = action.payload.preview;
+          state.currentJob.preview_data = action.payload.preview_rows || action.payload.preview;
           state.currentJob.total_rows = action.payload.total_rows;
         }
       })

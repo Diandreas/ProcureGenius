@@ -179,8 +179,8 @@ const CustomizableDashboard = () => {
           // Layout minimal par défaut - seulement les widgets essentiels
           const defaultLayout = [
             { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-            { i: 'recent_activity', x: 0, y: 2, w: 2, h: 2 },
-            { i: 'alerts_notifications', x: 2, y: 2, w: 2, h: 2 },
+            { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
+            { i: 'invoices_overview', x: 2, y: 2, w: 2, h: 2 },
           ];
           setLayout(defaultLayout);
           // Créer le layout dans la BD pour le persister
@@ -191,8 +191,8 @@ const CustomizableDashboard = () => {
         // Layout minimal même en cas d'erreur
         const fallbackLayout = [
           { i: 'financial_summary', x: 0, y: 0, w: 4, h: 2 },
-          { i: 'recent_activity', x: 0, y: 2, w: 2, h: 2 },
-          { i: 'alerts_notifications', x: 2, y: 2, w: 2, h: 2 },
+          { i: 'alerts_notifications', x: 0, y: 2, w: 2, h: 2 },
+          { i: 'invoices_overview', x: 2, y: 2, w: 2, h: 2 },
         ];
         setLayout(fallbackLayout);
         // Tenter de créer le layout même après erreur

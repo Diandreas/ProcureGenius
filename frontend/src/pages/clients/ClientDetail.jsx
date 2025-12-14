@@ -423,7 +423,7 @@ function ClientDetail() {
                     fullWidth
                     variant="outlined"
                     startIcon={<Receipt />}
-                    onClick={() => navigate(`/invoices/new?client=${id}`)}
+                    onClick={() => navigate(`/invoices/new?clientId=${id}`)}
                     size="small"
                   >
                     {t('clients:actions.createInvoice')}
@@ -546,7 +546,7 @@ function ClientDetail() {
           {statistics?.sales_summary?.total_invoices > 0 && (
             <Alert severity="error" sx={{ mt: 2 }}>
               <Typography variant="body2" fontWeight="bold">
-                {statistics.sales_summary.total_invoices} facture(s) seront supprimée(s)
+                {t('clients:messages.invoicesWillBeDeleted', { count: statistics.sales_summary.total_invoices }, `${statistics.sales_summary.total_invoices} facture(s) seront supprimée(s)`)}
               </Typography>
             </Alert>
           )}
@@ -565,7 +565,7 @@ function ClientDetail() {
             color="error"
             startIcon={<Delete />}
           >
-            Supprimer définitivement
+            {t('clients:actions.deletePermanently', 'Supprimer définitivement')}
           </Button>
         </DialogActions>
       </Dialog>

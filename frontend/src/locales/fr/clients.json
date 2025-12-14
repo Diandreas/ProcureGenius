@@ -57,7 +57,8 @@
     "cancel": "Annuler",
     "create": "Créer",
     "modify": "Modifier",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "deletePermanently": "Supprimer définitivement"
   },
   "tooltips": {
     "editClient": "Modifier le client",
@@ -99,7 +100,8 @@
     "updateSuccess": "Client modifié avec succès",
     "saveError": "Erreur lors de l'enregistrement",
     "noInvoicesForClient": "Aucune facture pour ce client",
-    "noProductsPurchased": "Aucun produit acheté"
+    "noProductsPurchased": "Aucun produit acheté",
+    "invoicesWillBeDeleted": "{{count}} facture(s) seront supprimée(s)"
   },
   "validation": {
     "nameRequired": "Le nom est requis",

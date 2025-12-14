@@ -228,32 +228,35 @@ class InvoicePDFGenerator:
                 traceback.print_exc()
 
         # Récupérer les informations entreprise
+        # Priorité: OrganizationSettings > PrintTemplate
         company_name = None
-        if print_template and print_template.header_company_name:
-            company_name = print_template.header_company_name
-        elif org_settings and org_settings.company_name:
+        if org_settings and org_settings.company_name:
             company_name = org_settings.company_name
+        elif print_template and print_template.header_company_name:
+            company_name = print_template.header_company_name
 
         address = None
-        if print_template and print_template.header_address:
-            address = print_template.header_address
-        elif org_settings and org_settings.company_address:
+        if org_settings and org_settings.company_address:
             address = org_settings.company_address
+        elif print_template and print_template.header_address:
+            address = print_template.header_address
 
         phone = None
-        if print_template and print_template.header_phone:
-            phone = print_template.header_phone
-        elif org_settings and org_settings.company_phone:
+        if org_settings and org_settings.company_phone:
             phone = org_settings.company_phone
+        elif print_template and print_template.header_phone:
+            phone = print_template.header_phone
 
         email = None
-        if print_template and print_template.header_email:
-            email = print_template.header_email
-        elif org_settings and org_settings.company_email:
+        if org_settings and org_settings.company_email:
             email = org_settings.company_email
+        elif print_template and print_template.header_email:
+            email = print_template.header_email
 
         website = None
-        if print_template and print_template.header_website:
+        if org_settings and hasattr(org_settings, 'company_website') and org_settings.company_website:
+            website = org_settings.company_website
+        elif print_template and print_template.header_website:
             website = print_template.header_website
 
         # DESIGN SELON LE TEMPLATE

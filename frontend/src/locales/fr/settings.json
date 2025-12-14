@@ -45,6 +45,7 @@
     "emailLabel": "Email",
     "website": "Site web",
     "websitePlaceholder": "https://www.entreprise.com",
+    "websiteInvalid": "Saisissez une URL valide (ex: https://www.example.com)",
     "invoicePreview": "FACTURE",
     "invoiceNumber": "N°",
     "dateLabel": "Date",
@@ -226,7 +227,8 @@
     "cropImage": "Rogner l'image",
     "zoom": "Zoom",
     "apply": "Appliquer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "aspectRatio": "Ratio d'aspect (carré par défaut)"
   },
   "data": {
     "title": "Import / Export et Migration",

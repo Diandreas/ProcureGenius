@@ -9,12 +9,16 @@ import {
   Edit,
   GetApp,
   OpenInNew,
+  List as ListIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import ListModal from './ListModal';
 
 const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }) => {
   const navigate = useNavigate();
   const [buttonsDisabled, setButtonsDisabled] = React.useState(false);
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [modalData, setModalData] = React.useState({ items: [], entityType: '', title: '' });
 
   // Composants markdown compacts
   const components = {
@@ -132,6 +136,12 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
     ),
   };
 
+  // Ouvrir le modal avec les données
+  const openModal = (items, entityType, title) => {
+    setModalData({ items, entityType, title });
+    setModalOpen(true);
+  };
+
   // Rendu compact des résultats d'actions
   const renderActionResults = () => {
     if (!actionResults || actionResults.length === 0) return null;
@@ -142,6 +152,7 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
           const isSuccess = result.result?.success;
           const data = result.result?.data || {};
           const entityType = data.entity_type;
+          const items = data.items || []; // Liste d'éléments si présente
 
           // DEBUG: Log pour comprendre la structure des données
           console.log('🔍 DEBUG actionResult:', {
@@ -149,11 +160,14 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
             isSuccess,
             entityType,
             hasId: !!data.id,
+            hasItems: items.length > 0,
+            itemsCount: items.length,
             fullResult: result,
             fullData: data
           });
 
           const getEntityUrl = () => {
+            if (!data.id) return null; // Pas d'URL si c'est une liste
             switch (entityType) {
               case 'supplier':
                 return `/suppliers/${data.id}`;
@@ -169,6 +183,24 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
           };
 
           const entityUrl = getEntityUrl();
+
+          // Déterminer le titre du modal selon le type
+          const getModalTitle = () => {
+            switch (entityType) {
+              case 'client':
+                return items.length > 1 ? 'Clients trouvés' : 'Client trouvé';
+              case 'supplier':
+                return items.length > 1 ? 'Fournisseurs trouvés' : 'Fournisseur trouvé';
+              case 'invoice':
+                return items.length > 1 ? 'Factures trouvées' : 'Facture trouvée';
+              case 'purchase_order':
+                return items.length > 1 ? 'Bons de commande trouvés' : 'Bon de commande trouvé';
+              case 'product':
+                return items.length > 1 ? 'Produits trouvés' : 'Produit trouvé';
+              default:
+                return 'Résultats';
+            }
+          };
 
           return (
             <Paper
@@ -208,8 +240,27 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
                     {result.result?.message || result.result?.error || 'Action exécutée'}
                   </Typography>
 
-                  {/* Détails compacts */}
-                  {isSuccess && data.name && (
+                  {/* Si c'est une liste, afficher un bouton pour ouvrir le modal */}
+                  {isSuccess && items.length > 0 && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<ListIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => openModal(items, entityType, getModalTitle())}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.8rem',
+                        py: 0.75,
+                        px: 2,
+                        mb: 1,
+                      }}
+                    >
+                      Voir les {items.length} résultat{items.length !== 1 ? 's' : ''}
+                    </Button>
+                  )}
+
+                  {/* Détails compacts pour un seul élément */}
+                  {isSuccess && data.name && !items.length && (
                     <Box
                       sx={{
                         backgroundColor: 'white',
@@ -234,8 +285,8 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
                     </Box>
                   )}
 
-                  {/* Boutons compacts */}
-                  {isSuccess && entityUrl && (
+                  {/* Boutons compacts (seulement pour un seul élément, pas pour les listes) */}
+                  {isSuccess && entityUrl && !items.length && (
                     <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                       <Button
                         size="small"
@@ -383,6 +434,15 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
       </ReactMarkdown>
       {renderActionResults()}
       {renderActionButtons()}
+
+      {/* Modal pour afficher les listes */}
+      <ListModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalData.title}
+        items={modalData.items}
+        entityType={modalData.entityType}
+      />
     </Box>
   );
 };

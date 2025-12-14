@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -59,10 +59,12 @@ function InvoiceForm() {
   const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isEdit = Boolean(id);
+  const clientIdFromUrl = searchParams.get('clientId');
 
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
@@ -102,6 +104,17 @@ function InvoiceForm() {
       fetchInvoice();
     }
   }, [id, isEdit]);
+
+  // Pre-select client from URL
+  useEffect(() => {
+    if (clientIdFromUrl && clients.length > 0 && !formData.client && !isEdit) {
+      const client = clients.find(c => c.id === clientIdFromUrl);
+      if (client) {
+        setFormData(prev => ({ ...prev, client }));
+        enqueueSnackbar(t('invoices:messages.clientPreselected', { name: client.name }), { variant: 'info' });
+      }
+    }
+  }, [clientIdFromUrl, clients, formData.client, isEdit]);
 
   const fetchClients = async () => {
     try {

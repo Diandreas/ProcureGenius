@@ -219,14 +219,15 @@ else:
                             organization=organization
                         ).first()
 
-                        if org_settings:
-                            # Récupérer les données seulement si elles ne sont pas vides
-                            if org_settings.company_name and org_settings.company_name.strip():
-                                org_data['name'] = org_settings.company_name
-                            else:
-                                # Fallback: utiliser le nom de l'organisation
-                                org_data['name'] = organization.name if organization.name else None
+                        # Récupérer les données de l'organisation
+                        # Priorité: OrganizationSettings.company_name > Organization.name
+                        if org_settings and org_settings.company_name and org_settings.company_name.strip():
+                            org_data['name'] = org_settings.company_name
+                        else:
+                            # Fallback: utiliser le nom de l'organisation
+                            org_data['name'] = organization.name if organization.name else None
 
+                        if org_settings:
                             if org_settings.company_address and org_settings.company_address.strip():
                                 org_data['address'] = org_settings.company_address
 

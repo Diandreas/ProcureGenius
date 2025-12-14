@@ -74,6 +74,21 @@ def api_register(request):
                 subscription_type='free',  # Start with free plan
             )
 
+            # Create OrganizationSettings automatically
+            try:
+                from apps.core.models import OrganizationSettings
+                OrganizationSettings.objects.get_or_create(
+                    organization=organization,
+                    defaults={
+                        'company_name': organization_name,  # Utiliser le nom de l'organisation comme fallback
+                    }
+                )
+            except Exception as e:
+                # Log error but don't fail user creation
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error creating OrganizationSettings: {e}")
+
             # Create user
             user = CustomUser.objects.create_user(
                 username=email,  # Use email as username
@@ -330,6 +345,21 @@ def api_google_login(request):
                     email_verified=True,
                     password=CustomUser.objects.make_random_password()
                 )
+                
+                # Create OrganizationSettings automatically
+                try:
+                    from apps.core.models import OrganizationSettings
+                    OrganizationSettings.objects.get_or_create(
+                        organization=organization,
+                        defaults={
+                            'company_name': org_name,  # Utiliser le nom de l'organisation comme fallback
+                        }
+                    )
+                except Exception as e:
+                    # Log error but don't fail user creation
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error creating OrganizationSettings: {e}")
                 
                 # Create free subscription
                 try:

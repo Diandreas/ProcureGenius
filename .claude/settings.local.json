@@ -3,7 +3,25 @@
     "allow": [
       "Bash(Stop-Process -Force)",
       "Bash(pkill:*)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(py -m pytest:*)",
+      "Bash(cat:*)",
+      "Bash(.venv_specify/Scripts/pip install:*)",
+      "Bash(.venv_specify/Scripts/python:*)",
+      "Bash(py manage.py run_ai_scenarios:*)",
+      "Bash(py -m pip install:*)",
+      "Bash($env:PYTHONIOENCODING=\"utf-8\")",
+      "Bash(py -c:*)",
+      "Bash(py -m py_compile:*)",
+      "Bash(git checkout:*)",
+      "Bash(tee:*)",
+      "Bash(del \"d:\\project\\BFMa\\ProcureGenius\\apps\\suppliers\\migrations\\0010_add_search_indexes.py\")",
+      "Bash(rm:*)",
+      "Bash(py:*)"
     ],
     "deny": [],
     "ask": []

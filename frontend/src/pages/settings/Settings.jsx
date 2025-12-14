@@ -60,7 +60,14 @@ import {
   Apps as AppsIcon,
   ExpandMore,
   Receipt,
+  LocalShipping as LocalShippingIcon,
+  Inventory as InventoryIcon,
+  People as PeopleIcon,
+  FileDownload as FileDownloadIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { suppliersAPI } from '../../services/api';
 import Cropper from 'react-easy-crop';
 
 // Import API services
@@ -127,28 +134,12 @@ const Settings = () => {
         printConfigurationsAPI.getDefault().catch(() => ({ data: null })),
       ]);
 
-      // Normaliser les données pour s'assurer que tous les champs sont présents
-      const normalizedSettings = {
-        ...orgResponse.data,
-        // S'assurer que taxRegion est présent (peut être tax_region depuis l'API)
-        taxRegion: orgResponse.data.taxRegion || orgResponse.data.tax_region || 'international',
-        // Normaliser les champs fiscaux
-        companyNiu: orgResponse.data.companyNiu || orgResponse.data.company_niu || '',
-        companyRcNumber: orgResponse.data.companyRcNumber || orgResponse.data.company_rc_number || '',
-        companyRccmNumber: orgResponse.data.companyRccmNumber || orgResponse.data.company_rccm_number || '',
-        companyTaxNumber: orgResponse.data.companyTaxNumber || orgResponse.data.company_tax_number || '',
-        companyNeq: orgResponse.data.companyNeq || orgResponse.data.company_neq || '',
-        companyGstNumber: orgResponse.data.companyGstNumber || orgResponse.data.company_gst_number || '',
-        companyQstNumber: orgResponse.data.companyQstNumber || orgResponse.data.company_qst_number || '',
-        companyVatNumber: orgResponse.data.companyVatNumber || orgResponse.data.company_vat_number || '',
-      };
-
-      setSettings(normalizedSettings);
+      setSettings(orgResponse.data);
       setPrintTemplate(templateResponse.data);
       setPrintConfiguration(configResponse.data);
 
       console.log('Paramètres chargés:', {
-        settings: normalizedSettings,
+        settings: orgResponse.data,
         template: templateResponse.data,
         config: configResponse.data,
       });
@@ -171,22 +162,7 @@ const Settings = () => {
 
       // Sauvegarder les paramètres d'organisation
       if (settings) {
-        // S'assurer que tous les champs sont inclus, même ceux qui sont vides
-        const settingsToSave = {
-          ...settings,
-          // Inclure explicitement tous les champs fiscaux pour éviter qu'ils soient ignorés
-          taxRegion: settings.taxRegion || 'international',
-          companyNiu: settings.companyNiu || '',
-          companyRcNumber: settings.companyRcNumber || '',
-          companyRccmNumber: settings.companyRccmNumber || '',
-          companyTaxNumber: settings.companyTaxNumber || '',
-          companyNeq: settings.companyNeq || '',
-          companyGstNumber: settings.companyGstNumber || '',
-          companyQstNumber: settings.companyQstNumber || '',
-          companyVatNumber: settings.companyVatNumber || '',
-        };
-        console.log('💾 Sauvegarde des paramètres:', settingsToSave);
-        promises.push(settingsAPI.updateAll(settingsToSave));
+        promises.push(settingsAPI.updateAll(settings));
       }
 
       // Sauvegarder le template d'impression
@@ -200,17 +176,6 @@ const Settings = () => {
       }
 
       await Promise.all(promises);
-
-      // Si la devise a changé, déclencher un événement pour rafraîchir tous les composants
-      if (settings?.defaultCurrency) {
-        window.dispatchEvent(new CustomEvent('currency-changed', {
-          detail: { currency: settings.defaultCurrency }
-        }));
-        console.log('💰 Événement de changement de devise déclenché:', settings.defaultCurrency);
-      }
-
-      // Recharger les paramètres après sauvegarde pour s'assurer que tout est à jour
-      await loadSettings();
 
       showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
@@ -235,21 +200,6 @@ const Settings = () => {
         showSnackbar(t('settings:saveSuccess'), 'success');
       } catch (error) {
         console.error('Error changing language:', error);
-        showSnackbar(t('settings:saveError'), 'error');
-      }
-    }
-
-    // Si c'est la devise qui change, sauvegarder immédiatement et déclencher l'événement
-    if (key === 'defaultCurrency') {
-      try {
-        await settingsAPI.updateAll({ ...settings, [key]: value });
-        window.dispatchEvent(new CustomEvent('currency-changed', {
-          detail: { currency: value }
-        }));
-        console.log('💰 Devise mise à jour et événement déclenché:', value);
-        showSnackbar(t('settings:saveSuccess'), 'success');
-      } catch (error) {
-        console.error('Error updating currency:', error);
         showSnackbar(t('settings:saveError'), 'error');
       }
     }
@@ -1308,14 +1258,12 @@ const AppearanceSection = ({ settings, onUpdate }) => {
  */
 const ProfileSection = ({ settings, onUpdate }) => {
   const { t } = useTranslation(['settings', 'common']);
-  const user = useSelector((state) => state.auth.user);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
   const [showPasswords, setShowPasswords] = useState(false);
-  const hasPassword = user?.has_usable_password; // Assuming backend sends this flag
 
   const handlePasswordChange = (field, value) => {
     setPasswordData(prev => ({ ...prev, [field]: value }));
@@ -1338,50 +1286,22 @@ const ProfileSection = ({ settings, onUpdate }) => {
       <Divider sx={{ mb: 3 }} />
 
       <Grid container spacing={3}>
-        {/* Informations personnelles */}
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-            Informations personnelles
-          </Typography>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Email"
-            value={user?.email || ''}
-            disabled
-            helperText="L'adresse email est gérée via votre compte"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-        </Grid>
-
         {/* Changement de mot de passe */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-            {hasPassword ? 'Modifier le mot de passe' : 'Créer un mot de passe'}
+            Modifier le mot de passe
           </Typography>
-          {!hasPassword && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Vous êtes connecté via Google. Vous pouvez créer un mot de passe pour vous connecter également avec votre email.
-            </Alert>
-          )}
         </Grid>
 
-        {hasPassword && (
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              type={showPasswords ? 'text' : 'password'}
-              label="Mot de passe actuel"
-              value={passwordData.currentPassword}
-              onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-            />
-          </Grid>
-        )}
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            type={showPasswords ? 'text' : 'password'}
+            label="Mot de passe actuel"
+            value={passwordData.currentPassword}
+            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+          />
+        </Grid>
 
         <Grid item xs={12} md={4}>
           <TextField
@@ -1417,9 +1337,9 @@ const ProfileSection = ({ settings, onUpdate }) => {
             <Button
               variant="contained"
               onClick={handleSubmitPassword}
-              disabled={(hasPassword && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword}
+              disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
             >
-              {hasPassword ? 'Changer le mot de passe' : 'Créer le mot de passe'}
+              Changer le mot de passe
             </Button>
           </Stack>
         </Grid>
@@ -1433,151 +1353,194 @@ const ProfileSection = ({ settings, onUpdate }) => {
  */
 const DataSection = ({ settings, showSnackbar }) => {
   const { t } = useTranslation(['settings', 'common']);
+  const navigate = useNavigate();
+  const [exporting, setExporting] = useState(false);
 
-  const handleExport = (format) => {
-    showSnackbar(t('settings:exportInProgress', { format: format.toUpperCase() }), 'info');
-    // TODO: Implémenter l'export réel
-    setTimeout(() => {
-      showSnackbar(t('settings:exportSuccess', { format: format.toUpperCase() }), 'success');
-    }, 1500);
-  };
+  // Types d'import disponibles
+  const importTypes = [
+    {
+      key: 'suppliers',
+      label: 'Fournisseurs',
+      icon: <LocalShippingIcon sx={{ fontSize: 36 }} />,
+      color: '#2563eb',
+      description: 'Importez votre liste de fournisseurs',
+    },
+    {
+      key: 'products',
+      label: 'Produits',
+      icon: <InventoryIcon sx={{ fontSize: 36 }} />,
+      color: '#059669',
+      description: 'Importez votre catalogue produits',
+    },
+    {
+      key: 'clients',
+      label: 'Clients',
+      icon: <PeopleIcon sx={{ fontSize: 36 }} />,
+      color: '#7c3aed',
+      description: 'Importez votre base clients',
+    },
+  ];
 
-  const handleImport = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      showSnackbar(t('settings:importInProgress', { filename: file.name }), 'info');
-      // TODO: Implémenter l'import réel
-      setTimeout(() => {
-        showSnackbar(t('settings:importSuccess'), 'success');
-      }, 1500);
+  // Export réel des fournisseurs
+  const handleExportSuppliers = async () => {
+    try {
+      setExporting(true);
+      showSnackbar('Export en cours...', 'info');
+
+      const response = await suppliersAPI.exportCSV();
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fournisseurs_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showSnackbar('Export terminé avec succès !', 'success');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      showSnackbar('Erreur lors de l\'export', 'error');
+    } finally {
+      setExporting(false);
     }
   };
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('settings:data.title')}
-      </Typography>
-      <Divider sx={{ mb: 3 }} />
-
-      <Grid container spacing={3}>
-        {/* Section Export */}
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom>
-            {t('settings:data.exportSection.title')}
+      {/* Section Import - Mise en avant */}
+      <Box sx={{ mb: 4 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <CloudUploadIcon color="primary" />
+          <Typography variant="h6" fontWeight={600}>
+            Importer des données
           </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {t('settings:data.exportSection.description')}
-          </Alert>
-          <Stack direction="row" spacing={2} flexWrap="wrap">
-            <Button
-              variant="outlined"
-              onClick={() => handleExport('json')}
-            >
-              {t('settings:data.exportSection.exportJson')}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleExport('csv')}
-            >
-              {t('settings:data.exportSection.exportCsv')}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleExport('excel')}
-            >
-              {t('settings:data.exportSection.exportExcel')}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleExport('pdf')}
-            >
-              {t('settings:data.exportSection.exportPdf')}
-            </Button>
-          </Stack>
+        </Box>
+
+        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+          Importez facilement vos données depuis des fichiers Excel ou CSV.
+          Notre système détecte automatiquement les colonnes et suggère le mapping.
+        </Alert>
+
+        <Grid container spacing={2}>
+          {importTypes.map((type) => (
+            <Grid item xs={12} sm={4} key={type.key}>
+              <Paper
+                onClick={() => navigate('/settings/import')}
+                sx={{
+                  p: 3,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  borderRadius: 3,
+                  border: '2px solid transparent',
+                  transition: 'all 0.25s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 8px 24px ${type.color}20`,
+                    borderColor: type.color,
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 2,
+                    background: `linear-gradient(135deg, ${type.color}, ${type.color}cc)`,
+                    color: 'white',
+                  }}
+                >
+                  {type.icon}
+                </Box>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  {type.label}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {type.description}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
         </Grid>
 
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
-
-        {/* Section Import */}
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom>
-            {t('settings:data.importSection.title')}
-          </Typography>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            {t('settings:data.importSection.warning')}
-          </Alert>
+        <Box textAlign="center" mt={3}>
           <Button
             variant="contained"
-            component="label"
+            size="large"
             startIcon={<CloudUploadIcon />}
+            onClick={() => navigate('/settings/import')}
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #2563eb, #1e40af)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1e40af, #1e3a8a)',
+              },
+            }}
           >
-            {t('settings:data.importSection.chooseFile')}
-            <input
-              type="file"
-              hidden
-              accept=".json,.csv,.xlsx"
-              onChange={handleImport}
-            />
+            Ouvrir l'assistant d'import
           </Button>
-          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-            {t('settings:data.importSection.acceptedFormats')}
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Section Export */}
+      <Box sx={{ mb: 4 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <FileDownloadIcon color="primary" />
+          <Typography variant="h6" fontWeight={600}>
+            Exporter vos données
           </Typography>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          Exportez vos données pour sauvegarde ou migration vers un autre système.
+        </Typography>
 
-        {/* Section Migration */}
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom>
-            {t('settings:data.migrationSection.title')}
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <Button
+            variant="outlined"
+            startIcon={exporting ? <CircularProgress size={16} /> : <LocalShippingIcon />}
+            onClick={handleExportSuppliers}
+            disabled={exporting}
+          >
+            Exporter Fournisseurs (CSV)
+          </Button>
+        </Stack>
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Section Historique */}
+      <Box>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <HistoryIcon color="primary" />
+          <Typography variant="h6" fontWeight={600}>
+            Historique des imports
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {t('settings:data.migrationSection.description')}
-          </Typography>
-          <Stack spacing={2}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('settings:data.migrationSection.quickbooks.title')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                {t('settings:data.migrationSection.quickbooks.description')}
-              </Typography>
-              <Button variant="outlined" size="small">
-                {t('settings:data.migrationSection.quickbooks.configure')}
-              </Button>
-            </Paper>
+        </Box>
 
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('settings:data.migrationSection.sage.title')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                {t('settings:data.migrationSection.sage.description')}
-              </Typography>
-              <Button variant="outlined" size="small">
-                {t('settings:data.migrationSection.sage.configure')}
-              </Button>
-            </Paper>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          Consultez l'historique de vos imports et leur statut.
+        </Typography>
 
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 0.5, backgroundColor: '#fafafa' }}>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('settings:data.migrationSection.generic.title')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                {t('settings:data.migrationSection.generic.description')}
-              </Typography>
-              <Button variant="outlined" size="small">
-                {t('settings:data.migrationSection.generic.configure')}
-              </Button>
-            </Paper>
-          </Stack>
-        </Grid>
-      </Grid>
+        <Button
+          variant="outlined"
+          startIcon={<HistoryIcon />}
+          onClick={() => navigate('/migration/jobs')}
+        >
+          Voir l'historique complet
+        </Button>
+      </Box>
     </Box>
   );
 };

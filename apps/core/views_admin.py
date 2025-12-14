@@ -315,21 +315,31 @@ def admin_settings(request):
                 messages.success(request, 'Paramètres d\'impression mis à jour avec succès.')
 
         elif action == 'update_company_info':
-            # Mise à jour des informations entreprise
-            template = PrintTemplate.objects.filter(is_default=True).first()
-            if template:
-                template.header_company_name = request.POST.get('company_name', '')
-                template.header_address = request.POST.get('company_address', '')
-                template.header_phone = request.POST.get('company_phone', '')
-                template.header_email = request.POST.get('company_email', '')
-                template.save()
+            # Mise à jour des informations entreprise dans OrganizationSettings
+            if hasattr(request.user, 'organization') and request.user.organization:
+                org_settings, _ = OrganizationSettings.objects.get_or_create(
+                    organization=request.user.organization
+                )
+                org_settings.company_name = request.POST.get('company_name', '')
+                org_settings.company_address = request.POST.get('company_address', '')
+                org_settings.company_phone = request.POST.get('company_phone', '')
+                org_settings.company_email = request.POST.get('company_email', '')
+                org_settings.save()
                 messages.success(request, 'Informations entreprise mises à jour avec succès.')
+            else:
+                messages.error(request, 'Aucune organisation associée à cet utilisateur.')
 
         return redirect('core:admin_settings')
 
     # Récupération des paramètres actuels
     print_config = PrintConfiguration.objects.filter(is_default=True).first()
-    company_template = PrintTemplate.objects.filter(is_default=True).first()
+    
+    # Récupérer OrganizationSettings au lieu de PrintTemplate
+    org_settings = None
+    if hasattr(request.user, 'organization') and request.user.organization:
+        org_settings = OrganizationSettings.objects.filter(
+            organization=request.user.organization
+        ).first()
 
     # Statistiques système
     system_stats = {
@@ -344,7 +354,7 @@ def admin_settings(request):
 
     context = {
         'print_config': print_config,
-        'company_template': company_template,
+        'org_settings': org_settings,
         'system_stats': system_stats,
     }
 

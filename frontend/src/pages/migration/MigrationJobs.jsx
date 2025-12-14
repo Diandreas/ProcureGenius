@@ -115,7 +115,7 @@ function MigrationJobs() {
         <Button
           variant="contained"
           startIcon={<Add />}
-          onClick={() => navigate('/migration/wizard')}
+          onClick={() => navigate('/settings/import')}
         >
           Nouvel import
         </Button>

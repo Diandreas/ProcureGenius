@@ -725,18 +725,57 @@ class QuickActionsView(APIView):
     """Actions rapides prédéfinies depuis la configuration JSON"""
     permission_classes = [IsAuthenticated]
 
+    # Mapping entre catégories d'actions et modules requis
+    # Note: Si une catégorie n'est pas dans ce dict, l'action sera toujours affichée
+    CATEGORY_TO_MODULE = {
+        'suppliers': 'suppliers',
+        'invoices': 'invoices',
+        'purchase_orders': 'purchase-orders',
+        'clients': 'clients',
+        'products': 'products',
+        'dashboard': None,  # Toujours accessible (pas de module requis)
+        'reports': 'analytics',
+        'stock': 'products',
+        'search': None,  # Recherche générale toujours accessible
+    }
+
     def get(self, request):
-        """Retourner les actions rapides disponibles"""
+        """Retourner les actions rapides disponibles filtrées selon les modules activés"""
         try:
+            from apps.core.modules import get_user_accessible_modules
+
             # Récupérer la catégorie depuis les paramètres de requête
             category = request.GET.get('category')
 
+            # Obtenir les modules accessibles pour l'utilisateur
+            # Cette fonction gère Organization.enabled_modules ET UserPermissions.module_access
+            user = request.user
+            enabled_modules = set(get_user_accessible_modules(user))
+
+            logger.info(f"User {user.username} accessible modules: {enabled_modules}")
+
             # Obtenir les actions configurables
             available_actions = action_manager.get_available_actions(category)
+            logger.info(f"Total available actions: {len(available_actions)}")
+
+            # Filtrer les actions selon les modules activés
+            filtered_actions = []
+            for action in available_actions:
+                action_category = action.get('category')
+                required_module = self.CATEGORY_TO_MODULE.get(action_category)
+
+                # Si l'action n'a pas de module requis OU si le module est activé
+                if not required_module or required_module in enabled_modules:
+                    filtered_actions.append(action)
+                    logger.debug(f"Action '{action['name']}' included (category: {action_category}, module: {required_module})")
+                else:
+                    logger.debug(f"Action '{action['name']}' filtered out (category: {action_category}, module: {required_module})")
+
+            logger.info(f"Filtered actions: {len(filtered_actions)} out of {len(available_actions)}")
 
             # Convertir en format compatible avec le frontend
             quick_actions = []
-            for action in available_actions:
+            for action in filtered_actions:
                 # Créer un prompt basé sur la configuration
                 prompt = action_manager.create_ai_prompt(
                     action['id'],

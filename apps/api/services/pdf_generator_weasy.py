@@ -157,35 +157,38 @@ class InvoiceWeasyPDFGenerator:
                         is_default=True
                     ).first()
 
-                    # Priorité: PrintTemplate > OrganizationSettings
-                    if print_template and print_template.header_company_name:
-                        org_data['name'] = print_template.header_company_name
-                    elif org_settings and org_settings.company_name:
+                    # Priorité: OrganizationSettings > PrintTemplate
+                    # Utiliser toujours company_name de OrganizationSettings
+                    if org_settings and org_settings.company_name:
                         org_data['name'] = org_settings.company_name
+                    elif print_template and print_template.header_company_name:
+                        org_data['name'] = print_template.header_company_name
 
-                    if print_template and print_template.header_address:
-                        org_data['address'] = print_template.header_address
-                    elif org_settings and org_settings.company_address:
+                    if org_settings and org_settings.company_address:
                         org_data['address'] = org_settings.company_address
+                    elif print_template and print_template.header_address:
+                        org_data['address'] = print_template.header_address
 
-                    if print_template and print_template.header_phone:
-                        org_data['phone'] = print_template.header_phone
-                    elif org_settings and org_settings.company_phone:
+                    if org_settings and org_settings.company_phone:
                         org_data['phone'] = org_settings.company_phone
+                    elif print_template and print_template.header_phone:
+                        org_data['phone'] = print_template.header_phone
 
-                    if print_template and print_template.header_email:
-                        org_data['email'] = print_template.header_email
-                    elif org_settings and org_settings.company_email:
+                    if org_settings and org_settings.company_email:
                         org_data['email'] = org_settings.company_email
+                    elif print_template and print_template.header_email:
+                        org_data['email'] = print_template.header_email
 
-                    if print_template and print_template.header_website:
+                    if org_settings and hasattr(org_settings, 'company_website') and org_settings.company_website:
+                        org_data['website'] = org_settings.company_website
+                    elif print_template and print_template.header_website:
                         org_data['website'] = print_template.header_website
 
                     # Logo
-                    if print_template and print_template.header_logo:
-                        org_data['logo_path'] = print_template.header_logo.path
-                    elif org_settings and org_settings.company_logo:
+                    if org_settings and org_settings.company_logo:
                         org_data['logo_path'] = org_settings.company_logo.path
+                    elif print_template and print_template.header_logo:
+                        org_data['logo_path'] = print_template.header_logo.path
 
         except Exception as e:
             print(f"✗ Erreur lors de la récupération des données organisation: {e}")

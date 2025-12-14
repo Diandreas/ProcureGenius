@@ -67,7 +67,14 @@
         "purchaseCount_one": "{{count}} achat",
         "purchaseCount_other": "{{count}} achats",
         "unitsCount_one": "{{count}} unité",
-        "unitsCount_other": "{{count}} unités"
+        "unitsCount_other": "{{count}} unités",
+        "uncategorized": "Sans catégorie",
+        "selectWarehouse": "Sélectionner un entrepôt",
+        "noWarehouseAvailable": "Aucun entrepôt disponible",
+        "optional": "Optionnel",
+        "advancedDetails": "Détails avancés",
+        "stockManagement": "Gestion de stock",
+        "noSupplier": "Aucun fournisseur"
     },
     "table": {
         "invoiceNumber": "N° Facture",
@@ -130,14 +137,32 @@
         "leaveEmptyForAuto": "Laissez vide pour générer automatiquement",
         "alertLowStock": "Alerte si stock <= ce seuil",
         "noInvoicesForProduct": "Aucune facture pour ce produit",
-        "noClientsPurchased": "Aucun client n'a encore acheté ce produit"
+        "noClientsPurchased": "Aucun client n'a encore acheté ce produit",
+        "supplierCreated": "Fournisseur créé avec succès",
+        "supplierCreateError": "Erreur lors de la création du fournisseur",
+        "warehouseCreated": "Entrepôt créé avec succès",
+        "warehouseCreateError": "Erreur lors de la création de l'entrepôt",
+        "categoryCreated": "Catégorie créée avec succès",
+        "categoryCreateError": "Erreur lors de la création de la catégorie",
+        "noSuppliers": "Aucun fournisseur disponible",
+        "noWarehouses": "Aucun entrepôt disponible",
+        "noCategories": "Aucune catégorie disponible",
+        "warehouseUpdated": "Entrepôt modifié avec succès",
+        "warehouseDeleted": "Entrepôt supprimé avec succès",
+        "warehouseDeleteError": "Erreur lors de la suppression de l'entrepôt",
+        "deleteWarehouseConfirm": "Êtes-vous sûr de vouloir supprimer cet entrepôt ?",
+        "categoryUpdated": "Catégorie modifiée avec succès",
+        "categoryDeleted": "Catégorie supprimée avec succès",
+        "categoryDeleteError": "Erreur lors de la suppression de la catégorie",
+        "deleteCategoryConfirm": "Êtes-vous sûr de vouloir supprimer cette catégorie ?"
     },
     "actions": {
         "cancel": "Annuler",
         "create": "Créer",
         "modify": "Modifier",
         "change": "Changer",
-        "add": "Ajouter"
+        "add": "Ajouter",
+        "save": "Enregistrer"
     },
     "validation": {
         "nameRequired": "Le nom est requis",
@@ -150,5 +175,33 @@
         "stockRequired": "Le stock est requis",
         "thresholdNegative": "Le seuil ne peut pas être négatif",
         "thresholdRequired": "Requis"
+    },
+    "modals": {
+        "selectSupplier": "Sélectionner un fournisseur",
+        "selectWarehouse": "Sélectionner un entrepôt",
+        "selectCategory": "Sélectionner une catégorie",
+        "manageWarehouses": "Gérer les entrepôts",
+        "manageCategories": "Gérer les catégories",
+        "searchSupplier": "Rechercher un fournisseur...",
+        "searchWarehouse": "Rechercher un entrepôt...",
+        "searchCategory": "Rechercher une catégorie...",
+        "supplierName": "Nom du fournisseur:",
+        "supplierEmail": "Email (optionnel):",
+        "warehouseName": "Nom de l'entrepôt",
+        "warehouseCode": "Code",
+        "warehouseCity": "Ville",
+        "warehouseAddress": "Adresse",
+        "warehouseCodeHelper": "Code unique pour identifier l'entrepôt",
+        "newWarehouse": "Nouvel entrepôt",
+        "editWarehouse": "Modifier l'entrepôt",
+        "categoryName": "Nom de la catégorie",
+        "categoryDescription": "Description",
+        "categoryDescriptionHelper": "Description optionnelle de la catégorie",
+        "newCategory": "Nouvelle catégorie",
+        "editCategory": "Modifier la catégorie"
+    },
+    "warehouseMode": {
+        "activate": "Activer le mode entrepôt",
+        "active": "Mode entrepôt actif"
     }
 }

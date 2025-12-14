@@ -29,10 +29,14 @@ def print_invoice_view(request, invoice_id):
         ).first()
 
     # Récupérer le template et la configuration
-    template_obj = PrintTemplate.objects.filter(
-        template_type='invoice',
-        is_default=True
-    ).first()
+    # Filtrer par organisation pour éviter de récupérer un template d'une autre organisation
+    template_obj = None
+    if request.user.organization:
+        template_obj = PrintTemplate.objects.filter(
+            organization=request.user.organization,
+            template_type='invoice',
+            is_default=True
+        ).first()
 
     if not template_obj:
         # Créer un template par défaut si aucun n'existe
@@ -49,18 +53,19 @@ def print_invoice_view(request, invoice_id):
         header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else ""
         header_email = org_settings.company_email if org_settings and org_settings.company_email else ""
 
-        template_obj = PrintTemplate.objects.create(
-            name="Template par défaut",
-            template_type='invoice',
-            is_default=True,
-            organization=request.user.organization,
-            header_company_name=header_name,
-            header_address=header_address,
-            header_phone=header_phone,
-            header_email=header_email,
-            footer_text="Merci de votre confiance",
-            footer_conditions="Paiement à 30 jours. Retard de paiement : intérêts de 1,5% par mois."
-        )
+        if request.user.organization:
+            template_obj = PrintTemplate.objects.create(
+                name="Template par défaut",
+                template_type='invoice',
+                is_default=True,
+                organization=request.user.organization,
+                header_company_name=header_name,
+                header_address=header_address,
+                header_phone=header_phone,
+                header_email=header_email,
+                footer_text="Merci de votre confiance",
+                footer_conditions="Paiement à 30 jours. Retard de paiement : intérêts de 1,5% par mois."
+            )
 
         # Si il y a un logo dans org_settings, l'assigner au template
         if org_settings and org_settings.company_logo:
@@ -114,10 +119,14 @@ def print_purchase_order_view(request, po_id):
         ).first()
 
     # Récupérer le template et la configuration
-    template_obj = PrintTemplate.objects.filter(
-        template_type='purchase_order',
-        is_default=True
-    ).first()
+    # Filtrer par organisation pour éviter de récupérer un template d'une autre organisation
+    template_obj = None
+    if hasattr(request.user, 'organization') and request.user.organization:
+        template_obj = PrintTemplate.objects.filter(
+            organization=request.user.organization,
+            template_type='purchase_order',
+            is_default=True
+        ).first()
 
     if not template_obj:
         # Créer un template par défaut si aucun n'existe
@@ -133,16 +142,17 @@ def print_purchase_order_view(request, po_id):
         header_phone = org_settings.company_phone if org_settings and org_settings.company_phone else ""
         header_email = org_settings.company_email if org_settings and org_settings.company_email else ""
 
-        template_obj = PrintTemplate.objects.create(
-            name="Template BC par défaut",
-            template_type='purchase_order',
-            is_default=True,
-            organization=request.user.organization if hasattr(request.user, 'organization') else None,
-            header_company_name=header_name,
-            header_address=header_address,
-            header_phone=header_phone,
-            header_email=header_email,
-            footer_text="Merci de confirmer la réception de cette commande",
+        if hasattr(request.user, 'organization') and request.user.organization:
+            template_obj = PrintTemplate.objects.create(
+                name="Template BC par défaut",
+                template_type='purchase_order',
+                is_default=True,
+                organization=request.user.organization,
+                header_company_name=header_name,
+                header_address=header_address,
+                header_phone=header_phone,
+                header_email=header_email,
+                footer_text="Merci de confirmer la réception de cette commande",
             footer_conditions="Livraison selon les termes convenus. Retard de livraison à signaler immédiatement."
         )
 

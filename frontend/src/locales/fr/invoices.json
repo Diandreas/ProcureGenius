@@ -48,6 +48,7 @@
     "loadProductsError": "Erreur lors du chargement des produits",
     "loadInvoiceFormError": "Erreur lors du chargement de la facture",
     "fillAllRequiredFields": "Veuillez remplir tous les champs requis",
+    "clientPreselected": "Client {{name}} présélectionné",
     "selectClientRequired": "Veuillez sélectionner un client",
     "enterTitleRequired": "Veuillez saisir un titre",
     "addAtLeastOneItem": "Veuillez ajouter au moins un article",

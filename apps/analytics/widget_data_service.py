@@ -26,7 +26,7 @@ class WidgetDataService:
         widget_methods = {
             # Global widgets
             'financial_summary': self.get_financial_summary,
-            'recent_activity': self.get_recent_activity,
+            'recent_activity': lambda **kw: self.get_recent_activity(limit, **kw),
             'alerts_notifications': self.get_alerts_notifications,
             'global_performance': self.get_global_performance,
 
@@ -87,12 +87,34 @@ class WidgetDataService:
             'comparison': stats.get('comparison', {})
         }
 
-    def get_recent_activity(self, **kwargs):
-        """Recent activity across all modules - simplified version"""
-        # TODO: Implement activity feed from multiple sources
+    def get_recent_activity(self, limit, **kwargs):
+        """Recent activity across all modules"""
+        from .models import ActivityLog
+
+        # Récupérer les activités récentes pour l'organisation
+        activities = ActivityLog.objects.filter(
+            organization=self.stats_service.organization,
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).select_related('user').order_by('-created_at')[:limit]
+
+        activities_data = []
+        for activity in activities:
+            activities_data.append({
+                'id': str(activity.id),
+                'action_type': activity.action_type,
+                'entity_type': activity.entity_type,
+                'entity_id': activity.entity_id,
+                'description': activity.description,
+                'user': activity.user.username if activity.user else 'System',
+                'user_full_name': activity.user.get_full_name() if activity.user and hasattr(activity.user, 'get_full_name') else (activity.user.username if activity.user else 'System'),
+                'created_at': activity.created_at.isoformat(),
+                'metadata': activity.metadata
+            })
+
         return {
-            'activities': [],
-            'count': 0
+            'activities': activities_data,
+            'count': len(activities_data)
         }
 
     def get_alerts_notifications(self, **kwargs):
@@ -208,14 +230,6 @@ class WidgetDataService:
             'out_of_stock': list(out_of_stock)
         }
 
-    def get_margin_analysis(self, **kwargs):
-        """Margin analysis by category"""
-        # Simplified version
-        stats = self.stats_service.get_product_stats()
-        return {
-            'average_margin': 0,  # TODO: Calculate
-            'by_category': []  # TODO: Implement
-        }
 
     def get_stock_movements(self, limit, **kwargs):
         """Recent stock movements"""
@@ -238,6 +252,74 @@ class WidgetDataService:
                 }
                 for m in movements
             ]
+        }
+
+    def get_margin_analysis(self, **kwargs):
+        """Margin analysis by category"""
+        from apps.invoicing.models import Product, ProductCategory
+        from decimal import Decimal
+
+        # Calculer la marge moyenne globale
+        products = Product.objects.filter(
+            organization=self.stats_service.organization,
+            is_active=True,
+            cost_price__gt=0
+        )
+        
+        total_margin = Decimal('0')
+        total_margin_percent = Decimal('0')
+        count = 0
+        
+        for product in products:
+            if product.cost_price > 0:
+                margin = product.price - product.cost_price
+                margin_percent = ((product.price - product.cost_price) / product.cost_price) * 100
+                total_margin += margin
+                total_margin_percent += margin_percent
+                count += 1
+        
+        average_margin = float(total_margin / count) if count > 0 else 0
+        average_margin_percent = float(total_margin_percent / count) if count > 0 else 0
+
+        # Calculer les marges par catégorie
+        categories_data = []
+        categories = ProductCategory.objects.filter(
+            products__organization=self.stats_service.organization
+        ).distinct()
+        
+        for category in categories:
+            cat_products = products.filter(category=category)
+            cat_count = cat_products.count()
+            
+            if cat_count > 0:
+                cat_total_margin = Decimal('0')
+                cat_total_margin_percent = Decimal('0')
+                cat_valid_count = 0
+                
+                for product in cat_products:
+                    if product.cost_price > 0:
+                        margin = product.price - product.cost_price
+                        margin_percent = ((product.price - product.cost_price) / product.cost_price) * 100
+                        cat_total_margin += margin
+                        cat_total_margin_percent += margin_percent
+                        cat_valid_count += 1
+                
+                if cat_valid_count > 0:
+                    categories_data.append({
+                        'category_id': str(category.id),
+                        'category_name': category.name,
+                        'product_count': cat_count,
+                        'average_margin': float(cat_total_margin / cat_valid_count),
+                        'average_margin_percent': float(cat_total_margin_percent / cat_valid_count),
+                        'total_revenue': float(sum(p.price for p in cat_products)),
+                        'total_cost': float(sum(p.cost_price for p in cat_products if p.cost_price > 0))
+                    })
+
+        return {
+            'average_margin': average_margin,
+            'average_margin_percent': average_margin_percent,
+            'total_products': count,
+            'by_category': categories_data
         }
 
     # ========== CLIENT WIDGETS ==========
@@ -268,10 +350,20 @@ class WidgetDataService:
         ).annotate(
             overdue_count=Count('invoices'),
             overdue_amount=Sum('invoices__total_amount')
-        ).values('id', 'first_name', 'last_name', 'company', 'overdue_count', 'overdue_amount')[:10]
+        ).values('id', 'name', 'overdue_count', 'overdue_amount')[:10]
+
+        # Format the response to match frontend expectations
+        formatted_clients = []
+        for client in clients:
+            formatted_clients.append({
+                'id': str(client['id']),
+                'name': client['name'],
+                'overdue_invoices': client['overdue_count'],
+                'overdue_amount': float(client['overdue_amount'] or 0)
+            })
 
         return {
-            'clients': list(clients)
+            'clients': formatted_clients
         }
 
     def get_client_acquisition(self, **kwargs):
@@ -450,9 +542,19 @@ class WidgetDataService:
 
     def get_budget_tracking(self, **kwargs):
         """Budget tracking"""
+        from .models import Budget
         from apps.purchase_orders.models import PurchaseOrder
         from django.db.models import Sum
 
+        # Récupérer le budget actif pour la période
+        active_budget = Budget.objects.filter(
+            organization=self.stats_service.organization,
+            is_active=True,
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date
+        ).order_by('-start_date').first()
+
+        # Calculer les dépenses (POs approuvés, envoyés ou reçus)
         total_spent = PurchaseOrder.objects.filter(
             created_by__organization=self.stats_service.organization,
             status__in=['approved', 'sent', 'received'],
@@ -460,15 +562,35 @@ class WidgetDataService:
             created_at__lte=self.end_date
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-        # TODO: Get budget from config
-        budget = 100000
-
-        return {
-            'budget': budget,
-            'spent': float(total_spent),
-            'remaining': budget - float(total_spent),
-            'percent_used': (float(total_spent) / budget * 100) if budget > 0 else 0
-        }
+        if active_budget:
+            budget_amount = float(active_budget.amount)
+            spent = float(total_spent)
+            remaining = budget_amount - spent
+            percent_used = (spent / budget_amount * 100) if budget_amount > 0 else 0
+            
+            return {
+                'budget_id': str(active_budget.id),
+                'budget_name': active_budget.name,
+                'budget': budget_amount,
+                'spent': spent,
+                'remaining': remaining,
+                'percent_used': percent_used,
+                'is_over_budget': spent > budget_amount,
+                'period_type': active_budget.period_type,
+                'start_date': active_budget.start_date.isoformat(),
+                'end_date': active_budget.end_date.isoformat()
+            }
+        else:
+            # Pas de budget défini, retourner juste les dépenses
+            return {
+                'budget': 0,
+                'spent': float(total_spent),
+                'remaining': 0,
+                'percent_used': 0,
+                'is_over_budget': False,
+                'has_budget': False,
+                'message': 'Aucun budget défini pour cette période'
+            }
 
     # ========== AI WIDGETS ==========
 

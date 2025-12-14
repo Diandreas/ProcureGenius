@@ -303,7 +303,13 @@ def create_user_preferences_and_permissions(sender, instance, created, **kwargs)
         default_modules = _get_default_modules_for_role(instance.role, instance.organization)
         UserPreferences.objects.get_or_create(
             user=instance,
-            defaults={'enabled_modules': default_modules}
+            defaults={
+                'enabled_modules': default_modules,
+                'onboarding_completed': False,  # Important: nouveau utilisateur doit passer par l'onboarding
+                'onboarding_data': {},
+                'dashboard_layout': {},
+                'notification_settings': {},
+            }
         )
         
         # Créer les permissions selon le rôle

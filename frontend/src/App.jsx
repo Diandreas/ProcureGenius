@@ -47,6 +47,7 @@ import ContractDetail from './pages/contracts/ContractDetail';
 import ContractForm from './pages/contracts/ContractForm';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
+import DataImportPage from './pages/settings/DataImportPage';
 import Pricing from './pages/Pricing';
 import Register from './pages/auth/Register';
 import LoginEnhanced from './pages/auth/LoginEnhanced';
@@ -467,93 +468,94 @@ function App() {
                 {onboardingChecked && (
                   <>
                     <Router>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
-                    <Route path="/pricing" element={<Pricing />} />
+                      <Routes>
+                        {/* Public Routes */}
+                        <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+                        <Route path="/pricing" element={<Pricing />} />
 
-                    {/* Auth Routes */}
-                    <Route element={<AuthLayout />}>
-                      <Route path="/login" element={<LoginEnhanced />} />
-                      <Route path="/register" element={<Register />} />
-                    </Route>
+                        {/* Auth Routes */}
+                        <Route element={<AuthLayout />}>
+                          <Route path="/login" element={<LoginEnhanced />} />
+                          <Route path="/register" element={<Register />} />
+                        </Route>
 
-                    {/* Onboarding - Protected but accessible without onboarding_completed */}
-                    <Route element={<PrivateRoute />}>
-                      <Route path="/onboarding" element={<OnboardingSetup />} />
-                    </Route>
+                        {/* Onboarding - Protected but accessible without onboarding_completed */}
+                        <Route element={<PrivateRoute />}>
+                          <Route path="/onboarding" element={<OnboardingSetup />} />
+                        </Route>
 
-                    {/* Protected Routes */}
-                    <Route element={<PrivateRoute />}>
-                      <Route element={<MainLayout />}>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<CustomizableDashboard />} />
-                        <Route path="/dashboard-old" element={<OldDashboard />} />
+                        {/* Protected Routes */}
+                        <Route element={<PrivateRoute />}>
+                          <Route element={<MainLayout />}>
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/dashboard" element={<CustomizableDashboard />} />
+                            <Route path="/dashboard-old" element={<OldDashboard />} />
 
-                        {/* Suppliers - Module Protected */}
-                        <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
-                        <Route path="/suppliers/new" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
-                        <Route path="/suppliers/:id" element={<ModuleRoute module="suppliers"><SupplierDetail /></ModuleRoute>} />
-                        <Route path="/suppliers/:id/edit" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
+                            {/* Suppliers - Module Protected */}
+                            <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
+                            <Route path="/suppliers/new" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
+                            <Route path="/suppliers/:id" element={<ModuleRoute module="suppliers"><SupplierDetail /></ModuleRoute>} />
+                            <Route path="/suppliers/:id/edit" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
 
-                        {/* Purchase Orders - Module Protected */}
-                        <Route path="/purchase-orders" element={<ModuleRoute module="purchase-orders"><PurchaseOrders /></ModuleRoute>} />
-                        <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
-                        <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
-                        <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
+                            {/* Purchase Orders - Module Protected */}
+                            <Route path="/purchase-orders" element={<ModuleRoute module="purchase-orders"><PurchaseOrders /></ModuleRoute>} />
+                            <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
+                            <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
+                            <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
 
-                        {/* Invoices - Module Protected */}
-                        <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />
-                        <Route path="/invoices/new" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
-                        <Route path="/invoices/:id" element={<ModuleRoute module="invoices"><InvoiceDetail /></ModuleRoute>} />
-                        <Route path="/invoices/:id/edit" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
+                            {/* Invoices - Module Protected */}
+                            <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />
+                            <Route path="/invoices/new" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
+                            <Route path="/invoices/:id" element={<ModuleRoute module="invoices"><InvoiceDetail /></ModuleRoute>} />
+                            <Route path="/invoices/:id/edit" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
 
-                        {/* Products - Module Protected */}
-                        <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
-                        <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
-                        <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
-                        <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                            {/* Products - Module Protected */}
+                            <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
+                            <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                            <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
+                            <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
 
-                        {/* Clients - Module Protected */}
-                        <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
-                        <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
-                        <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
-                        <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
+                            {/* Clients - Module Protected */}
+                            <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
+                            <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
+                            <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
+                            <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
 
-                        {/* E-Sourcing - Module Protected */}
-                        <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
-                        <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                        <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
-                        <Route path="/e-sourcing/events/:id/edit" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                        <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
-                        <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
+                            {/* E-Sourcing - Module Protected */}
+                            <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
+                            <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
+                            <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
+                            <Route path="/e-sourcing/events/:id/edit" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
+                            <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
+                            <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
 
-                        {/* Contracts - Module Protected */}
-                        <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
-                        <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
-                        <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
-                        <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
+                            {/* Contracts - Module Protected */}
+                            <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
+                            <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
+                            <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
+                            <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
 
-                        {/* Data Migration - Admin only */}
-                        <Route path="/migration/jobs" element={<MigrationJobs />} />
-                        <Route path="/migration/wizard" element={<MigrationWizard />} />
+                            {/* Data Migration - Admin only */}
+                            <Route path="/migration/jobs" element={<MigrationJobs />} />
+                            <Route path="/migration/wizard" element={<MigrationWizard />} />
 
-                        {/* AI Chat - Admin only */}
-                        <Route path="/ai-chat" element={<AIChat />} />
+                            {/* AI Chat - Admin only */}
+                            <Route path="/ai-chat" element={<AIChat />} />
 
-                        {/* Settings */}
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/settings/users" element={<UserManagement />} />
-                      </Route>
-                    </Route>
+                            {/* Settings */}
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/settings/users" element={<UserManagement />} />
+                            <Route path="/settings/import" element={<DataImportPage />} />
+                          </Route>
+                        </Route>
 
-                    {/* 404 */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
+                        {/* 404 */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
 
-                  {/* PWA Install Prompt */}
-                  <PWAInstallPrompt />
-                </Router>
+                      {/* PWA Install Prompt */}
+                      <PWAInstallPrompt />
+                    </Router>
                   </>
                 )}
               </ModuleProvider>

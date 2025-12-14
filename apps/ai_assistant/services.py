@@ -1572,31 +1572,18 @@ class ActionExecutor:
 
         results = await search_suppliers_sync()
 
-        # Construire un message détaillé
+        # Message simple pour les listes (le modal affichera les détails)
         if results:
-            message = f"J'ai trouvé {len(results)} fournisseur(s) correspondant à '{params.get('query')}' :\n\n"
-
-            for i, result in enumerate(results, 1):
-                message += f"**{i}. {result['name']}**"
-                message += f" [Voir](/suppliers/{result['id']})\n"
-
-                if result.get('email'):
-                    message += f"   - Email: {result['email']}\n"
-                if result.get('phone'):
-                    message += f"   - Téléphone: {result['phone']}\n"
-                if result.get('contact'):
-                    message += f"   - Contact: {result['contact']}\n"
-                if result.get('status'):
-                    message += f"   - Statut: {result['status']}\n"
-
-                # Score de correspondance
-                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+            message = f"J'ai trouvé {len(results)} fournisseur(s) correspondant à '{params.get('query')}'. Cliquez sur le bouton ci-dessous pour voir la liste."
         else:
             message = f"Aucun fournisseur trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'supplier'
+            },
             'count': len(results),
             'message': message
         }
@@ -1877,7 +1864,10 @@ class ActionExecutor:
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'invoice'
+            },
             'count': len(results),
             'message': f"J'ai trouvé {len(results)} facture(s)" if results else f"Aucune facture trouvée pour '{params.get('query', '')}'"
         }
@@ -2147,7 +2137,10 @@ class ActionExecutor:
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'purchase_order'
+            },
             'count': len(results),
             'message': f"J'ai trouvé {len(results)} bon(s) de commande" if results else f"Aucun bon de commande trouvé pour '{params.get('query', '')}'"
         }
@@ -2443,29 +2436,18 @@ class ActionExecutor:
 
         results = await search_clients_sync()
 
-        # Construire un message détaillé
+        # Message simple pour les listes (le modal affichera les détails)
         if results:
-            message = f"J'ai trouvé {len(results)} client(s) correspondant à '{params.get('query')}' :\n\n"
-
-            for i, result in enumerate(results, 1):
-                message += f"**{i}. {result['name']}**"
-                message += f" [Voir](/clients/{result['id']})\n"
-
-                if result.get('email'):
-                    message += f"   - Email: {result['email']}\n"
-                if result.get('phone'):
-                    message += f"   - Téléphone: {result['phone']}\n"
-                if result.get('contact_person'):
-                    message += f"   - Contact: {result['contact_person']}\n"
-
-                # Score de correspondance
-                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+            message = f"J'ai trouvé {len(results)} client(s) correspondant à '{params.get('query')}'. Cliquez sur le bouton ci-dessous pour voir la liste."
         else:
             message = f"Aucun client trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'client'
+            },
             'count': len(results),
             'message': message
         }
@@ -2506,7 +2488,10 @@ class ActionExecutor:
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'client'
+            },
             'count': len(results),
             'message': f"Voici les {len(results)} dernier(s) client(s)" if results else "Aucun client trouvé"
         }
@@ -2660,14 +2645,20 @@ class ActionExecutor:
         if not results:
             return {
                 'success': True,
-                'data': [],
+                'data': {
+                    'items': [],
+                    'entity_type': 'invoice'
+                },
                 'count': 0,
                 'message': "Aucune facture trouvée"
             }
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'invoice'
+            },
             'count': len(results),
             'message': f"Voici {'la dernière facture' if len(results) == 1 else f'les {len(results)} dernières factures'}"
         }
@@ -3806,32 +3797,18 @@ ProcureGenius
 
         results = await search_products_sync()
 
-        # Construire un message détaillé
+        # Message simple pour les listes (le modal affichera les détails)
         if results:
-            message = f"J'ai trouvé {len(results)} produit(s) correspondant à '{params.get('query')}' :\n\n"
-
-            for i, result in enumerate(results, 1):
-                message += f"**{i}. {result['name']}**"
-                message += f" [Voir](/products/{result['id']})\n"
-
-                if result.get('reference'):
-                    message += f"   - Référence: {result['reference']}\n"
-                if result.get('product_type'):
-                    type_label = 'Service' if result['product_type'] == 'service' else 'Produit physique'
-                    message += f"   - Type: {type_label}\n"
-                if result.get('price'):
-                    message += f"   - Prix: {result['price']}€\n"
-                if result.get('stock_quantity') is not None:
-                    message += f"   - Stock: {result['stock_quantity']}\n"
-
-                # Score de correspondance
-                message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+            message = f"J'ai trouvé {len(results)} produit(s) correspondant à '{params.get('query')}'. Cliquez sur le bouton ci-dessous pour voir la liste."
         else:
             message = f"Aucun produit trouvé pour '{params.get('query', '')}'"
 
         return {
             'success': True,
-            'data': results,
+            'data': {
+                'items': results,
+                'entity_type': 'product'
+            },
             'count': len(results),
             'message': message
         }

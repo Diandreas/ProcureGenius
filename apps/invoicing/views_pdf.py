@@ -277,44 +277,44 @@ else:
                         if print_template:
                             print(f"[DEBUG]   - header_company_name: '{print_template.header_company_name}'")
 
-                        # Priorité: PrintTemplate > OrganizationSettings
-                        # Mais seulement si le champ PrintTemplate n'est pas vide
-                        if print_template and print_template.header_company_name and print_template.header_company_name.strip():
-                            org_data['name'] = print_template.header_company_name
-                            print(f"[DEBUG] ✓ Using PrintTemplate name: '{org_data['name']}'")
-                        elif org_settings and org_settings.company_name and org_settings.company_name.strip():
+                        # Priorité: OrganizationSettings > PrintTemplate
+                        # Utiliser toujours company_name de OrganizationSettings
+                        if org_settings and org_settings.company_name and org_settings.company_name.strip():
                             org_data['name'] = org_settings.company_name
                             print(f"[DEBUG] ✓ Using OrganizationSettings name: '{org_data['name']}'")
+                        elif print_template and print_template.header_company_name and print_template.header_company_name.strip():
+                            org_data['name'] = print_template.header_company_name
+                            print(f"[DEBUG] ✓ Using PrintTemplate name: '{org_data['name']}'")
                         else:
                             # Fallback: utiliser le nom de l'organisation
                             org_data['name'] = organization.name if organization.name else None
                             print(f"[DEBUG] ✓ Using Organization fallback: '{org_data['name']}'")
 
-                        if print_template and print_template.header_address and print_template.header_address.strip():
-                            org_data['address'] = print_template.header_address
-                        elif org_settings and org_settings.company_address and org_settings.company_address.strip():
+                        if org_settings and org_settings.company_address and org_settings.company_address.strip():
                             org_data['address'] = org_settings.company_address
+                        elif print_template and print_template.header_address and print_template.header_address.strip():
+                            org_data['address'] = print_template.header_address
 
-                        if print_template and print_template.header_phone and print_template.header_phone.strip():
-                            org_data['phone'] = print_template.header_phone
-                        elif org_settings and org_settings.company_phone and org_settings.company_phone.strip():
+                        if org_settings and org_settings.company_phone and org_settings.company_phone.strip():
                             org_data['phone'] = org_settings.company_phone
+                        elif print_template and print_template.header_phone and print_template.header_phone.strip():
+                            org_data['phone'] = print_template.header_phone
 
-                        if print_template and print_template.header_email and print_template.header_email.strip():
-                            org_data['email'] = print_template.header_email
-                        elif org_settings and org_settings.company_email and org_settings.company_email.strip():
+                        if org_settings and org_settings.company_email and org_settings.company_email.strip():
                             org_data['email'] = org_settings.company_email
+                        elif print_template and print_template.header_email and print_template.header_email.strip():
+                            org_data['email'] = print_template.header_email
 
-                        if print_template and print_template.header_website and print_template.header_website.strip():
-                            org_data['website'] = print_template.header_website
-                        elif org_settings and hasattr(org_settings, 'company_website') and org_settings.company_website and org_settings.company_website.strip():
+                        if org_settings and hasattr(org_settings, 'company_website') and org_settings.company_website and org_settings.company_website.strip():
                             org_data['website'] = org_settings.company_website
+                        elif print_template and print_template.header_website and print_template.header_website.strip():
+                            org_data['website'] = print_template.header_website
 
                         # Logo
-                        if print_template and print_template.header_logo:
-                            org_data['logo_path'] = print_template.header_logo.path
-                        elif org_settings and org_settings.company_logo:
+                        if org_settings and org_settings.company_logo:
                             org_data['logo_path'] = org_settings.company_logo.path
+                        elif print_template and print_template.header_logo:
+                            org_data['logo_path'] = print_template.header_logo.path
 
                         # Couleur de marque
                         if org_settings and hasattr(org_settings, 'brand_color') and org_settings.brand_color:

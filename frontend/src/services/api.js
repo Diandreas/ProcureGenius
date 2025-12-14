@@ -264,7 +264,16 @@ export const migrationAPI = {
   create: (data) => {
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
-      formData.append(key, data[key]);
+      const value = data[key];
+      // Ne pas ajouter les valeurs null ou undefined
+      if (value !== null && value !== undefined) {
+        // Convertir les booléens en strings pour FormData
+        if (typeof value === 'boolean') {
+          formData.append(key, value ? 'true' : 'false');
+        } else {
+          formData.append(key, value);
+        }
+      }
     });
     return api.post('/migration/jobs/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

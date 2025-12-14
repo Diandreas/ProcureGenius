@@ -37,6 +37,10 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'company_qst_number',
             # Identifiants fiscaux (UE/USA)
             'company_vat_number',
+            # Informations bancaires
+            'company_bank_name',
+            'company_bank_account',
+            'company_bank_swift',
             # Taxation
             'default_tax_rate',
             'gst_hst_rate',

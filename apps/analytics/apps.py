@@ -6,3 +6,7 @@ class AnalyticsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.analytics'
     verbose_name = _('Analytics et Rapports')
+    
+    def ready(self):
+        """Connecte les signaux lors du chargement de l'application"""
+        import apps.analytics.signals  # noqa

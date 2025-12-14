@@ -87,6 +87,7 @@ function Products() {
   const [warehouseFilter, setWarehouseFilter] = useState('');
   const [stockFilter, setStockFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [warehouseMode, setWarehouseMode] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -160,166 +161,166 @@ function Products() {
           },
         }}
       >
-      <CardContent sx={{ p: 2 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            src={product.image}
-            variant="rounded"
-            sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
-              bgcolor: typeConfig.color,
-              borderRadius: 1,
-            }}
-          >
-            <TypeIcon />
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
+        <CardContent sx={{ p: 2 }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+            <Avatar
+              src={product.image}
+              variant="rounded"
               sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
+                width: isMobile ? 48 : 56,
+                height: isMobile ? 48 : 56,
+                bgcolor: typeConfig.color,
+                borderRadius: 1,
               }}
             >
-              {product.name}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: '0.75rem' }}
-            >
-              {product.sku || product.reference}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Prix */}
-        <Box
-          sx={{
-            bgcolor: 'primary.50',
-            borderRadius: 1,
-            p: 1,
-            mb: 1.5,
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            color="primary"
-            sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
-          >
-            {formatCurrency(product.price || product.unit_price)}
-          </Typography>
-        </Box>
-
-        {/* Infos */}
-        <Stack spacing={0.75}>
-          {product.supplier_name && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <TypeIcon />
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
-                variant="body2"
+                variant="subtitle2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  mb: 0.5,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  fontSize: isMobile ? '0.875rem' : '0.95rem',
                 }}
               >
-                {product.supplier_name}
+                {product.name}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.75rem' }}
+              >
+                {product.sku || product.reference}
               </Typography>
             </Box>
-          )}
+          </Box>
 
-          {product.warehouse_code && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Warehouse sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {product.warehouse_code}
-              </Typography>
-            </Box>
-          )}
+          {/* Prix */}
+          <Box
+            sx={{
+              bgcolor: 'primary.50',
+              borderRadius: 1,
+              p: 1,
+              mb: 1.5,
+              textAlign: 'center',
+            }}
+          >
+            <Typography
+              variant="h6"
+              color="primary"
+              sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+            >
+              {formatCurrency(product.price || product.unit_price)}
+            </Typography>
+          </Box>
 
-          {product.category && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Category sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {product.category.name}
-              </Typography>
-            </Box>
-          )}
-
-          {product.product_type === 'physical' ? (
-            product.stock_quantity !== null && product.stock_quantity !== undefined && (
+          {/* Infos */}
+          <Stack spacing={0.75}>
+            {product.supplier_name && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Inventory sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                  Stock: {product.stock_quantity}
+                <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.8rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                  }}
+                >
+                  {product.supplier_name}
                 </Typography>
-                {product.stock_quantity === 0 && (
-                  <Chip
-                    label={t('products:stockStatus.outOfStock')}
-                    size="small"
-                    color="error"
-                    sx={{ fontSize: '0.65rem', height: 18 }}
-                  />
-                )}
-                {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
-                  <Chip
-                    label={t('products:stockStatus.low')}
-                    size="small"
-                    color="warning"
-                    sx={{ fontSize: '0.65rem', height: 18 }}
-                  />
-                )}
               </Box>
-            )
-          ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <TypeIcon sx={{ fontSize: 16, color: typeConfig.color }} />
-              <Chip
-                label={typeConfig.label}
-                size="small"
-                sx={{
-                  backgroundColor: typeConfig.color,
-                  color: 'white',
-                  fontSize: '0.7rem',
-                  height: 20
-                }}
-              />
-            </Box>
-          )}
-        </Stack>
+            )}
 
-        {/* Footer */}
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
-            size="small"
-            color={product.is_active ? 'success' : 'default'}
-            sx={{ fontSize: '0.7rem', height: 20 }}
-          />
-          {product.total_invoices > 0 && (
+            {product.warehouse_code && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Warehouse sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  {product.warehouse_code}
+                </Typography>
+              </Box>
+            )}
+
+            {product.category && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Category sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  {product.category.name}
+                </Typography>
+              </Box>
+            )}
+
+            {product.product_type === 'physical' ? (
+              product.stock_quantity !== null && product.stock_quantity !== undefined && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Inventory sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                    Stock: {product.stock_quantity}
+                  </Typography>
+                  {product.stock_quantity === 0 && (
+                    <Chip
+                      label={t('products:stockStatus.outOfStock')}
+                      size="small"
+                      color="error"
+                      sx={{ fontSize: '0.65rem', height: 18 }}
+                    />
+                  )}
+                  {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
+                    <Chip
+                      label={t('products:stockStatus.low')}
+                      size="small"
+                      color="warning"
+                      sx={{ fontSize: '0.65rem', height: 18 }}
+                    />
+                  )}
+                </Box>
+              )
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <TypeIcon sx={{ fontSize: 16, color: typeConfig.color }} />
+                <Chip
+                  label={typeConfig.label}
+                  size="small"
+                  sx={{
+                    backgroundColor: typeConfig.color,
+                    color: 'white',
+                    fontSize: '0.7rem',
+                    height: 20
+                  }}
+                />
+              </Box>
+            )}
+          </Stack>
+
+          {/* Footer */}
+          <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-              icon={<TrendingUp sx={{ fontSize: 14 }} />}
-              label={product.total_invoices}
+              label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
               size="small"
-              variant="outlined"
+              color={product.is_active ? 'success' : 'default'}
               sx={{ fontSize: '0.7rem', height: 20 }}
             />
-          )}
-        </Box>
-      </CardContent>
-    </Card>
+            {product.total_invoices > 0 && (
+              <Chip
+                icon={<TrendingUp sx={{ fontSize: 14 }} />}
+                label={product.total_invoices}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: '0.7rem', height: 20 }}
+              />
+            )}
+          </Box>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -365,6 +366,19 @@ function Products() {
     <Box sx={{ p: isMobile ? 2 : 3 }}>
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
+        {/* Warehouse Mode Toggle */}
+        {warehouses.length > 0 && (
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant={warehouseMode ? 'contained' : 'outlined'}
+              startIcon={<Warehouse />}
+              onClick={() => setWarehouseMode(!warehouseMode)}
+              size="small"
+            >
+              {warehouseMode ? t('products:warehouseMode.active', 'Mode entrepôt actif') : t('products:warehouseMode.activate', 'Activer le mode entrepôt')}
+            </Button>
+          </Box>
+        )}
         {/* Stats Cards - Cliquables pour filtrer */}
         <Grid container spacing={isMobile ? 1 : 2}>
           {/* En stock (OK) */}

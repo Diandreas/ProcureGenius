@@ -20,25 +20,25 @@
                 <div class="form-group">
                     <label for="company_name">{% trans "Nom de l'entreprise" %}</label>
                     <input type="text" id="company_name" name="company_name"
-                        value="{{ company_template.header_company_name|default:'ProcureGenius' }}" class="form-control">
+                        value="{{ org_settings.company_name|default:'' }}" class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label for="company_email">{% trans "Email" %}</label>
                     <input type="email" id="company_email" name="company_email"
-                        value="{{ company_template.header_email }}" class="form-control">
+                        value="{{ org_settings.company_email|default:'' }}" class="form-control">
                 </div>
 
                 <div class="form-group full-width">
                     <label for="company_address">{% trans "Adresse" %}</label>
                     <textarea id="company_address" name="company_address" class="form-control"
-                        rows="3">{{ company_template.header_address }}</textarea>
+                        rows="3">{{ org_settings.company_address|default:'' }}</textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="company_phone">{% trans "Téléphone" %}</label>
                     <input type="tel" id="company_phone" name="company_phone"
-                        value="{{ company_template.header_phone }}" class="form-control">
+                        value="{{ org_settings.company_phone|default:'' }}" class="form-control">
                 </div>
             </div>
 

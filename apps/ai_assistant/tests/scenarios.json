@@ -1,0 +1,337 @@
+[
+    {
+        "id": "1.1.A",
+        "section": "1. Actions de Gestion des Fournisseurs",
+        "description": "Création réussie (nouveau fournisseur)",
+        "steps": [
+            {
+                "input": "Crée un fournisseur TechCorp_{random} avec email tech_{random}@corp.com",
+                "expected_output_contains": [
+                    "créé",
+                    "succès"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "1.1.B",
+        "section": "1. Actions de Gestion des Fournisseurs",
+        "description": "Fournisseur similaire détecté (Confirmation)",
+        "steps": [
+            {
+                "input": "Crée un fournisseur TechCorp",
+                "expected_output_contains": [
+                    "similaire",
+                    "TechCorp"
+                ]
+            },
+            {
+                "input": "1",
+                "expected_output_contains": [
+                    "utilisé",
+                    "existant"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "1.1.D",
+        "section": "1. Actions de Gestion des Fournisseurs",
+        "description": "Fournisseur similaire détecté (Forcer création)",
+        "steps": [
+            {
+                "input": "Crée un fournisseur TechCorp",
+                "expected_output_contains": [
+                    "similaire",
+                    "TechCorp"
+                ]
+            },
+            {
+                "input": "2",
+                "expected_output_contains": [
+                    "Tech"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "1.2.B",
+        "section": "1. Actions de Gestion des Fournisseurs",
+        "description": "Recherche sans résultats",
+        "steps": [
+            {
+                "input": "Cherche le fournisseur XYZ_{random}",
+                "expected_output_contains": [
+                    "Aucun",
+                    "trouvé"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "1.3.A",
+        "section": "1. Actions de Gestion des Fournisseurs",
+        "description": "Mise à jour réussie",
+        "steps": [
+            {
+                "input": "Mets à jour l'email du fournisseur TechCorp_{random} à newemail_{random}@tech.com",
+                "expected_output_contains": [
+                    "modifié avec succès"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "2.1.A",
+        "section": "2. Actions de Gestion des Clients",
+        "description": "Création réussie",
+        "steps": [
+            {
+                "input": "Crée un client Acme_{random} avec email contact_{random}@acme.com",
+                "expected_output_contains": [
+                    "créé",
+                    "succès"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "2.1.B",
+        "section": "2. Actions de Gestion des Clients",
+        "description": "Client similaire détecté",
+        "steps": [
+            {
+                "input": "Crée un client Acme",
+                "expected_output_contains": [
+                    "similaire",
+                    "Acme"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "2.2.A",
+        "section": "2. Actions de Gestion des Clients",
+        "description": "Recherche par nom",
+        "steps": [
+            {
+                "input": "Liste les clients dont le nom contient 'Acme'",
+                "expected_output_contains": [
+                    "Acme"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "2.3.A",
+        "section": "2. Actions de Gestion des Clients",
+        "description": "Liste complète",
+        "steps": [
+            {
+                "input": "Liste tous mes clients",
+                "expected_output_contains": [
+                    "client"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "3.1.A",
+        "section": "3. Actions de Gestion des Factures",
+        "description": "Création complète (avec confirmation si client existe)",
+        "steps": [
+            {
+                "input": "Crée une facture pour Acme Corp:\n- 10 licences logicielles à 500€",
+                "expected_output_contains": [
+                    "similaire",
+                    "Acme Corp"
+                ]
+            },
+            {
+                "input": "1",
+                "expected_output_contains": [
+                    "utilisé",
+                    "existant",
+                    "Facture",
+                    "créée"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "3.1.C",
+        "section": "3. Actions de Gestion des Factures",
+        "description": "Création auto du client",
+        "steps": [
+            {
+                "input": "Crée une facture pour NewClient_{random} (email: new_{random}@client.com)\n- Produit A: 1000€",
+                "expected_output_contains": [
+                    "Client",
+                    "créé",
+                    "Facture",
+                    "créée"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "3.2.A",
+        "section": "3. Actions de Gestion des Factures",
+        "description": "Recherche par numéro (Simulé car on ne connait pas le numéro exact)",
+        "steps": [
+            {
+                "input": "Cherche les factures du client Acme Corp",
+                "expected_output_contains": [
+                    "facture"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "4.1.A",
+        "section": "4. Actions de Gestion des Bons de Commande",
+        "description": "Création complète (avec confirmation)",
+        "steps": [
+            {
+                "input": "Crée un bon de commande pour DL Light Telecom:\n- 45 Lenovo Radian XR 4 à 12000€",
+                "expected_output_contains": [
+                    "similaire",
+                    "DL Light Telecom"
+                ]
+            },
+            {
+                "input": "1",
+                "expected_output_contains": [
+                    "utilisé",
+                    "existant",
+                    "Bon de commande",
+                    "créé"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "4.1.C",
+        "section": "4. Actions de Gestion des Bons de Commande",
+        "description": "Création avec nouveau fournisseur",
+        "steps": [
+            {
+                "input": "Crée un BC pour NewSupplier_{random} (email: new_{random}@supplier.com)\n- 100 items à 50€",
+                "expected_output_contains": [
+                    "Fournisseur",
+                    "créé",
+                    "Bon de commande",
+                    "créé"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "5.1.A",
+        "section": "5. Actions de Gestion des Produits",
+        "description": "Produit physique (Unique)",
+        "steps": [
+            {
+                "input": "Crée un produit 'Laptop_{random}':\n- Référence: REF-{random}\n- Code-barres: BAR-{random}\n- Prix: 1500€\n- Type: Physique\n- Stock initial: 10",
+                "expected_output_contains": [
+                    "Produit",
+                    "créé"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "5.1.B",
+        "section": "5. Actions de Gestion des Produits",
+        "description": "Produit service",
+        "steps": [
+            {
+                "input": "Crée un service 'Consultation_Unique_{random}':\n- Prix: 100€/heure",
+                "expected_output_contains": [
+                    "Consultation_Unique",
+                    "créé"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "5.2.A",
+        "section": "5. Actions de Gestion des Produits",
+        "description": "Recherche par nom",
+        "steps": [
+            {
+                "input": "Cherche les produits 'Laptop'",
+                "expected_output_contains": [
+                    "Laptop"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "5.3.A",
+        "section": "5. Actions de Gestion des Produits",
+        "description": "Mise à jour prix",
+        "steps": [
+            {
+                "input": "Mets à jour le produit Laptop_{random} avec un prix de 1400€",
+                "expected_output_contains": [
+                    "modifié avec succès",
+                    "1 400"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "6.1.A",
+        "section": "6. Actions de Gestion du Stock",
+        "description": "Ajustement positif",
+        "steps": [
+            {
+                "input": "Ajuste le stock du produit Laptop_{random} en ajoutant 50 unités",
+                "expected_output_contains": [
+                    "Ajout de"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "6.2.A",
+        "section": "6. Actions de Gestion du Stock",
+        "description": "Alertes de stock",
+        "steps": [
+            {
+                "input": "Montre-moi les alertes de stock",
+                "expected_output_contains": [
+                    "stock"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "7.1.A",
+        "section": "7. Actions de Rapports",
+        "description": "Rapport des ventes",
+        "steps": [
+            {
+                "input": "Génère un rapport des ventes de décembre 2025",
+                "expected_output_contains": [
+                    "Rapport",
+                    "génération"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "7.2.A",
+        "section": "7. Actions de Rapports",
+        "description": "Statut rapport",
+        "steps": [
+            {
+                "input": "Quel est le statut du rapport des ventes?",
+                "expected_output_contains": [
+                    "Rapport"
+                ]
+            }
+        ]
+    }
+]
