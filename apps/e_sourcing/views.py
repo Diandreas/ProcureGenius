@@ -169,6 +169,41 @@ class SourcingEventViewSet(viewsets.ModelViewSet):
             stats['highest_bid'] = SupplierBidListSerializer(stats['highest_bid']).data
 
         return Response(stats)
+    
+    @action(detail=True, methods=['get'], url_path='pdf-report')
+    def generate_pdf_report(self, request, pk=None):
+        """Générer un rapport PDF pour un événement de sourcing"""
+        from django.http import HttpResponse
+        
+        try:
+            event = self.get_object()
+            
+            # Générer le PDF avec WeasyPrint
+            from apps.api.services.report_generator_weasy import generate_sourcing_event_report_pdf
+            pdf_buffer = generate_sourcing_event_report_pdf(event, request.user)
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-sourcing-{event.id}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur lors de la génération du PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SupplierInvitationViewSet(viewsets.ModelViewSet):

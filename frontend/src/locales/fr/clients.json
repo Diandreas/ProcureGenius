@@ -58,7 +58,22 @@
     "create": "Créer",
     "modify": "Modifier",
     "save": "Enregistrer",
-    "deletePermanently": "Supprimer définitivement"
+    "deletePermanently": "Supprimer définitivement",
+    "generateReport": "Rapport PDF"
+  },
+  "report": {
+    "title": "Générer un Rapport de Clients",
+    "itemLabel": "client",
+    "itemsLabel": "clients"
+  },
+  "buttons": {
+    "preview": "Aperçu",
+    "print": "Imprimer",
+    "download": "Télécharger",
+    "cancel": "Annuler"
+  },
+  "dialogs": {
+    "generatePdf": "Générer un PDF du rapport"
   },
   "tooltips": {
     "editClient": "Modifier le client",
@@ -83,7 +98,8 @@
   },
   "labels": {
     "productUnavailable": "Produit non disponible",
-    "ref": "Réf"
+    "ref": "Réf",
+    "generatingLabel": "Génération du rapport en cours..."
   },
   "messages": {
     "noClients": "Aucun client",
@@ -101,7 +117,12 @@
     "saveError": "Erreur lors de l'enregistrement",
     "noInvoicesForClient": "Aucune facture pour ce client",
     "noProductsPurchased": "Aucun produit acheté",
-    "invoicesWillBeDeleted": "{{count}} facture(s) seront supprimée(s)"
+    "invoicesWillBeDeleted": "{{count}} facture(s) seront supprimée(s)",
+    "reportError": "Erreur lors de la génération du rapport",
+    "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
+    "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.",
+    "pdfDownloadedSuccess": "PDF téléchargé avec succès",
+    "printWindowOpened": "Fenêtre d'impression ouverte"
   },
   "validation": {
     "nameRequired": "Le nom est requis",

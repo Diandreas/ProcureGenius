@@ -57,7 +57,22 @@
         "cancel": "Cancel",
         "create": "Create",
         "modify": "Modify",
-        "save": "Save"
+        "save": "Save",
+        "generateReport": "PDF Report"
+    },
+    "report": {
+        "title": "Generate Clients Report",
+        "itemLabel": "client",
+        "itemsLabel": "clients"
+    },
+    "buttons": {
+        "preview": "Preview",
+        "print": "Print",
+        "download": "Download",
+        "cancel": "Cancel"
+    },
+    "dialogs": {
+        "generatePdf": "Generate report PDF"
     },
     "tooltips": {
         "editClient": "Edit Client",
@@ -82,7 +97,8 @@
     },
     "labels": {
         "productUnavailable": "Product unavailable",
-        "ref": "Ref"
+        "ref": "Ref",
+        "generatingLabel": "Generating report..."
     },
     "messages": {
         "noClients": "No clients",
@@ -99,7 +115,12 @@
         "updateSuccess": "Client updated successfully",
         "saveError": "Error saving client",
         "noInvoicesForClient": "No invoices for this client",
-        "noProductsPurchased": "No products purchased"
+        "noProductsPurchased": "No products purchased",
+        "reportError": "Error generating report",
+        "reportGenerated": "Report generated successfully! Choose an action below.",
+        "pdfGenerationHelpText": "You can preview, download or print the report directly.",
+        "pdfDownloadedSuccess": "PDF downloaded successfully",
+        "printWindowOpened": "Print window opened"
     },
     "validation": {
         "nameRequired": "Name is required",

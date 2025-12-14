@@ -1,0 +1,198 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Rapport Produit - {{ product.name|default:"Produit" }}{% endblock %}
+
+{% block report_title %}Rapport Produit{% endblock %}
+{% block report_subtitle %}{{ product.name|default:"Produit" }} • Généré le {{ generated_at|date:"d/m/Y à H:i" }}{% endblock %}
+
+{% block content %}
+<!-- Informations du produit -->
+<div class="info-grid">
+    <div class="info-box">
+        <h3>Informations Générales</h3>
+        <div class="content">
+            <strong>{{ product.name|default:"Produit" }}</strong>
+            {% if product.sku %}<div><span class="label">SKU:</span> <span class="value">{{ product.sku|default:"" }}</span></div>{% endif %}
+            {% if product.reference %}<div><span class="label">Référence:</span> <span class="value">{{ product.reference|default:"" }}</span></div>{% endif %}
+            {% if product.description %}<div><span class="label">Description:</span> <span class="value">{{ product.description|truncatewords:15|default:"" }}</span></div>{% endif %}
+            <div><span class="label">Type:</span> 
+                {% if product.product_type == 'physical' %}
+                    <span class="badge info">Physique</span>
+                {% elif product.product_type == 'service' %}
+                    <span class="badge warning">Service</span>
+                {% else %}
+                    <span class="value">{{ product.product_type }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>Informations Commerciales</h3>
+        <div class="content">
+            <div><span class="label">Statut:</span> 
+                {% if product.is_active %}
+                    <span class="badge success">Actif</span>
+                {% else %}
+                    <span class="badge danger">Inactif</span>
+                {% endif %}
+            </div>
+            {% if product.price %}<div><span class="label">Prix de vente:</span> <span class="value">{{ product.price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span></div>{% endif %}
+            {% if product.cost_price %}<div><span class="label">Prix de revient:</span> <span class="value">{{ product.cost_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span></div>{% endif %}
+            {% if product.product_type == 'physical' %}
+                <div><span class="label">Stock actuel:</span> <span class="value">{{ current_stock|default:0 }} unités</span></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques de Ventes et Achats -->
+<div class="stats-grid">
+    <div class="stat-card success">
+        <div class="label">Total Vendu</div>
+        <div class="value">{{ total_sold|default:0 }}</div>
+        <div class="subvalue">Unités</div>
+    </div>
+    
+    <div class="stat-card primary">
+        <div class="label">Revenu Généré</div>
+        <div class="value">{{ total_revenue|floatformat:2 }} $</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Total Acheté</div>
+        <div class="value">{{ total_purchased|default:0 }}</div>
+        <div class="subvalue">Unités</div>
+    </div>
+</div>
+
+        <!-- Fournisseurs -->
+{% if suppliers and suppliers|length > 0 %}
+<div class="section">
+    <h2 class="section-title">Fournisseurs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Fournisseur</th>
+                <th>Référence Fournisseur</th>
+                <th class="text-right">Prix Fournisseur</th>
+                <th class="text-center">Délai (jours)</th>
+                <th class="text-center">Préféré</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in suppliers %}
+            <tr>
+                <td><strong>{% if sp.supplier %}{{ sp.supplier.name|default:"-" }}{% else %}-{% endif %}</strong></td>
+                <td>{{ sp.supplier_reference|default:"-" }}</td>
+                <td class="text-right">
+                    {% if sp.supplier_price %}
+                        {{ sp.supplier_price|floatformat:2 }} {{ organization.currency|default:"CAD" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ sp.lead_time_days|default:"-" }}</td>
+                <td class="text-center">
+                    {% if sp.is_preferred %}
+                        <span class="badge success">✓</span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #999;">Aucun fournisseur associé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+        <!-- Ventes Récentes -->
+{% if recent_sales and recent_sales|length > 0 %}
+<div class="section">
+    <h2 class="section-title">Ventes Récentes (15 dernières)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Facture</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th class="text-center">Quantité</th>
+                <th class="text-right">Prix Unitaire</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in recent_sales %}
+            <tr>
+                <td><strong>{% if sale.invoice %}{{ sale.invoice.invoice_number|default:"-" }}{% else %}-{% endif %}</strong></td>
+                <td>{% if sale.invoice and sale.invoice.client %}{{ sale.invoice.client.name|truncatewords:3|default:"-" }}{% else %}-{% endif %}</td>
+                <td>{% if sale.invoice and sale.invoice.issue_date %}{{ sale.invoice.issue_date|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                <td class="text-center">{{ sale.quantity|default:0 }}</td>
+                <td class="text-right">{{ sale.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ sale.total_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #999;">Aucune vente enregistrée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+        <!-- Achats Récents -->
+{% if recent_purchases and recent_purchases|length > 0 %}
+<div class="section">
+    <h2 class="section-title">Achats Récents (15 derniers)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Bon de Commande</th>
+                <th>Fournisseur</th>
+                <th>Date</th>
+                <th class="text-center">Quantité</th>
+                <th class="text-right">Prix Unitaire</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in recent_purchases %}
+            <tr>
+                <td><strong>{% if purchase.purchase_order %}{{ purchase.purchase_order.po_number|default:"-" }}{% else %}-{% endif %}</strong></td>
+                <td>{% if purchase.purchase_order and purchase.purchase_order.supplier %}{{ purchase.purchase_order.supplier.name|truncatewords:3|default:"-" }}{% else %}-{% endif %}</td>
+                <td>{% if purchase.purchase_order and purchase.purchase_order.created_at %}{{ purchase.purchase_order.created_at|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                <td class="text-center">{{ purchase.quantity|default:0 }}</td>
+                <td class="text-right">{{ purchase.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ purchase.total_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #999;">Aucun achat enregistré</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Résumé -->
+<div class="highlight-box">
+        <strong>Résumé de la performance du produit:</strong>
+    <div style="margin-top: 8px;">
+        Ce produit a généré un revenu total de <strong>{{ total_revenue|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> 
+        avec <strong>{{ total_sold|default:0 }}</strong> unité(s) vendue(s).
+        {% if product.product_type == 'physical' %}
+            Le stock actuel est de <strong>{{ current_stock|default:0 }}</strong> unité(s).
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+

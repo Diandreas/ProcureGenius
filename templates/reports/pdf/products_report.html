@@ -1,0 +1,111 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Rapport des Produits{% endblock %}
+
+{% block report_title %}Rapport des Produits{% endblock %}
+{% block report_subtitle %}
+    {% if date_start or date_end %}
+        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+    {% endif %}
+    • {{ total_products }} produit(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques Globales -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">Nombre de Produits</div>
+        <div class="value">{{ total_products }}</div>
+        <div class="subvalue">Produit(s)</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="label">Stock Total</div>
+        <div class="value">{{ total_stock|floatformat:0 }}</div>
+        <div class="subvalue">Unités</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Valeur Totale</div>
+        <div class="value">{{ total_value|floatformat:2 }}</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card info">
+        <div class="label">Valeur Moyenne</div>
+        <div class="value">{{ avg_value|floatformat:2 }}</div>
+        <div class="subvalue">Par produit</div>
+    </div>
+</div>
+
+<!-- Répartition par Catégorie -->
+{% if by_category %}
+<div class="section">
+    <h2 class="section-title">Répartition par Catégorie</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Catégorie</th>
+                <th class="text-center">Nombre</th>
+                <th class="text-right">Stock Total</th>
+                <th class="text-right">Valeur Totale</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in by_category %}
+            <tr>
+                <td><strong>{{ cat.category }}</strong></td>
+                <td class="text-center">{{ cat.count }}</td>
+                <td class="text-right">{{ cat.total_stock|floatformat:0 }}</td>
+                <td class="text-right">{{ cat.total_value|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Liste des Produits -->
+<div class="section">
+    <h2 class="section-title">Liste des Produits</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Référence</th>
+                <th class="text-right">Prix</th>
+                <th class="text-center">Stock</th>
+                <th class="text-center">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td><strong>{{ product.name|default:"-" }}</strong></td>
+                <td>{{ product.sku|default:product.reference|default:"-" }}</td>
+                <td class="text-right">{{ product.sale_price|floatformat:2|default:"0.00" }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-center">
+                    {% if product.product_type == 'physical' %}
+                        {{ product.stock_quantity|default:0|floatformat:0 }}
+                    {% else %}
+                        <span class="badge info">Service</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {% if product.product_type == 'physical' %}
+                        <span class="badge primary">Physique</span>
+                    {% else %}
+                        <span class="badge warning">Service</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Aucun produit trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

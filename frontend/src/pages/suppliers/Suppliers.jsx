@@ -9,6 +9,9 @@ import {
   TextField,
   InputAdornment,
   FormControl,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
   InputLabel,
   Select,
   MenuItem,
@@ -20,6 +23,13 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Divider,
 } from '@mui/material';
 import {
   Search,
@@ -35,12 +45,17 @@ import {
   Block,
   Public,
   StarBorder,
+  PictureAsPdf,
+  Print,
+  Download,
+  Receipt,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
+import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Suppliers() {
   const navigate = useNavigate();
@@ -55,6 +70,16 @@ function Suppliers() {
   const [statusFilter, setStatusFilter] = useState('');
   const [quickFilter, setQuickFilter] = useState(''); // Nouveau: filtre rapide
   const [showFilters, setShowFilters] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportConfigOpen, setReportConfigOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [reportFilters, setReportFilters] = useState({
+    dateStart: '',
+    dateEnd: '',
+    selectedSuppliers: [],
+  });
 
   useEffect(() => {
     fetchSuppliers();
@@ -289,8 +314,88 @@ function Suppliers() {
     );
   }
 
+  // Générer automatiquement le PDF quand le dialogue s'ouvre
+  useEffect(() => {
+    if (pdfDialogOpen && filteredSuppliers.length > 0 && !generatedPdfBlob && !generatingPdf) {
+      const generatePDF = async () => {
+        setGeneratingPdf(true);
+        try {
+          // Générer un PDF pour le premier fournisseur (ou créer un PDF groupé si endpoint disponible)
+          const pdfBlob = await generateSupplierReportPDF(filteredSuppliers[0]);
+          setGeneratedPdfBlob(pdfBlob);
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          enqueueSnackbar(t('suppliers:messages.reportError', 'Erreur lors de la génération du rapport'), {
+            variant: 'error',
+          });
+          setPdfDialogOpen(false);
+        } finally {
+          setGeneratingPdf(false);
+        }
+      };
+      generatePDF();
+    }
+  }, [pdfDialogOpen, filteredSuppliers, generatedPdfBlob, generatingPdf]);
+
+  const handleGenerateBulkReport = () => {
+    if (filteredSuppliers.length === 0) {
+      enqueueSnackbar(t('suppliers:messages.noSuppliersSelected', 'Aucun fournisseur à générer'), {
+        variant: 'warning',
+      });
+      return;
+    }
+    setGeneratedPdfBlob(null);
+    setPdfDialogOpen(true);
+  };
+
+  const handlePdfAction = (action) => {
+    if (!generatedPdfBlob) return;
+
+    if (action === 'download') {
+      downloadPDF(generatedPdfBlob, `rapport-fournisseurs-${new Date().getTime()}.pdf`);
+      enqueueSnackbar(t('suppliers:messages.pdfDownloaded', 'PDF téléchargé avec succès'), {
+        variant: 'success',
+      });
+    } else if (action === 'preview') {
+      openPDFInNewTab(generatedPdfBlob);
+    } else if (action === 'print') {
+      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+    }
+    setPdfDialogOpen(false);
+    setGeneratedPdfBlob(null);
+  };
+
+  const handleClosePdfDialog = () => {
+    setPdfDialogOpen(false);
+    setGeneratedPdfBlob(null);
+  };
+
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec titre et bouton PDF */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
+          {t('suppliers:title', 'Fournisseurs')}
+        </Typography>
+        <Button
+          variant="outlined"
+          color="success"
+          startIcon={<PictureAsPdf />}
+          onClick={handleGenerateBulkReport}
+          disabled={filteredSuppliers.length === 0}
+          sx={{ ml: 'auto' }}
+        >
+          {t('suppliers:actions.generateReport', 'Rapport PDF')}
+        </Button>
+      </Box>
+
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         {/* Stats Cards - Cliquables pour filtrer */}
@@ -548,6 +653,64 @@ function Suppliers() {
           ))}
         </Grid>
       )}
+
+      {/* PDF Dialog - Génération automatique */}
+      <Dialog open={pdfDialogOpen} onClose={handleClosePdfDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PictureAsPdf color="error" />
+            {t('suppliers:pdf.title', 'Rapport PDF Fournisseur')}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {generatingPdf ? (
+            <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
+              <CircularProgress size={40} />
+              <Typography variant="body2" color="text.secondary">
+                {t('common:labels.generating', 'Génération du PDF en cours...')}
+              </Typography>
+            </Box>
+          ) : generatedPdfBlob ? (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {t('suppliers:pdf.ready', 'Le rapport PDF est prêt. Choisissez une action:')}
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {t('suppliers:pdf.description', 'Génération du rapport PDF...')}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePdfDialog}>
+            {t('common:buttons.cancel', 'Annuler')}
+          </Button>
+          <Button
+            onClick={() => handlePdfAction('preview')}
+            variant="outlined"
+            disabled={generatingPdf || !generatedPdfBlob}
+            startIcon={<Receipt />}
+          >
+            {t('common:buttons.preview', 'Aperçu')}
+          </Button>
+          <Button
+            onClick={() => handlePdfAction('print')}
+            variant="outlined"
+            color="secondary"
+            disabled={generatingPdf || !generatedPdfBlob}
+            startIcon={<Print />}
+          >
+            {t('common:buttons.print', 'Imprimer')}
+          </Button>
+          <Button
+            onClick={() => handlePdfAction('download')}
+            variant="contained"
+            disabled={generatingPdf || !generatedPdfBlob}
+            startIcon={<Download />}
+          >
+            {t('common:buttons.download', 'Télécharger')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

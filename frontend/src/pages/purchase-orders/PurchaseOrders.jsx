@@ -2,28 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
-  FormControl, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
-  CircularProgress, useMediaQuery, useTheme,
+  FormControl, FormGroup, FormControlLabel, Checkbox, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
+  CircularProgress, useMediaQuery, useTheme, Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Divider,
 } from '@mui/material';
 import {
   Search, FilterList, ShoppingCart, AttachMoney, CheckCircle, Schedule, Business,
-  Description, HourglassEmpty, Cancel,
+  Description, HourglassEmpty, Cancel, PictureAsPdf,
+  Print,
+  Download,
+  Receipt,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import { generatePurchaseOrdersBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function PurchaseOrders() {
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
+  const { enqueueSnackbar } = useSnackbar();
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
+  const [reportConfigOpen, setReportConfigOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [reportFilters, setReportFilters] = useState({
+    dateStart: '',
+    dateEnd: '',
+    selectedPOs: [],
+  });
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -50,6 +71,62 @@ function PurchaseOrders() {
     } else {
       setQuickFilter(filterValue);
     }
+  };
+
+  const handleGenerateReportClick = () => {
+    setReportConfigOpen(true);
+  };
+
+  const handleConfigureReport = async () => {
+    setReportConfigOpen(false);
+    setGeneratingPdf(true);
+    setReportDialogOpen(true);
+    
+    try {
+      const pdfBlob = await generatePurchaseOrdersBulkReport({
+        itemIds: reportFilters.selectedPOs.length > 0 ? reportFilters.selectedPOs : undefined,
+        dateStart: reportFilters.dateStart || undefined,
+        dateEnd: reportFilters.dateEnd || undefined,
+        status: quickFilter || statusFilter || undefined,
+      });
+      setGeneratedPdfBlob(pdfBlob);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      enqueueSnackbar(t('purchaseOrders:messages.reportError', 'Erreur lors de la génération du rapport'), {
+        variant: 'error',
+      });
+      setReportDialogOpen(false);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setReportDialogOpen(false);
+    setGeneratedPdfBlob(null);
+  };
+
+  const handlePdfAction = (action) => {
+    if (!generatedPdfBlob) return;
+
+    if (action === 'download') {
+      downloadPDF(generatedPdfBlob, `rapport-bons-commande-${new Date().getTime()}.pdf`);
+      enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
+        variant: 'success',
+      });
+    } else if (action === 'preview') {
+      openPDFInNewTab(generatedPdfBlob);
+    } else if (action === 'print') {
+      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+    }
+    setPdfDialogOpen(false);
   };
 
   const getStatusColor = (status) => {
@@ -218,6 +295,22 @@ function PurchaseOrders() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec titre et bouton PDF */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
+          {t('purchaseOrders:title', 'Bons de Commande')}
+        </Typography>
+        <Button
+          variant="outlined"
+          color="success"
+          startIcon={<PictureAsPdf />}
+          onClick={handleGenerateReportClick}
+          sx={{ ml: 'auto' }}
+        >
+          {t('purchaseOrders:actions.generateReport', 'Rapport PDF')}
+        </Button>
+      </Box>
+
       <Box sx={{ mb: 3 }}>
         {/* Stats Cards - Clickable Filters */}
         <Grid container spacing={isMobile ? 1 : 2}>
@@ -490,6 +583,203 @@ function PurchaseOrders() {
           ))}
         </Grid>
       )}
+
+      {/* Configuration Dialog */}
+      <Dialog open={reportConfigOpen} onClose={() => setReportConfigOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PictureAsPdf color="error" />
+            {t('purchaseOrders:report.title', 'Générer un Rapport de Bons de Commande')}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {/* Période */}
+            <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+              📅 Période (optionnel)
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+              Filtrer par période - laisser vide pour tout inclure
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+              <TextField
+                label="Date de début"
+                type="date"
+                value={reportFilters.dateStart}
+                onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
+                fullWidth
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ max: reportFilters.dateEnd || undefined }}
+              />
+              <TextField
+                label="Date de fin"
+                type="date"
+                value={reportFilters.dateEnd}
+                onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
+                fullWidth
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: reportFilters.dateStart || undefined }}
+              />
+            </Stack>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Sélection de bons de commande */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                📋 Bons de commande à inclure
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                {reportFilters.selectedPOs.length > 0
+                  ? `${reportFilters.selectedPOs.length} bon(s) de commande sélectionné(s)`
+                  : 'Tous les bons de commande filtrés seront inclus'}
+              </Typography>
+              
+              <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+                <FormControl component="fieldset" fullWidth>
+                  <FormGroup>
+                    {filteredPurchaseOrders.map((po) => (
+                      <FormControlLabel
+                        key={po.id}
+                        control={
+                          <Checkbox
+                            checked={reportFilters.selectedPOs.includes(po.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setReportFilters({
+                                  ...reportFilters,
+                                  selectedPOs: [...reportFilters.selectedPOs, po.id]
+                                });
+                              } else {
+                                setReportFilters({
+                                  ...reportFilters,
+                                  selectedPOs: reportFilters.selectedPOs.filter(id => id !== po.id)
+                                });
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2">{po.po_number}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {po.supplier_name || '-'} • {formatCurrency(po.total_amount)}
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ width: '100%', m: 0, py: 0.5 }}
+                      />
+                    ))}
+                  </FormGroup>
+                </FormControl>
+              </Box>
+
+              {filteredPurchaseOrders.length > 0 && (
+                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={() => setReportFilters({ ...reportFilters, selectedPOs: filteredPurchaseOrders.map(po => po.id) })}
+                  >
+                    Tout sélectionner
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setReportFilters({ ...reportFilters, selectedPOs: [] })}
+                  >
+                    Tout désélectionner
+                  </Button>
+                </Box>
+              )}
+            </Box>
+
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="caption">
+                {reportFilters.selectedPOs.length > 0
+                  ? `Un rapport sera généré avec ${reportFilters.selectedPOs.length} bon(s) de commande sélectionné(s)`
+                  : `Un rapport sera généré avec tous les bons de commande (${filteredPurchaseOrders.length})`}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                .
+              </Typography>
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportConfigOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfigureReport}
+            variant="contained"
+            color="success"
+            startIcon={<PictureAsPdf />}
+          >
+            Générer le Rapport
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF Actions Dialog */}
+      <Dialog open={reportDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PictureAsPdf color="error" />
+            {t('purchaseOrders:dialogs.generatePdf', 'Générer un PDF du rapport')}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {generatingPdf ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+              <CircularProgress size={60} sx={{ mb: 2 }} />
+              <Typography variant="body1" color="text.secondary">
+                {t('purchaseOrders:labels.generatingLabel', 'Génération du rapport en cours...')}
+              </Typography>
+            </Box>
+          ) : generatedPdfBlob ? (
+            <Box sx={{ py: 2 }}>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {t('purchaseOrders:messages.reportGenerated', 'Rapport généré avec succès ! Choisissez une action ci-dessous.')}
+              </Alert>
+              <Typography variant="body2" color="text.secondary">
+                {t('purchaseOrders:messages.pdfGenerationHelpText', 'Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.')}
+              </Typography>
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} disabled={generatingPdf}>
+            {t('purchaseOrders:buttons.cancel', 'Annuler')}
+          </Button>
+          {generatedPdfBlob && (
+            <>
+              <Button
+                onClick={() => handlePdfAction('preview')}
+                variant="outlined"
+                startIcon={<Description />}
+              >
+                {t('purchaseOrders:buttons.preview', 'Aperçu')}
+              </Button>
+              <Button
+                onClick={() => handlePdfAction('print')}
+                variant="outlined"
+                color="secondary"
+                startIcon={<Print />}
+              >
+                {t('purchaseOrders:buttons.print', 'Imprimer')}
+              </Button>
+              <Button
+                onClick={() => handlePdfAction('download')}
+                variant="contained"
+                color="success"
+                startIcon={<Download />}
+              >
+                {t('purchaseOrders:buttons.download', 'Télécharger')}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

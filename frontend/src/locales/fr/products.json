@@ -58,6 +58,7 @@
         "lowStockThreshold": "Seuil de stock bas",
         "activeProduct": "Produit actif",
         "inactiveProduct": "Produit inactif",
+        "generatingLabel": "Génération du rapport en cours...",
         "mandatory": "Obligatoire",
         "type": "Type",
         "price": "Prix",
@@ -140,6 +141,11 @@
         "noClientsPurchased": "Aucun client n'a encore acheté ce produit",
         "supplierCreated": "Fournisseur créé avec succès",
         "supplierCreateError": "Erreur lors de la création du fournisseur",
+        "reportError": "Erreur lors de la génération du rapport",
+        "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
+        "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.",
+        "pdfDownloadedSuccess": "PDF téléchargé avec succès",
+        "printWindowOpened": "Fenêtre d'impression ouverte",
         "warehouseCreated": "Entrepôt créé avec succès",
         "warehouseCreateError": "Erreur lors de la création de l'entrepôt",
         "categoryCreated": "Catégorie créée avec succès",
@@ -162,7 +168,22 @@
         "modify": "Modifier",
         "change": "Changer",
         "add": "Ajouter",
-        "save": "Enregistrer"
+        "save": "Enregistrer",
+        "generateReport": "Rapport PDF"
+    },
+    "report": {
+        "title": "Générer un Rapport de Produits",
+        "itemLabel": "produit",
+        "itemsLabel": "produits"
+    },
+    "buttons": {
+        "preview": "Aperçu",
+        "print": "Imprimer",
+        "download": "Télécharger",
+        "cancel": "Annuler"
+    },
+    "dialogs": {
+        "generatePdf": "Générer un PDF du rapport"
     },
     "validation": {
         "nameRequired": "Le nom est requis",

@@ -1,0 +1,151 @@
+{% extends "reports/pdf/base_report.html" %}
+{% load invoice_filters %}
+
+{% block title %}Rapport des Bons de Commande{% endblock %}
+
+{% block report_title %}Rapport des Bons de Commande{% endblock %}
+{% block report_subtitle %}
+    {% if date_start or date_end %}
+        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+    {% endif %}
+    • {{ total_count }} bon(s) de commande • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques Globales -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">Nombre de Bons</div>
+        <div class="value">{{ total_count }}</div>
+        <div class="subvalue">Bon(s) de commande</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="label">Montant Total</div>
+        <div class="value">{{ total_amount|floatformat:2 }}</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Valeur Moyenne</div>
+        <div class="value">{{ avg_amount|floatformat:2 }}</div>
+        <div class="subvalue">Par bon</div>
+    </div>
+</div>
+
+<!-- Répartition par Statut -->
+{% if by_status %}
+<div class="section">
+    <h2 class="section-title">Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th class="text-center">Nombre</th>
+                <th class="text-right">Montant Total</th>
+                <th class="text-right">% du Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in by_status %}
+            <tr>
+                <td>
+                    {% if stat.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif stat.status == 'sent' %}<span class="badge warning">Envoyé</span>
+                    {% elif stat.status == 'approved' %}<span class="badge success">Approuvé</span>
+                    {% elif stat.status == 'received' %}<span class="badge success">Reçu</span>
+                    {% elif stat.status == 'cancelled' %}<span class="badge danger">Annulé</span>
+                    {% else %}{{ stat.status }}{% endif %}
+                </td>
+                <td class="text-center">{{ stat.count }}</td>
+                <td class="text-right">{{ stat.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ stat.percentage|default:0|floatformat:1 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Top Fournisseurs -->
+{% if by_supplier %}
+<div class="section">
+    <h2 class="section-title">Top 10 Fournisseurs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Fournisseur</th>
+                <th class="text-center">Nombre de Commandes</th>
+                <th class="text-right">Montant Total</th>
+                <th class="text-right">% du Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for supplier in by_supplier %}
+            <tr>
+                <td><strong>{{ supplier.supplier__name|default:"Non spécifié" }}</strong></td>
+                <td class="text-center">{{ supplier.count }}</td>
+                <td class="text-right">{{ supplier.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ supplier.percentage|default:0|floatformat:1 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Liste des Bons de Commande -->
+<div class="section">
+    <h2 class="section-title">Liste des Bons de Commande</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Bon</th>
+                <th>Fournisseur</th>
+                <th>Date de création</th>
+                <th>Statut</th>
+                <th class="text-right">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for po in purchase_orders %}
+            <tr>
+                <td><strong>{{ po.po_number }}</strong></td>
+                <td>{{ po.supplier.name|truncatewords:4|default:"-" }}</td>
+                <td>{{ po.created_at|date:"d/m/Y" }}</td>
+                <td>
+                    {% if po.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif po.status == 'sent' %}<span class="badge warning">Envoyé</span>
+                    {% elif po.status == 'approved' %}<span class="badge success">Approuvé</span>
+                    {% elif po.status == 'received' %}<span class="badge success">Reçu</span>
+                    {% elif po.status == 'cancelled' %}<span class="badge danger">Annulé</span>
+                    {% else %}{{ po.status }}{% endif %}
+                </td>
+                <td class="text-right">{{ po.total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #999;">Aucun bon de commande dans cette sélection</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Résumé -->
+<div class="highlight-box">
+    <strong>Résumé du rapport:</strong>
+    <div style="margin-top: 8px;">
+        Ce rapport contient <strong>{{ total_count }}</strong> bon(s) de commande pour un montant total de 
+        <strong>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>, 
+        avec une valeur moyenne de <strong>{{ avg_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> par bon.
+        {% if date_start or date_end %}
+        <br>Période couverte: 
+        {% if date_start %}du {{ date_start|date:"d/m/Y" }}{% endif %}
+        {% if date_end %}au {{ date_end|date:"d/m/Y" }}{% endif %}.
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+

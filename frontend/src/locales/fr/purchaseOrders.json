@@ -55,7 +55,18 @@
     "poUpdatedSuccess": "Bon de commande modifié avec succès",
     "poCreatedSuccess": "Bon de commande créé avec succès",
     "savingError": "Erreur lors de la sauvegarde",
-    "noItemsAlert": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer."
+    "noItemsAlert": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer.",
+    "reportError": "Erreur lors de la génération du rapport",
+    "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
+    "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport."
+  },
+  "actions": {
+    "generateReport": "Rapport PDF"
+  },
+  "report": {
+    "title": "Générer un Rapport de Bons de Commande",
+    "itemLabel": "bon de commande",
+    "itemsLabel": "bons de commande"
   },
   "labels": {
     "delivery": "Livraison:",
@@ -90,7 +101,8 @@
     "selectedSupplier": "Fournisseur sélectionné",
     "poTemplate": "Modèle de bon de commande",
     "saving": "Sauvegarde...",
-    "generating": "Génération..."
+    "generating": "Génération...",
+    "generatingLabel": "Génération du rapport en cours..."
   },
   "buttons": {
     "generatePDF": "Générer PDF",
@@ -118,6 +130,7 @@
     "approvePO": "Approuver le bon de commande",
     "addItem": "Ajouter un article",
     "generatePDF": "Générer un PDF du bon de commande",
+    "generatePdf": "Générer un PDF du rapport",
     "quickCreateSupplier": "Créer un fournisseur rapidement",
     "quickCreateProduct": "Créer un produit rapidement"
   },

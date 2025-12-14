@@ -1,0 +1,109 @@
+# Template pour ajouter le système de rapport amélioré
+
+## Imports nécessaires
+```javascript
+// Ajouter aux imports MUI
+FormGroup, FormControlLabel, Checkbox, Divider
+
+// Remplacer
+import ReportGenerationDialog from '../../components/common/ReportGenerationDialog';
+import { generate[Module]BulkReport } from '../../services/pdfReportService';
+
+// Par
+import { generate[Module]BulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+```
+
+## États
+```javascript
+const [reportConfigOpen, setReportConfigOpen] = useState(false);
+const [reportDialogOpen, setReportDialogOpen] = useState(false);
+const [generatingPdf, setGeneratingPdf] = useState(false);
+const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+const [reportFilters, setReportFilters] = useState({
+  dateStart: '',
+  dateEnd: '',
+  selectedItems: [],
+});
+```
+
+## Fonctions
+```javascript
+const handleGenerateReportClick = () => {
+  setReportConfigOpen(true);
+};
+
+const handleConfigureReport = async () => {
+  setReportConfigOpen(false);
+  setGeneratingPdf(true);
+  setReportDialogOpen(true);
+  
+  try {
+    const pdfBlob = await generate[Module]BulkReport({
+      itemIds: reportFilters.selectedItems.length > 0 ? reportFilters.selectedItems : undefined,
+      dateStart: reportFilters.dateStart || undefined,
+      dateEnd: reportFilters.dateEnd || undefined,
+      status: quickFilter || statusFilter || undefined,
+    });
+    setGeneratedPdfBlob(pdfBlob);
+  } catch (error) {
+    console.error('Error generating report:', error);
+    enqueueSnackbar(t('[module]:messages.reportError'), { variant: 'error' });
+    setReportDialogOpen(false);
+  } finally {
+    setGeneratingPdf(false);
+  }
+};
+
+const handleCloseDialog = () => {
+  setReportDialogOpen(false);
+  setGeneratedPdfBlob(null);
+};
+
+const handlePdfAction = (action) => {
+  if (!generatedPdfBlob) return;
+
+  if (action === 'download') {
+    downloadPDF(generatedPdfBlob, `rapport-[module]-${new Date().getTime()}.pdf`);
+    enqueueSnackbar(t('[module]:messages.pdfDownloadedSuccess'), { variant: 'success' });
+  } else if (action === 'preview') {
+    openPDFInNewTab(generatedPdfBlob);
+  } else if (action === 'print') {
+    const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+    const printWindow = window.open(pdfUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+        setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+      };
+    }
+    enqueueSnackbar(t('[module]:messages.printWindowOpened'), { variant: 'success' });
+  }
+  setReportDialogOpen(false);
+};
+```
+
+## Bouton
+```javascript
+<Button
+  variant="outlined"
+  color="success"
+  startIcon={<PictureAsPdf />}
+  onClick={handleGenerateReportClick}
+  sx={{ ml: 'auto' }}
+>
+  {t('[module]:actions.generateReport', 'Rapport PDF')}
+</Button>
+```
+
+## Dialogues (remplacer ReportGenerationDialog)
+[Voir RAPPORT_FACTURES_FINAL.md pour le code complet des dialogues]
+
+---
+
+Appliqué automatiquement à:
+- ✅ Invoices
+- ⏳ Purchase Orders
+- ⏳ Clients
+- ⏳ Products  
+- ⏳ Suppliers
+

@@ -249,6 +249,41 @@ class ContractViewSet(viewsets.ModelViewSet):
             stats['by_risk_level'][risk] = all_clauses.filter(risk_level=risk).count()
 
         return Response(stats)
+    
+    @action(detail=True, methods=['get'], url_path='pdf-report')
+    def generate_pdf_report(self, request, pk=None):
+        """Générer un rapport PDF pour un contrat"""
+        from django.http import HttpResponse
+        
+        try:
+            contract = self.get_object()
+            
+            # Générer le PDF avec WeasyPrint
+            from apps.api.services.report_generator_weasy import generate_contract_report_pdf
+            pdf_buffer = generate_contract_report_pdf(contract, request.user)
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-contrat-{contract.id}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur lors de la génération du PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ContractClauseViewSet(viewsets.ModelViewSet):

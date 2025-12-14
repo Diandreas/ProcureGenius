@@ -171,6 +171,47 @@ class SupplierViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             ])
         
         return response
+    
+    @action(detail=True, methods=['get'], url_path='pdf-report')
+    def generate_pdf_report(self, request, pk=None):
+        """Générer un rapport PDF pour un fournisseur"""
+        from django.http import HttpResponse
+        import traceback
+        
+        try:
+            supplier = self.get_object()
+            
+            # Générer le PDF avec WeasyPrint
+            from .services.report_generator_weasy import generate_supplier_report_pdf
+            pdf_buffer = generate_supplier_report_pdf(supplier, request.user)
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            supplier_name = getattr(supplier, 'name', 'fournisseur') or 'fournisseur'
+            filename = f"rapport-fournisseur-{supplier_name.replace(' ', '_')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF fournisseur: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF fournisseur: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du PDF: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SupplierProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
@@ -327,6 +368,144 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         serializer = StockMovementSerializer(movements, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='pdf-report')
+    def generate_pdf_report(self, request, pk=None):
+        """Générer un rapport PDF pour un produit"""
+        from django.http import HttpResponse
+        import traceback
+        
+        try:
+            product = self.get_object()
+            
+            # Générer le PDF avec WeasyPrint
+            from .services.report_generator_weasy import generate_product_report_pdf
+            pdf_buffer = generate_product_report_pdf(product, request.user)
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            product_name = getattr(product, 'name', 'produit') or 'produit'
+            filename = f"rapport-produit-{product_name.replace(' ', '_')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF produit: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF produit: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du PDF: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], url_path='bulk-pdf-report')
+    def generate_bulk_pdf_report(self, request):
+        """Générer un rapport PDF pour plusieurs produits (avec filtres)"""
+        from django.http import HttpResponse
+        from datetime import datetime
+        import traceback
+        
+        try:
+            # Récupérer les paramètres de filtrage
+            product_ids = request.data.get('product_ids', [])
+            date_start = request.data.get('date_start')
+            date_end = request.data.get('date_end')
+            category_filter = request.data.get('category')
+            
+            # Construire le queryset
+            queryset = self.get_queryset()
+            
+            # Filtrer par IDs si fournis
+            if product_ids and len(product_ids) > 0:
+                queryset = queryset.filter(id__in=product_ids)
+            
+            # Filtrer par dates (sur created_at)
+            date_start_obj = None
+            date_end_obj = None
+            if date_start:
+                try:
+                    if isinstance(date_start, str):
+                        date_start = date_start.replace('Z', '+00:00') if 'Z' in date_start else date_start
+                        date_start_obj = datetime.fromisoformat(date_start.replace('Z', ''))
+                    else:
+                        date_start_obj = date_start
+                    queryset = queryset.filter(created_at__gte=date_start_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_start: {e}")
+            
+            if date_end:
+                try:
+                    if isinstance(date_end, str):
+                        date_end = date_end.replace('Z', '+00:00') if 'Z' in date_end else date_end
+                        date_end_obj = datetime.fromisoformat(date_end.replace('Z', ''))
+                    else:
+                        date_end_obj = date_end
+                    queryset = queryset.filter(created_at__lte=date_end_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_end: {e}")
+            
+            # Filtrer par catégorie
+            if category_filter:
+                queryset = queryset.filter(category_id=category_filter)
+            
+            # Vérifier qu'il y a des produits
+            count = queryset.count()
+            if count == 0:
+                return Response(
+                    {'error': 'Aucun produit trouvé avec les filtres spécifiés'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Limiter le nombre de produits (sécurité)
+            queryset = queryset[:500]
+            
+            # Générer le PDF
+            from .services.report_generator_weasy import generate_products_report_pdf
+            pdf_buffer = generate_products_report_pdf(
+                queryset,
+                request.user,
+                date_start_obj,
+                date_end_obj
+            )
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-produits-{datetime.now().strftime('%Y%m%d')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF produits: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF produits: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du rapport: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
@@ -758,6 +937,144 @@ class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             ])
         
         return response
+    
+    @action(detail=True, methods=['get'], url_path='pdf-report')
+    def generate_pdf_report(self, request, pk=None):
+        """Générer un rapport PDF pour un client"""
+        from django.http import HttpResponse
+        import traceback
+        
+        try:
+            client = self.get_object()
+            
+            # Générer le PDF avec WeasyPrint
+            from .services.report_generator_weasy import generate_client_report_pdf
+            pdf_buffer = generate_client_report_pdf(client, request.user)
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            client_name = getattr(client, 'name', 'client') or 'client'
+            filename = f"rapport-client-{client_name.replace(' ', '_')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF client: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF client: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du PDF: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], url_path='bulk-pdf-report')
+    def generate_bulk_pdf_report(self, request):
+        """Générer un rapport PDF pour plusieurs clients (avec filtres)"""
+        from django.http import HttpResponse
+        from datetime import datetime
+        import traceback
+        
+        try:
+            # Récupérer les paramètres de filtrage
+            client_ids = request.data.get('client_ids', [])
+            date_start = request.data.get('date_start')
+            date_end = request.data.get('date_end')
+            status_filter = request.data.get('status')
+            
+            # Construire le queryset
+            queryset = self.get_queryset()
+            
+            # Filtrer par IDs si fournis
+            if client_ids and len(client_ids) > 0:
+                queryset = queryset.filter(id__in=client_ids)
+            
+            # Filtrer par dates (sur created_at)
+            date_start_obj = None
+            date_end_obj = None
+            if date_start:
+                try:
+                    if isinstance(date_start, str):
+                        date_start = date_start.replace('Z', '+00:00') if 'Z' in date_start else date_start
+                        date_start_obj = datetime.fromisoformat(date_start.replace('Z', ''))
+                    else:
+                        date_start_obj = date_start
+                    queryset = queryset.filter(created_at__gte=date_start_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_start: {e}")
+            
+            if date_end:
+                try:
+                    if isinstance(date_end, str):
+                        date_end = date_end.replace('Z', '+00:00') if 'Z' in date_end else date_end
+                        date_end_obj = datetime.fromisoformat(date_end.replace('Z', ''))
+                    else:
+                        date_end_obj = date_end
+                    queryset = queryset.filter(created_at__lte=date_end_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_end: {e}")
+            
+            # Filtrer par statut
+            if status_filter:
+                queryset = queryset.filter(is_active=(status_filter == 'active'))
+            
+            # Vérifier qu'il y a des clients
+            count = queryset.count()
+            if count == 0:
+                return Response(
+                    {'error': 'Aucun client trouvé avec les filtres spécifiés'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Limiter le nombre de clients (sécurité)
+            queryset = queryset[:500]
+            
+            # Générer le PDF
+            from .services.report_generator_weasy import generate_clients_report_pdf
+            pdf_buffer = generate_clients_report_pdf(
+                queryset,
+                request.user,
+                date_start_obj,
+                date_end_obj
+            )
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-clients-{datetime.now().strftime('%Y%m%d')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF clients: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF clients: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du rapport: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
@@ -844,6 +1161,108 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         """Générer PDF du bon de commande"""
         # À implémenter avec ReportLab
         return Response({'message': 'PDF generation not implemented yet'})
+    
+    @action(detail=False, methods=['post'], url_path='bulk-pdf-report')
+    def generate_bulk_pdf_report(self, request):
+        """Générer un rapport PDF pour plusieurs bons de commande (avec filtres)"""
+        from django.http import HttpResponse
+        from datetime import datetime
+        import traceback
+        
+        try:
+            # Récupérer les paramètres de filtrage
+            po_ids = request.data.get('po_ids', [])
+            date_start = request.data.get('date_start')
+            date_end = request.data.get('date_end')
+            status_filter = request.data.get('status')
+            supplier_id = request.data.get('supplier_id')
+            
+            # Construire le queryset
+            queryset = self.get_queryset()
+            
+            # Filtrer par IDs si fournis
+            if po_ids and len(po_ids) > 0:
+                queryset = queryset.filter(id__in=po_ids)
+            
+            # Filtrer par dates
+            date_start_obj = None
+            date_end_obj = None
+            if date_start:
+                try:
+                    if isinstance(date_start, str):
+                        date_start = date_start.replace('Z', '+00:00') if 'Z' in date_start else date_start
+                        date_start_obj = datetime.fromisoformat(date_start.replace('Z', ''))
+                    else:
+                        date_start_obj = date_start
+                    queryset = queryset.filter(created_at__gte=date_start_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_start: {e}")
+            
+            if date_end:
+                try:
+                    if isinstance(date_end, str):
+                        date_end = date_end.replace('Z', '+00:00') if 'Z' in date_end else date_end
+                        date_end_obj = datetime.fromisoformat(date_end.replace('Z', ''))
+                    else:
+                        date_end_obj = date_end
+                    queryset = queryset.filter(created_at__lte=date_end_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_end: {e}")
+            
+            # Filtrer par statut
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            
+            # Filtrer par fournisseur
+            if supplier_id:
+                queryset = queryset.filter(supplier_id=supplier_id)
+            
+            # Vérifier qu'il y a des bons de commande
+            count = queryset.count()
+            if count == 0:
+                return Response(
+                    {'error': 'Aucun bon de commande trouvé avec les filtres spécifiés'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Limiter le nombre de bons (sécurité)
+            queryset = queryset[:500]
+            
+            # Générer le PDF
+            from .services.report_generator_weasy import generate_purchase_orders_report_pdf
+            pdf_buffer = generate_purchase_orders_report_pdf(
+                queryset,
+                request.user,
+                date_start_obj,
+                date_end_obj
+            )
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-bons-commande-{datetime.now().strftime('%Y%m%d')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF bons de commande: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF bons de commande: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du rapport: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
@@ -1010,6 +1429,147 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'], url_path='bulk-pdf-report')
+    def generate_bulk_pdf_report(self, request):
+        """Générer un rapport PDF pour plusieurs factures (avec filtres)"""
+        from django.http import HttpResponse
+        from datetime import datetime
+        import traceback
+        
+        try:
+            # Récupérer les paramètres de filtrage
+            invoice_ids = request.data.get('invoice_ids', [])
+            date_start = request.data.get('date_start')
+            date_end = request.data.get('date_end')
+            status_filter = request.data.get('status')
+            client_id = request.data.get('client_id')
+            
+            # Construire le queryset
+            queryset = self.get_queryset()
+            
+            # Filtrer par IDs si fournis
+            if invoice_ids:
+                queryset = queryset.filter(id__in=invoice_ids)
+            
+            # Filtrer par dates
+            date_start_obj = None
+            date_end_obj = None
+            if date_start:
+                try:
+                    # Gérer différents formats de date
+                    # Les dates viennent du frontend au format YYYY-MM-DD (input type="date")
+                    if isinstance(date_start, str):
+                        from datetime import date as date_class
+                        # Si c'est juste une date (YYYY-MM-DD), utiliser date.fromisoformat
+                        if 'T' not in date_start and ' ' not in date_start:
+                            date_start_obj = date_class.fromisoformat(date_start)
+                        else:
+                            # Si c'est un datetime, extraire juste la date
+                            date_start_str = date_start.split('T')[0].split(' ')[0]
+                            date_start_obj = date_class.fromisoformat(date_start_str)
+                    elif isinstance(date_start, datetime):
+                        date_start_obj = date_start.date()
+                    elif hasattr(date_start, 'date'):
+                        date_start_obj = date_start.date()
+                    else:
+                        date_start_obj = date_start
+                    
+                    if date_start_obj:
+                        # Utiliser created_at au lieu de issue_date (qui n'existe pas)
+                        queryset = queryset.filter(created_at__date__gte=date_start_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_start '{date_start}': {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            if date_end:
+                try:
+                    if isinstance(date_end, str):
+                        from datetime import date as date_class
+                        # Si c'est juste une date (YYYY-MM-DD), utiliser date.fromisoformat
+                        if 'T' not in date_end and ' ' not in date_end:
+                            date_end_obj = date_class.fromisoformat(date_end)
+                        else:
+                            # Si c'est un datetime, extraire juste la date
+                            date_end_str = date_end.split('T')[0].split(' ')[0]
+                            date_end_obj = date_class.fromisoformat(date_end_str)
+                    elif isinstance(date_end, datetime):
+                        date_end_obj = date_end.date()
+                    elif hasattr(date_end, 'date'):
+                        date_end_obj = date_end.date()
+                    else:
+                        date_end_obj = date_end
+                    
+                    if date_end_obj:
+                        # Utiliser created_at au lieu de issue_date (qui n'existe pas)
+                        queryset = queryset.filter(created_at__date__lte=date_end_obj)
+                except Exception as e:
+                    print(f"Erreur parsing date_end '{date_end}': {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # Filtrer par statut
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            
+            # Filtrer par client
+            if client_id:
+                queryset = queryset.filter(client_id=client_id)
+            
+            # Précharger les relations pour éviter les problèmes de lazy loading
+            # IMPORTANT: select_related doit être appelé AVANT la limitation [:500]
+            try:
+                queryset = queryset.select_related('client', 'created_by')
+            except Exception as e:
+                print(f"Erreur select_related: {e}")
+            
+            # Vérifier qu'il y a des factures
+            count = queryset.count()
+            if count == 0:
+                return Response(
+                    {'error': 'Aucune facture trouvée avec les filtres spécifiés'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Limiter le nombre de factures (sécurité) - après select_related
+            queryset = queryset[:500]
+            
+            # Générer le PDF
+            from .services.report_generator_weasy import generate_invoices_report_pdf
+            pdf_buffer = generate_invoices_report_pdf(
+                queryset, 
+                request.user,
+                date_start_obj,
+                date_end_obj
+            )
+            
+            # Créer la réponse HTTP
+            response = HttpResponse(
+                pdf_buffer.getvalue(),
+                content_type='application/pdf'
+            )
+            
+            filename = f"rapport-factures-{datetime.now().strftime('%Y%m%d')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+            
+            return response
+            
+        except ImportError as e:
+            print(f"ImportError génération PDF factures: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': 'Service de génération PDF non disponible', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            print(f"Erreur génération PDF factures: {e}")
+            traceback.print_exc()
+            return Response(
+                {'error': f'Erreur lors de la génération du rapport: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class DashboardStatsView(APIView):

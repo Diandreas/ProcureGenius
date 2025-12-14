@@ -10,3 +10,12 @@ def mul(value, arg):
         return float(value) * float(arg)
     except (ValueError, TypeError):
         return 0
+
+
+@register.filter
+def div(value, arg):
+    """Divise deux valeurs"""
+    try:
+        return float(value) / float(arg) if float(arg) != 0 else 0
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0

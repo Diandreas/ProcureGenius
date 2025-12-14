@@ -53,6 +53,7 @@ import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
+import SmartInvoiceUpload from '../../components/SmartInvoiceUpload';
 
 function InvoiceForm() {
   const { t } = useTranslation(['invoices', 'common']);
@@ -436,6 +437,16 @@ function InvoiceForm() {
           </Button>
         </Box>
       </Box>
+
+      {/* Smart Invoice Upload - Drag & Drop IA */}
+      {!isEdit && (
+        <Box sx={{ mb: 4 }}>
+          <SmartInvoiceUpload />
+          <Divider sx={{ my: 4 }}>
+            <Chip label="OU remplir manuellement ci-dessous" />
+          </Divider>
+        </Box>
+      )}
 
       <form onSubmit={handleSubmit}>
         {isMobile ? (

@@ -43,7 +43,8 @@
     "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression",
     "pdfGenerationError": "Erreur lors de la génération du PDF",
     "sendInvoiceConfirm": "Êtes-vous sûr de vouloir envoyer cette facture au client ? Elle ne pourra plus être modifiée.",
-    "pdfGenerationHelpText": "Choisissez le style de votre facture. Le PDF sera généré avec un QR code de vérification. Vous pouvez prévisualiser, télécharger ou imprimer directement la facture.",
+    "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.",
+    "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
     "loadClientsError": "Erreur lors du chargement des clients",
     "loadProductsError": "Erreur lors du chargement des produits",
     "loadInvoiceFormError": "Erreur lors du chargement de la facture",
@@ -58,7 +59,16 @@
     "creationError": "Erreur lors de la création",
     "noItemsAddedMessage": "Aucun article ajouté. Cliquez sur \"Ajouter\" pour commencer.",
     "noItemsDesktopMessage": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer.",
-    "overdueMessage": "En retard de {{days}} jours"
+    "overdueMessage": "En retard de {{days}} jours",
+    "reportError": "Erreur lors de la génération du rapport"
+  },
+  "actions": {
+    "generateReport": "Rapport PDF"
+  },
+  "report": {
+    "title": "Générer un Rapport de Factures",
+    "itemLabel": "facture",
+    "itemsLabel": "factures"
   },
   "labels": {
     "dueDate": "Échéance:",

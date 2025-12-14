@@ -58,6 +58,7 @@
         "lowStockThreshold": "Low Stock Threshold",
         "activeProduct": "Active Product",
         "inactiveProduct": "Inactive Product",
+        "generatingLabel": "Generating report...",
         "mandatory": "Mandatory",
         "type": "Type",
         "price": "Price",
@@ -130,14 +131,34 @@
         "leaveEmptyForAuto": "Leave empty to auto-generate",
         "alertLowStock": "Alert if stock <= this threshold",
         "noInvoicesForProduct": "No invoices for this product",
-        "noClientsPurchased": "No client has purchased this product yet"
+        "noClientsPurchased": "No client has purchased this product yet",
+        "reportError": "Error generating report",
+        "reportGenerated": "Report generated successfully! Choose an action below.",
+        "pdfGenerationHelpText": "You can preview, download or print the report directly.",
+        "pdfDownloadedSuccess": "PDF downloaded successfully",
+        "printWindowOpened": "Print window opened"
     },
     "actions": {
         "cancel": "Cancel",
         "create": "Create",
         "modify": "Modify",
         "change": "Change",
-        "add": "Add"
+        "add": "Add",
+        "generateReport": "PDF Report"
+    },
+    "report": {
+        "title": "Generate Products Report",
+        "itemLabel": "product",
+        "itemsLabel": "products"
+    },
+    "buttons": {
+        "preview": "Preview",
+        "print": "Print",
+        "download": "Download",
+        "cancel": "Cancel"
+    },
+    "dialogs": {
+        "generatePdf": "Generate report PDF"
     },
     "validation": {
         "nameRequired": "Name is required",

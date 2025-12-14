@@ -10,6 +10,9 @@ import {
   TextField,
   InputAdornment,
   FormControl,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
   InputLabel,
   Select,
   MenuItem,
@@ -21,6 +24,12 @@ import {
   useMediaQuery,
   useTheme,
   Alert,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
 } from '@mui/material';
 import {
   Search,
@@ -37,17 +46,23 @@ import {
   Block,
   Star,
   FiberNew,
+  PictureAsPdf,
+  Print,
+  Download,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
 import { fetchClients } from '../../store/slices/clientsSlice';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import { generateClientsBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Clients() {
   const { t } = useTranslation(['clients', 'common']);
   const { format: formatCurrency } = useCurrency();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -60,6 +75,15 @@ function Clients() {
   const [paymentTermsFilter, setPaymentTermsFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
+  const [reportConfigOpen, setReportConfigOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [reportFilters, setReportFilters] = useState({
+    dateStart: '',
+    dateEnd: '',
+    selectedClients: [],
+  });
 
   useEffect(() => {
     dispatch(fetchClients());
@@ -301,8 +325,85 @@ function Clients() {
     );
   }
 
+  const handleGenerateReportClick = () => {
+    setReportConfigOpen(true);
+  };
+
+  const handleConfigureReport = async () => {
+    setReportConfigOpen(false);
+    setGeneratingPdf(true);
+    setReportDialogOpen(true);
+    
+    try {
+      const pdfBlob = await generateClientsBulkReport({
+        itemIds: reportFilters.selectedClients.length > 0 ? reportFilters.selectedClients : undefined,
+        dateStart: reportFilters.dateStart || undefined,
+        dateEnd: reportFilters.dateEnd || undefined,
+        status: quickFilter || statusFilter || undefined,
+      });
+      setGeneratedPdfBlob(pdfBlob);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      enqueueSnackbar(t('clients:messages.reportError', 'Erreur lors de la génération du rapport'), {
+        variant: 'error',
+      });
+      setReportDialogOpen(false);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setReportDialogOpen(false);
+    setGeneratedPdfBlob(null);
+  };
+
+  const handlePdfAction = (action) => {
+    if (!generatedPdfBlob) return;
+
+    if (action === 'download') {
+      downloadPDF(generatedPdfBlob, `rapport-clients-${new Date().getTime()}.pdf`);
+      enqueueSnackbar(t('clients:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
+        variant: 'success',
+      });
+    } else if (action === 'preview') {
+      openPDFInNewTab(generatedPdfBlob);
+    } else if (action === 'print') {
+      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+      enqueueSnackbar(t('clients:messages.printWindowOpened', 'Fenêtre d\'impression ouverte'), {
+        variant: 'success',
+      });
+    }
+    setReportDialogOpen(false);
+  };
+
+
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Header avec titre et bouton PDF */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
+          {t('clients:title', 'Clients')}
+        </Typography>
+        <Button
+          variant="outlined"
+          color="success"
+          startIcon={<PictureAsPdf />}
+          onClick={handleGenerateReportClick}
+          disabled={filteredClients.length === 0}
+          sx={{ ml: 'auto' }}
+        >
+          {t('clients:actions.generateReport', 'Rapport PDF')}
+        </Button>
+      </Box>
+
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
         {/* Stats Cards - Clickable Filters */}
@@ -594,6 +695,203 @@ function Clients() {
           ))}
         </Grid>
       )}
+
+      {/* Configuration Dialog */}
+      <Dialog open={reportConfigOpen} onClose={() => setReportConfigOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PictureAsPdf color="error" />
+            {t('clients:report.title', 'Générer un Rapport de Clients')}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {/* Période */}
+            <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+              📅 Période (optionnel)
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+              Filtrer par période - laisser vide pour tout inclure
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+              <TextField
+                label="Date de début"
+                type="date"
+                value={reportFilters.dateStart}
+                onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
+                fullWidth
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ max: reportFilters.dateEnd || undefined }}
+              />
+              <TextField
+                label="Date de fin"
+                type="date"
+                value={reportFilters.dateEnd}
+                onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
+                fullWidth
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: reportFilters.dateStart || undefined }}
+              />
+            </Stack>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Sélection de clients */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                📋 Clients à inclure
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                {reportFilters.selectedClients.length > 0
+                  ? `${reportFilters.selectedClients.length} client(s) sélectionné(s)`
+                  : 'Tous les clients filtrés seront inclus'}
+              </Typography>
+              
+              <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+                <FormControl component="fieldset" fullWidth>
+                  <FormGroup>
+                    {filteredClients.map((client) => (
+                      <FormControlLabel
+                        key={client.id}
+                        control={
+                          <Checkbox
+                            checked={reportFilters.selectedClients.includes(client.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setReportFilters({
+                                  ...reportFilters,
+                                  selectedClients: [...reportFilters.selectedClients, client.id]
+                                });
+                              } else {
+                                setReportFilters({
+                                  ...reportFilters,
+                                  selectedClients: reportFilters.selectedClients.filter(id => id !== client.id)
+                                });
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2">{client.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {client.email || '-'} • {client.contact_person || '-'}
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ width: '100%', m: 0, py: 0.5 }}
+                      />
+                    ))}
+                  </FormGroup>
+                </FormControl>
+              </Box>
+
+              {filteredClients.length > 0 && (
+                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={() => setReportFilters({ ...reportFilters, selectedClients: filteredClients.map(c => c.id) })}
+                  >
+                    Tout sélectionner
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setReportFilters({ ...reportFilters, selectedClients: [] })}
+                  >
+                    Tout désélectionner
+                  </Button>
+                </Box>
+              )}
+            </Box>
+
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="caption">
+                {reportFilters.selectedClients.length > 0
+                  ? `Un rapport sera généré avec ${reportFilters.selectedClients.length} client(s) sélectionné(s)`
+                  : `Un rapport sera généré avec tous les clients (${filteredClients.length})`}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                .
+              </Typography>
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportConfigOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfigureReport}
+            variant="contained"
+            color="success"
+            startIcon={<PictureAsPdf />}
+          >
+            Générer le Rapport
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF Actions Dialog */}
+      <Dialog open={reportDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PictureAsPdf color="error" />
+            {t('clients:dialogs.generatePdf', 'Générer un PDF du rapport')}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {generatingPdf ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+              <CircularProgress size={60} sx={{ mb: 2 }} />
+              <Typography variant="body1" color="text.secondary">
+                {t('clients:labels.generatingLabel', 'Génération du rapport en cours...')}
+              </Typography>
+            </Box>
+          ) : generatedPdfBlob ? (
+            <Box sx={{ py: 2 }}>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {t('clients:messages.reportGenerated', 'Rapport généré avec succès ! Choisissez une action ci-dessous.')}
+              </Alert>
+              <Typography variant="body2" color="text.secondary">
+                {t('clients:messages.pdfGenerationHelpText', 'Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.')}
+              </Typography>
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} disabled={generatingPdf}>
+            {t('clients:buttons.cancel', 'Annuler')}
+          </Button>
+          {generatedPdfBlob && (
+            <>
+              <Button
+                onClick={() => handlePdfAction('preview')}
+                variant="outlined"
+                startIcon={<Receipt />}
+              >
+                {t('clients:buttons.preview', 'Aperçu')}
+              </Button>
+              <Button
+                onClick={() => handlePdfAction('print')}
+                variant="outlined"
+                color="secondary"
+                startIcon={<Print />}
+              >
+                {t('clients:buttons.print', 'Imprimer')}
+              </Button>
+              <Button
+                onClick={() => handlePdfAction('download')}
+                variant="contained"
+                color="success"
+                startIcon={<Download />}
+              >
+                {t('clients:buttons.download', 'Télécharger')}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

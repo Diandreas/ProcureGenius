@@ -1,0 +1,101 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Rapport des Clients{% endblock %}
+
+{% block report_title %}Rapport des Clients{% endblock %}
+{% block report_subtitle %}
+    {% if date_start or date_end %}
+        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+    {% endif %}
+    • {{ total_clients }} client(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques Globales -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">Nombre de Clients</div>
+        <div class="value">{{ total_clients }}</div>
+        <div class="subvalue">Client(s)</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="label">Ventes Totales</div>
+        <div class="value">{{ total_sales|floatformat:2 }}</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Factures Total</div>
+        <div class="value">{{ total_invoices }}</div>
+        <div class="subvalue">Facture(s)</div>
+    </div>
+    
+    <div class="stat-card info">
+        <div class="label">Ventes Moyennes</div>
+        <div class="value">{{ avg_sales|floatformat:2 }}</div>
+        <div class="subvalue">Par client</div>
+    </div>
+</div>
+
+<!-- Répartition par Statut -->
+{% if by_status %}
+<div class="section">
+    <h2 class="section-title">Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th class="text-center">Nombre</th>
+                <th class="text-right">Ventes Totales</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in by_status %}
+            <tr>
+                <td><strong>{{ stat.status|title }}</strong></td>
+                <td class="text-center">{{ stat.count }}</td>
+                <td class="text-right">{{ stat.total_sales|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Liste des Clients -->
+<div class="section">
+    <h2 class="section-title">Liste des Clients</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th class="text-center">Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td><strong>{{ client.name|default:"-" }}</strong></td>
+                <td>{{ client.email|default:"-" }}</td>
+                <td>{{ client.contact_person|default:"-" }}</td>
+                <td class="text-center">
+                    {% if client.is_active %}
+                        <span class="badge success">Actif</span>
+                    {% else %}
+                        <span class="badge error">Inactif</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">Aucun client trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

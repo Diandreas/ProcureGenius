@@ -1,0 +1,139 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Rapport Client - {{ client.name }}{% endblock %}
+
+{% block report_title %}Rapport Client{% endblock %}
+{% block report_subtitle %}{{ client.name }} • Généré le {{ generated_at|date:"d/m/Y à H:i" }}{% endblock %}
+
+{% block content %}
+<!-- Informations du client -->
+<div class="info-grid">
+    <div class="info-box">
+        <h3>Informations Générales</h3>
+        <div class="content">
+            <strong>{{ client.name }}</strong>
+            {% if client.contact_person %}<div><span class="label">Contact:</span> <span class="value">{{ client.contact_person }}</span></div>{% endif %}
+            {% if client.email %}<div><span class="label">Email:</span> <span class="value">{{ client.email }}</span></div>{% endif %}
+            {% if client.phone %}<div><span class="label">Téléphone:</span> <span class="value">{{ client.phone }}</span></div>{% endif %}
+            {% if client.address %}<div><span class="label">Adresse:</span> <span class="value">{{ client.address }}</span></div>{% endif %}
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>Informations Commerciales</h3>
+        <div class="content">
+            <div><span class="label">Statut:</span> 
+                {% if client.is_active %}
+                    <span class="badge success">Actif</span>
+                {% else %}
+                    <span class="badge danger">Inactif</span>
+                {% endif %}
+            </div>
+            {% if client.payment_terms %}<div><span class="label">Conditions de paiement:</span> <span class="value">{{ client.payment_terms }}</span></div>{% endif %}
+            {% if client.tax_id %}<div><span class="label">N° Fiscal:</span> <span class="value">{{ client.tax_id }}</span></div>{% endif %}
+            <div><span class="label">Client depuis:</span> <span class="value">{{ client.created_at|date:"d/m/Y" }}</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques Financières -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">Total Facturé</div>
+        <div class="value">{{ total_invoiced|floatformat:2 }} $</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="label">Nombre de Factures</div>
+        <div class="value">{{ total_invoices }}</div>
+        <div class="subvalue">Factures émises</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Valeur Moyenne</div>
+        <div class="value">{{ avg_invoice_value|floatformat:2 }} $</div>
+        <div class="subvalue">Par facture</div>
+    </div>
+</div>
+
+<!-- Factures par Statut -->
+{% if invoices_by_status %}
+<div class="section">
+    <h2 class="section-title">Répartition des Factures par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th class="text-center">Nombre</th>
+                <th class="text-right">Montant Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in invoices_by_status %}
+            <tr>
+                <td>
+                    {% if stat.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif stat.status == 'sent' %}<span class="badge warning">Envoyée</span>
+                    {% elif stat.status == 'paid' %}<span class="badge success">Payée</span>
+                    {% elif stat.status == 'overdue' %}<span class="badge danger">En retard</span>
+                    {% elif stat.status == 'cancelled' %}<span class="badge danger">Annulée</span>
+                    {% else %}{{ stat.status }}{% endif %}
+                </td>
+                <td class="text-center">{{ stat.count }}</td>
+                <td class="text-right">{{ stat.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Factures Récentes -->
+{% if recent_invoices %}
+<div class="section">
+    <h2 class="section-title">Factures Récentes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Facture</th>
+                <th>Date d'émission</th>
+                <th>Date d'échéance</th>
+                <th>Statut</th>
+                <th class="text-right">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in recent_invoices %}
+            <tr>
+                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                <td>{{ invoice.issue_date|date:"d/m/Y" }}</td>
+                <td>{{ invoice.due_date|date:"d/m/Y"|default:"-" }}</td>
+                <td>
+                    {% if invoice.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif invoice.status == 'sent' %}<span class="badge warning">Envoyée</span>
+                    {% elif invoice.status == 'paid' %}<span class="badge success">Payée</span>
+                    {% elif invoice.status == 'overdue' %}<span class="badge danger">En retard</span>
+                    {% elif invoice.status == 'cancelled' %}<span class="badge danger">Annulée</span>
+                    {% else %}{{ invoice.status }}{% endif %}
+                </td>
+                <td class="text-right">{{ invoice.total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Résumé -->
+<div class="highlight-box">
+    <strong>Résumé de la relation commerciale:</strong>
+    <div style="margin-top: 8px;">
+        Ce client a généré un chiffre d'affaires total de <strong>{{ total_invoiced|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> 
+        sur un total de <strong>{{ total_invoices }}</strong> facture(s), avec une valeur moyenne de 
+        <strong>{{ avg_invoice_value|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> par facture.
+    </div>
+</div>
+
+{% endblock %}
+

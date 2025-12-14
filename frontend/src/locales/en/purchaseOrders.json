@@ -55,7 +55,18 @@
     "poUpdatedSuccess": "Purchase order updated successfully",
     "poCreatedSuccess": "Purchase order created successfully",
     "savingError": "Error saving",
-    "noItemsAlert": "No items added. Click \"Add item\" to begin."
+    "noItemsAlert": "No items added. Click \"Add item\" to begin.",
+    "reportError": "Error generating report",
+    "reportGenerated": "Report generated successfully! Choose an action below.",
+    "pdfGenerationHelpText": "You can preview, download or print the report directly."
+  },
+  "actions": {
+    "generateReport": "PDF Report"
+  },
+  "report": {
+    "title": "Generate Purchase Orders Report",
+    "itemLabel": "purchase order",
+    "itemsLabel": "purchase orders"
   },
   "labels": {
     "delivery": "Delivery:",
@@ -90,7 +101,8 @@
     "selectedSupplier": "Selected supplier",
     "poTemplate": "Purchase order template",
     "saving": "Saving...",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "generatingLabel": "Generating report..."
   },
   "buttons": {
     "generatePDF": "Generate PDF",
@@ -118,6 +130,7 @@
     "approvePO": "Approve purchase order",
     "addItem": "Add item",
     "generatePDF": "Generate purchase order PDF",
+    "generatePdf": "Generate report PDF",
     "quickCreateSupplier": "Quick create supplier",
     "quickCreateProduct": "Quick create product"
   },

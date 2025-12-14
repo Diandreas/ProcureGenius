@@ -43,7 +43,8 @@
     "cannotOpenPrintWindow": "Cannot open print window",
     "pdfGenerationError": "Error generating PDF",
     "sendInvoiceConfirm": "Are you sure you want to send this invoice to the client? It cannot be modified afterwards.",
-    "pdfGenerationHelpText": "Choose your invoice style. The PDF will be generated with a verification QR code. You can preview, download or print the invoice directly.",
+    "pdfGenerationHelpText": "You can preview, download or print the report directly.",
+    "reportGenerated": "Report generated successfully! Choose an action below.",
     "loadClientsError": "Error loading clients",
     "loadProductsError": "Error loading products",
     "loadInvoiceFormError": "Error loading invoice",
@@ -57,7 +58,16 @@
     "creationError": "Error creating invoice",
     "noItemsAddedMessage": "No items added. Click \"Add\" to begin.",
     "noItemsDesktopMessage": "No items added. Click \"Add item\" to begin.",
-    "overdueMessage": "{{days}} days overdue"
+    "overdueMessage": "{{days}} days overdue",
+    "reportError": "Error generating report"
+  },
+  "actions": {
+    "generateReport": "PDF Report"
+  },
+  "report": {
+    "title": "Generate Invoices Report",
+    "itemLabel": "invoice",
+    "itemsLabel": "invoices"
   },
   "labels": {
     "dueDate": "Due date:",

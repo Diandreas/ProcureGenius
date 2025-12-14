@@ -1,0 +1,146 @@
+{% extends "reports/pdf/base_report.html" %}
+{% load invoice_filters %}
+
+{% block title %}Rapport des Factures{% endblock %}
+
+{% block report_title %}Rapport des Factures{% endblock %}
+{% block report_subtitle %}
+    {% if date_start or date_end %}
+        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+    {% endif %}
+    • {{ total_count }} facture(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques Globales -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">Nombre de Factures</div>
+        <div class="value">{{ total_count }}</div>
+        <div class="subvalue">Facture(s)</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="label">Montant Total</div>
+        <div class="value">{{ total_amount|floatformat:2 }}</div>
+        <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="label">Valeur Moyenne</div>
+        <div class="value">{{ avg_amount|floatformat:2 }}</div>
+        <div class="subvalue">Par facture</div>
+    </div>
+</div>
+
+<!-- Répartition par Statut -->
+{% if by_status %}
+<div class="section">
+    <h2 class="section-title">Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th class="text-center">Nombre</th>
+                <th class="text-right">Montant Total</th>
+                <th class="text-right">% du Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in by_status %}
+            <tr>
+                <td>
+                    {% if stat.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif stat.status == 'sent' %}<span class="badge warning">Envoyée</span>
+                    {% elif stat.status == 'paid' %}<span class="badge success">Payée</span>
+                    {% elif stat.status == 'overdue' %}<span class="badge danger">En retard</span>
+                    {% elif stat.status == 'cancelled' %}<span class="badge danger">Annulée</span>
+                    {% else %}{{ stat.status }}{% endif %}
+                </td>
+                <td class="text-center">{{ stat.count }}</td>
+                <td class="text-right">{{ stat.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ stat.percentage|default:0|floatformat:1 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Liste des Factures -->
+<div class="section">
+    <h2 class="section-title">Liste des Factures</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Facture</th>
+                <th>Client</th>
+                <th>Date d'émission</th>
+                <th>Date d'échéance</th>
+                <th>Statut</th>
+                <th class="text-right">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td><strong>{{ invoice.invoice_number|default:"-" }}</strong></td>
+                <td>
+                    {% if invoice.client %}
+                        {{ invoice.client.name|truncatewords:4|default:"-" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if invoice.created_at %}
+                        {{ invoice.created_at|date:"d/m/Y" }}
+                    {% elif invoice.issue_date %}
+                        {{ invoice.issue_date|date:"d/m/Y" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if invoice.due_date %}
+                        {{ invoice.due_date|date:"d/m/Y" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if invoice.status == 'draft' %}<span class="badge info">Brouillon</span>
+                    {% elif invoice.status == 'sent' %}<span class="badge warning">Envoyée</span>
+                    {% elif invoice.status == 'paid' %}<span class="badge success">Payée</span>
+                    {% elif invoice.status == 'overdue' %}<span class="badge danger">En retard</span>
+                    {% elif invoice.status == 'cancelled' %}<span class="badge danger">Annulée</span>
+                    {% else %}{{ invoice.status|default:"-" }}{% endif %}
+                </td>
+                <td class="text-right">{{ invoice.total_amount|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #999;">Aucune facture dans cette sélection</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Résumé -->
+<div class="highlight-box">
+    <strong>Résumé du rapport:</strong>
+    <div style="margin-top: 8px;">
+        Ce rapport contient <strong>{{ total_count }}</strong> facture(s) pour un montant total de 
+        <strong>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>, 
+        avec une valeur moyenne de <strong>{{ avg_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> par facture.
+        {% if date_start or date_end %}
+        <br>Période couverte: 
+        {% if date_start %}du {{ date_start|date:"d/m/Y" }}{% endif %}
+        {% if date_end %}au {{ date_end|date:"d/m/Y" }}{% endif %}.
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
