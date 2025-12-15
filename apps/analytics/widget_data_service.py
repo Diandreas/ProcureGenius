@@ -22,49 +22,32 @@ class WidgetDataService:
     def get_widget_data(self, widget_code: str, limit: int = 10, compare: bool = False) -> Dict[str, Any]:
         """Route to appropriate widget data method"""
 
-        # Map widget codes to methods
+        # Map widget codes to methods - 15 widgets essentiels
         widget_methods = {
-            # Global widgets
+            # Global widgets (3)
             'financial_summary': self.get_financial_summary,
-            'recent_activity': lambda **kw: self.get_recent_activity(limit, **kw),
             'alerts_notifications': self.get_alerts_notifications,
-            'global_performance': self.get_global_performance,
+            'cash_flow_summary': self.get_cash_flow_summary,
 
-            # Products widgets
-            'products_overview': self.get_products_overview,
+            # Clients widgets (3)
+            'top_clients': lambda **kw: self.get_top_clients(limit, **kw),
+            'clients_at_risk': self.get_clients_at_risk,
+            'pareto_clients': self.get_pareto_clients,
+
+            # Products widgets (3)
             'top_selling_products': lambda **kw: self.get_top_selling_products(limit, **kw),
             'stock_alerts': self.get_stock_alerts,
             'margin_analysis': self.get_margin_analysis,
-            'stock_movements': lambda **kw: self.get_stock_movements(limit, **kw),
 
-            # Clients widgets
-            'clients_overview': self.get_clients_overview,
-            'top_clients': lambda **kw: self.get_top_clients(limit, **kw),
-            'clients_at_risk': self.get_clients_at_risk,
-            'client_acquisition': self.get_client_acquisition,
-            'client_segmentation': self.get_client_segmentation,
-
-            # Invoices widgets
+            # Invoices widgets (2)
             'invoices_overview': self.get_invoices_overview,
-            'invoices_status': self.get_invoices_status,
-            'revenue_chart': self.get_revenue_chart,
             'overdue_invoices': self.get_overdue_invoices,
-            'payment_performance': self.get_payment_performance,
-            'recent_invoices': lambda **kw: self.get_recent_invoices(limit, **kw),
 
-            # Purchase Orders widgets
+            # Purchase Orders widgets (4)
             'po_overview': self.get_po_overview,
-            'po_status': self.get_po_status,
-            'expenses_chart': self.get_expenses_chart,
             'overdue_po': self.get_overdue_po,
             'supplier_performance': lambda **kw: self.get_supplier_performance(limit, **kw),
             'pending_approvals': self.get_pending_approvals,
-            'budget_tracking': self.get_budget_tracking,
-
-            # AI widgets
-            'ai_usage': self.get_ai_usage,
-            'ai_documents': lambda **kw: self.get_ai_documents(limit, **kw),
-            'ai_last_conversation': self.get_ai_last_conversation,
         }
 
         method = widget_methods.get(widget_code)
@@ -186,10 +169,92 @@ class WidgetDataService:
             'total_count': len(alerts)
         }
 
-    def get_global_performance(self, **kwargs):
-        """Global performance metrics"""
-        perf = self.stats_service.get_performance_metrics()
-        return perf
+    def get_cash_flow_summary(self, **kwargs):
+        """Cash flow summary: receivable vs payable"""
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+        from django.db.models import Sum
+
+        # Montant à recevoir (factures envoyées + en retard)
+        receivable = Invoice.objects.filter(
+            created_by__organization=self.stats_service.organization,
+            status__in=['sent', 'overdue']
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+        # Montant à payer (BC approuvés + en attente, non reçus)
+        payable = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
+            status__in=['pending', 'approved', 'sent']
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+        return {
+            'receivable': float(receivable),
+            'payable': float(payable),
+            'balance': float(receivable) - float(payable)
+        }
+
+    def get_pareto_clients(self, **kwargs):
+        """Pareto analysis 80/20 for clients"""
+        from apps.invoicing.models import Invoice
+        from apps.accounts.models import Client
+        from django.db.models import Sum, Count
+
+        if not self.stats_service.organization:
+            return {
+                'top_clients_percent': 0,
+                'revenue_percent': 0,
+                'top_clients_count': 0,
+                'total_clients': 0,
+                'top_revenue': 0,
+                'total_revenue': 0
+            }
+
+        # Récupérer tous les clients avec leur CA (utiliser created_at au lieu de payments)
+        clients_with_revenue = Client.objects.filter(
+            organization=self.stats_service.organization,
+            invoices__status='paid',
+            invoices__created_at__gte=self.start_date,
+            invoices__created_at__lte=self.end_date
+        ).annotate(
+            revenue=Sum('invoices__total_amount'),
+            invoice_count=Count('invoices')
+        ).filter(revenue__gt=0).order_by('-revenue').distinct()
+
+        total_clients = clients_with_revenue.count()
+        total_revenue = sum(c.revenue for c in clients_with_revenue)
+
+        if total_clients == 0 or total_revenue == 0:
+            return {
+                'top_clients_percent': 0,
+                'revenue_percent': 0,
+                'top_clients_count': 0,
+                'total_clients': 0,
+                'top_revenue': 0,
+                'total_revenue': 0
+            }
+
+        # Calculer combien de clients représentent 80% du CA
+        cumulative_revenue = 0
+        target_revenue = total_revenue * 0.80
+        top_clients_count = 0
+
+        for client in clients_with_revenue:
+            cumulative_revenue += client.revenue
+            top_clients_count += 1
+            if cumulative_revenue >= target_revenue:
+                break
+
+        top_clients_percent = (top_clients_count / total_clients) * 100 if total_clients > 0 else 0
+        revenue_percent = (cumulative_revenue / total_revenue) * 100 if total_revenue > 0 else 0
+
+        return {
+            'top_clients_percent': round(top_clients_percent, 1),
+            'revenue_percent': round(revenue_percent, 1),
+            'top_clients_count': top_clients_count,
+            'total_clients': total_clients,
+            'top_revenue': float(cumulative_revenue),
+            'total_revenue': float(total_revenue)
+        }
 
     # ========== PRODUCT WIDGETS ==========
 
@@ -386,11 +451,34 @@ class WidgetDataService:
     # ========== INVOICE WIDGETS ==========
 
     def get_invoices_overview(self, **kwargs):
-        """Invoices overview"""
+        """Invoices overview with amounts by status"""
+        from apps.invoicing.models import Invoice
+        from django.db.models import Sum, Count
+
         stats = self.stats_service.get_invoice_stats()
+        
+        # Récupérer les montants par statut
+        status_amounts = Invoice.objects.filter(
+            created_by__organization=self.stats_service.organization,
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).values('status').annotate(
+            count=Count('id'),
+            total=Sum('total_amount')
+        )
+
+        amounts = {}
+        for item in status_amounts:
+            amounts[item['status']] = float(item['total'] or 0)
+
+        # Total amount
+        total_amount = sum(amounts.values())
+
         return {
             'total': stats.get('total', 0),
+            'total_amount': total_amount,
             'by_status': stats.get('by_status', {}),
+            'amounts': amounts,
             'period': stats.get('period', {})
         }
 
@@ -424,13 +512,13 @@ class WidgetDataService:
                 {
                     'id': str(inv.id),
                     'invoice_number': inv.invoice_number,
-                    'client': inv.client.company or f"{inv.client.first_name} {inv.client.last_name}",
+                    'client_name': inv.client.company or (f"{inv.client.first_name} {inv.client.last_name}".strip() if inv.client else 'Sans client'),
                     'total_amount': float(inv.total_amount),
-                    'due_date': inv.due_date.isoformat(),
-                    'days_overdue': (timezone.now().date() - inv.due_date).days
+                    'due_date': inv.due_date.isoformat() if inv.due_date else None,
+                    'days_overdue': (timezone.now().date() - inv.due_date).days if inv.due_date else 0
                 }
                 for inv in invoices
-            ]
+            ] if invoices.exists() else []
         }
 
     def get_payment_performance(self, **kwargs):
@@ -467,9 +555,36 @@ class WidgetDataService:
     # ========== PURCHASE ORDER WIDGETS ==========
 
     def get_po_overview(self, **kwargs):
-        """Purchase orders overview"""
+        """Purchase orders overview with amounts by status"""
+        from apps.purchase_orders.models import PurchaseOrder
+        from django.db.models import Sum, Count
+
         stats = self.stats_service.get_purchase_order_stats()
-        return stats
+        
+        # Récupérer les montants par statut
+        status_amounts = PurchaseOrder.objects.filter(
+            created_by__organization=self.stats_service.organization,
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).values('status').annotate(
+            count=Count('id'),
+            total=Sum('total_amount')
+        )
+
+        amounts = {}
+        for item in status_amounts:
+            amounts[item['status']] = float(item['total'] or 0)
+
+        # Total amount
+        total_amount = sum(amounts.values())
+
+        return {
+            'total': stats.get('total', 0),
+            'total_amount': total_amount,
+            'by_status': stats.get('by_status', {}),
+            'amounts': amounts,
+            'period': stats.get('period', {})
+        }
 
     def get_po_status(self, **kwargs):
         """PO status distribution"""

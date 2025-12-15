@@ -1,12 +1,42 @@
-/* Customizable Dashboard Styles - Professional & Simple */
+/* Customizable Dashboard - Modern Clean Design with Dark Mode */
 
+/* ===================================
+   CSS Variables
+   ================================= */
+:root {
+  --dashboard-bg: #f8fafc;
+  --dashboard-paper: #ffffff;
+  --dashboard-border: rgba(0, 0, 0, 0.06);
+  --dashboard-text: #1e293b;
+  --dashboard-text-secondary: #64748b;
+  --dashboard-primary: #2563eb;
+  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --dashboard-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .customizable-dashboard,
+.dark .customizable-dashboard {
+  --dashboard-bg: #0f172a;
+  --dashboard-paper: #1e293b;
+  --dashboard-border: rgba(255, 255, 255, 0.06);
+  --dashboard-text: #f1f5f9;
+  --dashboard-text-secondary: #94a3b8;
+  --dashboard-primary: #3b82f6;
+  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --dashboard-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ===================================
+   Main Container
+   ================================= */
 .customizable-dashboard {
-  padding: 24px;
-  background: #f8fafc;
+  padding: 16px;
   min-height: 100vh;
 }
 
-/* Loading Overlay */
+/* ===================================
+   Loading
+   ================================= */
 .dashboard-loading {
   position: fixed;
   top: 0;
@@ -16,15 +46,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--dashboard-bg);
   z-index: 9999;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #3b82f6;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--dashboard-border);
+  border-top-color: var(--dashboard-primary);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -33,143 +63,58 @@
   to { transform: rotate(360deg); }
 }
 
-/* Toolbar */
-.dashboard-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 16px 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
-}
-
-.dashboard-toolbar.edit-mode {
-  background: #3b82f6;
-  color: white;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.dashboard-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #1e293b;
-}
-
-.dashboard-toolbar.edit-mode .dashboard-title {
-  color: white;
-}
-
-.edit-mode-badge {
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.toolbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.period-select {
-  padding: 8px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  cursor: pointer;
-  color: #475569;
-}
-
-.period-select:hover {
-  border-color: #3b82f6;
-}
-
-.period-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.dashboard-toolbar.edit-mode .period-select {
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.toolbar-right {
-  display: flex;
-  gap: 8px;
-}
-
+/* ===================================
+   Toolbar Buttons
+   ================================= */
 .toolbar-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #f1f5f9;
-  color: #475569;
+  transition: all 0.15s ease;
+  background: var(--dashboard-paper);
+  color: var(--dashboard-text-secondary);
+  border: 1px solid var(--dashboard-border);
 }
 
 .toolbar-btn:hover {
-  background: #e2e8f0;
+  background: var(--dashboard-border);
+  color: var(--dashboard-text);
 }
 
 .toolbar-btn-primary {
-  background: #3b82f6;
+  background: var(--dashboard-primary);
   color: white;
+  border-color: transparent;
 }
 
 .toolbar-btn-primary:hover {
-  background: #2563eb;
+  background: #1d4ed8;
+}
+
+.toolbar-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--dashboard-border);
 }
 
 .toolbar-btn-success {
   background: #10b981;
   color: white;
+  border-color: transparent;
 }
 
 .toolbar-btn-success:hover {
   background: #059669;
 }
 
-.dashboard-toolbar.edit-mode .toolbar-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.dashboard-toolbar.edit-mode .toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.dashboard-toolbar.edit-mode .toolbar-btn-primary {
-  background: white;
-  color: #3b82f6;
-  border: none;
-}
-
-.dashboard-toolbar.edit-mode .toolbar-btn-primary:hover {
-  background: #f1f5f9;
+.toolbar-btn-large {
+  padding: 10px 20px;
+  font-size: 14px;
 }
 
 .toolbar-btn:disabled {
@@ -177,58 +122,59 @@
   cursor: not-allowed;
 }
 
-/* Edit Mode Hint */
+/* ===================================
+   Edit Mode Hint
+   ================================= */
 .edit-mode-hint {
-  background: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #475569;
-  font-size: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--dashboard-paper) !important;
+  border: 1px solid var(--dashboard-primary) !important;
+  border-radius: 8px !important;
+  color: var(--dashboard-text) !important;
 }
 
 .edit-mode-hint .hint-icon {
-  color: #3b82f6;
+  color: var(--dashboard-primary);
 }
 
-/* Grid Layout */
+/* ===================================
+   Grid Layout
+   ================================= */
 .dashboard-grid {
   position: relative;
 }
 
 .dashboard-grid-item {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--dashboard-paper);
+  border-radius: 10px;
+  box-shadow: var(--dashboard-shadow);
   overflow: hidden;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s ease;
 }
 
 .dashboard-grid-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--dashboard-shadow-hover);
 }
 
 .react-grid-item.react-grid-placeholder {
-  background: #3b82f6;
-  opacity: 0.2;
-  border-radius: 12px;
+  background: var(--dashboard-primary);
+  opacity: 0.15;
+  border-radius: 10px;
 }
 
 .react-grid-item.resizing,
 .react-grid-item.react-draggable-dragging {
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
   z-index: 100;
 }
 
-/* Widget Wrapper */
+/* ===================================
+   Widget Wrapper
+   ================================= */
 .widget-wrapper {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: var(--dashboard-paper);
 }
 
 .widget-wrapper.edit-mode {
@@ -237,7 +183,7 @@
 }
 
 .widget-wrapper.edit-mode:hover {
-  border-color: #3b82f6;
+  border-color: var(--dashboard-primary);
 }
 
 .widget-header {
@@ -245,8 +191,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  border-bottom: 1px solid #e2e8f0;
-  background: white;
+  border-bottom: 1px solid var(--dashboard-border);
+  background: var(--dashboard-paper);
   gap: 10px;
 }
 
@@ -254,7 +200,7 @@
   flex: 1;
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--dashboard-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -264,14 +210,14 @@
   cursor: move;
   display: flex;
   align-items: center;
-  color: #64748b;
-  opacity: 0.7;
+  color: var(--dashboard-text-secondary);
+  opacity: 0.6;
   flex-shrink: 0;
 }
 
 .widget-drag-handle:hover {
   opacity: 1;
-  color: #3b82f6;
+  color: var(--dashboard-primary);
 }
 
 .widget-action-btn {
@@ -283,17 +229,13 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #64748b;
+  color: var(--dashboard-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
-.widget-action-btn:hover {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
+.widget-action-btn:hover,
 .widget-remove-btn:hover {
   background: #fee2e2;
   color: #ef4444;
@@ -303,143 +245,114 @@
   flex: 1;
   overflow: auto;
   padding: 12px;
+  background: var(--dashboard-paper);
 }
 
 .widget-placeholder {
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
-  font-size: 14px;
+  color: var(--dashboard-text-secondary);
+  font-size: 13px;
 }
 
-/* Widget Loading */
+/* ===================================
+   Widget Loading/Error States
+   ================================= */
 .widget-loading,
 .widget-error {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
-  font-size: 14px;
+  color: var(--dashboard-text-secondary);
+  font-size: 13px;
 }
 
 .widget-error {
   color: #ef4444;
 }
 
-/* Empty State */
+/* ===================================
+   Empty State
+   ================================= */
 .dashboard-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: 300px;
   text-align: center;
-  color: #64748b;
-  background: white;
+  color: var(--dashboard-text-secondary);
+  background: var(--dashboard-paper);
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 48px;
+  box-shadow: var(--dashboard-shadow);
+  padding: 40px;
 }
 
 .empty-icon {
-  color: #cbd5e1;
+  color: var(--dashboard-text-secondary);
+  opacity: 0.5;
   margin-bottom: 16px;
 }
 
 .dashboard-empty h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #334155;
+  color: var(--dashboard-text);
   margin-bottom: 8px;
 }
 
 .dashboard-empty p {
   font-size: 14px;
-  margin-bottom: 24px;
-  color: #64748b;
+  margin-bottom: 20px;
+  color: var(--dashboard-text-secondary);
 }
 
-/* Save Notification */
+/* ===================================
+   Save Notification
+   ================================= */
 .save-notification {
   position: fixed;
-  top: 24px;
+  bottom: 24px;
   right: 24px;
-  background: white;
+  background: var(--dashboard-paper);
   padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-weight: 500;
+  font-size: 14px;
   z-index: 10000;
-  color: #059669;
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .save-notification .icon {
   color: #10b981;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .customizable-dashboard {
-    padding: 16px;
-  }
-
-  .widget-content {
-    padding: 10px;
-  }
+/* ===================================
+   Getting Started Widget Container
+   ================================= */
+.dashboard-getting-started {
+  margin-bottom: 16px;
 }
 
+/* ===================================
+   Responsive
+   ================================= */
 @media (max-width: 768px) {
   .customizable-dashboard {
     padding: 12px;
   }
 
-  .dashboard-toolbar {
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-  }
-
-  .toolbar-left {
-    width: 100%;
-  }
-
-  .toolbar-center {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .toolbar-right {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .dashboard-title {
-    font-size: 18px;
-  }
-
-  .toolbar-btn {
-    font-size: 13px;
-    padding: 8px 12px;
-    flex: 1;
-    min-width: 120px;
-    justify-content: center;
-  }
-
-  .edit-mode-badge {
-    font-size: 10px;
-    padding: 3px 8px;
-  }
-
   .widget-content {
-    padding: 8px;
-    font-size: 13px;
+    padding: 10px;
   }
 
   .widget-header {
@@ -451,7 +364,7 @@
   }
 
   .save-notification {
-    top: 12px;
+    bottom: 80px;
     right: 12px;
     left: 12px;
     font-size: 13px;
@@ -459,7 +372,7 @@
 
   .edit-mode-hint {
     font-size: 12px;
-    padding: 10px 16px;
+    flex-wrap: wrap;
   }
 }
 
@@ -468,28 +381,8 @@
     padding: 8px;
   }
 
-  .dashboard-toolbar {
-    padding: 10px;
-  }
-
-  .dashboard-title {
-    font-size: 16px;
-  }
-
-  .toolbar-btn {
-    font-size: 12px;
-    padding: 6px 10px;
-    min-width: 100px;
-  }
-
-  .period-select {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-
   .widget-content {
     padding: 8px;
-    font-size: 12px;
   }
 
   .widget-header {

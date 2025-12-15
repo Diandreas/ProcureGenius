@@ -23,7 +23,15 @@ const OverdueInvoicesWidget = ({ period = 'last_30_days' }) => {
   }, [period]);
 
   if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data || !data.invoices) return <div className="widget-empty"><AlertOctagon size={40} className="widget-empty-icon" /><div className="widget-empty-text">Aucune facture en retard</div></div>;
+  if (!data) return <div className="widget-error">Erreur</div>;
+  if (!data.invoices || data.invoices.length === 0) {
+    return (
+      <div className="widget-empty">
+        <AlertOctagon size={40} className="widget-empty-icon" />
+        <div className="widget-empty-text">Aucune facture en retard</div>
+      </div>
+    );
+  }
 
   return (
     <div className="widget-list">

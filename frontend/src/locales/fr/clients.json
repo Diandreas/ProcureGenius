@@ -77,7 +77,13 @@
   },
   "tooltips": {
     "editClient": "Modifier le client",
-    "deleteClient": "Supprimer le client"
+    "deleteClient": "Supprimer le client",
+    "downloadPdfReport": "Télécharger le rapport PDF"
+  },
+  "pdf": {
+    "title": "Rapport PDF Client",
+    "ready": "Le rapport PDF est prêt. Choisissez une action:",
+    "description": "Génération du rapport PDF..."
   },
   "status": {
     "active": "Actif",

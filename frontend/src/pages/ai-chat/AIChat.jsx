@@ -13,15 +13,13 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActionArea,
-  InputAdornment,
   Drawer,
   ListItemButton,
   ListItemText,
-  Button,
   Fade,
   Tooltip,
-  Chip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Send,
@@ -36,7 +34,6 @@ import {
   Menu as MenuIcon,
   Add,
   Close,
-  Circle,
   Mic,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
@@ -53,6 +50,8 @@ function AIChat() {
   const location = useLocation();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -68,24 +67,15 @@ function AIChat() {
     fetchConversations();
     fetchQuickActions();
 
-    // Gérer les messages vocaux entrants depuis la navigation
     if (location.state?.voiceMessage) {
       setMessage(location.state.voiceMessage);
       enqueueSnackbar(t('aiChat:messages.voiceTranscribed'), { variant: 'success' });
-      // Nettoyer le state pour éviter de réafficher le message
       window.history.replaceState({}, document.title);
     }
 
-    // Écouter l'événement pour créer une nouvelle conversation depuis la navbar
-    const handleNewConversation = () => {
-      startNewConversation();
-    };
-
+    const handleNewConversation = () => startNewConversation();
     window.addEventListener('ai-chat-new-conversation', handleNewConversation);
-
-    return () => {
-      window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
-    };
+    return () => window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
   }, [location]);
 
   useEffect(() => {
@@ -174,10 +164,8 @@ function AIChat() {
               variant: 'success',
               autoHideDuration: 3000,
             });
-            // Déclencher l'animation de succès de la mascotte contextuelle
             window.dispatchEvent(new CustomEvent('mascot-success'));
           } else if (result.result?.success === false) {
-            // Déclencher l'animation d'erreur de la mascotte contextuelle
             window.dispatchEvent(new CustomEvent('mascot-error'));
           }
         });
@@ -186,16 +174,13 @@ function AIChat() {
       setTypingIndicator(false);
       enqueueSnackbar(t('aiChat:messages.sendMessageError'), { variant: 'error' });
       setMessages(prev => prev.slice(0, -1));
-      // Déclencher l'animation d'erreur de la mascotte contextuelle
       window.dispatchEvent(new CustomEvent('mascot-error'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickAction = (action) => {
-    handleSendMessage(action.prompt);
-  };
+  const handleQuickAction = (action) => handleSendMessage(action.prompt);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -226,12 +211,20 @@ function AIChat() {
       dashboard: '#f59e0b',
       documents: '#8b5cf6',
     };
-    return colors[category] || '#6b7280';
+    return colors[category] || '#64748b';
   };
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', backgroundColor: '#fafafa' }}>
-      {/* Drawer compact */}
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        height: 'calc(100vh - 80px)',
+        bgcolor: 'background.default',
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Drawer conversations */}
       <Drawer
         anchor="left"
         open={drawerOpen}
@@ -239,31 +232,35 @@ function AIChat() {
         sx={{
           '& .MuiDrawer-paper': {
             width: 280,
-            boxSizing: 'border-box',
+            bgcolor: 'background.paper',
+            borderRight: 'none',
+            boxShadow: isDark ? '4px 0 20px rgba(0,0,0,0.3)' : '4px 0 20px rgba(0,0,0,0.08)',
           },
         }}
       >
         <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight="600">{t('aiChat:drawer.conversations')}</Typography>
+            <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+              {t('aiChat:drawer.conversations')}
+            </Typography>
             <IconButton onClick={() => setDrawerOpen(false)} size="small">
               <Close fontSize="small" />
             </IconButton>
           </Box>
 
           <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-            <List dense>
+            <List dense disablePadding>
               {conversations.map((conv) => (
                 <ListItemButton
                   key={conv.id}
                   selected={currentConversation?.id === conv.id}
                   onClick={() => loadConversation(conv.id)}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 1.5,
                     mb: 0.5,
                     py: 1,
                     '&.Mui-selected': {
-                      backgroundColor: 'primary.light',
+                      bgcolor: alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1),
                     },
                   }}
                 >
@@ -272,10 +269,15 @@ function AIChat() {
                     secondary={formatDateTime(conv.last_message_at)}
                     primaryTypographyProps={{
                       noWrap: true,
-                      fontSize: '0.875rem',
+                      fontSize: '0.813rem',
                       fontWeight: currentConversation?.id === conv.id ? 600 : 400,
+                      color: 'text.primary',
                     }}
-                    secondaryTypographyProps={{ variant: 'caption', fontSize: '0.75rem' }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.688rem',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItemButton>
               ))}
@@ -288,67 +290,84 @@ function AIChat() {
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-          {/* Bouton pour ouvrir les conversations */}
+          {/* Header avec bouton menu */}
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <IconButton
               onClick={() => setDrawerOpen(true)}
               size="small"
               sx={{
-                backgroundColor: 'rgba(0,0,0,0.04)',
+                bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.04),
                 '&:hover': {
-                  backgroundColor: 'rgba(0,0,0,0.08)',
+                  bgcolor: isDark ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.08),
                 }
               }}
             >
               <MenuIcon fontSize="small" />
             </IconButton>
           </Box>
+
           {messages.length === 0 ? (
-            <Fade in timeout={600}>
-              <Box sx={{ textAlign: 'center', mt: 4, maxWidth: 800, mx: 'auto' }}>
+            <Fade in timeout={400}>
+              <Box sx={{ textAlign: 'center', mt: 2, maxWidth: 700, mx: 'auto' }}>
+                {/* Mascotte */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                  <Mascot
-                    pose="excited"
-                    animation="wave"
-                    size={120}
-                  />
+                  <Mascot pose="excited" animation="wave" size={100} />
                 </Box>
 
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography 
+                  variant="h5" 
+                  gutterBottom 
+                  sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
+                >
                   {t('aiChat:welcome.greeting')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
+                >
                   {t('aiChat:welcome.description')}
                 </Typography>
 
-                {/* Actions rapides compactes */}
-                <Grid container spacing={1.5} sx={{ mt: 2 }}>
+                {/* Actions rapides */}
+                <Grid container spacing={1.5} sx={{ mt: 1 }}>
                   {quickActions.slice(0, 6).map((action) => (
                     <Grid item xs={6} sm={4} key={action.id}>
                       <Card
+                        onClick={() => handleQuickAction(action)}
                         sx={{
                           cursor: 'pointer',
-                          transition: 'all 0.2s',
+                          bgcolor: 'background.paper',
+                          border: 'none',
+                          borderRadius: 2,
+                          transition: 'all 0.15s ease',
+                          boxShadow: isDark 
+                            ? '0 1px 3px rgba(0,0,0,0.3)' 
+                            : '0 1px 3px rgba(0,0,0,0.06)',
                           '&:hover': {
                             transform: 'translateY(-2px)',
-                            boxShadow: 2,
+                            boxShadow: isDark 
+                              ? '0 4px 12px rgba(0,0,0,0.4)' 
+                              : '0 4px 12px rgba(0,0,0,0.1)',
                           },
                         }}
-                        onClick={() => handleQuickAction(action)}
                       >
                         <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                             <Avatar
                               sx={{
-                                width: 32,
-                                height: 32,
-                                backgroundColor: getCategoryColor(action.category) + '20',
+                                width: 28,
+                                height: 28,
+                                bgcolor: alpha(getCategoryColor(action.category), 0.15),
                                 color: getCategoryColor(action.category),
                               }}
                             >
                               {getActionIcon(action.id)}
                             </Avatar>
-                            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ fontWeight: 600, fontSize: '0.813rem', color: 'text.primary' }}
+                            >
                               {action.title}
                             </Typography>
                           </Box>
@@ -356,8 +375,9 @@ function AIChat() {
                             variant="caption"
                             color="text.secondary"
                             sx={{
-                              fontSize: '0.75rem',
-                              display: { xs: 'none', md: 'block' } // Caché sur mobile, visible sur desktop
+                              fontSize: '0.688rem',
+                              display: { xs: 'none', md: 'block' },
+                              lineHeight: 1.3,
                             }}
                           >
                             {action.description}
@@ -370,7 +390,7 @@ function AIChat() {
               </Box>
             </Fade>
           ) : (
-            <List sx={{ maxWidth: 900, mx: 'auto', p: 0 }}>
+            <List sx={{ maxWidth: 800, mx: 'auto', p: 0 }}>
               {messages.map((msg, index) => (
                 <ListItem
                   key={index}
@@ -383,7 +403,12 @@ function AIChat() {
                 >
                   <Avatar
                     sx={{
-                      bgcolor: msg.role === 'user' ? 'secondary.main' : 'primary.main',
+                      bgcolor: msg.role === 'user' 
+                        ? (isDark ? '#475569' : '#e2e8f0')
+                        : 'primary.main',
+                      color: msg.role === 'user' 
+                        ? (isDark ? '#e2e8f0' : '#475569')
+                        : 'white',
                       ml: msg.role === 'user' ? 1.5 : 0,
                       mr: msg.role === 'user' ? 0 : 1.5,
                       width: 32,
@@ -397,9 +422,10 @@ function AIChat() {
                     sx={{
                       p: 1.5,
                       maxWidth: '75%',
-                      backgroundColor: msg.role === 'user' ? '#f3f4f6' : 'white',
-                      border: 1,
-                      borderColor: msg.role === 'user' ? 'transparent' : 'divider',
+                      bgcolor: msg.role === 'user' 
+                        ? (isDark ? alpha(theme.palette.common.white, 0.05) : '#f1f5f9')
+                        : 'background.paper',
+                      border: msg.role === 'user' ? 'none' : `1px solid ${theme.palette.divider}`,
                       borderRadius: 2,
                     }}
                   >
@@ -408,7 +434,6 @@ function AIChat() {
                       actionResults={msg.action_results}
                       actionButtons={msg.action_buttons}
                       onButtonClick={(buttonIndex) => {
-                        // Envoyer "1", "2", ou "3" selon le bouton cliqué
                         const responseMap = { 0: '1', 1: '2', 2: '3' };
                         handleSendMessage(responseMap[buttonIndex] || '1');
                       }}
@@ -416,7 +441,7 @@ function AIChat() {
                     <Typography
                       variant="caption"
                       color="text.secondary"
-                      sx={{ mt: 1, display: 'block', fontSize: '0.7rem' }}
+                      sx={{ mt: 1, display: 'block', fontSize: '0.625rem', opacity: 0.7 }}
                     >
                       {formatDateTime(msg.created_at)}
                     </Typography>
@@ -424,7 +449,7 @@ function AIChat() {
                 </ListItem>
               ))}
 
-              {/* Indicateur de frappe compact */}
+              {/* Indicateur de frappe */}
               {typingIndicator && (
                 <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
                   <Avatar sx={{ bgcolor: 'primary.main', mr: 1.5, width: 32, height: 32 }}>
@@ -434,16 +459,34 @@ function AIChat() {
                     elevation={0}
                     sx={{
                       p: 1.5,
-                      border: 1,
-                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      border: `1px solid ${theme.palette.divider}`,
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
                     }}
                   >
-                    <CircularProgress size={14} />
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      {[0, 1, 2].map((i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            animation: 'pulse 1.4s infinite',
+                            animationDelay: `${i * 0.2}s`,
+                            '@keyframes pulse': {
+                              '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
+                              '50%': { opacity: 1, transform: 'scale(1.2)' },
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.813rem', ml: 0.5 }}>
                       {t('aiChat:messages.assistantThinking')}
                     </Typography>
                   </Paper>
@@ -454,17 +497,26 @@ function AIChat() {
           )}
         </Box>
 
-        {/* Input zone compacte */}
-        <Paper
-          elevation={3}
+        {/* Zone de saisie */}
+        <Box
           sx={{
-            p: 1.5,
-            borderTop: 1,
-            borderColor: 'divider',
-            backgroundColor: 'white',
+            p: 2,
+            bgcolor: 'background.paper',
+            borderTop: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <Box sx={{ maxWidth: 900, mx: 'auto', display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+          <Box 
+            sx={{ 
+              maxWidth: 800, 
+              mx: 'auto', 
+              display: 'flex', 
+              gap: 1, 
+              alignItems: 'flex-end',
+              bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : '#f8fafc',
+              borderRadius: 2,
+              p: 1,
+            }}
+          >
             <TextField
               fullWidth
               multiline
@@ -480,17 +532,18 @@ function AIChat() {
               }}
               disabled={loading}
               size="small"
+              variant="standard"
+              InputProps={{
+                disableUnderline: true,
+              }}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#f9fafb',
+                '& .MuiInputBase-root': {
                   fontSize: '0.875rem',
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'divider',
+                  px: 1,
                 },
               }}
             />
+            
             <Tooltip title={t('aiChat:input.attach')}>
               <span>
                 <input
@@ -506,54 +559,45 @@ function AIChat() {
                   size="small"
                   sx={{ color: 'text.secondary' }}
                 >
-                  <AttachFile fontSize="small" />
+                  <AttachFile sx={{ fontSize: 20 }} />
                 </IconButton>
               </span>
             </Tooltip>
+
             <Tooltip title={t('aiChat:input.voiceMessage')}>
               <span>
                 <IconButton
                   onClick={() => setVoiceRecorderOpen(true)}
                   disabled={loading}
                   size="small"
-                  sx={{
-                    color: 'text.secondary',
-                    '&:hover': {
-                      color: 'primary.main',
-                      bgcolor: 'action.hover',
-                    }
-                  }}
+                  sx={{ color: 'text.secondary' }}
                 >
-                  <Mic fontSize="small" />
+                  <Mic sx={{ fontSize: 20 }} />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={t('aiChat:input.send')}>
-              <span>
-                <IconButton
-                  onClick={() => handleSendMessage()}
-                  disabled={loading || !message.trim()}
-                  sx={{
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
-                    '&.Mui-disabled': {
-                      backgroundColor: 'action.disabledBackground',
-                      color: 'action.disabled',
-                    },
-                  }}
-                  size="small"
-                >
-                  <Send fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Box>
-        </Paper>
 
-        {/* Composant d'enregistrement vocal */}
+            <IconButton
+              onClick={() => handleSendMessage()}
+              disabled={loading || !message.trim()}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                width: 36,
+                height: 36,
+                '&:hover': { bgcolor: 'primary.dark' },
+                '&.Mui-disabled': {
+                  bgcolor: isDark ? alpha(theme.palette.common.white, 0.1) : '#e2e8f0',
+                  color: isDark ? alpha(theme.palette.common.white, 0.3) : '#94a3b8',
+                },
+              }}
+            >
+              <Send sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Enregistrement vocal */}
         {voiceRecorderOpen && (
           <VoiceRecorder
             onVoiceMessage={(transcribedText) => {

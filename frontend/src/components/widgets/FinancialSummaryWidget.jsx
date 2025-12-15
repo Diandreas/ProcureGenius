@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Target, Percent } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
@@ -43,29 +43,22 @@ const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
     {
       label: t('widgets.financial_summary_metrics.revenue', { ns: 'dashboard', defaultValue: 'Revenus' }),
       value: data.revenue || 0,
-      icon: DollarSign,
-      color: '#10b981',
       change: data.comparison?.revenue_percent_change
     },
     {
       label: t('widgets.financial_summary_metrics.expenses', { ns: 'dashboard', defaultValue: 'Dépenses' }),
       value: data.expenses || 0,
-      icon: PiggyBank,
-      color: '#ef4444',
-      change: data.comparison?.expenses_change
+      change: data.comparison?.expenses_change,
+      isExpense: true
     },
     {
-      label: t('widgets.financial_summary_metrics.net_profit', { ns: 'dashboard', defaultValue: 'Profit Net' }),
+      label: t('widgets.financial_summary_metrics.net_profit', { ns: 'dashboard', defaultValue: 'Profit' }),
       value: data.net_profit || 0,
-      icon: Target,
-      color: '#6366f1',
       change: data.comparison?.profit_percent_change
     },
     {
       label: t('widgets.financial_summary_metrics.margin', { ns: 'dashboard', defaultValue: 'Marge' }),
       value: `${(data.profit_margin || 0).toFixed(1)}%`,
-      icon: TrendingUp,
-      color: '#f59e0b',
       isPercentage: true
     }
   ];
@@ -73,9 +66,9 @@ const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
   return (
     <div className="stats-grid">
       {metrics.map((metric, index) => {
-        const Icon = metric.icon;
         const isPositive = metric.change > 0;
         const isNegative = metric.change < 0;
+        const showChange = metric.change !== undefined && metric.change !== null;
 
         return (
           <div key={index} className="stat-card">
@@ -83,7 +76,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days' }) => {
             <div className="stat-value">
               {metric.isPercentage ? metric.value : formatCurrency(metric.value)}
             </div>
-            {metric.change !== undefined && (
+            {showChange && (
               <div className={`stat-change ${isPositive ? 'positive' : isNegative ? 'negative' : ''}`}>
                 {isPositive ? <TrendingUp size={12} /> : isNegative ? <TrendingDown size={12} /> : null}
                 <span>{Math.abs(metric.change).toFixed(1)}%</span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -63,52 +63,133 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 // AdSense
 import { AdSenseScript } from './components/AdSense';
 
-// Theme configuration - Material Design 3 inspired
-const theme = createTheme({
+// Theme Context for dark mode
+export const ColorModeContext = createContext({
+  toggleColorMode: () => { },
+  mode: 'light'
+});
+
+export const useColorMode = () => useContext(ColorModeContext);
+
+// Get design tokens based on mode
+const getDesignTokens = (mode) => ({
   palette: {
-    mode: 'light',
-    primary: {
-      main: '#1e40af', // Deep Blue - Professional & Trustworthy
-      light: '#3b82f6',
-      dark: '#1e3a8a',
-      contrastText: '#ffffff',
-    },
-    secondary: {
-      main: '#059669', // Emerald Green - Success & Growth
-      light: '#10b981',
-      dark: '#047857',
-      contrastText: '#ffffff',
-    },
-    error: {
-      main: '#dc2626',
-      light: '#ef4444',
-      dark: '#b91c1c',
-    },
-    warning: {
-      main: '#f59e0b',
-      light: '#fbbf24',
-      dark: '#d97706',
-    },
-    info: {
-      main: '#0284c7',
-      light: '#0ea5e9',
-      dark: '#0369a1',
-    },
-    success: {
-      main: '#059669',
-      light: '#10b981',
-      dark: '#047857',
-    },
-    background: {
-      default: '#f8fafc', // Subtle gray
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#0f172a', // Near black for clarity
-      secondary: '#64748b', // Medium gray
-      disabled: '#cbd5e1',
-    },
-    divider: '#e2e8f0',
+    mode,
+    ...(mode === 'light'
+      ? {
+        // Light mode - Clean & Professional (based on mascot theme)
+        primary: {
+          main: '#2563eb',
+          light: '#3b82f6',
+          dark: '#1d4ed8',
+          contrastText: '#ffffff',
+        },
+        secondary: {
+          main: '#64748b',
+          light: '#94a3b8',
+          dark: '#475569',
+          contrastText: '#ffffff',
+        },
+        // Golden accent from mascot earring
+        accent: {
+          main: '#f59e0b',
+          light: '#fbbf24',
+          dark: '#d97706',
+        },
+        error: {
+          main: '#ef4444',
+          light: '#f87171',
+          dark: '#dc2626',
+        },
+        warning: {
+          main: '#f59e0b',
+          light: '#fbbf24',
+          dark: '#d97706',
+        },
+        info: {
+          main: '#3b82f6',
+          light: '#60a5fa',
+          dark: '#2563eb',
+        },
+        success: {
+          main: '#10b981',
+          light: '#34d399',
+          dark: '#059669',
+        },
+        background: {
+          default: '#f8fafc',
+          paper: '#ffffff',
+          subtle: '#f1f5f9',
+        },
+        text: {
+          primary: '#0f172a',
+          secondary: '#64748b',
+          disabled: '#94a3b8',
+        },
+        divider: 'rgba(0, 0, 0, 0.06)',
+        action: {
+          hover: 'rgba(0, 0, 0, 0.04)',
+          selected: 'rgba(37, 99, 235, 0.08)',
+          selectedOpacity: 0.08,
+        },
+      }
+      : {
+        // Dark mode - Deep & Immersive (based on mascot theme)
+        primary: {
+          main: '#3b82f6',
+          light: '#60a5fa',
+          dark: '#2563eb',
+          contrastText: '#ffffff',
+        },
+        secondary: {
+          main: '#94a3b8',
+          light: '#cbd5e1',
+          dark: '#64748b',
+          contrastText: '#0f172a',
+        },
+        // Golden accent from mascot earring
+        accent: {
+          main: '#fbbf24',
+          light: '#fcd34d',
+          dark: '#f59e0b',
+        },
+        error: {
+          main: '#f87171',
+          light: '#fca5a5',
+          dark: '#ef4444',
+        },
+        warning: {
+          main: '#fbbf24',
+          light: '#fcd34d',
+          dark: '#f59e0b',
+        },
+        info: {
+          main: '#60a5fa',
+          light: '#93c5fd',
+          dark: '#3b82f6',
+        },
+        success: {
+          main: '#34d399',
+          light: '#6ee7b7',
+          dark: '#10b981',
+        },
+        background: {
+          default: '#0f172a',
+          paper: '#1e293b',
+          subtle: '#334155',
+        },
+        text: {
+          primary: '#f1f5f9',
+          secondary: '#94a3b8',
+          disabled: '#64748b',
+        },
+        divider: 'rgba(255, 255, 255, 0.06)',
+        action: {
+          hover: 'rgba(255, 255, 255, 0.05)',
+          selected: 'rgba(59, 130, 246, 0.15)',
+          selectedOpacity: 0.15,
+        },
+      }),
   },
   typography: {
     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
@@ -116,162 +197,94 @@ const theme = createTheme({
     fontWeightLight: 300,
     fontWeightRegular: 400,
     fontWeightMedium: 500,
-    fontWeightBold: 700,
-    h1: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-      lineHeight: 1.2,
-      letterSpacing: '-0.02em',
-    },
-    h2: {
-      fontWeight: 700,
-      fontSize: '2rem',
-      lineHeight: 1.3,
-      letterSpacing: '-0.01em',
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-      lineHeight: 1.4,
-      letterSpacing: '-0.01em',
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: '1.25rem',
-      lineHeight: 1.4,
-    },
-    h5: {
-      fontWeight: 600,
-      fontSize: '1.125rem',
-      lineHeight: 1.5,
-    },
-    h6: {
-      fontWeight: 600,
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-    subtitle1: {
-      fontSize: '1rem',
-      lineHeight: 1.5,
-      fontWeight: 500,
-    },
-    subtitle2: {
-      fontSize: '0.875rem',
-      lineHeight: 1.5,
-      fontWeight: 500,
-    },
-    body1: {
-      fontSize: '0.938rem',
-      lineHeight: 1.6,
-    },
-    body2: {
-      fontSize: '0.875rem',
-      lineHeight: 1.6,
-    },
-    button: {
-      fontWeight: 500,
-      fontSize: '0.875rem',
-      lineHeight: 1.5,
-      letterSpacing: '0.01em',
-    },
-    caption: {
-      fontSize: '0.75rem',
-      lineHeight: 1.5,
-    },
+    fontWeightBold: 600,
+    h1: { fontWeight: 600, fontSize: '2rem', lineHeight: 1.2, letterSpacing: '-0.02em' },
+    h2: { fontWeight: 600, fontSize: '1.5rem', lineHeight: 1.3, letterSpacing: '-0.01em' },
+    h3: { fontWeight: 600, fontSize: '1.25rem', lineHeight: 1.4 },
+    h4: { fontWeight: 600, fontSize: '1.125rem', lineHeight: 1.4 },
+    h5: { fontWeight: 600, fontSize: '1rem', lineHeight: 1.5 },
+    h6: { fontWeight: 600, fontSize: '0.875rem', lineHeight: 1.5 },
+    subtitle1: { fontSize: '0.938rem', lineHeight: 1.5, fontWeight: 500 },
+    subtitle2: { fontSize: '0.813rem', lineHeight: 1.5, fontWeight: 500 },
+    body1: { fontSize: '0.875rem', lineHeight: 1.6 },
+    body2: { fontSize: '0.813rem', lineHeight: 1.6 },
+    button: { fontWeight: 500, fontSize: '0.813rem', lineHeight: 1.5, letterSpacing: '0.01em' },
+    caption: { fontSize: '0.75rem', lineHeight: 1.5 },
   },
   shape: {
-    borderRadius: 12, // More modern rounded corners
+    borderRadius: 8,
   },
-  spacing: 8, // Base spacing unit
+  spacing: 8,
   shadows: [
     'none',
-    '0 1px 2px 0 rgb(0 0 0 / 0.05)', // Subtle
-    '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-    '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-    '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-    '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)', // Deep
-    '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06)',
-    '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
-    '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05)',
-    '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+    '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+    mode === 'light'
+      ? '0 1px 3px 0 rgb(0 0 0 / 0.08)'
+      : '0 1px 3px 0 rgb(0 0 0 / 0.3)',
+    mode === 'light'
+      ? '0 4px 6px -1px rgb(0 0 0 / 0.07)'
+      : '0 4px 6px -1px rgb(0 0 0 / 0.4)',
+    mode === 'light'
+      ? '0 10px 15px -3px rgb(0 0 0 / 0.08)'
+      : '0 10px 15px -3px rgb(0 0 0 / 0.5)',
+    mode === 'light'
+      ? '0 20px 25px -5px rgb(0 0 0 / 0.08)'
+      : '0 20px 25px -5px rgb(0 0 0 / 0.6)',
+    ...Array(19).fill(mode === 'light' ? '0 25px 50px -12px rgb(0 0 0 / 0.15)' : '0 25px 50px -12px rgb(0 0 0 / 0.7)'),
   ],
   components: {
     MuiCssBaseline: {
-      styleOverrides: {
+      styleOverrides: (theme) => ({
         body: {
           scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 #f1f5f9',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-          },
+          scrollbarColor: mode === 'light' ? '#cbd5e1 #f1f5f9' : '#475569 #1e293b',
+          '&::-webkit-scrollbar': { width: '6px', height: '6px' },
           '&::-webkit-scrollbar-track': {
-            background: '#f1f5f9',
+            background: mode === 'light' ? '#f1f5f9' : '#1e293b'
           },
           '&::-webkit-scrollbar-thumb': {
-            background: '#cbd5e1',
-            borderRadius: '4px',
-            '&:hover': {
-              background: '#94a3b8',
-            },
+            background: mode === 'light' ? '#cbd5e1' : '#475569',
+            borderRadius: '3px',
+            '&:hover': { background: mode === 'light' ? '#94a3b8' : '#64748b' },
           },
         },
-      },
+      }),
     },
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
           fontWeight: 500,
-          borderRadius: 10,
-          padding: '8px 20px',
+          borderRadius: 6,
+          padding: '6px 14px',
           boxShadow: 'none',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.08)',
-            transform: 'translateY(-0.5px)',
-          },
+          transition: 'all 0.15s ease',
+          '&:hover': { boxShadow: 'none' },
         },
         contained: {
-          '&:active': {
-            transform: 'translateY(0)',
+          '&:hover': {
+            boxShadow: mode === 'light'
+              ? '0 2px 4px rgba(0,0,0,0.1)'
+              : '0 2px 8px rgba(0,0,0,0.4)',
           },
         },
-        sizeSmall: {
-          padding: '6px 16px',
-          fontSize: '0.813rem',
-        },
-        sizeLarge: {
-          padding: '10px 24px',
-          fontSize: '0.938rem',
-        },
+        sizeSmall: { padding: '4px 10px', fontSize: '0.75rem' },
+        sizeLarge: { padding: '8px 18px', fontSize: '0.875rem' },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06)',
-          border: '1px solid #f1f5f9',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: 10,
+          border: 'none',
+          boxShadow: mode === 'light'
+            ? '0 1px 3px rgba(0,0,0,0.04)'
+            : '0 1px 3px rgba(0,0,0,0.3)',
+          transition: 'box-shadow 0.15s ease',
           '&:hover': {
-            boxShadow: '0 4px 8px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
-            transform: 'translateY(-1px)',
+            boxShadow: mode === 'light'
+              ? '0 4px 12px rgba(0,0,0,0.06)'
+              : '0 4px 12px rgba(0,0,0,0.4)',
           },
         },
       },
@@ -279,23 +292,22 @@ const theme = createTheme({
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: '20px',
-          '&:last-child': {
-            paddingBottom: '20px',
-          },
+          padding: '16px',
+          '&:last-child': { paddingBottom: '16px' },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 10,
+          backgroundImage: 'none',
         },
+        elevation0: { boxShadow: 'none' },
         elevation1: {
-          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06)',
-        },
-        elevation2: {
-          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          boxShadow: mode === 'light'
+            ? '0 1px 3px rgba(0,0,0,0.04)'
+            : '0 1px 3px rgba(0,0,0,0.3)'
         },
       },
     },
@@ -303,90 +315,157 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: 'none',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: 'none',
+          backgroundImage: 'none',
         },
       },
     },
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          borderRight: '1px solid #e2e8f0',
+          border: 'none',
           boxShadow: 'none',
+          backgroundImage: 'none',
         },
       },
     },
     MuiListItemButton: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
-          margin: '4px 8px',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: 6,
+          margin: '2px 6px',
+          padding: '8px 12px',
+          transition: 'all 0.15s ease',
           '&.Mui-selected': {
-            backgroundColor: '#eff6ff',
-            color: '#1e40af',
+            backgroundColor: mode === 'light' ? 'rgba(37, 99, 235, 0.08)' : 'rgba(59, 130, 246, 0.15)',
             '&:hover': {
-              backgroundColor: '#dbeafe',
-            },
-            '& .MuiListItemIcon-root': {
-              color: '#1e40af',
+              backgroundColor: mode === 'light' ? 'rgba(37, 99, 235, 0.12)' : 'rgba(59, 130, 246, 0.2)',
             },
           },
           '&:hover': {
-            backgroundColor: '#f8fafc',
+            backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)',
           },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
-        root: {
-          fontWeight: 500,
-          borderRadius: 8,
-        },
-        filled: {
-          border: '1px solid transparent',
-        },
+        root: { fontWeight: 500, borderRadius: 6, height: 26 },
+        sizeSmall: { height: 22, fontSize: '0.75rem' },
       },
     },
     MuiTextField: {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 10,
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#94a3b8',
-              },
+            borderRadius: 6,
+            '& fieldset': {
+              borderColor: mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
             },
-            '&.Mui-focused': {
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderWidth: 2,
-              },
+            '&:hover fieldset': {
+              borderColor: mode === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
             },
           },
         },
       },
     },
-    MuiAvatar: {
+    MuiTableCell: {
       styleOverrides: {
         root: {
-          fontWeight: 600,
+          borderBottom: mode === 'light'
+            ? '1px solid rgba(0,0,0,0.05)'
+            : '1px solid rgba(255,255,255,0.05)',
+          padding: '12px 16px',
         },
+        head: {
+          fontWeight: 600,
+          backgroundColor: mode === 'light' ? '#f8fafc' : '#0f172a',
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: mode === 'light'
+              ? 'rgba(0,0,0,0.02)'
+              : 'rgba(255,255,255,0.02)',
+          },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: { fontWeight: 600 },
       },
     },
     MuiLinearProgress: {
       styleOverrides: {
-        root: {
+        root: { borderRadius: 3, height: 4 },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 8,
+          boxShadow: mode === 'light'
+            ? '0 4px 20px rgba(0,0,0,0.1)'
+            : '0 4px 20px rgba(0,0,0,0.5)',
+          border: mode === 'light'
+            ? '1px solid rgba(0,0,0,0.05)'
+            : '1px solid rgba(255,255,255,0.05)',
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: mode === 'light' ? '#1e293b' : '#f1f5f9',
+          color: mode === 'light' ? '#f1f5f9' : '#1e293b',
+          fontSize: '0.75rem',
           borderRadius: 4,
-          height: 6,
+          padding: '4px 8px',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 12,
+          boxShadow: mode === 'light'
+            ? '0 25px 50px rgba(0,0,0,0.15)'
+            : '0 25px 50px rgba(0,0,0,0.6)',
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          height: 2,
+          borderRadius: 1,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+          minHeight: 40,
         },
       },
     },
   },
 });
 
-// Composant pour initialiser les settings
+// App Initializer component
 function AppInitializer({ children }) {
   const dispatch = useDispatch();
   const [initialized, setInitialized] = React.useState(false);
@@ -396,7 +475,6 @@ function AppInitializer({ children }) {
       const authToken = localStorage.getItem('authToken');
       if (authToken) {
         try {
-          // Charger les settings de l'organisation (incluant la langue)
           await dispatch(fetchSettings()).unwrap();
         } catch (error) {
           console.error('Error loading settings:', error);
@@ -404,19 +482,66 @@ function AppInitializer({ children }) {
       }
       setInitialized(true);
     };
-
     initializeApp();
   }, [dispatch]);
 
-  if (!initialized) {
-    return null; // ou un loader
-  }
-
+  if (!initialized) return null;
   return children;
 }
 
 function App() {
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
+  // Theme mode state - persisted to localStorage
+  const [mode, setMode] = useState(() => {
+    const savedMode = localStorage.getItem('themeMode');
+    if (savedMode) return savedMode;
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
+
+  // Apply theme to document body for CSS variables
+  useEffect(() => {
+    document.body.setAttribute('data-theme', mode);
+    document.documentElement.setAttribute('data-theme', mode);
+    if (mode === 'dark') {
+      document.body.classList.add('dark');
+      document.body.classList.remove('light');
+    } else {
+      document.body.classList.add('light');
+      document.body.classList.remove('dark');
+    }
+  }, [mode]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (!localStorage.getItem('themeMode')) {
+        setMode(e.matches ? 'dark' : 'light');
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => {
+          const newMode = prevMode === 'light' ? 'dark' : 'light';
+          localStorage.setItem('themeMode', newMode);
+          return newMode;
+        });
+      },
+      mode,
+    }),
+    [mode]
+  );
+
+  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
   const [onboardingChecked, setOnboardingChecked] = React.useState(false);
 
   React.useEffect(() => {
@@ -432,16 +557,12 @@ function App() {
       }
 
       const response = await fetch('/api/v1/accounts/profile/', {
-        headers: {
-          'Authorization': `Token ${authToken}`,
-        },
+        headers: { 'Authorization': `Token ${authToken}` },
       });
 
       if (response.ok) {
         const data = await response.json();
         const needsOnboarding = !data.preferences?.onboarding_completed;
-
-        // If user needs onboarding and is not already on the onboarding page
         if (needsOnboarding && window.location.pathname !== '/onboarding') {
           window.location.href = '/onboarding';
           return;
@@ -455,18 +576,20 @@ function App() {
   };
 
   return (
-    <Provider store={store}>
-      <I18nextProvider i18n={i18n}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-            <AppInitializer>
-              <ModuleProvider>
-                {/* Load Google AdSense script */}
-                <AdSenseScript />
-
-                {onboardingChecked && (
-                  <>
+    <ColorModeContext.Provider value={colorMode}>
+      <Provider store={store}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              autoHideDuration={3000}
+            >
+              <AppInitializer>
+                <ModuleProvider>
+                  <AdSenseScript />
+                  {onboardingChecked && (
                     <Router>
                       <Routes>
                         {/* Public Routes */}
@@ -479,7 +602,7 @@ function App() {
                           <Route path="/register" element={<Register />} />
                         </Route>
 
-                        {/* Onboarding - Protected but accessible without onboarding_completed */}
+                        {/* Onboarding */}
                         <Route element={<PrivateRoute />}>
                           <Route path="/onboarding" element={<OnboardingSetup />} />
                         </Route>
@@ -491,37 +614,37 @@ function App() {
                             <Route path="/dashboard" element={<CustomizableDashboard />} />
                             <Route path="/dashboard-old" element={<OldDashboard />} />
 
-                            {/* Suppliers - Module Protected */}
+                            {/* Suppliers */}
                             <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
                             <Route path="/suppliers/new" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
                             <Route path="/suppliers/:id" element={<ModuleRoute module="suppliers"><SupplierDetail /></ModuleRoute>} />
                             <Route path="/suppliers/:id/edit" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
 
-                            {/* Purchase Orders - Module Protected */}
+                            {/* Purchase Orders */}
                             <Route path="/purchase-orders" element={<ModuleRoute module="purchase-orders"><PurchaseOrders /></ModuleRoute>} />
                             <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
                             <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
                             <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
 
-                            {/* Invoices - Module Protected */}
+                            {/* Invoices */}
                             <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />
                             <Route path="/invoices/new" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
                             <Route path="/invoices/:id" element={<ModuleRoute module="invoices"><InvoiceDetail /></ModuleRoute>} />
                             <Route path="/invoices/:id/edit" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
 
-                            {/* Products - Module Protected */}
+                            {/* Products */}
                             <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
                             <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
                             <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                             <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
 
-                            {/* Clients - Module Protected */}
+                            {/* Clients */}
                             <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
                             <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
                             <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
                             <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
 
-                            {/* E-Sourcing - Module Protected */}
+                            {/* E-Sourcing */}
                             <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
                             <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
                             <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
@@ -529,17 +652,17 @@ function App() {
                             <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
                             <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
 
-                            {/* Contracts - Module Protected */}
+                            {/* Contracts */}
                             <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
                             <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
                             <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
                             <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
 
-                            {/* Data Migration - Admin only */}
+                            {/* Data Migration */}
                             <Route path="/migration/jobs" element={<MigrationJobs />} />
                             <Route path="/migration/wizard" element={<MigrationWizard />} />
 
-                            {/* AI Chat - Admin only */}
+                            {/* AI Chat */}
                             <Route path="/ai-chat" element={<AIChat />} />
 
                             {/* Settings */}
@@ -552,18 +675,16 @@ function App() {
                         {/* 404 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
-
-                      {/* PWA Install Prompt */}
                       <PWAInstallPrompt />
                     </Router>
-                  </>
-                )}
-              </ModuleProvider>
-            </AppInitializer>
-          </SnackbarProvider>
-        </ThemeProvider>
-      </I18nextProvider>
-    </Provider>
+                  )}
+                </ModuleProvider>
+              </AppInitializer>
+            </SnackbarProvider>
+          </ThemeProvider>
+        </I18nextProvider>
+      </Provider>
+    </ColorModeContext.Provider>
   );
 }
 

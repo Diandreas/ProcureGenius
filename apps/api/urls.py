@@ -4,6 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from . import quick_create_views
 from . import views_settings
+from . import views_onboarding
 from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
 
@@ -53,6 +54,9 @@ urlpatterns = [
     # Custom API endpoints
     path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('dashboard/recent/', views.RecentActivityView.as_view(), name='recent-activity'),
+
+    # Onboarding endpoints
+    path('onboarding/check-actions/', views_onboarding.OnboardingActionsCheckView.as_view(), name='onboarding-check-actions'),
 
     # Quick Create endpoints (avec détection de doublons)
     path('quick-create/client/', quick_create_views.quick_create_client, name='quick-create-client'),

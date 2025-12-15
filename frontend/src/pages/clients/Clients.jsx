@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -88,6 +88,24 @@ function Clients() {
   useEffect(() => {
     dispatch(fetchClients());
   }, [dispatch]);
+
+  const handleGenerateReportClick = useCallback(() => {
+    setReportConfigOpen(true);
+  }, []);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('register-report-action', {
+      detail: {
+        onClick: handleGenerateReportClick,
+        label: t('clients:actions.generateReport', 'Rapport PDF'),
+      }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-report-action'));
+    };
+  }, [handleGenerateReportClick, t]);
 
   const handleQuickFilterClick = (filterValue) => {
     if (quickFilter === filterValue) {
@@ -325,10 +343,6 @@ function Clients() {
     );
   }
 
-  const handleGenerateReportClick = () => {
-    setReportConfigOpen(true);
-  };
-
   const handleConfigureReport = async () => {
     setReportConfigOpen(false);
     setGeneratingPdf(true);
@@ -387,22 +401,6 @@ function Clients() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header avec titre et bouton PDF */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
-          {t('clients:title', 'Clients')}
-        </Typography>
-        <Button
-          variant="outlined"
-          color="success"
-          startIcon={<PictureAsPdf />}
-          onClick={handleGenerateReportClick}
-          disabled={filteredClients.length === 0}
-          sx={{ ml: 'auto' }}
-        >
-          {t('clients:actions.generateReport', 'Rapport PDF')}
-        </Button>
-      </Box>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

@@ -8,7 +8,6 @@ import {
   Toolbar,
   List,
   Typography,
-  Divider,
   IconButton,
   ListItem,
   ListItemButton,
@@ -21,52 +20,31 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  alpha,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
-  Dashboard,
-  Business,
-  ShoppingCart,
-  Receipt,
-  Inventory,
-  People,
-  Chat,
-  Settings,
-  Logout,
-  ChevronLeft,
   Add,
-  Gavel,
-  CompareArrows,
-  CloudUpload,
-  Lock,
   SupervisorAccount,
   Tune,
   Refresh,
+  DarkMode,
+  LightMode,
+  PictureAsPdf,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
+import { useColorMode } from '../App';
 import MobileBottomNav from '../components/MobileBottomNav';
 import PermanentAIAssistant from '../components/PermanentAIAssistant';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
+import TutorialButton from '../components/tutorial/TutorialButton';
+import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import { useTranslation } from 'react-i18next';
 
-const drawerWidth = 260;
+const drawerWidth = 240;
 
-// Modules incontournables (toujours affichés)
 const CORE_MODULES = ['dashboard'];
-
-const menuItems = [
-  { text: 'Tableau de bord', icon: <IconImage src="/icon/dashboard.png" alt="Dashboard" size={24} />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
-  { text: 'Fournisseurs', icon: <IconImage src="/icon/supplier.png" alt="Suppliers" size={24} />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
-  { text: 'Bons de commande', icon: <IconImage src="/icon/purchase-order.png" alt="Purchase Orders" size={24} />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
-  { text: 'Factures', icon: <IconImage src="/icon/bill.png" alt="Invoices" size={24} />, path: '/invoices', moduleId: 'invoices', isCore: false },
-  { text: 'Produits', icon: <IconImage src="/icon/product.png" alt="Products" size={24} />, path: '/products', moduleId: 'products', isCore: false },
-  { text: 'Clients', icon: <IconImage src="/icon/user.png" alt="Clients" size={24} />, path: '/clients', moduleId: 'clients', isCore: false },
-  { text: 'E-Sourcing (RFQ)', icon: <IconImage src="/icon/market.png" alt="E-Sourcing" size={24} />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
-  { text: 'Contrats', icon: <IconImage src="/icon/contract.png" alt="Contracts" size={24} />, path: '/contracts', moduleId: 'contracts', isCore: false },
-  { text: 'Assistant IA', icon: <IconImage src="/icon/ai-assistant.png" alt="AI Assistant" size={24} />, path: '/ai-chat', moduleId: 'dashboard', isCore: true }, // Toujours disponible
-];
 
 function MainLayout() {
   const { t } = useTranslation(['navigation', 'common']);
@@ -78,11 +56,10 @@ function MainLayout() {
   const [dashboardPeriod, setDashboardPeriod] = useState('last_30_days');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { toggleColorMode, mode } = useColorMode();
 
-  // Use module context
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
 
-  // Listen for dashboard period changes
   useEffect(() => {
     const handlePeriodChange = (event) => {
       if (event.detail?.period) {
@@ -90,43 +67,59 @@ function MainLayout() {
       }
     };
     window.addEventListener('dashboard-period-change', handlePeriodChange);
-    return () => {
-      window.removeEventListener('dashboard-period-change', handlePeriodChange);
-    };
+    return () => window.removeEventListener('dashboard-period-change', handlePeriodChange);
   }, []);
 
-  // Menu items with translations
   const menuItems = [
-    { text: t('navigation:menu.dashboard'), icon: <IconImage src="/icon/dashboard.png" alt="Dashboard" size={24} />, path: '/dashboard', moduleId: 'dashboard', isCore: true },
-    { text: t('navigation:menu.suppliers'), icon: <IconImage src="/icon/supplier.png" alt="Suppliers" size={24} />, path: '/suppliers', moduleId: 'suppliers', isCore: false },
-    { text: t('navigation:menu.purchaseOrders'), icon: <IconImage src="/icon/purchase-order.png" alt="Purchase Orders" size={24} />, path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
-    { text: t('navigation:menu.invoices'), icon: <IconImage src="/icon/bill.png" alt="Invoices" size={24} />, path: '/invoices', moduleId: 'invoices', isCore: false },
-    { text: t('navigation:menu.products'), icon: <IconImage src="/icon/product.png" alt="Products" size={24} />, path: '/products', moduleId: 'products', isCore: false },
-    { text: t('navigation:menu.clients'), icon: <IconImage src="/icon/user.png" alt="Clients" size={24} />, path: '/clients', moduleId: 'clients', isCore: false },
-    { text: t('navigation:menu.eSourcing'), icon: <IconImage src="/icon/market.png" alt="E-Sourcing" size={24} />, path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
-    { text: t('navigation:menu.contracts'), icon: <IconImage src="/icon/contract.png" alt="Contracts" size={24} />, path: '/contracts', moduleId: 'contracts', isCore: false },
-    { text: t('navigation:menu.aiAssistant'), icon: <IconImage src="/icon/ai-assistant.png" alt="AI Assistant" size={24} />, path: '/ai-chat', moduleId: 'dashboard', isCore: true },
+    { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: true },
+    { text: t('navigation:menu.suppliers'), iconSrc: '/icon/supplier.png', path: '/suppliers', moduleId: 'suppliers', isCore: false },
+    { text: t('navigation:menu.purchaseOrders'), iconSrc: '/icon/purchase-order.png', path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
+    { text: t('navigation:menu.invoices'), iconSrc: '/icon/bill.png', path: '/invoices', moduleId: 'invoices', isCore: false },
+    { text: t('navigation:menu.products'), iconSrc: '/icon/product.png', path: '/products', moduleId: 'products', isCore: false },
+    { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
+    { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
+    { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
+    { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
 
-
-  // États pour la gestion des modules
   const [userPermissions, setUserPermissions] = useState(null);
   const [moduleActivationDialogOpen, setModuleActivationDialogOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
+  const [reportAction, setReportAction] = useState(null);
 
-  // Charger les préférences utilisateur au montage
   useEffect(() => {
     fetchUserPermissions();
   }, []);
 
+  // Écouter les événements de rapport depuis les pages
+  useEffect(() => {
+    const handleReportAction = (event) => {
+      if (event.detail?.onClick) {
+        setReportAction({
+          onClick: event.detail.onClick,
+          label: event.detail.label || t('navigation:topBar.report', 'Rapport PDF'),
+        });
+      }
+    };
+
+    const handleClearReportAction = () => {
+      setReportAction(null);
+    };
+
+    window.addEventListener('register-report-action', handleReportAction);
+    window.addEventListener('clear-report-action', handleClearReportAction);
+
+    return () => {
+      window.removeEventListener('register-report-action', handleReportAction);
+      window.removeEventListener('clear-report-action', handleClearReportAction);
+    };
+  }, [t]);
+
   const fetchUserPermissions = async () => {
     try {
       const response = await fetch('/api/v1/accounts/profile/', {
-        headers: {
-          'Authorization': `Token ${localStorage.getItem('authToken')}`,
-        },
+        headers: { 'Authorization': `Token ${localStorage.getItem('authToken')}` },
       });
-
       if (response.ok) {
         const data = await response.json();
         setUserPermissions(data.permissions);
@@ -136,17 +129,9 @@ function MainLayout() {
     }
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+  const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -154,28 +139,20 @@ function MainLayout() {
   };
 
   const handleModuleClick = (item) => {
-    // Les modules core sont toujours accessibles
     if (item.isCore || hasModule(item.moduleId)) {
-      // Module activé ou core: navigation normale
       navigate(item.path);
-      if (isMobile) {
-        setMobileOpen(false);
-      }
+      if (isMobile) setMobileOpen(false);
     } else {
-      // Module désactivé: display message (admin needs to change subscription)
       setSelectedModule(item.moduleId);
       setModuleActivationDialogOpen(true);
     }
   };
 
   const handleActivateModule = async (moduleId) => {
-    // Module activation is now controlled at organization level
-    // Redirect to module settings where admin can upgrade subscription
     setModuleActivationDialogOpen(false);
     navigate('/settings/modules');
   };
 
-  // Déterminer le module actuel depuis le path
   const currentModule = useMemo(() => {
     const path = location.pathname;
     for (const item of menuItems) {
@@ -186,7 +163,6 @@ function MainLayout() {
     return 'dashboard';
   }, [location.pathname]);
 
-  // Actions contextuelles selon la page
   const getContextualActions = () => {
     const currentPath = location.pathname;
 
@@ -200,28 +176,21 @@ function MainLayout() {
             setDashboardPeriod(newPeriod);
             window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period: newPeriod } }));
           },
-          onRefresh: () => {
-            window.dispatchEvent(new CustomEvent('dashboard-refresh'));
-          },
-          actions: [
-            {
-              label: '',
-              icon: <Tune />,
-              onClick: () => {
-                // Dispatch event to activate edit mode in CustomizableDashboard
-                window.dispatchEvent(new CustomEvent('dashboard-edit-mode', { detail: { activate: true } }));
-              },
-              isIconOnly: true,
-              tooltip: t('navigation:topBar.customizeDashboard', 'Personnaliser le tableau de bord')
-            }
-          ]
+          onRefresh: () => window.dispatchEvent(new CustomEvent('dashboard-refresh')),
+          actions: [{
+            label: '',
+            icon: <Tune fontSize="small" />,
+            onClick: () => window.dispatchEvent(new CustomEvent('dashboard-edit-mode', { detail: { activate: true } })),
+            isIconOnly: true,
+            tooltip: t('navigation:topBar.customizeDashboard', 'Personnaliser')
+          }]
         };
       case '/suppliers':
         return {
           title: t('navigation:menu.suppliers'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newSupplier'),
-            icon: <Add />,
+            label: t('navigation:topBar.newSupplier', 'Nouveau fournisseur'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/suppliers/new')
           }
         };
@@ -229,8 +198,8 @@ function MainLayout() {
         return {
           title: t('navigation:menu.purchaseOrders'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newPurchaseOrder'),
-            icon: <Add />,
+            label: t('navigation:topBar.newPurchaseOrder', 'Nouveau bon de commande'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/purchase-orders/new')
           }
         };
@@ -238,8 +207,8 @@ function MainLayout() {
         return {
           title: t('navigation:menu.invoices'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newInvoice'),
-            icon: <Add />,
+            label: t('navigation:topBar.newInvoice', 'Nouvelle facture'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/invoices/new')
           }
         };
@@ -247,8 +216,8 @@ function MainLayout() {
         return {
           title: t('navigation:menu.products'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newProduct'),
-            icon: <Add />,
+            label: t('navigation:topBar.newProduct', 'Nouveau produit'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/products/new')
           }
         };
@@ -256,8 +225,8 @@ function MainLayout() {
         return {
           title: t('navigation:menu.clients'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newClient'),
-            icon: <Add />,
+            label: t('navigation:topBar.newClient', 'Nouveau client'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/clients/new')
           }
         };
@@ -265,8 +234,8 @@ function MainLayout() {
         return {
           title: t('navigation:menu.eSourcing'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newRfqEvent'),
-            icon: <Add />,
+            label: t('navigation:topBar.newRfqEvent', 'Nouvel événement'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/e-sourcing/events/new')
           }
         };
@@ -274,120 +243,116 @@ function MainLayout() {
         return {
           title: t('navigation:menu.contracts'),
           action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newContract'),
-            icon: <Add />,
+            label: t('navigation:topBar.newContract', 'Nouveau contrat'),
+            icon: <Add fontSize="small" />,
             onClick: () => navigate('/contracts/new')
           }
         };
       case '/migration/jobs':
-        return {
-          title: t('navigation:topBar.dataImport'),
-          action: {
-            label: isMobile ? t('navigation:topBar.newImport') : t('navigation:topBar.newImport'),
-            icon: <IconImage src="/icon/migration.png" alt="Import" size={20} />,
-            onClick: () => navigate('/migration/wizard')
-          }
-        };
+        return { title: t('navigation:topBar.dataImport'), action: { label: t('navigation:topBar.newImport'), icon: <IconImage src="/icon/migration.png" alt="Import" size={18} />, onClick: () => navigate('/migration/wizard') } };
       case '/migration/wizard':
-        return {
-          title: t('navigation:topBar.importWizard')
-        };
+        return { title: t('navigation:topBar.importWizard') };
       case '/ai-chat':
-        return {
-          title: t('navigation:menu.aiAssistant'),
-          action: {
-            label: isMobile ? t('navigation:topBar.new') : t('navigation:topBar.newConversation'),
-            icon: <Add />,
-            onClick: () => {
-              // Cette action sera gérée par le composant AIChat
-              window.dispatchEvent(new CustomEvent('ai-chat-new-conversation'));
-            }
-          }
-        };
+        return { title: t('navigation:menu.aiAssistant'), action: { label: isMobile ? '' : t('navigation:topBar.newConversation'), icon: <Add fontSize="small" />, onClick: () => window.dispatchEvent(new CustomEvent('ai-chat-new-conversation')) } };
       case '/settings':
-        return {
-          title: t('navigation:menu.settings')
-        };
+        return { title: t('navigation:menu.settings') };
       default:
-        // Fallback pour les routes non définies
-        return {
-          title: 'Procura'
-        };
+        return { title: 'Procura' };
     }
   };
 
   const contextualActions = useMemo(() => getContextualActions(), [location.pathname, isMobile, dashboardPeriod]);
 
   const drawer = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Toolbar sx={{ px: 2.5, py: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            component="img"
-            src="/main.png"
-            alt="Procura"
-            onError={(e) => {
-              // Fallback si le logo n'existe pas
-              e.target.style.display = 'none';
-              if (e.target.nextSibling) {
-                e.target.nextSibling.style.display = 'flex';
-              }
-            }}
-            sx={{
-              width: 36,
-              height: 36,
-              objectFit: 'contain',
-              display: 'block',
-            }}
-          />
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-              display: 'none',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: '1.125rem',
-            }}
-          >
-            P
-          </Box>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>
-            Procura
-          </Typography>
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      bgcolor: 'background.paper',
+    }}>
+      {/* Logo */}
+      <Box sx={{
+        px: 2,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+      }}>
+        <Box
+          component="img"
+          src="/main.png"
+          alt="Procura"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+          }}
+          sx={{ width: 32, height: 32, objectFit: 'contain' }}
+        />
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: 1.5,
+            bgcolor: 'primary.main',
+            display: 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+          }}
+        >
+          P
         </Box>
-      </Toolbar>
-      <Divider />
-      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1 }}>
-        <List sx={{ px: 1 }}>
-          {menuItems.filter(item => {
-            // Only show items if module is enabled (hide completely instead of graying out)
-            return item.isCore || hasModule(item.moduleId);
-          }).map((item) => {
-            const isSelected = location.pathname === item.path;
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            fontSize: '1rem',
+            color: 'text.primary',
+          }}
+        >
+          Procura
+        </Typography>
+      </Box>
+
+      {/* Navigation */}
+      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1, px: 1 }}>
+        <List disablePadding>
+          {menuItems.filter(item => item.isCore || hasModule(item.moduleId)).map((item) => {
+            const isSelected = location.pathname === item.path ||
+              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
             return (
-              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
                 <ListItemButton
                   selected={isSelected}
                   onClick={() => handleModuleClick(item)}
+                  data-tutorial={`menu-${item.moduleId}`}
                   sx={{
-                    minHeight: 44,
-                    px: 2,
+                    minHeight: 40,
+                    px: 1.5,
+                    borderRadius: 1.5,
+                    '&.Mui-selected': {
+                      bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.15 : 0.08),
+                      '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                    },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    {item.icon}
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <IconImage
+                      src={item.iconSrc}
+                      alt={item.text}
+                      size={20}
+                      withBackground={mode === 'dark'}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary={item.text}
                     primaryTypographyProps={{
-                      fontSize: '0.875rem',
+                      fontSize: '0.813rem',
                       fontWeight: isSelected ? 600 : 500,
+                      color: isSelected ? 'primary.main' : 'text.secondary',
                     }}
                   />
                 </ListItemButton>
@@ -396,26 +361,32 @@ function MainLayout() {
           })}
         </List>
       </Box>
-      <Divider />
-      <List sx={{ px: 1, py: 1 }}>
+
+      {/* Bottom Section */}
+      <Box sx={{ px: 1, pb: 2 }}>
         {userPermissions?.can_manage_users && (
-          <ListItem disablePadding>
+          <ListItem disablePadding sx={{ mb: 0.25 }}>
             <ListItemButton
               onClick={() => navigate('/settings/users')}
-              sx={{
-                minHeight: 44,
-                px: 2,
-              }}
+              sx={{ minHeight: 40, px: 1.5, borderRadius: 1.5 }}
             >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <SupervisorAccount />
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                {mode === 'dark' ? (
+                  <Box sx={{
+                    width: 28, height: 28, borderRadius: '6px',
+                    bgcolor: '#fef7ed',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <SupervisorAccount sx={{ fontSize: 18, color: '#475569' }} />
+                  </Box>
+                ) : (
+                  <SupervisorAccount sx={{ fontSize: 20, color: 'text.secondary' }} />
+                )}
               </ListItemIcon>
               <ListItemText
                 primary={t('navigation:menu.users')}
-                primaryTypographyProps={{
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
+                primaryTypographyProps={{ fontSize: '0.813rem', fontWeight: 500, color: 'text.secondary' }}
               />
             </ListItemButton>
           </ListItem>
@@ -423,135 +394,94 @@ function MainLayout() {
         <ListItem disablePadding>
           <ListItemButton
             onClick={() => navigate('/settings')}
-            sx={{
-              minHeight: 44,
-              px: 2,
-            }}
+            data-tutorial="menu-settings"
+            sx={{ minHeight: 40, px: 1.5, borderRadius: 1.5 }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <IconImage src="/icon/setting.png" alt="Settings" size={24} />
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <IconImage
+                src="/icon/setting.png"
+                alt="Settings"
+                size={20}
+                withBackground={mode === 'dark'}
+              />
             </ListItemIcon>
             <ListItemText
               primary={t('navigation:menu.settings')}
-              primaryTypographyProps={{
-                fontSize: '0.875rem',
-                fontWeight: 500,
-              }}
+              primaryTypographyProps={{ fontSize: '0.813rem', fontWeight: 500, color: 'text.secondary' }}
             />
           </ListItemButton>
         </ListItem>
-      </List>
+      </Box>
     </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Top Bar */}
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: 'blur(20px)',
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          bgcolor: alpha(theme.palette.background.paper, 0.8),
+          backdropFilter: 'blur(12px)',
           color: 'text.primary',
-          borderBottom: '0px ',
-          borderColor: 'divider',
         }}
       >
-        <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }}>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
-              {contextualActions?.title || 'Procura'}
-            </Typography>
-          </Box>
+        <Toolbar sx={{ minHeight: { xs: 56, sm: 60 }, px: { xs: 2, sm: 3 } }}>
+          <Typography
+            variant="h6"
+            noWrap
+            sx={{
+              flexGrow: 1,
+              fontWeight: 600,
+              fontSize: '0.938rem',
+              color: 'text.primary',
+            }}
+          >
+            {contextualActions?.title || 'Procura'}
+          </Typography>
+
           {/* Period controls for dashboard */}
           {contextualActions?.periodControls && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
-              <Button
-                size="small"
-                onClick={() => contextualActions.onPeriodChange('last_7_days')}
-                variant={contextualActions.currentPeriod === 'last_7_days' ? 'contained' : 'outlined'}
-                sx={{
-                  minWidth: 'auto',
-                  px: 1.25,
-                  py: 0.5,
-                  fontSize: '0.7rem',
-                  borderRadius: 1.5,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                }}
-              >
-                7j
-              </Button>
-              <Button
-                size="small"
-                onClick={() => contextualActions.onPeriodChange('last_30_days')}
-                variant={contextualActions.currentPeriod === 'last_30_days' ? 'contained' : 'outlined'}
-                sx={{
-                  minWidth: 'auto',
-                  px: 1.25,
-                  py: 0.5,
-                  fontSize: '0.7rem',
-                  borderRadius: 1.5,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                }}
-              >
-                30j
-              </Button>
-              <Button
-                size="small"
-                onClick={() => contextualActions.onPeriodChange('this_month')}
-                variant={contextualActions.currentPeriod === 'this_month' ? 'contained' : 'outlined'}
-                sx={{
-                  minWidth: 'auto',
-                  px: 1.25,
-                  py: 0.5,
-                  fontSize: '0.7rem',
-                  borderRadius: 1.5,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                }}
-              >
-                Mois
-              </Button>
+              {['last_7_days', 'last_30_days', 'this_month'].map((period, i) => (
+                <Button
+                  key={period}
+                  size="small"
+                  onClick={() => contextualActions.onPeriodChange(period)}
+                  variant={contextualActions.currentPeriod === period ? 'contained' : 'text'}
+                  sx={{
+                    minWidth: 'auto',
+                    px: 1,
+                    py: 0.5,
+                    fontSize: '0.688rem',
+                    borderRadius: 1,
+                    fontWeight: 500,
+                    color: contextualActions.currentPeriod === period ? 'white' : 'text.secondary',
+                  }}
+                >
+                  {['7j', '30j', 'Mois'][i]}
+                </Button>
+              ))}
               <Tooltip title="Actualiser">
                 <IconButton
                   onClick={contextualActions.onRefresh}
                   size="small"
-                  sx={{
-                    ml: 0.5,
-                    color: 'text.secondary',
-                    '&:hover': {
-                      color: 'primary.main',
-                      bgcolor: 'action.hover',
-                    }
-                  }}
+                  sx={{ ml: 0.5, color: 'text.secondary' }}
                 >
-                  <Refresh fontSize="small" />
+                  <Refresh sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
             </Box>
           )}
+
           {/* Actions */}
           {contextualActions?.actions?.map((action, index) => (
             action.isIconOnly ? (
               <Tooltip key={index} title={action.tooltip || action.label}>
-                <IconButton
-                  onClick={action.onClick}
-                  size="small"
-                  sx={{
-                    mr: index < (contextualActions.actions?.length || 0) - 1 ? 1 : 2,
-                    color: 'text.secondary',
-                    transition: 'all 0.3s ease-in-out',
-                    '&:hover': {
-                      color: 'primary.main',
-                      bgcolor: 'action.hover',
-                      transform: 'scale(1.05)',
-                    }
-                  }}
-                >
+                <IconButton onClick={action.onClick} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
                   {action.icon}
                 </IconButton>
               </Tooltip>
@@ -562,102 +492,94 @@ function MainLayout() {
                 startIcon={action.icon}
                 onClick={action.onClick}
                 size="small"
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  px: isMobile ? 1.5 : 2,
-                  py: 0.5,
-                  fontSize: isMobile ? '0.75rem' : '0.875rem',
-                  mr: index < (contextualActions.actions?.length || 0) - 1 ? 1 : 2,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'scale(1.01)',
-                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
-                  }
-                }}
+                sx={{ borderRadius: 1.5, fontWeight: 500, px: 1.5, py: 0.5, fontSize: '0.75rem', mr: 0.5 }}
               >
                 {action.label}
               </Button>
             )
           ))}
-          {/* Legacy action support */}
+
+          {/* Legacy action support - Label court sur mobile */}
           {contextualActions?.action && !contextualActions?.actions && (
-            contextualActions.action.isIconOnly ? (
-              <Tooltip title={contextualActions.action.tooltip || contextualActions.action.label}>
-                <IconButton
-                  onClick={contextualActions.action.onClick}
-                  size="small"
-                  sx={{
-                    mr: 2,
-                    color: 'text.secondary',
-                    transition: 'all 0.3s ease-in-out',
-                    '&:hover': {
-                      color: 'primary.main',
-                      bgcolor: 'action.hover',
-                      transform: 'scale(1.05)',
-                    }
-                  }}
-                >
-                  {contextualActions.action.icon}
-                </IconButton>
-              </Tooltip>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={contextualActions.action.icon}
-                onClick={contextualActions.action.onClick}
-                size="small"
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  px: isMobile ? 1.5 : 2,
-                  py: 0.5,
-                  fontSize: isMobile ? '0.75rem' : '0.875rem',
-                  mr: 2,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'scale(1.01)',
-                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)'
-                  }
-                }}
-              >
-                {contextualActions.action.label}
-              </Button>
-            )
+            <Button
+              variant="contained"
+              startIcon={contextualActions.action.icon}
+              onClick={contextualActions.action.onClick}
+              size="small"
+              disableElevation
+              sx={{
+                borderRadius: 2,
+                fontWeight: 600,
+                px: { xs: 1.5, sm: 2 },
+                py: 0.75,
+                fontSize: '0.813rem',
+                mr: 1.5,
+                bgcolor: 'primary.main',
+                color: 'white',
+                textTransform: 'none',
+                letterSpacing: '0.01em',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              }}
+            >
+              {isMobile ? t('navigation:topBar.new', 'Nouveau') : (contextualActions.action.label || t('navigation:topBar.new', 'Nouveau'))}
+            </Button>
           )}
-          <IconButton
-            onClick={handleMenuClick}
-            size="small"
-            sx={{
-              ml: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.02)',
-              },
-            }}
-          >
+
+          {/* Bouton Rapport PDF - Label court sur mobile */}
+          {reportAction && (
+            <Button
+              variant="outlined"
+              startIcon={<PictureAsPdf fontSize="small" />}
+              onClick={reportAction.onClick}
+              size="small"
+              sx={{
+                borderRadius: 2,
+                fontWeight: 500,
+                px: { xs: 1.5, sm: 1.5 },
+                py: 0.75,
+                fontSize: '0.813rem',
+                mr: 1.5,
+                borderColor: 'text.secondary',
+                color: 'text.primary',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.1 : 0.05),
+                },
+              }}
+            >
+              {isMobile ? t('navigation:topBar.report', 'Rapport') : reportAction.label}
+            </Button>
+          )}
+
+          {/* Theme Toggle */}
+          <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
+            <IconButton onClick={toggleColorMode} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
+              {mode === 'dark' ? <LightMode sx={{ fontSize: 20 }} /> : <DarkMode sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+
+          {/* Tutorial Button */}
+          <TutorialButton variant="icon" size="small" />
+
+          {/* User Avatar */}
+          <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 0.5 }} data-tutorial="profile-menu">
             <Avatar
               sx={{
-                width: 40,
-                height: 40,
+                width: 34,
+                height: 34,
                 bgcolor: 'primary.main',
                 fontWeight: 600,
-                fontSize: '0.875rem',
-                boxShadow: '0 2px 8px rgba(30, 64, 175, 0.15)',
+                fontSize: '0.75rem',
               }}
             >
               {useSelector((state) => {
                 const user = state.auth.user;
                 const orgName = user?.organization?.name;
-
-                if (orgName) {
-                  // Prend les 2 premières lettres du nom de l'organisation
-                  return orgName.substring(0, 2).toUpperCase();
-                }
-
-                // Fallback: Initiales utilisateur ou Email
+                if (orgName) return orgName.substring(0, 2).toUpperCase();
                 if (user?.first_name && user?.last_name) {
                   return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
                 }
@@ -665,82 +587,88 @@ function MainLayout() {
               })}
             </Avatar>
           </IconButton>
+
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             PaperProps={{
-              sx: {
-                mt: 1.5,
-                minWidth: 200,
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-              },
+              sx: { mt: 1, minWidth: 180 },
             }}
           >
             <MenuItem
-              onClick={() => {
-                navigate('/settings');
-                handleMenuClose();
-              }}
-              sx={{ py: 1.5, px: 2 }}
+              onClick={() => { navigate('/settings'); handleMenuClose(); }}
+              data-tutorial="menu-settings-profile"
+              sx={{ py: 1, px: 2, fontSize: '0.813rem' }}
             >
               <ListItemIcon>
-                <IconImage src="/icon/setting.png" alt="Settings" size={20} />
+                <IconImage src="/icon/setting.png" alt="Settings" size={18} withBackground={mode === 'dark'} />
               </ListItemIcon>
-              <Typography variant="body2">{t('navigation:userMenu.settings')}</Typography>
+              {t('navigation:userMenu.settings')}
             </MenuItem>
-            <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2 }}>
+            <MenuItem onClick={handleLogout} sx={{ py: 1, px: 2, fontSize: '0.813rem' }}>
               <ListItemIcon>
-                <IconImage src="/icon/logout.png" alt="Logout" size={20} />
+                <IconImage src="/icon/logout.png" alt="Logout" size={18} withBackground={mode === 'dark'} />
               </ListItemIcon>
-              <Typography variant="body2">{t('navigation:userMenu.logout')}</Typography>
+              {t('navigation:userMenu.logout')}
             </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
+
+      {/* Sidebar */}
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        {/* Mobile Drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
+          ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              bgcolor: 'background.paper',
+            },
           }}
         >
           {drawer}
         </Drawer>
+
+        {/* Desktop Drawer */}
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              bgcolor: 'background.paper',
+            },
           }}
           open
         >
           {drawer}
         </Drawer>
       </Box>
+
+      {/* Main Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3 },
-          pb: { xs: 10, sm: 3 }, // Padding bottom pour la navigation mobile
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 2, sm: 2.5 },
+          pb: { xs: 10, sm: 2.5 },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
           bgcolor: 'background.default',
         }}
       >
-        <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }} />
-        <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
+        <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
+        <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
           <Outlet />
         </Box>
       </Box>
@@ -748,16 +676,19 @@ function MainLayout() {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav enabledModules={enabledModules} />
 
-      {/* Assistant IA permanent (toujours visible) */}
+      {/* Permanent AI Assistant */}
       {!isMobile && <PermanentAIAssistant currentModule={currentModule} />}
 
-      {/* Dialog d'activation de module */}
+      {/* Module Activation Dialog */}
       <ModuleActivationDialog
         open={moduleActivationDialogOpen}
         moduleId={selectedModule}
         onClose={() => setModuleActivationDialogOpen(false)}
         onActivate={handleActivateModule}
       />
+
+      {/* Tutorial System */}
+      <SimpleTutorial />
     </Box>
   );
 }

@@ -1,80 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { Plus, Settings, Save, LayoutGrid, Eye, CheckCircle } from 'lucide-react';
+import { Plus, Settings, Save, LayoutGrid, Eye, CheckCircle, Grid3x3 } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import * as widgetsAPI from '../services/widgetsAPI';
 import WidgetLibrary from '../components/dashboard/WidgetLibrary';
 import WidgetWrapper from '../components/dashboard/WidgetWrapper';
+import GettingStartedWidget from '../components/dashboard/GettingStartedWidget';
 import '../styles/CustomizableDashboard.css';
 
-// Import widgets
+// Import widgets - 15 widgets essentiels
+// Global (3)
 import FinancialSummaryWidget from '../components/widgets/FinancialSummaryWidget';
-import RecentActivityWidget from '../components/widgets/RecentActivityWidget';
 import AlertsWidget from '../components/widgets/AlertsWidget';
-import GlobalPerformanceWidget from '../components/widgets/GlobalPerformanceWidget';
-import ProductsOverviewWidget from '../components/widgets/ProductsOverviewWidget';
+import CashFlowSummaryWidget from '../components/widgets/CashFlowSummaryWidget';
+// Clients (3)
+import TopClientsWidget from '../components/widgets/TopClientsWidget';
+import ClientsAtRiskWidget from '../components/widgets/ClientsAtRiskWidget';
+import ParetoClientsWidget from '../components/widgets/ParetoClientsWidget';
+// Produits (3)
 import TopSellingProductsWidget from '../components/widgets/TopSellingProductsWidget';
 import StockAlertsWidget from '../components/widgets/StockAlertsWidget';
 import MarginAnalysisWidget from '../components/widgets/MarginAnalysisWidget';
-import StockMovementsWidget from '../components/widgets/StockMovementsWidget';
-import ClientsOverviewWidget from '../components/widgets/ClientsOverviewWidget';
-import TopClientsWidget from '../components/widgets/TopClientsWidget';
-import ClientsAtRiskWidget from '../components/widgets/ClientsAtRiskWidget';
-import ClientAcquisitionWidget from '../components/widgets/ClientAcquisitionWidget';
-import ClientSegmentationWidget from '../components/widgets/ClientSegmentationWidget';
+// Factures (2)
 import InvoicesOverviewWidget from '../components/widgets/InvoicesOverviewWidget';
-import InvoicesStatusWidget from '../components/widgets/InvoicesStatusWidget';
-import RevenueChartWidget from '../components/widgets/RevenueChartWidget';
 import OverdueInvoicesWidget from '../components/widgets/OverdueInvoicesWidget';
-import PaymentPerformanceWidget from '../components/widgets/PaymentPerformanceWidget';
-import RecentInvoicesWidget from '../components/widgets/RecentInvoicesWidget';
+// Achats (4)
 import POOverviewWidget from '../components/widgets/POOverviewWidget';
-import POStatusWidget from '../components/widgets/POStatusWidget';
-import ExpensesChartWidget from '../components/widgets/ExpensesChartWidget';
 import OverduePOWidget from '../components/widgets/OverduePOWidget';
 import SupplierPerformanceWidget from '../components/widgets/SupplierPerformanceWidget';
 import PendingApprovalsWidget from '../components/widgets/PendingApprovalsWidget';
-import BudgetTrackingWidget from '../components/widgets/BudgetTrackingWidget';
-import AIUsageWidget from '../components/widgets/AIUsageWidget';
-import AIDocumentsWidget from '../components/widgets/AIDocumentsWidget';
-import AILastConversationWidget from '../components/widgets/AILastConversationWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// Widget component mapping
+// Widget component mapping - 15 widgets essentiels
 const WIDGET_COMPONENTS = {
+  // Global (3)
   financial_summary: FinancialSummaryWidget,
-  recent_activity: RecentActivityWidget,
   alerts_notifications: AlertsWidget,
-  global_performance: GlobalPerformanceWidget,
-  products_overview: ProductsOverviewWidget,
+  cash_flow_summary: CashFlowSummaryWidget,
+  // Clients (3)
+  top_clients: TopClientsWidget,
+  clients_at_risk: ClientsAtRiskWidget,
+  pareto_clients: ParetoClientsWidget,
+  // Produits (3)
   top_selling_products: TopSellingProductsWidget,
   stock_alerts: StockAlertsWidget,
   margin_analysis: MarginAnalysisWidget,
-  stock_movements: StockMovementsWidget,
-  clients_overview: ClientsOverviewWidget,
-  top_clients: TopClientsWidget,
-  clients_at_risk: ClientsAtRiskWidget,
-  client_acquisition: ClientAcquisitionWidget,
-  client_segmentation: ClientSegmentationWidget,
+  // Factures (2)
   invoices_overview: InvoicesOverviewWidget,
-  invoices_status: InvoicesStatusWidget,
-  revenue_chart: RevenueChartWidget,
   overdue_invoices: OverdueInvoicesWidget,
-  payment_performance: PaymentPerformanceWidget,
-  recent_invoices: RecentInvoicesWidget,
+  // Achats (4)
   po_overview: POOverviewWidget,
-  po_status: POStatusWidget,
-  expenses_chart: ExpensesChartWidget,
   overdue_po: OverduePOWidget,
   supplier_performance: SupplierPerformanceWidget,
   pending_approvals: PendingApprovalsWidget,
-  budget_tracking: BudgetTrackingWidget,
-  ai_usage: AIUsageWidget,
-  ai_documents: AIDocumentsWidget,
-  ai_last_conversation: AILastConversationWidget,
 };
 
 const CustomizableDashboard = () => {
@@ -91,12 +72,13 @@ const CustomizableDashboard = () => {
   const [showSaveNotification, setShowSaveNotification] = useState(false);
   const [gridKey, setGridKey] = useState(0);
 
-  // Load available widgets
+  // Load available widgets (already filtered by modules on backend)
   useEffect(() => {
     const loadWidgets = async () => {
       try {
         const response = await widgetsAPI.getAvailableWidgets();
         if (response.success) {
+          // Backend already filters by user's accessible modules
           setAvailableWidgets(response.data);
         }
       } catch (error) {
@@ -214,17 +196,21 @@ const CustomizableDashboard = () => {
 
   // Add widget to dashboard
   const handleAddWidget = (widgetCode) => {
+    // Check if widget exists in available widgets (module must be activated)
+    const widget = Object.values(availableWidgets)
+      .flat()
+      .find(w => w.code === widgetCode);
+
+    if (!widget) {
+      alert('Ce widget n\'est pas disponible. Le module correspondant n\'est peut-être pas activé.');
+      return;
+    }
+
     // Check if widget already exists
     if (layout.some(item => item.i === widgetCode)) {
       alert(t('widgetAlreadyExists'));
       return;
     }
-
-    const widget = Object.values(availableWidgets)
-      .flat()
-      .find(w => w.code === widgetCode);
-
-    if (!widget) return;
 
     const maxY = layout.reduce((max, item) => Math.max(max, item.y + item.h), 0);
 
@@ -241,6 +227,79 @@ const CustomizableDashboard = () => {
     setIsLibraryOpen(false);
 
     // Auto-enter edit mode when adding widget
+    if (!isEditMode) {
+      setIsEditMode(true);
+    }
+  };
+
+  // Add all available widgets to dashboard
+  const handleAddAllWidgets = () => {
+    // Get all widgets from availableWidgets
+    const allWidgets = Object.values(availableWidgets).flat();
+    
+    // Filter widgets that are not already in layout
+    const missingWidgets = allWidgets.filter(widget => 
+      !layout.some(item => item.i === widget.code)
+    );
+
+    if (missingWidgets.length === 0) {
+      alert(t('allWidgetsAdded'));
+      return;
+    }
+
+    // Show confirmation if adding many widgets
+    if (missingWidgets.length > 5) {
+      if (!window.confirm(
+        t('addAllWidgetsConfirm', { count: missingWidgets.length })
+      )) {
+        return;
+      }
+    }
+
+    // Calculate positions for new widgets
+    const cols = 4; // lg breakpoint
+    let currentX = 0;
+    let currentY = layout.reduce((max, item) => Math.max(max, item.y + item.h), 0);
+    let rowMaxHeight = 0;
+
+    const newItems = missingWidgets.map(widget => {
+      const w = widget.default_size?.w || 2;
+      const h = widget.default_size?.h || 1;
+
+      // Check if widget fits on current row
+      if (currentX + w > cols) {
+        // Move to next row
+        currentX = 0;
+        currentY += rowMaxHeight;
+        rowMaxHeight = 0;
+      }
+
+      const newItem = {
+        i: widget.code,
+        x: currentX,
+        y: currentY,
+        w: w,
+        h: h,
+      };
+
+      // Update position for next widget
+      currentX += w;
+      rowMaxHeight = Math.max(rowMaxHeight, h);
+      
+      // If we've filled the row, move to next
+      if (currentX >= cols) {
+        currentX = 0;
+        currentY += rowMaxHeight;
+        rowMaxHeight = 0;
+      }
+
+      return newItem;
+    });
+
+    setLayout([...layout, ...newItems]);
+    setHasChanges(true);
+    
+    // Auto-enter edit mode
     if (!isEditMode) {
       setIsEditMode(true);
     }
@@ -311,11 +370,23 @@ const CustomizableDashboard = () => {
       return (
         <div className="widget-placeholder">
           <p>{t('widgetPlaceholder', { code: widgetCode })}</p>
+          <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '8px' }}>
+            Module non activé
+          </p>
         </div>
       );
     }
     return <Component period={period} />;
   };
+
+  // Filter layout to only show widgets from availableWidgets (already filtered by modules)
+  const filteredLayout = layout.filter(item => {
+    // Check if widget exists in available widgets (means module is activated)
+    const widgetExists = Object.values(availableWidgets)
+      .flat()
+      .some(w => w.code === item.i);
+    return widgetExists;
+  });
 
   if (isLoading) {
     return (
@@ -342,6 +413,15 @@ const CustomizableDashboard = () => {
               {t('addWidget')}
             </button>
             <button
+              onClick={handleAddAllWidgets}
+              className="toolbar-btn toolbar-btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+              title={t('addAllWidgetsTooltip')}
+            >
+              <Grid3x3 size={16} />
+              {t('addAllWidgets')}
+            </button>
+            <button
               onClick={toggleEditMode}
               className="toolbar-btn"
               style={{ padding: '6px 12px', fontSize: '0.875rem' }}
@@ -362,12 +442,21 @@ const CustomizableDashboard = () => {
         </div>
       )}
 
+      {/* Widget Getting Started pour les nouveaux utilisateurs */}
+      <div className="dashboard-getting-started" data-tutorial="dashboard">
+        <GettingStartedWidget 
+          onStartTutorial={() => {
+            window.dispatchEvent(new CustomEvent('start-tutorial'));
+          }}
+        />
+      </div>
+
       {/* Grid Layout */}
       <div className="dashboard-content">
         <ResponsiveGridLayout
           key={gridKey}
           className="dashboard-grid"
-          layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
+          layouts={{ lg: filteredLayout, md: filteredLayout, sm: filteredLayout, xs: filteredLayout, xxs: filteredLayout }}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 4, md: 3, sm: 2, xs: 1, xxs: 1 }}
           rowHeight={150}
@@ -380,7 +469,7 @@ const CustomizableDashboard = () => {
           containerPadding={[0, 0]}
           draggableHandle=".widget-drag-handle"
         >
-          {layout.map((item) => (
+          {filteredLayout.map((item) => (
             <div key={item.i} className="dashboard-grid-item">
               <WidgetWrapper
                 widgetCode={item.i}
@@ -394,7 +483,7 @@ const CustomizableDashboard = () => {
         </ResponsiveGridLayout>
 
         {/* Empty state */}
-        {layout.length === 0 && (
+        {filteredLayout.length === 0 && (
           <div className="dashboard-empty">
             <LayoutGrid size={80} className="empty-icon" />
             <h2>{t('emptyState.title')}</h2>
@@ -417,7 +506,7 @@ const CustomizableDashboard = () => {
       {isLibraryOpen && (
         <WidgetLibrary
           availableWidgets={availableWidgets}
-          currentWidgets={layout.map(item => item.i)}
+          currentWidgets={filteredLayout.map(item => item.i)}
           onAddWidget={handleAddWidget}
           onClose={() => setIsLibraryOpen(false)}
         />

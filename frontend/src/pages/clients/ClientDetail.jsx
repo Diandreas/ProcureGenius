@@ -181,57 +181,100 @@ function ClientDetail() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <IconButton onClick={() => navigate('/clients')} size={isMobile ? 'small' : 'medium'}>
+      {/* Header avec design amélioré */}
+      <Box
+        sx={{
+          mb: 3,
+          p: { xs: 2, sm: 3 },
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          boxShadow: 2
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <IconButton
+            onClick={() => navigate('/clients')}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{
+              color: 'white',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+            }}
+          >
             <ArrowBack />
           </IconButton>
-          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
-            {client.name}
-          </Typography>
-          <Tooltip title={t('clients:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant={isMobile ? 'h5' : 'h4'}
+              fontWeight="bold"
               sx={{
-                color: 'success.main',
-                '&:hover': {
-                  bgcolor: 'success.light',
-                  color: 'white',
-                }
+                color: 'white',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
-              <PictureAsPdf />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('clients:tooltips.editClient')}>
-            <IconButton
-              onClick={() => navigate(`/clients/${id}/edit`)}
-              sx={{
-                color: 'primary.main',
-                '&:hover': {
-                  bgcolor: 'primary.light',
+              {client.name}
+            </Typography>
+            {client.legal_name && client.legal_name !== client.name && (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'rgba(255,255,255,0.8)',
+                  mt: 0.5,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {client.legal_name}
+              </Typography>
+            )}
+          </Box>
+          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+            <Tooltip title={t('clients:tooltips.downloadPdfReport')}>
+              <IconButton
+                onClick={() => setPdfDialogOpen(true)}
+                sx={{
                   color: 'white',
-                }
-              }}
-            >
-              <Edit />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('clients:tooltips.deleteClient')}>
-            <IconButton
-              onClick={handleDeleteClick}
-              sx={{
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.light',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.3)',
+                  }
+                }}
+              >
+                <PictureAsPdf />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('clients:tooltips.editClient')}>
+              <IconButton
+                onClick={() => navigate(`/clients/${id}/edit`)}
+                sx={{
                   color: 'white',
-                }
-              }}
-            >
-              <Delete />
-            </IconButton>
-          </Tooltip>
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.3)',
+                  }
+                }}
+              >
+                <Edit />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('clients:tooltips.deleteClient')}>
+              <IconButton
+                onClick={handleDeleteClick}
+                sx={{
+                  color: 'white',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,0,0,0.3)',
+                  }
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Box>
       </Box>
 
@@ -251,36 +294,63 @@ function ClientDetail() {
       {/* Tab: Informations */}
       {activeTab === 0 && (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Card principale */}
+          {/* Card principale avec design amélioré */}
           <Grid item xs={12} md={8}>
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                mb: isMobile ? 2 : 3,
+                boxShadow: 2,
+                overflow: 'hidden'
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {/* En-tête avec Avatar */}
+                <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}>
                   <Avatar
                     sx={{
                       width: isMobile ? 80 : 100,
                       height: isMobile ? 80 : 100,
                       bgcolor: 'primary.main',
-                      borderRadius: 1,
+                      borderRadius: 2,
                       fontSize: isMobile ? '2rem' : '2.5rem',
+                      fontWeight: 'bold',
+                      boxShadow: 2
                     }}
                   >
                     {client.name?.charAt(0)?.toUpperCase() || '?'}
                   </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant={isMobile ? 'h6' : 'h5'}
+                      fontWeight="bold"
+                      gutterBottom
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
                       {client.name}
                     </Typography>
                     {client.legal_name && client.legal_name !== client.name && (
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
                         {client.legal_name}
                       </Typography>
                     )}
-                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
                       <Chip
                         label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
                         color={client.is_active ? 'success' : 'default'}
                         size="small"
+                        sx={{ fontWeight: 500 }}
                       />
                       {client.business_number && (
                         <Chip
@@ -288,25 +358,37 @@ function ClientDetail() {
                           label={client.business_number}
                           variant="outlined"
                           size="small"
+                          sx={{ fontWeight: 500 }}
                         />
                       )}
                     </Stack>
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2.5 }} />
 
-                {/* Informations de contact */}
-                <Grid container spacing={2}>
+                {/* Informations de contact avec design amélioré */}
+                <Grid container spacing={2.5}>
                   {client.contact_person && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Person sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          bgcolor: 'grey.50',
+                          '&:hover': { bgcolor: 'grey.100' },
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        <Person sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight="500">
                             {t('clients:labels.contactPerson')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
+                          <Typography variant="body2" fontWeight="600" sx={{ mt: 0.5 }}>
                             {client.contact_person}
                           </Typography>
                         </Box>
@@ -316,14 +398,36 @@ function ClientDetail() {
 
                   {client.email && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Email sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          bgcolor: 'grey.50',
+                          '&:hover': { bgcolor: 'grey.100' },
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        <Email sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight="500">
                             {t('clients:labels.email')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
-                            <a href={`mailto:${client.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              '& a': {
+                                color: 'primary.main',
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }
+                            }}
+                          >
+                            <a href={`mailto:${client.email}`}>
                               {client.email}
                             </a>
                           </Typography>
@@ -334,14 +438,36 @@ function ClientDetail() {
 
                   {client.phone && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Phone sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          bgcolor: 'grey.50',
+                          '&:hover': { bgcolor: 'grey.100' },
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        <Phone sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight="500">
                             {t('clients:labels.phone')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
-                            <a href={`tel:${client.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              '& a': {
+                                color: 'primary.main',
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }
+                            }}
+                          >
+                            <a href={`tel:${client.phone}`}>
                               {client.phone}
                             </a>
                           </Typography>
@@ -352,13 +478,24 @@ function ClientDetail() {
 
                   {client.billing_address && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <LocationOn sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          bgcolor: 'grey.50',
+                          '&:hover': { bgcolor: 'grey.100' },
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        <LocationOn sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight="500">
                             {t('clients:labels.address')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
+                          <Typography variant="body2" fontWeight="600" sx={{ mt: 0.5 }}>
                             {client.billing_address}
                           </Typography>
                         </Box>
@@ -369,96 +506,140 @@ function ClientDetail() {
               </CardContent>
             </Card>
 
-            {/* Statistiques */}
+            {/* Statistiques avec design amélioré */}
             {statistics?.sales_summary && (
-              <Grid container spacing={isMobile ? 2 : 3}>
-                <Grid item xs={6}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <Receipt sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="primary" fontWeight="bold">
-                        {statistics.sales_summary.total_invoices || 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('clients:tabs.invoices')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={6}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <AttachMoney sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="success.main" fontWeight="bold">
-                        {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('clients:stats.totalRevenue')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                {statistics.sales_summary.unique_products > 0 && (
-                  <Grid item xs={6}>
-                    <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                        <Inventory sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
-                        <Typography variant={isMobile ? 'h5' : 'h4'} color="info.main" fontWeight="bold">
-                          {statistics.sales_summary.unique_products}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
+                  {t('clients:labels.generalInfo', 'Informations générales')}
+                </Typography>
+                <Grid container spacing={isMobile ? 2 : 2.5}>
+                  <Grid item xs={6} sm={6}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        boxShadow: 3,
+                        transition: 'transform 0.2s',
+                        '&:hover': { transform: 'translateY(-4px)' }
+                      }}
+                    >
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
+                        <Receipt sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
+                        <Typography variant={isMobile ? 'h5' : 'h4'} color="white" fontWeight="bold">
+                          {statistics.sales_summary.total_invoices || 0}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {t('clients:stats.productsPurchased')}
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                          {t('clients:tabs.invoices')}
                         </Typography>
                       </CardContent>
                     </Card>
                   </Grid>
-                )}
 
-                {statistics.sales_summary.average_invoice_amount > 0 && (
-                  <Grid item xs={6}>
-                    <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                        <TrendingUp sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
-                        <Typography variant={isMobile ? 'h5' : 'h4'} color="warning.main" fontWeight="bold">
-                          {formatCurrency(statistics.sales_summary.average_invoice_amount)}
+                  <Grid item xs={6} sm={6}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        boxShadow: 3,
+                        transition: 'transform 0.2s',
+                        '&:hover': { transform: 'translateY(-4px)' }
+                      }}
+                    >
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
+                        <AttachMoney sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
+                        <Typography variant={isMobile ? 'h6' : 'h5'} color="white" fontWeight="bold" sx={{ wordBreak: 'break-word' }}>
+                          {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {t('clients:stats.averageBasket')}
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                          {t('clients:stats.totalRevenue')}
                         </Typography>
                       </CardContent>
                     </Card>
                   </Grid>
-                )}
-              </Grid>
+
+                  {statistics.sales_summary.unique_products > 0 && (
+                    <Grid item xs={6} sm={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                          boxShadow: 3,
+                          transition: 'transform 0.2s',
+                          '&:hover': { transform: 'translateY(-4px)' }
+                        }}
+                      >
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
+                          <Inventory sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
+                          <Typography variant={isMobile ? 'h5' : 'h4'} color="white" fontWeight="bold">
+                            {statistics.sales_summary.unique_products}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                            {t('clients:stats.productsPurchased')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )}
+
+                  {statistics.sales_summary.average_invoice_amount > 0 && (
+                    <Grid item xs={6} sm={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                          boxShadow: 3,
+                          transition: 'transform 0.2s',
+                          '&:hover': { transform: 'translateY(-4px)' }
+                        }}
+                      >
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
+                          <TrendingUp sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
+                          <Typography variant={isMobile ? 'h6' : 'h5'} color="white" fontWeight="bold" sx={{ wordBreak: 'break-word' }}>
+                            {formatCurrency(statistics.sales_summary.average_invoice_amount)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                            {t('clients:stats.averageBasket')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
             )}
           </Grid>
 
-          {/* Sidebar */}
+          {/* Sidebar avec design amélioré */}
           <Grid item xs={12} md={4}>
             {/* Conditions commerciales */}
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                mb: isMobile ? 2 : 3,
+                boxShadow: 2
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <CreditCard sx={{ color: 'primary.main' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                  <CreditCard sx={{ color: 'primary.main', fontSize: 24 }} />
                   <Typography variant="subtitle1" fontWeight="600">
-                    {t('clients:labels.conditions')}
+                    {t('clients:labels.commercialConditions')}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
                     textAlign: 'center',
-                    p: 2,
-                    borderRadius: 1,
-                    bgcolor: 'info.50',
-                    mb: 2,
+                    p: 2.5,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    mb: client.credit_limit ? 2 : 0,
+                    boxShadow: 2
                   }}
                 >
-                  <Typography variant="h6" color="info.main" fontWeight="bold">
+                  <Typography variant="h6" color="white" fontWeight="bold" gutterBottom>
                     {client.payment_terms || 'NET 30'}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                     {t('clients:labels.paymentTerms')}
                   </Typography>
                 </Box>
@@ -467,15 +648,16 @@ function ClientDetail() {
                   <Box
                     sx={{
                       textAlign: 'center',
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: 'success.50',
+                      p: 2.5,
+                      borderRadius: 2,
+                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      boxShadow: 2
                     }}
                   >
-                    <Typography variant="h6" color="success.main" fontWeight="bold">
+                    <Typography variant="h6" color="white" fontWeight="bold" gutterBottom>
                       {formatCurrency(client.credit_limit)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                       {t('clients:labels.creditLimit')}
                     </Typography>
                   </Box>
@@ -483,19 +665,32 @@ function ClientDetail() {
               </CardContent>
             </Card>
 
-            {/* Actions rapides */}
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            {/* Actions rapides avec design amélioré */}
+            <Card
+              sx={{
+                borderRadius: 2,
+                mb: isMobile ? 2 : 3,
+                boxShadow: 2
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
                   {t('clients:labels.quickActions')}
                 </Typography>
-                <Stack spacing={1}>
+                <Stack spacing={1.5}>
                   <Button
                     fullWidth
-                    variant="outlined"
+                    variant="contained"
                     startIcon={<Receipt />}
                     onClick={() => navigate(`/invoices/new?clientId=${id}`)}
-                    size="small"
+                    size="medium"
+                    sx={{
+                      py: 1.2,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      boxShadow: 2,
+                      '&:hover': { boxShadow: 4 }
+                    }}
                   >
                     {t('clients:actions.createInvoice')}
                   </Button>
@@ -505,7 +700,14 @@ function ClientDetail() {
                     startIcon={<Email />}
                     href={`mailto:${client.email}`}
                     disabled={!client.email}
-                    size="small"
+                    size="medium"
+                    sx={{
+                      py: 1.2,
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      borderWidth: 2,
+                      '&:hover': { borderWidth: 2 }
+                    }}
                   >
                     {t('clients:actions.sendEmail')}
                   </Button>
@@ -515,7 +717,14 @@ function ClientDetail() {
                     startIcon={<Phone />}
                     href={`tel:${client.phone}`}
                     disabled={!client.phone}
-                    size="small"
+                    size="medium"
+                    sx={{
+                      py: 1.2,
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      borderWidth: 2,
+                      '&:hover': { borderWidth: 2 }
+                    }}
                   >
                     {t('clients:actions.call')}
                   </Button>
@@ -523,27 +732,47 @@ function ClientDetail() {
               </CardContent>
             </Card>
 
-            {/* Dates */}
-            <Card sx={{ borderRadius: 1 }}>
+            {/* Dates avec design amélioré */}
+            <Card
+              sx={{
+                borderRadius: 2,
+                boxShadow: 2
+              }}
+            >
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
                   {t('clients:labels.systemInfo')}
                 </Typography>
-                <Stack spacing={1.5} sx={{ mt: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: 'grey.50',
+                      '&:hover': { bgcolor: 'grey.100' },
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" fontWeight="500" display="block" gutterBottom>
                       {t('clients:labels.createdOn')}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" fontWeight="600">
                       {formatDate(client.created_at)}
                     </Typography>
                   </Box>
-                  <Divider />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: 'grey.50',
+                      '&:hover': { bgcolor: 'grey.100' },
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" fontWeight="500" display="block" gutterBottom>
                       {t('clients:labels.updatedOn')}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" fontWeight="600">
                       {formatDate(client.updated_at)}
                     </Typography>
                   </Box>
@@ -557,28 +786,64 @@ function ClientDetail() {
       {/* Tab: Factures */}
       {activeTab === 1 && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Receipt color="primary" />
-            {t('clients:tabs.invoices')}
-          </Typography>
-          <ClientInvoicesTable
-            invoices={statistics?.recent_invoices}
-            loading={!statistics}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              mb: 3,
+              p: 2,
+              borderRadius: 2,
+              bgcolor: 'primary.50',
+              border: '1px solid',
+              borderColor: 'primary.100'
+            }}
+          >
+            <Receipt sx={{ color: 'primary.main', fontSize: 28 }} />
+            <Typography variant="h6" fontWeight="600" color="primary.main">
+              {t('clients:tabs.invoices')}
+            </Typography>
+          </Box>
+          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <CardContent sx={{ p: 0 }}>
+              <ClientInvoicesTable
+                invoices={statistics?.recent_invoices}
+                loading={!statistics}
+              />
+            </CardContent>
+          </Card>
         </Box>
       )}
 
       {/* Tab: Produits */}
       {activeTab === 2 && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Inventory color="primary" />
-            {t('clients:tabs.products')}
-          </Typography>
-          <ClientProductsTable
-            products={statistics?.top_products}
-            loading={!statistics}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              mb: 3,
+              p: 2,
+              borderRadius: 2,
+              bgcolor: 'info.50',
+              border: '1px solid',
+              borderColor: 'info.100'
+            }}
+          >
+            <Inventory sx={{ color: 'info.main', fontSize: 28 }} />
+            <Typography variant="h6" fontWeight="600" color="info.main">
+              {t('clients:tabs.products')}
+            </Typography>
+          </Box>
+          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <CardContent sx={{ p: 0 }}>
+              <ClientProductsTable
+                products={statistics?.top_products}
+                loading={!statistics}
+              />
+            </CardContent>
+          </Card>
         </Box>
       )}
 
@@ -642,11 +907,24 @@ function ClientDetail() {
       </Dialog>
 
       {/* PDF Dialog - Génération automatique */}
-      <Dialog open={pdfDialogOpen} onClose={handleClosePdfDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <PictureAsPdf color="error" />
-            {t('clients:pdf.title', 'Rapport PDF Client')}
+      <Dialog
+        open={pdfDialogOpen}
+        onClose={handleClosePdfDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: 4
+          }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <PictureAsPdf sx={{ color: 'error.main', fontSize: 28 }} />
+            <Typography variant="h6" fontWeight="600">
+              {t('clients:pdf.title')}
+            </Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -658,12 +936,12 @@ function ClientDetail() {
               </Typography>
             </Box>
           ) : generatedPdfBlob ? (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {t('clients:pdf.ready', 'Le rapport PDF est prêt. Choisissez une action:')}
+            <Alert severity="success" sx={{ mb: 2, borderRadius: 1 }}>
+              {t('clients:pdf.ready')}
             </Alert>
           ) : (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {t('clients:pdf.description', 'Génération du rapport PDF...')}
+            <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
+              {t('clients:pdf.description')}
             </Alert>
           )}
         </DialogContent>

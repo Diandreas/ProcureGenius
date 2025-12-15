@@ -25,7 +25,8 @@
         "newImport": "Nouvel import",
         "new": "Nouveau",
         "importWizard": "Assistant d'import",
-        "dataImport": "Import de données"
+        "dataImport": "Import de données",
+        "customizeDashboard": "Personnaliser le tableau de bord"
     },
     "userMenu": {
         "settings": "Paramètres",

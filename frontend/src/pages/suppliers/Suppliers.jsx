@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -337,7 +337,7 @@ function Suppliers() {
     }
   }, [pdfDialogOpen, filteredSuppliers, generatedPdfBlob, generatingPdf]);
 
-  const handleGenerateBulkReport = () => {
+  const handleGenerateBulkReport = useCallback(() => {
     if (filteredSuppliers.length === 0) {
       enqueueSnackbar(t('suppliers:messages.noSuppliersSelected', 'Aucun fournisseur à générer'), {
         variant: 'warning',
@@ -346,7 +346,21 @@ function Suppliers() {
     }
     setGeneratedPdfBlob(null);
     setPdfDialogOpen(true);
-  };
+  }, [filteredSuppliers.length, enqueueSnackbar, t]);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('register-report-action', {
+      detail: {
+        onClick: handleGenerateBulkReport,
+        label: t('suppliers:actions.generateReport', 'Rapport PDF'),
+      }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-report-action'));
+    };
+  }, [handleGenerateBulkReport, t]);
 
   const handlePdfAction = (action) => {
     if (!generatedPdfBlob) return;
@@ -379,22 +393,6 @@ function Suppliers() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header avec titre et bouton PDF */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
-          {t('suppliers:title', 'Fournisseurs')}
-        </Typography>
-        <Button
-          variant="outlined"
-          color="success"
-          startIcon={<PictureAsPdf />}
-          onClick={handleGenerateBulkReport}
-          disabled={filteredSuppliers.length === 0}
-          sx={{ ml: 'auto' }}
-        >
-          {t('suppliers:actions.generateReport', 'Rapport PDF')}
-        </Button>
-      </Box>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

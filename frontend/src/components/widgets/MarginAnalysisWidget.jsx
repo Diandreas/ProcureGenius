@@ -23,7 +23,15 @@ const MarginAnalysisWidget = ({ period = 'last_30_days' }) => {
   }, [period]);
 
   if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data || !data.by_category) return <div className="chart-placeholder"><BarChart3 size={32} /><div>Aucune donnée</div></div>;
+  if (!data) return <div className="widget-error">Erreur</div>;
+  if (!data.by_category || data.by_category.length === 0) {
+    return (
+      <div className="widget-empty">
+        <BarChart3 size={40} className="widget-empty-icon" />
+        <div className="widget-empty-text">Aucune analyse de marge disponible</div>
+      </div>
+    );
+  }
 
   return (
     <div className="widget-list">

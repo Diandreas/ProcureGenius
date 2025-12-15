@@ -25,7 +25,8 @@
         "newImport": "New import",
         "new": "New",
         "importWizard": "Import wizard",
-        "dataImport": "Data import"
+        "dataImport": "Data import",
+        "customizeDashboard": "Customize dashboard"
     },
     "userMenu": {
         "settings": "Settings",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -95,9 +95,23 @@ function Invoices() {
     }
   };
 
-  const handleGenerateReportClick = () => {
+  const handleGenerateReportClick = useCallback(() => {
     setReportConfigOpen(true);
-  };
+  }, []);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('register-report-action', {
+      detail: {
+        onClick: handleGenerateReportClick,
+        label: t('invoices:actions.generateReport', 'Rapport PDF'),
+      }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-report-action'));
+    };
+  }, [handleGenerateReportClick, t]);
 
   const handleConfigureReport = async () => {
     setReportConfigOpen(false);
@@ -340,21 +354,6 @@ function Invoices() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header avec titre et bouton PDF */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
-          {t('invoices:title', 'Factures')}
-        </Typography>
-        <Button
-          variant="outlined"
-          color="success"
-          startIcon={<PictureAsPdf />}
-          onClick={handleGenerateReportClick}
-          sx={{ ml: 'auto' }}
-        >
-          {t('invoices:actions.generateReport', 'Rapport PDF')}
-        </Button>
-      </Box>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

@@ -478,26 +478,27 @@ class DashboardStatsService:
         active_with_invoices = Client.objects.filter(
             organization=self.organization,
             invoices__status='paid',
-            invoices__payments__payment_date__gte=self.start_date,
-            invoices__payments__payment_date__lte=self.end_date
+            invoices__created_at__gte=self.start_date,
+            invoices__created_at__lte=self.end_date
         ).distinct().count()
 
         # Top clients par chiffre d'affaires - FILTERED BY ORGANIZATION
+        # Utiliser created_at des factures au lieu de payments__payment_date
         top_clients = Client.objects.filter(
             organization=self.organization,
             invoices__status='paid',
-            invoices__payments__payment_date__gte=self.start_date,
-            invoices__payments__payment_date__lte=self.end_date
+            invoices__created_at__gte=self.start_date,
+            invoices__created_at__lte=self.end_date
         ).annotate(
             total_invoices=Count('invoices', distinct=True),
-            total_revenue=Sum('invoices__total_amount', distinct=True)
+            total_revenue=Sum('invoices__total_amount')
         ).order_by('-total_revenue')[:5]
 
         top_clients_data = [
             {
                 'id': str(c.id),
-                'name': f"{c.first_name} {c.last_name}" if c.first_name else c.company,
-                'total_invoices': c.total_invoices,
+                'name': c.company or (f"{c.first_name} {c.last_name}".strip() if c.first_name else str(c.id)),
+                'total_invoices': c.total_invoices or 0,
                 'total_revenue': float(c.total_revenue or 0)
             }
             for c in top_clients
@@ -568,11 +569,12 @@ class DashboardStatsService:
             organization=self.organization,
             invoice_items__invoice__created_at__gte=self.start_date,
             invoice_items__invoice__created_at__lte=self.end_date,
-            invoice_items__invoice__status='paid'
+            invoice_items__invoice__status='paid',
+            invoice_items__invoice__created_by__organization=self.organization
         ).annotate(
             quantity_sold=Sum('invoice_items__quantity'),
             revenue=Sum(F('invoice_items__quantity') * F('invoice_items__unit_price'))
-        ).order_by('-revenue')[:5]
+        ).filter(revenue__gt=0).order_by('-revenue')[:5]
 
         top_products_data = [
             {
@@ -609,13 +611,14 @@ class DashboardStatsService:
         if not self.organization:
             return {'revenue': 0, 'expenses': 0, 'net_profit': 0, 'profit_margin': 0, 'pending_revenue': 0}
 
-        # Revenus (factures payées)
+        # Revenus (factures payées) - utiliser created_at si status='paid'
+        # Note: Si vous avez un champ paid_date, remplacez created_at par paid_date
         revenue = Invoice.objects.filter(
             created_by__organization=self.organization,
             status='paid',
-            payments__payment_date__gte=self.start_date,
-            payments__payment_date__lte=self.end_date
-        ).distinct().aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
         # Dépenses (BCs approuvés/reçus)
         expenses = PurchaseOrder.objects.filter(
@@ -646,12 +649,14 @@ class DashboardStatsService:
         # Comparaison avec période précédente
         if self.compare_previous:
             previous_revenue = Invoice.objects.filter(
+                created_by__organization=self.organization,
                 status='paid',
-                payments__payment_date__gte=self.compare_start_date,
-                payments__payment_date__lt=self.compare_end_date
-            ).distinct().aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+                created_at__gte=self.compare_start_date,
+                created_at__lt=self.compare_end_date
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
             previous_expenses = PurchaseOrder.objects.filter(
+                created_by__organization=self.organization,
                 status__in=['approved', 'sent', 'received'],
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, Search, Check } from 'lucide-react';
+import { X, Plus, Search, Check, Grid3x3 } from 'lucide-react';
 import '../../styles/WidgetLibrary.css';
 
 // Icon mapping (you can use lucide-react icons)
@@ -46,6 +46,30 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
   // Check if widget is already added
   const isWidgetAdded = (widgetCode) => currentWidgets.includes(widgetCode);
 
+  // Get all filtered widgets that are not already added
+  const getAvailableWidgetsToAdd = () => {
+    return Object.values(filteredWidgets)
+      .flat()
+      .filter(widget => !isWidgetAdded(widget.code));
+  };
+
+  // Handle adding all available widgets
+  const handleAddAllWidgets = () => {
+    const widgetsToAdd = getAvailableWidgetsToAdd();
+    
+    if (widgetsToAdd.length === 0) {
+      alert(t('library.allAdded'));
+      return;
+    }
+
+    // Add each widget
+    widgetsToAdd.forEach(widget => {
+      onAddWidget(widget.code);
+    });
+  };
+
+  const availableWidgetsCount = getAvailableWidgetsToAdd().length;
+
   // Get icon component
   const getIcon = (iconName) => {
     const IconComponent = Icons[iconName] || Icons.Box;
@@ -68,9 +92,34 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
         {/* Header */}
         <div className="library-header">
           <h2>{t('library.title')}</h2>
-          <button className="close-btn" onClick={onClose}>
-            <X size={24} />
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {availableWidgetsCount > 0 && (
+              <button
+                onClick={handleAddAllWidgets}
+                className="library-add-all-btn"
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.875rem',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: '500'
+                }}
+                title={t('addAllWidgetsTooltip')}
+              >
+                <Grid3x3 size={16} />
+                {t('library.addAll')} ({availableWidgetsCount})
+              </button>
+            )}
+            <button className="close-btn" onClick={onClose}>
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Search & Filters */}

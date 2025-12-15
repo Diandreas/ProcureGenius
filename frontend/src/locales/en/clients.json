@@ -76,7 +76,13 @@
     },
     "tooltips": {
         "editClient": "Edit Client",
-        "deleteClient": "Delete Client"
+        "deleteClient": "Delete Client",
+        "downloadPdfReport": "Download PDF Report"
+    },
+    "pdf": {
+        "title": "Client PDF Report",
+        "ready": "PDF report is ready. Choose an action:",
+        "description": "Generating PDF report..."
     },
     "status": {
         "active": "Active",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -377,9 +377,23 @@ function Products() {
   const inStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity > (p.low_stock_threshold || 10)).length;
   const servicesCount = products.filter(p => p.product_type !== 'physical').length;
 
-  const handleGenerateReportClick = () => {
+  const handleGenerateReportClick = useCallback(() => {
     setReportConfigOpen(true);
-  };
+  }, []);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('register-report-action', {
+      detail: {
+        onClick: handleGenerateReportClick,
+        label: t('products:actions.generateReport', 'Rapport PDF'),
+      }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-report-action'));
+    };
+  }, [handleGenerateReportClick, t]);
 
   const handleConfigureReport = async () => {
     setReportConfigOpen(false);
@@ -448,33 +462,19 @@ function Products() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header avec titre et bouton PDF */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold">
-          {t('products:title', 'Produits')}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {warehouses.length > 0 && (
-            <Button
-              variant={warehouseMode ? 'contained' : 'outlined'}
-              startIcon={<Warehouse />}
-              onClick={() => setWarehouseMode(!warehouseMode)}
-              size="small"
-            >
-              {warehouseMode ? t('products:warehouseMode.active', 'Mode entrepôt actif') : t('products:warehouseMode.activate', 'Activer le mode entrepôt')}
-            </Button>
-          )}
+      {/* Mode entrepôt - si disponible */}
+      {warehouses.length > 0 && (
+        <Box sx={{ mb: 2 }}>
           <Button
-            variant="outlined"
-            color="success"
-            startIcon={<PictureAsPdf />}
-            onClick={handleGenerateReportClick}
-            disabled={filteredProducts.length === 0}
+            variant={warehouseMode ? 'contained' : 'outlined'}
+            startIcon={<Warehouse />}
+            onClick={() => setWarehouseMode(!warehouseMode)}
+            size="small"
           >
-            {t('products:actions.generateReport', 'Rapport PDF')}
+            {warehouseMode ? t('products:warehouseMode.active', 'Mode entrepôt actif') : t('products:warehouseMode.activate', 'Activer le mode entrepôt')}
           </Button>
         </Box>
-      </Box>
+      )}
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

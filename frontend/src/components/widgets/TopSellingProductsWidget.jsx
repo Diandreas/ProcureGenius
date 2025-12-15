@@ -22,7 +22,15 @@ const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
   }, [period]);
 
   if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data || !data.products) return <div className="widget-empty"><div className="widget-empty-text">Aucun produit</div></div>;
+  if (!data) return <div className="widget-error">Erreur</div>;
+  if (!data.products || data.products.length === 0) {
+    return (
+      <div className="widget-empty">
+        <div className="widget-empty-icon">📦</div>
+        <div className="widget-empty-text">Aucun produit vendu</div>
+      </div>
+    );
+  }
 
   return (
     <div className="widget-list">

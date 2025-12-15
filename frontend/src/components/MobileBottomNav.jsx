@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BottomNavigation, BottomNavigationAction, Paper, Box } from '@mui/material';
+import { BottomNavigation, BottomNavigationAction, Paper, Box, useTheme, alpha } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import IconImage from './IconImage';
 
@@ -7,8 +7,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const { t } = useTranslation(['navigation']);
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-  // Tous les items possibles avec leur module associé (sans IA)
+  // Couleur beige/crème chaude
+  const bgColor = '#fef7ed';
+
   const allNavigationItems = [
     { label: t('navigation:mobile.dashboard'), value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
     { label: t('navigation:mobile.suppliers'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
@@ -18,7 +22,6 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
   ];
 
-  // Item IA (séparé pour le mettre au centre)
   const aiItem = {
     label: t('navigation:mobile.ai'),
     value: '/ai-chat',
@@ -27,13 +30,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     isCore: true
   };
 
-  // Filtrer les items : modules core (toujours) + modules activés
   const navigationItems = allNavigationItems.filter(item => {
     if (item.isCore) return true;
     return enabledModules.includes(item.moduleId);
   });
 
-  // Diviser les items en deux groupes pour placer l'IA au centre
   const halfLength = Math.ceil(navigationItems.length / 2);
   const leftItems = navigationItems.slice(0, halfLength);
   const rightItems = navigationItems.slice(halfLength);
@@ -44,105 +45,160 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
 
   const isAIActive = location.pathname.startsWith(aiItem.value);
 
+  // Icon wrapper component pour dark mode avec fond beige
+  const NavIcon = ({ src, alt, isSelected }) => (
+    <Box
+      sx={{
+        width: 32,
+        height: 32,
+        borderRadius: '8px',
+        backgroundColor: isDark ? bgColor : 'transparent',
+        boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+      }}
+    >
+      <Box
+        component="img"
+        src={src}
+        alt={alt}
+        sx={{
+          width: 22,
+          height: 22,
+          objectFit: 'contain',
+        }}
+      />
+    </Box>
+  );
+
   return (
     <Paper
+      data-tutorial="mobile-nav"
       sx={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        display: { xs: 'block', sm: 'none' },
+        display: { xs: 'block', md: 'none' },
         zIndex: 1000,
-        bgcolor: 'background.paper',
-        borderTop: '1px solid',
-        borderColor: 'divider',
+        bgcolor: isDark ? alpha(theme.palette.background.paper, 0.95) : 'background.paper',
+        backdropFilter: 'blur(12px)',
+        borderTop: 'none',
+        boxShadow: isDark 
+          ? '0 -2px 20px rgba(0, 0, 0, 0.4)' 
+          : '0 -2px 10px rgba(0, 0, 0, 0.05)',
       }}
-      elevation={3}
+      elevation={0}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1, py: 1 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        px: 0.5, 
+        py: 0.75,
+        maxWidth: 500,
+        mx: 'auto',
+      }}>
         {/* Items de gauche */}
         <Box sx={{ display: 'flex', flex: 1 }}>
           <BottomNavigation
             value={currentPath}
-            onChange={(_event, newValue) => {
-              navigate(newValue);
-            }}
+            onChange={(_event, newValue) => navigate(newValue)}
             showLabels
             sx={{
               backgroundColor: 'transparent',
               width: '100%',
+              height: 'auto',
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 'auto',
-                padding: '6px 4px',
+                padding: '4px 2px',
                 color: 'text.secondary',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.2s ease',
                 '&.Mui-selected': {
                   color: 'primary.main',
-                  transform: 'translateY(-4px)',
                 },
               },
               '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.65rem',
-                marginTop: '4px',
+                fontSize: '0.625rem',
+                marginTop: '2px',
+                opacity: 0.8,
                 '&.Mui-selected': {
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                   fontWeight: 600,
+                  opacity: 1,
                 },
               },
             }}
           >
-            {leftItems.map((item) => (
-              <BottomNavigationAction
-                key={item.value}
-                label={item.label}
-                value={item.value}
-                icon={<IconImage src={item.icon} alt={item.label} size={24} />}
-              />
-            ))}
+            {leftItems.map((item) => {
+              const isSelected = currentPath === item.value;
+              return (
+                <BottomNavigationAction
+                  key={item.value}
+                  label={item.label}
+                  value={item.value}
+                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  data-tutorial={`menu-${item.moduleId}`}
+                />
+              );
+            })}
           </BottomNavigation>
         </Box>
 
-        {/* IA au centre - Sur la même ligne mais légèrement surélevé */}
+        {/* IA au centre */}
         <Box
           sx={{
-            mx: 0.5,
+            mx: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            transform: isAIActive ? 'translateY(-6px)' : 'translateY(0)',
-            '&:active': {
-              transform: 'scale(0.95)',
-            },
+            transition: 'all 0.2s ease',
+            '&:active': { transform: 'scale(0.95)' },
           }}
           onClick={() => navigate(aiItem.value)}
+          data-tutorial="ai-button"
         >
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
+              width: 50,
+              height: 50,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: isAIActive ? 'primary.main' : 'background.default',
-              border: '2px solid',
-              borderColor: isAIActive ? 'primary.main' : 'divider',
-              transition: 'all 0.3s ease',
-              boxShadow: isAIActive ? '0 4px 12px rgba(30, 64, 175, 0.3)' : 'none',
+              bgcolor: isAIActive 
+                ? 'primary.main' 
+                : (isDark ? bgColor : alpha(theme.palette.primary.main, 0.08)),
+              transition: 'all 0.2s ease',
+              boxShadow: isAIActive 
+                ? '0 4px 14px rgba(37, 99, 235, 0.35)' 
+                : (isDark ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'),
+              transform: isAIActive ? 'translateY(-4px)' : 'translateY(0)',
             }}
           >
-            <IconImage src={aiItem.icon} alt="Assistant IA" size={28} />
+            <Box
+              component="img"
+              src={aiItem.icon}
+              alt="Assistant IA"
+              sx={{
+                width: 28,
+                height: 28,
+                objectFit: 'contain',
+                filter: isAIActive && !isDark ? 'brightness(0) invert(1)' : 'none',
+              }}
+            />
           </Box>
           <Box
             component="span"
             sx={{
-              fontSize: '0.65rem',
+              fontSize: '0.625rem',
               mt: 0.5,
               color: isAIActive ? 'primary.main' : 'text.secondary',
               fontWeight: isAIActive ? 600 : 500,
-              transition: 'all 0.3s ease',
             }}
           >
             {aiItem.label}
@@ -153,41 +209,45 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         <Box sx={{ display: 'flex', flex: 1 }}>
           <BottomNavigation
             value={currentPath}
-            onChange={(_event, newValue) => {
-              navigate(newValue);
-            }}
+            onChange={(_event, newValue) => navigate(newValue)}
             showLabels
             sx={{
               backgroundColor: 'transparent',
               width: '100%',
+              height: 'auto',
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 'auto',
-                padding: '6px 4px',
+                padding: '4px 2px',
                 color: 'text.secondary',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.2s ease',
                 '&.Mui-selected': {
                   color: 'primary.main',
-                  transform: 'translateY(-4px)',
                 },
               },
               '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.65rem',
-                marginTop: '4px',
+                fontSize: '0.625rem',
+                marginTop: '2px',
+                opacity: 0.8,
                 '&.Mui-selected': {
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                   fontWeight: 600,
+                  opacity: 1,
                 },
               },
             }}
           >
-            {rightItems.map((item) => (
-              <BottomNavigationAction
-                key={item.value}
-                label={item.label}
-                value={item.value}
-                icon={<IconImage src={item.icon} alt={item.label} size={24} />}
-              />
-            ))}
+            {rightItems.map((item) => {
+              const isSelected = currentPath === item.value;
+              return (
+                <BottomNavigationAction
+                  key={item.value}
+                  label={item.label}
+                  value={item.value}
+                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  data-tutorial={`menu-${item.moduleId}`}
+                />
+              );
+            })}
           </BottomNavigation>
         </Box>
       </Box>

@@ -25,17 +25,54 @@ logger = logging.getLogger(__name__)
 class WidgetListView(APIView):
     """
     List all available widgets from registry
+    Filtered by user's accessible modules
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Get all widgets, optionally filtered by module"""
+        """Get all widgets, optionally filtered by module, respecting user's module access"""
+        from apps.core.modules import get_user_accessible_modules
+        
+        # Get user's accessible modules
+        user_modules = get_user_accessible_modules(request.user)
+        
+        # Convert module codes to match widget module names (e.g., 'purchase-orders' -> 'purchase_orders')
+        module_mapping = {
+            'invoices': 'invoices',
+            'purchase-orders': 'purchase_orders',
+            'purchase_orders': 'purchase_orders',
+            'clients': 'clients',
+            'products': 'products',
+            'suppliers': 'suppliers',
+        }
+        
+        # Normalize module names
+        normalized_user_modules = set()
+        for mod in user_modules:
+            normalized = module_mapping.get(mod, mod)
+            normalized_user_modules.add(normalized)
+        
+        # Always include 'global' module (accessible to all)
+        normalized_user_modules.add('global')
+        
         module = request.query_params.get('module', None)
 
         if module:
+            # Filter by requested module if user has access
+            if module not in normalized_user_modules and module != 'global':
+                return Response({
+                    'success': True,
+                    'data': []
+                })
             widgets = get_widgets_by_module(module)
         else:
-            widgets = get_all_widgets()
+            # Filter all widgets by user's accessible modules
+            all_widgets = get_all_widgets()
+            widgets = {
+                code: widget 
+                for code, widget in all_widgets.items()
+                if widget['module'] in normalized_user_modules
+            }
 
         # Group by module if no filter
         if not module:
@@ -49,7 +86,7 @@ class WidgetListView(APIView):
             return Response({
                 'success': True,
                 'data': grouped,
-                'modules': get_modules()
+                'modules': list(normalized_user_modules)
             })
 
         return Response({

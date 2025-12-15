@@ -1,319 +1,167 @@
 """
-Registry of all available widgets
-Fixed definitions - no database storage needed
+Registry of all available widgets - 15 widgets essentiels
+Optimisé pour un dashboard focalisé et actionnable
 """
 
 WIDGETS_REGISTRY = {
-    # ========== GLOBAL WIDGETS ==========
+    # ========== GLOBAL WIDGETS (3) ==========
     'financial_summary': {
         'code': 'financial_summary',
         'name': 'Vue Financière Globale',
         'description': 'Résumé des revenus, dépenses, profit net et marge',
         'module': 'global',
         'type': 'stats',
-        'default_size': {'w': 3, 'h': 2},
+        'default_size': {'w': 4, 'h': 2},
         'icon': 'DollarSign',
         'component': 'FinancialSummaryWidget'
     },
     'alerts_notifications': {
         'code': 'alerts_notifications',
         'name': 'Alertes et Notifications',
-        'description': 'Centre de notifications',
+        'description': 'Centre des alertes critiques',
         'module': 'global',
         'type': 'alert',
-        'default_size': {'w': 1, 'h': 2},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'Bell',
         'component': 'AlertsWidget'
     },
-    'recent_activity': {
-        'code': 'recent_activity',
-        'name': 'Activité Récente',
-        'description': 'Feed des dernières activités',
-        'module': 'global',
-        'type': 'timeline',
-        'default_size': {'w': 2, 'h': 2},
-        'icon': 'Activity',
-        'component': 'RecentActivityWidget'
-    },
-    'global_performance': {
-        'code': 'global_performance',
-        'name': 'Performance Globale',
-        'description': 'KPIs globaux',
+    'cash_flow_summary': {
+        'code': 'cash_flow_summary',
+        'name': 'Trésorerie',
+        'description': 'Balance: montant à recevoir vs à payer',
         'module': 'global',
         'type': 'stats',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'TrendingUp',
-        'component': 'GlobalPerformanceWidget'
-    },
-
-    # ========== PRODUCTS WIDGETS ==========
-    'products_overview': {
-        'code': 'products_overview',
-        'name': 'Aperçu Stock',
-        'description': 'Statistiques générales des produits',
-        'module': 'products',
-        'type': 'stats',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'Package',
-        'component': 'ProductsOverviewWidget'
-    },
-    'top_selling_products': {
-        'code': 'top_selling_products',
-        'name': 'Produits les Plus Vendus',
-        'description': 'Top 5 des produits',
-        'module': 'products',
-        'type': 'table',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'TrendingUp',
-        'component': 'TopSellingProductsWidget'
-    },
-    'stock_alerts': {
-        'code': 'stock_alerts',
-        'name': 'Alertes Stock',
-        'description': 'Stock bas et ruptures',
-        'module': 'products',
-        'type': 'alert',
-        'default_size': {'w': 1, 'h': 2},
-        'icon': 'AlertTriangle',
-        'component': 'StockAlertsWidget'
-    },
-    'margin_analysis': {
-        'code': 'margin_analysis',
-        'name': 'Analyse Marges',
-        'description': 'Marges par catégorie',
-        'module': 'products',
-        'type': 'chart',
         'default_size': {'w': 2, 'h': 2},
-        'icon': 'BarChart3',
-        'component': 'MarginAnalysisWidget'
-    },
-    'stock_movements': {
-        'code': 'stock_movements',
-        'name': 'Mouvements de Stock',
-        'description': 'Derniers mouvements',
-        'module': 'products',
-        'type': 'timeline',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'ArrowRightLeft',
-        'component': 'StockMovementsWidget'
+        'icon': 'Scale',
+        'component': 'CashFlowSummaryWidget'
     },
 
-    # ========== CLIENTS WIDGETS ==========
-    'clients_overview': {
-        'code': 'clients_overview',
-        'name': 'Aperçu Clients',
-        'description': 'Stats clients',
-        'module': 'clients',
-        'type': 'stats',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'Users',
-        'component': 'ClientsOverviewWidget'
-    },
+    # ========== CLIENTS WIDGETS (3) ==========
     'top_clients': {
         'code': 'top_clients',
         'name': 'Top Clients',
-        'description': 'Meilleurs clients par CA',
+        'description': 'Meilleurs clients par chiffre d\'affaires',
         'module': 'clients',
         'type': 'table',
-        'default_size': {'w': 2, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'Award',
         'component': 'TopClientsWidget'
     },
     'clients_at_risk': {
         'code': 'clients_at_risk',
         'name': 'Clients à Risque',
-        'description': 'Clients avec retards',
+        'description': 'Clients avec factures en retard de paiement',
         'module': 'clients',
         'type': 'alert',
-        'default_size': {'w': 1, 'h': 2},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'AlertCircle',
         'component': 'ClientsAtRiskWidget'
     },
-    'client_acquisition': {
-        'code': 'client_acquisition',
-        'name': 'Acquisition Clients',
-        'description': 'Nouveaux clients',
+    'pareto_clients': {
+        'code': 'pareto_clients',
+        'name': 'Analyse Pareto 80/20',
+        'description': 'Concentration du CA: X% clients = Y% revenus',
         'module': 'clients',
         'type': 'chart',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'UserPlus',
-        'component': 'ClientAcquisitionWidget'
-    },
-    'client_segmentation': {
-        'code': 'client_segmentation',
-        'name': 'Segmentation Clients',
-        'description': 'Répartition clients',
-        'module': 'clients',
-        'type': 'chart',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'PieChart',
-        'component': 'ClientSegmentationWidget'
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'TrendingUp',
+        'component': 'ParetoClientsWidget'
     },
 
-    # ========== INVOICES WIDGETS ==========
+    # ========== PRODUCTS WIDGETS (3) ==========
+    'top_selling_products': {
+        'code': 'top_selling_products',
+        'name': 'Produits les Plus Vendus',
+        'description': 'Top 5 des produits par volume de ventes',
+        'module': 'products',
+        'type': 'table',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'TrendingUp',
+        'component': 'TopSellingProductsWidget'
+    },
+    'stock_alerts': {
+        'code': 'stock_alerts',
+        'name': 'Alertes Stock',
+        'description': 'Produits en rupture ou stock bas',
+        'module': 'products',
+        'type': 'alert',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'AlertTriangle',
+        'component': 'StockAlertsWidget'
+    },
+    'margin_analysis': {
+        'code': 'margin_analysis',
+        'name': 'Analyse Marges',
+        'description': 'Marges bénéficiaires par catégorie de produit',
+        'module': 'products',
+        'type': 'chart',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'BarChart3',
+        'component': 'MarginAnalysisWidget'
+    },
+
+    # ========== INVOICES WIDGETS (2) ==========
     'invoices_overview': {
         'code': 'invoices_overview',
-        'name': 'Aperçu Factures',
-        'description': 'Stats factures',
+        'name': 'Vue Factures',
+        'description': 'Répartition complète des factures par statut avec montants',
         'module': 'invoices',
         'type': 'stats',
-        'default_size': {'w': 1, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'FileText',
         'component': 'InvoicesOverviewWidget'
-    },
-    'invoices_status': {
-        'code': 'invoices_status',
-        'name': 'Statut Factures',
-        'description': 'Répartition par statut',
-        'module': 'invoices',
-        'type': 'chart',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'PieChart',
-        'component': 'InvoicesStatusWidget'
-    },
-    'revenue_chart': {
-        'code': 'revenue_chart',
-        'name': 'Revenus',
-        'description': 'Évolution des revenus',
-        'module': 'invoices',
-        'type': 'chart',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'TrendingUp',
-        'component': 'RevenueChartWidget'
     },
     'overdue_invoices': {
         'code': 'overdue_invoices',
         'name': 'Factures en Retard',
-        'description': 'Factures impayées',
+        'description': 'Liste détaillée des factures impayées à recouvrer',
         'module': 'invoices',
         'type': 'alert',
-        'default_size': {'w': 2, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'AlertOctagon',
         'component': 'OverdueInvoicesWidget'
     },
-    'payment_performance': {
-        'code': 'payment_performance',
-        'name': 'Performance Paiements',
-        'description': 'Métriques de paiement',
-        'module': 'invoices',
-        'type': 'stats',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'Clock',
-        'component': 'PaymentPerformanceWidget'
-    },
-    'recent_invoices': {
-        'code': 'recent_invoices',
-        'name': 'Factures Récentes',
-        'description': 'Dernières factures',
-        'module': 'invoices',
-        'type': 'list',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'List',
-        'component': 'RecentInvoicesWidget'
-    },
 
-    # ========== PURCHASE ORDERS WIDGETS ==========
+    # ========== PURCHASE ORDERS WIDGETS (4) ==========
     'po_overview': {
         'code': 'po_overview',
-        'name': 'Aperçu Bons de Commande',
-        'description': 'Stats BCs',
+        'name': 'Vue Bons de Commande',
+        'description': 'Répartition complète des BCs par statut avec montants',
         'module': 'purchase_orders',
         'type': 'stats',
-        'default_size': {'w': 1, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'ShoppingCart',
         'component': 'POOverviewWidget'
-    },
-    'po_status': {
-        'code': 'po_status',
-        'name': 'Statut Bons de Commande',
-        'description': 'Répartition par statut',
-        'module': 'purchase_orders',
-        'type': 'chart',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'PieChart',
-        'component': 'POStatusWidget'
-    },
-    'expenses_chart': {
-        'code': 'expenses_chart',
-        'name': 'Dépenses Achats',
-        'description': 'Évolution dépenses',
-        'module': 'purchase_orders',
-        'type': 'chart',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'TrendingDown',
-        'component': 'ExpensesChartWidget'
     },
     'overdue_po': {
         'code': 'overdue_po',
         'name': 'BCs en Retard',
-        'description': 'BCs en retard de livraison',
+        'description': 'Bons de commande en retard de livraison',
         'module': 'purchase_orders',
         'type': 'alert',
-        'default_size': {'w': 2, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'AlertTriangle',
         'component': 'OverduePOWidget'
     },
     'supplier_performance': {
         'code': 'supplier_performance',
-        'name': 'Performance Fournisseurs',
-        'description': 'Top fournisseurs',
+        'name': 'Top Fournisseurs',
+        'description': 'Classement des fournisseurs par volume d\'achats',
         'module': 'purchase_orders',
         'type': 'table',
-        'default_size': {'w': 2, 'h': 1},
+        'default_size': {'w': 2, 'h': 2},
         'icon': 'Award',
         'component': 'SupplierPerformanceWidget'
     },
     'pending_approvals': {
         'code': 'pending_approvals',
         'name': 'Approbations en Attente',
-        'description': 'BCs à approuver',
+        'description': 'Bons de commande nécessitant une approbation',
         'module': 'purchase_orders',
         'type': 'list',
-        'default_size': {'w': 1, 'h': 2},
+        'default_size': {'w': 2, 'h': 1},
         'icon': 'CheckSquare',
         'component': 'PendingApprovalsWidget'
-    },
-    'budget_tracking': {
-        'code': 'budget_tracking',
-        'name': 'Suivi Budget',
-        'description': 'Budget vs dépenses',
-        'module': 'purchase_orders',
-        'type': 'gauge',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'Target',
-        'component': 'BudgetTrackingWidget'
-    },
-
-    # ========== AI WIDGETS ==========
-    'ai_usage': {
-        'code': 'ai_usage',
-        'name': 'Utilisation IA',
-        'description': 'Stats IA',
-        'module': 'ai',
-        'type': 'stats',
-        'default_size': {'w': 1, 'h': 1},
-        'icon': 'Bot',
-        'component': 'AIUsageWidget'
-    },
-    'ai_documents': {
-        'code': 'ai_documents',
-        'name': 'Documents Traités',
-        'description': 'Documents scannés',
-        'module': 'ai',
-        'type': 'list',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'FileSearch',
-        'component': 'AIDocumentsWidget'
-    },
-    'ai_last_conversation': {
-        'code': 'ai_last_conversation',
-        'name': 'Dernière Conversation',
-        'description': 'Actions récentes IA',
-        'module': 'ai',
-        'type': 'timeline',
-        'default_size': {'w': 2, 'h': 1},
-        'icon': 'MessageSquare',
-        'component': 'AILastConversationWidget'
     },
 }
 
@@ -339,14 +187,12 @@ def get_modules():
     return list(modules)
 
 
-# Default layout for new users
+# Default layout for new users - 6 widgets essentiels
 DEFAULT_LAYOUT = [
-    {'i': 'financial_summary', 'x': 0, 'y': 0, 'w': 3, 'h': 2},
-    {'i': 'alerts_notifications', 'x': 3, 'y': 0, 'w': 1, 'h': 2},
-    {'i': 'revenue_chart', 'x': 0, 'y': 2, 'w': 2, 'h': 1},
-    {'i': 'expenses_chart', 'x': 2, 'y': 2, 'w': 2, 'h': 1},
-    {'i': 'invoices_overview', 'x': 0, 'y': 3, 'w': 1, 'h': 1},
-    {'i': 'po_overview', 'x': 1, 'y': 3, 'w': 1, 'h': 1},
-    {'i': 'products_overview', 'x': 2, 'y': 3, 'w': 1, 'h': 1},
-    {'i': 'clients_overview', 'x': 3, 'y': 3, 'w': 1, 'h': 1},
+    {'i': 'financial_summary', 'x': 0, 'y': 0, 'w': 4, 'h': 2},
+    {'i': 'alerts_notifications', 'x': 0, 'y': 2, 'w': 2, 'h': 2},
+    {'i': 'cash_flow_summary', 'x': 2, 'y': 2, 'w': 2, 'h': 2},
+    {'i': 'invoices_overview', 'x': 0, 'y': 4, 'w': 2, 'h': 2},
+    {'i': 'po_overview', 'x': 2, 'y': 4, 'w': 2, 'h': 2},
+    {'i': 'top_clients', 'x': 0, 'y': 6, 'w': 2, 'h': 2},
 ]
