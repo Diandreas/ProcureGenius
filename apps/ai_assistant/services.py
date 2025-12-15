@@ -3,11 +3,13 @@ Service d'intégration avec Mistral AI
 """
 import os
 import json
+import time
 from typing import Dict, List, Any, Optional
 from mistralai import Mistral
 from django.conf import settings
 from django.core.cache import cache
 from .action_manager import action_manager
+from .usage_analytics import UsageAnalytics
 import logging
 
 logger = logging.getLogger(__name__)
@@ -133,6 +135,54 @@ Réponds toujours en français de manière naturelle et engageante."""
             ] + recent_messages
 
         return recent_messages
+
+    def _log_ai_usage(self, user_context: Dict, prompt_tokens: int, completion_tokens: int,
+                      total_tokens: int, model: str, action_type: str, response_time_ms: int):
+        """
+        Enregistre l'utilisation de l'IA dans la base de données et appelle TokenMonitor
+        """
+        try:
+            from .models import AIUsageLog
+            from .token_monitor import token_monitor
+
+            # Extraire informations du contexte
+            user_id = user_context.get('user_id') if user_context else None
+            organization_id = user_context.get('organization_id') if user_context else None
+            conversation_id = user_context.get('conversation_id') if user_context else None
+
+            if not user_id or not organization_id:
+                logger.warning("Cannot log AI usage: missing user_id or organization_id")
+                return
+
+            # Calculer coût estimé
+            estimated_cost = UsageAnalytics.calculate_cost(prompt_tokens, completion_tokens, model)
+
+            # Créer log dans la base de données
+            AIUsageLog.objects.create(
+                user_id=user_id,
+                organization_id=organization_id,
+                conversation_id=conversation_id,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                estimated_cost=estimated_cost,
+                action_type=action_type,
+                model_used=model,
+                response_time_ms=response_time_ms
+            )
+
+            # Appeler TokenMonitor pour les alertes de budget
+            token_monitor.track_usage(
+                tokens_used=total_tokens,
+                user_id=user_id,
+                organization_id=organization_id
+            )
+
+            logger.debug(f"AI usage logged: {total_tokens} tokens, €{estimated_cost}")
+
+        except Exception as e:
+            # Ne pas faire échouer la requête si le logging échoue
+            logger.error(f"Failed to log AI usage: {e}")
 
     def _define_tools(self) -> List[Dict]:
         """Définit tous les tools/functions disponibles pour Mistral"""
@@ -804,6 +854,10 @@ Réponds toujours en français de manière naturelle et engageante."""
         """
         Envoie un message à Mistral avec function calling et retourne la réponse
         """
+        start_time = time.time()
+        prompt_tokens = 0
+        completion_tokens = 0
+
         try:
             # Construire les messages
             messages = [
@@ -841,13 +895,17 @@ Réponds toujours en français de manière naturelle et engageante."""
             tokens_used = 0
             if hasattr(response, 'usage') and response.usage:
                 tokens_used = response.usage.total_tokens
+                prompt_tokens = getattr(response.usage, 'prompt_tokens', 0)
+                completion_tokens = getattr(response.usage, 'completion_tokens', 0)
 
             result = {
                 'success': True,
                 'response': message_response.content if message_response.content else "",
                 'tool_calls': None,
                 'finish_reason': choice.finish_reason,
-                'tokens_used': tokens_used
+                'tokens_used': tokens_used,
+                'prompt_tokens': prompt_tokens,
+                'completion_tokens': completion_tokens
             }
 
             # Si l'IA a décidé d'appeler des fonctions
@@ -920,6 +978,17 @@ Réponds toujours en français de manière naturelle et engageante."""
                     actions = [action_descriptions.get(tc['function'], f"J'exécute {tc['function']}")
                               for tc in result['tool_calls']]
                     result['response'] = " et ".join(actions) + "..."
+
+            # Logger l'utilisation AI
+            self._log_ai_usage(
+                user_context=user_context,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=tokens_used,
+                model=self.model,
+                action_type='chat',
+                response_time_ms=int((time.time() - start_time) * 1000)
+            )
 
             return result
 

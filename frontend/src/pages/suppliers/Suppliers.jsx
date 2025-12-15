@@ -81,6 +81,7 @@ function Suppliers() {
     selectedSuppliers: [],
   });
 
+  // Tous les hooks AVANT tout return conditionnel
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -96,6 +97,69 @@ function Suppliers() {
       setLoading(false);
     }
   };
+
+  // Générer automatiquement le PDF quand le dialogue s'ouvre
+  useEffect(() => {
+    if (pdfDialogOpen && suppliers.length > 0 && !generatedPdfBlob && !generatingPdf) {
+      const generatePDF = async () => {
+        setGeneratingPdf(true);
+        try {
+          // Générer un PDF pour le premier fournisseur (ou créer un PDF groupé si endpoint disponible)
+          const pdfBlob = await generateSupplierReportPDF(suppliers[0]);
+          setGeneratedPdfBlob(pdfBlob);
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          enqueueSnackbar(t('suppliers:messages.reportError', 'Erreur lors de la génération du rapport'), {
+            variant: 'error',
+          });
+          setPdfDialogOpen(false);
+        } finally {
+          setGeneratingPdf(false);
+        }
+      };
+      generatePDF();
+    }
+  }, [pdfDialogOpen, suppliers, generatedPdfBlob, generatingPdf, enqueueSnackbar, t]);
+
+  const handleGenerateBulkReport = useCallback(() => {
+    const filtered = suppliers.filter(supplier => {
+      const matchesSearch = !searchTerm ||
+        supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        supplier.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        supplier.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = !statusFilter || supplier.status === statusFilter;
+
+      const matchesQuick = !quickFilter || (() => {
+        if (quickFilter === 'active') return supplier.status === 'active';
+        if (quickFilter === 'inactive') return supplier.status === 'inactive';
+        if (quickFilter === 'local') return supplier.is_local;
+        if (quickFilter === 'international') return !supplier.is_local;
+        if (quickFilter === 'top_rated') return parseRating(supplier.rating) >= 4;
+        return true;
+      })();
+
+      return matchesSearch && matchesStatus && matchesQuick;
+    });
+
+    if (filtered.length === 0) {
+      enqueueSnackbar(t('suppliers:messages.noSuppliersSelected', 'Aucun fournisseur à générer'), {
+        variant: 'warning',
+      });
+      return;
+    }
+    setGeneratedPdfBlob(null);
+    setPdfDialogOpen(true);
+  }, [suppliers, searchTerm, statusFilter, quickFilter, enqueueSnackbar, t]);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    // Cette fonction sera appelée par le bouton "Rapport" dans la top nav
+    window.handleSupplierReport = handleGenerateBulkReport;
+    return () => {
+      delete window.handleSupplierReport;
+    };
+  }, [handleGenerateBulkReport]);
 
   const filteredSuppliers = suppliers.filter(supplier => {
     const matchesSearch = !searchTerm ||
@@ -300,67 +364,6 @@ function Suppliers() {
       </CardContent>
     </Card>
   );
-
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // Générer automatiquement le PDF quand le dialogue s'ouvre
-  useEffect(() => {
-    if (pdfDialogOpen && filteredSuppliers.length > 0 && !generatedPdfBlob && !generatingPdf) {
-      const generatePDF = async () => {
-        setGeneratingPdf(true);
-        try {
-          // Générer un PDF pour le premier fournisseur (ou créer un PDF groupé si endpoint disponible)
-          const pdfBlob = await generateSupplierReportPDF(filteredSuppliers[0]);
-          setGeneratedPdfBlob(pdfBlob);
-        } catch (error) {
-          console.error('Error generating PDF:', error);
-          enqueueSnackbar(t('suppliers:messages.reportError', 'Erreur lors de la génération du rapport'), {
-            variant: 'error',
-          });
-          setPdfDialogOpen(false);
-        } finally {
-          setGeneratingPdf(false);
-        }
-      };
-      generatePDF();
-    }
-  }, [pdfDialogOpen, filteredSuppliers, generatedPdfBlob, generatingPdf]);
-
-  const handleGenerateBulkReport = useCallback(() => {
-    if (filteredSuppliers.length === 0) {
-      enqueueSnackbar(t('suppliers:messages.noSuppliersSelected', 'Aucun fournisseur à générer'), {
-        variant: 'warning',
-      });
-      return;
-    }
-    setGeneratedPdfBlob(null);
-    setPdfDialogOpen(true);
-  }, [filteredSuppliers.length, enqueueSnackbar, t]);
-
-  // Enregistrer la fonction de rapport dans la top nav bar
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('register-report-action', {
-      detail: {
-        onClick: handleGenerateBulkReport,
-        label: t('suppliers:actions.generateReport', 'Rapport PDF'),
-      }
-    }));
-
-    return () => {
-      window.dispatchEvent(new CustomEvent('clear-report-action'));
-    };
-  }, [handleGenerateBulkReport, t]);
 
   const handlePdfAction = (action) => {
     if (!generatedPdfBlob) return;

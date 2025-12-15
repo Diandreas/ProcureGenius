@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Conversation, Message, DocumentScan
+from .models import Conversation, Message, DocumentScan, AIUsageLog
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -71,3 +71,24 @@ class DocumentAnalysisSerializer(serializers.Serializer):
         default='invoice'
     )
     auto_create = serializers.BooleanField(default=False)
+
+
+class AIUsageLogSerializer(serializers.ModelSerializer):
+    """Serializer pour les logs d'utilisation AI"""
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    user_full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AIUsageLog
+        fields = [
+            'id', 'user', 'user_name', 'user_full_name', 'organization',
+            'conversation', 'prompt_tokens', 'completion_tokens', 'total_tokens',
+            'estimated_cost', 'action_type', 'model_used', 'response_time_ms',
+            'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def get_user_full_name(self, obj):
+        if obj.user.first_name and obj.user.last_name:
+            return f"{obj.user.first_name} {obj.user.last_name}"
+        return obj.user.username

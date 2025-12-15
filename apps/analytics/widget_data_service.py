@@ -22,7 +22,7 @@ class WidgetDataService:
     def get_widget_data(self, widget_code: str, limit: int = 10, compare: bool = False) -> Dict[str, Any]:
         """Route to appropriate widget data method"""
 
-        # Map widget codes to methods - 15 widgets essentiels
+        # Map widget codes to methods - 16 widgets essentiels
         widget_methods = {
             # Global widgets (3)
             'financial_summary': self.get_financial_summary,
@@ -48,6 +48,9 @@ class WidgetDataService:
             'overdue_po': self.get_overdue_po,
             'supplier_performance': lambda **kw: self.get_supplier_performance(limit, **kw),
             'pending_approvals': self.get_pending_approvals,
+
+            # AI widget (1)
+            'ai_suggestions': self.get_ai_suggestions,
         }
 
         method = widget_methods.get(widget_code)
@@ -198,6 +201,7 @@ class WidgetDataService:
         from apps.invoicing.models import Invoice
         from apps.accounts.models import Client
         from django.db.models import Sum, Count
+        from decimal import Decimal
 
         if not self.stats_service.organization:
             return {
@@ -210,15 +214,16 @@ class WidgetDataService:
             }
 
         # Récupérer tous les clients avec leur CA (utiliser created_at au lieu de payments)
+        # Inclure toutes les factures pertinentes (paid, sent, overdue)
         clients_with_revenue = Client.objects.filter(
             organization=self.stats_service.organization,
-            invoices__status='paid',
+            invoices__status__in=['paid', 'sent', 'overdue'],
             invoices__created_at__gte=self.start_date,
             invoices__created_at__lte=self.end_date
         ).annotate(
             revenue=Sum('invoices__total_amount'),
-            invoice_count=Count('invoices')
-        ).filter(revenue__gt=0).order_by('-revenue').distinct()
+            invoice_count=Count('invoices', distinct=True)
+        ).filter(revenue__gt=0).order_by('-revenue')
 
         total_clients = clients_with_revenue.count()
         total_revenue = sum(c.revenue for c in clients_with_revenue)
@@ -234,8 +239,8 @@ class WidgetDataService:
             }
 
         # Calculer combien de clients représentent 80% du CA
-        cumulative_revenue = 0
-        target_revenue = total_revenue * 0.80
+        cumulative_revenue = Decimal('0')
+        target_revenue = total_revenue * Decimal('0.80')
         top_clients_count = 0
 
         for client in clients_with_revenue:
@@ -290,8 +295,19 @@ class WidgetDataService:
             is_active=True
         ).values('id', 'name')[:10]
 
+        # Format data to match frontend expectations
+        low_stock_products = [
+            {
+                'name': p['name'],
+                'stock': p['stock_quantity'],
+                'min_stock': p['low_stock_threshold']
+            }
+            for p in low_stock
+        ]
+
         return {
-            'low_stock': list(low_stock),
+            'low_stock_products': low_stock_products,
+            'low_stock': list(low_stock),  # Keep for backward compatibility
             'out_of_stock': list(out_of_stock)
         }
 
@@ -345,6 +361,15 @@ class WidgetDataService:
         
         average_margin = float(total_margin / count) if count > 0 else 0
         average_margin_percent = float(total_margin_percent / count) if count > 0 else 0
+
+        # Si pas de produits avec prix de revient, retourner structure vide
+        if count == 0:
+            return {
+                'average_margin': 0,
+                'average_margin_percent': 0,
+                'total_products': 0,
+                'by_category': []
+            }
 
         # Calculer les marges par catégorie
         categories_data = []
@@ -512,7 +537,7 @@ class WidgetDataService:
                 {
                     'id': str(inv.id),
                     'invoice_number': inv.invoice_number,
-                    'client_name': inv.client.company or (f"{inv.client.first_name} {inv.client.last_name}".strip() if inv.client else 'Sans client'),
+                    'client_name': inv.client.name if inv.client else 'Sans client',
                     'total_amount': float(inv.total_amount),
                     'due_date': inv.due_date.isoformat() if inv.due_date else None,
                     'days_overdue': (timezone.now().date() - inv.due_date).days if inv.due_date else 0
@@ -628,8 +653,11 @@ class WidgetDataService:
     def get_supplier_performance(self, limit, **kwargs):
         """Top suppliers performance"""
         stats = self.stats_service.get_supplier_stats()
+        suppliers = stats.get('top_suppliers', [])[:limit] if stats else []
+        
+        # Ensure consistent structure even if empty
         return {
-            'suppliers': stats.get('top_suppliers', [])[:limit]
+            'suppliers': suppliers if suppliers else []
         }
 
     def get_pending_approvals(self, **kwargs):
@@ -782,3 +810,17 @@ class WidgetDataService:
         except Exception as e:
             logger.error(f"Error fetching AI last conversation: {e}")
             return {'actions': []}
+
+    def get_ai_suggestions(self, **kwargs):
+        """AI proactive suggestions - stub for future implementation"""
+        # This is a placeholder for future AI suggestions feature
+        # Will be implemented with actual AI-generated suggestions based on:
+        # - Recent user activity
+        # - Business patterns
+        # - Anomalies detected
+        # - Optimization opportunities
+        
+        return {
+            'suggestions': [],
+            'message': 'Les suggestions IA seront disponibles prochainement'
+        }

@@ -40,6 +40,7 @@ import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
 import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
+import AINotificationProvider from '../components/ai/AINotificationProvider';
 import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 240;
@@ -416,7 +417,8 @@ function MainLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <AINotificationProvider>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* Top Bar */}
       <AppBar
         position="fixed"
@@ -689,7 +691,8 @@ function MainLayout() {
 
       {/* Tutorial System */}
       <SimpleTutorial />
-    </Box>
+      </Box>
+    </AINotificationProvider>
   );
 }
 

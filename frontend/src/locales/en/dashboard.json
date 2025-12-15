@@ -81,6 +81,7 @@
         "ai_usage": "AI Usage",
         "ai_documents": "Processed Documents",
         "ai_last_conversation": "Last Conversation",
+        "ai_suggestions": "AI Suggestions",
         "financial_summary_metrics": {
             "revenue": "Revenue",
             "expenses": "Expenses",
@@ -125,11 +126,23 @@
         "pareto_normal": "Normal distribution",
         "pareto_diversified": "Diversified portfolio",
         "pareto_clients_empty": "No Pareto data",
+        "pareto_clients_title": "Client Pareto Analysis",
+        "pareto_clients_summary": "{{topClientsPercent}}% of clients generate {{revenuePercent}}% of revenue",
+        "pareto_clients_count": "{{count}} clients out of {{total}}",
+        "pareto_revenue_amount": "{{topRevenue}} out of {{totalRevenue}}",
         "cash_flow_title": "Cash Flow",
+        "cash_flow_summary_title": "Cash Flow Summary",
         "cash_flow_receivable": "Receivable",
         "cash_flow_payable": "Payable",
         "cash_flow_balance": "Net balance",
-        "cash_flow_empty": "No data"
+        "cash_flow_empty": "No data",
+        "top_selling_products_empty": "No products",
+        "stock_alerts_empty": "No stock alerts",
+        "margin_analysis_empty": "No margin data",
+        "overdue_invoices_empty": "No overdue invoices",
+        "overdue_po_empty": "No overdue POs",
+        "supplier_performance_empty": "No suppliers",
+        "pending_approvals_empty": "No pending approvals"
     },
     "actions": {
         "remove": "Remove",
@@ -167,6 +180,29 @@
         "topClients": "Top 5 Clients",
         "topSuppliers": "Top 5 Suppliers",
         "noClients": "No clients found",
-        "noSuppliers": "No suppliers found"
+        "noSuppliers": "No suppliers found",
+        "loading": "Loading...",
+        "noData": "No data available",
+        "error": "Loading error"
+    },
+    "messages": {
+        "loadingError": "Error loading data",
+        "noDataAvailable": "No data available for this period",
+        "widgetError": "Unable to load this widget",
+        "refreshSuccess": "Data refreshed successfully",
+        "saveLayoutSuccess": "Layout saved successfully",
+        "saveLayoutError": "Error saving layout",
+        "widgetAdded": "Widget added to dashboard",
+        "widgetRemoved": "Widget removed from dashboard",
+        "allWidgetsAdded": "All widgets have been added"
+    },
+    "tooltips": {
+        "refresh": "Refresh data",
+        "customize": "Customize dashboard",
+        "addWidget": "Add a widget",
+        "removeWidget": "Remove this widget",
+        "expandWidget": "Expand this widget",
+        "exportData": "Export data",
+        "changePeriod": "Change period"
     }
 }

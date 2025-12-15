@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -20,6 +20,8 @@ import {
   Tooltip,
   useTheme,
   alpha,
+  Chip,
+  Badge,
 } from '@mui/material';
 import {
   Send,
@@ -35,6 +37,7 @@ import {
   Add,
   Close,
   Mic,
+  Lightbulb,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +51,7 @@ function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['aiChat', 'common']);
   const location = useLocation();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const theme = useTheme();
@@ -62,10 +66,12 @@ function AIChat() {
   const [quickActions, setQuickActions] = useState([]);
   const [typingIndicator, setTypingIndicator] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
+  const [suggestionsCount, setSuggestionsCount] = useState(0);
 
   useEffect(() => {
     fetchConversations();
     fetchQuickActions();
+    fetchSuggestionsCount();
 
     if (location.state?.voiceMessage) {
       setMessage(location.state.voiceMessage);
@@ -77,6 +83,15 @@ function AIChat() {
     window.addEventListener('ai-chat-new-conversation', handleNewConversation);
     return () => window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
   }, [location]);
+
+  const fetchSuggestionsCount = async () => {
+    try {
+      const response = await aiChatAPI.get('/ai/suggestions/count/');
+      setSuggestionsCount(response.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching suggestions count:', error);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -290,8 +305,33 @@ function AIChat() {
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-          {/* Header avec bouton menu */}
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Header avec bouton menu et badge suggestions */}
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Badge suggestions actives */}
+            {suggestionsCount > 0 && (
+              <Fade in timeout={300}>
+                <Chip
+                  icon={<Lightbulb sx={{ fontSize: 18 }} />}
+                  label={`${suggestionsCount} suggestion${suggestionsCount > 1 ? 's' : ''}`}
+                  size="small"
+                  onClick={() => navigate('/dashboard')}
+                  sx={{
+                    bgcolor: alpha('#ff9800', 0.15),
+                    color: '#ff9800',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: `1px solid ${alpha('#ff9800', 0.3)}`,
+                    '&:hover': {
+                      bgcolor: alpha('#ff9800', 0.25),
+                    },
+                    '& .MuiChip-icon': {
+                      color: '#ff9800',
+                    },
+                  }}
+                />
+              </Fade>
+            )}
+            <Box sx={{ flexGrow: 1 }} />
             <IconButton
               onClick={() => setDrawerOpen(true)}
               size="small"

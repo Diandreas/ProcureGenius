@@ -39,7 +39,8 @@
     "select": "Select",
     "view": "View",
     "details": "Details",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "preview": "Preview"
   },
   "success": "Success",
   "failed": "Failed",

@@ -1,5 +1,5 @@
 """
-Registry of all available widgets - 15 widgets essentiels
+Registry of all available widgets - 16 widgets essentiels
 Optimisé pour un dashboard focalisé et actionnable
 """
 
@@ -163,6 +163,18 @@ WIDGETS_REGISTRY = {
         'icon': 'CheckSquare',
         'component': 'PendingApprovalsWidget'
     },
+
+    # ========== AI WIDGETS (1) ==========
+    'ai_suggestions': {
+        'code': 'ai_suggestions',
+        'name': 'Suggestions IA',
+        'description': 'Suggestions proactives de l\'assistant IA',
+        'module': 'ai',
+        'type': 'list',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Lightbulb',
+        'component': 'AIProactiveSuggestionsWidget'
+    },
 }
 
 
@@ -187,12 +199,23 @@ def get_modules():
     return list(modules)
 
 
-# Default layout for new users - 6 widgets essentiels
+# Default layout for new users - 8 widgets essentiels (les plus utiles)
 DEFAULT_LAYOUT = [
+    # Ligne 1: Vue financière complète (4 colonnes)
     {'i': 'financial_summary', 'x': 0, 'y': 0, 'w': 4, 'h': 2},
+    
+    # Ligne 2: Alertes et Trésorerie (2+2 colonnes)
     {'i': 'alerts_notifications', 'x': 0, 'y': 2, 'w': 2, 'h': 2},
     {'i': 'cash_flow_summary', 'x': 2, 'y': 2, 'w': 2, 'h': 2},
+    
+    # Ligne 3: Factures et Bons de Commande (2+2 colonnes)
     {'i': 'invoices_overview', 'x': 0, 'y': 4, 'w': 2, 'h': 2},
     {'i': 'po_overview', 'x': 2, 'y': 4, 'w': 2, 'h': 2},
+    
+    # Ligne 4: Clients (2+2 colonnes)
     {'i': 'top_clients', 'x': 0, 'y': 6, 'w': 2, 'h': 2},
+    {'i': 'pareto_clients', 'x': 2, 'y': 6, 'w': 2, 'h': 2},
+    
+    # Ligne 5: Produits les plus vendus (2 colonnes)
+    {'i': 'top_selling_products', 'x': 0, 'y': 8, 'w': 2, 'h': 2},
 ]

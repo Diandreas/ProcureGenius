@@ -31,10 +31,12 @@ import POOverviewWidget from '../components/widgets/POOverviewWidget';
 import OverduePOWidget from '../components/widgets/OverduePOWidget';
 import SupplierPerformanceWidget from '../components/widgets/SupplierPerformanceWidget';
 import PendingApprovalsWidget from '../components/widgets/PendingApprovalsWidget';
+// IA (1)
+import AIProactiveSuggestionsWidget from '../components/widgets/AIProactiveSuggestionsWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// Widget component mapping - 15 widgets essentiels
+// Widget component mapping - 16 widgets essentiels
 const WIDGET_COMPONENTS = {
   // Global (3)
   financial_summary: FinancialSummaryWidget,
@@ -56,6 +58,8 @@ const WIDGET_COMPONENTS = {
   overdue_po: OverduePOWidget,
   supplier_performance: SupplierPerformanceWidget,
   pending_approvals: PendingApprovalsWidget,
+  // IA (1)
+  ai_suggestions: AIProactiveSuggestionsWidget,
 };
 
 const CustomizableDashboard = () => {

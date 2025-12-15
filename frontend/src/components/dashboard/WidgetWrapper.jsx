@@ -5,39 +5,43 @@ import { X, GripVertical } from 'lucide-react';
 // Widget titles mapping
 const getWidgetTitle = (t, widgetCode) => {
   const titles = {
-    // Global
+    // Global (3)
     'financial_summary': t('widgets.financial_summary'),
-    'recent_activity': t('widgets.recent_activity'),
     'alerts_notifications': t('widgets.alerts_notifications'),
-    'global_performance': t('widgets.global_performance'),
-    // Products
-    'products_overview': t('widgets.products_overview'),
+    'cash_flow_summary': t('widgets.cash_flow_summary_title'),
+    // Clients (3)
+    'top_clients': t('widgets.top_clients'),
+    'clients_at_risk': t('widgets.clients_at_risk'),
+    'pareto_clients': t('widgets.pareto_clients_title'),
+    // Products (3)
     'top_selling_products': t('widgets.top_selling_products'),
     'stock_alerts': t('widgets.stock_alerts'),
     'margin_analysis': t('widgets.margin_analysis'),
-    'stock_movements': t('widgets.stock_movements'),
-    // Clients
-    'clients_overview': t('widgets.clients_overview'),
-    'top_clients': t('widgets.top_clients'),
-    'clients_at_risk': t('widgets.clients_at_risk'),
-    'client_acquisition': t('widgets.client_acquisition'),
-    'client_segmentation': t('widgets.client_segmentation'),
-    // Invoices
+    // Invoices (2)
     'invoices_overview': t('widgets.invoices_overview'),
-    'invoices_status': t('widgets.invoices_status'),
-    'revenue_chart': t('widgets.revenue_chart'),
     'overdue_invoices': t('widgets.overdue_invoices'),
-    'payment_performance': t('widgets.payment_performance'),
-    'recent_invoices': t('widgets.recent_invoices'),
-    // Purchase Orders
+    // Purchase Orders (4)
     'po_overview': t('widgets.po_overview'),
-    'po_status': t('widgets.po_status'),
-    'expenses_chart': t('widgets.expenses_chart'),
     'overdue_po': t('widgets.overdue_po'),
     'supplier_performance': t('widgets.supplier_performance'),
     'pending_approvals': t('widgets.pending_approvals'),
+    // AI (1)
+    'ai_suggestions': t('widgets.ai_suggestions'),
+    // Legacy/Deprecated (for backward compatibility)
+    'recent_activity': t('widgets.recent_activity'),
+    'global_performance': t('widgets.global_performance'),
+    'products_overview': t('widgets.products_overview'),
+    'stock_movements': t('widgets.stock_movements'),
+    'clients_overview': t('widgets.clients_overview'),
+    'client_acquisition': t('widgets.client_acquisition'),
+    'client_segmentation': t('widgets.client_segmentation'),
+    'invoices_status': t('widgets.invoices_status'),
+    'revenue_chart': t('widgets.revenue_chart'),
+    'payment_performance': t('widgets.payment_performance'),
+    'recent_invoices': t('widgets.recent_invoices'),
+    'po_status': t('widgets.po_status'),
+    'expenses_chart': t('widgets.expenses_chart'),
     'budget_tracking': t('widgets.budget_tracking'),
-    // AI
     'ai_usage': t('widgets.ai_usage'),
     'ai_documents': t('widgets.ai_documents'),
     'ai_last_conversation': t('widgets.ai_last_conversation'),

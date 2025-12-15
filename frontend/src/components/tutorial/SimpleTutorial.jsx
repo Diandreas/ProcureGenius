@@ -368,7 +368,7 @@ const SimpleTutorial = () => {
                 setTargetElement(null);
             }
         }
-    }, []);
+    }, [isMobile]);
 
     // Mettre à jour la position de l'élément cible
     useEffect(() => {
@@ -429,7 +429,7 @@ const SimpleTutorial = () => {
         } else {
             handleClose();
         }
-    }, [currentStepIndex, steps.length, handleClose, isMobile, steps]);
+    }, [currentStepIndex, steps, handleClose, isMobile]);
 
     const handlePrev = useCallback(() => {
         // Fermer le menu profil si ouvert (en mobile)

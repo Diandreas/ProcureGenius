@@ -1,12 +1,13 @@
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
+from rest_framework.decorators import action
 from django.utils import timezone
 from asgiref.sync import async_to_sync
-from .models import Conversation, Message
-from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer
+from .models import Conversation, Message, AIUsageLog, ProactiveSuggestion, UserSuggestionHistory
+from .serializers import ChatRequestSerializer, ConversationSerializer, MessageSerializer, AIUsageLogSerializer
 # Lazy imports to avoid module-level initialization errors
 # from .services import MistralService, ActionExecutor
 # from .ocr_service import OCRService
@@ -956,3 +957,376 @@ class VoiceTranscriptionView(APIView):
                 'success': False,
                 'error': f'Transcription error: {str(e)}'
             }
+
+
+class AIUsageViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API ViewSet pour consulter les statistiques d'utilisation de l'IA
+    Endpoints backend pour le monitoring et contrôle d'utilisation
+    """
+    serializer_class = AIUsageLogSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrer par organisation de l'utilisateur"""
+        return AIUsageLog.objects.filter(
+            organization=self.request.user.organization
+        )
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        GET /api/ai/usage/stats/?period=day|week|month&user_id=X
+
+        Retourne les statistiques agrégées d'utilisation AI
+        """
+        from .usage_analytics import UsageAnalytics
+
+        period = request.query_params.get('period', 'month')
+        user_id = request.query_params.get('user_id')
+
+        # Vérifier permissions: seuls les admins peuvent voir stats des autres users
+        if user_id and user_id != str(request.user.id):
+            if not request.user.is_staff:
+                return Response({
+                    'error': 'Permission denied. Only admins can view other users stats.'
+                }, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            stats = UsageAnalytics.get_usage_stats(
+                organization_id=request.user.organization_id,
+                period=period,
+                user_id=user_id
+            )
+
+            return Response(stats)
+
+        except Exception as e:
+            logger.error(f"Error getting AI usage stats: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def logs(self, request):
+        """
+        GET /api/ai/usage/logs/?action_type=X&page=1
+
+        Liste paginée des logs d'utilisation AI
+        """
+        qs = self.get_queryset()
+
+        # Filtres
+        action_type = request.query_params.get('action_type')
+        if action_type:
+            qs = qs.filter(action_type=action_type)
+
+        user_id = request.query_params.get('user_id')
+        if user_id:
+            # Vérifier permissions
+            if user_id != str(request.user.id) and not request.user.is_staff:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            qs = qs.filter(user_id=user_id)
+
+        # Pagination
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def budget_status(self, request):
+        """
+        GET /api/ai/usage/budget-status/
+
+        Retourne l'état actuel du budget tokens (horaire et journalier)
+        """
+        from .usage_analytics import UsageAnalytics
+
+        try:
+            status_data = UsageAnalytics.get_organization_budget_status(
+                organization_id=request.user.organization_id
+            )
+
+            return Response(status_data)
+
+        except Exception as e:
+            logger.error(f"Error getting budget status: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def my_usage(self, request):
+        """
+        GET /api/ai/usage/my-usage/?days=30
+
+        Résumé d'utilisation pour l'utilisateur connecté
+        """
+        from .usage_analytics import UsageAnalytics
+
+        days = int(request.query_params.get('days', 30))
+
+        try:
+            usage_summary = UsageAnalytics.get_user_usage_summary(
+                user_id=request.user.id,
+                days=days
+            )
+
+            return Response(usage_summary)
+
+        except Exception as e:
+            logger.error(f"Error getting user usage summary: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ProactiveSuggestionsView(APIView):
+    """
+    API endpoints pour les suggestions proactives
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/ai/suggestions/
+
+        Retourne les suggestions actives pour l'utilisateur connecté
+        """
+        from .suggestion_matcher import suggestion_matcher
+
+        try:
+            # Récupérer suggestions pour l'utilisateur
+            suggestions = suggestion_matcher.get_suggestions_for_user(request.user)
+
+            # Marquer comme affichées
+            for suggestion in suggestions:
+                suggestion_matcher.mark_suggestion_displayed(request.user, suggestion)
+
+            # Sérialiser
+            suggestions_data = [{
+                'id': str(suggestion.id),
+                'type': suggestion.suggestion_type,
+                'title': suggestion.title,
+                'message': suggestion.message,
+                'action_label': suggestion.action_label,
+                'action_url': suggestion.action_url,
+                'priority': suggestion.priority
+            } for suggestion in suggestions]
+
+            return Response({
+                'suggestions': suggestions_data,
+                'count': len(suggestions_data)
+            })
+
+        except Exception as e:
+            logger.error(f"Error getting suggestions: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SuggestionDismissView(APIView):
+    """Rejeter une suggestion"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, suggestion_id):
+        """
+        POST /api/ai/suggestions/{id}/dismiss/
+
+        Marque une suggestion comme rejetée
+        """
+        from .suggestion_matcher import suggestion_matcher
+
+        try:
+            success = suggestion_matcher.mark_suggestion_dismissed(
+                request.user,
+                suggestion_id
+            )
+
+            if success:
+                return Response({'success': True})
+            else:
+                return Response({
+                    'error': 'Suggestion not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.error(f"Error dismissing suggestion: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SuggestionActionTakenView(APIView):
+    """Marquer l'action d'une suggestion comme effectuée"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, suggestion_id):
+        """
+        POST /api/ai/suggestions/{id}/action-taken/
+
+        Marque l'action de la suggestion comme effectuée
+        """
+        from .suggestion_matcher import suggestion_matcher
+
+        try:
+            success = suggestion_matcher.mark_action_taken(
+                request.user,
+                suggestion_id
+            )
+
+            if success:
+                return Response({'success': True})
+            else:
+                return Response({
+                    'error': 'Suggestion not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.error(f"Error marking action taken: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SuggestionsCountView(APIView):
+    """Compte de suggestions actives disponibles"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/ai/suggestions/count/
+
+        Retourne le nombre de suggestions actives disponibles
+        """
+        from .suggestion_matcher import suggestion_matcher
+
+        try:
+            count = suggestion_matcher.get_active_suggestions_count(request.user)
+
+            return Response({
+                'count': count,
+                'has_suggestions': count > 0
+            })
+
+        except Exception as e:
+            logger.error(f"Error getting suggestions count: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AINotificationsView(APIView):
+    """API pour récupérer les notifications push IA"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/ai/notifications/?unread_only=true
+
+        Récupère les notifications pour l'utilisateur
+        """
+        from .models import AINotification
+
+        unread_only = request.query_params.get('unread_only', 'true').lower() == 'true'
+
+        try:
+            notifications = AINotification.objects.filter(user=request.user)
+
+            if unread_only:
+                notifications = notifications.filter(is_read=False)
+
+            notifications = notifications.order_by('-created_at')[:20]  # Max 20 dernières
+
+            data = [{
+                'id': str(notif.id),
+                'type': notif.notification_type,
+                'title': notif.title,
+                'message': notif.message,
+                'action_label': notif.action_label,
+                'action_url': notif.action_url,
+                'is_read': notif.is_read,
+                'created_at': notif.created_at.isoformat(),
+                'data': notif.data
+            } for notif in notifications]
+
+            return Response({
+                'notifications': data,
+                'count': len(data)
+            })
+
+        except Exception as e:
+            logger.error(f"Error fetching notifications: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AINotificationMarkReadView(APIView):
+    """Marquer une notification comme lue"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id):
+        """
+        POST /api/ai/notifications/{id}/mark-read/
+
+        Marque une notification comme lue
+        """
+        from .models import AINotification
+
+        try:
+            notification = AINotification.objects.get(
+                id=notification_id,
+                user=request.user
+            )
+
+            notification.mark_as_read()
+
+            return Response({'success': True})
+
+        except AINotification.DoesNotExist:
+            return Response({
+                'error': 'Notification not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error marking notification as read: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AINotificationsCountView(APIView):
+    """Compte de notifications non lues"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/ai/notifications/count/
+
+        Retourne le nombre de notifications non lues
+        """
+        from .models import AINotification
+
+        try:
+            count = AINotification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count()
+
+            return Response({
+                'count': count,
+                'has_notifications': count > 0
+            })
+
+        except Exception as e:
+            logger.error(f"Error getting notifications count: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

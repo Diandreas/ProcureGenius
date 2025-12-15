@@ -113,19 +113,19 @@ function Products() {
     selectedProducts: [],
   });
 
-  useEffect(() => {
-    dispatch(fetchProducts());
-    fetchWarehouses();
-  }, [dispatch]);
-
-  const fetchWarehouses = async () => {
+  const fetchWarehousesData = useCallback(async () => {
     try {
       const response = await warehousesAPI.list();
       setWarehouses(response.data.results || response.data);
     } catch (err) {
       console.error('Error fetching warehouses:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+    fetchWarehousesData();
+  }, [dispatch, fetchWarehousesData]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = !searchTerm ||
@@ -161,6 +161,89 @@ function Products() {
 
     return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus && matchesStock;
   });
+
+  // Tous les hooks doivent être appelés avant tout return conditionnel
+  const handleGenerateReportClick = useCallback(() => {
+    setReportConfigOpen(true);
+  }, []);
+
+  // Enregistrer la fonction de rapport dans la top nav bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('register-report-action', {
+      detail: {
+        onClick: handleGenerateReportClick,
+        label: t('products:actions.generateReport', 'Rapport PDF'),
+      }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-report-action'));
+    };
+  }, [handleGenerateReportClick, t]);
+
+  const handleConfigureReport = async () => {
+    setReportConfigOpen(false);
+    setGeneratingPdf(true);
+    setReportDialogOpen(true);
+
+    try {
+      const pdfBlob = await generateProductsBulkReport({
+        itemIds: reportFilters.selectedProducts.length > 0 ? reportFilters.selectedProducts : undefined,
+        dateStart: reportFilters.dateStart || undefined,
+        dateEnd: reportFilters.dateEnd || undefined,
+        category: categoryFilter || undefined,
+      });
+      setGeneratedPdfBlob(pdfBlob);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      enqueueSnackbar(t('products:messages.reportError', 'Erreur lors de la génération du rapport'), {
+        variant: 'error',
+      });
+      setReportDialogOpen(false);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setReportDialogOpen(false);
+    setGeneratedPdfBlob(null);
+  };
+
+  const handlePdfAction = (action) => {
+    if (!generatedPdfBlob) return;
+
+    if (action === 'download') {
+      downloadPDF(generatedPdfBlob, `rapport-produits-${new Date().getTime()}.pdf`);
+      enqueueSnackbar(t('products:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
+        variant: 'success',
+      });
+    } else if (action === 'preview') {
+      openPDFInNewTab(generatedPdfBlob);
+    } else if (action === 'print') {
+      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+      enqueueSnackbar(t('products:messages.printWindowOpened', 'Fenêtre d\'impression ouverte'), {
+        variant: 'success',
+      });
+    }
+    setReportDialogOpen(false);
+  };
+
+  // Fonction pour gérer le clic sur les cartes de statistiques
+  const handleStockFilterClick = (filterValue) => {
+    if (stockFilter === filterValue) {
+      setStockFilter(''); // Désactiver le filtre si déjà actif
+    } else {
+      setStockFilter(filterValue); // Activer le nouveau filtre
+    }
+  };
 
   const ProductCard = ({ product }) => {
     const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
@@ -376,89 +459,6 @@ function Products() {
   const outOfStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity === 0).length;
   const inStock = products.filter(p => p.product_type === 'physical' && p.stock_quantity > (p.low_stock_threshold || 10)).length;
   const servicesCount = products.filter(p => p.product_type !== 'physical').length;
-
-  const handleGenerateReportClick = useCallback(() => {
-    setReportConfigOpen(true);
-  }, []);
-
-  // Enregistrer la fonction de rapport dans la top nav bar
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('register-report-action', {
-      detail: {
-        onClick: handleGenerateReportClick,
-        label: t('products:actions.generateReport', 'Rapport PDF'),
-      }
-    }));
-
-    return () => {
-      window.dispatchEvent(new CustomEvent('clear-report-action'));
-    };
-  }, [handleGenerateReportClick, t]);
-
-  const handleConfigureReport = async () => {
-    setReportConfigOpen(false);
-    setGeneratingPdf(true);
-    setReportDialogOpen(true);
-
-    try {
-      const pdfBlob = await generateProductsBulkReport({
-        itemIds: reportFilters.selectedProducts.length > 0 ? reportFilters.selectedProducts : undefined,
-        dateStart: reportFilters.dateStart || undefined,
-        dateEnd: reportFilters.dateEnd || undefined,
-        category: categoryFilter || undefined,
-      });
-      setGeneratedPdfBlob(pdfBlob);
-    } catch (error) {
-      console.error('Error generating report:', error);
-      enqueueSnackbar(t('products:messages.reportError', 'Erreur lors de la génération du rapport'), {
-        variant: 'error',
-      });
-      setReportDialogOpen(false);
-    } finally {
-      setGeneratingPdf(false);
-    }
-  };
-
-  const handleCloseDialog = () => {
-    setReportDialogOpen(false);
-    setGeneratedPdfBlob(null);
-  };
-
-  const handlePdfAction = (action) => {
-    if (!generatedPdfBlob) return;
-
-    if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-produits-${new Date().getTime()}.pdf`);
-      enqueueSnackbar(t('products:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
-        variant: 'success',
-      });
-    } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
-    } else if (action === 'print') {
-      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
-      const printWindow = window.open(pdfUrl, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-        };
-      }
-      enqueueSnackbar(t('products:messages.printWindowOpened', 'Fenêtre d\'impression ouverte'), {
-        variant: 'success',
-      });
-    }
-    setReportDialogOpen(false);
-  };
-
-
-  // Fonction pour gérer le clic sur les cartes de statistiques
-  const handleStockFilterClick = (filterValue) => {
-    if (stockFilter === filterValue) {
-      setStockFilter(''); // Désactiver le filtre si déjà actif
-    } else {
-      setStockFilter(filterValue); // Activer le nouveau filtre
-    }
-  };
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>

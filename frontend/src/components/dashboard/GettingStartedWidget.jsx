@@ -241,10 +241,27 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
         }
     }, []);
 
-    // Charger les données au montage
+    // Vérifier si le widget a été masqué précédemment
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        const dismissed = localStorage.getItem('getting_started_dismissed');
+        if (dismissed) {
+            try {
+                const data = JSON.parse(dismissed);
+                if (data.dismissed) {
+                    setIsDismissed(true);
+                }
+            } catch (error) {
+                console.error('[GettingStarted] Erreur parsing localStorage:', error);
+            }
+        }
+    }, []);
+
+    // Charger les données au montage (seulement si pas masqué)
+    useEffect(() => {
+        if (!isDismissed) {
+            loadData();
+        }
+    }, [loadData, isDismissed]);
 
     // Recharger après navigation sur certaines routes ou événements
     useEffect(() => {
@@ -302,6 +319,19 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
     const handleRefresh = () => {
         loadData();
     };
+
+    // Fonction globale pour réafficher le widget (accessible depuis la console ou ailleurs)
+    useEffect(() => {
+        window.showGettingStarted = () => {
+            localStorage.removeItem('getting_started_dismissed');
+            setIsDismissed(false);
+            loadData();
+        };
+
+        return () => {
+            delete window.showGettingStarted;
+        };
+    }, [loadData]);
 
     const handleStartTutorial = () => {
         if (onStartTutorial) {

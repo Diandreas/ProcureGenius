@@ -82,6 +82,7 @@
         "ai_usage": "Utilisation IA",
         "ai_documents": "Documents Traités",
         "ai_last_conversation": "Dernière Conversation",
+        "ai_suggestions": "Suggestions IA",
         "financial_summary_metrics": {
             "revenue": "Revenus",
             "expenses": "Dépenses",
@@ -126,11 +127,23 @@
         "pareto_normal": "Distribution normale",
         "pareto_diversified": "Portefeuille diversifié",
         "pareto_clients_empty": "Aucune donnée Pareto",
+        "pareto_clients_title": "Analyse Pareto Clients",
+        "pareto_clients_summary": "{{topClientsPercent}}% des clients génèrent {{revenuePercent}}% du CA",
+        "pareto_clients_count": "{{count}} clients sur {{total}}",
+        "pareto_revenue_amount": "{{topRevenue}} sur {{totalRevenue}}",
         "cash_flow_title": "Trésorerie",
+        "cash_flow_summary_title": "Résumé Trésorerie",
         "cash_flow_receivable": "À recevoir",
         "cash_flow_payable": "À payer",
         "cash_flow_balance": "Balance nette",
-        "cash_flow_empty": "Aucune donnée"
+        "cash_flow_empty": "Aucune donnée",
+        "top_selling_products_empty": "Aucun produit",
+        "stock_alerts_empty": "Aucune alerte stock",
+        "margin_analysis_empty": "Aucune donnée de marge",
+        "overdue_invoices_empty": "Aucune facture en retard",
+        "overdue_po_empty": "Aucun BC en retard",
+        "supplier_performance_empty": "Aucun fournisseur",
+        "pending_approvals_empty": "Aucune approbation en attente"
     },
     "actions": {
         "remove": "Supprimer",
@@ -168,6 +181,29 @@
         "topClients": "Top 5 Clients",
         "topSuppliers": "Top 5 Fournisseurs",
         "noClients": "Aucun client trouvé",
-        "noSuppliers": "Aucun fournisseur trouvé"
+        "noSuppliers": "Aucun fournisseur trouvé",
+        "loading": "Chargement...",
+        "noData": "Aucune donnée disponible",
+        "error": "Erreur de chargement"
+    },
+    "messages": {
+        "loadingError": "Erreur lors du chargement des données",
+        "noDataAvailable": "Aucune donnée disponible pour cette période",
+        "widgetError": "Impossible de charger ce widget",
+        "refreshSuccess": "Données actualisées avec succès",
+        "saveLayoutSuccess": "Configuration sauvegardée",
+        "saveLayoutError": "Erreur lors de la sauvegarde",
+        "widgetAdded": "Widget ajouté au tableau de bord",
+        "widgetRemoved": "Widget supprimé du tableau de bord",
+        "allWidgetsAdded": "Tous les widgets ont été ajoutés"
+    },
+    "tooltips": {
+        "refresh": "Actualiser les données",
+        "customize": "Personnaliser le tableau de bord",
+        "addWidget": "Ajouter un widget",
+        "removeWidget": "Supprimer ce widget",
+        "expandWidget": "Agrandir ce widget",
+        "exportData": "Exporter les données",
+        "changePeriod": "Changer la période"
     }
 }

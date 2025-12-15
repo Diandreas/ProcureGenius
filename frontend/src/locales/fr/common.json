@@ -39,7 +39,8 @@
     "select": "Sélectionner",
     "view": "Voir",
     "details": "Détails",
-    "saving": "Enregistrement..."
+    "saving": "Enregistrement...",
+    "preview": "Aperçu"
   },
   "success": "Succès",
   "failed": "Échec",

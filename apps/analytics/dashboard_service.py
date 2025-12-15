@@ -474,19 +474,20 @@ class DashboardStatsService:
             created_at__lte=self.end_date
         ).count()
 
-        # Clients actifs (avec factures payées récemment) - FILTERED BY ORGANIZATION
+        # Clients actifs (avec factures récentes) - FILTERED BY ORGANIZATION
+        # Inclure paid, sent et overdue pour avoir une vue complète
         active_with_invoices = Client.objects.filter(
             organization=self.organization,
-            invoices__status='paid',
+            invoices__status__in=['paid', 'sent', 'overdue'],
             invoices__created_at__gte=self.start_date,
             invoices__created_at__lte=self.end_date
         ).distinct().count()
 
         # Top clients par chiffre d'affaires - FILTERED BY ORGANIZATION
-        # Utiliser created_at des factures au lieu de payments__payment_date
+        # Inclure toutes les factures pertinentes (pas seulement paid)
         top_clients = Client.objects.filter(
             organization=self.organization,
-            invoices__status='paid',
+            invoices__status__in=['paid', 'sent', 'overdue'],
             invoices__created_at__gte=self.start_date,
             invoices__created_at__lte=self.end_date
         ).annotate(
@@ -497,7 +498,7 @@ class DashboardStatsService:
         top_clients_data = [
             {
                 'id': str(c.id),
-                'name': c.company or (f"{c.first_name} {c.last_name}".strip() if c.first_name else str(c.id)),
+                'name': c.name or str(c.id),
                 'total_invoices': c.total_invoices or 0,
                 'total_revenue': float(c.total_revenue or 0)
             }
@@ -564,12 +565,13 @@ class DashboardStatsService:
         ).aggregate(total=Sum('value'))['total'] or 0
 
         # Produits les plus vendus (via factures)
+        # Inclure toutes les factures pertinentes (paid, sent, overdue)
         from apps.invoicing.models import InvoiceItem
         top_products = Product.objects.filter(
             organization=self.organization,
             invoice_items__invoice__created_at__gte=self.start_date,
             invoice_items__invoice__created_at__lte=self.end_date,
-            invoice_items__invoice__status='paid',
+            invoice_items__invoice__status__in=['paid', 'sent', 'overdue'],
             invoice_items__invoice__created_by__organization=self.organization
         ).annotate(
             quantity_sold=Sum('invoice_items__quantity'),
@@ -611,11 +613,11 @@ class DashboardStatsService:
         if not self.organization:
             return {'revenue': 0, 'expenses': 0, 'net_profit': 0, 'profit_margin': 0, 'pending_revenue': 0}
 
-        # Revenus (factures payées) - utiliser created_at si status='paid'
-        # Note: Si vous avez un champ paid_date, remplacez created_at par paid_date
+        # Revenus (factures payées et envoyées) - comptabilité d'engagement
+        # Note: Si vous préférez seulement 'paid', changez status__in
         revenue = Invoice.objects.filter(
             created_by__organization=self.organization,
-            status='paid',
+            status__in=['paid', 'sent', 'overdue'],
             created_at__gte=self.start_date,
             created_at__lte=self.end_date
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0

@@ -40,7 +40,7 @@ const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
             <div className="list-item-title">#{i + 1} {product.name}</div>
             <div className="list-item-subtitle">{product.quantity_sold} vendus</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', minimumFractionDigits: 0}).format(product.total_revenue)}</div>
+          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(product.revenue || 0)}</div>
         </div>
       ))}
     </div>

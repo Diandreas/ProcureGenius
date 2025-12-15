@@ -38,10 +38,10 @@ const MarginAnalysisWidget = ({ period = 'last_30_days' }) => {
       {data.by_category.map((cat, i) => (
         <div key={i} className="list-item">
           <div className="list-item-content">
-            <div className="list-item-title">{cat.category}</div>
-            <div className="list-item-subtitle">Marge: {cat.margin_percent}%</div>
+            <div className="list-item-title">{cat.category_name}</div>
+            <div className="list-item-subtitle">Marge: {cat.average_margin_percent?.toFixed(1) || 0}%</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', minimumFractionDigits: 0}).format(cat.total_margin)}</div>
+          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(cat.average_margin || 0)}</div>
         </div>
       ))}
     </div>
