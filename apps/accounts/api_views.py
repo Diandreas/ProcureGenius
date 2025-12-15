@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
-from .models import CustomUser, UserPreferences, UserPermissions, Organization
+from .models import CustomUser, UserPreferences, UserPermissions, Organization, EmailConfiguration
+from apps.core.encryption import encrypt_value, decrypt_value
 from apps.core.modules import (
     get_user_accessible_modules, 
     MODULE_METADATA, 
@@ -434,4 +435,344 @@ def api_organization_settings(request):
         {'error': 'Méthode non supportée'},
         status=status.HTTP_405_METHOD_NOT_ALLOWED
     )
+
+
+@api_view(['GET', 'POST', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def email_config(request):
+    """
+    GET/POST/PATCH /api/accounts/email-config/
+    
+    Gère la configuration email SMTP de l'organisation
+    """
+    organization = request.user.organization
+    
+    if not organization:
+        return Response(
+            {'error': 'User must belong to an organization'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if request.method == 'GET':
+        try:
+            config = EmailConfiguration.objects.filter(organization=organization).first()
+            
+            if not config:
+                return Response({
+                    'exists': False,
+                    'config': None
+                })
+            
+            return Response({
+                'exists': True,
+                'config': {
+                    'id': str(config.id),
+                    'smtp_host': config.smtp_host,
+                    'smtp_port': config.smtp_port,
+                    'smtp_username': config.smtp_username,
+                    'use_tls': config.use_tls,
+                    'use_ssl': config.use_ssl,
+                    'default_from_email': config.default_from_email,
+                    'default_from_name': config.default_from_name,
+                    'is_verified': config.is_verified,
+                    'last_verified_at': config.last_verified_at.isoformat() if config.last_verified_at else None,
+                }
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    elif request.method == 'POST':
+        # Créer une nouvelle configuration
+        try:
+            data = request.data
+            
+            # Chiffrer le mot de passe
+            password = data.get('smtp_password')
+            if not password:
+                return Response(
+                    {'error': 'smtp_password is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            encrypted_password = encrypt_value(password)
+            
+            config = EmailConfiguration.objects.create(
+                organization=organization,
+                smtp_host=data.get('smtp_host'),
+                smtp_port=data.get('smtp_port', 587),
+                smtp_username=data.get('smtp_username'),
+                smtp_password_encrypted=encrypted_password,
+                use_tls=data.get('use_tls', True),
+                use_ssl=data.get('use_ssl', False),
+                default_from_email=data.get('default_from_email'),
+                default_from_name=data.get('default_from_name', organization.name),
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Configuration email créée',
+                'config': {
+                    'id': str(config.id),
+                    'smtp_host': config.smtp_host,
+                    'smtp_port': config.smtp_port,
+                    'smtp_username': config.smtp_username,
+                    'use_tls': config.use_tls,
+                    'use_ssl': config.use_ssl,
+                    'default_from_email': config.default_from_email,
+                    'default_from_name': config.default_from_name,
+                    'is_verified': config.is_verified,
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    elif request.method == 'PATCH':
+        # Mettre à jour la configuration existante
+        try:
+            config = EmailConfiguration.objects.filter(organization=organization).first()
+            
+            if not config:
+                return Response(
+                    {'error': 'Email configuration not found. Use POST to create.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            data = request.data
+            
+            # Mettre à jour les champs
+            if 'smtp_host' in data:
+                config.smtp_host = data['smtp_host']
+            if 'smtp_port' in data:
+                config.smtp_port = data['smtp_port']
+            if 'smtp_username' in data:
+                config.smtp_username = data['smtp_username']
+            if 'smtp_password' in data:
+                config.smtp_password_encrypted = encrypt_value(data['smtp_password'])
+            if 'use_tls' in data:
+                config.use_tls = data['use_tls']
+            if 'use_ssl' in data:
+                config.use_ssl = data['use_ssl']
+            if 'default_from_email' in data:
+                config.default_from_email = data['default_from_email']
+            if 'default_from_name' in data:
+                config.default_from_name = data['default_from_name']
+            
+            config.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Configuration email mise à jour',
+                'config': {
+                    'id': str(config.id),
+                    'smtp_host': config.smtp_host,
+                    'smtp_port': config.smtp_port,
+                    'smtp_username': config.smtp_username,
+                    'use_tls': config.use_tls,
+                    'use_ssl': config.use_ssl,
+                    'default_from_email': config.default_from_email,
+                    'default_from_name': config.default_from_name,
+                    'is_verified': config.is_verified,
+                }
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def email_config_test(request):
+    """
+    POST /api/accounts/email-config/test/
+    
+    Envoie un email de test avec la configuration actuelle
+    """
+    from django.core.mail import EmailMessage
+    from django.utils import timezone
+    
+    organization = request.user.organization
+    
+    if not organization:
+        return Response(
+            {'error': 'User must belong to an organization'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        config = EmailConfiguration.objects.filter(organization=organization).first()
+        
+        if not config:
+            return Response(
+                {'error': 'Email configuration not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Récupérer le mot de passe déchiffré
+        password = config.get_decrypted_password()
+        
+        if not password:
+            return Response(
+                {'error': 'Could not decrypt password'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Configurer Django pour utiliser cette configuration SMTP
+        from django.conf import settings
+        original_email_backend = getattr(settings, 'EMAIL_BACKEND', None)
+        original_email_host = getattr(settings, 'EMAIL_HOST', None)
+        original_email_port = getattr(settings, 'EMAIL_PORT', None)
+        original_email_use_tls = getattr(settings, 'EMAIL_USE_TLS', None)
+        original_email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', None)
+        original_email_host_user = getattr(settings, 'EMAIL_HOST_USER', None)
+        original_email_host_password = getattr(settings, 'EMAIL_HOST_PASSWORD', None)
+        
+        # Utiliser la configuration de l'organisation
+        settings.EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        settings.EMAIL_HOST = config.smtp_host
+        settings.EMAIL_PORT = config.smtp_port
+        settings.EMAIL_USE_TLS = config.use_tls
+        settings.EMAIL_USE_SSL = config.use_ssl
+        settings.EMAIL_HOST_USER = config.smtp_username
+        settings.EMAIL_HOST_PASSWORD = password
+        
+        # Envoyer l'email de test
+        test_email = request.data.get('test_email', request.user.email)
+        
+        email = EmailMessage(
+            subject='Test de configuration email - ProcureGenius',
+            body=f"""
+Bonjour,
+
+Ceci est un email de test pour vérifier votre configuration SMTP.
+
+Configuration testée:
+- Serveur: {config.smtp_host}:{config.smtp_port}
+- TLS: {config.use_tls}
+- SSL: {config.use_ssl}
+- Expéditeur: {config.default_from_name} <{config.default_from_email}>
+
+Si vous recevez cet email, votre configuration est correcte !
+
+Cordialement,
+ProcureGenius
+            """,
+            from_email=f"{config.default_from_name} <{config.default_from_email}>",
+            to=[test_email],
+        )
+        
+        email.send(fail_silently=False)
+        
+        # Marquer comme vérifié
+        config.is_verified = True
+        config.last_verified_at = timezone.now()
+        config.save()
+        
+        # Restaurer les paramètres originaux
+        if original_email_backend:
+            settings.EMAIL_BACKEND = original_email_backend
+        if original_email_host:
+            settings.EMAIL_HOST = original_email_host
+        if original_email_port:
+            settings.EMAIL_PORT = original_email_port
+        if original_email_use_tls is not None:
+            settings.EMAIL_USE_TLS = original_email_use_tls
+        if original_email_use_ssl is not None:
+            settings.EMAIL_USE_SSL = original_email_use_ssl
+        if original_email_host_user:
+            settings.EMAIL_HOST_USER = original_email_host_user
+        if original_email_host_password:
+            settings.EMAIL_HOST_PASSWORD = original_email_host_password
+        
+        return Response({
+            'success': True,
+            'message': f'Email de test envoyé à {test_email}'
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Erreur lors de l\'envoi de l\'email de test: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def email_config_verify(request):
+    """
+    POST /api/accounts/email-config/verify/
+    
+    Vérifie la connexion SMTP sans envoyer d'email
+    """
+    import smtplib
+    
+    organization = request.user.organization
+    
+    if not organization:
+        return Response(
+            {'error': 'User must belong to an organization'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        config = EmailConfiguration.objects.filter(organization=organization).first()
+        
+        if not config:
+            return Response(
+                {'error': 'Email configuration not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        password = config.get_decrypted_password()
+        
+        if not password:
+            return Response(
+                {'error': 'Could not decrypt password'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Tester la connexion SMTP
+        try:
+            if config.use_ssl:
+                server = smtplib.SMTP_SSL(config.smtp_host, config.smtp_port)
+            else:
+                server = smtplib.SMTP(config.smtp_host, config.smtp_port)
+            
+            if config.use_tls and not config.use_ssl:
+                server.starttls()
+            
+            server.login(config.smtp_username, password)
+            server.quit()
+            
+            # Marquer comme vérifié
+            from django.utils import timezone
+            config.is_verified = True
+            config.last_verified_at = timezone.now()
+            config.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Connexion SMTP vérifiée avec succès'
+            })
+            
+        except smtplib.SMTPException as e:
+            return Response(
+                {'error': f'Erreur de connexion SMTP: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 

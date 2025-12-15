@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,6 +22,11 @@ import {
   alpha,
   Chip,
   Badge,
+  Tabs,
+  Tab,
+  Divider,
+  LinearProgress,
+  Button,
 } from '@mui/material';
 import {
   Send,
@@ -38,6 +43,20 @@ import {
   Close,
   Mic,
   Lightbulb,
+  Notifications,
+  TrendingUp,
+  ExpandMore,
+  CheckCircle,
+  Warning,
+  TipsAndUpdates,
+  EmojiEvents,
+  Assignment,
+  Category,
+  BarChart,
+  Description,
+  Inventory,
+  People,
+  LocalShipping,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +65,422 @@ import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
 import Mascot from '../../components/Mascot';
 import VoiceRecorder from '../../components/VoiceRecorder';
+import ProactiveConversationCard from '../../components/ai/ProactiveConversationCard';
+
+// Composant Header compact avec navigation IA
+const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        p: 1,
+        mb: 1.5,
+        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.primary.main, 0.03),
+        borderRadius: 1.5,
+      }}
+    >
+      <Box sx={{ flexGrow: 1 }} />
+
+      {/* Import Reviews - NOUVELLE FONCTIONNALITÉ */}
+      <Tooltip title="Imports en attente">
+        <IconButton
+          size="small"
+          onClick={onImportReviewsClick}
+          sx={{
+            p: 0.75,
+            bgcolor: alpha('#10b981', 0.1),
+            '&:hover': {
+              bgcolor: alpha('#10b981', 0.2),
+            }
+          }}
+        >
+          <Assignment sx={{ fontSize: 18, color: '#10b981' }} />
+        </IconButton>
+      </Tooltip>
+
+      {/* Notifications */}
+      <Tooltip title="Notifications IA">
+        <IconButton
+          size="small"
+          onClick={onNotificationsClick}
+          sx={{
+            p: 0.75,
+            bgcolor: stats?.notifications_count > 0
+              ? alpha('#f59e0b', 0.15)
+              : 'transparent',
+            '&:hover': {
+              bgcolor: stats?.notifications_count > 0
+                ? alpha('#f59e0b', 0.25)
+                : alpha(theme.palette.action.hover, 0.05),
+            }
+          }}
+        >
+          <Badge badgeContent={stats?.notifications_count || 0} color="warning" max={9}>
+            <Notifications sx={{ fontSize: 18 }} />
+          </Badge>
+        </IconButton>
+      </Tooltip>
+
+      {/* Suggestions */}
+      <Tooltip title="Suggestions actives">
+        <IconButton
+          size="small"
+          onClick={onSuggestionsClick}
+          sx={{
+            p: 0.75,
+            bgcolor: stats?.suggestions_count > 0
+              ? alpha('#8b5cf6', 0.15)
+              : 'transparent',
+            '&:hover': {
+              bgcolor: stats?.suggestions_count > 0
+                ? alpha('#8b5cf6', 0.25)
+                : alpha(theme.palette.action.hover, 0.05),
+            }
+          }}
+        >
+          <Badge badgeContent={stats?.suggestions_count || 0} color="secondary" max={9}>
+            <Lightbulb sx={{ fontSize: 18 }} />
+          </Badge>
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+};
+
+// Composant Panel Latéral Suggestions
+const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'alert': return <Warning sx={{ color: '#f59e0b' }} />;
+      case 'insight': return <TipsAndUpdates sx={{ color: '#3b82f6' }} />;
+      case 'achievement': return <EmojiEvents sx={{ color: '#10b981' }} />;
+      default: return <Lightbulb sx={{ color: '#8b5cf6' }} />;
+    }
+  };
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: 360,
+          bgcolor: 'background.paper',
+          borderLeft: 'none',
+          boxShadow: isDark ? '-4px 0 20px rgba(0,0,0,0.3)' : '-4px 0 20px rgba(0,0,0,0.08)',
+        },
+      }}
+    >
+      <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+            Suggestions Intelligentes
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <Close fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          {suggestions && suggestions.length > 0 ? (
+            <List dense disablePadding>
+              {suggestions.map((suggestion, idx) => (
+                <Card
+                  key={idx}
+                  sx={{
+                    mb: 1.5,
+                    bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : '#f8fafc',
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 2,
+                  }}
+                >
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                      {getTypeIcon(suggestion.type || suggestion.suggestion_type)}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" fontWeight={600} gutterBottom>
+                          {suggestion.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          {suggestion.message}
+                        </Typography>
+                        {suggestion.action_label && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => onActionClick(suggestion)}
+                            sx={{ mt: 0.5, fontSize: '0.75rem' }}
+                          >
+                            {suggestion.action_label}
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Lightbulb sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="body2" color="text.secondary">
+                Aucune suggestion pour le moment
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Drawer>
+  );
+};
+
+// Composant Centre de Notifications IA
+const NotificationsCenter = ({ open, onClose, notifications, onMarkRead }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [filter, setFilter] = useState('all');
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'alert': return <Warning sx={{ color: '#f59e0b', fontSize: 24 }} />;
+      case 'insight': return <TipsAndUpdates sx={{ color: '#3b82f6', fontSize: 24 }} />;
+      case 'achievement': return <EmojiEvents sx={{ color: '#10b981', fontSize: 24 }} />;
+      default: return <Lightbulb sx={{ color: '#8b5cf6', fontSize: 24 }} />;
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'alert': return '#f59e0b';
+      case 'insight': return '#3b82f6';
+      case 'achievement': return '#10b981';
+      default: return '#8b5cf6';
+    }
+  };
+
+  const filteredNotifications = notifications?.filter(n =>
+    filter === 'all' || n.type === filter
+  ) || [];
+
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: 450,
+          bgcolor: 'background.paper',
+        },
+      }}
+    >
+      <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
+              Centre de Notifications IA
+            </Typography>
+            {unreadCount > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {unreadCount} notification{unreadCount > 1 ? 's' : ''} non lue{unreadCount > 1 ? 's' : ''}
+              </Typography>
+            )}
+          </Box>
+          <IconButton onClick={onClose} size="small">
+            <Close fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Tabs
+          value={filter}
+          onChange={(e, v) => setFilter(v)}
+          variant="fullWidth"
+          sx={{ mb: 2, minHeight: 40 }}
+        >
+          <Tab label={`Tout (${notifications?.length || 0})`} value="all" sx={{ minHeight: 40 }} />
+          <Tab label={`Alertes (${notifications?.filter(n => n.type === 'alert').length || 0})`} value="alert" sx={{ minHeight: 40 }} />
+          <Tab label={`Insights (${notifications?.filter(n => n.type === 'insight').length || 0})`} value="insight" sx={{ minHeight: 40 }} />
+          <Tab label={`Succès (${notifications?.filter(n => n.type === 'achievement').length || 0})`} value="achievement" sx={{ minHeight: 40 }} />
+        </Tabs>
+
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          {filteredNotifications.length > 0 ? (
+            <List dense disablePadding>
+              {filteredNotifications.map((notif) => (
+                <Card
+                  key={notif.id}
+                  sx={{
+                    mb: 2,
+                    bgcolor: notif.is_read
+                      ? 'transparent'
+                      : alpha(getTypeColor(notif.type), 0.08),
+                    border: notif.is_read ? `1px solid ${theme.palette.divider}` : `2px solid ${getTypeColor(notif.type)}`,
+                    borderRadius: 2,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)',
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
+                      {getTypeIcon(notif.type)}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" fontWeight={notif.is_read ? 500 : 600} gutterBottom>
+                          {notif.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {notif.message}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                          {formatDateTime(notif.created_at)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {!notif.is_read && (
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => onMarkRead(notif.id)}
+                          startIcon={<CheckCircle />}
+                          sx={{
+                            borderColor: getTypeColor(notif.type),
+                            color: getTypeColor(notif.type),
+                            '&:hover': {
+                              borderColor: getTypeColor(notif.type),
+                              bgcolor: alpha(getTypeColor(notif.type), 0.1),
+                            }
+                          }}
+                        >
+                          Marquer comme lu
+                        </Button>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Notifications sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Aucune notification
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {filter === 'all' ? 'Vous êtes à jour !' : `Aucune notification de type "${filter}"`}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Drawer>
+  );
+};
+
+// Quick Actions améliorées
+const QUICK_ACTIONS_CATEGORIES = [
+  {
+    id: 'chat',
+    label: 'Conversation IA',
+    icon: <SmartToy />,
+    color: '#6366f1',
+    actions: [
+      {
+        id: 'help_me',
+        title: 'Aide-moi',
+        icon: <Lightbulb />,
+        prompt: 'Peux-tu m\'aider avec mes tâches quotidiennes ?',
+        description: 'Assistance générale pour vos questions'
+      },
+      {
+        id: 'analyze_data',
+        title: 'Analyser mes données',
+        icon: <Analytics />,
+        prompt: 'Analyse mes données et donne-moi des insights pertinents pour mon entreprise.',
+        description: 'Insights intelligents sur vos données'
+      },
+      {
+        id: 'optimize',
+        title: 'Optimisations',
+        icon: <TrendingUp />,
+        prompt: 'Quelles optimisations puis-je apporter à mon entreprise pour améliorer l\'efficacité et réduire les coûts ?',
+        description: 'Suggestions d\'optimisation'
+      },
+    ]
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    icon: <Category />,
+    color: '#10b981',
+    actions: [
+      {
+        id: 'create_invoice',
+        title: 'Créer facture',
+        icon: <Receipt />,
+        prompt: 'Je souhaite créer une nouvelle facture. Peux-tu me guider dans le processus ?',
+        description: 'Création de factures'
+      },
+      {
+        id: 'create_purchase_order',
+        title: 'Bon de commande',
+        icon: <ShoppingCart />,
+        prompt: 'J\'ai besoin de créer un nouveau bon de commande. Quelle est la procédure ?',
+        description: 'Gestion des commandes'
+      },
+      {
+        id: 'create_supplier',
+        title: 'Ajouter fournisseur',
+        icon: <Business />,
+        prompt: 'Je veux ajouter un nouveau fournisseur à mon système. Comment procéder ?',
+        description: 'Gestion des fournisseurs'
+      },
+    ]
+  },
+  {
+    id: 'analysis',
+    label: 'Analyses',
+    icon: <Analytics />,
+    color: '#f59e0b',
+    actions: [
+      {
+        id: 'get_statistics',
+        title: 'Tableau de bord',
+        icon: <BarChart />,
+        prompt: 'Montre-moi les statistiques principales de mon entreprise ce mois-ci.',
+        description: 'Vue d\'ensemble des métriques'
+      },
+      {
+        id: 'product_analysis',
+        title: 'Performance produits',
+        icon: <Inventory />,
+        prompt: 'Analyse la performance de mes produits les plus vendus ce trimestre.',
+        description: 'Analyse des produits'
+      },
+      {
+        id: 'client_analysis',
+        title: 'Analyse clients',
+        icon: <People />,
+        prompt: 'Analyse le comportement de mes clients et leurs habitudes d\'achat.',
+        description: 'Insights clients'
+      },
+    ]
+  },
+];
 
 function AIChat() {
   const { enqueueSnackbar } = useSnackbar();
@@ -57,21 +492,52 @@ function AIChat() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // States principaux
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [quickActions, setQuickActions] = useState([]);
   const [typingIndicator, setTypingIndicator] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
-  const [suggestionsCount, setSuggestionsCount] = useState(0);
 
+  // States pour les nouvelles fonctionnalités
+  const [usageStats, setUsageStats] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [suggestionsPanelOpen, setSuggestionsPanelOpen] = useState(false);
+  const [notificationsPanelOpen, setNotificationsPanelOpen] = useState(false);
+  const [currentWidgetIndex, setCurrentWidgetIndex] = useState(0);
+  const [widgetVisible, setWidgetVisible] = useState(true);
+  const [proactiveConversations, setProactiveConversations] = useState([]);
+
+  // Charger les conversations proactives
+  const fetchProactiveConversations = async () => {
+    try {
+      const response = await aiChatAPI.getProactiveConversations();
+      setProactiveConversations(response.data.conversations || []);
+    } catch (error) {
+      console.error('Error fetching proactive conversations:', error);
+    }
+  };
+
+  // Charger les données au montage
   useEffect(() => {
     fetchConversations();
-    fetchQuickActions();
-    fetchSuggestionsCount();
+    fetchUsageStats();
+    fetchSuggestions();
+    fetchNotifications();
+    fetchProactiveConversations();
+
+    // Écouter les événements depuis MainLayout
+    const handleOpenNotifications = () => setNotificationsPanelOpen(true);
+    const handleOpenSuggestions = () => setSuggestionsPanelOpen(true);
+    const handleOpenConversations = () => setDrawerOpen(true);
+
+    window.addEventListener('ai-chat-open-notifications', handleOpenNotifications);
+    window.addEventListener('ai-chat-open-suggestions', handleOpenSuggestions);
+    window.addEventListener('ai-chat-open-conversations', handleOpenConversations);
 
     if (location.state?.voiceMessage) {
       setMessage(location.state.voiceMessage);
@@ -81,15 +547,82 @@ function AIChat() {
 
     const handleNewConversation = () => startNewConversation();
     window.addEventListener('ai-chat-new-conversation', handleNewConversation);
-    return () => window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
+
+    return () => {
+      window.removeEventListener('ai-chat-open-notifications', handleOpenNotifications);
+      window.removeEventListener('ai-chat-open-suggestions', handleOpenSuggestions);
+      window.removeEventListener('ai-chat-open-conversations', handleOpenConversations);
+      window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
+    };
   }, [location]);
 
-  const fetchSuggestionsCount = async () => {
+  // Effet pour changer automatiquement les widgets
+  useEffect(() => {
+    const allActions = QUICK_ACTIONS_CATEGORIES.flatMap(category => category.actions);
+
+    const changeWidget = () => {
+      setWidgetVisible(false);
+      setTimeout(() => {
+        setCurrentWidgetIndex(Math.floor(Math.random() * allActions.length));
+        setWidgetVisible(true);
+      }, 300);
+    };
+
+    // Changer de widget toutes les 8 secondes
+    const interval = setInterval(changeWidget, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Polling pour les stats (toutes les 60s)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsageStats();
+      fetchNotifications();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUsageStats = async () => {
     try {
-      const response = await aiChatAPI.get('/ai/suggestions/count/');
-      setSuggestionsCount(response.data.count || 0);
+      const response = await aiChatAPI.getUsageSummary();
+      setUsageStats(response.data);
+      // Notifier MainLayout des stats mises à jour
+      window.dispatchEvent(new CustomEvent('ai-chat-stats-update', {
+        detail: { stats: response.data }
+      }));
     } catch (error) {
-      console.error('Error fetching suggestions count:', error);
+      console.error('Error fetching usage stats:', error);
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    try {
+      const response = await aiChatAPI.getSuggestions();
+      setSuggestions(response.data.suggestions || []);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await aiChatAPI.getNotifications(false);
+      setNotifications(response.data.notifications || []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    try {
+      await aiChatAPI.markNotificationRead(notificationId);
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      fetchUsageStats(); // Refresh counts
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
   };
 
@@ -107,15 +640,6 @@ function AIChat() {
       setConversations(response.data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
-    }
-  };
-
-  const fetchQuickActions = async () => {
-    try {
-      const response = await aiChatAPI.getQuickActions();
-      setQuickActions(response.data.actions || []);
-    } catch (error) {
-      console.error('Error fetching quick actions:', error);
     }
   };
 
@@ -172,6 +696,9 @@ function AIChat() {
         fetchConversations();
       }
 
+      // Refresh stats after AI interaction
+      fetchUsageStats();
+
       if (response.data.action_results) {
         response.data.action_results.forEach(result => {
           if (result.result?.success) {
@@ -195,49 +722,78 @@ function AIChat() {
     }
   };
 
-  const handleQuickAction = (action) => handleSendMessage(action.prompt);
-
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    enqueueSnackbar(t('aiChat:messages.scanInDevelopment'), { variant: 'info' });
+  const handleQuickAction = (action) => {
+    if (action.link) {
+      navigate(action.link);
+    } else if (action.prompt) {
+      // Remplir directement le champ de saisie
+      setMessage(action.prompt);
+      // Focus sur le champ pour permettre l'édition
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"], textarea');
+        if (input) input.focus();
+      }, 100);
+    }
   };
 
-  const getActionIcon = (actionId) => {
-    const icons = {
-      create_invoice: <Receipt fontSize="small" />,
-      create_purchase_order: <ShoppingCart fontSize="small" />,
-      create_supplier: <Business fontSize="small" />,
-      get_statistics: <Analytics fontSize="small" />,
-      analyze_document: <DocumentScanner fontSize="small" />,
-      add_invoice_items: <Add fontSize="small" />,
-      send_invoice: <Send fontSize="small" />,
-      add_po_items: <Add fontSize="small" />,
-      send_purchase_order: <Send fontSize="small" />,
-    };
-    return icons[actionId] || <SmartToy fontSize="small" />;
+  const handleAcceptProactiveConversation = async (conversationId) => {
+    try {
+      const response = await aiChatAPI.acceptProactiveConversation(conversationId);
+      if (response.data.success) {
+        enqueueSnackbar('Conversation démarrée !', { variant: 'success' });
+        // Recharger les conversations et naviguer vers la nouvelle
+        await fetchConversations();
+        if (response.data.conversation_id) {
+          navigate(`/ai-chat?conversation=${response.data.conversation_id}`);
+        }
+        // Retirer de la liste
+        setProactiveConversations(prev => prev.filter(c => c.id !== conversationId));
+      }
+    } catch (error) {
+      console.error('Error accepting proactive conversation:', error);
+      enqueueSnackbar('Erreur lors du démarrage de la conversation', { variant: 'error' });
+    }
+  };
+
+  const handleDismissProactiveConversation = async (conversationId) => {
+    try {
+      const response = await aiChatAPI.dismissProactiveConversation(conversationId);
+      if (response.data.success) {
+        // Retirer de la liste
+        setProactiveConversations(prev => prev.filter(c => c.id !== conversationId));
+      }
+    } catch (error) {
+      console.error('Error dismissing proactive conversation:', error);
+      enqueueSnackbar('Erreur lors de l\'ignorance de la conversation', { variant: 'error' });
+    }
+  };
+
+  const handleSuggestionAction = (suggestion) => {
+    if (suggestion.action_url) {
+      navigate(suggestion.action_url);
+    }
+    setSuggestionsPanelOpen(false);
+  };
+
+  const handleFileUpload = (event) => {
+    // Rediriger vers la page d'import dédiée au lieu de traiter ici
+    navigate('/ai-chat/document-import');
   };
 
   const getCategoryColor = (category) => {
-    const colors = {
-      suppliers: '#3b82f6',
-      invoices: '#10b981',
-      purchase_orders: '#06b6d4',
-      dashboard: '#f59e0b',
-      documents: '#8b5cf6',
-    };
-    return colors[category] || '#64748b';
+    const cat = QUICK_ACTIONS_CATEGORIES.find(c => c.id === category);
+    return cat?.color || '#64748b';
   };
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        height: 'calc(100vh - 80px)',
-        bgcolor: 'background.default',
-        borderRadius: 2,
-        overflow: 'hidden',
-      }}
+    <Box
+        sx={{
+          display: 'flex',
+          height: 'calc(100vh - 80px)',
+          bgcolor: 'background.default',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
     >
       {/* Drawer conversations */}
       <Drawer
@@ -262,6 +818,16 @@ function AIChat() {
               <Close fontSize="small" />
             </IconButton>
           </Box>
+
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            onClick={startNewConversation}
+            fullWidth
+            sx={{ mb: 2 }}
+          >
+            Nouvelle conversation
+          </Button>
 
           <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
             <List dense disablePadding>
@@ -301,132 +867,239 @@ function AIChat() {
         </Box>
       </Drawer>
 
+      {/* Suggestions Panel */}
+      <SuggestionsPanel
+        open={suggestionsPanelOpen}
+        onClose={() => setSuggestionsPanelOpen(false)}
+        suggestions={suggestions}
+        onActionClick={handleSuggestionAction}
+      />
+
+      {/* Notifications History */}
+            <NotificationsCenter
+              open={notificationsPanelOpen}
+              onClose={() => setNotificationsPanelOpen(false)}
+              notifications={notifications}
+              onMarkRead={handleMarkNotificationRead}
+            />
+
       {/* Zone principale */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-          {/* Header avec bouton menu et badge suggestions */}
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Badge suggestions actives */}
-            {suggestionsCount > 0 && (
-              <Fade in timeout={300}>
-                <Chip
-                  icon={<Lightbulb sx={{ fontSize: 18 }} />}
-                  label={`${suggestionsCount} suggestion${suggestionsCount > 1 ? 's' : ''}`}
-                  size="small"
-                  onClick={() => navigate('/dashboard')}
-                  sx={{
-                    bgcolor: alpha('#ff9800', 0.15),
-                    color: '#ff9800',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: `1px solid ${alpha('#ff9800', 0.3)}`,
-                    '&:hover': {
-                      bgcolor: alpha('#ff9800', 0.25),
-                    },
-                    '& .MuiChip-icon': {
-                      color: '#ff9800',
-                    },
-                  }}
-                />
-              </Fade>
-            )}
-            <Box sx={{ flexGrow: 1 }} />
-            <IconButton
-              onClick={() => setDrawerOpen(true)}
-              size="small"
-              sx={{
-                bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.04),
-                '&:hover': {
-                  bgcolor: isDark ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.08),
-                }
-              }}
-            >
-              <MenuIcon fontSize="small" />
-            </IconButton>
-          </Box>
+          {/* Les boutons sont maintenant dans la top nav bar */}
 
           {messages.length === 0 ? (
             <Fade in timeout={400}>
-              <Box sx={{ textAlign: 'center', mt: 2, maxWidth: 700, mx: 'auto' }}>
+              <Box sx={{ textAlign: 'center', mt: 2, maxWidth: 800, mx: 'auto' }}>
+                {/* Navigation IA rapide */}
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<DocumentScanner />}
+                    onClick={() => navigate('/ai-chat/document-import')}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Importer un document
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Assignment />}
+                    onClick={() => navigate('/ai-chat/import-reviews')}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Imports en attente
+                  </Button>
+                </Box>
+
                 {/* Mascotte */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                   <Mascot pose="excited" animation="wave" size={100} />
                 </Box>
 
-                <Typography 
-                  variant="h5" 
-                  gutterBottom 
+                <Typography
+                  variant="h5"
+                  gutterBottom
                   sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
                 >
                   {t('aiChat:welcome.greeting')}
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
                   sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
                 >
                   {t('aiChat:welcome.description')}
                 </Typography>
 
-                {/* Actions rapides */}
-                <Grid container spacing={1.5} sx={{ mt: 1 }}>
-                  {quickActions.slice(0, 6).map((action) => (
-                    <Grid item xs={6} sm={4} key={action.id}>
-                      <Card
-                        onClick={() => handleQuickAction(action)}
+                {/* Widget d'action rapide qui change automatiquement */}
+                <Box sx={{ mt: 1, mb: 1 }}>
+                  {(() => {
+                    const allActions = QUICK_ACTIONS_CATEGORIES.flatMap(category =>
+                      category.actions.map(action => ({
+                        ...action,
+                        categoryColor: category.color,
+                        categoryIcon: category.icon,
+                        categoryName: category.label,
+                      }))
+                    );
+                    const currentAction = allActions[currentWidgetIndex];
+
+                    return currentAction ? (
+                      <Box
+                        onClick={() => handleQuickAction(currentAction)}
                         sx={{
                           cursor: 'pointer',
-                          bgcolor: 'background.paper',
-                          border: 'none',
+                          bgcolor: alpha(currentAction.categoryColor, 0.08),
+                          border: `1px solid ${alpha(currentAction.categoryColor, 0.2)}`,
                           borderRadius: 2,
-                          transition: 'all 0.15s ease',
-                          boxShadow: isDark 
-                            ? '0 1px 3px rgba(0,0,0,0.3)' 
-                            : '0 1px 3px rgba(0,0,0,0.06)',
+                          p: 1.5,
+                          mx: 1,
+                          transition: 'all 0.3s ease',
+                          opacity: widgetVisible ? 1 : 0,
+                          transform: widgetVisible ? 'translateY(0)' : 'translateY(-10px)',
                           '&:hover': {
+                            bgcolor: alpha(currentAction.categoryColor, 0.12),
+                            borderColor: currentAction.categoryColor,
                             transform: 'translateY(-2px)',
-                            boxShadow: isDark 
-                              ? '0 4px 12px rgba(0,0,0,0.4)' 
-                              : '0 4px 12px rgba(0,0,0,0.1)',
                           },
                         }}
                       >
-                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <Avatar
-                              sx={{
-                                width: 28,
-                                height: 28,
-                                bgcolor: alpha(getCategoryColor(action.category), 0.15),
-                                color: getCategoryColor(action.category),
-                              }}
-                            >
-                              {getActionIcon(action.id)}
-                            </Avatar>
-                            <Typography 
-                              variant="body2" 
-                              sx={{ fontWeight: 600, fontSize: '0.813rem', color: 'text.primary' }}
-                            >
-                              {action.title}
-                            </Typography>
-                          </Box>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
                             sx={{
-                              fontSize: '0.688rem',
-                              display: { xs: 'none', md: 'block' },
-                              lineHeight: 1.3,
+                              width: 36,
+                              height: 36,
+                              bgcolor: alpha(currentAction.categoryColor, 0.15),
+                              color: currentAction.categoryColor,
                             }}
                           >
-                            {action.description}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
+                            {currentAction.icon}
+                          </Avatar>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                lineHeight: 1.2,
+                                color: 'text.primary',
+                                mb: 0.5,
+                              }}
+                            >
+                              💡 {currentAction.title}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: currentAction.categoryColor,
+                                fontSize: '0.7rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {currentAction.categoryName}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.65rem',
+                                display: 'block',
+                                mb: 0.5,
+                              }}
+                            >
+                              Cliquez pour remplir
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'text.disabled',
+                                  fontSize: '0.6rem',
+                                }}
+                              >
+                                Auto dans 8s
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const allActions = QUICK_ACTIONS_CATEGORIES.flatMap(category => category.actions);
+                                  setWidgetVisible(false);
+                                  setTimeout(() => {
+                                    setCurrentWidgetIndex((prev) => (prev + 1) % allActions.length);
+                                    setWidgetVisible(true);
+                                  }, 150);
+                                }}
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  '&:hover': {
+                                    bgcolor: alpha(theme.palette.action.hover, 0.1),
+                                  },
+                                }}
+                              >
+                                <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                                  ⟳
+                                </Typography>
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
+                    ) : null;
+                  })()}
+
+                  {/* Indicateur d'actions disponibles (4 points max) */}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 1 }}>
+                    {Array.from({ length: Math.min(4, QUICK_ACTIONS_CATEGORIES.flatMap(category => category.actions).length) }, (_, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: i === (currentWidgetIndex % 4)
+                            ? 'primary.main'
+                            : alpha(theme.palette.text.disabled, 0.3),
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Conversations Proactives */}
+                {proactiveConversations.length > 0 && (
+                  <Box sx={{ mt: 4, mb: 2, maxWidth: 600, mx: 'auto' }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SmartToy sx={{ fontSize: 18 }} />
+                      L'IA vous propose de discuter
+                    </Typography>
+                    {proactiveConversations.map((conv) => (
+                      <ProactiveConversationCard
+                        key={conv.id}
+                        conversation={conv}
+                        onAccept={handleAcceptProactiveConversation}
+                        onDismiss={handleDismissProactiveConversation}
+                      />
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Fade>
           ) : (
@@ -584,24 +1257,15 @@ function AIChat() {
               }}
             />
             
-            <Tooltip title={t('aiChat:input.attach')}>
-              <span>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  style={{ display: 'none' }}
-                  accept="image/*,.pdf"
-                />
-                <IconButton
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  size="small"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  <AttachFile sx={{ fontSize: 20 }} />
-                </IconButton>
-              </span>
+            <Tooltip title="Importer un document">
+              <IconButton
+                onClick={() => navigate('/ai-chat/document-import')}
+                disabled={loading}
+                size="small"
+                sx={{ color: 'text.secondary' }}
+              >
+                <DocumentScanner sx={{ fontSize: 20 }} />
+              </IconButton>
             </Tooltip>
 
             <Tooltip title={t('aiChat:input.voiceMessage')}>

@@ -812,15 +812,57 @@ class WidgetDataService:
             return {'actions': []}
 
     def get_ai_suggestions(self, **kwargs):
-        """AI proactive suggestions - stub for future implementation"""
-        # This is a placeholder for future AI suggestions feature
-        # Will be implemented with actual AI-generated suggestions based on:
-        # - Recent user activity
-        # - Business patterns
-        # - Anomalies detected
-        # - Optimization opportunities
-        
-        return {
-            'suggestions': [],
-            'message': 'Les suggestions IA seront disponibles prochainement'
-        }
+        """
+        AI proactive suggestions intelligentes
+        Combine suggestions statiques et analyses en temps réel des données
+        """
+        try:
+            from apps.ai_assistant.suggestion_matcher import suggestion_matcher
+
+            # Récupérer les suggestions pertinentes pour l'utilisateur
+            suggestions_list = suggestion_matcher.get_suggestions_for_user(
+                self.user,
+                include_intelligent=True
+            )
+
+            # Formatter les suggestions pour le widget
+            formatted_suggestions = []
+            for suggestion in suggestions_list:
+                # Si c'est une suggestion intelligente (dict)
+                if isinstance(suggestion, dict):
+                    formatted_suggestions.append({
+                        'id': suggestion.get('data', {}).get('id', 'intelligent'),
+                        'type': suggestion.get('suggestion_type', 'insight'),
+                        'title': suggestion.get('title', ''),
+                        'message': suggestion.get('message', ''),
+                        'action_label': suggestion.get('action_label', ''),
+                        'action_url': suggestion.get('action_url', ''),
+                        'priority': suggestion.get('priority', 5),
+                        'is_intelligent': suggestion.get('is_intelligent', False)
+                    })
+                # Si c'est une suggestion statique (modèle Django)
+                else:
+                    formatted_suggestions.append({
+                        'id': str(suggestion.id),
+                        'type': suggestion.suggestion_type,
+                        'title': suggestion.title,
+                        'message': suggestion.message,
+                        'action_label': suggestion.action_label,
+                        'action_url': suggestion.action_url,
+                        'priority': suggestion.priority,
+                        'is_intelligent': False
+                    })
+
+            return {
+                'suggestions': formatted_suggestions,
+                'count': len(formatted_suggestions),
+                'message': 'Aucune suggestion pour le moment' if not formatted_suggestions else ''
+            }
+
+        except Exception as e:
+            logger.error(f"Error fetching AI suggestions: {e}")
+            return {
+                'suggestions': [],
+                'count': 0,
+                'message': 'Erreur lors du chargement des suggestions'
+            }

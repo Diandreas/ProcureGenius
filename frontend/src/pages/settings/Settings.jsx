@@ -45,6 +45,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Chip,
 } from '@mui/material';
 import {
   Business as BusinessIcon,
@@ -65,6 +66,9 @@ import {
   People as PeopleIcon,
   FileDownload as FileDownloadIcon,
   History as HistoryIcon,
+  Email as EmailIcon,
+  CheckCircle,
+  Warning,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
@@ -414,6 +418,7 @@ const Settings = () => {
     { label: t('settings:tabs.print'), icon: <PrintIcon /> },
     { label: t('settings:tabs.notifications'), icon: <NotificationsIcon /> },
     { label: t('settings:tabs.appearance'), icon: <AppearanceIcon /> },
+    { label: 'Email', icon: <EmailIcon /> },
     { label: 'Profil', icon: <SecurityIcon /> },
     { label: 'Migration de données', icon: <BackupIcon /> },
   ];
@@ -531,8 +536,16 @@ const Settings = () => {
             />
           )}
 
-          {/* Section Profil (mot de passe, etc.) */}
+          {/* Section Email */}
           {activeTab === 5 && (
+            <EmailSection
+              settings={settings}
+              showSnackbar={showSnackbar}
+            />
+          )}
+
+          {/* Section Profil (mot de passe, etc.) */}
+          {activeTab === 6 && (
             <ProfileSection
               settings={settings}
               onUpdate={handleUpdateSetting}
@@ -540,7 +553,7 @@ const Settings = () => {
           )}
 
           {/* Section Migration de données */}
-          {activeTab === 6 && (
+          {activeTab === 7 && (
             <DataSection
               settings={settings}
               showSnackbar={showSnackbar}
@@ -1580,6 +1593,326 @@ const DataSection = ({ settings, showSnackbar }) => {
           Voir l'historique complet
         </Button>
       </Box>
+    </Box>
+  );
+};
+
+// Email Section Component
+const EmailSection = ({ settings, showSnackbar }) => {
+  const { t } = useTranslation(['settings', 'common']);
+  const [emailConfig, setEmailConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+
+  useEffect(() => {
+    fetchEmailConfig();
+  }, []);
+
+  const fetchEmailConfig = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/v1/accounts/email-config/', {
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Configuration n'existe pas encore, c'est normal
+          setEmailConfig({
+            smtp_host: '',
+            smtp_port: 587,
+            smtp_username: '',
+            smtp_password: '',
+            use_tls: true,
+            use_ssl: false,
+            default_from_email: '',
+            default_from_name: '',
+          });
+          setLoading(false);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.exists) {
+        setEmailConfig(data.config);
+        setTestEmail(data.config.default_from_email || '');
+      } else {
+        // Configuration n'existe pas encore
+        setEmailConfig({
+          smtp_host: '',
+          smtp_port: 587,
+          smtp_username: '',
+          smtp_password: '',
+          use_tls: true,
+          use_ssl: false,
+          default_from_email: '',
+          default_from_name: '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching email config:', error);
+      // Ne pas afficher d'erreur si c'est juste que la config n'existe pas
+      if (!error.message.includes('404')) {
+        showSnackbar('Erreur lors du chargement de la configuration email', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const method = emailConfig ? 'PATCH' : 'POST';
+      const body = {
+        smtp_host: emailConfig?.smtp_host || '',
+        smtp_port: emailConfig?.smtp_port || 587,
+        smtp_username: emailConfig?.smtp_username || '',
+        smtp_password: emailConfig?.smtp_password || '', // Will be encrypted on backend
+        use_tls: emailConfig?.use_tls !== false,
+        use_ssl: emailConfig?.use_ssl || false,
+        default_from_email: emailConfig?.default_from_email || '',
+        default_from_name: emailConfig?.default_from_name || '',
+      };
+
+      const response = await fetch('/api/v1/accounts/email-config/', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+      if (data.success || response.ok) {
+        showSnackbar('Configuration email sauvegardée', 'success');
+        fetchEmailConfig();
+      } else {
+        showSnackbar(data.error || 'Erreur lors de la sauvegarde', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving email config:', error);
+      showSnackbar('Erreur lors de la sauvegarde', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    try {
+      setTesting(true);
+      const response = await fetch('/api/v1/accounts/email-config/test/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({ test_email: testEmail }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSnackbar(`Email de test envoyé à ${testEmail}`, 'success');
+        fetchEmailConfig();
+      } else {
+        showSnackbar(data.error || 'Erreur lors de l\'envoi', 'error');
+      }
+    } catch (error) {
+      console.error('Error testing email:', error);
+      showSnackbar('Erreur lors de l\'envoi du test', 'error');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    try {
+      setTesting(true);
+      const response = await fetch('/api/v1/accounts/email-config/verify/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSnackbar('Connexion SMTP vérifiée avec succès', 'success');
+        fetchEmailConfig();
+      } else {
+        showSnackbar(data.error || 'Erreur de connexion', 'error');
+      }
+    } catch (error) {
+      console.error('Error verifying email config:', error);
+      showSnackbar('Erreur lors de la vérification', 'error');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (!emailConfig) {
+    setEmailConfig({
+      smtp_host: '',
+      smtp_port: 587,
+      smtp_username: '',
+      smtp_password: '',
+      use_tls: true,
+      use_ssl: false,
+      default_from_email: '',
+      default_from_name: '',
+    });
+  }
+
+  return (
+    <Box>
+      <Typography variant="h6" fontWeight={600} gutterBottom>
+        Configuration SMTP
+      </Typography>
+      <Typography variant="body2" color="text.secondary" paragraph>
+        Configurez les paramètres SMTP pour envoyer des emails (factures, notifications, etc.)
+      </Typography>
+
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Serveur SMTP"
+            value={emailConfig?.smtp_host || ''}
+            onChange={(e) => setEmailConfig({ ...emailConfig, smtp_host: e.target.value })}
+            placeholder="smtp.gmail.com"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Port SMTP"
+            type="number"
+            value={emailConfig?.smtp_port || 587}
+            onChange={(e) => setEmailConfig({ ...emailConfig, smtp_port: parseInt(e.target.value) || 587 })}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Nom d'utilisateur"
+            value={emailConfig?.smtp_username || ''}
+            onChange={(e) => setEmailConfig({ ...emailConfig, smtp_username: e.target.value })}
+            placeholder="votre@email.com"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Mot de passe"
+            type="password"
+            value={emailConfig?.smtp_password || ''}
+            onChange={(e) => setEmailConfig({ ...emailConfig, smtp_password: e.target.value })}
+            placeholder="••••••••"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={emailConfig?.use_tls !== false}
+                onChange={(e) => setEmailConfig({ ...emailConfig, use_tls: e.target.checked })}
+              />
+            }
+            label="Utiliser TLS"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={emailConfig?.use_ssl || false}
+                onChange={(e) => setEmailConfig({ ...emailConfig, use_ssl: e.target.checked })}
+              />
+            }
+            label="Utiliser SSL"
+            sx={{ ml: 2 }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Email expéditeur"
+            type="email"
+            value={emailConfig?.default_from_email || ''}
+            onChange={(e) => setEmailConfig({ ...emailConfig, default_from_email: e.target.value })}
+            placeholder="noreply@votredomaine.com"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Nom expéditeur"
+            value={emailConfig?.default_from_name || ''}
+            onChange={(e) => setEmailConfig({ ...emailConfig, default_from_name: e.target.value })}
+            placeholder="Votre Entreprise"
+          />
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Chip
+          label={emailConfig?.is_verified ? 'Vérifié' : 'Non vérifié'}
+          color={emailConfig?.is_verified ? 'success' : 'default'}
+          icon={emailConfig?.is_verified ? <CheckCircle /> : undefined}
+        />
+        {emailConfig?.last_verified_at && (
+          <Typography variant="caption" color="text.secondary">
+            Dernière vérification: {new Date(emailConfig.last_verified_at).toLocaleString()}
+          </Typography>
+        )}
+      </Box>
+
+      <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={saving}
+          startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+        >
+          Sauvegarder
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleVerify}
+          disabled={testing}
+          startIcon={testing ? <CircularProgress size={16} /> : <CheckCircle />}
+        >
+          Vérifier la connexion
+        </Button>
+        <TextField
+          size="small"
+          label="Email de test"
+          type="email"
+          value={testEmail}
+          onChange={(e) => setTestEmail(e.target.value)}
+          sx={{ flex: 1, maxWidth: 300 }}
+        />
+        <Button
+          variant="outlined"
+          onClick={handleTest}
+          disabled={testing || !testEmail}
+          startIcon={testing ? <CircularProgress size={16} /> : <EmailIcon />}
+        >
+          Envoyer test
+        </Button>
+      </Stack>
     </Box>
   );
 };

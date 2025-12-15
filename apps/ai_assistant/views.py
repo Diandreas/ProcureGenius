@@ -183,21 +183,30 @@ class ChatView(APIView):
                     'action_buttons': None
                 }, status=status.HTTP_200_OK)
 
-            # Récupérer l'historique de la conversation
-            history = Message.objects.filter(
-                conversation=conversation
-            ).order_by('created_at').values('role', 'content')
+            # NOUVEAU: Détecter si c'est une requête de statistiques
+            from .services.stats_response_service import StatsResponseService
+            stats_response = StatsResponseService.generate_stats_response(request.user, user_message)
             
-            # Appeler Mistral AI (lazy import)
-            from .services import MistralService
-            mistral_service = MistralService()
+            if stats_response:
+                # Utiliser la réponse de template au lieu d'appeler Mistral
+                final_response = stats_response
+                result = {'response': final_response, 'tool_calls': None}
+            else:
+                # Récupérer l'historique de la conversation
+                history = Message.objects.filter(
+                    conversation=conversation
+                ).order_by('created_at').values('role', 'content')
+                
+                # Appeler Mistral AI (lazy import)
+                from .services import MistralService
+                mistral_service = MistralService()
 
-            # Utiliser async_to_sync au lieu de créer un event loop
-            result = async_to_sync(mistral_service.chat)(
-                message=user_message,
-                conversation_history=list(history)[:-1],  # Exclure le dernier message
-                user_context={'user_id': request.user.id}
-            )
+                # Utiliser async_to_sync au lieu de créer un event loop
+                result = async_to_sync(mistral_service.chat)(
+                    message=user_message,
+                    conversation_history=list(history)[:-1],  # Exclure le dernier message
+                    user_context={'user_id': request.user.id}
+                )
             
             # Exécuter les tool_calls si présents AVANT de sauvegarder la réponse
             action_results = []
@@ -539,14 +548,16 @@ class DocumentAnalysisView(APIView):
                     'processing_method': 'pixtral_vision'  # Pour tracking
                 }
                 
-                # Créer automatiquement si demandé
-                if auto_create and ai_result['success']:
-                    creation_result = self._auto_create_entity(
+                # TOUJOURS créer un ImportReview (plus de création automatique directe)
+                if ai_result['success']:
+                    review_result = self._create_import_review(
                         document_type,
                         ai_result['data'],
-                        request.user
+                        request.user,
+                        request.FILES.get('image')
                     )
-                    final_result['creation_result'] = creation_result
+                    final_result['review_id'] = review_result.get('review_id')
+                    final_result['review_created'] = review_result.get('success', False)
                 
                 return Response(final_result)
                 
@@ -574,14 +585,15 @@ class DocumentAnalysisView(APIView):
                 result = mistral_service.analyze_document(text, document_type)
                 
                 if result['success']:
-                    # Optionnellement, créer automatiquement l'entité
-                    if request.data.get('auto_create', False):
-                        creation_result = self._auto_create_entity(
-                            document_type,
-                            result['data'],
-                            request.user
-                        )
-                        result['creation_result'] = creation_result
+                    # TOUJOURS créer un ImportReview
+                    review_result = self._create_import_review(
+                        document_type,
+                        result['data'],
+                        request.user,
+                        None  # Pas d'image pour le texte
+                    )
+                    result['review_id'] = review_result.get('review_id')
+                    result['review_created'] = review_result.get('success', False)
                     
                     return Response(result)
                 else:
@@ -603,8 +615,52 @@ class DocumentAnalysisView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
+    def _create_import_review(self, document_type, data, user, image_file=None):
+        """Crée un ImportReview au lieu de créer directement l'entité"""
+        from .models import ImportReview, DocumentScan
+        from django.utils import timezone
+        import os
+        
+        try:
+            # Créer un DocumentScan si image fournie
+            document_scan = None
+            if image_file:
+                # Sauvegarder le fichier (simplifié - à améliorer avec storage)
+                file_path = f"documents/{user.id}/{image_file.name}"
+                document_scan = DocumentScan.objects.create(
+                    user=user,
+                    document_type=document_type,
+                    original_filename=image_file.name,
+                    file_path=file_path,
+                    extracted_data=data,
+                    is_processed=False
+                )
+            
+            # Créer l'ImportReview
+            review = ImportReview.objects.create(
+                user=user,
+                organization=user.organization,
+                entity_type=document_type,
+                extracted_data=data,
+                source_document=document_scan,
+                status='pending'
+            )
+            
+            return {
+                'success': True,
+                'review_id': str(review.id),
+                'message': 'Import créé, en attente de validation'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating import review: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def _auto_create_entity(self, document_type, data, user):
-        """Crée automatiquement une entité basée sur les données extraites avec entity matching"""
+        """Crée automatiquement une entité basée sur les données extraites avec entity matching (DEPRECATED - utilise ImportReview)"""
         try:
             if document_type == 'invoice':
                 from apps.invoicing.models import Invoice, Client, InvoiceItem
@@ -1086,6 +1142,70 @@ class AIUsageViewSet(viewsets.ReadOnlyModelViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """
+        GET /api/ai/usage/summary/
+
+        Résumé rapide pour le header AIChat (tokens aujourd'hui, coût, notifications)
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        from decimal import Decimal
+        from .models import AINotification
+
+        try:
+            today = timezone.now().date()
+            this_month_start = today.replace(day=1)
+
+            # Stats d'aujourd'hui
+            today_logs = AIUsageLog.objects.filter(
+                user=request.user,
+                created_at__date=today
+            )
+            today_tokens = sum(log.total_tokens for log in today_logs)
+            today_cost = sum(log.estimated_cost for log in today_logs)
+
+            # Stats du mois
+            month_logs = AIUsageLog.objects.filter(
+                user=request.user,
+                created_at__date__gte=this_month_start
+            )
+            month_tokens = sum(log.total_tokens for log in month_logs)
+            month_cost = sum(log.estimated_cost for log in month_logs)
+
+            # Nombre de notifications non lues
+            notifications_count = AINotification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count()
+
+            # Nombre de suggestions actives
+            from .suggestion_matcher import suggestion_matcher
+            suggestions = suggestion_matcher.get_suggestions_for_user(request.user, include_intelligent=True)
+            suggestions_count = len(suggestions) if suggestions else 0
+
+            return Response({
+                'today': {
+                    'tokens': today_tokens,
+                    'cost': float(today_cost),
+                    'requests': today_logs.count()
+                },
+                'month': {
+                    'tokens': month_tokens,
+                    'cost': float(month_cost),
+                    'requests': month_logs.count()
+                },
+                'notifications_count': notifications_count,
+                'suggestions_count': suggestions_count
+            })
+
+        except Exception as e:
+            logger.error(f"Error getting usage summary: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ProactiveSuggestionsView(APIView):
     """
@@ -1263,9 +1383,12 @@ class AINotificationsView(APIView):
             })
 
         except Exception as e:
-            logger.error(f"Error fetching notifications: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Error fetching notifications: {e}\n{error_trace}")
             return Response({
-                'error': str(e)
+                'error': str(e),
+                'detail': 'Vérifiez que les migrations ont été appliquées: python manage.py migrate'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -1330,3 +1453,399 @@ class AINotificationsCountView(APIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ImportReviewListView(APIView):
+    """Liste des imports en attente de révision"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/ai/import-reviews/?status=pending
+
+        Liste les imports en attente de révision
+        """
+        from .models import ImportReview
+
+        status_filter = request.query_params.get('status', 'pending')
+        
+        reviews = ImportReview.objects.filter(
+            user=request.user,
+            status=status_filter
+        ).order_by('-created_at')
+
+        data = [{
+            'id': str(review.id),
+            'entity_type': review.entity_type,
+            'status': review.status,
+            'extracted_data': review.extracted_data,
+            'modified_data': review.modified_data,
+            'notes': review.notes,
+            'created_at': review.created_at.isoformat(),
+            'updated_at': review.updated_at.isoformat(),
+            'source_document_id': str(review.source_document.id) if review.source_document else None,
+        } for review in reviews]
+
+        return Response({
+            'reviews': data,
+            'count': len(data)
+        })
+
+
+class ImportReviewDetailView(APIView):
+    """Détails d'un import review"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, review_id):
+        """
+        GET /api/ai/import-reviews/{id}/
+
+        Récupère les détails d'un import review
+        """
+        from .models import ImportReview
+
+        try:
+            review = ImportReview.objects.get(id=review_id, user=request.user)
+            
+            return Response({
+                'id': str(review.id),
+                'entity_type': review.entity_type,
+                'status': review.status,
+                'extracted_data': review.extracted_data,
+                'modified_data': review.modified_data,
+                'notes': review.notes,
+                'created_at': review.created_at.isoformat(),
+                'updated_at': review.updated_at.isoformat(),
+                'reviewed_at': review.reviewed_at.isoformat() if review.reviewed_at else None,
+                'created_entity_id': str(review.created_entity_id) if review.created_entity_id else None,
+                'source_document_id': str(review.source_document.id) if review.source_document else None,
+            })
+        except ImportReview.DoesNotExist:
+            return Response({
+                'error': 'Import review not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, review_id):
+        """
+        PATCH /api/ai/import-reviews/{id}/
+
+        Modifie les données extraites
+        """
+        from .models import ImportReview
+
+        try:
+            review = ImportReview.objects.get(id=review_id, user=request.user)
+            
+            if review.status != 'pending':
+                return Response({
+                    'error': 'Cannot modify a review that is not pending'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Mettre à jour les données modifiées
+            if 'modified_data' in request.data:
+                review.modified_data = request.data['modified_data']
+                review.status = 'modified'
+            
+            if 'notes' in request.data:
+                review.notes = request.data['notes']
+
+            review.save()
+
+            return Response({
+                'success': True,
+                'review': {
+                    'id': str(review.id),
+                    'status': review.status,
+                    'modified_data': review.modified_data,
+                }
+            })
+        except ImportReview.DoesNotExist:
+            return Response({
+                'error': 'Import review not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ImportReviewApproveView(APIView):
+    """Approuver un import et créer l'entité"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, review_id):
+        """
+        POST /api/ai/import-reviews/{id}/approve/
+
+        Approuve l'import et crée l'entité
+        """
+        from .models import ImportReview
+        from django.utils import timezone
+
+        try:
+            review = ImportReview.objects.get(id=review_id, user=request.user)
+            
+            if review.status != 'pending' and review.status != 'modified':
+                return Response({
+                    'error': 'Can only approve pending or modified reviews'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Utiliser les données modifiées si disponibles, sinon les données extraites
+            data_to_use = review.modified_data if review.modified_data else review.extracted_data
+
+            # Créer l'entité
+            creation_result = self._create_entity_from_review(review.entity_type, data_to_use, request.user)
+
+            if creation_result['success']:
+                review.status = 'approved'
+                review.reviewed_at = timezone.now()
+                review.created_entity_id = creation_result.get('entity_id')
+                review.save()
+
+                return Response({
+                    'success': True,
+                    'message': creation_result.get('message', 'Entity created successfully'),
+                    'entity_id': str(review.created_entity_id),
+                    'entity_type': review.entity_type
+                })
+            else:
+                return Response({
+                    'error': creation_result.get('error', 'Failed to create entity')
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except ImportReview.DoesNotExist:
+            return Response({
+                'error': 'Import review not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def _create_entity_from_review(self, entity_type, data, user):
+        """Crée l'entité à partir des données du review"""
+        try:
+            if entity_type == 'invoice':
+                from apps.invoicing.models import Invoice, Client, InvoiceItem
+                from .entity_matcher import entity_matcher
+
+                client_name = data.get('client_name', 'Client inconnu')
+                client_email = data.get('client_email')
+
+                similar_clients = entity_matcher.find_similar_clients(
+                    first_name=client_name,
+                    last_name='',
+                    email=client_email if client_email else None,
+                    company=client_name
+                )
+
+                if similar_clients:
+                    client = similar_clients[0][0]
+                else:
+                    client = Client.objects.create(name=client_name, email=client_email)
+
+                invoice = Invoice.objects.create(
+                    title=f"Facture {data.get('invoice_number', '')}",
+                    client=client,
+                    created_by=user
+                )
+
+                for item in data.get('items', []):
+                    InvoiceItem.objects.create(
+                        invoice=invoice,
+                        description=item.get('description', ''),
+                        quantity=item.get('quantity', 1),
+                        unit_price=item.get('unit_price', 0)
+                    )
+
+                invoice.recalculate_totals()
+
+                return {
+                    'success': True,
+                    'entity_id': invoice.id,
+                    'message': f'Facture {invoice.invoice_number} créée avec succès'
+                }
+
+            elif entity_type == 'purchase_order':
+                from apps.purchase_orders.models import PurchaseOrder, Supplier
+                from .entity_matcher import entity_matcher
+
+                supplier_name = data.get('supplier_name', 'Fournisseur inconnu')
+                supplier_email = data.get('supplier_email')
+                supplier_phone = data.get('supplier_phone')
+
+                similar_suppliers = entity_matcher.find_similar_suppliers(
+                    name=supplier_name,
+                    email=supplier_email if supplier_email else None,
+                    phone=supplier_phone if supplier_phone else None
+                )
+
+                if similar_suppliers:
+                    supplier = similar_suppliers[0][0]
+                else:
+                    supplier = Supplier.objects.create(
+                        name=supplier_name,
+                        email=supplier_email,
+                        phone=supplier_phone
+                    )
+
+                po = PurchaseOrder.objects.create(
+                    title=f"BC {data.get('po_number', '')}",
+                    supplier=supplier,
+                    created_by=user
+                )
+
+                return {
+                    'success': True,
+                    'entity_id': po.id,
+                    'message': f'Bon de commande {po.po_number} créé avec succès'
+                }
+
+            else:
+                return {
+                    'success': False,
+                    'error': f'Entity type {entity_type} not supported yet'
+                }
+
+        except Exception as e:
+            logger.error(f"Error creating entity from review: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+
+class ProactiveConversationListView(APIView):
+    """Liste des conversations proactives disponibles"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/v1/ai/proactive-conversations/
+
+        Liste les conversations proactives en attente pour l'utilisateur
+        """
+        from .models import ProactiveConversation
+
+        conversations = ProactiveConversation.objects.filter(
+            user=request.user,
+            status='pending'
+        ).order_by('-created_at')
+
+        data = [{
+            'id': str(conv.id),
+            'title': conv.title,
+            'starter_message': conv.starter_message,
+            'context_data': conv.context_data,
+            'created_at': conv.created_at.isoformat(),
+        } for conv in conversations]
+
+        return Response({
+            'conversations': data,
+            'count': len(data)
+        })
+
+
+class ProactiveConversationAcceptView(APIView):
+    """Accepter une conversation proactive"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        """
+        POST /api/v1/ai/proactive-conversations/{id}/accept/
+
+        Accepte la conversation proactive et crée la conversation
+        """
+        from .models import ProactiveConversation
+
+        try:
+            proactive_conv = ProactiveConversation.objects.get(
+                id=conversation_id,
+                user=request.user,
+                status='pending'
+            )
+        except ProactiveConversation.DoesNotExist:
+            return Response({
+                'error': 'Conversation proactive non trouvée'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            conversation = proactive_conv.accept()
+            
+            return Response({
+                'success': True,
+                'conversation_id': str(conversation.id),
+                'message': 'Conversation créée avec succès'
+            })
+        except Exception as e:
+            logger.error(f"Error accepting proactive conversation: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ProactiveConversationDismissView(APIView):
+    """Ignorer une conversation proactive"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        """
+        POST /api/v1/ai/proactive-conversations/{id}/dismiss/
+
+        Ignore la conversation proactive
+        """
+        from .models import ProactiveConversation
+
+        try:
+            proactive_conv = ProactiveConversation.objects.get(
+                id=conversation_id,
+                user=request.user,
+                status='pending'
+            )
+        except ProactiveConversation.DoesNotExist:
+            return Response({
+                'error': 'Conversation proactive non trouvée'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            proactive_conv.dismiss()
+            
+            return Response({
+                'success': True,
+                'message': 'Conversation ignorée'
+            })
+        except Exception as e:
+            logger.error(f"Error dismissing proactive conversation: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ImportReviewRejectView(APIView):
+    """Rejeter un import"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, review_id):
+        """
+        POST /api/ai/import-reviews/{id}/reject/
+
+        Rejette l'import
+        """
+        from .models import ImportReview
+        from django.utils import timezone
+
+        try:
+            review = ImportReview.objects.get(id=review_id, user=request.user)
+            
+            if review.status != 'pending':
+                return Response({
+                    'error': 'Can only reject pending reviews'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            review.status = 'rejected'
+            review.reviewed_at = timezone.now()
+            if 'notes' in request.data:
+                review.notes = request.data['notes']
+            review.save()
+
+            return Response({
+                'success': True,
+                'message': 'Import rejected'
+            })
+
+        except ImportReview.DoesNotExist:
+            return Response({
+                'error': 'Import review not found'
+            }, status=status.HTTP_404_NOT_FOUND)

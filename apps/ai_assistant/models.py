@@ -14,6 +14,10 @@ class Conversation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_message_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+    
+    # Champs pour conversations proactives
+    is_proactive = models.BooleanField(default=False, verbose_name=_("Conversation proactive"))
+    proactive_source_id = models.UUIDField(null=True, blank=True, verbose_name=_("ID source proactive"))
 
     class Meta:
         verbose_name = _("Conversation")
@@ -265,7 +269,8 @@ class AINotification(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_notifications')
-    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, related_name='ai_notifications', null=True, blank=True)
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES, verbose_name=_("Type"))
 
     # Contenu
     title = models.CharField(max_length=200, verbose_name=_("Titre"))
@@ -278,6 +283,10 @@ class AINotification(models.Model):
 
     # Métadonnées
     data = models.JSONField(default=dict, verbose_name=_("Données additionnelles"))
+    metadata = models.JSONField(default=dict, verbose_name=_("Métadonnées"))  # Alias pour compatibilité
+    
+    # Priorité
+    priority = models.IntegerField(default=5, verbose_name=_("Priorité"))  # 1-10
 
     # Statut
     is_read = models.BooleanField(default=False, verbose_name=_("Lu"))
@@ -301,4 +310,158 @@ class AINotification(models.Model):
         from django.utils import timezone
         self.is_read = True
         self.read_at = timezone.now()
+        self.save()
+
+
+class ImportReview(models.Model):
+    """Import en attente de validation utilisateur"""
+    REVIEW_STATUS = [
+        ('pending', _('En attente')),
+        ('approved', _('Approuvé')),
+        ('rejected', _('Rejeté')),
+        ('modified', _('Modifié')),
+    ]
+    ENTITY_TYPES = [
+        ('invoice', _('Facture')),
+        ('purchase_order', _('Bon de commande')),
+        ('supplier', _('Fournisseur')),
+        ('product', _('Produit')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='import_reviews', verbose_name=_("Utilisateur"))
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, related_name='import_reviews', verbose_name=_("Organisation"))
+    entity_type = models.CharField(max_length=50, choices=ENTITY_TYPES, verbose_name=_("Type d'entité"))
+    
+    # Données extraites par l'IA
+    extracted_data = models.JSONField(verbose_name=_("Données extraites"))
+    modified_data = models.JSONField(null=True, blank=True, verbose_name=_("Données modifiées"))
+    
+    # Lien vers le document source
+    source_document = models.ForeignKey(DocumentScan, on_delete=models.SET_NULL, null=True, blank=True, related_name='import_reviews', verbose_name=_("Document source"))
+    
+    # Statut de la révision
+    status = models.CharField(max_length=20, choices=REVIEW_STATUS, default='pending', verbose_name=_("Statut"))
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de révision"))
+    
+    # ID de l'entité créée après approbation
+    created_entity_id = models.UUIDField(null=True, blank=True, verbose_name=_("ID entité créée"))
+    
+    # Notes de l'utilisateur
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
+
+    class Meta:
+        verbose_name = _("Révision d'import")
+        verbose_name_plural = _("Révisions d'import")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status', '-created_at']),
+            models.Index(fields=['organization', 'status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_entity_type_display()} - {self.get_status_display()} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+    def approve(self):
+        """Marque la révision comme approuvée"""
+        from django.utils import timezone
+        self.status = 'approved'
+        self.reviewed_at = timezone.now()
+        self.save()
+
+    def reject(self):
+        """Marque la révision comme rejetée"""
+        from django.utils import timezone
+        self.status = 'rejected'
+        self.reviewed_at = timezone.now()
+        self.save()
+
+    def mark_as_modified(self):
+        """Marque la révision comme modifiée"""
+        from django.utils import timezone
+        self.status = 'modified'
+        self.reviewed_at = timezone.now()
+        self.save()
+
+
+class ProactiveConversation(models.Model):
+    """Conversation proactive initiée par l'IA"""
+    STATUS_CHOICES = [
+        ('pending', _('En attente')),
+        ('accepted', _('Acceptée')),
+        ('dismissed', _('Ignorée')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proactive_conversations', verbose_name=_("Utilisateur"))
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, related_name='proactive_conversations', verbose_name=_("Organisation"))
+    
+    # Contenu de la conversation proactive
+    title = models.CharField(max_length=200, verbose_name=_("Titre"))
+    starter_message = models.TextField(verbose_name=_("Message de démarrage"))
+    
+    # Données contextuelles analysées
+    context_data = models.JSONField(default=dict, verbose_name=_("Données contextuelles"))
+    
+    # Statut
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_("Statut"))
+    
+    # Lien vers la conversation créée si acceptée
+    conversation = models.ForeignKey(Conversation, on_delete=models.SET_NULL, null=True, blank=True, related_name='proactive_source', verbose_name=_("Conversation"))
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    accepted_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'acceptation"))
+    dismissed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'ignorance"))
+
+    class Meta:
+        verbose_name = _("Conversation proactive")
+        verbose_name_plural = _("Conversations proactives")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status', '-created_at']),
+            models.Index(fields=['organization', 'status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username} ({self.get_status_display()})"
+
+    def accept(self):
+        """Accepte la conversation proactive et crée la conversation"""
+        from django.utils import timezone
+        
+        self.status = 'accepted'
+        self.accepted_at = timezone.now()
+        
+        # Créer la conversation
+        conversation = Conversation.objects.create(
+            user=self.user,
+            title=self.title,
+            is_proactive=True,
+            proactive_source_id=self.id
+        )
+        self.conversation = conversation
+        
+        # Créer le message de démarrage de l'IA
+        Message.objects.create(
+            conversation=conversation,
+            role='assistant',
+            content=self.starter_message,
+            metadata={
+                'is_proactive': True,
+                'proactive_source_id': str(self.id),
+                'context_data': self.context_data
+            }
+        )
+        
+        self.save()
+        return conversation
+
+    def dismiss(self):
+        """Ignore la conversation proactive"""
+        from django.utils import timezone
+        self.status = 'dismissed'
+        self.dismissed_at = timezone.now()
         self.save()

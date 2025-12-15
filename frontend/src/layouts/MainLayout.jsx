@@ -21,6 +21,7 @@ import {
   useTheme,
   Tooltip,
   alpha,
+  Badge,
 } from '@mui/material';
 import {
   Add,
@@ -30,6 +31,10 @@ import {
   DarkMode,
   LightMode,
   PictureAsPdf,
+  Notifications,
+  Lightbulb,
+  Menu as MenuIcon,
+  Assignment,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
@@ -55,9 +60,11 @@ function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [dashboardPeriod, setDashboardPeriod] = useState('last_30_days');
+  const [aiChatStats, setAiChatStats] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { toggleColorMode, mode } = useColorMode();
+  const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
 
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
 
@@ -70,6 +77,34 @@ function MainLayout() {
     window.addEventListener('dashboard-period-change', handlePeriodChange);
     return () => window.removeEventListener('dashboard-period-change', handlePeriodChange);
   }, []);
+
+  // Écouter les mises à jour des stats AI Chat
+  useEffect(() => {
+    const handleAIStatsUpdate = (event) => {
+      if (event.detail?.stats) {
+        setAiChatStats(event.detail.stats);
+      }
+    };
+    window.addEventListener('ai-chat-stats-update', handleAIStatsUpdate);
+    return () => window.removeEventListener('ai-chat-stats-update', handleAIStatsUpdate);
+  }, []);
+
+  // Handlers pour les boutons AI Chat
+  const handleAIChatNotificationsClick = () => {
+    window.dispatchEvent(new CustomEvent('ai-chat-open-notifications'));
+  };
+
+  const handleAIChatSuggestionsClick = () => {
+    window.dispatchEvent(new CustomEvent('ai-chat-open-suggestions'));
+  };
+
+  const handleAIChatConversationsClick = () => {
+    window.dispatchEvent(new CustomEvent('ai-chat-open-conversations'));
+  };
+
+  const handleAIChatImportReviewsClick = () => {
+    navigate('/ai-chat/import-reviews');
+  };
 
   const menuItems = [
     { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: true },
@@ -419,278 +454,361 @@ function MainLayout() {
   return (
     <AINotificationProvider>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Top Bar */}
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: alpha(theme.palette.background.paper, 0.8),
-          backdropFilter: 'blur(12px)',
-          color: 'text.primary',
-        }}
-      >
-        <Toolbar sx={{ minHeight: { xs: 56, sm: 60 }, px: { xs: 2, sm: 3 } }}>
-          <Typography
-            variant="h6"
-            noWrap
-            sx={{
-              flexGrow: 1,
-              fontWeight: 600,
-              fontSize: '0.938rem',
-              color: 'text.primary',
-            }}
-          >
-            {contextualActions?.title || 'Procura'}
-          </Typography>
-
-          {/* Period controls for dashboard */}
-          {contextualActions?.periodControls && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
-              {['last_7_days', 'last_30_days', 'this_month'].map((period, i) => (
-                <Button
-                  key={period}
-                  size="small"
-                  onClick={() => contextualActions.onPeriodChange(period)}
-                  variant={contextualActions.currentPeriod === period ? 'contained' : 'text'}
-                  sx={{
-                    minWidth: 'auto',
-                    px: 1,
-                    py: 0.5,
-                    fontSize: '0.688rem',
-                    borderRadius: 1,
-                    fontWeight: 500,
-                    color: contextualActions.currentPeriod === period ? 'white' : 'text.secondary',
-                  }}
-                >
-                  {['7j', '30j', 'Mois'][i]}
-                </Button>
-              ))}
-              <Tooltip title="Actualiser">
-                <IconButton
-                  onClick={contextualActions.onRefresh}
-                  size="small"
-                  sx={{ ml: 0.5, color: 'text.secondary' }}
-                >
-                  <Refresh sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          )}
-
-          {/* Actions */}
-          {contextualActions?.actions?.map((action, index) => (
-            action.isIconOnly ? (
-              <Tooltip key={index} title={action.tooltip || action.label}>
-                <IconButton onClick={action.onClick} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
-                  {action.icon}
-                </IconButton>
-              </Tooltip>
-            ) : (
-              <Button
-                key={index}
-                variant="contained"
-                startIcon={action.icon}
-                onClick={action.onClick}
-                size="small"
-                sx={{ borderRadius: 1.5, fontWeight: 500, px: 1.5, py: 0.5, fontSize: '0.75rem', mr: 0.5 }}
-              >
-                {action.label}
-              </Button>
-            )
-          ))}
-
-          {/* Legacy action support - Label court sur mobile */}
-          {contextualActions?.action && !contextualActions?.actions && (
-            <Button
-              variant="contained"
-              startIcon={contextualActions.action.icon}
-              onClick={contextualActions.action.onClick}
-              size="small"
-              disableElevation
+        {/* Top Bar */}
+        <AppBar
+          position="fixed"
+          elevation={0}
+          sx={{
+            width: { md: `calc(100% - ${drawerWidth}px)` },
+            ml: { md: `${drawerWidth}px` },
+            bgcolor: alpha(theme.palette.background.paper, 0.8),
+            backdropFilter: 'blur(12px)',
+            color: 'text.primary',
+          }}
+        >
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 }, px: { xs: 2, sm: 3 } }}>
+            <Typography
+              variant="h6"
+              noWrap
               sx={{
-                borderRadius: 2,
+                flexGrow: 1,
                 fontWeight: 600,
-                px: { xs: 1.5, sm: 2 },
-                py: 0.75,
-                fontSize: '0.813rem',
-                mr: 1.5,
-                bgcolor: 'primary.main',
-                color: 'white',
-                textTransform: 'none',
-                letterSpacing: '0.01em',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                },
-              }}
-            >
-              {isMobile ? t('navigation:topBar.new', 'Nouveau') : (contextualActions.action.label || t('navigation:topBar.new', 'Nouveau'))}
-            </Button>
-          )}
-
-          {/* Bouton Rapport PDF - Label court sur mobile */}
-          {reportAction && (
-            <Button
-              variant="outlined"
-              startIcon={<PictureAsPdf fontSize="small" />}
-              onClick={reportAction.onClick}
-              size="small"
-              sx={{
-                borderRadius: 2,
-                fontWeight: 500,
-                px: { xs: 1.5, sm: 1.5 },
-                py: 0.75,
-                fontSize: '0.813rem',
-                mr: 1.5,
-                borderColor: 'text.secondary',
+                fontSize: '0.938rem',
                 color: 'text.primary',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.1 : 0.05),
-                },
               }}
             >
-              {isMobile ? t('navigation:topBar.report', 'Rapport') : reportAction.label}
-            </Button>
-          )}
+              {contextualActions?.title || 'Procura'}
+            </Typography>
 
-          {/* Theme Toggle */}
-          <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
-            <IconButton onClick={toggleColorMode} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
-              {mode === 'dark' ? <LightMode sx={{ fontSize: 20 }} /> : <DarkMode sx={{ fontSize: 20 }} />}
+            {/* Boutons AI Chat dans la toolbar */}
+            {isAIChatPage && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
+                {/* Import Reviews */}
+                <Tooltip title="Imports en attente">
+                  <IconButton
+                    size="small"
+                    onClick={handleAIChatImportReviewsClick}
+                    sx={{
+                      p: 0.75,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.action.hover, 0.05),
+                      }
+                    }}
+                  >
+                    <Assignment sx={{ fontSize: 18, color: '#10b981' }} />
+                  </IconButton>
+                </Tooltip>
+
+                {/* Notifications */}
+                <Tooltip title="Notifications IA">
+                  <IconButton
+                    size="small"
+                    onClick={handleAIChatNotificationsClick}
+                    sx={{
+                      p: 0.75,
+                      bgcolor: aiChatStats?.notifications_count > 0
+                        ? alpha('#f59e0b', 0.15)
+                        : 'transparent',
+                      '&:hover': {
+                        bgcolor: aiChatStats?.notifications_count > 0
+                          ? alpha('#f59e0b', 0.25)
+                          : alpha(theme.palette.action.hover, 0.05),
+                      }
+                    }}
+                  >
+                    <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" max={9}>
+                      <Notifications sx={{ fontSize: 18 }} />
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+
+                {/* Suggestions */}
+                <Tooltip title="Suggestions actives">
+                  <IconButton
+                    size="small"
+                    onClick={handleAIChatSuggestionsClick}
+                    sx={{
+                      p: 0.75,
+                      bgcolor: aiChatStats?.suggestions_count > 0
+                        ? alpha('#8b5cf6', 0.15)
+                        : 'transparent',
+                      '&:hover': {
+                        bgcolor: aiChatStats?.suggestions_count > 0
+                          ? alpha('#8b5cf6', 0.25)
+                          : alpha(theme.palette.action.hover, 0.05),
+                      }
+                    }}
+                  >
+                    <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" max={9}>
+                      <Lightbulb sx={{ fontSize: 18 }} />
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+
+                {/* Burger menu pour conversations */}
+                <Tooltip title="Historique des conversations">
+                  <IconButton
+                    size="small"
+                    onClick={handleAIChatConversationsClick}
+                    sx={{
+                      p: 0.75,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.action.hover, 0.05),
+                      }
+                    }}
+                  >
+                    <MenuIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
+
+            {/* Period controls for dashboard */}
+            {contextualActions?.periodControls && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
+                {['last_7_days', 'last_30_days', 'this_month'].map((period, i) => (
+                  <Button
+                    key={period}
+                    size="small"
+                    onClick={() => contextualActions.onPeriodChange(period)}
+                    variant={contextualActions.currentPeriod === period ? 'contained' : 'text'}
+                    sx={{
+                      minWidth: 'auto',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '0.688rem',
+                      borderRadius: 1,
+                      fontWeight: 500,
+                      color: contextualActions.currentPeriod === period ? 'white' : 'text.secondary',
+                    }}
+                  >
+                    {['7j', '30j', 'Mois'][i]}
+                  </Button>
+                ))}
+                <Tooltip title="Actualiser">
+                  <IconButton
+                    onClick={contextualActions.onRefresh}
+                    size="small"
+                    sx={{ ml: 0.5, color: 'text.secondary' }}
+                  >
+                    <Refresh sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
+
+            {/* Actions */}
+            {contextualActions?.actions?.map((action, index) => (
+              action.isIconOnly ? (
+                <Tooltip key={index} title={action.tooltip || action.label}>
+                  <IconButton onClick={action.onClick} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
+                    {action.icon}
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Button
+                  key={index}
+                  variant="contained"
+                  startIcon={action.icon}
+                  onClick={action.onClick}
+                  size="small"
+                  sx={{ borderRadius: 1.5, fontWeight: 500, px: 1.5, py: 0.5, fontSize: '0.75rem', mr: 0.5 }}
+                >
+                  {action.label}
+                </Button>
+              )
+            ))}
+
+            {/* Legacy action support - Label court sur mobile */}
+            {contextualActions?.action && !contextualActions?.actions && (
+              <Button
+                variant="contained"
+                startIcon={contextualActions.action.icon}
+                onClick={contextualActions.action.onClick}
+                size="small"
+                disableElevation
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  px: { xs: 1.5, sm: 2 },
+                  py: 0.75,
+                  fontSize: '0.813rem',
+                  mr: 1.5,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  textTransform: 'none',
+                  letterSpacing: '0.01em',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                {isMobile ? t('navigation:topBar.new', 'Nouveau') : (contextualActions.action.label || t('navigation:topBar.new', 'Nouveau'))}
+              </Button>
+            )}
+
+            {/* Bouton Rapport PDF - Label court sur mobile */}
+            {reportAction && (
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdf fontSize="small" />}
+                onClick={reportAction.onClick}
+                size="small"
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 500,
+                  px: { xs: 1.5, sm: 1.5 },
+                  py: 0.75,
+                  fontSize: '0.813rem',
+                  mr: 1.5,
+                  borderColor: 'text.secondary',
+                  color: 'text.primary',
+                  textTransform: 'none',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.1 : 0.05),
+                  },
+                }}
+              >
+                {isMobile ? t('navigation:topBar.report', 'Rapport') : reportAction.label}
+              </Button>
+            )}
+
+            {/* Theme Toggle */}
+            <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
+              <IconButton onClick={toggleColorMode} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
+                {mode === 'dark' ? <LightMode sx={{ fontSize: 20 }} /> : <DarkMode sx={{ fontSize: 20 }} />}
+              </IconButton>
+            </Tooltip>
+
+            {/* Tutorial Button */}
+            <TutorialButton variant="icon" size="small" />
+
+            {/* User Avatar */}
+            <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 0.5 }} data-tutorial="profile-menu">
+              <Avatar
+                sx={{
+                  width: 34,
+                  height: 34,
+                  bgcolor: 'primary.main',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                }}
+              >
+                {useSelector((state) => {
+                  const user = state.auth.user;
+                  const orgName = user?.organization?.name;
+                  if (orgName) return orgName.substring(0, 2).toUpperCase();
+                  if (user?.first_name && user?.last_name) {
+                    return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+                  }
+                  return user?.email?.[0]?.toUpperCase() || 'P';
+                })}
+              </Avatar>
             </IconButton>
-          </Tooltip>
 
-          {/* Tutorial Button */}
-          <TutorialButton variant="icon" size="small" />
-
-          {/* User Avatar */}
-          <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 0.5 }} data-tutorial="profile-menu">
-            <Avatar
-              sx={{
-                width: 34,
-                height: 34,
-                bgcolor: 'primary.main',
-                fontWeight: 600,
-                fontSize: '0.75rem',
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              PaperProps={{
+                sx: { mt: 1, minWidth: 180 },
               }}
             >
-              {useSelector((state) => {
-                const user = state.auth.user;
-                const orgName = user?.organization?.name;
-                if (orgName) return orgName.substring(0, 2).toUpperCase();
-                if (user?.first_name && user?.last_name) {
-                  return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-                }
-                return user?.email?.[0]?.toUpperCase() || 'P';
-              })}
-            </Avatar>
-          </IconButton>
+              <MenuItem
+                onClick={() => { navigate('/settings'); handleMenuClose(); }}
+                data-tutorial="menu-settings-profile"
+                sx={{ py: 1, px: 2, fontSize: '0.813rem' }}
+              >
+                <ListItemIcon>
+                  <IconImage src="/icon/setting.png" alt="Settings" size={18} withBackground={mode === 'dark'} />
+                </ListItemIcon>
+                {t('navigation:userMenu.settings')}
+              </MenuItem>
+              <MenuItem onClick={handleLogout} sx={{ py: 1, px: 2, fontSize: '0.813rem' }}>
+                <ListItemIcon>
+                  <IconImage src="/icon/logout.png" alt="Logout" size={18} withBackground={mode === 'dark'} />
+                </ListItemIcon>
+                {t('navigation:userMenu.logout')}
+              </MenuItem>
+            </Menu>
+          </Toolbar>
+        </AppBar>
 
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            PaperProps={{
-              sx: { mt: 1, minWidth: 180 },
+        {/* Sidebar */}
+        <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+          {/* Mobile Drawer */}
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              display: { xs: 'block', md: 'none' },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: drawerWidth,
+                bgcolor: 'background.paper',
+              },
             }}
           >
-            <MenuItem
-              onClick={() => { navigate('/settings'); handleMenuClose(); }}
-              data-tutorial="menu-settings-profile"
-              sx={{ py: 1, px: 2, fontSize: '0.813rem' }}
-            >
-              <ListItemIcon>
-                <IconImage src="/icon/setting.png" alt="Settings" size={18} withBackground={mode === 'dark'} />
-              </ListItemIcon>
-              {t('navigation:userMenu.settings')}
-            </MenuItem>
-            <MenuItem onClick={handleLogout} sx={{ py: 1, px: 2, fontSize: '0.813rem' }}>
-              <ListItemIcon>
-                <IconImage src="/icon/logout.png" alt="Logout" size={18} withBackground={mode === 'dark'} />
-              </ListItemIcon>
-              {t('navigation:userMenu.logout')}
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
+            {drawer}
+          </Drawer>
 
-      {/* Sidebar */}
-      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        {/* Mobile Drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              bgcolor: 'background.paper',
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-
-        {/* Desktop Drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              bgcolor: 'background.paper',
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      {/* Main Content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: { xs: 2, sm: 2.5 },
-          pb: { xs: 10, sm: 2.5 },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-        }}
-      >
-        <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
-        <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
-          <Outlet />
+          {/* Desktop Drawer */}
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: drawerWidth,
+                bgcolor: 'background.paper',
+              },
+            }}
+            open
+          >
+            {drawer}
+          </Drawer>
         </Box>
-      </Box>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav enabledModules={enabledModules} />
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: { xs: 2, sm: 2.5 },
+            pb: { xs: 10, sm: 2.5 },
+            width: { md: `calc(100% - ${drawerWidth}px)` },
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
+          <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
+            <Outlet />
+          </Box>
+        </Box>
 
-      {/* Permanent AI Assistant */}
-      {!isMobile && <PermanentAIAssistant currentModule={currentModule} />}
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav enabledModules={enabledModules} />
 
-      {/* Module Activation Dialog */}
-      <ModuleActivationDialog
-        open={moduleActivationDialogOpen}
-        moduleId={selectedModule}
-        onClose={() => setModuleActivationDialogOpen(false)}
-        onActivate={handleActivateModule}
-      />
+        {/* Permanent AI Assistant */}
+        {!isMobile && <PermanentAIAssistant currentModule={currentModule} />}
 
-      {/* Tutorial System */}
-      <SimpleTutorial />
+        {/* Module Activation Dialog */}
+        <ModuleActivationDialog
+          open={moduleActivationDialogOpen}
+          moduleId={selectedModule}
+          onClose={() => setModuleActivationDialogOpen(false)}
+          onActivate={handleActivateModule}
+        />
+
+        {/* Tutorial System */}
+        <SimpleTutorial />
       </Box>
     </AINotificationProvider>
   );

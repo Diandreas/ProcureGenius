@@ -1,6 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BottomNavigation, BottomNavigationAction, Paper, Box, useTheme, alpha } from '@mui/material';
+import { BottomNavigation, BottomNavigationAction, Paper, Box, useTheme, alpha, Badge } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
+import { aiChatAPI } from '../services/api';
 import IconImage from './IconImage';
 
 function MobileBottomNav({ enabledModules = ['dashboard'] }) {
@@ -9,6 +11,24 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const location = useLocation();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [notificationsCount, setNotificationsCount] = useState(0);
+
+  // Récupérer le count de notifications au chargement et toutes les 30 secondes
+  useEffect(() => {
+    const fetchNotificationsCount = async () => {
+      try {
+        const response = await aiChatAPI.getNotificationsCount();
+        setNotificationsCount(response.data.count || 0);
+      } catch (error) {
+        console.error('Error fetching notifications count:', error);
+      }
+    };
+
+    fetchNotificationsCount();
+    const interval = setInterval(fetchNotificationsCount, 30000); // Poll toutes les 30s
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Couleur beige/crème chaude
   const bgColor = '#fef7ed';
@@ -162,36 +182,52 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
           onClick={() => navigate(aiItem.value)}
           data-tutorial="ai-button"
         >
-          <Box
+          <Badge
+            badgeContent={notificationsCount}
+            color="error"
+            max={9}
+            overlap="circular"
             sx={{
-              width: 50,
-              height: 50,
-              borderRadius: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: isAIActive 
-                ? 'primary.main' 
-                : (isDark ? bgColor : alpha(theme.palette.primary.main, 0.08)),
-              transition: 'all 0.2s ease',
-              boxShadow: isAIActive 
-                ? '0 4px 14px rgba(37, 99, 235, 0.35)' 
-                : (isDark ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'),
-              transform: isAIActive ? 'translateY(-4px)' : 'translateY(0)',
+              '& .MuiBadge-badge': {
+                fontSize: '0.625rem',
+                height: 18,
+                minWidth: 18,
+                padding: '0 4px',
+                fontWeight: 700,
+              },
             }}
           >
             <Box
-              component="img"
-              src={aiItem.icon}
-              alt="Assistant IA"
               sx={{
-                width: 28,
-                height: 28,
-                objectFit: 'contain',
-                filter: isAIActive && !isDark ? 'brightness(0) invert(1)' : 'none',
+                width: 50,
+                height: 50,
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: isAIActive
+                  ? 'primary.main'
+                  : (isDark ? bgColor : alpha(theme.palette.primary.main, 0.08)),
+                transition: 'all 0.2s ease',
+                boxShadow: isAIActive
+                  ? '0 4px 14px rgba(37, 99, 235, 0.35)'
+                  : (isDark ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'),
+                transform: isAIActive ? 'translateY(-4px)' : 'translateY(0)',
               }}
-            />
-          </Box>
+            >
+              <Box
+                component="img"
+                src={aiItem.icon}
+                alt="Assistant IA"
+                sx={{
+                  width: 28,
+                  height: 28,
+                  objectFit: 'contain',
+                  filter: isAIActive && !isDark ? 'brightness(0) invert(1)' : 'none',
+                }}
+              />
+            </Box>
+          </Badge>
           <Box
             component="span"
             sx={{

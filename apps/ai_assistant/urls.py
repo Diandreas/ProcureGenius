@@ -35,6 +35,12 @@ urlpatterns = [
     path('notifications/count/', views.AINotificationsCountView.as_view(), name='notifications_count'),
     path('notifications/<uuid:notification_id>/mark-read/', views.AINotificationMarkReadView.as_view(), name='notification_mark_read'),
 
+    # Import Reviews
+    path('import-reviews/', views.ImportReviewListView.as_view(), name='import_reviews_list'),
+    path('import-reviews/<uuid:review_id>/', views.ImportReviewDetailView.as_view(), name='import_review_detail'),
+    path('import-reviews/<uuid:review_id>/approve/', views.ImportReviewApproveView.as_view(), name='import_review_approve'),
+    path('import-reviews/<uuid:review_id>/reject/', views.ImportReviewRejectView.as_view(), name='import_review_reject'),
+
     # AI Usage Monitoring (ViewSet routes)
     path('', include(router.urls)),
 ]

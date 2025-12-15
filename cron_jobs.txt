@@ -1,0 +1,31 @@
+# Configuration des tâches cron pour le module IA
+# Ces tâches doivent être ajoutées au crontab du serveur
+
+# Génération de suggestions asynchrones - Toutes les heures
+0 * * * * cd /chemin/vers/ProcureGenius && python manage.py generate_async_suggestions >> /var/log/procuregenius/async_suggestions.log 2>&1
+
+# Génération de conversations proactives - Quotidiennement à 8h du matin
+0 8 * * * cd /chemin/vers/ProcureGenius && python manage.py generate_proactive_conversations >> /var/log/procuregenius/proactive_conversations.log 2>&1
+
+# Nettoyage des suggestions anciennes - Hebdomadaire (dimanche à 2h du matin)
+0 2 * * 0 cd /chemin/vers/ProcureGenius && python manage.py generate_async_suggestions --cleanup --cleanup-days 30 >> /var/log/procuregenius/cleanup_suggestions.log 2>&1
+
+# Instructions pour Windows (Task Scheduler):
+# 1. Ouvrir le Planificateur de tâches Windows
+# 2. Créer une tâche de base
+# 3. Déclencheur: Répéter toutes les heures
+# 4. Action: Démarrer un programme
+#    Programme: python
+#    Arguments: manage.py generate_async_suggestions
+#    Dossier de départ: D:\project\BFMa\ProcureGenius
+
+# Instructions pour Linux/Mac:
+# 1. Éditer le crontab: crontab -e
+# 2. Ajouter les lignes ci-dessus (en remplaçant /chemin/vers/ProcureGenius par le chemin réel)
+# 3. Sauvegarder et quitter
+
+# Notes:
+# - Assurez-vous que Python est dans le PATH
+# - Créez les dossiers de logs si nécessaire: mkdir -p /var/log/procuregenius
+# - Vérifiez les permissions d'écriture pour les logs
+

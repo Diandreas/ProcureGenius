@@ -400,3 +400,41 @@ def _get_default_permissions_for_role(role):
             'can_view_analytics': False,
             'can_approve_purchases': False,
         }
+
+
+class EmailConfiguration(models.Model):
+    """Configuration SMTP par organisation"""
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='email_config',
+        verbose_name=_("Organisation")
+    )
+    smtp_host = models.CharField(max_length=255, verbose_name=_("Serveur SMTP"))
+    smtp_port = models.IntegerField(default=587, verbose_name=_("Port SMTP"))
+    smtp_username = models.CharField(max_length=255, verbose_name=_("Nom d'utilisateur SMTP"))
+    smtp_password_encrypted = models.TextField(verbose_name=_("Mot de passe SMTP (chiffré)"))
+    use_tls = models.BooleanField(default=True, verbose_name=_("Utiliser TLS"))
+    use_ssl = models.BooleanField(default=False, verbose_name=_("Utiliser SSL"))
+    default_from_email = models.EmailField(verbose_name=_("Email expéditeur par défaut"))
+    default_from_name = models.CharField(max_length=100, verbose_name=_("Nom expéditeur par défaut"))
+    is_verified = models.BooleanField(default=False, verbose_name=_("Vérifié"))
+    last_verified_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière vérification"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
+
+    class Meta:
+        verbose_name = _("Configuration email")
+        verbose_name_plural = _("Configurations email")
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Email config - {self.organization.name}"
+
+    def get_decrypted_password(self):
+        """Récupère le mot de passe déchiffré"""
+        from apps.core.encryption import decrypt_value
+        try:
+            return decrypt_value(self.smtp_password_encrypted)
+        except Exception:
+            return None

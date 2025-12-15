@@ -34,6 +34,8 @@ import Clients from './pages/clients/Clients';
 import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
 import AIChat from './pages/ai-chat/AIChat';
+import ImportReviews from './pages/ai-chat/ImportReviews';
+import DocumentImport from './pages/ai-chat/DocumentImport';
 import Settings from './pages/settings/Settings';
 import UserManagement from './pages/settings/UserManagement';
 import SourcingEvents from './pages/e-sourcing/SourcingEvents';
@@ -664,6 +666,8 @@ function App() {
 
                             {/* AI Chat */}
                             <Route path="/ai-chat" element={<AIChat />} />
+                            <Route path="/ai-chat/import-reviews" element={<ImportReviews />} />
+                            <Route path="/ai-chat/document-import" element={<DocumentImport />} />
 
                             {/* Settings */}
                             <Route path="/settings" element={<Settings />} />

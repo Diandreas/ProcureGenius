@@ -155,6 +155,25 @@ export const aiChatAPI = {
     const params = category ? { category } : {};
     return api.get('/ai/quick-actions/', { params });
   },
+  // Generic get method for AI endpoints
+  get: (url) => api.get(`/ai${url}`),
+  post: (url, data) => api.post(`/ai${url}`, data),
+  patch: (url, data) => api.patch(`/ai${url}`, data),
+  // Specific methods
+  getUsageSummary: () => api.get('/ai/usage/summary/'),
+  getSuggestions: () => api.get('/ai/suggestions/'),
+  getNotifications: (unreadOnly = true) => api.get(`/ai/notifications/?unread_only=${unreadOnly}`),
+  getNotificationsCount: () => api.get('/ai/notifications/count/'),
+  markNotificationRead: (id) => api.post(`/ai/notifications/${id}/mark-read/`),
+  getImportReviews: (status = 'pending') => api.get(`/ai/import-reviews/?status=${status}`),
+  getImportReview: (id) => api.get(`/ai/import-reviews/${id}/`),
+  approveImportReview: (id) => api.post(`/ai/import-reviews/${id}/approve/`),
+  rejectImportReview: (id) => api.post(`/ai/import-reviews/${id}/reject/`),
+  updateImportReview: (id, data) => api.patch(`/ai/import-reviews/${id}/`, data),
+  // Proactive Conversations
+  getProactiveConversations: () => api.get('/ai/proactive-conversations/'),
+  acceptProactiveConversation: (id) => api.post(`/ai/proactive-conversations/${id}/accept/`),
+  dismissProactiveConversation: (id) => api.post(`/ai/proactive-conversations/${id}/dismiss/`),
 };
 
 // Contracts API

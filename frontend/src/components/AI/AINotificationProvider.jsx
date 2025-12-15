@@ -16,7 +16,7 @@ const AINotificationProvider = ({ children }) => {
   // Poll les notifications toutes les 30 secondes
   const checkForNotifications = useCallback(async () => {
     try {
-      const response = await aiChatAPI.get('/ai/notifications/?unread_only=true');
+      const response = await aiChatAPI.getNotifications(true);
 
       if (response.data.notifications && response.data.notifications.length > 0) {
         // Afficher la première notification non lue
@@ -50,7 +50,7 @@ const AINotificationProvider = ({ children }) => {
     // Marquer comme lu
     if (notification) {
       try {
-        await aiChatAPI.post(`/ai/notifications/${notification.id}/mark-read/`);
+        await aiChatAPI.markNotificationRead(notification.id);
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
