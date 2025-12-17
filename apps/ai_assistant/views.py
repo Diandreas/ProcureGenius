@@ -438,9 +438,11 @@ class ChatView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            logger.error(f"Chat error: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Chat error: {e}\n{error_trace}")
             return Response(
-                {'error': 'An error occurred while processing your request'},
+                {'error': 'An error occurred while processing your request', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -522,12 +524,35 @@ class DocumentAnalysisView(APIView):
         if 'image' in request.FILES:
             image_file = request.FILES['image']
             document_type = request.data.get('document_type', 'invoice')
+            
+            # Valider que le fichier est bien présent
+            if not image_file:
+                return Response(
+                    {'error': 'No image file provided'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             auto_create = request.data.get('auto_create', 'false').lower() == 'true'
             
             try:
                 # 🚀 ANALYSE DIRECTE AVEC PIXTRAL (Vision AI)
                 # +30% précision, -50% coûts, 2x plus rapide vs OCR+Mistral
-                from .pixtral_service import pixtral_service
+                from .pixtral_service import pixtral_service, PDF_SUPPORT
+                
+                # Vérifier si c'est un PDF et si le support est disponible
+                is_pdf = (
+                    image_file.content_type == 'application/pdf' or
+                    image_file.name.lower().endswith('.pdf')
+                )
+                
+                if is_pdf and not PDF_SUPPORT:
+                    return Response(
+                        {
+                            'error': 'Les PDFs nécessitent PyMuPDF. Installez-le avec: pip install PyMuPDF',
+                            'requires_pymupdf': True
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 ai_result = pixtral_service.analyze_document_image(
                     image=image_file,
@@ -621,6 +646,20 @@ class DocumentAnalysisView(APIView):
         from django.utils import timezone
         import os
         
+        # Mapper les types de documents du frontend vers les types acceptés par le backend
+        document_type_mapping = {
+            'invoice': 'invoice',
+            'purchase_order': 'purchase_order',
+            'supplier_list': 'supplier',
+            'product_catalog': 'product',
+            'contract': 'invoice',  # Les contrats sont traités comme des factures
+            'financial_report': 'invoice',  # Les rapports financiers sont traités comme des factures
+            'mixed_document': 'invoice',  # Les documents mixtes sont traités comme des factures
+        }
+        
+        # Convertir le type de document
+        mapped_type = document_type_mapping.get(document_type, 'invoice')
+        
         try:
             # Créer un DocumentScan si image fournie
             document_scan = None
@@ -629,18 +668,25 @@ class DocumentAnalysisView(APIView):
                 file_path = f"documents/{user.id}/{image_file.name}"
                 document_scan = DocumentScan.objects.create(
                     user=user,
-                    document_type=document_type,
+                    document_type=document_type,  # Garder le type original pour DocumentScan
                     original_filename=image_file.name,
                     file_path=file_path,
                     extracted_data=data,
                     is_processed=False
                 )
             
-            # Créer l'ImportReview
+            # Vérifier que l'utilisateur a une organisation
+            if not user.organization:
+                return {
+                    'success': False,
+                    'error': 'User has no organization assigned'
+                }
+            
+            # Créer l'ImportReview avec le type mappé
             review = ImportReview.objects.create(
                 user=user,
                 organization=user.organization,
-                entity_type=document_type,
+                entity_type=mapped_type,  # Utiliser le type mappé
                 extracted_data=data,
                 source_document=document_scan,
                 status='pending'
@@ -653,7 +699,9 @@ class DocumentAnalysisView(APIView):
             }
             
         except Exception as e:
-            logger.error(f"Error creating import review: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Error creating import review: {e}\n{error_trace}")
             return {
                 'success': False,
                 'error': str(e)
@@ -1218,8 +1266,10 @@ class ProactiveSuggestionsView(APIView):
         GET /api/ai/suggestions/
 
         Retourne les suggestions actives pour l'utilisateur connecté
+        Inclut les ProactiveSuggestions et les ProactiveConversations avec actions d'envoi d'email
         """
         from .suggestion_matcher import suggestion_matcher
+        from .models import ProactiveConversation
 
         try:
             # Récupérer suggestions pour l'utilisateur
@@ -1239,6 +1289,59 @@ class ProactiveSuggestionsView(APIView):
                 'action_url': suggestion.action_url,
                 'priority': suggestion.priority
             } for suggestion in suggestions]
+
+            # Ajouter les ProactiveConversations avec actions d'envoi d'email
+            email_conversations = ProactiveConversation.objects.filter(
+                user=request.user,
+                status='pending',
+                context_data__template_key__in=['invoices_to_send', 'invoices_followup', 'purchase_orders_to_send']
+            ).order_by('-created_at')[:5]
+
+            for conv in email_conversations:
+                template_key = conv.context_data.get('template_key')
+                context = conv.context_data.get('analysis_context', {})
+                
+                # Créer les actions selon le type
+                actions = []
+                if template_key == 'invoices_to_send':
+                    for invoice in context.get('invoices', []):
+                        actions.append({
+                            'type': 'send_invoice_email',
+                            'label': f"Envoyer {invoice.get('number', '')}",
+                            'invoice_id': invoice.get('id'),
+                            'invoice_number': invoice.get('number'),
+                            'client_name': invoice.get('client_name')
+                        })
+                elif template_key == 'invoices_followup':
+                    for invoice in context.get('invoices', []):
+                        actions.append({
+                            'type': 'send_invoice_email',
+                            'label': f"Relancer {invoice.get('number', '')}",
+                            'invoice_id': invoice.get('id'),
+                            'invoice_number': invoice.get('number'),
+                            'client_name': invoice.get('client_name')
+                        })
+                elif template_key == 'purchase_orders_to_send':
+                    for po in context.get('purchase_orders', []):
+                        actions.append({
+                            'type': 'send_purchase_order_email',
+                            'label': f"Envoyer {po.get('number', '')}",
+                            'po_id': po.get('id'),
+                            'po_number': po.get('number'),
+                            'supplier_name': po.get('supplier_name')
+                        })
+
+                suggestions_data.append({
+                    'id': f"conv_{conv.id}",
+                    'type': 'email_action',
+                    'title': conv.title,
+                    'message': conv.starter_message,
+                    'action_label': 'Envoyer maintenant',
+                    'action_url': None,
+                    'priority': conv.context_data.get('priority', 7),
+                    'actions': actions,
+                    'template_key': template_key
+                })
 
             return Response({
                 'suggestions': suggestions_data,

@@ -53,7 +53,6 @@ import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
-import SmartInvoiceUpload from '../../components/SmartInvoiceUpload';
 
 function InvoiceForm() {
   const { t } = useTranslation(['invoices', 'common']);
@@ -159,15 +158,22 @@ function InvoiceForm() {
   };
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (item.total_price || 0), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
+    return isNaN(subtotal) ? 0 : subtotal;
   };
 
   const calculateTaxAmount = () => {
-    return (calculateSubtotal() * formData.tax_rate) / 100;
+    const taxRate = formData.tax_rate || 0;
+    const subtotal = calculateSubtotal();
+    const taxAmount = (subtotal * taxRate) / 100;
+    return isNaN(taxAmount) ? 0 : taxAmount;
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTaxAmount();
+    const subtotal = calculateSubtotal();
+    const taxAmount = calculateTaxAmount();
+    const total = subtotal + taxAmount;
+    return isNaN(total) ? 0 : total;
   };
 
   // Quick Create handlers
@@ -262,6 +268,10 @@ function InvoiceForm() {
 
     setLoading(true);
     try {
+      const subtotal = calculateSubtotal();
+      const taxAmount = calculateTaxAmount();
+      const totalAmount = calculateTotal();
+
       const payload = {
         ...formData,
         client: formData.client.id,
@@ -272,9 +282,9 @@ function InvoiceForm() {
           product_reference: item.product_reference,
           total_price: item.total_price
         })),
-        subtotal: calculateSubtotal(),
-        tax_amount: calculateTaxAmount(),
-        total_amount: calculateTotal()
+        subtotal: subtotal || 0,
+        tax_amount: taxAmount || 0,
+        total_amount: totalAmount || 0
       };
 
       if (isEdit) {
@@ -437,16 +447,6 @@ function InvoiceForm() {
           </Button>
         </Box>
       </Box>
-
-      {/* Smart Invoice Upload - Drag & Drop IA */}
-      {!isEdit && (
-        <Box sx={{ mb: 4 }}>
-          <SmartInvoiceUpload />
-          <Divider sx={{ my: 4 }}>
-            <Chip label="OU remplir manuellement ci-dessous" />
-          </Divider>
-        </Box>
-      )}
 
       <form onSubmit={handleSubmit}>
         {isMobile ? (

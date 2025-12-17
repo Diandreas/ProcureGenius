@@ -14,6 +14,14 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+# Essayer d'importer PyMuPDF pour la conversion PDF
+try:
+    import fitz  # PyMuPDF
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+    logger.warning("PyMuPDF (fitz) non disponible. Les PDFs ne peuvent pas être convertis en images.")
+
 
 class PixtralService:
     """Service pour analyse de documents avec Pixtral (vision)"""
@@ -114,34 +122,58 @@ class PixtralService:
     def _prepare_image(self, image: Union[InMemoryUploadedFile, str, bytes]) -> str:
         """
         Convertit l'image en base64
+        Gère aussi la conversion PDF → image si nécessaire
 
         Args:
-            image: Image (diverses formes)
+            image: Image (diverses formes) ou PDF
 
         Returns:
-            String base64
+            String base64 de l'image
         """
         try:
             if isinstance(image, InMemoryUploadedFile):
                 # Fichier uploadé Django
                 image.seek(0)
-                image_bytes = image.read()
-
+                file_bytes = image.read()
+                content_type = getattr(image, 'content_type', None) or ''
+                filename = getattr(image, 'name', '')
             elif isinstance(image, str):
                 # Chemin de fichier
                 with open(image, 'rb') as f:
-                    image_bytes = f.read()
-
+                    file_bytes = f.read()
+                content_type = None
+                filename = image
             elif isinstance(image, bytes):
                 # Déjà en bytes
-                image_bytes = image
-
+                file_bytes = image
+                content_type = None
+                filename = ''
             else:
                 raise ValueError(f"Type d'image non supporté: {type(image)}")
 
             # Vérifier la taille
-            if len(image_bytes) > self.max_file_size:
-                raise ValueError(f"Image trop volumineuse: {len(image_bytes)} bytes (max {self.max_file_size})")
+            if len(file_bytes) > self.max_file_size:
+                raise ValueError(f"Fichier trop volumineux: {len(file_bytes)} bytes (max {self.max_file_size})")
+
+            # Détecter si c'est un PDF
+            is_pdf = (
+                content_type == 'application/pdf' or
+                filename.lower().endswith('.pdf') or
+                file_bytes[:4] == b'%PDF'
+            )
+
+            if is_pdf:
+                # Convertir PDF en image
+                if not PDF_SUPPORT:
+                    raise ValueError(
+                        "Les PDFs ne sont pas supportés. "
+                        "Installez PyMuPDF: pip install PyMuPDF"
+                    )
+                
+                image_bytes = self._pdf_to_image(file_bytes)
+            else:
+                # C'est déjà une image
+                image_bytes = file_bytes
 
             # Convertir en base64
             return base64.b64encode(image_bytes).decode('utf-8')
@@ -149,6 +181,47 @@ class PixtralService:
         except Exception as e:
             logger.error(f"Image preparation error: {e}")
             raise
+
+    def _pdf_to_image(self, pdf_bytes: bytes) -> bytes:
+        """
+        Convertit un PDF en image (première page)
+
+        Args:
+            pdf_bytes: Contenu du PDF en bytes
+
+        Returns:
+            Bytes de l'image (PNG)
+        """
+        try:
+            # Ouvrir le PDF avec PyMuPDF
+            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+            
+            if len(pdf_document) == 0:
+                raise ValueError("Le PDF est vide")
+            
+            # Prendre la première page
+            page = pdf_document[0]
+            
+            # Convertir en image avec une résolution raisonnable (300 DPI)
+            mat = fitz.Matrix(2.0, 2.0)  # 2x zoom = ~144 DPI, ajustable
+            pix = page.get_pixmap(matrix=mat)
+            
+            # Convertir en PIL Image puis en bytes PNG
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            
+            # Convertir en bytes PNG
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='PNG')
+            img_bytes = img_byte_arr.getvalue()
+            
+            pdf_document.close()
+            
+            logger.info(f"PDF converti en image: {pix.width}x{pix.height}px")
+            return img_bytes
+            
+        except Exception as e:
+            logger.error(f"Erreur conversion PDF: {e}")
+            raise ValueError(f"Impossible de convertir le PDF en image: {str(e)}")
 
     def _build_prompt(self, document_type: str) -> str:
         """

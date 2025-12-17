@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import { CloudUpload, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { aiChatAPI } from '../services/api';
 
 const SmartInvoiceUpload = () => {
   const [dragging, setDragging] = useState(false);
@@ -39,12 +39,8 @@ const SmartInvoiceUpload = () => {
     formData.append('auto_create', 'true');
 
     try {
-      // APPEL API EXISTANT !
-      const response = await axios.post('/api/ai-assistant/analyze-document/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // APPEL API CORRIGÉ - Utilise la bonne URL via aiChatAPI
+      const response = await aiChatAPI.analyzeDocument(formData);
 
       if (response.data.success) {
         setExtractedData(response.data.ai_extracted_data);

@@ -180,12 +180,12 @@ function ClientDetail() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
+    <Box sx={{ p: isMobile ? 1.5 : 3 }}>
       {/* Header avec design amélioré */}
       <Box
         sx={{
-          mb: 3,
-          p: { xs: 2, sm: 3 },
+          mb: isMobile ? 2 : 3,
+          p: { xs: 1.5, sm: 3 },
           borderRadius: 2,
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
@@ -284,50 +284,61 @@ function ClientDetail() {
         onChange={(e, v) => setActiveTab(v)}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        sx={{
+          mb: isMobile ? 2 : 3,
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': {
+            minHeight: isMobile ? 40 : 48,
+            fontSize: isMobile ? '0.813rem' : '0.875rem',
+            px: isMobile ? 1.5 : 2,
+          }
+        }}
       >
-        <Tab icon={<Info />} label={t('clients:tabs.info')} iconPosition="start" />
-        <Tab icon={<Receipt />} label={t('clients:tabs.invoices')} iconPosition="start" />
-        <Tab icon={<Inventory />} label={t('clients:tabs.products')} iconPosition="start" />
+        <Tab icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.info')} iconPosition="start" />
+        <Tab icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.invoices')} iconPosition="start" />
+        <Tab icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.products')} iconPosition="start" />
       </Tabs>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
           {/* Card principale avec design amélioré */}
           <Grid item xs={12} md={8}>
             <Card
               sx={{
                 borderRadius: 2,
-                mb: isMobile ? 2 : 3,
+                mb: isMobile ? 1.5 : 3,
                 boxShadow: 2,
                 overflow: 'hidden'
               }}
             >
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 {/* En-tête avec Avatar */}
-                <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}>
+                <Box sx={{ display: 'flex', gap: isMobile ? 1.5 : 2, mb: isMobile ? 2 : 3, alignItems: 'flex-start' }}>
                   <Avatar
                     sx={{
-                      width: isMobile ? 80 : 100,
-                      height: isMobile ? 80 : 100,
+                      width: isMobile ? 56 : 100,
+                      height: isMobile ? 56 : 100,
                       bgcolor: 'primary.main',
                       borderRadius: 2,
-                      fontSize: isMobile ? '2rem' : '2.5rem',
+                      fontSize: isMobile ? '1.5rem' : '2.5rem',
                       fontWeight: 'bold',
-                      boxShadow: 2
+                      boxShadow: 2,
+                      flexShrink: 0
                     }}
                   >
                     {client.name?.charAt(0)?.toUpperCase() || '?'}
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
-                      variant={isMobile ? 'h6' : 'h5'}
+                      variant={isMobile ? 'subtitle1' : 'h5'}
                       fontWeight="bold"
                       gutterBottom
                       sx={{
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
+                        fontSize: isMobile ? '1rem' : undefined
                       }}
                     >
                       {client.name}
@@ -339,56 +350,77 @@ function ClientDetail() {
                         gutterBottom
                         sx={{
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          textOverflow: 'ellipsis',
+                          fontSize: isMobile ? '0.813rem' : undefined
                         }}
                       >
                         {client.legal_name}
                       </Typography>
                     )}
-                    <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ mt: isMobile ? 1 : 1.5, flexWrap: 'wrap', gap: 0.5 }}>
                       <Chip
                         label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
                         color={client.is_active ? 'success' : 'default'}
                         size="small"
-                        sx={{ fontWeight: 500 }}
+                        sx={{
+                          fontWeight: 500,
+                          fontSize: isMobile ? '0.688rem' : undefined,
+                          height: isMobile ? 20 : undefined
+                        }}
                       />
                       {client.business_number && (
                         <Chip
-                          icon={<Business sx={{ fontSize: 16 }} />}
+                          icon={<Business sx={{ fontSize: isMobile ? 14 : 16 }} />}
                           label={client.business_number}
                           variant="outlined"
                           size="small"
-                          sx={{ fontWeight: 500 }}
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: isMobile ? '0.688rem' : undefined,
+                            height: isMobile ? 20 : undefined
+                          }}
                         />
                       )}
                     </Stack>
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 2.5 }} />
+                <Divider sx={{ my: isMobile ? 1.5 : 2.5 }} />
 
                 {/* Informations de contact avec design amélioré */}
-                <Grid container spacing={2.5}>
+                <Grid container spacing={isMobile ? 1.5 : 2.5}>
                   {client.contact_person && (
                     <Grid item xs={12} sm={6}>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
+                          gap: isMobile ? 1 : 1.5,
+                          p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
                           bgcolor: 'grey.50',
                           '&:hover': { bgcolor: 'grey.100' },
                           transition: 'background-color 0.2s'
                         }}
                       >
-                        <Person sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight="500">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                          >
                             {t('clients:labels.contactPerson')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="600" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.813rem' : undefined
+                            }}
+                          >
                             {client.contact_person}
                           </Typography>
                         </Box>
@@ -402,17 +434,22 @@ function ClientDetail() {
                         sx={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
+                          gap: isMobile ? 1 : 1.5,
+                          p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
                           bgcolor: 'grey.50',
                           '&:hover': { bgcolor: 'grey.100' },
                           transition: 'background-color 0.2s'
                         }}
                       >
-                        <Email sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Email sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight="500">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                          >
                             {t('clients:labels.email')}
                           </Typography>
                           <Typography
@@ -420,6 +457,7 @@ function ClientDetail() {
                             fontWeight="600"
                             sx={{
                               mt: 0.5,
+                              fontSize: isMobile ? '0.813rem' : undefined,
                               '& a': {
                                 color: 'primary.main',
                                 textDecoration: 'none',
@@ -442,17 +480,22 @@ function ClientDetail() {
                         sx={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
+                          gap: isMobile ? 1 : 1.5,
+                          p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
                           bgcolor: 'grey.50',
                           '&:hover': { bgcolor: 'grey.100' },
                           transition: 'background-color 0.2s'
                         }}
                       >
-                        <Phone sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <Phone sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight="500">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                          >
                             {t('clients:labels.phone')}
                           </Typography>
                           <Typography
@@ -460,6 +503,7 @@ function ClientDetail() {
                             fontWeight="600"
                             sx={{
                               mt: 0.5,
+                              fontSize: isMobile ? '0.813rem' : undefined,
                               '& a': {
                                 color: 'primary.main',
                                 textDecoration: 'none',
@@ -482,20 +526,32 @@ function ClientDetail() {
                         sx={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
+                          gap: isMobile ? 1 : 1.5,
+                          p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
                           bgcolor: 'grey.50',
                           '&:hover': { bgcolor: 'grey.100' },
                           transition: 'background-color 0.2s'
                         }}
                       >
-                        <LocationOn sx={{ fontSize: 24, color: 'primary.main', mt: 0.5 }} />
+                        <LocationOn sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight="500">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                          >
                             {t('clients:labels.address')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="600" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.813rem' : undefined
+                            }}
+                          >
                             {client.billing_address}
                           </Typography>
                         </Box>
@@ -508,11 +564,19 @@ function ClientDetail() {
 
             {/* Statistiques avec design amélioré */}
             {statistics?.sales_summary && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
+              <Box sx={{ mt: isMobile ? 2 : 3 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight="600"
+                  gutterBottom
+                  sx={{
+                    mb: isMobile ? 1.5 : 2,
+                    fontSize: isMobile ? '1rem' : undefined
+                  }}
+                >
                   {t('clients:labels.generalInfo', 'Informations générales')}
                 </Typography>
-                <Grid container spacing={isMobile ? 2 : 2.5}>
+                <Grid container spacing={isMobile ? 1 : 2.5}>
                   <Grid item xs={6} sm={6}>
                     <Card
                       sx={{
@@ -520,15 +584,29 @@ function ClientDetail() {
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         boxShadow: 3,
                         transition: 'transform 0.2s',
-                        '&:hover': { transform: 'translateY(-4px)' }
+                        '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
                       }}
                     >
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
-                        <Receipt sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
-                        <Typography variant={isMobile ? 'h5' : 'h4'} color="white" fontWeight="bold">
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
+                        <Receipt sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                        <Typography
+                          variant={isMobile ? 'h6' : 'h4'}
+                          color="white"
+                          fontWeight="bold"
+                          sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
+                        >
                           {statistics.sales_summary.total_invoices || 0}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'rgba(255,255,255,0.9)',
+                            fontWeight: 500,
+                            mt: 0.5,
+                            display: 'block',
+                            fontSize: isMobile ? '0.688rem' : undefined
+                          }}
+                        >
                           {t('clients:tabs.invoices')}
                         </Typography>
                       </CardContent>
@@ -542,15 +620,32 @@ function ClientDetail() {
                         background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         boxShadow: 3,
                         transition: 'transform 0.2s',
-                        '&:hover': { transform: 'translateY(-4px)' }
+                        '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
                       }}
                     >
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
-                        <AttachMoney sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
-                        <Typography variant={isMobile ? 'h6' : 'h5'} color="white" fontWeight="bold" sx={{ wordBreak: 'break-word' }}>
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
+                        <AttachMoney sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                        <Typography
+                          variant={isMobile ? 'body2' : 'h5'}
+                          color="white"
+                          fontWeight="bold"
+                          sx={{
+                            wordBreak: 'break-word',
+                            fontSize: isMobile ? '0.875rem' : undefined
+                          }}
+                        >
                           {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'rgba(255,255,255,0.9)',
+                            fontWeight: 500,
+                            mt: 0.5,
+                            display: 'block',
+                            fontSize: isMobile ? '0.688rem' : undefined
+                          }}
+                        >
                           {t('clients:stats.totalRevenue')}
                         </Typography>
                       </CardContent>
@@ -565,15 +660,29 @@ function ClientDetail() {
                           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                           boxShadow: 3,
                           transition: 'transform 0.2s',
-                          '&:hover': { transform: 'translateY(-4px)' }
+                          '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
                         }}
                       >
-                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
-                          <Inventory sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
-                          <Typography variant={isMobile ? 'h5' : 'h4'} color="white" fontWeight="bold">
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
+                          <Inventory sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                          <Typography
+                            variant={isMobile ? 'h6' : 'h4'}
+                            color="white"
+                            fontWeight="bold"
+                            sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
+                          >
                             {statistics.sales_summary.unique_products}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'rgba(255,255,255,0.9)',
+                              fontWeight: 500,
+                              mt: 0.5,
+                              display: 'block',
+                              fontSize: isMobile ? '0.688rem' : undefined
+                            }}
+                          >
                             {t('clients:stats.productsPurchased')}
                           </Typography>
                         </CardContent>
@@ -589,15 +698,32 @@ function ClientDetail() {
                           background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
                           boxShadow: 3,
                           transition: 'transform 0.2s',
-                          '&:hover': { transform: 'translateY(-4px)' }
+                          '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
                         }}
                       >
-                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 2.5 }}>
-                          <TrendingUp sx={{ fontSize: 36, color: 'white', mb: 1, opacity: 0.9 }} />
-                          <Typography variant={isMobile ? 'h6' : 'h5'} color="white" fontWeight="bold" sx={{ wordBreak: 'break-word' }}>
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
+                          <TrendingUp sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                          <Typography
+                            variant={isMobile ? 'body2' : 'h5'}
+                            color="white"
+                            fontWeight="bold"
+                            sx={{
+                              wordBreak: 'break-word',
+                              fontSize: isMobile ? '0.875rem' : undefined
+                            }}
+                          >
                             {formatCurrency(statistics.sales_summary.average_invoice_amount)}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, mt: 0.5, display: 'block' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'rgba(255,255,255,0.9)',
+                              fontWeight: 500,
+                              mt: 0.5,
+                              display: 'block',
+                              fontSize: isMobile ? '0.688rem' : undefined
+                            }}
+                          >
                             {t('clients:stats.averageBasket')}
                           </Typography>
                         </CardContent>
@@ -615,31 +741,48 @@ function ClientDetail() {
             <Card
               sx={{
                 borderRadius: 2,
-                mb: isMobile ? 2 : 3,
+                mb: isMobile ? 1.5 : 3,
                 boxShadow: 2
               }}
             >
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
-                  <CreditCard sx={{ color: 'primary.main', fontSize: 24 }} />
-                  <Typography variant="subtitle1" fontWeight="600">
+              <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: isMobile ? 1.5 : 2.5 }}>
+                  <CreditCard sx={{ color: 'primary.main', fontSize: isMobile ? 20 : 24 }} />
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="600"
+                    sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
+                  >
                     {t('clients:labels.commercialConditions')}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
                     textAlign: 'center',
-                    p: 2.5,
+                    p: isMobile ? 1.5 : 2.5,
                     borderRadius: 2,
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    mb: client.credit_limit ? 2 : 0,
+                    mb: client.credit_limit ? (isMobile ? 1.5 : 2) : 0,
                     boxShadow: 2
                   }}
                 >
-                  <Typography variant="h6" color="white" fontWeight="bold" gutterBottom>
+                  <Typography
+                    variant="h6"
+                    color="white"
+                    fontWeight="bold"
+                    gutterBottom
+                    sx={{ fontSize: isMobile ? '1rem' : undefined }}
+                  >
                     {client.payment_terms || 'NET 30'}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      fontWeight: 500,
+                      fontSize: isMobile ? '0.688rem' : undefined
+                    }}
+                  >
                     {t('clients:labels.paymentTerms')}
                   </Typography>
                 </Box>
@@ -648,16 +791,29 @@ function ClientDetail() {
                   <Box
                     sx={{
                       textAlign: 'center',
-                      p: 2.5,
+                      p: isMobile ? 1.5 : 2.5,
                       borderRadius: 2,
                       background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                       boxShadow: 2
                     }}
                   >
-                    <Typography variant="h6" color="white" fontWeight="bold" gutterBottom>
+                    <Typography
+                      variant="h6"
+                      color="white"
+                      fontWeight="bold"
+                      gutterBottom
+                      sx={{ fontSize: isMobile ? '1rem' : undefined }}
+                    >
                       {formatCurrency(client.credit_limit)}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'rgba(255,255,255,0.9)',
+                        fontWeight: 500,
+                        fontSize: isMobile ? '0.688rem' : undefined
+                      }}
+                    >
                       {t('clients:labels.creditLimit')}
                     </Typography>
                   </Box>
@@ -669,26 +825,35 @@ function ClientDetail() {
             <Card
               sx={{
                 borderRadius: 2,
-                mb: isMobile ? 2 : 3,
+                mb: isMobile ? 1.5 : 3,
                 boxShadow: 2
               }}
             >
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="600"
+                  gutterBottom
+                  sx={{
+                    mb: isMobile ? 1.5 : 2,
+                    fontSize: isMobile ? '0.938rem' : undefined
+                  }}
+                >
                   {t('clients:labels.quickActions')}
                 </Typography>
-                <Stack spacing={1.5}>
+                <Stack spacing={isMobile ? 1 : 1.5}>
                   <Button
                     fullWidth
                     variant="contained"
-                    startIcon={<Receipt />}
+                    startIcon={<Receipt sx={{ fontSize: isMobile ? 18 : undefined }} />}
                     onClick={() => navigate(`/invoices/new?clientId=${id}`)}
-                    size="medium"
+                    size={isMobile ? 'small' : 'medium'}
                     sx={{
-                      py: 1.2,
+                      py: isMobile ? 0.75 : 1.2,
                       fontWeight: 600,
                       textTransform: 'none',
                       boxShadow: 2,
+                      fontSize: isMobile ? '0.813rem' : undefined,
                       '&:hover': { boxShadow: 4 }
                     }}
                   >
@@ -697,15 +862,16 @@ function ClientDetail() {
                   <Button
                     fullWidth
                     variant="outlined"
-                    startIcon={<Email />}
+                    startIcon={<Email sx={{ fontSize: isMobile ? 18 : undefined }} />}
                     href={`mailto:${client.email}`}
                     disabled={!client.email}
-                    size="medium"
+                    size={isMobile ? 'small' : 'medium'}
                     sx={{
-                      py: 1.2,
+                      py: isMobile ? 0.75 : 1.2,
                       fontWeight: 500,
                       textTransform: 'none',
                       borderWidth: 2,
+                      fontSize: isMobile ? '0.813rem' : undefined,
                       '&:hover': { borderWidth: 2 }
                     }}
                   >
@@ -714,15 +880,16 @@ function ClientDetail() {
                   <Button
                     fullWidth
                     variant="outlined"
-                    startIcon={<Phone />}
+                    startIcon={<Phone sx={{ fontSize: isMobile ? 18 : undefined }} />}
                     href={`tel:${client.phone}`}
                     disabled={!client.phone}
-                    size="medium"
+                    size={isMobile ? 'small' : 'medium'}
                     sx={{
-                      py: 1.2,
+                      py: isMobile ? 0.75 : 1.2,
                       fontWeight: 500,
                       textTransform: 'none',
                       borderWidth: 2,
+                      fontSize: isMobile ? '0.813rem' : undefined,
                       '&:hover': { borderWidth: 2 }
                     }}
                   >
@@ -739,40 +906,70 @@ function ClientDetail() {
                 boxShadow: 2
               }}
             >
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="600"
+                  gutterBottom
+                  sx={{
+                    mb: isMobile ? 1.5 : 2,
+                    fontSize: isMobile ? '0.938rem' : undefined
+                  }}
+                >
                   {t('clients:labels.systemInfo')}
                 </Typography>
-                <Stack spacing={2} sx={{ mt: 1 }}>
+                <Stack spacing={isMobile ? 1.5 : 2} sx={{ mt: 1 }}>
                   <Box
                     sx={{
-                      p: 1.5,
+                      p: isMobile ? 1 : 1.5,
                       borderRadius: 1,
                       bgcolor: 'grey.50',
                       '&:hover': { bgcolor: 'grey.100' },
                       transition: 'background-color 0.2s'
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary" fontWeight="500" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight="500"
+                      display="block"
+                      gutterBottom
+                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                    >
                       {t('clients:labels.createdOn')}
                     </Typography>
-                    <Typography variant="body2" fontWeight="600">
+                    <Typography
+                      variant="body2"
+                      fontWeight="600"
+                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                    >
                       {formatDate(client.created_at)}
                     </Typography>
                   </Box>
                   <Box
                     sx={{
-                      p: 1.5,
+                      p: isMobile ? 1 : 1.5,
                       borderRadius: 1,
                       bgcolor: 'grey.50',
                       '&:hover': { bgcolor: 'grey.100' },
                       transition: 'background-color 0.2s'
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary" fontWeight="500" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight="500"
+                      display="block"
+                      gutterBottom
+                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                    >
                       {t('clients:labels.updatedOn')}
                     </Typography>
-                    <Typography variant="body2" fontWeight="600">
+                    <Typography
+                      variant="body2"
+                      fontWeight="600"
+                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                    >
                       {formatDate(client.updated_at)}
                     </Typography>
                   </Box>
@@ -791,16 +988,21 @@ function ClientDetail() {
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              mb: 3,
-              p: 2,
+              mb: isMobile ? 2 : 3,
+              p: isMobile ? 1.5 : 2,
               borderRadius: 2,
               bgcolor: 'primary.50',
               border: '1px solid',
               borderColor: 'primary.100'
             }}
           >
-            <Receipt sx={{ color: 'primary.main', fontSize: 28 }} />
-            <Typography variant="h6" fontWeight="600" color="primary.main">
+            <Receipt sx={{ color: 'primary.main', fontSize: isMobile ? 22 : 28 }} />
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              color="primary.main"
+              sx={{ fontSize: isMobile ? '1rem' : undefined }}
+            >
               {t('clients:tabs.invoices')}
             </Typography>
           </Box>
@@ -823,16 +1025,21 @@ function ClientDetail() {
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              mb: 3,
-              p: 2,
+              mb: isMobile ? 2 : 3,
+              p: isMobile ? 1.5 : 2,
               borderRadius: 2,
               bgcolor: 'info.50',
               border: '1px solid',
               borderColor: 'info.100'
             }}
           >
-            <Inventory sx={{ color: 'info.main', fontSize: 28 }} />
-            <Typography variant="h6" fontWeight="600" color="info.main">
+            <Inventory sx={{ color: 'info.main', fontSize: isMobile ? 22 : 28 }} />
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              color="info.main"
+              sx={{ fontSize: isMobile ? '1rem' : undefined }}
+            >
               {t('clients:tabs.products')}
             </Typography>
           </Box>

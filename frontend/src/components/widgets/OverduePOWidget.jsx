@@ -41,7 +41,7 @@ const OverduePOWidget = ({ period = 'last_30_days' }) => {
             <div className="list-item-title">{po.po_number}</div>
             <div className="list-item-subtitle">{po.supplier_name} - {po.days_overdue} jours</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', minimumFractionDigits: 0}).format(po.total_amount)}</div>
+          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(po.total_amount)}</div>
         </div>
       ))}
     </div>

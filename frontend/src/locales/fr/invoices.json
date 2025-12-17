@@ -60,7 +60,11 @@
     "noItemsAddedMessage": "Aucun article ajouté. Cliquez sur \"Ajouter\" pour commencer.",
     "noItemsDesktopMessage": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer.",
     "overdueMessage": "En retard de {{days}} jours",
-    "reportError": "Erreur lors de la génération du rapport"
+    "reportError": "Erreur lors de la génération du rapport",
+    "emailSent": "Email envoyé avec succès",
+    "emailError": "Erreur lors de l'envoi de l'email",
+    "emailRequired": "Email destinataire requis",
+    "sending": "Envoi..."
   },
   "actions": {
     "generateReport": "Rapport PDF"
@@ -128,7 +132,8 @@
     "preview": "Aperçu",
     "print": "Imprimer",
     "download": "Télécharger",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "sendEmail": "Envoyer par email"
   },
   "columns": {
     "reference": "Référence",
@@ -147,7 +152,15 @@
     "addItem": "Ajouter un article",
     "generatePdf": "Générer un PDF de la facture",
     "quickCreateClient": "Créer un client rapidement",
-    "quickCreateProduct": "Créer un produit rapidement"
+    "quickCreateProduct": "Créer un produit rapidement",
+    "sendEmail": {
+      "title": "Envoyer la facture par email",
+      "recipient": "Email destinataire",
+      "recipientHelp": "Email du client qui recevra la facture",
+      "message": "Message personnalisé",
+      "messageHelp": "Message qui sera inclus dans l'email (optionnel)",
+      "send": "Envoyer"
+    }
   },
   "fields": {
     "paymentDate": "Date de paiement",

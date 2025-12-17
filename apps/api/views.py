@@ -1323,15 +1323,17 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         """Envoyer une facture par email"""
         invoice = self.get_object()
 
-        if invoice.status != 'draft':
-            return Response(
-                {'error': 'Seules les factures en brouillon peuvent être envoyées'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Permettre l'envoi même si la facture est déjà envoyée (pour relances)
+        # if invoice.status != 'draft':
+        #     return Response(
+        #         {'error': 'Seules les factures en brouillon peuvent être envoyées'},
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
 
         # Email du destinataire (par défaut: client, sinon fourni dans la requête)
-        recipient_email = request.data.get('email')
+        recipient_email = request.data.get('recipient_email') or request.data.get('email')
         template_type = request.data.get('template', 'classic')
+        custom_message = request.data.get('custom_message')
 
         # Envoyer l'email avec le PDF
         from .services.email_service import InvoiceEmailService
@@ -1339,14 +1341,17 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         result = InvoiceEmailService.send_invoice_email(
             invoice=invoice,
             recipient_email=recipient_email,
-            template_type=template_type
+            template_type=template_type,
+            custom_message=custom_message
         )
 
         if result['success']:
-            # Marquer la facture comme envoyée
-            invoice.status = 'sent'
-            invoice.sent_date = timezone.now().date()
-            invoice.save()
+            # Marquer la facture comme envoyée si elle était en draft
+            if invoice.status == 'draft':
+                invoice.status = 'sent'
+                if hasattr(invoice, 'sent_date'):
+                    invoice.sent_date = timezone.now().date()
+                invoice.save()
 
             serializer = self.get_serializer(invoice)
             return Response({

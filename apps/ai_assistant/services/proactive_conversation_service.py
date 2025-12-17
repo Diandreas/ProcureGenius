@@ -111,6 +111,27 @@ class ProactiveConversationService:
             if conv:
                 conversations_created += 1
 
+        # 6. Analyser les factures à envoyer
+        invoice_send_analysis = ProactiveConversationService._analyze_invoices_to_send(user)
+        if invoice_send_analysis:
+            conv = ProactiveConversationService._create_conversation(user, invoice_send_analysis)
+            if conv:
+                conversations_created += 1
+
+        # 7. Analyser les factures en retard à relancer
+        invoice_followup_analysis = ProactiveConversationService._analyze_invoices_followup(user)
+        if invoice_followup_analysis:
+            conv = ProactiveConversationService._create_conversation(user, invoice_followup_analysis)
+            if conv:
+                conversations_created += 1
+
+        # 8. Analyser les bons de commande à envoyer
+        po_send_analysis = ProactiveConversationService._analyze_purchase_orders_to_send(user)
+        if po_send_analysis:
+            conv = ProactiveConversationService._create_conversation(user, po_send_analysis)
+            if conv:
+                conversations_created += 1
+
         return conversations_created
 
     @staticmethod
@@ -292,6 +313,126 @@ class ProactiveConversationService:
                         'period': 'ce mois'
                     },
                     'priority': 9
+                }
+
+        return None
+
+    @staticmethod
+    def _analyze_invoices_to_send(user):
+        """Analyse les factures en brouillon qui devraient être envoyées"""
+        organization = user.organization
+        
+        # Factures en draft depuis plus de 3 jours
+        three_days_ago = timezone.now() - timedelta(days=3)
+        draft_invoices = Invoice.objects.filter(
+            organization=organization,
+            status='draft',
+            created_at__lt=three_days_ago
+        ).select_related('client')
+
+        count = draft_invoices.count()
+        if count > 0:
+            # Filtrer celles qui ont un client avec email
+            invoices_with_email = [inv for inv in draft_invoices if inv.client and hasattr(inv.client, 'email') and inv.client.email]
+            
+            if invoices_with_email:
+                return {
+                    'template_key': 'invoices_to_send',
+                    'context': {
+                        'count': len(invoices_with_email),
+                        'invoice_numbers': [inv.invoice_number for inv in invoices_with_email[:5]],
+                        'invoices': [
+                            {
+                                'id': str(inv.id),
+                                'number': inv.invoice_number,
+                                'client_name': inv.client.name if inv.client else 'Client',
+                                'amount': float(inv.total_amount) if inv.total_amount else 0
+                            }
+                            for inv in invoices_with_email[:5]
+                        ]
+                    },
+                    'priority': 7
+                }
+
+        return None
+
+    @staticmethod
+    def _analyze_invoices_followup(user):
+        """Analyse les factures envoyées depuis plus de X jours sans paiement"""
+        organization = user.organization
+        
+        # Factures envoyées depuis plus de 7 jours sans paiement
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        sent_invoices = Invoice.objects.filter(
+            organization=organization,
+            status='sent',
+            created_at__lt=seven_days_ago
+        ).select_related('client')
+
+        count = sent_invoices.count()
+        if count > 0:
+            total_amount = sent_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            # Filtrer celles qui ont un client avec email
+            invoices_with_email = [inv for inv in sent_invoices if inv.client and hasattr(inv.client, 'email') and inv.client.email]
+            
+            if invoices_with_email:
+                return {
+                    'template_key': 'invoices_followup',
+                    'context': {
+                        'count': len(invoices_with_email),
+                        'total_amount': round(float(total_amount), 2),
+                        'invoices': [
+                            {
+                                'id': str(inv.id),
+                                'number': inv.invoice_number,
+                                'client_name': inv.client.name if inv.client else 'Client',
+                                'amount': float(inv.total_amount) if inv.total_amount else 0,
+                                'days_since_sent': (timezone.now().date() - (inv.created_at.date() if inv.created_at else timezone.now().date())).days
+                            }
+                            for inv in invoices_with_email[:5]
+                        ]
+                    },
+                    'priority': 8
+                }
+
+        return None
+
+    @staticmethod
+    def _analyze_purchase_orders_to_send(user):
+        """Analyse les bons de commande approuvés qui devraient être envoyés"""
+        organization = user.organization
+        
+        # Bons de commande approuvés depuis plus de 2 jours non envoyés
+        two_days_ago = timezone.now() - timedelta(days=2)
+        approved_pos = PurchaseOrder.objects.filter(
+            organization=organization,
+            status='approved',
+            created_at__lt=two_days_ago
+        ).select_related('supplier')
+
+        count = approved_pos.count()
+        if count > 0:
+            # Filtrer ceux qui ont un fournisseur avec email
+            pos_with_email = [po for po in approved_pos if po.supplier and hasattr(po.supplier, 'email') and po.supplier.email]
+            
+            if pos_with_email:
+                return {
+                    'template_key': 'purchase_orders_to_send',
+                    'context': {
+                        'count': len(pos_with_email),
+                        'po_numbers': [po.po_number for po in pos_with_email[:5]],
+                        'purchase_orders': [
+                            {
+                                'id': str(po.id),
+                                'number': po.po_number,
+                                'supplier_name': po.supplier.name if po.supplier else 'Fournisseur',
+                                'amount': float(po.total_amount) if po.total_amount else 0
+                            }
+                            for po in pos_with_email[:5]
+                        ]
+                    },
+                    'priority': 7
                 }
 
         return None

@@ -434,7 +434,14 @@ class EmailConfiguration(models.Model):
     def get_decrypted_password(self):
         """Récupère le mot de passe déchiffré"""
         from apps.core.encryption import decrypt_value
+        import logging
+        logger = logging.getLogger(__name__)
         try:
-            return decrypt_value(self.smtp_password_encrypted)
-        except Exception:
+            password = decrypt_value(self.smtp_password_encrypted)
+            if password:
+                # S'assurer qu'il n'y a pas d'espaces (important pour Gmail App Password)
+                password = password.strip().replace(' ', '')
+            return password
+        except Exception as e:
+            logger.error(f"Error decrypting password: {e}")
             return None

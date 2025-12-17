@@ -1601,6 +1601,7 @@ const DataSection = ({ settings, showSnackbar }) => {
 const EmailSection = ({ settings, showSnackbar }) => {
   const { t } = useTranslation(['settings', 'common']);
   const [emailConfig, setEmailConfig] = useState(null);
+  const [configExists, setConfigExists] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -1633,6 +1634,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
             default_from_email: '',
             default_from_name: '',
           });
+          setConfigExists(false);
           setLoading(false);
           return;
         }
@@ -1640,8 +1642,9 @@ const EmailSection = ({ settings, showSnackbar }) => {
       }
 
       const data = await response.json();
-      if (data.exists) {
+      if (data.exists && data.config) {
         setEmailConfig(data.config);
+        setConfigExists(true);
         setTestEmail(data.config.default_from_email || '');
       } else {
         // Configuration n'existe pas encore
@@ -1655,6 +1658,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           default_from_email: '',
           default_from_name: '',
         });
+        setConfigExists(false);
       }
     } catch (error) {
       console.error('Error fetching email config:', error);
@@ -1670,16 +1674,18 @@ const EmailSection = ({ settings, showSnackbar }) => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const method = emailConfig ? 'PATCH' : 'POST';
+      // Utiliser configExists au lieu de emailConfig pour déterminer la méthode
+      const method = configExists ? 'PATCH' : 'POST';
       const body = {
-        smtp_host: emailConfig?.smtp_host || '',
+        smtp_host: (emailConfig?.smtp_host || '').trim(),
         smtp_port: emailConfig?.smtp_port || 587,
-        smtp_username: emailConfig?.smtp_username || '',
-        smtp_password: emailConfig?.smtp_password || '', // Will be encrypted on backend
+        smtp_username: (emailConfig?.smtp_username || '').trim(),
+        // Supprimer tous les espaces du mot de passe (important pour Gmail App Password)
+        smtp_password: (emailConfig?.smtp_password || '').replace(/\s+/g, ''),
         use_tls: emailConfig?.use_tls !== false,
         use_ssl: emailConfig?.use_ssl || false,
-        default_from_email: emailConfig?.default_from_email || '',
-        default_from_name: emailConfig?.default_from_name || '',
+        default_from_email: (emailConfig?.default_from_email || '').trim(),
+        default_from_name: (emailConfig?.default_from_name || '').trim(),
       };
 
       const response = await fetch('/api/v1/accounts/email-config/', {
@@ -1694,7 +1700,8 @@ const EmailSection = ({ settings, showSnackbar }) => {
       const data = await response.json();
       if (data.success || response.ok) {
         showSnackbar('Configuration email sauvegardée', 'success');
-        fetchEmailConfig();
+        // Recharger la configuration pour mettre à jour configExists
+        await fetchEmailConfig();
       } else {
         showSnackbar(data.error || 'Erreur lors de la sauvegarde', 'error');
       }

@@ -490,13 +490,16 @@ def email_config(request):
             data = request.data
             
             # Chiffrer le mot de passe
-            password = data.get('smtp_password')
+            password = data.get('smtp_password', '').strip()
+            # Supprimer tous les espaces (important pour Gmail App Password)
+            password = password.replace(' ', '').replace('\t', '').replace('\n', '')
             if not password:
                 return Response(
                     {'error': 'smtp_password is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # S'assurer que le mot de passe n'est pas déjà chiffré
             encrypted_password = encrypt_value(password)
             
             config = EmailConfiguration.objects.create(
@@ -554,7 +557,11 @@ def email_config(request):
             if 'smtp_username' in data:
                 config.smtp_username = data['smtp_username']
             if 'smtp_password' in data:
-                config.smtp_password_encrypted = encrypt_value(data['smtp_password'])
+                password = data['smtp_password'].strip()
+                # Supprimer tous les espaces (important pour Gmail App Password)
+                password = password.replace(' ', '')
+                if password:  # Ne mettre à jour que si un nouveau mot de passe est fourni
+                    config.smtp_password_encrypted = encrypt_value(password)
             if 'use_tls' in data:
                 config.use_tls = data['use_tls']
             if 'use_ssl' in data:
@@ -626,8 +633,15 @@ def email_config_test(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+        # S'assurer que le mot de passe n'a pas d'espaces superflus
+        password = password.strip()
+        username = config.smtp_username.strip()
+        
         # Configurer Django pour utiliser cette configuration SMTP
         from django.conf import settings
+        import logging
+        logger = logging.getLogger(__name__)
+        
         original_email_backend = getattr(settings, 'EMAIL_BACKEND', None)
         original_email_host = getattr(settings, 'EMAIL_HOST', None)
         original_email_port = getattr(settings, 'EMAIL_PORT', None)
@@ -642,8 +656,11 @@ def email_config_test(request):
         settings.EMAIL_PORT = config.smtp_port
         settings.EMAIL_USE_TLS = config.use_tls
         settings.EMAIL_USE_SSL = config.use_ssl
-        settings.EMAIL_HOST_USER = config.smtp_username
+        settings.EMAIL_HOST_USER = username
         settings.EMAIL_HOST_PASSWORD = password
+        
+        # Log pour déboguer (sans afficher le mot de passe complet)
+        logger.info(f"SMTP test: host={config.smtp_host}, port={config.smtp_port}, user={username}, password_length={len(password)}")
         
         # Envoyer l'email de test
         test_email = request.data.get('test_email', request.user.email)
@@ -740,8 +757,16 @@ def email_config_verify(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+        # S'assurer que le mot de passe et le nom d'utilisateur n'ont pas d'espaces superflus
+        password = password.strip()
+        username = config.smtp_username.strip()
+        
         # Tester la connexion SMTP
         try:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"SMTP verify: host={config.smtp_host}, port={config.smtp_port}, user={username}, password_length={len(password)}")
+            
             if config.use_ssl:
                 server = smtplib.SMTP_SSL(config.smtp_host, config.smtp_port)
             else:
@@ -750,7 +775,7 @@ def email_config_verify(request):
             if config.use_tls and not config.use_ssl:
                 server.starttls()
             
-            server.login(config.smtp_username, password)
+            server.login(username, password)
             server.quit()
             
             # Marquer comme vérifié

@@ -214,7 +214,22 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                           {suggestion.message}
                         </Typography>
-                        {suggestion.action_label && (
+                        {suggestion.actions && suggestion.actions.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
+                            {suggestion.actions.map((action, actionIdx) => (
+                              <Button
+                                key={actionIdx}
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Send fontSize="small" />}
+                                onClick={() => onActionClick(suggestion, action)}
+                                sx={{ fontSize: '0.75rem', justifyContent: 'flex-start' }}
+                              >
+                                {action.label}
+                              </Button>
+                            ))}
+                          </Box>
+                        ) : suggestion.action_label && (
                           <Button
                             size="small"
                             variant="outlined"
@@ -676,10 +691,16 @@ function AIChat() {
     setTypingIndicator(true);
 
     try {
-      const response = await aiChatAPI.sendMessage({
+      const requestData = {
         message: userMessage.content,
-        conversation_id: currentConversation?.id,
-      });
+      };
+      
+      // Only include conversation_id if it exists and is valid
+      if (currentConversation?.id) {
+        requestData.conversation_id = currentConversation.id;
+      }
+      
+      const response = await aiChatAPI.sendMessage(requestData);
 
       setTypingIndicator(false);
 
@@ -714,7 +735,28 @@ function AIChat() {
       }
     } catch (error) {
       setTypingIndicator(false);
-      enqueueSnackbar(t('aiChat:messages.sendMessageError'), { variant: 'error' });
+      console.error('Error sending message:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Full error:', error);
+      
+      // Show more detailed error message if available
+      const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || t('aiChat:messages.sendMessageError');
+      
+      // For 500 errors, provide more helpful message
+      if (error.response?.status === 500) {
+        console.error('⚠️ Server Error 500 - Check Django server logs for details');
+        enqueueSnackbar(
+          'Erreur serveur (500). Vérifiez les logs Django pour plus de détails.',
+          { 
+            variant: 'error',
+            autoHideDuration: 5000 
+          }
+        );
+      } else {
+        enqueueSnackbar(errorMessage, { variant: 'error' });
+      }
+      
       setMessages(prev => prev.slice(0, -1));
       window.dispatchEvent(new CustomEvent('mascot-error'));
     } finally {
@@ -768,11 +810,26 @@ function AIChat() {
     }
   };
 
-  const handleSuggestionAction = (suggestion) => {
-    if (suggestion.action_url) {
+  const handleSuggestionAction = (suggestion, action = null) => {
+    // Si c'est une suggestion avec actions d'envoi d'email
+    if (suggestion.type === 'email_action' && suggestion.actions) {
+      if (action) {
+        // Ouvrir la page de détail avec le modal d'envoi d'email
+        if (action.type === 'send_invoice_email') {
+          navigate(`/invoices/${action.invoice_id}`, { 
+            state: { openEmailDialog: true, recipientEmail: action.client_name ? undefined : '' }
+          });
+        } else if (action.type === 'send_purchase_order_email') {
+          navigate(`/purchase-orders/${action.po_id}`, { 
+            state: { openEmailDialog: true }
+          });
+        }
+      }
+      setSuggestionsPanelOpen(false);
+    } else if (suggestion.action_url) {
       navigate(suggestion.action_url);
+      setSuggestionsPanelOpen(false);
     }
-    setSuggestionsPanelOpen(false);
   };
 
   const handleFileUpload = (event) => {

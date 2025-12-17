@@ -94,6 +94,33 @@ def get_conversation_starter_templates() -> Dict[str, Dict[str, Any]]:
             ),
             'priority': 5,
         },
+        'invoices_to_send': {
+            'title_template': '{count} facture(s) à envoyer',
+            'message_template': (
+                "Vous avez {count} facture(s) en brouillon depuis plus de 3 jours qui n'ont pas encore été envoyées. "
+                "Souhaitez-vous que je vous aide à les envoyer maintenant ? Je peux vous proposer d'envoyer "
+                "les factures suivantes : {invoice_numbers}. Vous pouvez personnaliser le message pour chaque client."
+            ),
+            'priority': 7,
+        },
+        'invoices_followup': {
+            'title_template': 'Relancer {count} facture(s) en attente',
+            'message_template': (
+                "Vous avez {count} facture(s) envoyées depuis plus d'une semaine qui n'ont pas encore été payées, "
+                "pour un montant total de {total_amount}€. Il serait judicieux de relancer ces clients. "
+                "Souhaitez-vous que je vous aide à préparer des emails de relance personnalisés ?"
+            ),
+            'priority': 8,
+        },
+        'purchase_orders_to_send': {
+            'title_template': '{count} bon(s) de commande à envoyer',
+            'message_template': (
+                "Vous avez {count} bon(s) de commande approuvé(s) depuis plus de 2 jours qui n'ont pas encore été "
+                "envoyés aux fournisseurs. Souhaitez-vous que je vous aide à les envoyer maintenant ? "
+                "Les bons de commande suivants sont prêts : {po_numbers}. Vous pouvez personnaliser le message pour chaque fournisseur."
+            ),
+            'priority': 7,
+        },
     }
 
 

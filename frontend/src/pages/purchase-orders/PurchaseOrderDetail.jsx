@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -76,6 +76,7 @@ import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES 
 function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -89,8 +90,14 @@ function PurchaseOrderDetail() {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailData, setEmailData] = useState({
+    recipient_email: '',
+    custom_message: ''
+  });
   const [newItem, setNewItem] = useState({
     description: '',
     quantity: 1,
@@ -246,6 +253,30 @@ function PurchaseOrderDetail() {
                   {t('purchaseOrders:buttons.generatePDF')}
                 </Button>
               </Tooltip>
+              <Tooltip title={t('purchaseOrders:tooltips.sendEmail') || 'Envoyer par email'}>
+                <Button
+                  variant="outlined"
+                  startIcon={<Email />}
+                  onClick={() => {
+                    setEmailData({
+                      recipient_email: purchaseOrder.supplier?.email || '',
+                      custom_message: `Bonjour ${purchaseOrder.supplier?.name || 'Fournisseur'},
+
+Veuillez trouver ci-joint votre bon de commande ${purchaseOrder.po_number}.
+
+Le PDF de votre bon de commande est joint à cet email.
+
+Pour toute question, n'hésitez pas à nous contacter.
+
+Cordialement`
+                    });
+                    setSendEmailDialogOpen(true);
+                  }}
+                  disabled={!purchaseOrder.supplier?.email}
+                >
+                  {t('purchaseOrders:buttons.sendEmail') || 'Envoyer par email'}
+                </Button>
+              </Tooltip>
               <Tooltip title={t('purchaseOrders:tooltips.editPO')}>
                 <IconButton
                   onClick={handleEdit}
@@ -289,6 +320,27 @@ function PurchaseOrderDetail() {
                 <MenuItem onClick={() => setPdfDialogOpen(true)}>
                   <PictureAsPdf fontSize="small" sx={{ mr: 1 }} />
                   {t('purchaseOrders:buttons.generatePDF')}
+                </MenuItem>
+                <MenuItem 
+                  onClick={() => {
+                    setEmailData({
+                      recipient_email: purchaseOrder.supplier?.email || '',
+                      custom_message: `Bonjour ${purchaseOrder.supplier?.name || 'Fournisseur'},
+
+Veuillez trouver ci-joint votre bon de commande ${purchaseOrder.po_number}.
+
+Le PDF de votre bon de commande est joint à cet email.
+
+Pour toute question, n'hésitez pas à nous contacter.
+
+Cordialement`
+                    });
+                    setSendEmailDialogOpen(true);
+                  }}
+                  disabled={!purchaseOrder.supplier?.email}
+                >
+                  <Email fontSize="small" sx={{ mr: 1 }} />
+                  {t('purchaseOrders:buttons.sendEmail') || 'Envoyer par email'}
                 </MenuItem>
                 <MenuItem onClick={handleEdit}>
                   <Edit fontSize="small" sx={{ mr: 1 }} />

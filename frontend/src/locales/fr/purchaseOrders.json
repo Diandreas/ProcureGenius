@@ -58,7 +58,11 @@
     "noItemsAlert": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer.",
     "reportError": "Erreur lors de la génération du rapport",
     "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
-    "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport."
+    "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.",
+    "emailSent": "Email envoyé avec succès",
+    "emailError": "Erreur lors de l'envoi de l'email",
+    "emailRequired": "Email destinataire requis",
+    "sending": "Envoi..."
   },
   "actions": {
     "generateReport": "Rapport PDF"
@@ -116,7 +120,8 @@
     "preview": "Aperçu",
     "print": "Imprimer",
     "download": "Télécharger",
-    "save": "Sauvegarder"
+    "save": "Sauvegarder",
+    "sendEmail": "Envoyer par email"
   },
   "columns": {
     "reference": "Référence",
@@ -132,7 +137,15 @@
     "generatePDF": "Générer un PDF du bon de commande",
     "generatePdf": "Générer un PDF du rapport",
     "quickCreateSupplier": "Créer un fournisseur rapidement",
-    "quickCreateProduct": "Créer un produit rapidement"
+    "quickCreateProduct": "Créer un produit rapidement",
+    "sendEmail": {
+      "title": "Envoyer le bon de commande par email",
+      "recipient": "Email destinataire",
+      "recipientHelp": "Email du fournisseur qui recevra le bon de commande",
+      "message": "Message personnalisé",
+      "messageHelp": "Message qui sera inclus dans l'email (optionnel)",
+      "send": "Envoyer"
+    }
   },
   "fields": {
     "productReference": "Référence produit",
@@ -154,6 +167,7 @@
   "tooltips": {
     "generatePDF": "Générer un PDF du bon de commande",
     "editPO": "Modifier le bon de commande",
-    "approvePO": "Approuver le bon de commande"
+    "approvePO": "Approuver le bon de commande",
+    "sendEmail": "Envoyer le bon de commande par email au fournisseur"
   }
 }

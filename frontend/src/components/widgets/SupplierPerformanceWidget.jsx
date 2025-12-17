@@ -41,7 +41,7 @@ const SupplierPerformanceWidget = ({ period = 'last_30_days' }) => {
             <div className="list-item-title">#{i + 1} {supplier.name}</div>
             <div className="list-item-subtitle">{supplier.total_orders} commande(s)</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', minimumFractionDigits: 0}).format(supplier.total_amount)}</div>
+          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(supplier.total_amount)}</div>
         </div>
       ))}
     </div>

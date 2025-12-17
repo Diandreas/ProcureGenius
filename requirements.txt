@@ -65,6 +65,7 @@ rapidfuzz==3.5.2
 WeasyPrint==62.3
 django-weasyprint==2.3.0
 qrcode==7.4.2
+PyMuPDF==1.23.8  # Pour conversion PDF → image dans l'analyse IA
 
 # Internationalisation
 django-modeltranslation==0.18.11

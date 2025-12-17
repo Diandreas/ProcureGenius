@@ -58,5 +58,17 @@
       "viewStatistics": "Affiche-moi les statistiques",
       "monthlyReport": "Génère un rapport mensuel"
     }
+  },
+  "proactiveConversations": {
+    "title": "Conversations proactives",
+    "accept": "Accepter",
+    "dismiss": "Ignorer"
+  },
+  "suggestions": {
+    "emailActions": {
+      "sendInvoice": "Envoyer la facture",
+      "sendPurchaseOrder": "Envoyer le bon de commande",
+      "followupInvoice": "Relancer la facture"
+    }
   }
 }

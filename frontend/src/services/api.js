@@ -17,9 +17,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
-    // Ne pas écraser le Content-Type si déjà défini (pour FormData notamment)
-    // Si pas de Content-Type défini et que ce n'est pas FormData, utiliser JSON par défaut
-    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+    // Pour FormData, ne pas définir Content-Type - le navigateur le fera automatiquement avec la boundary
+    if (config.data instanceof FormData) {
+      // Supprimer Content-Type pour laisser le navigateur le définir avec la boundary
+      delete config.headers['Content-Type'];
+    } else if (!config.headers['Content-Type']) {
+      // Si pas de Content-Type défini et que ce n'est pas FormData, utiliser JSON par défaut
       config.headers['Content-Type'] = 'application/json';
     }
     return config;
@@ -87,7 +90,8 @@ export const invoicesAPI = {
   update: (id, data) => api.patch(`/invoices/${id}/`, data),
   delete: (id) => api.delete(`/invoices/${id}/`),
   addItem: (id, item) => api.post(`/invoices/${id}/add_item/`, item),
-  send: (id) => api.post(`/invoices/${id}/send/`),
+  send: (id, data) => api.post(`/invoices/${id}/send/`, data),
+  sendEmail: (id, data) => api.post(`/invoices/${id}/send/`, data),
   markPaid: (id, data) => api.post(`/invoices/${id}/mark_paid/`, data),
 };
 

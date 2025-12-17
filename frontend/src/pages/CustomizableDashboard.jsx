@@ -240,9 +240,9 @@ const CustomizableDashboard = () => {
   const handleAddAllWidgets = () => {
     // Get all widgets from availableWidgets
     const allWidgets = Object.values(availableWidgets).flat();
-    
+
     // Filter widgets that are not already in layout
-    const missingWidgets = allWidgets.filter(widget => 
+    const missingWidgets = allWidgets.filter(widget =>
       !layout.some(item => item.i === widget.code)
     );
 
@@ -289,7 +289,7 @@ const CustomizableDashboard = () => {
       // Update position for next widget
       currentX += w;
       rowMaxHeight = Math.max(rowMaxHeight, h);
-      
+
       // If we've filled the row, move to next
       if (currentX >= cols) {
         currentX = 0;
@@ -302,7 +302,7 @@ const CustomizableDashboard = () => {
 
     setLayout([...layout, ...newItems]);
     setHasChanges(true);
-    
+
     // Auto-enter edit mode
     if (!isEditMode) {
       setIsEditMode(true);
@@ -448,7 +448,7 @@ const CustomizableDashboard = () => {
 
       {/* Widget Getting Started pour les nouveaux utilisateurs */}
       <div className="dashboard-getting-started" data-tutorial="dashboard">
-        <GettingStartedWidget 
+        <GettingStartedWidget
           onStartTutorial={() => {
             window.dispatchEvent(new CustomEvent('start-tutorial'));
           }}

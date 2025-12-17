@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -74,6 +74,7 @@ function InvoiceDetail() {
   const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -82,11 +83,17 @@ function InvoiceDetail() {
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false);
   const [markPaidDialogOpen, setMarkPaidDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailData, setEmailData] = useState({
+    recipient_email: '',
+    custom_message: ''
+  });
   const [paymentData, setPaymentData] = useState({
     payment_date: new Date().toISOString().split('T')[0],
     payment_method: '',
@@ -104,6 +111,20 @@ function InvoiceDetail() {
       fetchInvoice();
     }
   }, [id]);
+
+  // Ouvrir le modal d'email si demandé depuis la navigation
+  useEffect(() => {
+    if (location.state?.openEmailDialog && invoice) {
+      setSendEmailDialogOpen(true);
+      if (location.state?.recipientEmail) {
+        setEmailData(prev => ({ ...prev, recipient_email: location.state.recipientEmail }));
+      } else if (invoice.client?.email) {
+        setEmailData(prev => ({ ...prev, recipient_email: invoice.client.email }));
+      }
+      // Nettoyer le state pour éviter de rouvrir le modal à chaque render
+      navigate(location.pathname, { replace: true });
+    }
+  }, [invoice, location.state, navigate]);
 
   const fetchInvoice = async () => {
     setLoading(true);
@@ -137,11 +158,39 @@ function InvoiceDetail() {
   const handleSend = async () => {
     try {
       const response = await invoicesAPI.send(id);
-      setInvoice(response.data);
+      setInvoice(response.data.invoice || response.data);
       enqueueSnackbar(t('invoices:messages.invoiceSentSuccess'), { variant: 'success' });
       setSendDialogOpen(false);
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.sendError'), { variant: 'error' });
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailData.recipient_email) {
+      enqueueSnackbar(t('invoices:messages.emailRequired') || 'Email destinataire requis', { variant: 'error' });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const response = await invoicesAPI.sendEmail(id, {
+        recipient_email: emailData.recipient_email,
+        custom_message: emailData.custom_message || undefined,
+        template: selectedTemplate
+      });
+      setInvoice(response.data.invoice || response.data);
+      enqueueSnackbar(response.data.message || t('invoices:messages.emailSent') || 'Email envoyé avec succès', { variant: 'success' });
+      setSendEmailDialogOpen(false);
+      setEmailData({ recipient_email: '', custom_message: '' });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      enqueueSnackbar(
+        error.response?.data?.error || t('invoices:messages.emailError') || 'Erreur lors de l\'envoi de l\'email',
+        { variant: 'error' }
+      );
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -314,6 +363,41 @@ function InvoiceDetail() {
           </IconButton>
           <IconButton
             size="small"
+            onClick={() => {
+              setEmailData({
+                recipient_email: invoice.client?.email || '',
+                custom_message: `Bonjour ${invoice.client?.name || 'Client'},
+
+Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
+
+Le PDF de votre facture est joint à cet email.
+
+Pour toute question, n'hésitez pas à nous contacter.
+
+Cordialement`
+              });
+              setSendEmailDialogOpen(true);
+            }}
+            disabled={!invoice.client?.email}
+            sx={{
+              bgcolor: invoice.client?.email ? 'info.50' : 'grey.100',
+              color: invoice.client?.email ? 'info.main' : 'grey.400',
+              width: 32,
+              height: 32,
+              borderRadius: 1,
+              '&:hover': invoice.client?.email ? {
+                bgcolor: 'info.main',
+                color: 'white',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.25)'
+              } : {},
+              transition: 'all 0.2s'
+            }}
+          >
+            <Email sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
+          <IconButton
+            size="small"
             onClick={handleEdit}
             sx={{
               bgcolor: 'grey.100',
@@ -347,12 +431,12 @@ function InvoiceDetail() {
                   color: 'white',
                   transform: 'translateY(-2px)',
                   boxShadow: '0 4px 8px rgba(46, 125, 50, 0.25)'
-                },
-                transition: 'all 0.2s'
-              }}
-            >
-              <Send sx={{ fontSize: '1.1rem' }} />
-            </IconButton>
+              },
+              transition: 'all 0.2s'
+            }}
+          >
+            <Send sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
           )}
           {(invoice.status === 'sent' || isOverdue()) && (
             <IconButton
@@ -426,6 +510,29 @@ function InvoiceDetail() {
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
               {t('invoices:buttons.generatePdf')}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Email />}
+              onClick={() => {
+                setEmailData({
+                  recipient_email: invoice.client?.email || '',
+                  custom_message: `Bonjour ${invoice.client?.name || 'Client'},
+
+Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
+
+Le PDF de votre facture est joint à cet email.
+
+Pour toute question, n'hésitez pas à nous contacter.
+
+Cordialement`
+                });
+                setSendEmailDialogOpen(true);
+              }}
+              disabled={!invoice.client?.email}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              {t('invoices:buttons.sendEmail')}
             </Button>
             <Button
               variant="outlined"
@@ -1057,6 +1164,89 @@ function InvoiceDetail() {
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
             {t('invoices:buttons.send')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog 
+        open={sendEmailDialogOpen} 
+        onClose={() => setSendEmailDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Email sx={{ color: 'primary.main' }} />
+          {t('invoices:dialogs.sendEmail.title')}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('invoices:dialogs.sendEmail.recipient')}
+                  type="email"
+                  value={emailData.recipient_email}
+                  onChange={(e) => setEmailData({ ...emailData, recipient_email: e.target.value })}
+                  required
+                  helperText={t('invoices:dialogs.sendEmail.recipientHelp')}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
+                  <Select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                    label={t('invoices:fields.invoiceTemplate')}
+                  >
+                    <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('invoices:dialogs.sendEmail.message')}
+                  multiline
+                  rows={8}
+                  value={emailData.custom_message}
+                  onChange={(e) => setEmailData({ ...emailData, custom_message: e.target.value })}
+                  helperText={t('invoices:dialogs.sendEmail.messageHelp')}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem'
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => {
+              setSendEmailDialogOpen(false);
+              setEmailData({ recipient_email: '', custom_message: '' });
+            }} 
+            sx={{ borderRadius: 2, textTransform: 'none' }}
+          >
+            {t('invoices:buttons.cancel')}
+          </Button>
+          <Button
+            onClick={handleSendEmail}
+            color="primary"
+            variant="contained"
+            disabled={!emailData.recipient_email || sendingEmail}
+            startIcon={sendingEmail ? <CircularProgress size={20} /> : <Send />}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {sendingEmail ? t('invoices:labels.sending') : t('invoices:dialogs.sendEmail.send')}
           </Button>
         </DialogActions>
       </Dialog>

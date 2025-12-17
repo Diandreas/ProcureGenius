@@ -41,7 +41,7 @@ const OverdueInvoicesWidget = ({ period = 'last_30_days' }) => {
             <div className="list-item-title">{invoice.invoice_number}</div>
             <div className="list-item-subtitle">{invoice.client_name} - {invoice.days_overdue} jours</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', minimumFractionDigits: 0}).format(invoice.total_amount)}</div>
+          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(invoice.total_amount)}</div>
         </div>
       ))}
     </div>
