@@ -52,6 +52,8 @@ import useCurrency from '../../hooks/useCurrency';
 import ClientInvoicesTable from '../../components/clients/ClientInvoicesTable';
 import ClientProductsTable from '../../components/clients/ClientProductsTable';
 import { generateClientReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 
 function ClientDetail() {
   const { t } = useTranslation(['clients', 'common']);
@@ -168,15 +170,18 @@ function ClientDetail() {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('clients:messages.loading', 'Chargement du client...')} />;
   }
 
   if (!client) {
-    return <Alert severity="error">{t('clients:messages.clientNotFound')}</Alert>;
+    return (
+      <ErrorState
+        title={t('clients:messages.clientNotFound', 'Client non trouvé')}
+        message={t('clients:messages.clientNotFoundDescription', 'Le client que vous recherchez n\'existe pas ou a été supprimé.')}
+        showHome={false}
+        onRetry={() => navigate('/clients')}
+      />
+    );
   }
 
   return (

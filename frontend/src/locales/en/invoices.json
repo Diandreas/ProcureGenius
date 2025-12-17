@@ -24,11 +24,13 @@
     "placeholder": "Search for an invoice..."
   },
   "messages": {
+    "loading": "Loading invoice...",
     "loadingError": "Error loading invoices",
     "loadInvoiceError": "Error loading invoice",
     "noInvoices": "No invoices",
     "noInvoicesDescription": "No invoices match your search criteria.",
     "invoiceNotFound": "Invoice not found",
+    "invoiceNotFoundDescription": "The invoice you are looking for does not exist or has been deleted.",
     "deleteConfirmation": "Are you sure you want to delete this invoice?",
     "invoiceDeletedSuccess": "Invoice deleted successfully",
     "deleteError": "Error deleting invoice",
@@ -59,7 +61,11 @@
     "noItemsAddedMessage": "No items added. Click \"Add\" to begin.",
     "noItemsDesktopMessage": "No items added. Click \"Add item\" to begin.",
     "overdueMessage": "{{days}} days overdue",
-    "reportError": "Error generating report"
+    "reportError": "Error generating report",
+    "emailSent": "Email sent successfully",
+    "emailError": "Error sending email",
+    "emailRequired": "Recipient email required",
+    "sending": "Sending..."
   },
   "actions": {
     "generateReport": "PDF Report"
@@ -111,7 +117,9 @@
     "vatRateField": "VAT rate (%)",
     "invoiceStatusField": "Invoice status",
     "savingLabel": "Saving...",
-    "generatingLabel": "Generating..."
+    "generatingLabel": "Generating...",
+    "sending": "Sending...",
+    "sentDateLabel": "Sent date"
   },
   "buttons": {
     "generatePdf": "Generate PDF",
@@ -127,7 +135,8 @@
     "preview": "Preview",
     "print": "Print",
     "download": "Download",
-    "save": "Save"
+    "save": "Save",
+    "sendEmail": "Send by email"
   },
   "columns": {
     "reference": "Reference",
@@ -146,7 +155,19 @@
     "addItem": "Add item",
     "generatePdf": "Generate invoice PDF",
     "quickCreateClient": "Quick create client",
-    "quickCreateProduct": "Quick create product"
+    "quickCreateProduct": "Quick create product",
+    "sendEmail": {
+      "title": "Send invoice by email",
+      "recipient": "Recipient email",
+      "recipientHelp": "Email of the client who will receive the invoice",
+      "subject": "Subject",
+      "message": "Custom message",
+      "messageHelp": "Message that will be included in the email (optional)",
+      "messagePlaceholder": "Custom message to include in the email...",
+      "send": "Send",
+      "pdfAttachment": "The invoice will be sent as a PDF attachment.",
+      "invoiceDetails": "Invoice details"
+    }
   },
   "fields": {
     "paymentDate": "Payment date",

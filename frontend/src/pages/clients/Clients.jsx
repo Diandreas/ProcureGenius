@@ -55,6 +55,8 @@ import { useSnackbar } from 'notistack';
 import { fetchClients } from '../../store/slices/clientsSlice';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generateClientsBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Clients() {
@@ -323,23 +325,17 @@ function Clients() {
   );
 
   if (loading && clients.length === 0) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('clients:messages.loading', 'Chargement des clients...')} />;
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{t('clients:messages.loadingError')}</Alert>
-      </Box>
+      <ErrorState
+        title={t('clients:messages.loadingError', 'Erreur de chargement')}
+        message={t('clients:messages.loadingErrorDescription', 'Impossible de charger les clients. Veuillez réessayer.')}
+        showHome={false}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

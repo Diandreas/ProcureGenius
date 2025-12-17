@@ -54,6 +54,7 @@ class InvoiceWeasyPDFGenerator:
             'due_date': getattr(invoice, 'due_date', None),
             'client': invoice.client if hasattr(invoice, 'client') else None,
             'template_type': template_type,  # Pour le styling conditionnel
+            'brand_color': org_data.get('brand_color', '#2563eb'),  # Couleur de marque depuis les paramètres
         }
 
         # Sélectionner le template HTML selon le type
@@ -135,6 +136,7 @@ class InvoiceWeasyPDFGenerator:
             'email': None,
             'website': None,
             'logo_path': None,
+            'brand_color': '#2563eb',  # Couleur par défaut
         }
 
         try:
@@ -189,6 +191,12 @@ class InvoiceWeasyPDFGenerator:
                         org_data['logo_path'] = org_settings.company_logo.path
                     elif print_template and print_template.header_logo:
                         org_data['logo_path'] = print_template.header_logo.path
+
+                    # Couleur de marque (brand_color)
+                    if org_settings and hasattr(org_settings, 'brand_color') and org_settings.brand_color:
+                        org_data['brand_color'] = org_settings.brand_color
+                    elif print_template and print_template.primary_color:
+                        org_data['brand_color'] = print_template.primary_color
 
         except Exception as e:
             print(f"✗ Erreur lors de la récupération des données organisation: {e}")

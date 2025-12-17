@@ -411,7 +411,7 @@ const QUICK_ACTIONS_CATEGORIES = [
   {
     id: 'chat',
     label: 'Conversation IA',
-    icon: <SmartToy />,
+    icon: <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><Mascot pose="happy" animation="none" size={20} /></Box>,
     color: '#6366f1',
     actions: [
       {
@@ -1144,7 +1144,9 @@ function AIChat() {
                 {proactiveConversations.length > 0 && (
                   <Box sx={{ mt: 4, mb: 2, maxWidth: 600, mx: 'auto' }}>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <SmartToy sx={{ fontSize: 18 }} />
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <Mascot pose="excited" animation="wave" size={20} />
+                      </Box>
                       L'IA vous propose de discuter
                     </Typography>
                     {proactiveConversations.map((conv) => (
@@ -1171,22 +1173,24 @@ function AIChat() {
                     p: 0,
                   }}
                 >
-                  <Avatar
-                    sx={{
-                      bgcolor: msg.role === 'user' 
-                        ? (isDark ? '#475569' : '#e2e8f0')
-                        : 'primary.main',
-                      color: msg.role === 'user' 
-                        ? (isDark ? '#e2e8f0' : '#475569')
-                        : 'white',
-                      ml: msg.role === 'user' ? 1.5 : 0,
-                      mr: msg.role === 'user' ? 0 : 1.5,
-                      width: 32,
-                      height: 32,
-                    }}
-                  >
-                    {msg.role === 'user' ? <Person sx={{ fontSize: 18 }} /> : <SmartToy sx={{ fontSize: 18 }} />}
-                  </Avatar>
+                  {msg.role === 'user' ? (
+                    <Avatar
+                      sx={{
+                        bgcolor: isDark ? '#475569' : '#e2e8f0',
+                        color: isDark ? '#e2e8f0' : '#475569',
+                        ml: 1.5,
+                        mr: 0,
+                        width: 32,
+                        height: 32,
+                      }}
+                    >
+                      <Person sx={{ fontSize: 18 }} />
+                    </Avatar>
+                  ) : (
+                    <Box sx={{ ml: 0, mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Mascot pose="happy" animation="float" size={32} />
+                    </Box>
+                  )}
                   <Paper
                     elevation={0}
                     sx={{
@@ -1222,9 +1226,9 @@ function AIChat() {
               {/* Indicateur de frappe */}
               {typingIndicator && (
                 <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
-                  <Avatar sx={{ bgcolor: 'primary.main', mr: 1.5, width: 32, height: 32 }}>
-                    <SmartToy sx={{ fontSize: 18 }} />
-                  </Avatar>
+                  <Box sx={{ mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mascot pose="thinking" animation="pulse" size={32} />
+                  </Box>
                   <Paper
                     elevation={0}
                     sx={{

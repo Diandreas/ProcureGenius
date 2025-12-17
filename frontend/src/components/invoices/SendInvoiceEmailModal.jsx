@@ -18,9 +18,11 @@ import {
   Email,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [recipientEmail, setRecipientEmail] = useState(invoice?.client?.email || '');
   const [subject, setSubject] = useState(`Facture ${invoice?.invoice_number || ''} - ProcureGenius`);
   const [message, setMessage] = useState('');
@@ -28,7 +30,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
 
   const handleSend = async () => {
     if (!recipientEmail) {
-      enqueueSnackbar('Veuillez saisir un email destinataire', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.emailRequired'), { variant: 'error' });
       return;
     }
 
@@ -49,15 +51,15 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
 
       const data = await response.json();
       if (data.success || response.ok) {
-        enqueueSnackbar(data.message || 'Facture envoyée avec succès', { variant: 'success' });
+        enqueueSnackbar(data.message || t('invoices:messages.invoiceSentSuccess'), { variant: 'success' });
         if (onSent) onSent();
         onClose();
       } else {
-        enqueueSnackbar(data.error || 'Erreur lors de l\'envoi', { variant: 'error' });
+        enqueueSnackbar(data.error || t('invoices:messages.sendError'), { variant: 'error' });
       }
     } catch (error) {
       console.error('Error sending invoice email:', error);
-      enqueueSnackbar('Erreur lors de l\'envoi de l\'email', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.emailError'), { variant: 'error' });
     } finally {
       setSending(false);
     }
@@ -76,7 +78,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Email />
-            <Typography variant="h6">Envoyer la facture par email</Typography>
+            <Typography variant="h6">{t('invoices:dialogs.sendEmail.title')}</Typography>
           </Box>
           <Button onClick={onClose} size="small" sx={{ minWidth: 'auto', p: 0.5 }}>
             <Close />
@@ -87,21 +89,22 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
       <DialogContent dividers>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Alert severity="info" sx={{ mb: 1 }}>
-            La facture sera envoyée en PDF en pièce jointe.
+            {t('invoices:dialogs.sendEmail.pdfAttachment', 'La facture sera envoyée en PDF en pièce jointe.')}
           </Alert>
 
           <TextField
             fullWidth
-            label="Email destinataire"
+            label={t('invoices:dialogs.sendEmail.recipient')}
             type="email"
             value={recipientEmail}
             onChange={(e) => setRecipientEmail(e.target.value)}
             required
+            helperText={t('invoices:dialogs.sendEmail.recipientHelp')}
           />
 
           <TextField
             fullWidth
-            label="Objet"
+            label={t('invoices:dialogs.sendEmail.subject', 'Objet')}
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
           />
@@ -110,27 +113,28 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
             fullWidth
             multiline
             rows={4}
-            label="Message (optionnel)"
+            label={t('invoices:dialogs.sendEmail.message')}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Message personnalisé à inclure dans l'email..."
+            placeholder={t('invoices:dialogs.sendEmail.messagePlaceholder', 'Message personnalisé à inclure dans l\'email...')}
+            helperText={t('invoices:dialogs.sendEmail.messageHelp')}
           />
 
           <Divider />
 
           <Box>
             <Typography variant="subtitle2" gutterBottom>
-              Détails de la facture:
+              {t('invoices:dialogs.sendEmail.invoiceDetails', 'Détails de la facture')}:
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Numéro: {invoice.invoice_number || 'N/A'}
+              {t('invoices:invoiceNumber')}: {invoice.invoice_number || 'N/A'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Montant: {invoice.total_amount?.toFixed(2) || '0.00'} €
+              {t('invoices:labels.total')}: {invoice.total_amount?.toFixed(2) || '0.00'} {invoice.currency || 'CAD'}
             </Typography>
             {invoice.client && (
               <Typography variant="body2" color="text.secondary">
-                Client: {invoice.client.name || invoice.client.first_name + ' ' + invoice.client.last_name}
+                {t('invoices:labels.client')}: {invoice.client.name || (invoice.client.first_name + ' ' + invoice.client.last_name)}
               </Typography>
             )}
           </Box>
@@ -139,7 +143,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} variant="outlined">
-          Annuler
+          {t('invoices:buttons.cancel')}
         </Button>
         <Button
           onClick={handleSend}
@@ -147,7 +151,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
           startIcon={sending ? <CircularProgress size={16} /> : <Send />}
           disabled={sending || !recipientEmail}
         >
-          {sending ? 'Envoi...' : 'Envoyer'}
+          {sending ? t('invoices:labels.sending') : t('invoices:dialogs.sendEmail.send')}
         </Button>
       </DialogActions>
     </Dialog>

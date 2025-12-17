@@ -60,6 +60,8 @@ import { suppliersAPI } from '../../services/api';
 import reportsAPI from '../../services/reportsAPI';
 import { getStatusColor, getStatusLabel, formatDate, parseRating } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function SupplierDetail() {
@@ -197,15 +199,18 @@ function SupplierDetail() {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('suppliers:messages.loading', 'Chargement du fournisseur...')} />;
   }
 
   if (!supplier) {
-    return <Alert severity="error">{t('suppliers:messages.supplierNotFound')}</Alert>;
+    return (
+      <ErrorState
+        title={t('suppliers:messages.supplierNotFound', 'Fournisseur non trouvé')}
+        message={t('suppliers:messages.supplierNotFoundDescription', 'Le fournisseur que vous recherchez n\'existe pas ou a été supprimé.')}
+        showHome={false}
+        onRetry={() => navigate('/suppliers')}
+      />
+    );
   }
 
   return (

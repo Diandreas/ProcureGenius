@@ -46,6 +46,8 @@ import {
   fetchMigrationLogs,
   clearPreview,
 } from '../../store/slices/migrationSlice';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 
 const steps = ['Téléverser le fichier', 'Aperçu et mapping', 'Configuration', 'Import'];
 
@@ -261,9 +263,7 @@ function MigrationWizard() {
         Aperçu des données et mapping des champs
       </Typography>
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingState message="Analyse du fichier en cours..." size={60} />
       ) : (
         <>
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -552,9 +552,12 @@ function MigrationWizard() {
             ))}
           </Stepper>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
+            <ErrorState
+              title="Erreur"
+              message={error}
+              showHome={false}
+              onRetry={() => window.location.reload()}
+            />
           )}
           {activeStep === 0 && renderStep1()}
           {activeStep === 1 && renderStep2()}

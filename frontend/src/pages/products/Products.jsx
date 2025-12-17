@@ -56,6 +56,8 @@ import { fetchProducts } from '../../store/slices/productsSlice';
 import { warehousesAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generateProductsBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 // Product type visual configuration
@@ -432,23 +434,17 @@ function Products() {
   };
 
   if (loading && products.length === 0) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('products:messages.loading', 'Chargement des produits...')} />;
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{t('products:messages.loadingError')}</Alert>
-      </Box>
+      <ErrorState
+        title={t('products:messages.loadingError', 'Erreur de chargement')}
+        message={t('products:messages.loadingErrorDescription', 'Impossible de charger les produits. Veuillez réessayer.')}
+        showHome={false}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

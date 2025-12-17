@@ -8,6 +8,8 @@ import * as widgetsAPI from '../services/widgetsAPI';
 import WidgetLibrary from '../components/dashboard/WidgetLibrary';
 import WidgetWrapper from '../components/dashboard/WidgetWrapper';
 import GettingStartedWidget from '../components/dashboard/GettingStartedWidget';
+import EmptyState from '../components/EmptyState';
+import { Box } from '@mui/material';
 import '../styles/CustomizableDashboard.css';
 
 // Import widgets - 15 widgets essentiels
@@ -488,21 +490,18 @@ const CustomizableDashboard = () => {
 
         {/* Empty state */}
         {filteredLayout.length === 0 && (
-          <div className="dashboard-empty">
-            <LayoutGrid size={80} className="empty-icon" />
-            <h2>{t('emptyState.title')}</h2>
-            <p>{t('emptyState.description')}</p>
-            <button
-              onClick={() => {
+          <Box sx={{ py: 8 }}>
+            <EmptyState
+              title={t('emptyState.title', 'Aucun widget configuré')}
+              description={t('emptyState.description', 'Commencez par ajouter des widgets à votre tableau de bord.')}
+              mascotPose="reading"
+              actionLabel={t('emptyState.button', 'Ajouter un widget')}
+              onAction={() => {
                 setIsEditMode(true);
                 setIsLibraryOpen(true);
               }}
-              className="toolbar-btn toolbar-btn-primary toolbar-btn-large"
-            >
-              <Plus size={20} />
-              {t('emptyState.button')}
-            </button>
-          </div>
+            />
+          </Box>
         )}
       </div>
 

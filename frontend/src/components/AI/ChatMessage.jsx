@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import {
   Person,
-  SmartToy,
   OpenInNew,
   Download,
   PlayArrow,
@@ -30,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { formatDateTime } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
+import Mascot from '../Mascot';
 
 /**
  * Composant de message de chat IA avancé avec animations et actions
@@ -216,9 +216,9 @@ function ChatMessage({
         alignItems: 'flex-start',
         mb: 2
       }}>
-        <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 32, height: 32 }}>
-          <SmartToy sx={{ fontSize: 18 }} />
-        </Avatar>
+        <Box sx={{ mr: 2, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Mascot pose="thinking" animation="pulse" size={32} />
+        </Box>
         <Paper
           elevation={2}
           sx={{
@@ -243,9 +243,9 @@ function ChatMessage({
         mb: 2
       }}>
         {!isUser && (
-          <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 32, height: 32 }}>
-            <SmartToy sx={{ fontSize: 18 }} />
-          </Avatar>
+          <Box sx={{ mr: 2, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Mascot pose="happy" animation="float" size={32} />
+          </Box>
         )}
 
         <Box sx={{ maxWidth: '80%' }}>

@@ -45,6 +45,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import LoadingState from '../../components/LoadingState';
 
 function SourcingEventDetail() {
   const navigate = useNavigate();
@@ -141,11 +142,7 @@ function SourcingEventDetail() {
   };
 
   if (loading || !currentEvent) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('eSourcing:messages.loading', 'Chargement de l\'événement...')} />;
   }
 
   return (

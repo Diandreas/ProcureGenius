@@ -304,7 +304,27 @@ ProcureGenius
             # Envoyer l'email
             email.send(fail_silently=False)
 
-            logger.info(f"Invoice {invoice.invoice_number} sent successfully to {recipient_email}")
+            # Sauvegarder la date d'envoi
+            from django.utils import timezone
+            update_fields = []
+            
+            if hasattr(invoice, 'sent_at'):
+                invoice.sent_at = timezone.now()
+                update_fields.append('sent_at')
+            elif hasattr(invoice, 'sent_date'):
+                invoice.sent_date = timezone.now().date()
+                update_fields.append('sent_date')
+            
+            # Mettre à jour le statut si c'était un brouillon
+            if invoice.status == 'draft':
+                invoice.status = 'sent'
+                update_fields.append('status')
+            
+            # Sauvegarder la facture avec les nouvelles informations
+            if update_fields:
+                invoice.save(update_fields=update_fields)
+
+            logger.info(f"Invoice {invoice.invoice_number} sent successfully to {recipient_email} at {timezone.now()}")
 
             # Restaurer les settings originaux
             if original_settings:
@@ -312,7 +332,8 @@ ProcureGenius
 
             return {
                 'success': True,
-                'message': f'Facture envoyée avec succès à {recipient_email}'
+                'message': f'Facture envoyée avec succès à {recipient_email}',
+                'sent_at': invoice.sent_at.isoformat() if hasattr(invoice, 'sent_at') and invoice.sent_at else None
             }
 
         except Exception as e:

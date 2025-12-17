@@ -64,6 +64,8 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -466,18 +468,17 @@ Cordialement`
   );
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('invoices:messages.loading', 'Chargement de la facture...')} />;
   }
 
   if (!invoice) {
     return (
-      <Alert severity="error">
-        {t('invoices:messages.invoiceNotFound')}
-      </Alert>
+      <ErrorState
+        title={t('invoices:messages.invoiceNotFound', 'Facture non trouvée')}
+        message={t('invoices:messages.invoiceNotFoundDescription', 'La facture que vous recherchez n\'existe pas ou a été supprimée.')}
+        showHome={false}
+        onRetry={() => navigate('/invoices')}
+      />
     );
   }
 
@@ -790,6 +791,16 @@ Cordialement`
                     </Typography>
                   </Box>
                 )}
+                {(invoice.sent_at || invoice.sent_date) && (
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                      {t('invoices:labels.sentDateLabel', 'Date d\'envoi')}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'info.main' }}>
+                      {formatDate(invoice.sent_at || invoice.sent_date)}
+                    </Typography>
+                  </Box>
+                )}
               </Stack>
             </CardContent>
           </Card>
@@ -1075,6 +1086,17 @@ Cordialement`
                       <ListItemText
                         primary={t('invoices:labels.paymentDateLabel')}
                         secondary={formatDate(invoice.payment_date)}
+                      />
+                    </ListItem>
+                  )}
+                  {(invoice.sent_at || invoice.sent_date) && (
+                    <ListItem>
+                      <ListItemIcon>
+                        <Send color="info" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={t('invoices:labels.sentDateLabel', 'Date d\'envoi')}
+                        secondary={formatDate(invoice.sent_at || invoice.sent_date)}
                       />
                     </ListItem>
                   )}

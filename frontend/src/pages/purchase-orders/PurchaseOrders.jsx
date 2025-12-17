@@ -24,6 +24,8 @@ import { purchaseOrdersAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generatePurchaseOrdersBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function PurchaseOrders() {
@@ -300,11 +302,7 @@ function PurchaseOrders() {
   );
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('purchaseOrders:messages.loading', 'Chargement des bons de commande...')} />;
   }
 
   return (

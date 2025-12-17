@@ -55,6 +55,7 @@ import {
   extractClauses,
   verifyClause,
 } from '../../store/slices/contractsSlice';
+import LoadingState from '../../components/LoadingState';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
@@ -178,11 +179,7 @@ function ContractDetail() {
   };
 
   if (loading || !currentContract) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('contracts:messages.loading', 'Chargement du contrat...')} />;
   }
 
   return (

@@ -54,6 +54,8 @@ import { fetchInvoices } from '../../store/slices/invoicesSlice';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Invoices() {
@@ -337,18 +339,17 @@ function Invoices() {
   );
 
   if (loading && invoices.length === 0) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('invoices:messages.loading', 'Chargement des factures...')} />;
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{t('invoices:messages.loadingError')}</Alert>
-      </Box>
+      <ErrorState
+        title={t('invoices:messages.loadingError', 'Erreur de chargement')}
+        message={t('invoices:messages.loadingErrorDescription', 'Impossible de charger les factures. Veuillez réessayer.')}
+        showHome={false}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

@@ -133,5 +133,10 @@
     "NT": "Territoires du Nord-Ouest",
     "YT": "Yukon",
     "NU": "Nunavut"
+  },
+  "pdf": {
+    "title": "Rapport PDF Fournisseur",
+    "description": "Génération du rapport PDF...",
+    "ready": "Le rapport PDF est prêt. Choisissez une action:"
   }
 }

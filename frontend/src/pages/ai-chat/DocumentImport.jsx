@@ -35,6 +35,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
+import LoadingState from '../../components/LoadingState';
+import Mascot from '../../components/Mascot';
 
 const DOCUMENT_TYPES = [
   {
@@ -395,9 +397,15 @@ function DocumentImport() {
             zIndex: 9999,
           }}
         >
-          <Paper sx={{ p: 4, textAlign: 'center', minWidth: 300 }}>
-            <CircularProgress size={48} sx={{ mb: 2 }} />
-            <Typography variant="h6">
+          <Paper sx={{ p: 4, textAlign: 'center', minWidth: 300, borderRadius: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Mascot
+                pose={analyzing ? 'thinking' : 'happy'}
+                animation={analyzing ? 'pulse' : 'bounce'}
+                size={80}
+              />
+            </Box>
+            <Typography variant="h6" sx={{ mb: 1 }}>
               {analyzing ? 'Analyse IA en cours...' : 'Téléchargement...'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -405,6 +413,11 @@ function DocumentImport() {
                 ? 'Extraction intelligente des données...'
                 : 'Préparation de votre document...'}
             </Typography>
+            {uploading && (
+              <Box sx={{ mt: 2, width: '100%' }}>
+                <LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 6, borderRadius: 3 }} />
+              </Box>
+            )}
           </Paper>
         </Box>
       )}

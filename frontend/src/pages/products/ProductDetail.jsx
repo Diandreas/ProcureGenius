@@ -50,6 +50,8 @@ import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
@@ -184,15 +186,18 @@ function ProductDetail() {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('products:messages.loading', 'Chargement du produit...')} />;
   }
 
   if (!product) {
-    return <Alert severity="error">{t('products:messages.productNotFound')}</Alert>;
+    return (
+      <ErrorState
+        title={t('products:messages.productNotFound', 'Produit non trouvé')}
+        message={t('products:messages.productNotFoundDescription', 'Le produit que vous recherchez n\'existe pas ou a été supprimé.')}
+        showHome={false}
+        onRetry={() => navigate('/products')}
+      />
+    );
   }
 
   const stockStatus = product.stock_quantity === 0 ? 'error' :

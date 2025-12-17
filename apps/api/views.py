@@ -1346,12 +1346,11 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         )
 
         if result['success']:
-            # Marquer la facture comme envoyée si elle était en draft
+            # La date d'envoi est déjà sauvegardée dans le service email
+            # On vérifie juste que le statut est bien à jour
             if invoice.status == 'draft':
                 invoice.status = 'sent'
-                if hasattr(invoice, 'sent_date'):
-                    invoice.sent_date = timezone.now().date()
-                invoice.save()
+                invoice.save(update_fields=['status'])
 
             serializer = self.get_serializer(invoice)
             return Response({

@@ -101,6 +101,7 @@
     "issueDateLabel": "Date d'émission",
     "dueDateLabel": "Date d'échéance",
     "paymentDateLabel": "Date de paiement",
+    "sentDateLabel": "Date d'envoi",
     "lastUpdate": "Dernière modification",
     "paymentInfo": "Informations de paiement",
     "paymentMethod": "Méthode de paiement",
@@ -157,9 +158,13 @@
       "title": "Envoyer la facture par email",
       "recipient": "Email destinataire",
       "recipientHelp": "Email du client qui recevra la facture",
+      "subject": "Objet",
       "message": "Message personnalisé",
       "messageHelp": "Message qui sera inclus dans l'email (optionnel)",
-      "send": "Envoyer"
+      "messagePlaceholder": "Message personnalisé à inclure dans l'email...",
+      "send": "Envoyer",
+      "pdfAttachment": "La facture sera envoyée en PDF en pièce jointe.",
+      "invoiceDetails": "Détails de la facture"
     }
   },
   "fields": {

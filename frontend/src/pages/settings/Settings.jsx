@@ -80,6 +80,8 @@ import { settingsAPI } from '../../services/settingsAPI';
 import { printTemplatesAPI } from '../../services/printTemplatesAPI';
 import { printConfigurationsAPI } from '../../services/printConfigurationsAPI';
 import ModulesManager from '../../components/settings/ModulesManager';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 
 // Import Redux
 import { changeLanguage } from '../../store/slices/settingsSlice';
@@ -425,21 +427,18 @@ const Settings = () => {
 
   // Loading state
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('settings:loading', 'Chargement des paramètres...')} />;
   }
 
   // Error state
   if (!settings) {
     return (
-      <Box p={3}>
-        <Alert severity="error">
-          {t('settings:errorMessage')}
-        </Alert>
-      </Box>
+      <ErrorState
+        title={t('settings:errorMessage', 'Erreur de chargement')}
+        message={t('settings:errorDescription', 'Impossible de charger les paramètres. Veuillez réessayer.')}
+        showHome={false}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

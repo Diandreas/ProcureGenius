@@ -133,5 +133,10 @@
     "NT": "Northwest Territories",
     "YT": "Yukon",
     "NU": "Nunavut"
+  },
+  "pdf": {
+    "title": "Supplier PDF Report",
+    "description": "Generating PDF report...",
+    "ready": "The PDF report is ready. Choose an action:"
   }
 }

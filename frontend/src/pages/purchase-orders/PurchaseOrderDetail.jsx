@@ -72,6 +72,8 @@ import { purchaseOrdersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 
 function PurchaseOrderDetail() {
   const { id } = useParams();
@@ -210,18 +212,17 @@ function PurchaseOrderDetail() {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message={t('purchaseOrders:messages.loading', 'Chargement du bon de commande...')} />;
   }
 
   if (!purchaseOrder) {
     return (
-      <Alert severity="error">
-        {t('purchaseOrders:messages.poNotFound')}
-      </Alert>
+      <ErrorState
+        title={t('purchaseOrders:messages.poNotFound', 'Bon de commande non trouvé')}
+        message={t('purchaseOrders:messages.poNotFoundDescription', 'Le bon de commande que vous recherchez n\'existe pas ou a été supprimé.')}
+        showHome={false}
+        onRetry={() => navigate('/purchase-orders')}
+      />
     );
   }
 

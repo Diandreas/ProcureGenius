@@ -55,6 +55,8 @@ import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Suppliers() {
@@ -638,7 +640,9 @@ function Suppliers() {
       </Card>
 
       {/* Suppliers Grid */}
-      {filteredSuppliers.length === 0 ? (
+      {loading && suppliers.length === 0 ? (
+        <LoadingState message={t('suppliers:messages.loading', 'Chargement des fournisseurs...')} />
+      ) : filteredSuppliers.length === 0 ? (
         <EmptyState
           title={t('suppliers:messages.noSuppliers')}
           description={t('suppliers:messages.noSuppliersDescription')}

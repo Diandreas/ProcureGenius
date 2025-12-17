@@ -33,6 +33,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
+import LoadingState from '../components/LoadingState';
+import ErrorState from '../components/ErrorState';
 
 const Pricing = () => {
   const navigate = useNavigate();
@@ -259,18 +261,17 @@ const Pricing = () => {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingState message="Chargement des plans d'abonnement..." />;
   }
 
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <ErrorState
+        title="Erreur de chargement"
+        message={error}
+        showHome={false}
+        onRetry={fetchPlans}
+      />
     );
   }
 
