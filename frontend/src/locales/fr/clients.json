@@ -128,7 +128,10 @@
     "reportGenerated": "Rapport généré avec succès ! Choisissez une action ci-dessous.",
     "pdfGenerationHelpText": "Vous pouvez prévisualiser, télécharger ou imprimer directement le rapport.",
     "pdfDownloadedSuccess": "PDF téléchargé avec succès",
-    "printWindowOpened": "Fenêtre d'impression ouverte"
+    "printWindowOpened": "Fenêtre d'impression ouverte",
+    "pdfError": "Erreur lors de la génération du PDF",
+    "pdfDownloaded": "Rapport PDF téléchargé avec succès",
+    "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression"
   },
   "validation": {
     "nameRequired": "Le nom est requis",

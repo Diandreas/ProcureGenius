@@ -6,7 +6,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from io import BytesIO
-from .pdf_generator import generate_invoice_pdf
+from .pdf_generator_weasy import generate_invoice_pdf_weasy
 from apps.core.email_utils import configure_django_email_settings, restore_django_email_settings
 import logging
 
@@ -67,8 +67,8 @@ class InvoiceEmailService:
                              f"{getattr(invoice.client, 'first_name', '')} {getattr(invoice.client, 'last_name', '')}".strip() or \
                              'Client'
 
-            # Générer le PDF
-            pdf_buffer = generate_invoice_pdf(invoice, template_type)
+            # Générer le PDF avec WeasyPrint
+            pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type)
 
             # Préparer l'email
             subject = f"Facture {invoice.invoice_number} - ProcureGenius"
