@@ -1,0 +1,71 @@
+# Dépendances de production pour ProcureGenius
+# À utiliser avec pip install -r requirements_production.txt
+
+# Django
+Django==5.0.3
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+django-tenants==3.5.0
+django-allauth==0.61.1
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-import-export==3.3.7
+
+# Base de données
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# Cache et tâches
+redis==5.0.1
+celery==5.3.4
+django-celery-beat==2.5.0
+django-celery-results==2.6.0
+
+# Serveur WSGI
+gunicorn==21.2.0
+
+# Sécurité
+python-decouple==3.8
+bcrypt==4.1.2
+PyJWT==2.8.0
+
+# API et intégrations
+requests==2.31.0
+stripe==7.14.0
+paypalrestsdk==1.13.2
+mistralai==0.1.8
+
+# Traitement d'images et fichiers
+Pillow==10.1.0
+python-magic==0.4.27
+django-storages==1.14.2
+boto3==1.34.34
+
+# PDF et rapports
+reportlab==4.0.7
+weasyprint==61.2
+xhtml2pdf==0.2.11
+
+# Internationalisation
+django-modeltranslation==0.18.11
+
+# Utilitaires
+python-dotenv==1.0.0
+django-extensions==3.2.3
+django-debug-toolbar==4.2.0
+
+# Logging et monitoring
+sentry-sdk==1.38.0
+
+# Tâches asynchrones supplémentaires
+django-background-tasks==1.2.5
+
+# Validation
+jsonschema==4.19.2
+
+# Dates et temps
+python-dateutil==2.8.2
+
+# Serveur de développement (optionnel pour prod)
+whitenoise==6.6.0
