@@ -45,7 +45,7 @@ import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
 import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
-import AINotificationProvider from '../components/ai/AINotificationProvider';
+import AINotificationProvider from '../components/AI/AINotificationProvider';
 import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 240;

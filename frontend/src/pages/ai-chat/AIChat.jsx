@@ -65,7 +65,7 @@ import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
 import Mascot from '../../components/Mascot';
 import VoiceRecorder from '../../components/VoiceRecorder';
-import ProactiveConversationCard from '../../components/ai/ProactiveConversationCard';
+import ProactiveConversationCard from '../../components/AI/ProactiveConversationCard';
 
 // Composant Header compact avec navigation IA
 const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick }) => {

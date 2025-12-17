@@ -40,7 +40,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
-import ImportReviewModal from '../../components/ai/ImportReviewModal';
+import ImportReviewModal from '../../components/AI/ImportReviewModal';
 
 const ENTITY_TYPE_ICONS = {
   invoice: <Receipt />,
