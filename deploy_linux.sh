@@ -37,8 +37,16 @@ fi
 
 # Vérifier les privilèges root
 if [[ $EUID -eq 0 ]]; then
-   log_error "Ne pas exécuter ce script en tant que root"
-   exit 1
+   log_warning "⚠️ Vous exécutez ce script en tant que root"
+   log_warning "⚠️ Cela peut être nécessaire sur certains hébergements partagés"
+   log_warning "⚠️ Assurez-vous de comprendre les implications de sécurité"
+   read -p "Continuer ? (y/N): " -n 1 -r
+   echo
+   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+       log_info "Annulé par l'utilisateur"
+       exit 0
+   fi
+   log_info "Continuation avec les privilèges root..."
 fi
 
 log_info "🚀 Démarrage du déploiement de ProcureGenius sur Linux"
