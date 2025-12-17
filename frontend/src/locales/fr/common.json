@@ -40,7 +40,8 @@
     "view": "Voir",
     "details": "Détails",
     "saving": "Enregistrement...",
-    "preview": "Aperçu"
+    "preview": "Aperçu",
+    "moreActions": "Plus d'actions"
   },
   "success": "Succès",
   "failed": "Échec",

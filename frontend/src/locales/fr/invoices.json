@@ -162,6 +162,7 @@
       "message": "Message personnalisé",
       "messageHelp": "Message qui sera inclus dans l'email (optionnel)",
       "messagePlaceholder": "Message personnalisé à inclure dans l'email...",
+      "defaultMessage": "Bonjour {{name}},\n\nVeuillez trouver ci-joint votre facture {{number}}.\n\nLe PDF de votre facture est joint à cet email.\n\nPour toute question, n'hésitez pas à nous contacter.\n\nCordialement",
       "send": "Envoyer",
       "pdfAttachment": "La facture sera envoyée en PDF en pièce jointe.",
       "invoiceDetails": "Détails de la facture"

@@ -16,13 +16,14 @@ class InvoiceWeasyPDFGenerator:
     et professionnels pour vos factures.
     """
 
-    def generate_invoice_pdf(self, invoice, template_type='classic'):
+    def generate_invoice_pdf(self, invoice, template_type='classic', language='fr'):
         """
         Génère un PDF pour une facture donnée en utilisant HTML/CSS et WeasyPrint
 
         Args:
             invoice: Instance du modèle Invoice
             template_type: Type de template ('classic', 'modern', 'minimal')
+            language: Langue pour les traductions ('fr' ou 'en')
 
         Returns:
             BytesIO: Buffer contenant le PDF généré
@@ -40,22 +41,28 @@ class InvoiceWeasyPDFGenerator:
         # Générer le QR code
         qr_code_base64 = self._generate_qr_code(invoice)
 
-        # Préparer le contexte pour le template
-        context = {
-            'invoice': invoice,
-            'organization': org_data,
-            'logo_base64': self._get_logo_base64(org_data),
-            'qr_code_base64': qr_code_base64,  # Ajouter le QR code au contexte
-            'items': invoice.items.all() if hasattr(invoice, 'items') else [],
-            'subtotal': getattr(invoice, 'subtotal', 0) or 0,
-            'tax_amount': getattr(invoice, 'tax_amount', 0) or 0,
-            'total_amount': getattr(invoice, 'total_amount', 0) or 0,
-            'issue_date': getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None),
-            'due_date': getattr(invoice, 'due_date', None),
-            'client': invoice.client if hasattr(invoice, 'client') else None,
-            'template_type': template_type,  # Pour le styling conditionnel
-            'brand_color': org_data.get('brand_color', '#2563eb'),  # Couleur de marque depuis les paramètres
-        }
+        # Activer la langue pour les traductions du template
+        from django.utils import translation
+        translation.activate(language)
+        
+        try:
+            # Préparer le contexte pour le template
+            context = {
+                'invoice': invoice,
+                'organization': org_data,
+                'logo_base64': self._get_logo_base64(org_data),
+                'qr_code_base64': qr_code_base64,  # Ajouter le QR code au contexte
+                'items': invoice.items.all() if hasattr(invoice, 'items') else [],
+                'subtotal': getattr(invoice, 'subtotal', 0) or 0,
+                'tax_amount': getattr(invoice, 'tax_amount', 0) or 0,
+                'total_amount': getattr(invoice, 'total_amount', 0) or 0,
+                'issue_date': getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None),
+                'due_date': getattr(invoice, 'due_date', None),
+                'client': invoice.client if hasattr(invoice, 'client') else None,
+                'template_type': template_type,  # Pour le styling conditionnel
+                'brand_color': org_data.get('brand_color', '#2563eb'),  # Couleur de marque depuis les paramètres
+                'language': language,  # Langue pour le template
+            }
 
         # Sélectionner le template HTML selon le type
         template_name = f'invoicing/pdf_templates/invoice_{template_type}.html'
@@ -233,16 +240,17 @@ class InvoiceWeasyPDFGenerator:
         return None
 
 
-def generate_invoice_pdf_weasy(invoice, template_type='classic'):
+def generate_invoice_pdf_weasy(invoice, template_type='classic', language='fr'):
     """
     Fonction utilitaire pour générer un PDF de facture avec WeasyPrint
 
     Args:
         invoice: Instance du modèle Invoice
         template_type: Type de template ('classic', 'modern', 'minimal')
+        language: Langue pour les traductions ('fr' ou 'en')
 
     Returns:
         BytesIO: Buffer contenant le PDF
     """
     generator = InvoiceWeasyPDFGenerator()
-    return generator.generate_invoice_pdf(invoice, template_type)
+    return generator.generate_invoice_pdf(invoice, template_type, language=language)

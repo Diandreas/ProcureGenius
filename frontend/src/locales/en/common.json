@@ -40,7 +40,8 @@
     "view": "View",
     "details": "Details",
     "saving": "Saving...",
-    "preview": "Preview"
+    "preview": "Preview",
+    "moreActions": "More actions"
   },
   "success": "Success",
   "failed": "Failed",

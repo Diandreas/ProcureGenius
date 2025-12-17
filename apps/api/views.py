@@ -1156,6 +1156,49 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'stock_update': result
         })
 
+    @action(detail=True, methods=['post'])
+    def send(self, request, pk=None):
+        """Envoyer un bon de commande par email"""
+        purchase_order = self.get_object()
+
+        # Email du destinataire (par défaut: fournisseur, sinon fourni dans la requête)
+        recipient_email = request.data.get('recipient_email') or request.data.get('email')
+        template_type = request.data.get('template', 'modern')
+        custom_message = request.data.get('custom_message')
+        
+        # Récupérer la langue depuis la requête (header Accept-Language ou paramètre)
+        language = request.data.get('language')
+        if not language:
+            # Essayer de récupérer depuis les headers HTTP
+            accept_language = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+            if 'en' in accept_language.lower():
+                language = 'en'
+            else:
+                language = getattr(request, 'LANGUAGE_CODE', 'fr')
+
+        # Envoyer l'email avec le PDF
+        from .services.email_service import PurchaseOrderEmailService
+
+        result = PurchaseOrderEmailService.send_purchase_order_email(
+            po=purchase_order,
+            recipient_email=recipient_email,
+            template_type=template_type,
+            custom_message=custom_message,
+            language=language
+        )
+
+        if result['success']:
+            serializer = self.get_serializer(purchase_order)
+            return Response({
+                'purchase_order': serializer.data,
+                'message': result['message']
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
     @action(detail=True, methods=['get'])
     def print_pdf(self, request, pk=None):
         """Générer PDF du bon de commande"""
@@ -1334,6 +1377,16 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         recipient_email = request.data.get('recipient_email') or request.data.get('email')
         template_type = request.data.get('template', 'classic')
         custom_message = request.data.get('custom_message')
+        
+        # Récupérer la langue depuis la requête (header Accept-Language ou paramètre)
+        language = request.data.get('language')
+        if not language:
+            # Essayer de récupérer depuis les headers HTTP
+            accept_language = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+            if 'en' in accept_language.lower():
+                language = 'en'
+            else:
+                language = getattr(request, 'LANGUAGE_CODE', 'fr')
 
         # Envoyer l'email avec le PDF
         from .services.email_service import InvoiceEmailService
@@ -1342,7 +1395,8 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             invoice=invoice,
             recipient_email=recipient_email,
             template_type=template_type,
-            custom_message=custom_message
+            custom_message=custom_message,
+            language=language
         )
 
         if result['success']:

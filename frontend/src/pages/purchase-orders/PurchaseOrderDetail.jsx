@@ -68,6 +68,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n/config';
 import { purchaseOrdersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -163,6 +164,40 @@ function PurchaseOrderDetail() {
     }
   };
 
+  const handleSendEmail = async () => {
+    if (!emailData.recipient_email) {
+      enqueueSnackbar(t('purchaseOrders:messages.emailRequired') || 'Email destinataire requis', { variant: 'error' });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      // Récupérer la langue actuelle depuis i18n
+      const currentLanguage = i18n.language || 'fr';
+      const language = currentLanguage.split('-')[0]; // 'en-US' -> 'en'
+      
+      const response = await purchaseOrdersAPI.sendEmail(id, {
+        recipient_email: emailData.recipient_email,
+        custom_message: emailData.custom_message || undefined,
+        template: selectedTemplate,
+        language: language
+      });
+      setPurchaseOrder(response.data.purchase_order || response.data);
+      enqueueSnackbar(response.data.message || t('purchaseOrders:messages.emailSent') || 'Email envoyé avec succès', { variant: 'success' });
+      setSendEmailDialogOpen(false);
+      setEmailData({ recipient_email: '', custom_message: '' });
+      await fetchPurchaseOrder(); // Refresh to show updated sent_at date
+    } catch (error) {
+      console.error('Error sending email:', error);
+      enqueueSnackbar(
+        error.response?.data?.error || t('purchaseOrders:messages.emailError') || 'Erreur lors de l\'envoi de l\'email',
+        { variant: 'error' }
+      );
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleGeneratePDF = async (action = 'download') => {
     setGeneratingPdf(true);
     try {
@@ -254,28 +289,26 @@ function PurchaseOrderDetail() {
                   {t('purchaseOrders:buttons.generatePDF')}
                 </Button>
               </Tooltip>
-              <Tooltip title={t('purchaseOrders:tooltips.sendEmail') || 'Envoyer par email'}>
+              <Tooltip title={t('purchaseOrders:tooltips.sendEmail')}>
                 <Button
                   variant="outlined"
                   startIcon={<Email />}
                   onClick={() => {
+                    const currentLanguage = i18n.language || 'fr';
+                    const lang = currentLanguage.split('-')[0];
+                    const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                      name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                      number: purchaseOrder.po_number
+                    });
                     setEmailData({
                       recipient_email: purchaseOrder.supplier?.email || '',
-                      custom_message: `Bonjour ${purchaseOrder.supplier?.name || 'Fournisseur'},
-
-Veuillez trouver ci-joint votre bon de commande ${purchaseOrder.po_number}.
-
-Le PDF de votre bon de commande est joint à cet email.
-
-Pour toute question, n'hésitez pas à nous contacter.
-
-Cordialement`
+                      custom_message: defaultMessage
                     });
                     setSendEmailDialogOpen(true);
                   }}
                   disabled={!purchaseOrder.supplier?.email}
                 >
-                  {t('purchaseOrders:buttons.sendEmail') || 'Envoyer par email'}
+                  {t('purchaseOrders:buttons.sendEmail')}
                 </Button>
               </Tooltip>
               <Tooltip title={t('purchaseOrders:tooltips.editPO')}>
@@ -324,24 +357,20 @@ Cordialement`
                 </MenuItem>
                 <MenuItem 
                   onClick={() => {
+                    const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                      name: purchaseOrder.supplier?.name || 'Fournisseur',
+                      number: purchaseOrder.po_number
+                    });
                     setEmailData({
                       recipient_email: purchaseOrder.supplier?.email || '',
-                      custom_message: `Bonjour ${purchaseOrder.supplier?.name || 'Fournisseur'},
-
-Veuillez trouver ci-joint votre bon de commande ${purchaseOrder.po_number}.
-
-Le PDF de votre bon de commande est joint à cet email.
-
-Pour toute question, n'hésitez pas à nous contacter.
-
-Cordialement`
+                      custom_message: defaultMessage
                     });
                     setSendEmailDialogOpen(true);
                   }}
                   disabled={!purchaseOrder.supplier?.email}
                 >
                   <Email fontSize="small" sx={{ mr: 1 }} />
-                  {t('purchaseOrders:buttons.sendEmail') || 'Envoyer par email'}
+                  {t('purchaseOrders:buttons.sendEmail')}
                 </MenuItem>
                 <MenuItem onClick={handleEdit}>
                   <Edit fontSize="small" sx={{ mr: 1 }} />
@@ -831,6 +860,89 @@ Cordialement`
             startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
           >
             {generatingPdf ? t('purchaseOrders:labels.generating') : t('purchaseOrders:buttons.download')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog 
+        open={sendEmailDialogOpen} 
+        onClose={() => setSendEmailDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Email sx={{ color: 'primary.main' }} />
+          {t('purchaseOrders:dialogs.sendEmail.title')}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('purchaseOrders:dialogs.sendEmail.recipient')}
+                  type="email"
+                  value={emailData.recipient_email}
+                  onChange={(e) => setEmailData({ ...emailData, recipient_email: e.target.value })}
+                  required
+                  helperText={t('purchaseOrders:dialogs.sendEmail.recipientHelp')}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>{t('purchaseOrders:labels.poTemplate')}</InputLabel>
+                  <Select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                    label={t('purchaseOrders:labels.poTemplate')}
+                  >
+                    <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('purchaseOrders:templates.classic')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('purchaseOrders:templates.modern')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('purchaseOrders:templates.minimal')}</MenuItem>
+                    <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('purchaseOrders:templates.professional')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('purchaseOrders:dialogs.sendEmail.message')}
+                  multiline
+                  rows={8}
+                  value={emailData.custom_message}
+                  onChange={(e) => setEmailData({ ...emailData, custom_message: e.target.value })}
+                  helperText={t('purchaseOrders:dialogs.sendEmail.messageHelp')}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem'
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => {
+              setSendEmailDialogOpen(false);
+              setEmailData({ recipient_email: '', custom_message: '' });
+            }} 
+            sx={{ borderRadius: 2, textTransform: 'none' }}
+          >
+            {t('purchaseOrders:buttons.cancel')}
+          </Button>
+          <Button
+            onClick={handleSendEmail}
+            color="primary"
+            variant="contained"
+            disabled={!emailData.recipient_email || sendingEmail}
+            startIcon={sendingEmail ? <CircularProgress size={20} /> : <Send />}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {sendingEmail ? t('purchaseOrders:labels.sending') : t('purchaseOrders:dialogs.sendEmail.send')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -5,6 +5,8 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.http import HttpResponse
+from django.utils import translation
+from django.utils.translation import gettext_lazy as _
 from io import BytesIO
 from .pdf_generator_weasy import generate_invoice_pdf_weasy
 from apps.core.email_utils import configure_django_email_settings, restore_django_email_settings
@@ -17,7 +19,7 @@ class InvoiceEmailService:
     """Service pour envoyer des factures par email avec PDF attaché"""
 
     @staticmethod
-    def send_invoice_email(invoice, recipient_email=None, template_type='classic', custom_message=None):
+    def send_invoice_email(invoice, recipient_email=None, template_type='classic', custom_message=None, language='fr'):
         """
         Envoie une facture par email avec le PDF en pièce jointe
 
@@ -26,6 +28,7 @@ class InvoiceEmailService:
             recipient_email: Email du destinataire (par défaut: email du client)
             template_type: Type de template PDF
             custom_message: Message personnalisé (optionnel, remplace le message par défaut)
+            language: Langue pour les traductions ('fr' ou 'en')
 
         Returns:
             dict: Résultat de l'envoi avec 'success' et 'message'
@@ -67,14 +70,22 @@ class InvoiceEmailService:
                              f"{getattr(invoice.client, 'first_name', '')} {getattr(invoice.client, 'last_name', '')}".strip() or \
                              'Client'
 
-            # Générer le PDF avec WeasyPrint
-            pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type)
+            # Activer la langue pour les traductions
+            translation.activate(language)
+            
+            try:
+                # Générer le PDF avec WeasyPrint (avec langue)
+                pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type, language=language)
 
-            # Préparer l'email
-            subject = f"Facture {invoice.invoice_number} - ProcureGenius"
+            # Préparer l'email avec traductions
+            if language == 'en':
+                subject = f"Invoice {invoice.invoice_number} - ProcureGenius"
+            else:
+                subject = f"Facture {invoice.invoice_number} - ProcureGenius"
             
             # Utiliser le message personnalisé si fourni, sinon utiliser le template par défaut
-            if custom_message:
+            # Note: Le message personnalisé est utilisé tel quel (l'utilisateur peut le traduire)
+            if custom_message and custom_message.strip():
                 # Message personnalisé - créer un HTML simple
                 html_body = f"""
                 <!DOCTYPE html>
@@ -109,25 +120,28 @@ class InvoiceEmailService:
                 <body>
                     <div class="container">
                         <div class="content">
-                            <p>Bonjour <strong>{client_name}</strong>,</p>
+                            <p>{_('Hello')} <strong>{client_name}</strong>,</p>
                             <div style="white-space: pre-wrap;">{custom_message}</div>
-                            <p>Le PDF de votre facture est joint à cet email.</p>
+                            <p>{_('The PDF of your invoice is attached to this email.')}</p>
                             <div class="footer">
                                 <p><strong>ProcureGenius</strong></p>
-                                <p>Système de gestion des achats et des factures</p>
+                                <p>{_('Procurement and invoice management system')}</p>
                             </div>
                         </div>
                     </div>
                 </body>
                 </html>
                 """
-                text_body = f"""Bonjour {client_name},
+                greeting = _('Hello')
+                pdf_attached = _('The PDF of your invoice is attached to this email.')
+                regards = _('Best regards')
+                text_body = f"""{greeting} {client_name},
 
 {custom_message}
 
-Le PDF de votre facture est joint à cet email.
+{pdf_attached}
 
-Cordialement,
+{regards},
 ProcureGenius
                 """
             else:
@@ -218,34 +232,34 @@ ProcureGenius
 
                         <div class="invoice-details">
                             <div class="detail-row">
-                                <span class="label">Numéro de facture:</span>
+                                <span class="label">{_('Invoice number')}:</span>
                                 <span class="value">{invoice.invoice_number}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="label">Date d'émission:</span>
+                                <span class="label">{_('Issue date')}:</span>
                                 <span class="value">{(getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)).strftime('%d/%m/%Y') if (getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)) else 'N/A'}</span>
                             </div>
                             {f'''<div class="detail-row">
-                                <span class="label">Date d'échéance:</span>
+                                <span class="label">{_('Due date')}:</span>
                                 <span class="value">{invoice.due_date.strftime('%d/%m/%Y')}</span>
                             </div>''' if hasattr(invoice, 'due_date') and invoice.due_date else ''}
                             <div class="detail-row">
-                                <span class="label">Montant total:</span>
-                                <span class="value total">{invoice.total_amount:.2f} €</span>
+                                <span class="label">{_('Total amount')}:</span>
+                                <span class="value total">{invoice.total_amount:.2f} {getattr(invoice, 'currency', 'CAD')}</span>
                             </div>
                         </div>
 
-                        {f'<p><strong>Description:</strong> {invoice.description}</p>' if invoice.description else ''}
+                        {f'<p><strong>{_("Description")}:</strong> {invoice.description}</p>' if invoice.description else ''}
 
-                        <p>Le PDF de votre facture est joint à cet email.</p>
+                        <p>{_('The PDF of your invoice is attached to this email.')}</p>
 
-                        <p>Pour toute question, n'hésitez pas à nous contacter.</p>
+                        <p>{_('If you have any questions, please do not hesitate to contact us.')}</p>
 
                         <div class="footer">
                             <p><strong>ProcureGenius</strong></p>
-                            <p>Système de gestion des achats et des factures</p>
+                            <p>{_('Procurement and invoice management system')}</p>
                             <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
-                                Ceci est un email automatique, merci de ne pas y répondre directement.
+                                {_('This is an automatic email, please do not reply directly.')}
                             </p>
                         </div>
                     </div>
@@ -255,22 +269,33 @@ ProcureGenius
             """
 
             # Version texte simple (fallback)
+            greeting = _('Hello')
+            find_attached = _('Please find attached your invoice')
+            invoice_details = _('Invoice details')
+            invoice_number_label = _('Invoice number')
+            issue_date_label = _('Issue date')
+            due_date_label = _('Due date')
+            total_amount_label = _('Total amount')
+            description_label = _('Description')
+            contact_us = _('If you have any questions, please do not hesitate to contact us.')
+            regards = _('Best regards')
+            
             text_body = f"""
-Bonjour {client_name},
+{greeting} {client_name},
 
-Veuillez trouver ci-joint votre facture {invoice.invoice_number}.
+{find_attached} {invoice.invoice_number}.
 
-Détails de la facture:
-- Numéro: {invoice.invoice_number}
-- Date d'émission: {(getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)).strftime('%d/%m/%Y') if (getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)) else 'N/A'}
-{'- Date d\'échéance: ' + invoice.due_date.strftime('%d/%m/%Y') if hasattr(invoice, 'due_date') and invoice.due_date else ''}
-- Montant total: {invoice.total_amount:.2f} €
+{invoice_details}:
+- {invoice_number_label}: {invoice.invoice_number}
+- {issue_date_label}: {(getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)).strftime('%d/%m/%Y') if (getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)) else 'N/A'}
+{'- ' + due_date_label + ': ' + invoice.due_date.strftime('%d/%m/%Y') if hasattr(invoice, 'due_date') and invoice.due_date else ''}
+- {total_amount_label}: {invoice.total_amount:.2f} {getattr(invoice, 'currency', 'CAD')}
 
-{f'Description: {invoice.description}' if invoice.description else ''}
+{f'{description_label}: {invoice.description}' if invoice.description else ''}
 
-Pour toute question, n'hésitez pas à nous contacter.
+{contact_us}
 
-Cordialement,
+{regards},
 ProcureGenius
             """
 
@@ -298,7 +323,10 @@ ProcureGenius
             email.body = html_body
 
             # Attacher le PDF
-            pdf_filename = f"facture-{invoice.invoice_number}.pdf"
+            if language == 'en':
+                pdf_filename = f"invoice-{invoice.invoice_number}.pdf"
+            else:
+                pdf_filename = f"facture-{invoice.invoice_number}.pdf"
             email.attach(pdf_filename, pdf_buffer.getvalue(), 'application/pdf')
 
             # Envoyer l'email
@@ -329,10 +357,16 @@ ProcureGenius
             # Restaurer les settings originaux
             if original_settings:
                 restore_django_email_settings(original_settings)
+            
+            # Restaurer la langue par défaut
+            translation.deactivate()
+            
+            success_message = _('Invoice sent successfully to') if language == 'en' else 'Facture envoyée avec succès à'
+            success_message = f"{success_message} {recipient_email}"
 
             return {
                 'success': True,
-                'message': f'Facture envoyée avec succès à {recipient_email}',
+                'message': success_message,
                 'sent_at': invoice.sent_at.isoformat() if hasattr(invoice, 'sent_at') and invoice.sent_at else None
             }
 
@@ -341,9 +375,13 @@ ProcureGenius
             # Restaurer les settings en cas d'erreur
             if original_settings:
                 restore_django_email_settings(original_settings)
+            # Restaurer la langue
+            translation.deactivate()
+            
+            error_message = _('Error sending email') if language == 'en' else 'Erreur lors de l\'envoi de l\'email'
             return {
                 'success': False,
-                'message': f'Erreur lors de l\'envoi de l\'email: {str(e)}'
+                'message': f'{error_message}: {str(e)}'
             }
 
 
@@ -463,11 +501,18 @@ class PurchaseOrderEmailService:
             if po.supplier:
                 supplier_name = getattr(po.supplier, 'name', None) or 'Fournisseur'
 
-            # Générer le PDF
-            pdf_buffer = PurchaseOrderEmailService._generate_purchase_order_pdf(po, template_type)
+            # Activer la langue pour les traductions
+            translation.activate(language)
+            
+            try:
+                # Générer le PDF
+                pdf_buffer = PurchaseOrderEmailService._generate_purchase_order_pdf(po, template_type)
 
-            # Préparer l'email
-            subject = f"Bon de Commande {po.po_number} - ProcureGenius"
+                # Préparer l'email avec traductions
+                if language == 'en':
+                    subject = f"Purchase Order {po.po_number} - ProcureGenius"
+                else:
+                    subject = f"Bon de Commande {po.po_number} - ProcureGenius"
             
             # Utiliser le message personnalisé si fourni
             if custom_message:
@@ -504,25 +549,28 @@ class PurchaseOrderEmailService:
                 <body>
                     <div class="container">
                         <div class="content">
-                            <p>Bonjour <strong>{supplier_name}</strong>,</p>
+                            <p>{_('Hello')} <strong>{supplier_name}</strong>,</p>
                             <div style="white-space: pre-wrap;">{custom_message}</div>
-                            <p>Le PDF de votre bon de commande est joint à cet email.</p>
+                            <p>{_('The PDF of your purchase order is attached to this email.')}</p>
                             <div class="footer">
                                 <p><strong>ProcureGenius</strong></p>
-                                <p>Système de gestion des achats et des factures</p>
+                                <p>{_('Procurement and invoice management system')}</p>
                             </div>
                         </div>
                     </div>
                 </body>
                 </html>
                 """
-                text_body = f"""Bonjour {supplier_name},
+                greeting = _('Hello')
+                pdf_attached = _('The PDF of your purchase order is attached to this email.')
+                regards = _('Best regards')
+                text_body = f"""{greeting} {supplier_name},
 
 {custom_message}
 
-Le PDF de votre bon de commande est joint à cet email.
+{pdf_attached}
 
-Cordialement,
+{regards},
 ProcureGenius
                 """
             else:
@@ -593,45 +641,45 @@ ProcureGenius
                 <body>
                     <div class="container">
                         <div class="header">
-                            <h1 style="margin: 0; font-size: 28px;">Nouveau Bon de Commande</h1>
+                            <h1 style="margin: 0; font-size: 28px;">{_('New Purchase Order')}</h1>
                             <p style="margin: 10px 0 0 0; opacity: 0.9;">ProcureGenius</p>
                         </div>
 
                         <div class="content">
-                            <p>Bonjour <strong>{supplier_name}</strong>,</p>
+                            <p>{_('Hello')} <strong>{supplier_name}</strong>,</p>
 
-                            <p>Veuillez trouver ci-joint votre bon de commande <strong>{po.po_number}</strong>.</p>
+                            <p>{_('Please find attached your purchase order')} <strong>{po.po_number}</strong>.</p>
 
                             <div class="po-details">
                                 <div class="detail-row">
-                                    <span class="label">Numéro de BC:</span>
+                                    <span class="label">{_('PO Number')}:</span>
                                     <span class="value">{po.po_number}</span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="label">Date de création:</span>
+                                    <span class="label">{_('Creation date')}:</span>
                                     <span class="value">{po.created_at.strftime('%d/%m/%Y') if po.created_at else 'N/A'}</span>
                                 </div>
                                 {f'''<div class="detail-row">
-                                    <span class="label">Date requise:</span>
+                                    <span class="label">{_('Required date')}:</span>
                                     <span class="value">{po.required_date.strftime('%d/%m/%Y')}</span>
                                 </div>''' if hasattr(po, 'required_date') and po.required_date else ''}
                                 <div class="detail-row">
-                                    <span class="label">Montant total:</span>
-                                    <span class="value total">{po.total_amount:.2f} €</span>
+                                    <span class="label">{_('Total amount')}:</span>
+                                    <span class="value total">{po.total_amount:.2f} {getattr(po, 'currency', 'CAD')}</span>
                                 </div>
                             </div>
 
-                            {f'<p><strong>Description:</strong> {po.description}</p>' if po.description else ''}
+                            {f'<p><strong>{_("Description")}:</strong> {po.description}</p>' if po.description else ''}
 
-                            <p>Le PDF de votre bon de commande est joint à cet email.</p>
+                            <p>{_('The PDF of your purchase order is attached to this email.')}</p>
 
-                            <p>Pour toute question, n'hésitez pas à nous contacter.</p>
+                            <p>{_('If you have any questions, please do not hesitate to contact us.')}</p>
 
                             <div class="footer">
                                 <p><strong>ProcureGenius</strong></p>
-                                <p>Système de gestion des achats et des factures</p>
+                                <p>{_('Procurement and invoice management system')}</p>
                                 <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
-                                    Ceci est un email automatique, merci de ne pas y répondre directement.
+                                    {_('This is an automatic email, please do not reply directly.')}
                                 </p>
                             </div>
                         </div>
@@ -640,22 +688,33 @@ ProcureGenius
                 </html>
                 """
                 
+                greeting = _('Hello')
+                find_attached = _('Please find attached your purchase order')
+                po_details = _('Purchase order details')
+                po_number_label = _('PO Number')
+                creation_date_label = _('Creation date')
+                required_date_label = _('Required date')
+                total_amount_label = _('Total amount')
+                description_label = _('Description')
+                contact_us = _('If you have any questions, please do not hesitate to contact us.')
+                regards = _('Best regards')
+                
                 text_body = f"""
-Bonjour {supplier_name},
+{greeting} {supplier_name},
 
-Veuillez trouver ci-joint votre bon de commande {po.po_number}.
+{find_attached} {po.po_number}.
 
-Détails du bon de commande:
-- Numéro: {po.po_number}
-- Date de création: {po.created_at.strftime('%d/%m/%Y') if po.created_at else 'N/A'}
-{'- Date requise: ' + po.required_date.strftime('%d/%m/%Y') if hasattr(po, 'required_date') and po.required_date else ''}
-- Montant total: {po.total_amount:.2f} €
+{po_details}:
+- {po_number_label}: {po.po_number}
+- {creation_date_label}: {po.created_at.strftime('%d/%m/%Y') if po.created_at else 'N/A'}
+{'- ' + required_date_label + ': ' + po.required_date.strftime('%d/%m/%Y') if hasattr(po, 'required_date') and po.required_date else ''}
+- {total_amount_label}: {po.total_amount:.2f} {getattr(po, 'currency', 'CAD')}
 
-{f'Description: {po.description}' if po.description else ''}
+{f'{description_label}: {po.description}' if po.description else ''}
 
-Pour toute question, n'hésitez pas à nous contacter.
+{contact_us}
 
-Cordialement,
+{regards},
 ProcureGenius
                 """
 
@@ -705,7 +764,11 @@ ProcureGenius
             # Restaurer les settings en cas d'erreur
             if original_settings:
                 restore_django_email_settings(original_settings)
+            # Restaurer la langue
+            translation.deactivate()
+            
+            error_message = _('Error sending email') if language == 'en' else 'Erreur lors de l\'envoi de l\'email'
             return {
                 'success': False,
-                'message': f'Erreur lors de l\'envoi de l\'email: {str(e)}'
+                'message': f'{error_message}: {str(e)}'
             }

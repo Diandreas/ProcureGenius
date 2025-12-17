@@ -64,6 +64,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n/config';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
@@ -176,10 +177,15 @@ function InvoiceDetail() {
 
     setSendingEmail(true);
     try {
+      // Récupérer la langue actuelle depuis i18n
+      const currentLanguage = i18n.language || 'fr';
+      const language = currentLanguage.split('-')[0]; // 'en-US' -> 'en'
+      
       const response = await invoicesAPI.sendEmail(id, {
         recipient_email: emailData.recipient_email,
         custom_message: emailData.custom_message || undefined,
-        template: selectedTemplate
+        template: selectedTemplate,
+        language: language
       });
       setInvoice(response.data.invoice || response.data);
       enqueueSnackbar(response.data.message || t('invoices:messages.emailSent') || 'Email envoyé avec succès', { variant: 'success' });
@@ -366,17 +372,13 @@ function InvoiceDetail() {
           <IconButton
             size="small"
             onClick={() => {
+              const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
+                name: invoice.client?.name || 'Client',
+                number: invoice.invoice_number
+              });
               setEmailData({
                 recipient_email: invoice.client?.email || '',
-                custom_message: `Bonjour ${invoice.client?.name || 'Client'},
-
-Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
-
-Le PDF de votre facture est joint à cet email.
-
-Pour toute question, n'hésitez pas à nous contacter.
-
-Cordialement`
+                custom_message: defaultMessage
               });
               setSendEmailDialogOpen(true);
             }}

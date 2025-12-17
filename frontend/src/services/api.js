@@ -79,6 +79,7 @@ export const purchaseOrdersAPI = {
   addItem: (id, item) => api.post(`/purchase-orders/${id}/add_item/`, item),
   approve: (id) => api.post(`/purchase-orders/${id}/approve/`),
   receive: (id) => api.post(`/purchase-orders/${id}/receive/`),
+  sendEmail: (id, data) => api.post(`/purchase-orders/${id}/send/`, data),
   printPDF: (id) => api.get(`/purchase-orders/${id}/print_pdf/`, { responseType: 'blob' }),
 };
 

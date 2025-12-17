@@ -45,6 +45,10 @@
     "suppliersLoadError": "Error loading suppliers",
     "productsLoadError": "Error loading products",
     "supplierPreselected": "Supplier {{name}} preselected",
+    "emailSent": "Email sent successfully",
+    "emailError": "Error sending email",
+    "emailRequired": "Recipient email required",
+    "sending": "Sending...",
     "warehousesLoadError": "Error loading warehouses:",
     "poFormLoadError": "Error loading purchase order",
     "supplierCreatedSuccess": "Supplier created successfully",
@@ -116,7 +120,8 @@
     "preview": "Preview",
     "print": "Print",
     "download": "Download",
-    "save": "Save"
+    "save": "Save",
+    "sendEmail": "Send by email"
   },
   "columns": {
     "reference": "Reference",
@@ -132,7 +137,16 @@
     "generatePDF": "Generate purchase order PDF",
     "generatePdf": "Generate report PDF",
     "quickCreateSupplier": "Quick create supplier",
-    "quickCreateProduct": "Quick create product"
+    "quickCreateProduct": "Quick create product",
+    "sendEmail": {
+      "title": "Send purchase order by email",
+      "recipient": "Recipient email",
+      "recipientHelp": "Email of the supplier who will receive the purchase order",
+      "message": "Custom message",
+      "messageHelp": "Message that will be included in the email (optional)",
+      "defaultMessage": "Hello {{name}},\n\nPlease find attached your purchase order {{number}}.\n\nThe PDF of your purchase order is attached to this email.\n\nIf you have any questions, please do not hesitate to contact us.\n\nBest regards",
+      "send": "Send"
+    }
   },
   "fields": {
     "productReference": "Product reference",
