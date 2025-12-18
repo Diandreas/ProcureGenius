@@ -127,6 +127,14 @@ class ReportPDFGenerator:
 
     def _get_logo_base64(self, org_data):
         """Convertir le logo en base64 (comme les factures)"""
+        # #region agent log
+        import json, os, time
+        log_path = os.path.join(settings.BASE_DIR, '.cursor', 'debug.log')
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a') as f:
+            f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H4', 'location': 'report_generator_weasy.py:140', 'message': '_get_logo_base64: entry', 'data': {'has_org_data': bool(org_data), 'has_logo': bool(org_data and org_data.get('logo')) if org_data else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+        # #endregion
+        
         if not org_data or not org_data.get('logo'):
             return None
         
@@ -137,9 +145,20 @@ class ReportPDFGenerator:
             # Si c'est un champ FileField/ImageField Django
             if hasattr(logo, 'path'):
                 logo_path = logo.path
+                
+                # #region agent log
+                with open(log_path, 'a') as f:
+                    f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H4', 'location': 'report_generator_weasy.py:145', 'message': '_get_logo_base64: checking file path', 'data': {'logo_path': logo_path, 'path_exists': os.path.exists(logo_path) if logo_path else False, 'is_readable': os.access(logo_path, os.R_OK) if logo_path and os.path.exists(logo_path) else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+                # #endregion
+                
                 if os.path.exists(logo_path):
                     with open(logo_path, 'rb') as f:
                         logo_data = f.read()
+                    
+                    # #region agent log
+                    with open(log_path, 'a') as f:
+                        f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H4,H5', 'location': 'report_generator_weasy.py:152', 'message': '_get_logo_base64: file read', 'data': {'logo_data_len': len(logo_data), 'logo_data_preview': logo_data[:20].hex() if logo_data else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+                    # #endregion
                     
                     # Détecter le type MIME
                     ext = os.path.splitext(logo_path)[1].lower()
@@ -155,7 +174,14 @@ class ReportPDFGenerator:
                     mime_type = mime_types.get(ext, 'image/png')
                     
                     logo_base64 = base64.b64encode(logo_data).decode('utf-8')
-                    return f"data:{mime_type};base64,{logo_base64}"
+                    result = f"data:{mime_type};base64,{logo_base64}"
+                    
+                    # #region agent log
+                    with open(log_path, 'a') as f:
+                        f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H4,H5', 'location': 'report_generator_weasy.py:158', 'message': '_get_logo_base64: base64 encoded', 'data': {'base64_len': len(logo_base64), 'result_len': len(result), 'result_preview': result[:50]}, 'timestamp': int(time.time() * 1000)}) + '\n')
+                    # #endregion
+                    
+                    return result
             # Si c'est un objet avec méthode read()
             elif hasattr(logo, 'read'):
                 logo.seek(0)
@@ -491,7 +517,20 @@ class ReportPDFGenerator:
         # Générer le PDF
         template_name = 'reports/pdf/product_report.html'
         try:
+            # #region agent log
+            import json, os, time
+            log_path = os.path.join(settings.BASE_DIR, '.cursor', 'debug.log')
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H3,H4', 'location': 'report_generator_weasy.py:493', 'message': 'generate_product_report: before render_to_string', 'data': {'product_id': getattr(product, 'id', None), 'template': template_name, 'base_url': str(settings.BASE_DIR), 'logo_base64_len': len(context.get('logo_base64', '')) if context.get('logo_base64') else 0, 'logo_base64_preview': context.get('logo_base64', '')[:50] if context.get('logo_base64') else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             html_string = render_to_string(template_name, context)
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H5', 'location': 'report_generator_weasy.py:496', 'message': 'generate_product_report: after render_to_string', 'data': {'html_length': len(html_string) if html_string else 0, 'html_contains_logo': 'logo_base64' in html_string if html_string else False, 'html_contains_img': '<img' in html_string if html_string else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
             
             # Vérifier que le HTML n'est pas vide
             if not html_string or len(html_string.strip()) == 0:
@@ -499,6 +538,11 @@ class ReportPDFGenerator:
             
             html = self.HTML(string=html_string, base_url=settings.BASE_DIR)
             pdf_bytes = html.write_pdf()
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H2', 'location': 'report_generator_weasy.py:503', 'message': 'generate_product_report: after write_pdf', 'data': {'pdf_bytes_type': str(type(pdf_bytes)), 'pdf_bytes_len': len(pdf_bytes) if pdf_bytes else 0, 'pdf_starts_with': pdf_bytes[:10].hex() if pdf_bytes and len(pdf_bytes) >= 10 else None, 'is_bytes': isinstance(pdf_bytes, bytes), 'is_str': isinstance(pdf_bytes, str), 'starts_with_pdf': pdf_bytes.startswith(b'%PDF') if isinstance(pdf_bytes, bytes) else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
             
             # Vérifier que les bytes PDF sont valides
             if not pdf_bytes:
@@ -514,6 +558,12 @@ class ReportPDFGenerator:
             
             buffer = BytesIO(pdf_bytes)
             buffer.seek(0)
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1', 'location': 'report_generator_weasy.py:520', 'message': 'generate_product_report: buffer created', 'data': {'buffer_pos': buffer.tell(), 'buffer_size': len(pdf_bytes), 'buffer_getvalue_len': len(buffer.getvalue()) if hasattr(buffer, 'getvalue') else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             return buffer
         except Exception as e:
             print(f"Erreur génération PDF produit: {e}")
@@ -1188,9 +1238,22 @@ class ReportPDFGenerator:
         
         template_name = 'reports/pdf/products_report.html'
         try:
+            # #region agent log
+            import json, os, time
+            log_path = os.path.join(settings.BASE_DIR, '.cursor', 'debug.log')
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1', 'location': 'report_generator_weasy.py:1190', 'message': 'generate_products_report: before render_to_string (BULK - working)', 'data': {'products_count': len(products_list) if 'products_list' in locals() else 0, 'base_url': str(settings.BASE_DIR)}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             html_string = render_to_string(template_name, context)
             html = self.HTML(string=html_string, base_url=settings.BASE_DIR)
             pdf_bytes = html.write_pdf()
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H2', 'location': 'report_generator_weasy.py:1196', 'message': 'generate_products_report: after write_pdf (BULK - working)', 'data': {'pdf_bytes_type': str(type(pdf_bytes)), 'pdf_bytes_len': len(pdf_bytes) if pdf_bytes else 0, 'pdf_starts_with': pdf_bytes[:10].hex() if pdf_bytes and len(pdf_bytes) >= 10 else None, 'is_bytes': isinstance(pdf_bytes, bytes), 'starts_with_pdf': pdf_bytes.startswith(b'%PDF') if isinstance(pdf_bytes, bytes) else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
             
             buffer = BytesIO(pdf_bytes)
             buffer.seek(0)

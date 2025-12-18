@@ -378,15 +378,39 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         try:
             product = self.get_object()
             
+            # #region agent log
+            import json, os, time
+            from django.conf import settings
+            log_path = os.path.join(settings.BASE_DIR, '.cursor', 'debug.log')
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H2', 'location': 'views.py:379', 'message': 'generate_pdf_report: before generate_product_report_pdf', 'data': {'product_id': getattr(product, 'id', None)}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             # Générer le PDF avec WeasyPrint
             from .services.report_generator_weasy import generate_product_report_pdf
             pdf_buffer = generate_product_report_pdf(product, request.user)
             
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1', 'location': 'views.py:386', 'message': 'generate_pdf_report: after generate_product_report_pdf, before seek', 'data': {'buffer_type': str(type(pdf_buffer)), 'buffer_pos': pdf_buffer.tell() if hasattr(pdf_buffer, 'tell') else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             # S'assurer que le buffer est positionné au début
             pdf_buffer.seek(0)
             
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1', 'location': 'views.py:389', 'message': 'generate_pdf_report: after seek, before getvalue', 'data': {'buffer_pos': pdf_buffer.tell() if hasattr(pdf_buffer, 'tell') else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
+            
             # Lire le contenu du buffer
             pdf_content = pdf_buffer.getvalue()
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H1,H2', 'location': 'views.py:392', 'message': 'generate_pdf_report: after getvalue', 'data': {'content_type': str(type(pdf_content)), 'content_len': len(pdf_content) if pdf_content else 0, 'is_bytes': isinstance(pdf_content, bytes), 'is_str': isinstance(pdf_content, str), 'content_preview': pdf_content[:20].hex() if isinstance(pdf_content, bytes) and len(pdf_content) >= 20 else (pdf_content[:20] if isinstance(pdf_content, str) else None), 'starts_with_pdf': pdf_content.startswith(b'%PDF') if isinstance(pdf_content, bytes) else False}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
             
             # Créer la réponse HTTP avec les bytes directement
             response = HttpResponse(
@@ -402,6 +426,11 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             filename = f"rapport-produit-{safe_filename}.pdf"
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             response['Content-Length'] = len(pdf_content)
+            
+            # #region agent log
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'sessionId': 'debug-session', 'runId': 'run1', 'hypothesisId': 'H2', 'location': 'views.py:405', 'message': 'generate_pdf_report: response created', 'data': {'content_type': response.get('Content-Type'), 'content_length': response.get('Content-Length'), 'content_disposition': response.get('Content-Disposition'), 'response_content_len': len(response.content) if hasattr(response, 'content') else None, 'response_content_preview': response.content[:20].hex() if hasattr(response, 'content') and isinstance(response.content, bytes) and len(response.content) >= 20 else None}, 'timestamp': int(time.time() * 1000)}) + '\n')
+            # #endregion
             
             return response
             
