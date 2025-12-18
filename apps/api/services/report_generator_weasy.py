@@ -492,8 +492,25 @@ class ReportPDFGenerator:
         template_name = 'reports/pdf/product_report.html'
         try:
             html_string = render_to_string(template_name, context)
+            
+            # Vérifier que le HTML n'est pas vide
+            if not html_string or len(html_string.strip()) == 0:
+                raise ValueError("Le template HTML généré est vide")
+            
             html = self.HTML(string=html_string, base_url=settings.BASE_DIR)
             pdf_bytes = html.write_pdf()
+            
+            # Vérifier que les bytes PDF sont valides
+            if not pdf_bytes:
+                raise ValueError("Aucun contenu PDF généré")
+            
+            # S'assurer que pdf_bytes est bien des bytes
+            if isinstance(pdf_bytes, str):
+                pdf_bytes = pdf_bytes.encode('utf-8')
+            
+            # Vérifier que c'est bien un PDF (commence par %PDF)
+            if not pdf_bytes.startswith(b'%PDF'):
+                raise ValueError(f"Le contenu généré n'est pas un PDF valide. Début: {pdf_bytes[:20]}")
             
             buffer = BytesIO(pdf_bytes)
             buffer.seek(0)

@@ -44,7 +44,7 @@ boto3==1.34.34
 
 # PDF et rapports
 reportlab==3.6.12
-weasyprint==61.2
+weasyprint>=62.2
 django-weasyprint==2.3.0
 xhtml2pdf==0.2.11
 

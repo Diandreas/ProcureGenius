@@ -382,16 +382,26 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             from .services.report_generator_weasy import generate_product_report_pdf
             pdf_buffer = generate_product_report_pdf(product, request.user)
             
-            # Créer la réponse HTTP
+            # S'assurer que le buffer est positionné au début
+            pdf_buffer.seek(0)
+            
+            # Lire le contenu du buffer
+            pdf_content = pdf_buffer.getvalue()
+            
+            # Créer la réponse HTTP avec les bytes directement
             response = HttpResponse(
-                pdf_buffer.getvalue(),
+                pdf_content,
                 content_type='application/pdf'
             )
             
             product_name = getattr(product, 'name', 'produit') or 'produit'
-            filename = f"rapport-produit-{product_name.replace(' ', '_')}.pdf"
+            # Nettoyer le nom du fichier pour éviter les caractères problématiques
+            import re
+            safe_filename = re.sub(r'[^\w\s-]', '', product_name).strip()
+            safe_filename = re.sub(r'[-\s]+', '_', safe_filename)
+            filename = f"rapport-produit-{safe_filename}.pdf"
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            response['Content-Length'] = len(response.content)
+            response['Content-Length'] = len(pdf_content)
             
             return response
             

@@ -3,11 +3,15 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  // Configuration de l'URL du backend
+  // En production: URL du backend Django
+  // En développement: localhost pour le serveur de développement
+  const BACKEND_URL = mode === 'production'
+    ? 'http://procura.srv696182.hstgr.cloud'  // URL du backend en production
+    : 'http://localhost:8000';  // URL du backend en développement
+
   // #region agent log
-  const proxyTarget = mode === 'production'
-    ? 'https://procura.mirhosty.com'
-    : 'http://localhost:8000';
-  console.log('[Vite Config] Mode:', mode, 'Proxy target:', proxyTarget);
+  console.log('[Vite Config] Mode:', mode, 'Backend URL:', BACKEND_URL);
   // #endregion
 
   return {
@@ -24,7 +28,7 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {
         '/api': {
-          target: proxyTarget,
+          target: BACKEND_URL,
           changeOrigin: true,
           secure: mode === 'production',
           // No rewrite needed - keep the /api prefix
@@ -33,6 +37,10 @@ export default defineConfig(({ mode }) => {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       }
+    },
+    // Définir l'URL du backend comme variable d'environnement pour le build
+    define: {
+      'import.meta.env.VITE_BACKEND_URL': JSON.stringify(BACKEND_URL),
     },
     build: {
       outDir: 'build',

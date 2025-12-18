@@ -1,22 +1,19 @@
 import axios from 'axios';
 
 // Configuration de l'URL de base de l'API
-// En production, utiliser l'URL complète du backend si fournie via variable d'environnement
-// Sinon, utiliser l'URL relative (pour que nginx/CloudPanel fasse le proxy)
+// L'URL du backend est définie dans vite.config.js (VITE_BACKEND_URL)
+// En production: utilise l'URL complète du backend
+// En développement: utilise l'URL relative (le proxy Vite s'en charge)
 const getApiBaseUrl = () => {
-  // Si une variable d'environnement est définie, l'utiliser
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  // Utiliser l'URL du backend définie dans vite.config.js
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  if (backendUrl) {
+    // Si une URL complète est fournie, l'utiliser avec /api/v1
+    return `${backendUrl}/api/v1`;
   }
 
-  // En production, si on est sur le domaine frontend, utiliser l'URL relative
-  // CloudPanel/nginx fera le proxy vers le backend
-  if (import.meta.env.MODE === 'production') {
-    // URL relative - nginx/CloudPanel fera le proxy
-    return '/api/v1';
-  }
-
-  // En développement, utiliser l'URL relative (le proxy Vite s'en charge)
+  // Sinon, utiliser l'URL relative (pour le proxy nginx/CloudPanel ou Vite)
   return '/api/v1';
 };
 
