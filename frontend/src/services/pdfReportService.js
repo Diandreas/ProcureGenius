@@ -42,7 +42,7 @@ class PDFReportService {
   async generateSupplierReport(supplier) {
     try {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
 
       const response = await fetch(`${baseUrl}/suppliers/${supplier.id}/pdf-report/`, {
         method: 'GET',
@@ -88,7 +88,7 @@ class PDFReportService {
   async generateClientReport(client) {
     try {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
 
       const response = await fetch(`${baseUrl}/clients/${client.id}/pdf-report/`, {
         method: 'GET',
@@ -134,7 +134,7 @@ class PDFReportService {
   async generateProductReport(product) {
     try {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
 
       const response = await fetch(`${baseUrl}/products/${product.id}/pdf-report/`, {
         method: 'GET',

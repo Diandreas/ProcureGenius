@@ -70,14 +70,47 @@ function LoginEnhanced() {
     }
   };
 
+  // Fonction pour déterminer si l'onboarding est nécessaire
+  const checkIfOnboardingNeeded = (userData) => {
+    // 1. Vérifier si onboarding_completed n'est pas explicitement true
+    if (userData.preferences?.onboarding_completed === true) {
+      return false;
+    }
+
+    // 2. Vérifier si les informations essentielles sont vides
+    const organization = userData.organization;
+
+    // Si pas d'organisation, onboarding nécessaire
+    if (!organization) {
+      return true;
+    }
+
+    // Si le nom de l'organisation est vide ou générique, onboarding nécessaire
+    if (!organization.name || organization.name.startsWith('Organization ')) {
+      return true;
+    }
+
+    // 3. Vérifier les informations de l'utilisateur
+    const user = userData;
+
+    // Si le prénom ou nom est vide/générique, onboarding nécessaire
+    if (!user.first_name || !user.last_name ||
+      user.first_name === 'User' || user.last_name === 'User') {
+      return true;
+    }
+
+    // 4. Si toutes les vérifications passent, pas besoin d'onboarding
+    return false;
+  };
+
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       const result = await dispatch(googleLogin(tokenResponse.access_token));
       if (googleLogin.fulfilled.match(result)) {
         const user = result.payload.user;
-        const onboardingCompleted = user?.preferences?.onboarding_completed;
 
-        if (onboardingCompleted === false) {
+        // Vérifier si l'onboarding est nécessaire
+        if (checkIfOnboardingNeeded(user)) {
           window.location.href = '/onboarding';
         } else {
           window.location.href = '/dashboard';

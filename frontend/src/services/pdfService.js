@@ -32,7 +32,7 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
     // Try to call backend API for PDF generation
     try {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || '';
 
       const response = await fetch(`${baseUrl}/invoicing/${invoiceData.id}/pdf/?template=${selectedTemplate}`, {
         method: 'GET',
@@ -166,7 +166,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
     // Try to call backend API for PDF generation
     try {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || '';
 
       const response = await fetch(`${baseUrl}/purchase-orders/${purchaseOrderData.id}/pdf/?template=${selectedTemplate}`, {
         method: 'GET',

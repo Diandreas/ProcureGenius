@@ -1,6 +1,26 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Configuration de l'URL de base de l'API
+// En production, utiliser l'URL complète du backend si fournie via variable d'environnement
+// Sinon, utiliser l'URL relative (pour que nginx/CloudPanel fasse le proxy)
+const getApiBaseUrl = () => {
+  // Si une variable d'environnement est définie, l'utiliser
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // En production, si on est sur le domaine frontend, utiliser l'URL relative
+  // CloudPanel/nginx fera le proxy vers le backend
+  if (import.meta.env.MODE === 'production') {
+    // URL relative - nginx/CloudPanel fera le proxy
+    return '/api/v1';
+  }
+
+  // En développement, utiliser l'URL relative (le proxy Vite s'en charge)
+  return '/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance
 const api = axios.create({
@@ -13,6 +33,12 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    // #region agent log
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fullUrl = (config.baseURL || '') + (config.url || '');
+      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:15', message: 'Axios request interceptor', data: { baseURL: config.baseURL, url: config.url, fullUrl, method: config.method, origin: window.location.origin }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+    }
+    // #endregion
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
@@ -34,8 +60,20 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // #region agent log
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:37', message: 'Axios response success', data: { status: response.status, url: response.config.url, baseURL: response.config.baseURL }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+    }
+    // #endregion
+    return response;
+  },
   (error) => {
+    // #region agent log
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:42', message: 'Axios response error', data: { status: error.response?.status, statusText: error.response?.statusText, url: error.config?.url, baseURL: error.config?.baseURL, message: error.message }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+    }
+    // #endregion
     if (error.response?.status === 401) {
       // Redirect to login if unauthorized
       localStorage.removeItem('authToken');

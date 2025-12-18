@@ -550,6 +550,39 @@ function App() {
     checkOnboardingStatus();
   }, []);
 
+  // Fonction pour déterminer si l'onboarding est nécessaire
+  const checkIfOnboardingNeeded = (userData) => {
+    // 1. Vérifier si onboarding_completed n'est pas explicitement true
+    if (userData.preferences?.onboarding_completed === true) {
+      return false;
+    }
+
+    // 2. Vérifier si les informations essentielles sont vides
+    const organization = userData.organization;
+
+    // Si pas d'organisation, onboarding nécessaire
+    if (!organization) {
+      return true;
+    }
+
+    // Si le nom de l'organisation est vide ou générique, onboarding nécessaire
+    if (!organization.name || organization.name.startsWith('Organization ')) {
+      return true;
+    }
+
+    // 3. Vérifier les informations de l'utilisateur
+    const user = userData;
+
+    // Si le prénom ou nom est vide/générique, onboarding nécessaire
+    if (!user.first_name || !user.last_name ||
+      user.first_name === 'User' || user.last_name === 'User') {
+      return true;
+    }
+
+    // 4. Si toutes les vérifications passent, pas besoin d'onboarding
+    return false;
+  };
+
   const checkOnboardingStatus = async () => {
     try {
       const authToken = localStorage.getItem('authToken');
@@ -558,13 +591,28 @@ function App() {
         return;
       }
 
-      const response = await fetch('/api/v1/accounts/profile/', {
+      // #region agent log
+      const requestUrl = '/api/v1/accounts/profile/';
+      const fullUrl = window.location.origin + requestUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'App.jsx:594', message: 'Before fetch request', data: { requestUrl, fullUrl, origin: window.location.origin, protocol: window.location.protocol, host: window.location.host }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+      }
+      // #endregion
+      const response = await fetch(requestUrl, {
         headers: { 'Authorization': `Token ${authToken}` },
       });
+      // #region agent log
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'App.jsx:598', message: 'After fetch response', data: { status: response.status, statusText: response.statusText, ok: response.ok, url: response.url }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+      }
+      // #endregion
 
       if (response.ok) {
         const data = await response.json();
-        const needsOnboarding = !data.preferences?.onboarding_completed;
+
+        // Vérifier si l'onboarding est nécessaire
+        const needsOnboarding = checkIfOnboardingNeeded(data);
+
         if (needsOnboarding && window.location.pathname !== '/onboarding') {
           window.location.href = '/onboarding';
           return;

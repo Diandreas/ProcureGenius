@@ -31,7 +31,7 @@ log_error() {
 # Vérifier si on est sur Linux
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     log_error "Ce script est fait pour Linux uniquement"
-    exit 1
+   exit 1
 fi
 
 log_info "🚀 Déploiement de ProcureGenius sur Hébergement Partagé Linux"
