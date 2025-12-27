@@ -46,6 +46,8 @@ import {
     Refresh,
     Settings,
     Upload,
+    RocketLaunch,
+    Warning,
 } from '@mui/icons-material';
 import api from '../../services/api';
 import Mascot from '../Mascot';
@@ -365,7 +367,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                     <Celebration sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
                     <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: 'success.main' }}>
-                        🎉 Bravo ! Vous avez terminé la configuration
+                        Bravo ! Vous avez terminé la configuration
                     </Typography>
                     <Typography variant="body1" color="text.secondary" paragraph>
                         Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !
@@ -414,11 +416,11 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                        <School />
+                        <RocketLaunch />
                     </Avatar>
                     <Box>
                         <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                            🚀 Premiers pas avec ProcureGenius
+                            Premiers pas avec ProcureGenius
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                             {completedCount} / {totalCount} actions complétées
@@ -581,11 +583,14 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                                     </Button>
                                                 )}
                                                 {isBlocked && (
-                                                    <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1 }}>
-                                                        ⚠️ {blockedBy.length > 0
-                                                            ? `Complétez d'abord: ${blockedBy.map(id => actions.find(a => a.id === id)?.title || id).join(', ')}`
-                                                            : 'Complétez d\'abord les étapes précédentes'}
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                                                        <Warning sx={{ fontSize: 16, color: 'warning.main' }} />
+                                                        <Typography variant="caption" color="warning.main">
+                                                            {blockedBy.length > 0
+                                                                ? `Complétez d'abord: ${blockedBy.map(id => actions.find(a => a.id === id)?.title || id).join(', ')}`
+                                                                : 'Complétez d\'abord les étapes précédentes'}
+                                                        </Typography>
+                                                    </Box>
                                                 )}
                                             </Box>
                                         </Box>

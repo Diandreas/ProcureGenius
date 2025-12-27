@@ -19,13 +19,13 @@ export const useCurrency = () => {
       if (defaultCurrency) {
         setCurrency(prevCurrency => {
           if (prevCurrency !== defaultCurrency) {
-            console.log('💰 Devise chargée depuis l\'organisation:', defaultCurrency);
+            console.log('Devise chargée depuis l\'organisation:', defaultCurrency);
             return defaultCurrency;
           }
           return prevCurrency;
         });
       } else {
-        console.warn('⚠️ Aucune devise trouvée dans les paramètres, utilisation de CAD par défaut');
+        console.warn('Aucune devise trouvée dans les paramètres, utilisation de CAD par défaut');
         setCurrency('CAD');
       }
     } catch (error) {
@@ -41,7 +41,7 @@ export const useCurrency = () => {
 
     // Écouter les changements de devise depuis les paramètres
     const handleCurrencyChange = () => {
-      console.log('🔄 Changement de devise détecté, rechargement...');
+      console.log('Changement de devise détecté, rechargement...');
       loadCurrency();
     };
 

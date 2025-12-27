@@ -745,7 +745,7 @@ function AIChat() {
       
       // For 500 errors, provide more helpful message
       if (error.response?.status === 500) {
-        console.error('⚠️ Server Error 500 - Check Django server logs for details');
+        console.error('Server Error 500 - Check Django server logs for details');
         enqueueSnackbar(
           'Erreur serveur (500). Vérifiez les logs Django pour plus de détails.',
           { 
@@ -1046,18 +1046,20 @@ function AIChat() {
                             {currentAction.icon}
                           </Avatar>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                                lineHeight: 1.2,
-                                color: 'text.primary',
-                                mb: 0.5,
-                              }}
-                            >
-                              💡 {currentAction.title}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                              <Lightbulb sx={{ fontSize: 14, color: 'warning.main' }} />
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                  lineHeight: 1.2,
+                                  color: 'text.primary',
+                                }}
+                              >
+                                {currentAction.title}
+                              </Typography>
+                            </Box>
                             <Typography
                               variant="caption"
                               sx={{

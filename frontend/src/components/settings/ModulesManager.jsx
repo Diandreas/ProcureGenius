@@ -12,20 +12,33 @@ import {
   Button,
   Divider,
 } from '@mui/material';
-import { Apps as AppsIcon, Save as SaveIcon } from '@mui/icons-material';
+import {
+  Apps as AppsIcon,
+  Save as SaveIcon,
+  Receipt,
+  ShoppingCart,
+  Business,
+  People,
+  Inventory,
+  Description,
+  Gavel,
+  BarChart,
+  Search,
+  Assignment,
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
 const AVAILABLE_MODULES = [
-  { code: 'dashboard', name: 'Tableau de bord', description: 'Vue d\'ensemble', always_enabled: true },
-  { code: 'invoices', name: 'Facturation', description: 'Gestion des factures', icon: '💰' },
-  { code: 'purchase-orders', name: 'Bons de commande', description: 'Achats et commandes', icon: '📦' },
-  { code: 'suppliers', name: 'Fournisseurs', description: 'Gestion fournisseurs', icon: '🏢' },
-  { code: 'clients', name: 'Clients', description: 'Gestion clients', icon: '👥' },
-  { code: 'products', name: 'Produits', description: 'Catalogue produits', icon: '📦' },
-  { code: 'contracts', name: 'Contrats', description: 'Gestion des contrats', icon: '📄' },
-  { code: 'e-sourcing', name: 'E-Sourcing', description: 'Appels d\'offres', icon: '🎯' },
-  { code: 'analytics', name: 'Analytics', description: 'Rapports et analyses', icon: '📊' },
+  { code: 'dashboard', name: 'Tableau de bord', description: 'Vue d\'ensemble', always_enabled: true, IconComponent: AppsIcon },
+  { code: 'invoices', name: 'Facturation', description: 'Gestion des factures', IconComponent: Receipt },
+  { code: 'purchase-orders', name: 'Bons de commande', description: 'Achats et commandes', IconComponent: ShoppingCart },
+  { code: 'suppliers', name: 'Fournisseurs', description: 'Gestion fournisseurs', IconComponent: Business },
+  { code: 'clients', name: 'Clients', description: 'Gestion clients', IconComponent: People },
+  { code: 'products', name: 'Produits', description: 'Catalogue produits', IconComponent: Inventory },
+  { code: 'contracts', name: 'Contrats', description: 'Gestion des contrats', IconComponent: Description },
+  { code: 'e-sourcing', name: 'E-Sourcing', description: 'Appels d\'offres', IconComponent: Gavel },
+  { code: 'analytics', name: 'Analytics', description: 'Rapports et analyses', IconComponent: BarChart },
 ];
 
 const ModulesManager = () => {
@@ -41,12 +54,12 @@ const ModulesManager = () => {
 
   const loadModules = async () => {
     try {
-      console.log('📥 Chargement des modules...');
+      console.log('Chargement des modules...');
       const response = await api.get('/accounts/organization/settings/');
-      console.log('📦 Modules chargés:', response.data.enabled_modules);
+      console.log('Modules chargés:', response.data.enabled_modules);
       setEnabledModules(response.data.enabled_modules || []);
     } catch (error) {
-      console.error('❌ Erreur chargement modules:', error);
+      console.error('Erreur chargement modules:', error);
       enqueueSnackbar('Erreur lors du chargement des modules', { variant: 'error' });
     } finally {
       setLoading(false);
@@ -67,13 +80,13 @@ const ModulesManager = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      console.log('💾 Sauvegarde des modules:', enabledModules);
+      console.log('Sauvegarde des modules:', enabledModules);
 
       const response = await api.put('/accounts/organization/settings/', {
         enabled_modules: enabledModules
       });
 
-      console.log('✅ Réponse serveur:', response.data);
+      console.log('Réponse serveur:', response.data);
       enqueueSnackbar('Modules mis à jour avec succès', { variant: 'success' });
 
       // Force reload to update menu and ModuleContext
@@ -81,7 +94,7 @@ const ModulesManager = () => {
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error('❌ Erreur sauvegarde modules:', error);
+      console.error('Erreur sauvegarde modules:', error);
       console.error('Détails:', error.response?.data);
       enqueueSnackbar('Erreur lors de la sauvegarde: ' + (error.response?.data?.error || error.message), { variant: 'error' });
     } finally {
@@ -163,9 +176,12 @@ const ModulesManager = () => {
                       }
                       label={
                         <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            {module.icon} {module.name}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {module.IconComponent && <module.IconComponent sx={{ fontSize: 20 }} />}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              {module.name}
+                            </Typography>
+                          </Box>
                           <Typography variant="caption" color="text.secondary">
                             {module.description}
                           </Typography>
@@ -191,8 +207,9 @@ const ModulesManager = () => {
           variant="outlined"
           color="info"
           onClick={handleDebug}
+          startIcon={<Search />}
         >
-          🔍 Debug Info
+          Debug Info
         </Button>
         <Button
           variant="contained"
@@ -207,26 +224,38 @@ const ModulesManager = () => {
       {/* Debug Information */}
       {debugInfo && (
         <Paper sx={{ mt: 3, p: 3, bgcolor: '#f5f5f5' }}>
-          <Typography variant="h6" gutterBottom>🔍 Informations de Debug</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Search />
+            <Typography variant="h6">Informations de Debug</Typography>
+          </Box>
           <Divider sx={{ mb: 2 }} />
 
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            📦 Modules depuis Organization Settings (sauvegardés):
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Inventory sx={{ fontSize: 18 }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              Modules depuis Organization Settings (sauvegardés):
+            </Typography>
+          </Box>
           <Box sx={{ mb: 2, p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace' }}>
             {JSON.stringify(debugInfo.orgSettingsModules, null, 2)}
           </Box>
 
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            📋 Modules depuis User Modules API (utilisés par le menu):
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Assignment sx={{ fontSize: 18 }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              Modules depuis User Modules API (utilisés par le menu):
+            </Typography>
+          </Box>
           <Box sx={{ mb: 2, p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace' }}>
             {JSON.stringify(debugInfo.userModulesCodes, null, 2)}
           </Box>
 
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            📄 Métadonnées complètes:
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Description sx={{ fontSize: 18 }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              Métadonnées complètes:
+            </Typography>
+          </Box>
           <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}>
             {JSON.stringify(debugInfo.userModulesData, null, 2)}
           </Box>

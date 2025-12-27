@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Users } from 'lucide-react';
+import { TrendingUp, Users, AlertTriangle, BarChart3, CheckCircle } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
@@ -114,8 +114,23 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
         </div>
       </div>
 
-      <div className="pareto-insight" style={{ color: barColor }}>
-        {topPercent <= 20 ? '⚠️ Forte concentration' : topPercent <= 35 ? '📊 Distribution normale' : '✅ Portefeuille diversifié'}
+      <div className="pareto-insight" style={{ color: barColor, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {topPercent <= 20 ? (
+          <>
+            <AlertTriangle size={16} />
+            <span>Forte concentration</span>
+          </>
+        ) : topPercent <= 35 ? (
+          <>
+            <BarChart3 size={16} />
+            <span>Distribution normale</span>
+          </>
+        ) : (
+          <>
+            <CheckCircle size={16} />
+            <span>Portefeuille diversifié</span>
+          </>
+        )}
       </div>
     </div>
   );
