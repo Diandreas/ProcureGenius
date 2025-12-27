@@ -54,6 +54,10 @@ import Pricing from './pages/Pricing';
 import Register from './pages/auth/Register';
 import LoginEnhanced from './pages/auth/LoginEnhanced';
 import OnboardingSetup from './pages/auth/OnboardingSetup';
+import Help from './pages/Help';
+import FAQ from './pages/FAQ';
+import KeyboardShortcuts from './pages/KeyboardShortcuts';
+import Support from './pages/Support';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -721,6 +725,13 @@ function App() {
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/settings/users" element={<UserManagement />} />
                             <Route path="/settings/import" element={<DataImportPage />} />
+
+                            {/* Help & Documentation */}
+                            <Route path="/help" element={<Help />} />
+                            <Route path="/help/:articleId" element={<Help />} />
+                            <Route path="/help/faq" element={<FAQ />} />
+                            <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
+                            <Route path="/support" element={<Support />} />
                           </Route>
                         </Route>
 

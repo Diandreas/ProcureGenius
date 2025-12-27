@@ -25,14 +25,18 @@ import {
   VideoLibrary,
   MenuBook,
   Support,
+  Keyboard,
+  LiveHelp,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
-const TutorialButton = ({ 
+const TutorialButton = ({
   variant = 'icon', // 'icon', 'button', 'menu-item'
   showBadge = false,
   size = 'medium',
   color = 'default',
 }) => {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
 
@@ -126,14 +130,33 @@ const TutorialButton = ({
           )}
           
           <Divider />
-          
-          <MenuItem onClick={() => window.open('https://docs.procuregenius.com', '_blank')}>
+
+          <MenuItem onClick={() => { handleCloseMenu(); navigate('/help'); }}>
             <ListItemIcon>
               <MenuBook fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Documentation" />
+            <ListItemText
+              primary="Documentation"
+              secondary="Centre d'aide complet"
+            />
           </MenuItem>
-          
+
+          <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/faq'); }}>
+            <ListItemIcon>
+              <LiveHelp fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="FAQ" />
+          </MenuItem>
+
+          <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
+            <ListItemIcon>
+              <Keyboard fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Raccourcis clavier" />
+          </MenuItem>
+
+          <Divider />
+
           <MenuItem onClick={() => window.open('mailto:support@procuregenius.com', '_blank')}>
             <ListItemIcon>
               <Support fontSize="small" />
@@ -218,14 +241,33 @@ const TutorialButton = ({
         )}
         
         <Divider sx={{ my: 1 }} />
-        
-        <MenuItem onClick={() => { handleCloseMenu(); window.open('https://docs.procuregenius.com', '_blank'); }}>
+
+        <MenuItem onClick={() => { handleCloseMenu(); navigate('/help'); }}>
           <ListItemIcon>
             <MenuBook fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Documentation" />
+          <ListItemText
+            primary="Documentation"
+            secondary="Centre d'aide complet"
+          />
         </MenuItem>
-        
+
+        <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/faq'); }}>
+          <ListItemIcon>
+            <LiveHelp fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="FAQ" />
+        </MenuItem>
+
+        <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
+          <ListItemIcon>
+            <Keyboard fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Raccourcis clavier" />
+        </MenuItem>
+
+        <Divider sx={{ my: 1 }} />
+
         <MenuItem onClick={() => { handleCloseMenu(); window.open('mailto:support@procuregenius.com', '_blank'); }}>
           <ListItemIcon>
             <Support fontSize="small" />

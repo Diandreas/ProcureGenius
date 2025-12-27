@@ -29,6 +29,7 @@ import eSourcingFr from '../locales/fr/eSourcing.json';
 import eSourcingEn from '../locales/en/eSourcing.json';
 import authFr from '../locales/fr/auth.json';
 import authEn from '../locales/en/auth.json';
+import helpFr from '../locales/fr/help.json';
 
 // Configuration i18next
 i18n
@@ -50,6 +51,7 @@ i18n
         contracts: contractsFr,
         eSourcing: eSourcingFr,
         auth: authFr,
+        help: helpFr,
       },
       en: {
         common: commonEn,
@@ -92,7 +94,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth'],
+    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth', 'help'],
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',

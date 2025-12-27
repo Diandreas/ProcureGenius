@@ -47,6 +47,7 @@ import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
 import { useTranslation } from 'react-i18next';
+import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 
 const drawerWidth = 240;
 
@@ -67,6 +68,9 @@ function MainLayout() {
   const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
 
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+
+  // Activer les raccourcis clavier
+  useKeyboardShortcuts();
 
   useEffect(() => {
     const handlePeriodChange = (event) => {

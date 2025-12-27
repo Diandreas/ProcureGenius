@@ -26,7 +26,8 @@
       "Bash(for file in fr/*.json en/*.json)",
       "Bash(do echo \"Checking $file...\")",
       "Bash(node -e:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,90 @@
+{
+  "title": "Centre d'aide ProcureGenius",
+  "subtitle": "Trouvez rapidement les réponses à vos questions",
+  "quickActions": {
+    "tutorial": "Tutoriel interactif",
+    "faq": "FAQ",
+    "shortcuts": "Raccourcis clavier",
+    "support": "Contacter le support"
+  },
+  "search": {
+    "placeholder": "Rechercher dans la documentation...",
+    "popular": "Recherches populaires",
+    "noResults": "Aucun résultat trouvé pour",
+    "tryDifferent": "Essayez avec d'autres mots-clés"
+  },
+  "needMoreHelp": {
+    "title": "Besoin d'aide supplémentaire ?",
+    "description": "Notre équipe de support est là pour vous aider",
+    "contact": "Contacter le support",
+    "startTutorial": "Lancer le tutoriel"
+  },
+  "article": {
+    "notFound": "Article non trouvé",
+    "backToHelp": "Retour à l'aide",
+    "wasHelpful": "Cet article vous a-t-il été utile ?",
+    "thanksFeedback": "Merci pour votre retour !",
+    "sorryNotHelpful": "Nous sommes désolés. Contactez le support pour plus d'aide.",
+    "relatedTopics": "Articles liés",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "breadcrumb": {
+    "help": "Aide"
+  },
+  "faq": {
+    "title": "Questions fréquentes (FAQ)",
+    "subtitle": "Trouvez rapidement des réponses aux questions les plus courantes",
+    "backToHelp": "Retour à l'aide",
+    "searchPlaceholder": "Rechercher une question...",
+    "noResults": "Aucune question trouvée",
+    "tryDifferent": "Essayez avec d'autres mots-clés ou catégories",
+    "stillNeedHelp": "Vous n'avez pas trouvé votre réponse ?",
+    "contactUs": "Notre équipe de support est là pour vous aider",
+    "contactSupport": "Contacter le support"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "subtitle": "Gagnez du temps en utilisant les raccourcis clavier",
+    "backToHelp": "Retour à l'aide",
+    "macDetected": "Raccourcis pour Mac détectés",
+    "windowsDetected": "Raccourcis pour Windows détectés",
+    "tipTitle": "Conseil",
+    "tipContent": "Utilisez Ctrl+/ (Cmd+/ sur Mac) à tout moment pour afficher l'aide contextuelle et les raccourcis disponibles sur la page actuelle.",
+    "print": "Imprimer cette page"
+  },
+  "categories": {
+    "gettingStarted": {
+      "title": "Démarrage",
+      "description": "Premiers pas avec ProcureGenius"
+    },
+    "suppliers": {
+      "title": "Fournisseurs",
+      "description": "Gérer vos fournisseurs"
+    },
+    "purchaseOrders": {
+      "title": "Bons de commande",
+      "description": "Créer et suivre vos commandes"
+    },
+    "invoices": {
+      "title": "Factures",
+      "description": "Gérer vos factures"
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Gérer votre portefeuille clients"
+    },
+    "products": {
+      "title": "Produits",
+      "description": "Catalogue et gestion des produits"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Configuration de l'application"
+    },
+    "tips": {
+      "title": "Astuces",
+      "description": "Conseils et bonnes pratiques"
+    }
+  }
+}
