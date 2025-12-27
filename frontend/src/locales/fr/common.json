@@ -146,5 +146,10 @@
     "weeks": "semaines",
     "months": "mois",
     "years": "années"
+  },
+  "dateNavigator": {
+    "previousDay": "Jour précédent",
+    "today": "Aujourd'hui",
+    "nextDay": "Jour suivant"
   }
 }

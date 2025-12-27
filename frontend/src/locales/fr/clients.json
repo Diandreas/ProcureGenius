@@ -21,6 +21,13 @@
     "invoices": "Factures",
     "products": "Produits"
   },
+  "fields": {
+    "name": "Nom du client *",
+    "contactPerson": "Personne de contact",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse"
+  },
   "labels": {
     "contactPerson": "Personne contact",
     "email": "Email",

@@ -19,7 +19,8 @@
     "cancelled": "Annulés",
     "allStatuses": "Tous",
     "activeFilter": "Filtre actif:",
-    "statusLabel": "Statut"
+    "statusLabel": "Statut",
+    "dateFilter": "Filtre par date"
   },
   "search": {
     "placeholder": "Rechercher un bon de commande..."

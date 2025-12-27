@@ -56,6 +56,7 @@ import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import DateNavigator from '../../components/common/DateNavigator';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Invoices() {
@@ -75,6 +76,7 @@ function Invoices() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [reportConfigOpen, setReportConfigOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -186,7 +188,14 @@ function Invoices() {
       return true;
     })();
 
-    return matchesSearch && matchesStatus && matchesQuick;
+    const matchesDate = !selectedDate || (() => {
+      // Filtrer par date de facture (issue_date) ou date d'échéance (due_date)
+      const invoiceDate = invoice.issue_date ? invoice.issue_date.split('T')[0] : null;
+      const dueDate = invoice.due_date ? invoice.due_date.split('T')[0] : null;
+      return invoiceDate === selectedDate || dueDate === selectedDate;
+    })();
+
+    return matchesSearch && matchesStatus && matchesQuick && matchesDate;
   });
 
   const getStatusColor = (status) => {
@@ -559,7 +568,7 @@ function Invoices() {
       <Card sx={{ mb: 3, borderRadius: 1 }}>
         <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
           <Stack spacing={2}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <TextField
                 fullWidth
                 size="small"
@@ -573,7 +582,15 @@ function Invoices() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': { borderRadius: 1 },
+                  minWidth: isMobile ? '100%' : '200px',
+                  flex: 1,
+                }}
+              />
+              <DateNavigator
+                value={selectedDate}
+                onChange={setSelectedDate}
               />
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}
@@ -588,6 +605,21 @@ function Invoices() {
                 <FilterList />
               </IconButton>
             </Box>
+
+            {/* Date filter indicator */}
+            {selectedDate && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {t('invoices:filters.dateFilter', 'Filtre par date')}:
+                </Typography>
+                <Chip
+                  label={formatDate(selectedDate)}
+                  onDelete={() => setSelectedDate('')}
+                  color="primary"
+                  size="small"
+                />
+              </Box>
+            )}
 
             {showFilters && (
               <Grid container spacing={2}>

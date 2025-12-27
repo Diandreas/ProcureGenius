@@ -21,7 +21,12 @@
       "Bash(tee:*)",
       "Bash(del \"d:\\project\\BFMa\\ProcureGenius\\apps\\suppliers\\migrations\\0010_add_search_indexes.py\")",
       "Bash(rm:*)",
-      "Bash(py:*)"
+      "Bash(py:*)",
+      "Bash(npm run lint:*)",
+      "Bash(for file in fr/*.json en/*.json)",
+      "Bash(do echo \"Checking $file...\")",
+      "Bash(node -e:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

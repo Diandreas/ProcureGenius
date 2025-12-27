@@ -540,7 +540,6 @@ function InvoiceForm() {
                     <TextField
                       {...params}
                       label="Sélectionner un client"
-                      required
                       size="small"
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
@@ -893,7 +892,6 @@ function InvoiceForm() {
                       <TextField
                         {...params}
                         label={t('invoices:fields.selectClient')}
-                        required
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         InputProps={{
                           ...params.InputProps,

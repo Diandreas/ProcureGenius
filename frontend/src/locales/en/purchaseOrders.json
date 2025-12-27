@@ -19,7 +19,8 @@
     "cancelled": "Cancelled",
     "allStatuses": "All",
     "activeFilter": "Active filter:",
-    "statusLabel": "Status"
+    "statusLabel": "Status",
+    "dateFilter": "Date filter"
   },
   "search": {
     "placeholder": "Search for a purchase order..."

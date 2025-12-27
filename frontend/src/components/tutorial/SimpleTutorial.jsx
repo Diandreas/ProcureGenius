@@ -488,22 +488,54 @@ const SimpleTutorial = () => {
 
         const padding = 15;
         const tooltipWidth = 380;
+        const tooltipHeight = 300; // Approximate height of the tooltip
 
-        // Si l'élément est à gauche, mettre le tooltip à droite
-        if (targetRect.left < window.innerWidth / 2) {
+        // Calculer les positions possibles
+        const positionRight = targetRect.left + targetRect.width + padding;
+        const positionLeft = targetRect.left - tooltipWidth - padding;
+        const positionBelow = targetRect.top + targetRect.height + padding;
+        const positionAbove = targetRect.top - tooltipHeight - padding;
+
+        // Vérifier si les positions sont valides (à l'intérieur de l'écran)
+        const canPositionRight = positionRight + tooltipWidth <= window.innerWidth - 20;
+        const canPositionLeft = positionLeft >= 20;
+        const canPositionBelow = positionBelow + tooltipHeight <= window.innerHeight - 20;
+        const canPositionAbove = positionAbove >= 20;
+
+        // Priorité : droite > gauche > dessous > dessus
+        if (canPositionRight && targetRect.left < window.innerWidth / 2) {
+            const availableWidth = window.innerWidth - positionRight - 20;
             return {
                 position: 'fixed',
-                top: Math.max(20, Math.min(targetRect.top, window.innerHeight - 300)),
-                left: targetRect.left + targetRect.width + padding,
+                top: Math.max(20, Math.min(targetRect.top, window.innerHeight - tooltipHeight)),
+                left: positionRight,
+                maxWidth: `${Math.min(tooltipWidth, availableWidth)}px`,
+            };
+        } else if (canPositionLeft && targetRect.left >= window.innerWidth / 2) {
+            return {
+                position: 'fixed',
+                top: Math.max(20, Math.min(targetRect.top, window.innerHeight - tooltipHeight)),
+                left: Math.max(20, positionLeft), // Ensure minimum left position of 20px
+                maxWidth: `${Math.min(tooltipWidth, positionLeft - 20)}px`, // Ensure it doesn't go beyond left margin
+            };
+        } else if (canPositionBelow) {
+            const adjustedLeft = Math.max(20, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 20));
+            return {
+                position: 'fixed',
+                top: positionBelow,
+                left: adjustedLeft,
+                maxWidth: `${Math.min(tooltipWidth, window.innerWidth - adjustedLeft - 20)}px`,
+            };
+        } else {
+            // Position au-dessus ou centré si aucune autre position n'est valide
+            const adjustedLeft = Math.max(20, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 20));
+            return {
+                position: 'fixed',
+                top: Math.max(20, positionAbove),
+                left: adjustedLeft,
+                maxWidth: `${Math.min(tooltipWidth, window.innerWidth - adjustedLeft - 20)}px`,
             };
         }
-
-        // Sinon, mettre le tooltip en dessous ou au-dessus
-        return {
-            position: 'fixed',
-            top: Math.min(targetRect.top + targetRect.height + padding, window.innerHeight - 300),
-            left: Math.max(20, targetRect.left - tooltipWidth / 2),
-        };
     };
 
     return (
@@ -733,9 +765,9 @@ const SimpleTutorial = () => {
                     sx={{
                         ...getTooltipPosition(),
                         p: isMobile ? 2 : 3,
-                        maxWidth: isMobile ? 'calc(100vw - 32px)' : 400,
+                        maxWidth: isMobile ? 'calc(100vw - 32px)' : 'unset', // Use 'unset' to allow getTooltipPosition to control maxWidth
                         minWidth: isMobile ? 'unset' : 340,
-                        width: isMobile ? 'calc(100vw - 32px)' : 'auto',
+                        width: isMobile ? 'calc(100vw - 32px)' : 'unset', // Use unset to respect the calculated width from getTooltipPosition
                         borderRadius: 2,
                         bgcolor: 'background.paper',
                         zIndex: 9999,

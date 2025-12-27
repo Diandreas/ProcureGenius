@@ -26,6 +26,7 @@ import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import DateNavigator from '../../components/common/DateNavigator';
 import { generatePurchaseOrdersBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function PurchaseOrders() {
@@ -38,6 +39,7 @@ function PurchaseOrders() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [reportConfigOpen, setReportConfigOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
@@ -177,7 +179,14 @@ function PurchaseOrders() {
       return true;
     })();
 
-    return matchesSearch && matchesStatus && matchesQuick;
+    const matchesDate = !selectedDate || (() => {
+      // Filtrer par date de commande (order_date) ou date de livraison (delivery_date)
+      const orderDate = po.order_date ? po.order_date.split('T')[0] : null;
+      const deliveryDate = po.delivery_date ? po.delivery_date.split('T')[0] : null;
+      return orderDate === selectedDate || deliveryDate === selectedDate;
+    })();
+
+    return matchesSearch && matchesStatus && matchesQuick && matchesDate;
   });
 
   const totalPOs = purchaseOrders.length;
@@ -509,7 +518,7 @@ function PurchaseOrders() {
       <Card sx={{ mb: 3, borderRadius: 1 }}>
         <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
           <Stack spacing={2}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <TextField
                 fullWidth
                 size="small"
@@ -523,7 +532,15 @@ function PurchaseOrders() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': { borderRadius: 1 },
+                  minWidth: isMobile ? '100%' : '200px',
+                  flex: 1,
+                }}
+              />
+              <DateNavigator
+                value={selectedDate}
+                onChange={setSelectedDate}
               />
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}
@@ -538,6 +555,21 @@ function PurchaseOrders() {
                 <FilterList />
               </IconButton>
             </Box>
+
+            {/* Date filter indicator */}
+            {selectedDate && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {t('purchaseOrders:filters.dateFilter', 'Filtre par date')}:
+                </Typography>
+                <Chip
+                  label={formatDate(selectedDate)}
+                  onDelete={() => setSelectedDate('')}
+                  color="primary"
+                  size="small"
+                />
+              </Box>
+            )}
 
             {showFilters && (
               <Grid container spacing={2}>

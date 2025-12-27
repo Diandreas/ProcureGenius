@@ -284,6 +284,8 @@ function ProductSelectionDialog({
                   onChange={(e) =>
                     setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
                   }
+                  disabled={newItem.product !== null}
+                  helperText={newItem.product ? "Prix du catalogue (non modifiable)" : ""}
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
@@ -394,6 +396,8 @@ function ProductSelectionDialog({
                   onChange={(e) =>
                     setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
                   }
+                  disabled={newItem.product !== null}
+                  helperText={newItem.product ? "Prix du catalogue (non modifiable)" : ""}
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
