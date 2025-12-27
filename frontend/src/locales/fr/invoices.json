@@ -24,6 +24,7 @@
     "placeholder": "Rechercher une facture..."
   },
   "messages": {
+    "loading": "Chargement des factures...",
     "loadingError": "Erreur lors du chargement des factures",
     "loadInvoiceError": "Erreur lors du chargement de la facture",
     "noInvoices": "Aucune facture",

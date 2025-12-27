@@ -24,32 +24,30 @@ def quick_create_client(request):
     Création rapide d'un client avec détection des doublons
 
     Body:
-        - first_name: string (required)
-        - last_name: string
+        - name: string (required)
         - email: string
         - phone: string
-        - company: string
         - address: string
+        - contact_person: string
         - force_create: boolean (pour forcer la création malgré les similarités)
     """
     data = request.data
     force_create = data.get('force_create', False)
 
     # Validation des champs requis
-    first_name = data.get('first_name', '').strip()
-    if not first_name:
+    name = data.get('name', '').strip()
+    if not name:
         return Response(
-            {'error': 'Le prénom est requis'},
+            {'error': 'Le nom est requis'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     # Vérifier les similarités sauf si force_create
     if not force_create:
         similar_clients = entity_matcher.find_similar_clients(
-            first_name=first_name,
-            last_name=data.get('last_name', ''),
+            first_name=name,  # Utiliser name comme first_name pour la recherche
             email=data.get('email'),
-            company=data.get('company')
+            phone=data.get('phone')
         )
 
         if similar_clients:
@@ -58,7 +56,7 @@ def quick_create_client(request):
                 'similar_entities': [
                     {
                         'id': str(client.id),
-                        'name': f"{client.first_name} {client.last_name}".strip(),
+                        'name': client.name,
                         'email': client.email or '',
                         'phone': client.phone or '',
                         'similarity': score,
@@ -72,30 +70,24 @@ def quick_create_client(request):
     # Créer le client
     try:
         with transaction.atomic():
-            # Générer un username unique si l'email n'est pas fourni
-            username = data.get('email') or f"{first_name.lower()}_{User.objects.count() + 1}"
+            # Récupérer l'organisation de l'utilisateur
+            organization = request.user.organization if hasattr(request.user, 'organization') else None
 
             # Créer le client
-            client = User.objects.create_user(
-                username=username,
+            client = Client.objects.create(
+                organization=organization,
+                name=name,
                 email=data.get('email', ''),
-                first_name=first_name,
-                last_name=data.get('last_name', ''),
+                phone=data.get('phone', ''),
+                address=data.get('address', ''),
+                contact_person=data.get('contact_person', ''),
             )
-
-            # Ajouter les champs optionnels si disponibles
-            if data.get('phone'):
-                client.phone = data['phone']
-            if data.get('address'):
-                client.address = data['address']
-            if data.get('phone') or data.get('address'):
-                client.save()
 
             serializer = ClientSerializer(client)
             return Response({
                 'success': True,
                 'data': serializer.data,
-                'message': f'Client {client.get_full_name()} créé avec succès'
+                'message': f'Client {client.name} créé avec succès'
             }, status=status.HTTP_201_CREATED)
 
     except Exception as e:

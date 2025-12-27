@@ -121,6 +121,7 @@
         "low": "Bas"
     },
     "messages": {
+        "loading": "Chargement des produits...",
         "noProducts": "Aucun produit",
         "noProductsDescription": "Aucun produit ne correspond à vos critères de recherche.",
         "loadingError": "Erreur lors du chargement des produits",

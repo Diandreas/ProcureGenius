@@ -28,6 +28,7 @@
     "indigenous": "Autochtone"
   },
   "messages": {
+    "loading": "Chargement des fournisseurs...",
     "noSuppliers": "Aucun fournisseur",
     "noSuppliersDescription": "Aucun fournisseur ne correspond à vos critères de recherche.",
     "loadingError": "Erreur lors du chargement des fournisseurs",

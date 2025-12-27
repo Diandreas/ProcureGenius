@@ -4,15 +4,15 @@
 
 export const clientFields = [
   {
-    name: 'first_name',
-    label: 'Prénom *',
+    name: 'name',
+    label: 'Nom du client *',
     type: 'text',
     required: true,
-    fullWidth: false
+    fullWidth: true
   },
   {
-    name: 'last_name',
-    label: 'Nom',
+    name: 'contact_person',
+    label: 'Personne de contact',
     type: 'text',
     required: false,
     fullWidth: false
@@ -22,19 +22,12 @@ export const clientFields = [
     label: 'Email',
     type: 'email',
     required: false,
-    fullWidth: true
+    fullWidth: false
   },
   {
     name: 'phone',
     label: 'Téléphone',
     type: 'tel',
-    required: false,
-    fullWidth: false
-  },
-  {
-    name: 'company',
-    label: 'Entreprise',
-    type: 'text',
     required: false,
     fullWidth: false
   },

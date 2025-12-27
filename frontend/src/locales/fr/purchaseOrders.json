@@ -25,6 +25,7 @@
     "placeholder": "Rechercher un bon de commande..."
   },
   "messages": {
+    "loading": "Chargement des bons de commande...",
     "loadingError": "Erreur lors du chargement du bon de commande",
     "noPurchaseOrders": "Aucun bon de commande",
     "noPOMatchSearch": "Aucun bon de commande ne correspond à vos critères de recherche.",

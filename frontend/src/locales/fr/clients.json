@@ -108,6 +108,7 @@
     "generatingLabel": "Génération du rapport en cours..."
   },
   "messages": {
+    "loading": "Chargement des clients...",
     "noClients": "Aucun client",
     "noClientsDescription": "Aucun client ne correspond à vos critères de recherche.",
     "loadingError": "Erreur lors du chargement des clients",
