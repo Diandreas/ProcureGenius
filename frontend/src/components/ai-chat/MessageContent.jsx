@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ListModal from './ListModal';
+import ChartRenderer from './ChartRenderer';
 
 const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }) => {
   const navigate = useNavigate();
@@ -257,6 +258,137 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
                     >
                       Voir les {items.length} résultat{items.length !== 1 ? 's' : ''}
                     </Button>
+                  )}
+
+                  {/* Graphique simple (visualization) */}
+                  {isSuccess && data.entity_type === 'visualization' && (
+                    <ChartRenderer
+                      chartType={data.chart_type}
+                      chartTitle={data.chart_title}
+                      chartData={data.chart_data}
+                      chartConfig={data.chart_config}
+                    />
+                  )}
+
+                  {/* Analyse business (insights + charts) */}
+                  {isSuccess && data.entity_type === 'business_analysis' && (
+                    <>
+                      {/* Afficher les insights */}
+                      {data.insights && data.insights.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                          {data.insights.map((insight, idx) => (
+                            <Box
+                              key={idx}
+                              sx={{
+                                borderLeft: 3,
+                                borderColor:
+                                  insight.type === 'alert'
+                                    ? '#ef4444'
+                                    : insight.type === 'warning'
+                                    ? '#f59e0b'
+                                    : '#10b981',
+                                pl: 1.5,
+                                py: 1,
+                                mb: 1.5,
+                                backgroundColor:
+                                  insight.type === 'alert'
+                                    ? '#fef2f2'
+                                    : insight.type === 'warning'
+                                    ? '#fffbeb'
+                                    : '#f0fdf4',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600, fontSize: '0.85rem', mb: 0.5 }}
+                              >
+                                {insight.title}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontSize: '0.8rem', color: 'text.secondary' }}
+                              >
+                                {insight.message}
+                              </Typography>
+                              {insight.priority && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontSize: '0.7rem',
+                                    color: 'text.disabled',
+                                    display: 'block',
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  Priorité: {insight.priority}/10
+                                </Typography>
+                              )}
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+
+                      {/* Afficher les graphiques */}
+                      {data.charts && data.charts.length > 0 && (
+                        <Box>
+                          {data.charts.map((chart, idx) => (
+                            <ChartRenderer
+                              key={idx}
+                              chartType={chart.chart_type}
+                              chartTitle={chart.chart_title}
+                              chartData={chart.chart_data}
+                              chartConfig={chart.chart_config}
+                            />
+                          ))}
+                        </Box>
+                      )}
+                    </>
+                  )}
+
+                  {/* Statistiques (stats + charts optionnels) */}
+                  {isSuccess && data.entity_type === 'statistics' && (
+                    <>
+                      {/* Afficher les stats textuelles */}
+                      {data.stats && (
+                        <Box
+                          sx={{
+                            backgroundColor: '#f9fafb',
+                            p: 1.5,
+                            borderRadius: 1,
+                            mb: 2,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            component="pre"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem',
+                              whiteSpace: 'pre-wrap',
+                              margin: 0,
+                            }}
+                          >
+                            {JSON.stringify(data.stats, null, 2)}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {/* Afficher les graphiques */}
+                      {data.charts && data.charts.length > 0 && (
+                        <Box>
+                          {data.charts.map((chart, idx) => (
+                            <ChartRenderer
+                              key={idx}
+                              chartType={chart.chart_type}
+                              chartTitle={chart.chart_title}
+                              chartData={chart.chart_data}
+                              chartConfig={chart.chart_config}
+                            />
+                          ))}
+                        </Box>
+                      )}
+                    </>
                   )}
 
                   {/* Détails compacts pour un seul élément */}

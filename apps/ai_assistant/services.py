@@ -19,7 +19,7 @@ class MistralService:
     """Service pour interagir avec l'API Mistral AI"""
 
     # Cache key constant pour le system prompt
-    SYSTEM_PROMPT_CACHE_KEY = 'mistral_system_prompt_v2'  # Incrémenté pour invalider cache
+    SYSTEM_PROMPT_CACHE_KEY = 'mistral_system_prompt_v3'  # v3: Ajout outils analyse et visualisation
     SYSTEM_PROMPT_TTL = 86400  # 24h
 
     def __init__(self):
@@ -67,7 +67,57 @@ Tu peux aider avec :
 3. Créer et suivre les bons de commande (pour commander aux fournisseurs)
 4. Gérer les factures (pour facturer les clients)
 5. Consulter les produits et stocks
-6. Analyser les données et statistiques
+6. Analyser les données et statistiques avec intelligence
+
+ANALYSE ET VISUALISATION - Outils puissants :
+Tu disposes de 3 outils d'analyse pour aider l'utilisateur à comprendre son business :
+
+1. **analyze_business** - Analyse intelligente complète
+   Utilise cet outil quand l'utilisateur demande :
+   - "Analyse mon entreprise / ma rentabilité / mes clients / mes produits"
+   - "Quels sont les problèmes / opportunités / risques ?"
+   - "Donne-moi des insights / conseils / recommandations"
+   Paramètres :
+   - focus_area: 'all', 'profitability', 'clients', 'products', 'stock', 'automation'
+   - include_charts: true si l'utilisateur mentionne "graphe", "graphique", "visualisation", "montre-moi"
+   - priority_threshold: 7 par défaut (ne montrer que les insights importants)
+
+2. **get_statistics** - Stats modulaires et flexibles
+   Utilise cet outil quand l'utilisateur demande des chiffres spécifiques :
+   - "Stats de mes revenus / factures / clients / produits"
+   - "Combien de clients j'ai ?"
+   - "Quel est mon CA ce mois ?"
+   Paramètres :
+   - categories: ['revenue', 'invoices', 'clients', 'products', 'stock', 'purchase_orders']
+   - period: 'today', 'week', 'month', 'quarter', 'year', 'all'
+   - group_by: 'day', 'week', 'month' (pour les évolutions)
+   - include_charts: true si demande de graphique
+   - chart_types: ['revenue_evolution', 'top_clients', 'top_products', 'invoice_status']
+
+3. **generate_visualization** - Graphiques à la demande
+   Utilise cet outil quand l'utilisateur demande explicitement un graphique :
+   - "Crée un graphique / graphe / chart de..."
+   - "Montre-moi l'évolution de..."
+   - "Fais un camembert / pie chart / bar chart de..."
+   Paramètres :
+   - chart_type: 'line', 'bar', 'pie', 'area'
+   - data_source: 'revenue_evolution', 'top_clients', 'top_products', 'stock_alerts', 'invoice_status'
+   - period: 'today', 'week', 'month', 'quarter', 'year', 'all'
+   - group_by: 'day', 'week', 'month'
+   - limit: 5, 10, 20 (pour les tops)
+
+RÈGLES pour proposer des graphiques automatiquement :
+- Si l'utilisateur demande une "évolution" → toujours proposer un line chart
+- Si l'utilisateur demande "les meilleurs" ou "top" → proposer un bar chart
+- Si l'utilisateur demande "répartition" ou "distribution" → proposer un pie chart
+- Si l'utilisateur dit "montre", "visualise", "graphique" → TOUJOURS inclure un graphe
+- Par défaut, privilégie analyze_business avec include_charts=true pour les demandes d'analyse générale
+
+Exemples de bonnes utilisations :
+- "Analyse ma rentabilité" → analyze_business(focus_area='profitability', include_charts=true)
+- "Stats de mes revenus ce mois" → get_statistics(categories=['revenue'], period='month')
+- "Montre l'évolution de mes ventes" → generate_visualization(chart_type='line', data_source='revenue_evolution', period='month')
+- "Quels sont mes meilleurs clients ?" → get_statistics(categories=['clients'], include_charts=true, chart_types=['top_clients'])
 
 IMPORTANT - Isolation des données :
 - Toutes les actions (recherche, liste, création) sont automatiquement filtrées par l'organisation de l'utilisateur connecté
@@ -821,6 +871,267 @@ Réponds toujours en français de manière naturelle et engageante."""
                         "required": []
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_invoice_stats",
+                    "description": "Récupère les statistiques détaillées des factures (CA, panier moyen, factures payées/impayées, évolution mensuelle, top clients)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "period": {
+                                "type": "string",
+                                "enum": ["today", "week", "month", "quarter", "year", "all"],
+                                "description": "Période des statistiques (défaut: month)"
+                            },
+                            "include_top_clients": {
+                                "type": "boolean",
+                                "description": "Inclure le classement des meilleurs clients (défaut: true)"
+                            },
+                            "include_evolution": {
+                                "type": "boolean",
+                                "description": "Inclure l'évolution par rapport à la période précédente (défaut: true)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_client_stats",
+                    "description": "Récupère les statistiques des clients (clients actifs/inactifs, clients à risque, revenus par client, segmentation)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "include_at_risk": {
+                                "type": "boolean",
+                                "description": "Inclure les clients à risque/inactifs (défaut: true)"
+                            },
+                            "inactive_days_threshold": {
+                                "type": "integer",
+                                "description": "Nombre de jours d'inactivité pour considérer un client à risque (défaut: 60)"
+                            },
+                            "top_count": {
+                                "type": "integer",
+                                "description": "Nombre de top clients à retourner (défaut: 5)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_supplier_stats",
+                    "description": "Récupère les statistiques des fournisseurs (nombre actifs, dépenses totales, top fournisseurs, délais moyens)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "period": {
+                                "type": "string",
+                                "enum": ["month", "quarter", "year", "all"],
+                                "description": "Période des statistiques (défaut: month)"
+                            },
+                            "include_spending_breakdown": {
+                                "type": "boolean",
+                                "description": "Inclure la répartition des dépenses par fournisseur (défaut: true)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_product_stats",
+                    "description": "Récupère les statistiques des produits (bestsellers, produits qui ne bougent pas, analyse par catégorie, marges)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "period": {
+                                "type": "string",
+                                "enum": ["month", "quarter", "year", "all"],
+                                "description": "Période d'analyse (défaut: quarter)"
+                            },
+                            "include_underperformers": {
+                                "type": "boolean",
+                                "description": "Inclure les produits sous-performants (défaut: true)"
+                            },
+                            "category": {
+                                "type": "string",
+                                "description": "Filtrer par catégorie spécifique (optionnel)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_stock_stats",
+                    "description": "Récupère les statistiques avancées de stock (valeur totale, taux de rotation, prédictions de rupture, stock mort)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "include_predictions": {
+                                "type": "boolean",
+                                "description": "Inclure les prédictions de rupture de stock (défaut: true)"
+                            },
+                            "include_dead_stock": {
+                                "type": "boolean",
+                                "description": "Inclure l'analyse du stock mort (défaut: true)"
+                            },
+                            "prediction_days": {
+                                "type": "integer",
+                                "description": "Nombre de jours pour les prédictions de rupture (défaut: 30)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_insights",
+                    "description": "Génère des insights intelligents et recommandations actionnables basés sur l'analyse complète des données de l'entreprise (rentabilité, anomalies, clients à risque, opportunités d'automatisation). Utiliser cet outil quand l'utilisateur demande une analyse complète ou des insights.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "focus_area": {
+                                "type": "string",
+                                "enum": ["all", "profitability", "clients", "products", "stock", "automation"],
+                                "description": "Domaine d'analyse spécifique (défaut: all)"
+                            },
+                            "priority_threshold": {
+                                "type": "integer",
+                                "description": "Seuil de priorité minimum pour les insights (1-10, défaut: 5)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_business",
+                    "description": "Analyse intelligente complète de l'entreprise. Utilise l'IA pour générer des insights prioritaires (alertes, opportunités, anomalies). Peut automatiquement générer des graphes pertinents si demandé.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "focus_area": {
+                                "type": "string",
+                                "enum": ["all", "profitability", "clients", "products", "stock", "automation"],
+                                "description": "Zone de focus de l'analyse (défaut: all)"
+                            },
+                            "include_charts": {
+                                "type": "boolean",
+                                "description": "Générer automatiquement des graphes pertinents (défaut: false)"
+                            },
+                            "priority_threshold": {
+                                "type": "integer",
+                                "description": "Seuil de priorité minimum pour les insights (1-10, défaut: 5)"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_statistics",
+                    "description": "Récupère des statistiques modulaires et flexibles. L'IA peut choisir quelles catégories récupérer selon les besoins de l'utilisateur. Supporte le groupement temporel et peut optionnellement générer des graphes.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": ["revenue", "invoices", "clients", "products", "stock", "purchase_orders"]
+                                },
+                                "description": "Catégories de stats à récupérer (défaut: toutes)"
+                            },
+                            "period": {
+                                "type": "string",
+                                "enum": ["today", "week", "month", "quarter", "year", "all"],
+                                "description": "Période des statistiques (défaut: month)"
+                            },
+                            "group_by": {
+                                "type": "string",
+                                "enum": ["day", "week", "month"],
+                                "description": "Groupement temporel pour les évolutions (défaut: month)"
+                            },
+                            "include_charts": {
+                                "type": "boolean",
+                                "description": "Générer des graphes pour les stats (défaut: false)"
+                            },
+                            "chart_types": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": ["revenue_evolution", "top_clients", "top_products"]
+                                },
+                                "description": "Types de graphes à générer si include_charts=true"
+                            }
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "generate_visualization",
+                    "description": "Génère des graphes (visualisations) à la demande avec Recharts. Permet de créer des graphes personnalisés pour répondre aux questions de l'utilisateur.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "chart_type": {
+                                "type": "string",
+                                "enum": ["line", "bar", "pie", "area"],
+                                "description": "Type de graphe"
+                            },
+                            "data_source": {
+                                "type": "string",
+                                "enum": [
+                                    "revenue_evolution",
+                                    "expenses_evolution",
+                                    "top_clients",
+                                    "top_products",
+                                    "stock_alerts",
+                                    "invoice_status",
+                                    "payment_methods",
+                                    "products_by_category"
+                                ],
+                                "description": "Source de données pour le graphe"
+                            },
+                            "period": {
+                                "type": "string",
+                                "enum": ["today", "week", "month", "quarter", "year", "all"],
+                                "description": "Période des données (défaut: month)"
+                            },
+                            "group_by": {
+                                "type": "string",
+                                "enum": ["day", "week", "month"],
+                                "description": "Groupement temporel pour évolutions (défaut: month)"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Limite pour les top N (défaut: 10)"
+                            }
+                        },
+                        "required": ["data_source"]
+                    }
+                }
             }
         ]
 
@@ -1416,6 +1727,9 @@ class ActionExecutor:
             'delete_report': self.delete_report,
             'undo_last_action': self.undo_last_action,
             'search_entity': self.search_entity,
+            'analyze_business': self.analyze_business,
+            'get_statistics': self.get_statistics,
+            'generate_visualization': self.generate_visualization,
         }
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
@@ -2455,6 +2769,472 @@ class ActionExecutor:
             'data': stats,
             'message': f"Statistiques récupérées: {stats['total_invoices']} facture(s), {stats['total_suppliers']} fournisseur(s), {stats['total_clients']} client(s)"
         }
+
+    async def analyze_business(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Analyse intelligente complète avec IntelligentInsightsEngine
+
+        Args:
+            params: {
+                focus_area: str (all, profitability, clients, products, stock, automation)
+                include_charts: bool
+                priority_threshold: int (1-10)
+            }
+            user_context: Contexte utilisateur
+
+        Returns:
+            Dict avec success, message, data (insights + optional charts)
+        """
+        from .intelligent_insights import IntelligentInsightsEngine
+        from .chart_helpers import (
+            generate_revenue_evolution_chart,
+            generate_top_clients_chart,
+            generate_products_pie_chart
+        )
+        from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        @sync_to_async
+        def analyze_sync():
+            # Récupérer l'utilisateur complet
+            user = User.objects.get(id=user_context['id'])
+
+            # Initialiser le moteur
+            engine = IntelligentInsightsEngine(user)
+
+            # Paramètres
+            focus_area = params.get('focus_area', 'all')
+            include_charts = params.get('include_charts', False)
+            priority_threshold = params.get('priority_threshold', 5)
+
+            # Générer insights
+            if focus_area == 'all':
+                insights = engine.generate_all_insights()
+            elif focus_area == 'profitability':
+                insights = engine._analyze_profitability()
+            elif focus_area == 'clients':
+                insights = engine._identify_at_risk_clients()
+            elif focus_area == 'products':
+                insights = engine._analyze_product_performance()
+            elif focus_area == 'stock':
+                insights = engine._predict_stock_issues()
+            elif focus_area == 'automation':
+                insights = engine._find_automation_opportunities()
+            else:
+                insights = engine.generate_all_insights()
+
+            # Filtrer par priorité
+            insights = [i for i in insights if i.get('priority', 0) >= priority_threshold]
+
+            # Préparer résultat
+            result = {
+                'insights': insights,
+                'count': len(insights),
+                'focus_area': focus_area
+            }
+
+            # Générer graphes si demandé
+            if include_charts and user.organization:
+                charts = []
+
+                # Graphe d'évolution du CA si focus rentabilité ou all
+                if focus_area in ['all', 'profitability']:
+                    revenue_chart = generate_revenue_evolution_chart(
+                        user.organization,
+                        period='quarter'
+                    )
+                    charts.append(revenue_chart)
+
+                # Graphe top clients si focus clients ou all
+                if focus_area in ['all', 'clients']:
+                    clients_chart = generate_top_clients_chart(
+                        user.organization,
+                        period='quarter',
+                        limit=10
+                    )
+                    charts.append(clients_chart)
+
+                # Graphe produits si focus produits
+                if focus_area in ['products']:
+                    products_chart = generate_products_pie_chart(
+                        user.organization,
+                        period='quarter',
+                        limit=5
+                    )
+                    charts.append(products_chart)
+
+                result['charts'] = charts
+
+            return result
+
+        try:
+            data = await analyze_sync()
+
+            # Formater le message
+            insights_count = data['count']
+            focus_text = {
+                'all': 'toutes les zones',
+                'profitability': 'la rentabilité',
+                'clients': 'les clients',
+                'products': 'les produits',
+                'stock': 'le stock',
+                'automation': 'l\'automatisation'
+            }.get(data['focus_area'], 'l\'entreprise')
+
+            message = f"Analyse intelligente de {focus_text} terminée. {insights_count} insight(s) prioritaire(s) détecté(s)."
+
+            if data.get('charts'):
+                message += f" {len(data['charts'])} graphe(s) généré(s)."
+
+            return {
+                'success': True,
+                'message': message,
+                'data': {
+                    'entity_type': 'business_analysis',
+                    'insights': data['insights'],
+                    'charts': data.get('charts', []),
+                    'focus_area': data['focus_area']
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error in analyze_business: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'message': f"Erreur lors de l'analyse : {str(e)}"
+            }
+
+    async def get_statistics(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Récupère des statistiques modulaires avec groupement temporel
+
+        Args:
+            params: {
+                categories: List[str] (revenue, invoices, clients, products, stock, purchase_orders)
+                period: str (today, week, month, quarter, year, all)
+                group_by: str (day, week, month)
+                include_charts: bool
+                chart_types: List[str]
+            }
+            user_context: Contexte utilisateur
+
+        Returns:
+            Dict avec success, message, data (stats + optional charts)
+        """
+        from apps.suppliers.models import Supplier
+        from apps.invoicing.models import Invoice, Product, InvoiceItem
+        from apps.purchase_orders.models import PurchaseOrder
+        from apps.accounts.models import Client
+        from django.db.models import Sum, Count, Avg, F
+        from asgiref.sync import sync_to_async
+        from .chart_helpers import (
+            get_date_range,
+            group_by_time,
+            generate_revenue_evolution_chart,
+            generate_top_clients_chart,
+            generate_products_pie_chart
+        )
+
+        @sync_to_async
+        def get_stats_sync():
+            organization = user_context.get('organization')
+            user_id = user_context.get('id')
+            is_superuser = user_context.get('is_superuser', False)
+
+            # Paramètres
+            categories = params.get('categories', [
+                'revenue', 'invoices', 'clients', 'products', 'stock', 'purchase_orders'
+            ])
+            period = params.get('period', 'month')
+            group_by = params.get('group_by', 'month')
+            include_charts = params.get('include_charts', False)
+            chart_types = params.get('chart_types', [])
+
+            # Dates
+            start_date, end_date = get_date_range(period)
+
+            # Préparer filtres
+            if organization:
+                suppliers_qs = Supplier.objects.filter(organization=organization)
+                clients_qs = Client.objects.filter(organization=organization, is_active=True)
+                invoices_qs = Invoice.objects.filter(created_by__organization=organization)
+                pos_qs = PurchaseOrder.objects.filter(created_by__organization=organization)
+                products_qs = Product.objects.filter(organization=organization)
+            elif is_superuser:
+                suppliers_qs = Supplier.objects.all()
+                clients_qs = Client.objects.filter(is_active=True)
+                invoices_qs = Invoice.objects.all()
+                pos_qs = PurchaseOrder.objects.all()
+                products_qs = Product.objects.all()
+            else:
+                suppliers_qs = Supplier.objects.none()
+                clients_qs = Client.objects.none()
+                invoices_qs = Invoice.objects.filter(created_by_id=user_id)
+                pos_qs = PurchaseOrder.objects.filter(created_by_id=user_id)
+                products_qs = Product.objects.none()
+
+            # Filtrer par période
+            if start_date:
+                invoices_qs_period = invoices_qs.filter(created_at__gte=start_date)
+                pos_qs_period = pos_qs.filter(created_at__gte=start_date)
+            else:
+                invoices_qs_period = invoices_qs
+                pos_qs_period = pos_qs
+
+            # Collecter stats par catégorie
+            stats = {}
+
+            if 'revenue' in categories:
+                revenue_stats = invoices_qs_period.aggregate(
+                    total=Sum('total_amount'),
+                    avg=Avg('total_amount')
+                )
+                stats['revenue'] = {
+                    'total': float(revenue_stats['total'] or 0),
+                    'average': float(revenue_stats['avg'] or 0),
+                    'period': period
+                }
+
+            if 'invoices' in categories:
+                invoice_stats = {
+                    'total': invoices_qs_period.count(),
+                    'paid': invoices_qs_period.filter(status='paid').count(),
+                    'pending': invoices_qs_period.filter(status='pending').count(),
+                    'overdue': invoices_qs_period.filter(status='overdue').count()
+                }
+                stats['invoices'] = invoice_stats
+
+            if 'clients' in categories:
+                client_stats = {
+                    'total': clients_qs.count(),
+                    'active': clients_qs.filter(is_active=True).count()
+                }
+                # Clients avec achats dans la période
+                if start_date:
+                    client_stats['active_period'] = invoices_qs_period.values('client').distinct().count()
+                stats['clients'] = client_stats
+
+            if 'products' in categories:
+                product_stats = {
+                    'total': products_qs.count(),
+                    'in_stock': products_qs.filter(stock__gt=0).count(),
+                    'low_stock': products_qs.filter(stock__lte=F('low_stock_threshold')).count()
+                }
+                stats['products'] = product_stats
+
+            if 'stock' in categories:
+                stock_value = products_qs.aggregate(
+                    total_value=Sum(F('stock') * F('cost'))
+                )
+                stats['stock'] = {
+                    'total_value': float(stock_value['total_value'] or 0),
+                    'items': products_qs.count()
+                }
+
+            if 'purchase_orders' in categories:
+                po_stats = {
+                    'total': pos_qs_period.count(),
+                    'pending': pos_qs_period.filter(status='pending').count(),
+                    'approved': pos_qs_period.filter(status='approved').count()
+                }
+                stats['purchase_orders'] = po_stats
+
+            # Groupement temporel pour évolution
+            if 'revenue' in categories and start_date:
+                invoices_grouped = group_by_time(invoices_qs_period, 'created_at', group_by)
+                revenue_evolution = invoices_grouped.values('period').annotate(
+                    total=Sum('total_amount'),
+                    count=Count('id')
+                ).order_by('period')
+
+                stats['revenue']['evolution'] = [
+                    {
+                        'date': item['period'].strftime('%Y-%m-%d') if item['period'] else 'N/A',
+                        'revenue': float(item['total'] or 0),
+                        'count': item['count']
+                    }
+                    for item in revenue_evolution
+                ]
+
+            result = {
+                'stats': stats,
+                'period': period,
+                'group_by': group_by,
+                'categories': categories
+            }
+
+            # Générer graphes si demandé
+            if include_charts and organization:
+                charts = []
+
+                if 'revenue_evolution' in chart_types:
+                    charts.append(generate_revenue_evolution_chart(
+                        organization, period, group_by
+                    ))
+
+                if 'top_clients' in chart_types:
+                    charts.append(generate_top_clients_chart(
+                        organization, period, limit=10
+                    ))
+
+                if 'top_products' in chart_types:
+                    charts.append(generate_products_pie_chart(
+                        organization, period, limit=5
+                    ))
+
+                result['charts'] = charts
+
+            return result
+
+        try:
+            data = await get_stats_sync()
+
+            message = f"Statistiques récupérées pour {len(data['categories'])} catégorie(s) (période: {data['period']})."
+
+            if data.get('charts'):
+                message += f" {len(data['charts'])} graphe(s) généré(s)."
+
+            return {
+                'success': True,
+                'message': message,
+                'data': {
+                    'entity_type': 'statistics',
+                    'stats': data['stats'],
+                    'charts': data.get('charts', []),
+                    'period': data['period'],
+                    'group_by': data['group_by']
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error in get_statistics: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'message': f"Erreur lors de la récupération des stats : {str(e)}"
+            }
+
+    async def generate_visualization(self, params: Dict, user_context: Dict) -> Dict:
+        """
+        Génère des visualisations Recharts à la demande
+
+        Args:
+            params: {
+                chart_type: str (line, bar, pie, area)
+                data_source: str
+                period: str
+                group_by: str
+                limit: int
+            }
+            user_context: Contexte utilisateur
+
+        Returns:
+            Dict avec success, message, data (chart data for Recharts)
+        """
+        from asgiref.sync import sync_to_async
+        from django.contrib.auth import get_user_model
+        from .chart_helpers import (
+            generate_revenue_evolution_chart,
+            generate_top_clients_chart,
+            generate_products_pie_chart,
+            generate_stock_alerts_chart,
+            format_for_recharts,
+            get_date_range,
+            CHART_COLORS
+        )
+        from apps.invoicing.models import Invoice
+        from django.db.models import Count
+
+        User = get_user_model()
+
+        @sync_to_async
+        def generate_chart_sync():
+            user = User.objects.get(id=user_context['id'])
+            organization = user.organization
+
+            if not organization:
+                raise ValueError("Pas d'organisation associée à l'utilisateur")
+
+            # Paramètres
+            chart_type = params.get('chart_type', 'bar')
+            data_source = params['data_source']  # Required
+            period = params.get('period', 'month')
+            group_by = params.get('group_by', 'month')
+            limit = params.get('limit', 10)
+
+            # Router vers le bon générateur
+            if data_source == 'revenue_evolution':
+                return generate_revenue_evolution_chart(organization, period, group_by)
+
+            elif data_source == 'top_clients':
+                return generate_top_clients_chart(organization, period, limit)
+
+            elif data_source == 'top_products':
+                return generate_products_pie_chart(organization, period, limit)
+
+            elif data_source == 'stock_alerts':
+                return generate_stock_alerts_chart(organization)
+
+            elif data_source == 'invoice_status':
+                # Répartition des factures par statut
+                start_date, _ = get_date_range(period)
+                invoices_qs = Invoice.objects.filter(
+                    created_by__organization=organization
+                )
+                if start_date:
+                    invoices_qs = invoices_qs.filter(created_at__gte=start_date)
+
+                status_counts = invoices_qs.values('status').annotate(
+                    count=Count('id')
+                )
+
+                chart_data = []
+                colors = [
+                    CHART_COLORS['success'],
+                    CHART_COLORS['warning'],
+                    CHART_COLORS['error'],
+                    CHART_COLORS['info']
+                ]
+
+                for idx, item in enumerate(status_counts):
+                    chart_data.append({
+                        'name': item['status'].title(),
+                        'value': item['count'],
+                        'fill': colors[idx % len(colors)]
+                    })
+
+                return format_for_recharts(
+                    chart_type='pie',
+                    chart_title='Répartition des factures par statut',
+                    chart_data=chart_data,
+                    chart_config={'dataKey': 'value', 'nameKey': 'name'}
+                )
+
+            else:
+                raise ValueError(f"Source de données non supportée : {data_source}")
+
+        try:
+            chart_data = await generate_chart_sync()
+
+            return {
+                'success': True,
+                'message': f"Graphe '{params['data_source']}' généré avec succès.",
+                'data': chart_data
+            }
+
+        except Exception as e:
+            logger.error(f"Error in generate_visualization: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'message': f"Erreur lors de la génération du graphe : {str(e)}"
+            }
 
     async def search_client(self, params: Dict, user_context: Dict) -> Dict:
         """
