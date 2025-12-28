@@ -204,5 +204,71 @@
         "expandWidget": "Expand this widget",
         "exportData": "Export data",
         "changePeriod": "Change period"
+    },
+    "gettingStarted": {
+        "title": "Getting Started with ProcureGenius",
+        "congratulations": "Congratulations! You've completed the setup",
+        "ready": "You're now ready to use ProcureGenius to its full potential!",
+        "reviewTutorial": "Review tutorial",
+        "dismiss": "Dismiss this message",
+        "actionsCompleted": "{{completed}} / {{total}} actions completed",
+        "start": "Start",
+        "blockedBy": "Complete first: {{actions}}",
+        "blockedByPrevious": "Complete previous steps first",
+        "showMore": "Show more actions",
+        "showLess": "Show less actions",
+        "completed": "Completed",
+        "optional": "Optional",
+        "startTutorial": "Launch interactive tutorial",
+        "refresh": "Refresh",
+        "recommendedActions": "Recommended actions to get started:",
+        "viewAllActions": "View all actions ({{count}})",
+        "hideForNow": "Hide for now",
+        "actions": {
+            "add_first_supplier": {
+                "title": "Add your first supplier",
+                "description": "Create a supplier record to start placing orders"
+            },
+            "import_suppliers": {
+                "title": "Import suppliers",
+                "description": "Import your suppliers from an Excel file"
+            },
+            "add_first_client": {
+                "title": "Add your first client",
+                "description": "Register your clients to simplify invoicing"
+            },
+            "create_first_po": {
+                "title": "Create a purchase order",
+                "description": "Place your first order with a supplier"
+            },
+            "create_first_invoice": {
+                "title": "Create your first invoice",
+                "description": "Invoice your clients in just a few clicks"
+            },
+            "add_first_product": {
+                "title": "Add a product",
+                "description": "Create your product or service catalog"
+            },
+            "configure_company": {
+                "title": "Configure your company",
+                "description": "Add your company information and logo"
+            },
+            "configure_email": {
+                "title": "Configure email",
+                "description": "Set up SMTP to send invoices automatically"
+            },
+            "complete_profile": {
+                "title": "Complete your profile",
+                "description": "Add your company information and logo"
+            },
+            "create_first_rfq": {
+                "title": "Create a sourcing event",
+                "description": "Launch your first request for quotation"
+            },
+            "create_first_contract": {
+                "title": "Create a contract",
+                "description": "Manage your first supplier contract"
+            }
+        }
     }
 }

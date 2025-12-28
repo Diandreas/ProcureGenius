@@ -1394,7 +1394,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
    - **Application** : "Autre (nom personnalisé)"
    - **Nom** : "ProcureGenius" ou "SMTP ProcureGenius"
 4. Cliquez sur **"Générer"**
-5. Google affiche un mot de passe de 16 caractères (ex: `abcd efgh ijkl mnop`)
+5. Google affiche un mot de passe de 16 caractères (ex: "abcd efgh ijkl mnop")
 6. **COPIEZ CE MOT DE PASSE** (vous ne le reverrez jamais)
 
 ### Étape 3 : Configuration dans ProcureGenius

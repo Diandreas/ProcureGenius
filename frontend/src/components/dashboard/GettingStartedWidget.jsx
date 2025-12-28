@@ -56,12 +56,11 @@ import Mascot from '../Mascot';
 // Note: On n'utilise plus d'endpoints séparés pour vérifier les actions
 // car ils peuvent retourner 403 si le module n'est pas activé.
 // On utilise plutôt le dashboard/stats qui agrège toutes les données.
+// Les titres et descriptions sont maintenant traduits via i18n
 const GUIDED_ACTIONS = {
     suppliers: [
         {
             id: 'add_first_supplier',
-            title: 'Ajouter votre premier fournisseur',
-            description: 'Créez une fiche fournisseur pour commencer à passer des commandes',
             icon: <Business />,
             route: '/suppliers/new',
             color: '#2196F3',
@@ -70,8 +69,6 @@ const GUIDED_ACTIONS = {
         },
         {
             id: 'import_suppliers',
-            title: 'Importer des fournisseurs',
-            description: 'Importez vos fournisseurs depuis un fichier Excel',
             icon: <Upload />,
             route: '/suppliers?action=import',
             color: '#4CAF50',
@@ -82,8 +79,6 @@ const GUIDED_ACTIONS = {
     clients: [
         {
             id: 'add_first_client',
-            title: 'Ajouter votre premier client',
-            description: 'Enregistrez vos clients pour faciliter la facturation',
             icon: <People />,
             route: '/clients/new',
             color: '#9C27B0',
@@ -94,8 +89,6 @@ const GUIDED_ACTIONS = {
     'purchase-orders': [
         {
             id: 'create_first_po',
-            title: 'Créer un bon de commande',
-            description: 'Passez votre première commande auprès d\'un fournisseur',
             icon: <ShoppingCart />,
             route: '/purchase-orders/new',
             color: '#FF9800',
@@ -107,8 +100,6 @@ const GUIDED_ACTIONS = {
     invoices: [
         {
             id: 'create_first_invoice',
-            title: 'Créer votre première facture',
-            description: 'Facturez vos clients en quelques clics',
             icon: <Receipt />,
             route: '/invoices/new',
             color: '#4CAF50',
@@ -119,8 +110,6 @@ const GUIDED_ACTIONS = {
     products: [
         {
             id: 'add_first_product',
-            title: 'Ajouter un produit',
-            description: 'Créez votre catalogue de produits ou services',
             icon: <Inventory />,
             route: '/products/new',
             color: '#795548',
@@ -131,8 +120,6 @@ const GUIDED_ACTIONS = {
     'e-sourcing': [
         {
             id: 'create_first_rfq',
-            title: 'Lancer un appel d\'offres',
-            description: 'Comparez les offres de vos fournisseurs',
             icon: <CompareArrows />,
             route: '/e-sourcing/events/new',
             color: '#00BCD4',
@@ -143,8 +130,6 @@ const GUIDED_ACTIONS = {
     contracts: [
         {
             id: 'create_first_contract',
-            title: 'Créer un contrat',
-            description: 'Gérez vos contrats fournisseurs',
             icon: <Gavel />,
             route: '/contracts/new',
             color: '#607D8B',
@@ -155,8 +140,6 @@ const GUIDED_ACTIONS = {
     general: [
         {
             id: 'complete_profile',
-            title: 'Compléter votre profil entreprise',
-            description: 'Ajoutez votre logo et vos informations légales',
             icon: <Settings />,
             route: '/settings',
             color: '#673AB7',
@@ -171,7 +154,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const theme = useTheme();
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
 
     const [userModules, setUserModules] = useState([]);
     const [actions, setActions] = useState([]);
@@ -367,10 +350,10 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                     <Celebration sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
                     <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: 'success.main' }}>
-                        Bravo ! Vous avez terminé la configuration
+                        {t('dashboard:gettingStarted.congratulations')}
                     </Typography>
                     <Typography variant="body1" color="text.secondary" paragraph>
-                        Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !
+                        {t('dashboard:gettingStarted.ready')}
                     </Typography>
                     <Stack direction="row" spacing={2} justifyContent="center">
                         <Button
@@ -378,13 +361,13 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                             startIcon={<School />}
                             onClick={handleStartTutorial}
                         >
-                            Revoir le tutoriel
+                            {t('dashboard:gettingStarted.reviewTutorial')}
                         </Button>
                         <Button
                             variant="text"
                             onClick={handleDismiss}
                         >
-                            Masquer ce message
+                            {t('dashboard:gettingStarted.dismiss')}
                         </Button>
                     </Stack>
                 </CardContent>
@@ -420,10 +403,10 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                     </Avatar>
                     <Box>
                         <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                            Premiers pas avec ProcureGenius
+                            {t('dashboard:gettingStarted.title')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {completedCount} / {totalCount} actions complétées
+                            {t('dashboard:gettingStarted.actionsCompleted', { completed: completedCount, total: totalCount })}
                         </Typography>
                     </Box>
                 </Box>
@@ -437,7 +420,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}>
                         {isCollapsed ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
                     </IconButton>
-                    <Tooltip title="Masquer pour l'instant">
+                    <Tooltip title={t('dashboard:gettingStarted.hideForNow')}>
                         <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDismiss(); }}>
                             <Close fontSize="small" />
                         </IconButton>
@@ -471,7 +454,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                 },
                             }}
                         >
-                            Lancer le tutoriel interactif
+                            {t('dashboard:gettingStarted.startTutorial')}
                         </Button>
                         <Button
                             variant="outlined"
@@ -479,7 +462,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                             onClick={handleRefresh}
                             size="small"
                         >
-                            Actualiser
+                            {t('dashboard:gettingStarted.refresh')}
                         </Button>
                     </Box>
 
@@ -487,7 +470,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
 
                     {/* Liste des actions */}
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
-                        Actions recommandées pour démarrer :
+                        {t('dashboard:gettingStarted.recommendedActions')}
                     </Typography>
 
                     <Grid container spacing={2}>
@@ -496,7 +479,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                             const isCompleted = actionStatus?.completed || false;
                             const isBlocked = actionStatus?.blocked || false;
                             const blockedBy = actionStatus?.blocked_by || [];
-                            const statusMessage = actionStatus?.message || action.description;
+                            const statusMessage = actionStatus?.message || t(`dashboard:gettingStarted.actions.${action.id}.description`);
 
                             return (
                                 <Grid item xs={12} sm={6} md={4} key={action.id}>
@@ -546,18 +529,18 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                                             flex: 1,
                                                         }}
                                                     >
-                                                        {action.title}
+                                                        {t(`dashboard:gettingStarted.actions.${action.id}.title`)}
                                                     </Typography>
                                                     {isCompleted && (
                                                         <Chip
-                                                            label="Complété"
+                                                            label={t('dashboard:gettingStarted.completed')}
                                                             size="small"
                                                             color="success"
                                                             sx={{ height: 20, fontSize: '0.65rem' }}
                                                         />
                                                     )}
                                                     {action.optional && !isCompleted && (
-                                                        <Chip label="Optionnel" size="small" sx={{ height: 20, fontSize: '0.65rem' }} />
+                                                        <Chip label={t('dashboard:gettingStarted.optional')} size="small" sx={{ height: 20, fontSize: '0.65rem' }} />
                                                     )}
                                                 </Box>
                                                 <Typography
@@ -579,7 +562,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                                         sx={{ mt: 1, p: 0, minWidth: 'auto' }}
                                                         onClick={(e) => { e.stopPropagation(); handleActionClick(action); }}
                                                     >
-                                                        Commencer
+                                                        {t('dashboard:gettingStarted.start')}
                                                     </Button>
                                                 )}
                                                 {isBlocked && (
@@ -587,8 +570,8 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                                         <Warning sx={{ fontSize: 16, color: 'warning.main' }} />
                                                         <Typography variant="caption" color="warning.main">
                                                             {blockedBy.length > 0
-                                                                ? `Complétez d'abord: ${blockedBy.map(id => actions.find(a => a.id === id)?.title || id).join(', ')}`
-                                                                : 'Complétez d\'abord les étapes précédentes'}
+                                                                ? t('dashboard:gettingStarted.blockedBy', { actions: blockedBy.map(id => t(`dashboard:gettingStarted.actions.${id}.title`)).join(', ') })
+                                                                : t('dashboard:gettingStarted.blockedByPrevious')}
                                                         </Typography>
                                                     </Box>
                                                 )}
@@ -607,7 +590,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                                 size="small"
                                 onClick={() => navigate('/settings')}
                             >
-                                Voir toutes les actions ({actions.length})
+                                {t('dashboard:gettingStarted.viewAllActions', { count: actions.length })}
                             </Button>
                         </Box>
                     )}

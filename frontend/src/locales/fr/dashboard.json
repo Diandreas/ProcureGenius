@@ -205,5 +205,71 @@
         "expandWidget": "Agrandir ce widget",
         "exportData": "Exporter les données",
         "changePeriod": "Changer la période"
+    },
+    "gettingStarted": {
+        "title": "Premiers pas avec ProcureGenius",
+        "congratulations": "Bravo ! Vous avez terminé la configuration",
+        "ready": "Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !",
+        "reviewTutorial": "Revoir le tutoriel",
+        "dismiss": "Masquer ce message",
+        "actionsCompleted": "{{completed}} / {{total}} actions complétées",
+        "start": "Commencer",
+        "blockedBy": "Complétez d'abord: {{actions}}",
+        "blockedByPrevious": "Complétez d'abord les étapes précédentes",
+        "showMore": "Afficher plus d'actions",
+        "showLess": "Afficher moins d'actions",
+        "completed": "Complété",
+        "optional": "Optionnel",
+        "startTutorial": "Lancer le tutoriel interactif",
+        "refresh": "Actualiser",
+        "recommendedActions": "Actions recommandées pour démarrer :",
+        "viewAllActions": "Voir toutes les actions ({{count}})",
+        "hideForNow": "Masquer pour l'instant",
+        "actions": {
+            "add_first_supplier": {
+                "title": "Ajouter votre premier fournisseur",
+                "description": "Créez une fiche fournisseur pour commencer à passer des commandes"
+            },
+            "import_suppliers": {
+                "title": "Importer des fournisseurs",
+                "description": "Importez vos fournisseurs depuis un fichier Excel"
+            },
+            "add_first_client": {
+                "title": "Ajouter votre premier client",
+                "description": "Enregistrez vos clients pour faciliter la facturation"
+            },
+            "create_first_po": {
+                "title": "Créer un bon de commande",
+                "description": "Passez votre première commande auprès d'un fournisseur"
+            },
+            "create_first_invoice": {
+                "title": "Créer votre première facture",
+                "description": "Facturez vos clients en quelques clics"
+            },
+            "add_first_product": {
+                "title": "Ajouter un produit",
+                "description": "Créez votre catalogue de produits ou services"
+            },
+            "configure_company": {
+                "title": "Configurer votre entreprise",
+                "description": "Ajoutez les informations et le logo de votre entreprise"
+            },
+            "configure_email": {
+                "title": "Configurer l'email",
+                "description": "Paramétrez le SMTP pour envoyer les factures automatiquement"
+            },
+            "complete_profile": {
+                "title": "Compléter votre profil",
+                "description": "Ajoutez les informations et le logo de votre entreprise"
+            },
+            "create_first_rfq": {
+                "title": "Créer un événement d'approvisionnement",
+                "description": "Lancez votre première demande de devis"
+            },
+            "create_first_contract": {
+                "title": "Créer un contrat",
+                "description": "Gérez votre premier contrat fournisseur"
+            }
+        }
     }
 }

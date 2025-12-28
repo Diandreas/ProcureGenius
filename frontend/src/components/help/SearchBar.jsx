@@ -23,7 +23,7 @@ import {
   TrendingUp as TrendingIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { searchDocumentation, documentationCategories } from '../../data/documentation';
+import { searchDocumentation, documentationCategories } from '../../data/documentationLoader';
 import { useTranslation } from 'react-i18next';
 
 const SearchBar = ({ autoFocus = false, onResultClick }) => {
@@ -126,7 +126,7 @@ const SearchBar = ({ autoFocus = false, onResultClick }) => {
   };
 
   const getCategoryInfo = (categoryId) => {
-    return documentationCategories.find((cat) => cat.id === categoryId);
+    return documentationCategories().find((cat) => cat.id === categoryId);
   };
 
   const groupResultsByCategory = () => {

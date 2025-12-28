@@ -93,59 +93,109 @@ sudo systemctl enable redis-server
 sudo systemctl start redis-server
 log_success "Redis configuré"
 
-# Étape 5: Configuration de l'environnement virtuel Python
-log_info "🐍 Configuration de l'environnement Python..."
-python3 -m venv ~/procuregenius_env
-source ~/procuregenius_env/bin/activate
+# Étape 3: Installation Node.js si nécessaire
+log_info "📦 Installation de Node.js..."
+if ! command -v node &> /dev/null; then
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    log_success "Node.js installé"
+else
+    log_info "✅ Node.js déjà installé: $(node --version)"
+fi
 
-# Cloner ou mettre à jour le projet (adapter selon votre repo)
-if [ ! -d "~/procuregenius" ]; then
+# Étape 4: Configuration de l'environnement virtuel Python
+log_info "🐍 Configuration de l'environnement Python..."
+if [ ! -d "/home/$(whoami)/procuregenius_env" ]; then
+    python3 -m venv /home/$(whoami)/procuregenius_env
+fi
+
+source /home/$(whoami)/procuregenius_env/bin/activate
+
+# Étape 5: Cloner ou mettre à jour le projet
+if [ ! -d "/home/$(whoami)/procuregenius" ]; then
     log_info "📥 Clonage du projet..."
-    git clone https://votre-repo.git ~/procuregenius
+    git clone https://github.com/votre-compte/procuregenius.git /home/$(whoami)/procuregenius
 else
     log_info "📦 Mise à jour du projet..."
-    cd ~/procuregenius
+    cd /home/$(whoami)/procuregenius
     git pull origin main
 fi
 
-cd ~/procuregenius
+cd /home/$(whoami)/procuregenius
 
 # Installation des dépendances Python
 log_info "📦 Installation des dépendances Python..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Étape 6: Configuration Django
+# Étape 6: Configuration de l'application
+log_info "⚙️ Configuration de l'application..."
+
+# Copier le fichier d'exemple si nécessaire
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+fi
+
+# Générer une clé secrète Django si elle n'existe pas
+if ! grep -q "SECRET_KEY=" .env; then
+    SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
+    echo "SECRET_KEY=$SECRET_KEY" >> .env
+fi
+
+# Configurer les variables d'environnement
+sed -i "s|DB_NAME=.*|DB_NAME=procuregenius_db|" .env 2>/dev/null || echo "DB_NAME=procuregenius_db" >> .env
+sed -i "s|DB_USER=.*|DB_USER=procuregenius|" .env 2>/dev/null || echo "DB_USER=procuregenius" >> .env
+sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=procuregenius2025|" .env 2>/dev/null || echo "DB_PASSWORD=procuregenius2025" >> .env
+sed -i "s|DB_HOST=.*|DB_HOST=localhost|" .env 2>/dev/null || echo "DB_HOST=localhost" >> .env
+sed -i "s|DB_PORT=.*|DB_PORT=5432|" .env 2>/dev/null || echo "DB_PORT=5432" >> .env
+sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env 2>/dev/null || echo "REDIS_URL=redis://localhost:6379" >> .env
+sed -i "s|DEBUG=.*|DEBUG=False|" .env 2>/dev/null || echo "DEBUG=False" >> .env
+
+# Étape 7: Configuration du frontend
+log_info "🌐 Configuration du frontend..."
+
+# Aller dans le répertoire frontend
+cd frontend
+
+# Installer les dépendances frontend
+log_info "📦 Installation des dépendances frontend..."
+npm install
+
+# Construire le frontend
+log_info "🔨 Construction du frontend..."
+npm run build
+
+# Vérifier que le build a réussi
+if [ -d "build" ]; then
+    log_success "Frontend construit avec succès"
+else
+    log_error "Échec de la construction du frontend"
+    exit 1
+fi
+
+# Retourner au répertoire principal
+cd ..
+
+# Étape 8: Configuration Django
 log_info "⚙️ Configuration de Django..."
-cp .env.example .env 2>/dev/null || echo "# Créer votre fichier .env"
-
-# Générer une clé secrète Django
-SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
-echo "SECRET_KEY=$SECRET_KEY" >> .env
-echo "DEBUG=False" >> .env
-echo "DB_NAME=procuregenius_db" >> .env
-echo "DB_USER=procuregenius" >> .env
-echo "DB_PASSWORD=change_this_password" >> .env
-echo "DB_HOST=localhost" >> .env
-echo "DB_PORT=5432" >> .env
-echo "REDIS_URL=redis://localhost:6379" >> .env
-echo "ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com" >> .env
-
-log_warning "⚠️  Pensez à modifier le mot de passe PostgreSQL dans .env"
 
 # Appliquer les migrations
 log_info "🗄️ Application des migrations..."
-python manage.py migrate
+python manage.py migrate --noinput
 
 # Collecter les fichiers statiques
 log_info "📁 Collecte des fichiers statiques..."
 python manage.py collectstatic --noinput
 
+# Compiler les messages de traduction
+log_info "🌍 Compilation des traductions..."
+python manage.py compilemessages
+
 # Créer un superutilisateur (optionnel)
 log_info "👤 Création d'un superutilisateur..."
-echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@procuregenius.com', 'admin123') if not User.objects.filter(username='admin').exists() else None" | python manage.py shell
+echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@procuregenius.com', 'Admin123!') if not User.objects.filter(username='admin').exists() else None" | python manage.py shell
 
-# Étape 7: Configuration de Gunicorn
+# Étape 9: Configuration de Gunicorn
 log_info "🦄 Configuration de Gunicorn..."
 sudo mkdir -p /etc/gunicorn
 sudo tee /etc/gunicorn/procuregenius.conf.py > /dev/null <<EOF
@@ -171,7 +221,7 @@ tmp_upload_dir = None
 loglevel = "info"
 accesslog = "/var/log/gunicorn/procuregenius_access.log"
 errorlog = "/var/log/gunicorn/procuregenius_error.log"
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+access_log_format = '%(h)s %(l)s %(u)s %(t)s "%%(r)s" %%(s)s %%(b)s "%%(f)s" "%%(a)s" %%(D)s'
 
 # Application Django
 pythonpath = "/home/$(whoami)/procuregenius"
@@ -189,7 +239,7 @@ EOF
 sudo mkdir -p /var/log/gunicorn
 sudo chown $(whoami):$(whoami) /var/log/gunicorn
 
-# Étape 8: Configuration de Supervisor
+# Étape 10: Configuration de Supervisor
 log_info "👔 Configuration de Supervisor..."
 sudo tee /etc/supervisor/conf.d/procuregenius.conf > /dev/null <<EOF
 [program:procuregenius]
@@ -223,11 +273,15 @@ stdout_logfile=/var/log/supervisor/celery_beat.log
 environment=PATH="/home/$(whoami)/procuregenius_env/bin"
 EOF
 
-# Étape 9: Configuration de Nginx
+# Étape 11: Configuration de Nginx pour le frontend et backend
 log_info "🌐 Configuration de Nginx..."
+
+# Sauvegarder l'ancienne configuration
+sudo cp /etc/nginx/sites-available/procuregenius /etc/nginx/sites-available/procuregenius.backup 2>/dev/null || true
+
 sudo tee /etc/nginx/sites-available/procuregenius > /dev/null <<EOF
-# Configuration Nginx pour ProcureGenius
-upstream procuregenius_app {
+# Configuration Nginx pour ProcureGenius (Frontend + Backend)
+upstream procuregenius_backend {
     server 127.0.0.1:8000;
 }
 
@@ -246,7 +300,53 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
 
-    # Fichiers statiques
+    # Servir le frontend React depuis le build
+    location / {
+        alias /home/$(whoami)/procuregenius/frontend/build;
+        index index.html;
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # API Django
+    location /api/ {
+        proxy_pass http://procuregenius_backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+
+        # Timeouts appropriés pour Django
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+
+        # CORS headers
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, X-CSRFToken, X-Requested-With" always;
+
+        # OPTIONS requests
+        if (\$request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "*";
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, X-CSRFToken, X-Requested-With";
+            add_header Content-Length 0;
+            return 204;
+        }
+    }
+
+    # Django Admin
+    location /admin/ {
+        proxy_pass http://procuregenius_backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # Fichiers statiques Django
     location /static/ {
         alias /home/$(whoami)/procuregenius/staticfiles/;
         expires 1y;
@@ -260,24 +360,9 @@ server {
         add_header Cache-Control "public";
     }
 
-    # Application Django
-    location / {
-        proxy_pass http://procuregenius_app;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header Host \$http_host;
-        proxy_redirect off;
-        proxy_buffering off;
-
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
     # WebSocket pour Django Channels (si utilisé)
     location /ws/ {
-        proxy_pass http://procuregenius_app;
+        proxy_pass http://procuregenius_backend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -298,7 +383,7 @@ sudo rm -f /etc/nginx/sites-enabled/default
 # Tester la configuration Nginx
 sudo nginx -t
 
-# Étape 10: Démarrage des services
+# Étape 12: Démarrage des services
 log_info "🚀 Démarrage des services..."
 
 # Supervisor
@@ -312,18 +397,21 @@ sudo supervisorctl restart all
 sudo systemctl enable nginx
 sudo systemctl restart nginx
 
-# Étape 11: Configuration du firewall
+# Étape 13: Configuration du firewall
 log_info "🔥 Configuration du firewall..."
 sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
 sudo ufw allow 22/tcp
 echo "y" | sudo ufw enable
 
-# Étape 12: Tests finaux
+# Étape 14: Tests finaux
 log_info "🧪 Tests finaux..."
 
+# Attendre un peu pour que les services démarrent
+sleep 10
+
 # Tester la connectivité
-sleep 5
-if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|302"; then
+if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|302\|404"; then
     log_success "✅ Application accessible sur http://localhost"
 else
     log_error "❌ Application non accessible"
@@ -342,15 +430,15 @@ else
     log_warning "⚠️ Celery ne fonctionne pas (optionnel)"
 fi
 
-# Étape 13: Instructions finales
-log_success "🎉 Déploiement terminé !"
+# Étape 15: Instructions finales
+log_success "🎉 Déploiement complet terminé !"
 echo ""
 echo "========================================"
 echo "📋 INSTRUCTIONS FINALES:"
 echo "========================================"
 echo ""
 echo "1. 🌐 Votre application est accessible sur: http://localhost"
-echo "2. 🔐 Connectez-vous avec: admin / admin123"
+echo "2. 🔐 Connectez-vous avec: admin / Admin123!"
 echo "3. ⚙️ Modifiez le mot de passe admin dans l'interface"
 echo "4. 🔑 Configurez vos variables d'environnement dans ~/procuregenius/.env"
 echo "5. 📧 Configurez l'email dans les paramètres Django"
@@ -362,13 +450,24 @@ echo "========================================"
 echo ""
 echo "# Redémarrer l'application:"
 echo "sudo supervisorctl restart procuregenius"
+echo "sudo supervisorctl restart celery_worker"
+echo "sudo supervisorctl restart celery_beat"
 echo ""
 echo "# Voir les logs:"
 echo "sudo supervisorctl tail procuregenius"
+echo "sudo supervisorctl tail celery_worker"
+echo "sudo supervisorctl tail celery_beat"
 echo "tail -f /var/log/nginx/procuregenius_access.log"
 echo ""
 echo "# Mettre à jour l'application:"
 echo "cd ~/procuregenius && git pull && python manage.py migrate && python manage.py collectstatic --noinput"
+echo "cd ~/procuregenius/frontend && npm install && npm run build"
 echo "sudo supervisorctl restart procuregenius"
+echo ""
+echo "# Vérifier l'état des services:"
+echo "sudo supervisorctl status"
+echo "sudo systemctl status nginx"
+echo "sudo systemctl status postgresql"
+echo "sudo systemctl status redis-server"
 echo ""
 echo "========================================"

@@ -33,7 +33,7 @@ import {
   documentationCategories,
   getRelatedArticles,
   getArticlesByCategory,
-} from '../../data/documentation';
+} from '../../data/documentationLoader';
 import { useTranslation } from 'react-i18next';
 
 const ArticleView = ({ articleId }) => {
@@ -44,7 +44,7 @@ const ArticleView = ({ articleId }) => {
   const [bookmarked, setBookmarked] = useState(false);
 
   // Trouver l'article
-  const article = documentationArticles.find((a) => a.id === articleId);
+  const article = documentationArticles().find((a) => a.id === articleId);
 
   if (!article) {
     return (
@@ -64,7 +64,7 @@ const ArticleView = ({ articleId }) => {
   }
 
   // Informations de catégorie
-  const category = documentationCategories.find((c) => c.id === article.category);
+  const category = documentationCategories().find((c) => c.id === article.category);
 
   // Articles liés
   const relatedArticles = getRelatedArticles(articleId);

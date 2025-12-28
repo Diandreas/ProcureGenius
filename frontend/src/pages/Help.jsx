@@ -32,7 +32,7 @@ import ArticleView from '../components/help/ArticleView';
 import {
   documentationCategories,
   getArticlesByCategory,
-} from '../data/documentation';
+} from '../data/documentationLoader';
 import { useTranslation } from 'react-i18next';
 
 // Map des icônes
@@ -101,8 +101,8 @@ const Help = () => {
 
   // Filtrer les articles par catégorie sélectionnée
   const displayedCategories = selectedCategory
-    ? documentationCategories.filter((cat) => cat.id === selectedCategory)
-    : documentationCategories;
+    ? documentationCategories().filter((cat) => cat.id === selectedCategory)
+    : documentationCategories();
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
