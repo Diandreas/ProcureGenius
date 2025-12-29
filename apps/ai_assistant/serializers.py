@@ -61,6 +61,7 @@ class ChatRequestSerializer(serializers.Serializer):
     """Serializer pour les requêtes de chat"""
     message = serializers.CharField(required=True, max_length=2000)
     conversation_id = serializers.UUIDField(required=False, allow_null=True)
+    confirmation_data = serializers.JSONField(required=False, allow_null=True)
 
 
 class DocumentAnalysisSerializer(serializers.Serializer):

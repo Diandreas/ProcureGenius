@@ -27,7 +27,8 @@
       "Bash(do echo \"Checking $file...\")",
       "Bash(node -e:*)",
       "Bash(done)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -6,10 +6,9 @@ import pytest
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from apps.ai_assistant.services import MistralService
-from apps.organizations.models import Organization
+from apps.accounts.models import Organization, Client
 from apps.suppliers.models import Supplier
-from apps.clients.models import Client
-from apps.products.models import Product
+from apps.invoicing.models import Product
 from decimal import Decimal
 
 User = get_user_model()

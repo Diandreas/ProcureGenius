@@ -285,14 +285,14 @@ def generate_stock_alerts_chart(organization):
     # Récupérer produits avec stock faible
     low_stock = Product.objects.filter(
         organization=organization,
-        stock__lte=F('low_stock_threshold')
-    ).values('name', 'stock', 'low_stock_threshold').order_by('stock')[:10]
+        stock_quantity__lte=F('low_stock_threshold')
+    ).values('name', 'stock_quantity', 'low_stock_threshold').order_by('stock_quantity')[:10]
 
     chart_data = []
     for product in low_stock:
         chart_data.append({
             'name': product['name'][:20],  # Tronquer si trop long
-            'stock': product['stock'],
+            'stock': product['stock_quantity'],
             'threshold': product['low_stock_threshold']
         })
 

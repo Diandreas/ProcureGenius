@@ -127,14 +127,14 @@ class SuggestionMatcher:
 
             # Vérifier min_invoices
             if 'min_invoices' in conditions:
-                from apps.invoices.models import Invoice
+                from apps.invoicing.models import Invoice
                 count = Invoice.objects.filter(organization=organization).count()
                 if count < conditions['min_invoices']:
                     return False
 
             # Vérifier min_clients
             if 'min_clients' in conditions:
-                from apps.clients.models import Client
+                from apps.accounts.models import Client
                 count = Client.objects.filter(organization=organization).count()
                 if count < conditions['min_clients']:
                     return False
@@ -148,7 +148,7 @@ class SuggestionMatcher:
 
             # Vérifier min_products
             if 'min_products' in conditions:
-                from apps.products.models import Product
+                from apps.invoicing.models import Product
                 count = Product.objects.filter(organization=organization).count()
                 if count < conditions['min_products']:
                     return False

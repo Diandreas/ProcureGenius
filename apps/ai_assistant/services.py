@@ -1483,9 +1483,36 @@ Réponds toujours en français de manière naturelle et engageante."""
             executor = ActionExecutor()
             action_results = []
 
+            # Liste des actions valides pour validation
+            valid_actions = executor.actions.keys()
+
             for tool_call in tool_calls:
-                function_name = tool_call.get('function')
+                function_name = tool_call.get('function', '')
                 arguments = tool_call.get('arguments', {})
+
+                # SANITIZE: Nettoyer le nom de fonction si malformé
+                # Parfois Mistral retourne "recherche en cours...asterxmlsearch_product" au lieu de "search_product"
+                original_function_name = function_name
+                
+                # Extraire le vrai nom d'action des actions valides
+                for valid_action in valid_actions:
+                    if valid_action in function_name:
+                        function_name = valid_action
+                        logger.warning(f"Sanitized malformed function name: '{original_function_name}' -> '{function_name}'")
+                        break
+                
+                # Si toujours pas valide après nettoyage, logger l'erreur
+                if function_name not in valid_actions:
+                    logger.error(f"Invalid function name even after sanitization: '{original_function_name}'")
+                    action_results.append({
+                        'tool_call_id': tool_call.get('id'),
+                        'function': original_function_name,
+                        'result': {
+                            'success': False,
+                            'error': f"Action '{original_function_name}' non reconnue. Actions disponibles: {', '.join(sorted(valid_actions))}"
+                        }
+                    })
+                    continue
 
                 logger.info(f"Executing tool: {function_name} with args: {arguments}")
 
@@ -1834,6 +1861,23 @@ class ActionExecutor:
             phone = params.get('phone', '')
             organization = user_context.get('organization')
 
+            # NOUVEAU: Vérifier si on doit demander confirmation avant création
+            if not params.get('force_create', False):
+                return {
+                    'success': False,
+                    'needs_confirmation': True,
+                    'entity_type': 'supplier',
+                    'draft_data': {
+                        'name': name,
+                        'email': email,
+                        'phone': phone,
+                        'address': params.get('address', ''),
+                        'city': params.get('city', ''),
+                        'contact_person': params.get('contact_person', '')
+                    },
+                    'message': 'Veuillez vérifier et confirmer les détails du fournisseur avant sa création'
+                }
+
             # Vérifier les doublons potentiels
             @sync_to_async
             def check_similar():
@@ -1993,7 +2037,85 @@ class ActionExecutor:
             @sync_to_async
             def create_invoice_sync():
                 organization = user_context.get('organization')
-                
+
+                # NOUVEAU: Vérifier si on doit demander confirmation avant création
+                if not params.get('force_create', False):
+                    # Parser la date d'échéance pour le draft
+                    due_date = params.get('due_date')
+                    if due_date:
+                        if isinstance(due_date, str):
+                            try:
+                                for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                                    try:
+                                        due_date = datetime.strptime(due_date, fmt).date()
+                                        break
+                                    except ValueError:
+                                        continue
+                            except:
+                                due_date = (datetime.now() + timedelta(days=30)).date()
+                    else:
+                        due_date = (datetime.now() + timedelta(days=30)).date()
+
+                    # NOUVEAU: Vérifier si le client existe
+                    client_name = params.get('client_name', '')
+                    client_email = params.get('client_email', '')
+                    client_phone = params.get('client_phone', '')
+                    
+                    nested_previews = []
+                    
+                    # Rechercher si le client existe
+                    if client_name:
+                        similar_clients = entity_matcher.find_similar_clients(
+                            first_name=client_name,
+                            last_name='',
+                            email=client_email if client_email else None,
+                            company=client_name,
+                            min_score=0.85  # Seuil élevé pour vraie correspondance
+                        )
+                        
+                        if organization:
+                            similar_clients = [(c, s, r) for c, s, r in similar_clients if c.organization == organization]
+                        
+                        # Si aucun client similaire trouvé, ajouter preview du nouveau client
+                        if not similar_clients:
+                            nested_previews.append({
+                                'entity_type': 'client',
+                                'draft_data': {
+                                    'name': client_name,
+                                    'email': client_email,
+                                    'phone': client_phone,
+                                    'contact_person': params.get('contact_person', ''),
+                                    'address': params.get('client_address', ''),
+                                    'payment_terms': params.get('payment_terms', 'Net 30')
+                                },
+                                'status': 'will_be_created',
+                                'message': f'Nouveau client "{client_name}" sera créé automatiquement'
+                            })
+
+                    # Retourner draft pour confirmation avec previews imbriquées
+                    response = {
+                        'success': False,
+                        'needs_confirmation': True,
+                        'entity_type': 'invoice',
+                        'draft_data': {
+                            'client_name': client_name,
+                            'client_email': client_email,
+                            'client_phone': client_phone,
+                            'title': params.get('title', f"Facture pour {client_name}"),
+                            'description': params.get('description', ''),
+                            'total_amount': float(params.get('amount', 0)),
+                            'due_date': due_date.strftime('%Y-%m-%d') if due_date else '',
+                            'items': params.get('items', [])
+                        },
+                        'message': 'Veuillez vérifier et confirmer les détails de la facture avant sa création'
+                    }
+                    
+                    # Ajouter les previews imbriquées si présentes
+                    if nested_previews:
+                        response['nested_previews'] = nested_previews
+                    
+                    return response
+
                 # 1. TROUVER OU CRÉER CLIENT avec entity matching
                 client_name = params.get('client_name')
                 client_email = params.get('client_email', '')
@@ -2872,21 +2994,71 @@ class ActionExecutor:
         try:
             data = await analyze_sync()
 
-            # Formater le message
+            # Générer un message détaillé et personnalisé basé sur les insights
+            insights = data['insights']
             insights_count = data['count']
-            focus_text = {
-                'all': 'toutes les zones',
-                'profitability': 'la rentabilité',
-                'clients': 'les clients',
-                'products': 'les produits',
-                'stock': 'le stock',
-                'automation': 'l\'automatisation'
-            }.get(data['focus_area'], 'l\'entreprise')
 
-            message = f"Analyse intelligente de {focus_text} terminée. {insights_count} insight(s) prioritaire(s) détecté(s)."
+            if insights_count == 0:
+                message = "✅ **Excellente nouvelle !** Votre entreprise fonctionne de manière optimale.\n\n"
+                message += "📊 **Points positifs identifiés** :\n"
+                message += "- ✓ Aucun retard de paiement majeur détecté\n"
+                message += "- ✓ Stock géré efficacement\n"
+                message += "- ✓ Relations clients actives et saines\n\n"
+                message += "💡 **Pour aller plus loin** :\n"
+                message += "- Demandez-moi une analyse détaillée de vos produits les plus performants\n"
+                message += "- Consultez l'évolution de votre chiffre d'affaires sur les 6 derniers mois\n"
+                message += "- Explorez les opportunités de fidélisation client"
+            else:
+                # Grouper insights par type et priorité
+                alerts = [i for i in insights if i.get('type') == 'alert']
+                suggestions = [i for i in insights if i.get('type') == 'suggestion']
 
-            if data.get('charts'):
-                message += f" {len(data['charts'])} graphe(s) généré(s)."
+                # Calculer les bénéfices potentiels
+                high_priority_count = len([i for i in insights if i.get('priority') == 'high'])
+
+                message = f"📊 **Analyse complète de votre activité**\n\n"
+                message += f"J'ai analysé vos données et identifié **{insights_count} opportunité(s)** concrètes :\n"
+                message += f"- {len(alerts)} point(s) nécessitant une attention immédiate\n"
+                message += f"- {len(suggestions)} suggestion(s) pour optimiser votre performance\n\n"
+
+                # Détailler les alertes avec conseils professionnels
+                if alerts:
+                    message += f"🚨 **Points d'attention** :\n\n"
+                    for idx, alert in enumerate(alerts[:3], 1):
+                        title = alert.get('title', '').replace('🚨', '').replace('⚠️', '').replace('📉', '').replace('📝', '').strip()
+                        detail_msg = alert.get('message', '').strip()
+                        conseil = alert.get('conseil', '').strip()
+                        impact = alert.get('impact', '').strip()
+
+                        message += f"**{idx}. {title}**\n"
+                        if detail_msg:
+                            message += f"{detail_msg}\n"
+                        if conseil:
+                            message += f"\n💡 *Conseil* : {conseil}\n"
+                        if impact:
+                            message += f"📊 *Impact* : {impact}\n"
+                        message += "\n"
+
+                # Détailler les suggestions avec conseils
+                if suggestions:
+                    message += f"💡 **Opportunités identifiées** :\n\n"
+                    for idx, suggestion in enumerate(suggestions[:3], 1):
+                        title = suggestion.get('title', '').replace('⭐', '').replace('🎯', '').replace('💡', '').replace('🔄', '').replace('📦', '').strip()
+                        detail_msg = suggestion.get('message', '').strip()
+                        conseil = suggestion.get('conseil', '').strip()
+
+                        message += f"**{idx}. {title}**\n"
+                        if detail_msg:
+                            message += f"{detail_msg}\n"
+                        if conseil:
+                            message += f"\n💡 *Conseil* : {conseil}\n"
+                        message += "\n"
+
+                # Graphiques disponibles
+                if data.get('charts'):
+                    message += f"📊 **Visualisations** : {len(data['charts'])} graphique(s) disponible(s) ci-dessous.\n\n"
+
+                message += "💬 N'hésitez pas à me poser des questions sur ces analyses ou à me demander d'agir sur un point précis."
 
             return {
                 'success': True,
@@ -3021,14 +3193,14 @@ class ActionExecutor:
             if 'products' in categories:
                 product_stats = {
                     'total': products_qs.count(),
-                    'in_stock': products_qs.filter(stock__gt=0).count(),
-                    'low_stock': products_qs.filter(stock__lte=F('low_stock_threshold')).count()
+                    'in_stock': products_qs.filter(stock_quantity__gt=0).count(),
+                    'low_stock': products_qs.filter(stock_quantity__lte=F('low_stock_threshold')).count()
                 }
                 stats['products'] = product_stats
 
             if 'stock' in categories:
                 stock_value = products_qs.aggregate(
-                    total_value=Sum(F('stock') * F('cost'))
+                    total_value=Sum(F('stock_quantity') * F('cost_price'))
                 )
                 stats['stock'] = {
                     'total_value': float(stock_value['total_value'] or 0),
@@ -3370,6 +3542,24 @@ class ActionExecutor:
                 return {
                     'success': False,
                     'error': 'Le nom du client est obligatoire'
+                }
+
+            # NOUVEAU: Vérifier si on doit demander confirmation avant création
+            if not params.get('force_create', False):
+                return {
+                    'success': False,
+                    'needs_confirmation': True,
+                    'entity_type': 'client',
+                    'draft_data': {
+                        'name': name,
+                        'email': email,
+                        'phone': phone,
+                        'address': params.get('address', ''),
+                        'contact_person': params.get('contact_person', ''),
+                        'payment_terms': params.get('payment_terms', 'Net 30'),
+                        'tax_id': params.get('tax_id', '')
+                    },
+                    'message': 'Veuillez vérifier et confirmer les détails du client avant sa création'
                 }
 
             # Vérifier les doublons potentiels
@@ -4494,34 +4684,102 @@ ProcureGenius
             reference = params.get('reference', '')
             barcode = params.get('barcode', '')
             product_type = params.get('product_type', 'service')
-
-            # Entity matching pour éviter les doublons
-            similar_products = entity_matcher.find_similar_products(
-                name=name,
-                reference=reference if reference else None,
-                barcode=barcode if barcode else None
-            )
-
-            if similar_products:
-                existing_product = similar_products[0][0]
-                similarity_score = similar_products[0][1]
-                match_reason = similar_products[0][2]
-
+            
+            # NOUVEAU: Vérifier si on doit demander confirmation avant création
+            if not params.get('force_create', False):
+                # Retourner draft pour confirmation avec preview card
                 return {
-                    'created': False,
-                    'matched': True,
-                    'product': existing_product,
-                    'similarity_score': similarity_score,
-                    'match_reason': match_reason
+                    'success': False,
+                    'needs_confirmation': True,
+                    'entity_type': 'product',
+                    'draft_data': {
+                        'name': name,
+                        'reference': reference if reference else '',
+                        'price': float(params.get('price', 0)),
+                        'description': params.get('description', ''),
+                        'product_type': product_type,
+                        'stock_quantity': params.get('stock_quantity', 0) if product_type == 'physical' else 0,
+                        'cost_price': float(params.get('cost_price', 0))
+                    },
+                    'message': 'Veuillez vérifier et confirmer les détails du produit avant sa création'
                 }
+            
+            # Permettre à l'utilisateur de forcer la création s'il confirme que c'est un nouveau produit
+            user_confirmed_new = params.get('user_confirmed_new', False)
+            organization = user_context.get('organization')
+
+            # Entity matching pour éviter les doublons (sauf si l'utilisateur a confirmé)
+            if not user_confirmed_new:
+                similar_products = entity_matcher.find_similar_products(
+                    name=name,
+                    reference=reference if reference else None,
+                    barcode=barcode if barcode else None
+                )
+
+                # IMPORTANT: Filtrer par organisation de l'utilisateur
+                if organization:
+                    similar_products = [(p, s, r) for p, s, r in similar_products if p.organization == organization]
+                else:
+                    # Si pas d'organisation, ne pas chercher de doublons (ou filtrer les None)
+                    similar_products = []
+
+                if similar_products:
+                    existing_product = similar_products[0][0]
+                    similarity_score = similar_products[0][1]
+                    match_reason = similar_products[0][2]
+                    
+                    # AMÉLIORATION: Analyser la différence pour éviter les faux positifs
+                    # Si le score est entre 50% et 85%, c'est probablement différent
+                    # Par exemple: "Voiture" (score ~72%) vs "Voiture 4x4" devrait être autorisé
+                    if similarity_score >= 0.85:  # Seuil strict pour vrais doublons
+                        return {
+                            'created': False,
+                            'matched': True,
+                            'product': existing_product,
+                            'similarity_score': similarity_score,
+                            'match_reason': match_reason
+                        }
+                    else:
+                        # Similarité modérée - probable variation légitime
+                        # Analyser les mots différents
+                        import re
+                        name_words = set(re.findall(r'\w+', name.lower()))
+                        existing_words = set(re.findall(r'\w+', existing_product.name.lower()))
+                        
+                        # Si des mots significatifs sont différents, c'est probablement un nouveau produit
+                        unique_words = name_words - existing_words
+                        if len(unique_words) > 0:
+                            # Mots uniques trouvés, c'est probablement un produit différent
+                            # Continuer avec la création
+                            pass
+                        else:
+                            # Même mots, juste ordre différent - probable doublon
+                            return {
+                                'created': False,
+                                'matched': True,
+                                'product': existing_product,
+                                'similarity_score': similarity_score,
+                                'match_reason': match_reason
+                            }
 
             # Créer le nouveau produit
+            # FIX: Convertir barcode vide en None pour éviter erreur d'unicité
+            if not barcode or barcode.strip() == '':
+                # Générer un code-barres unique basé sur timestamp
+                import time
+                barcode = None  # Permettre NULL dans la DB
+            
+            # FIX: Convertir reference vide en None
+            if not reference or reference.strip() == '':
+                reference = None
+            
             product_data = {
                 'name': name,
                 'reference': reference,
                 'barcode': barcode,
                 'product_type': product_type,
                 'description': params.get('description', ''),
+                'organization': organization,  # IMPORTANT: Associer à l'organisation de l'utilisateur
             }
 
             # Champs spécifiques selon le type
@@ -4551,6 +4809,10 @@ ProcureGenius
 
         try:
             result = await create_product_sync()
+
+            # Si c'est une demande de confirmation, retourner directement
+            if result.get('needs_confirmation'):
+                return result
 
             if result['matched']:
                 # Produit existant trouvé
@@ -4603,17 +4865,19 @@ ProcureGenius
         @sync_to_async
         def search_products_sync():
             query = params.get('query', '')
-            min_score = params.get('min_score', 0.60)
+            # Toujours retourner les 3 plus similaires, peu importe le score
+            min_score = params.get('min_score', 0.10)  # Très bas pour toujours trouver
             product_type = params.get('product_type')
-            limit = params.get('limit', 10)
+            limit = params.get('limit', 3)  # Par défaut 3 résultats
             organization = user_context.get('organization')
 
             if not query:
                 return []
 
-            # Utiliser le fuzzy matching
+            # Utiliser le fuzzy matching avec recherche multi-champs
             matches = entity_matcher.find_similar_products(
                 name=query,
+                description=query,  # Chercher aussi dans la description
                 min_score=min_score
             )
 
@@ -4627,6 +4891,9 @@ ProcureGenius
             if product_type in ['service', 'physical']:
                 matches = [(p, score, details) for p, score, details in matches if p.product_type == product_type]
 
+            # Trier par score décroissant et prendre les 3 premiers
+            matches.sort(key=lambda x: x[1], reverse=True)
+
             return [
                 {
                     'id': str(product.id),
@@ -4638,7 +4905,7 @@ ProcureGenius
                     'price': float(product.price) if product.price else 0,
                     'stock_quantity': product.stock_quantity if product.product_type == 'physical' else None,
                     'low_stock_threshold': product.low_stock_threshold if product.product_type == 'physical' else None,
-                    'score': score * 100,
+                    'score': round(score * 100, 1),  # Score en % avec 1 décimale
                     'match_reason': entity_matcher.format_match_reason(details)
                 }
                 for product, score, details in matches[:limit]

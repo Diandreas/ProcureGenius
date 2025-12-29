@@ -4,9 +4,8 @@ Tests pour le système de matching d'entités (fuzzy matching)
 import pytest
 from django.test import TestCase
 from apps.ai_assistant.entity_matcher import EnhancedEntityMatcher
-from apps.organizations.models import Organization
+from apps.accounts.models import Organization, Client
 from apps.suppliers.models import Supplier
-from apps.clients.models import Client
 
 
 @pytest.mark.django_db

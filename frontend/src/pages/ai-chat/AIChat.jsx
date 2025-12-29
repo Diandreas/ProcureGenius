@@ -66,9 +66,10 @@ import MessageContent from '../../components/ai-chat/MessageContent';
 import Mascot from '../../components/Mascot';
 import VoiceRecorder from '../../components/VoiceRecorder';
 import ProactiveConversationCard from '../../components/AI/ProactiveConversationCard';
+import ArtifactsPanel from '../../components/ai-chat/ArtifactsPanel';
 
 // Composant Header compact avec navigation IA
-const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick }) => {
+const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick, onArtifactsClick, artifactsCount }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -146,6 +147,29 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
         >
           <Badge badgeContent={stats?.suggestions_count || 0} color="secondary" max={9}>
             <Lightbulb sx={{ fontSize: 18 }} />
+          </Badge>
+        </IconButton>
+      </Tooltip>
+
+      {/* Artifacts / Visualisations */}
+      <Tooltip title="Visualisations & Graphiques">
+        <IconButton
+          size="small"
+          onClick={onArtifactsClick}
+          sx={{
+            p: 0.75,
+            bgcolor: artifactsCount > 0
+              ? alpha('#3b82f6', 0.15)
+              : 'transparent',
+            '&:hover': {
+              bgcolor: artifactsCount > 0
+                ? alpha('#3b82f6', 0.25)
+                : alpha(theme.palette.action.hover, 0.05),
+            }
+          }}
+        >
+          <Badge badgeContent={artifactsCount || 0} color="primary" max={9}>
+            <BarChart sx={{ fontSize: 18 }} />
           </Badge>
         </IconButton>
       </Tooltip>
@@ -527,6 +551,10 @@ function AIChat() {
   const [widgetVisible, setWidgetVisible] = useState(true);
   const [proactiveConversations, setProactiveConversations] = useState([]);
 
+  // States pour le panel Artifacts (style Claude.ai)
+  const [artifactsPanelOpen, setArtifactsPanelOpen] = useState(false);
+  const [artifacts, setArtifacts] = useState([]);
+
   // Charger les conversations proactives
   const fetchProactiveConversations = async () => {
     try {
@@ -632,7 +660,7 @@ function AIChat() {
   const handleMarkNotificationRead = async (notificationId) => {
     try {
       await aiChatAPI.markNotificationRead(notificationId);
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       );
       fetchUsageStats(); // Refresh counts
@@ -675,13 +703,13 @@ function AIChat() {
     setDrawerOpen(false);
   };
 
-  const handleSendMessage = async (messageText = null) => {
+  const handleSendMessage = async (messageText = null, confirmationData = null) => {
     const textToSend = messageText || message;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() && !confirmationData) return;
 
     const userMessage = {
       role: 'user',
-      content: textToSend,
+      content: confirmationData ? `Confirmer la création` : textToSend,
       created_at: new Date().toISOString(),
     };
 
@@ -692,14 +720,22 @@ function AIChat() {
 
     try {
       const requestData = {
-        message: userMessage.content,
+        message: confirmationData ? textToSend : userMessage.content,
       };
-      
+
+      // Ajouter les données de confirmation si présentes
+      if (confirmationData) {
+        requestData.confirmation_data = {
+          ...confirmationData,
+          force_create: true,
+        };
+      }
+
       // Only include conversation_id if it exists and is valid
       if (currentConversation?.id) {
         requestData.conversation_id = currentConversation.id;
       }
-      
+
       const response = await aiChatAPI.sendMessage(requestData);
 
       setTypingIndicator(false);
@@ -739,24 +775,24 @@ function AIChat() {
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
       console.error('Full error:', error);
-      
+
       // Show more detailed error message if available
       const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || t('aiChat:messages.sendMessageError');
-      
+
       // For 500 errors, provide more helpful message
       if (error.response?.status === 500) {
         console.error('Server Error 500 - Check Django server logs for details');
         enqueueSnackbar(
           'Erreur serveur (500). Vérifiez les logs Django pour plus de détails.',
-          { 
+          {
             variant: 'error',
-            autoHideDuration: 5000 
+            autoHideDuration: 5000
           }
         );
       } else {
         enqueueSnackbar(errorMessage, { variant: 'error' });
       }
-      
+
       setMessages(prev => prev.slice(0, -1));
       window.dispatchEvent(new CustomEvent('mascot-error'));
     } finally {
@@ -816,11 +852,11 @@ function AIChat() {
       if (action) {
         // Ouvrir la page de détail avec le modal d'envoi d'email
         if (action.type === 'send_invoice_email') {
-          navigate(`/invoices/${action.invoice_id}`, { 
+          navigate(`/invoices/${action.invoice_id}`, {
             state: { openEmailDialog: true, recipientEmail: action.client_name ? undefined : '' }
           });
         } else if (action.type === 'send_purchase_order_email') {
-          navigate(`/purchase-orders/${action.po_id}`, { 
+          navigate(`/purchase-orders/${action.po_id}`, {
             state: { openEmailDialog: true }
           });
         }
@@ -842,15 +878,49 @@ function AIChat() {
     return cat?.color || '#64748b';
   };
 
+  // Fonctions pour gérer les Artifacts (visualisations)
+  const addArtifact = useCallback((artifact) => {
+    // Vérifier si un artifact avec le même titre existe déjà
+    setArtifacts(prev => {
+      const exists = prev.some(a =>
+        !a.archived &&
+        a.chart_title === artifact.chart_title &&
+        a.chart_type === artifact.chart_type
+      );
+      if (exists) {
+        return prev; // Ne pas ajouter de doublon
+      }
+      return [{
+        ...artifact,
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        archived: false,
+      }, ...prev];
+    });
+  }, []);
+
+  const removeArtifact = useCallback((id) => {
+    setArtifacts(prev => prev.map(a =>
+      a.id === id ? { ...a, archived: true } : a
+    ));
+  }, []);
+
+  const refreshArtifact = useCallback((id) => {
+    enqueueSnackbar('Rafraîchissement en cours...', { variant: 'info' });
+  }, [enqueueSnackbar]);
+
+  // NOTE: Les visualisations ne sont plus capturées automatiquement
+  // L'utilisateur peut les épingler manuellement via le bouton dans MessageContent
+
   return (
     <Box
-        sx={{
-          display: 'flex',
-          height: 'calc(100vh - 80px)',
-          bgcolor: 'background.default',
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
+      sx={{
+        display: 'flex',
+        height: 'calc(100vh - 80px)',
+        bgcolor: 'background.default',
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
     >
       {/* Drawer conversations */}
       <Drawer
@@ -911,8 +981,8 @@ function AIChat() {
                       fontWeight: currentConversation?.id === conv.id ? 600 : 400,
                       color: 'text.primary',
                     }}
-                    secondaryTypographyProps={{ 
-                      variant: 'caption', 
+                    secondaryTypographyProps={{
+                      variant: 'caption',
                       fontSize: '0.688rem',
                       color: 'text.secondary',
                     }}
@@ -933,18 +1003,42 @@ function AIChat() {
       />
 
       {/* Notifications History */}
-            <NotificationsCenter
-              open={notificationsPanelOpen}
-              onClose={() => setNotificationsPanelOpen(false)}
-              notifications={notifications}
-              onMarkRead={handleMarkNotificationRead}
-            />
+      <NotificationsCenter
+        open={notificationsPanelOpen}
+        onClose={() => setNotificationsPanelOpen(false)}
+        notifications={notifications}
+        onMarkRead={handleMarkNotificationRead}
+      />
+
+      {/* Artifacts Panel - Style Claude.ai */}
+      <ArtifactsPanel
+        open={artifactsPanelOpen}
+        onClose={() => setArtifactsPanelOpen(false)}
+        artifacts={artifacts}
+        onRemoveArtifact={removeArtifact}
+        onRefreshArtifact={refreshArtifact}
+      />
 
       {/* Zone principale */}
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+      }}>
+        {/* Header avec actions rapides */}
+        <StatsHeader
+          stats={usageStats}
+          onNotificationsClick={() => setNotificationsPanelOpen(true)}
+          onSuggestionsClick={() => setSuggestionsPanelOpen(true)}
+          onImportReviewsClick={() => navigate('/ai-chat/import-reviews')}
+          onArtifactsClick={() => setArtifactsPanelOpen(true)}
+          artifactsCount={artifacts.filter(a => !a.archived).length}
+        />
+
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-          {/* Les boutons sont maintenant dans la top nav bar */}
+          {/* Zone de conversation */}
 
           {messages.length === 0 ? (
             <Fade in timeout={400}>
@@ -1198,7 +1292,7 @@ function AIChat() {
                     sx={{
                       p: 1.5,
                       maxWidth: '75%',
-                      bgcolor: msg.role === 'user' 
+                      bgcolor: msg.role === 'user'
                         ? (isDark ? alpha(theme.palette.common.white, 0.05) : '#f1f5f9')
                         : 'background.paper',
                       border: msg.role === 'user' ? 'none' : `1px solid ${theme.palette.divider}`,
@@ -1209,9 +1303,18 @@ function AIChat() {
                       content={msg.content}
                       actionResults={msg.action_results}
                       actionButtons={msg.action_buttons}
-                      onButtonClick={(buttonIndex) => {
-                        const responseMap = { 0: '1', 1: '2', 2: '3' };
-                        handleSendMessage(responseMap[buttonIndex] || '1');
+                      onButtonClick={(buttonIndex, confirmationData) => {
+                        if (confirmationData) {
+                          // Pour les confirmations avec données - envoyer les données de confirmation
+                          handleSendMessage('Confirmer la création', confirmationData);
+                        } else {
+                          const responseMap = { 0: '1', 1: '2', 2: '3' };
+                          handleSendMessage(responseMap[buttonIndex] || '1');
+                        }
+                      }}
+                      onAddArtifact={(artifact) => {
+                        addArtifact(artifact);
+                        enqueueSnackbar('Graphique ajouté aux visualisations', { variant: 'success' });
                       }}
                     />
                     <Typography
@@ -1281,12 +1384,12 @@ function AIChat() {
             borderTop: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <Box 
-            sx={{ 
-              maxWidth: 800, 
-              mx: 'auto', 
-              display: 'flex', 
-              gap: 1, 
+          <Box
+            sx={{
+              maxWidth: 800,
+              mx: 'auto',
+              display: 'flex',
+              gap: 1,
               alignItems: 'flex-end',
               bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : '#f8fafc',
               borderRadius: 2,
@@ -1319,7 +1422,7 @@ function AIChat() {
                 },
               }}
             />
-            
+
             <Tooltip title="Importer un document">
               <IconButton
                 onClick={() => navigate('/ai-chat/document-import')}

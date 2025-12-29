@@ -414,11 +414,13 @@ class EnhancedEntityMatcher:
         name: str,
         reference: str = None,
         barcode: str = None,
+        description: str = None,
         exclude_id: str = None,
         min_score: float = None
     ) -> List[Tuple[Any, float, Dict]]:
         """
         Recherche avancée de produits similaires avec matching multi-algorithme.
+        Cherche dans: nom, référence, code-barre ET description.
         """
         from apps.invoicing.models import Product
 
@@ -481,6 +483,45 @@ class EnhancedEntityMatcher:
                     match_details['scores']['name'] = name_scores['weighted_average']
                     match_details['algorithms']['name'] = name_scores
                     best_score = max(best_score, name_scores['weighted_average'])
+
+            # 3. MATCHING SUR LA DESCRIPTION (si fournie)
+            # Chercher les mots-clés de la requête dans la description du produit
+            if description and product.description:
+                desc_scores = self.calculate_multi_algorithm_score(
+                    description, product.description, use_phonetic=False
+                )
+                
+                if desc_scores['weighted_average'] >= min_score * 0.8:  # Seuil plus bas pour descriptions
+                    match_details['matched_on'].append('description_fuzzy')
+                    match_details['scores']['description'] = desc_scores['weighted_average']
+                    match_details['algorithms']['description'] = desc_scores
+                    # Description match is weighted lower (0.7x) than name match
+                    best_score = max(best_score, desc_scores['weighted_average'] * 0.7)
+            
+            # 4. RECHERCHE PAR MOTS-CLÉS dans description si pas de description fournie
+            # mais un nom est donné (pour "ordinateur", "lenovo", etc.)
+            elif name and product.description:
+                # Extraire les mots importants du nom de recherche
+                search_words = set(self.normalize_text(name).split())
+                product_desc_normalized = self.normalize_text(product.description)
+                product_name_normalized = self.normalize_text(product.name)
+                
+                # Vérifier si les mots de recherche sont dans la description OU le nom
+                words_found_in_desc = sum(1 for word in search_words if word in product_desc_normalized)
+                words_found_in_name = sum(1 for word in search_words if word in product_name_normalized)
+                
+                if words_found_in_desc > 0 or words_found_in_name > 0:
+                    # Score basé sur le ratio de mots trouvés
+                    keyword_score = max(
+                        words_found_in_desc / len(search_words),
+                        words_found_in_name / len(search_words)
+                    )
+                    
+                    if keyword_score >= 0.3:  # Au moins 30% des mots trouvés
+                        match_details['matched_on'].append('keyword_match')
+                        match_details['scores']['keyword'] = keyword_score
+                        # Keyword match weighted at 0.6x
+                        best_score = max(best_score, keyword_score * 0.6)
 
             # Inclure seulement si le score atteint le seuil
             if best_score >= min_score:
@@ -571,5 +612,5 @@ class EnhancedEntityMatcher:
         return message
 
 
-# Instance globale avec seuil à 70% (plus strict pour éviter les faux positifs)
-entity_matcher = EnhancedEntityMatcher(threshold=0.70)
+# Instance globale avec seuil à 50% (plus permissif pour améliorer la recherche)
+entity_matcher = EnhancedEntityMatcher(threshold=0.50)

@@ -241,8 +241,17 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         if last_assistant_msg and last_assistant_msg.metadata:
             pending_confirmation = last_assistant_msg.metadata.get('pending_confirmation')
 
+        # IMPORTANT: Extract all user data synchronously to avoid 
+        # "You cannot call this from an async context" errors
+        # Access user attributes NOW while in sync context
+        user_id = self.user.id
+        organization = self.user.organization if hasattr(self.user, 'organization') else None
+        is_superuser = self.user.is_superuser
+        
         user_context = {
-            'user_id': self.user.id,
+            'user_id': user_id,
+            'organization': organization,
+            'is_superuser': is_superuser,
             'conversation_history': [
                 {'role': msg.role, 'content': msg.content}
                 for msg in conversation.messages.order_by('created_at')[-10:]

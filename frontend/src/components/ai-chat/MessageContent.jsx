@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Box, Typography, Chip, Paper, Button, Divider, IconButton } from '@mui/material';
+import { Box, Typography, Chip, Paper, Button, Divider, IconButton, Fade, Grow, Tooltip, alpha, useMediaQuery, useTheme } from '@mui/material';
 import {
   CheckCircle,
   Error,
@@ -10,16 +10,201 @@ import {
   GetApp,
   OpenInNew,
   List as ListIcon,
+  Fullscreen,
+  PushPin,
+  BarChart,
+  ShowChart,
+  PieChart,
+  Timeline,
+  Close,
+  ZoomIn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ListModal from './ListModal';
 import ChartRenderer from './ChartRenderer';
+import ConfirmationModal from './ConfirmationModal';
+import PreviewCard from './PreviewCard';
 
-const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }) => {
+const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [buttonsDisabled, setButtonsDisabled] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalData, setModalData] = React.useState({ items: [], entityType: '', title: '' });
+  const [fullscreenChart, setFullscreenChart] = React.useState(null);
+
+  // État pour la confirmation d'entité
+  const [confirmationModalOpen, setConfirmationModalOpen] = React.useState(false);
+  const [previewData, setPreviewData] = React.useState(null);
+  const [showPreview, setShowPreview] = React.useState(false);
+
+  // Helper pour l'icône du type de graphique
+  const getChartIcon = (chartType) => {
+    switch (chartType) {
+      case 'line': return <ShowChart sx={{ fontSize: 16 }} />;
+      case 'bar': return <BarChart sx={{ fontSize: 16 }} />;
+      case 'pie': return <PieChart sx={{ fontSize: 16 }} />;
+      case 'area': return <Timeline sx={{ fontSize: 16 }} />;
+      default: return <BarChart sx={{ fontSize: 16 }} />;
+    }
+  };
+
+  // Composant carte de visualisation style Claude.ai
+  const VisualizationCard = ({ chartType, chartTitle, chartData, chartConfig }) => {
+    const handleCardClick = () => {
+      if (isMobile) {
+        setFullscreenChart({ chartType, chartTitle, chartData, chartConfig });
+      }
+    };
+
+    return (
+      <Grow in timeout={500}>
+        <Paper
+          elevation={0}
+          onClick={handleCardClick}
+          sx={{
+            mt: 2,
+            mb: 1,
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: isMobile ? 'pointer' : 'default',
+            '&:hover': {
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)',
+            },
+          }}
+        >
+          {/* Header du graphique */}
+          <Box
+            sx={{
+              px: { xs: 1.5, sm: 2 },
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: alpha('#3b82f6', 0.04),
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: 1 }}>
+              <Box
+                sx={{
+                  width: { xs: 28, sm: 32 },
+                  height: { xs: 28, sm: 32 },
+                  borderRadius: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha('#3b82f6', 0.1),
+                  color: '#3b82f6',
+                  flexShrink: 0,
+                }}
+              >
+                {getChartIcon(chartType)}
+              </Box>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {chartTitle || 'Visualisation'}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  {isMobile ? 'Appuyer pour agrandir' : `Graphique ${chartType === 'line' ? 'linéaire' : chartType === 'bar' ? 'en barres' : chartType === 'pie' ? 'circulaire' : 'en aires'}`}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+              {/* Bouton zoom sur mobile */}
+              {isMobile && (
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFullscreenChart({ chartType, chartTitle, chartData, chartConfig });
+                  }}
+                  sx={{ color: '#3b82f6' }}
+                >
+                  <ZoomIn sx={{ fontSize: 20 }} />
+                </IconButton>
+              )}
+              {/* Boutons desktop */}
+              {!isMobile && (
+                <>
+                  <Tooltip title="Plein écran">
+                    <IconButton
+                      size="small"
+                      onClick={() => setFullscreenChart({ chartType, chartTitle, chartData, chartConfig })}
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      <Fullscreen sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                  {onAddArtifact && (
+                    <Tooltip title="Épingler aux visualisations">
+                      <IconButton
+                        size="small"
+                        onClick={() => onAddArtifact({ chartType, chartTitle, chartData, chartConfig })}
+                        sx={{ color: '#3b82f6' }}
+                      >
+                        <PushPin sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+            </Box>
+          </Box>
+
+          {/* Contenu du graphique */}
+          <Box sx={{ p: { xs: 1, sm: 2 }, height: { xs: 200, sm: 280 }, position: 'relative' }}>
+            <ChartRenderer
+              chartType={chartType}
+              chartTitle=""
+              chartData={chartData}
+              chartConfig={chartConfig}
+            />
+            {/* Overlay mobile pour indiquer qu'on peut cliquer */}
+            {isMobile && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  bgcolor: 'rgba(59, 130, 246, 0.9)',
+                  color: 'white',
+                  borderRadius: 1,
+                  px: 1,
+                  py: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  fontSize: '0.65rem',
+                  fontWeight: 500,
+                }}
+              >
+                <ZoomIn sx={{ fontSize: 14 }} />
+                Agrandir
+              </Box>
+            )}
+          </Box>
+        </Paper>
+      </Grow>
+    );
+  };
 
   // Composants markdown compacts
   const components = {
@@ -143,6 +328,49 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
     setModalOpen(true);
   };
 
+  // Handlers pour la confirmation d'entité
+  const handleShowPreview = (data) => {
+    setPreviewData(data);
+    setShowPreview(true);
+  };
+
+  const handleQuickConfirm = () => {
+    if (previewData && onButtonClick) {
+      // Inclure entity_type dans les données de confirmation
+      const confirmData = {
+        ...previewData.draft_data,
+        entity_type: previewData.entity_type,
+      };
+      onButtonClick(0, confirmData);
+    }
+    setShowPreview(false);
+    setPreviewData(null);
+  };
+
+  const handleModify = () => {
+    setShowPreview(false);
+    setConfirmationModalOpen(true);
+  };
+
+  const handleModalConfirm = (finalData) => {
+    if (onButtonClick && previewData) {
+      // Inclure entity_type dans les données de confirmation
+      const confirmData = {
+        ...finalData,
+        entity_type: previewData.entity_type,
+      };
+      onButtonClick(0, confirmData);
+    }
+    setConfirmationModalOpen(false);
+    setPreviewData(null);
+  };
+
+  const handleCancel = () => {
+    setShowPreview(false);
+    setConfirmationModalOpen(false);
+    setPreviewData(null);
+  };
+
   // Rendu compact des résultats d'actions
   const renderActionResults = () => {
     if (!actionResults || actionResults.length === 0) return null;
@@ -204,264 +432,299 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
           };
 
           return (
-            <Paper
-              key={index}
-              elevation={0}
-              sx={{
-                p: 1.5,
-                mb: 1,
-                backgroundColor: isSuccess ? '#f0fdf4' : '#fef2f2',
-                border: 1,
-                borderColor: isSuccess ? '#86efac' : '#fca5a5',
-                borderRadius: 1.5,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                {isSuccess ? (
-                  <CheckCircle sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
-                ) : (
-                  <Error sx={{ fontSize: 18, color: 'error.main', mt: 0.25 }} />
-                )}
+            <Fade in timeout={400} key={index}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 1.5,
+                  backgroundColor: isSuccess ? '#f0fdf4' : '#fef2f2',
+                  border: 1,
+                  borderColor: isSuccess ? '#86efac' : '#fca5a5',
+                  borderRadius: 2,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    boxShadow: isSuccess
+                      ? '0 4px 12px rgba(16, 185, 129, 0.15)'
+                      : '0 4px 12px rgba(239, 68, 68, 0.15)',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  {isSuccess ? (
+                    <CheckCircle sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
+                  ) : (
+                    <Error sx={{ fontSize: 18, color: 'error.main', mt: 0.25 }} />
+                  )}
 
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 600,
-                      color: isSuccess ? 'success.dark' : 'error.dark',
-                      display: 'block',
-                      mb: 0.5,
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    {isSuccess ? 'Succès' : 'Échec'}
-                  </Typography>
-
-                  <Typography variant="body2" sx={{ mb: 1, fontSize: '0.875rem' }}>
-                    {result.result?.message || result.result?.error || 'Action exécutée'}
-                  </Typography>
-
-                  {/* Si c'est une liste, afficher un bouton pour ouvrir le modal */}
-                  {isSuccess && items.length > 0 && (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      startIcon={<ListIcon sx={{ fontSize: 14 }} />}
-                      onClick={() => openModal(items, entityType, getModalTitle())}
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="caption"
                       sx={{
-                        textTransform: 'none',
+                        fontWeight: 600,
+                        color: isSuccess ? 'success.dark' : 'error.dark',
+                        display: 'block',
+                        mb: 0.5,
                         fontSize: '0.8rem',
-                        py: 0.75,
-                        px: 2,
-                        mb: 1,
                       }}
                     >
-                      Voir les {items.length} résultat{items.length !== 1 ? 's' : ''}
-                    </Button>
-                  )}
+                      {isSuccess ? 'Succès' : 'Échec'}
+                    </Typography>
 
-                  {/* Graphique simple (visualization) */}
-                  {isSuccess && data.entity_type === 'visualization' && (
-                    <ChartRenderer
-                      chartType={data.chart_type}
-                      chartTitle={data.chart_title}
-                      chartData={data.chart_data}
-                      chartConfig={data.chart_config}
-                    />
-                  )}
+                    <Typography variant="body2" sx={{ mb: 1, fontSize: '0.875rem' }}>
+                      {result.result?.message || result.result?.error || 'Action exécutée'}
+                    </Typography>
 
-                  {/* Analyse business (insights + charts) */}
-                  {isSuccess && data.entity_type === 'business_analysis' && (
-                    <>
-                      {/* Afficher les insights */}
-                      {data.insights && data.insights.length > 0 && (
-                        <Box sx={{ mb: 2 }}>
-                          {data.insights.map((insight, idx) => (
-                            <Box
-                              key={idx}
-                              sx={{
-                                borderLeft: 3,
-                                borderColor:
-                                  insight.type === 'alert'
-                                    ? '#ef4444'
-                                    : insight.type === 'warning'
-                                    ? '#f59e0b'
-                                    : '#10b981',
-                                pl: 1.5,
-                                py: 1,
-                                mb: 1.5,
-                                backgroundColor:
-                                  insight.type === 'alert'
-                                    ? '#fef2f2'
-                                    : insight.type === 'warning'
-                                    ? '#fffbeb'
-                                    : '#f0fdf4',
-                                borderRadius: 1,
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 600, fontSize: '0.85rem', mb: 0.5 }}
-                              >
-                                {insight.title}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ fontSize: '0.8rem', color: 'text.secondary' }}
-                              >
-                                {insight.message}
-                              </Typography>
-                              {insight.priority && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    fontSize: '0.7rem',
-                                    color: 'text.disabled',
-                                    display: 'block',
-                                    mt: 0.5,
-                                  }}
-                                >
-                                  Priorité: {insight.priority}/10
-                                </Typography>
-                              )}
-                            </Box>
-                          ))}
-                        </Box>
-                      )}
 
-                      {/* Afficher les graphiques */}
-                      {data.charts && data.charts.length > 0 && (
-                        <Box>
-                          {data.charts.map((chart, idx) => (
-                            <ChartRenderer
-                              key={idx}
-                              chartType={chart.chart_type}
-                              chartTitle={chart.chart_title}
-                              chartData={chart.chart_data}
-                              chartConfig={chart.chart_config}
-                            />
-                          ))}
-                        </Box>
-                      )}
-                    </>
-                  )}
-
-                  {/* Statistiques (stats + charts optionnels) */}
-                  {isSuccess && data.entity_type === 'statistics' && (
-                    <>
-                      {/* Afficher les stats textuelles */}
-                      {data.stats && (
-                        <Box
-                          sx={{
-                            backgroundColor: '#f9fafb',
-                            p: 1.5,
-                            borderRadius: 1,
-                            mb: 2,
-                          }}
-                        >
-                          <Typography
-                            variant="body2"
-                            component="pre"
+                    {/* Confirmation d'entité - Preview Card + Modal */}
+                    {result.result?.needs_confirmation && (
+                      <Box sx={{ mt: 2 }}>
+                        {!showPreview && !confirmationModalOpen && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleShowPreview(result.result)}
                             sx={{
-                              fontFamily: 'monospace',
-                              fontSize: '0.75rem',
-                              whiteSpace: 'pre-wrap',
-                              margin: 0,
+                              textTransform: 'none',
+                              fontSize: '0.875rem',
                             }}
                           >
-                            {JSON.stringify(data.stats, null, 2)}
-                          </Typography>
-                        </Box>
-                      )}
+                            📝 Vérifier et Confirmer
+                          </Button>
+                        )}
 
-                      {/* Afficher les graphiques */}
-                      {data.charts && data.charts.length > 0 && (
-                        <Box>
-                          {data.charts.map((chart, idx) => (
-                            <ChartRenderer
-                              key={idx}
-                              chartType={chart.chart_type}
-                              chartTitle={chart.chart_title}
-                              chartData={chart.chart_data}
-                              chartConfig={chart.chart_config}
+                        {showPreview && previewData && (
+                          <>
+                            {/* Nested Preview Cards - e.g., new client when creating invoice */}
+                            {result.result.nested_previews && result.result.nested_previews.length > 0 && (
+                              <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
+                                  📦 Entités associées qui seront créées:
+                                </Typography>
+                                {result.result.nested_previews.map((nestedPreview, idx) => (
+                                  <PreviewCard
+                                    key={idx}
+                                    entityType={nestedPreview.entity_type}
+                                    draftData={nestedPreview.draft_data}
+                                    isNested={true}
+                                    nestedMessage={nestedPreview.message}
+                                    // Nested previews are read-only, no actions
+                                    onQuickConfirm={null}
+                                    onModify={null}
+                                    onCancel={null}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+
+                            {/* Main Entity Preview Card */}
+                            <PreviewCard
+                              entityType={result.result.entity_type}
+                              draftData={result.result.draft_data}
+                              onQuickConfirm={handleQuickConfirm}
+                              onModify={handleModify}
+                              onCancel={handleCancel}
                             />
-                          ))}
-                        </Box>
-                      )}
-                    </>
-                  )}
+                          </>
+                        )}
 
-                  {/* Détails compacts pour un seul élément */}
-                  {isSuccess && data.name && !items.length && (
-                    <Box
-                      sx={{
-                        backgroundColor: 'white',
-                        p: 1,
-                        borderRadius: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                        {data.name}
-                      </Typography>
-                      {data.email && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                          {data.email}
-                        </Typography>
-                      )}
-                      {data.invoice_number && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                          N° {data.invoice_number}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
+                        {confirmationModalOpen && previewData && (
+                          <ConfirmationModal
+                            open={confirmationModalOpen}
+                            onClose={handleCancel}
+                            entityType={result.result.entity_type}
+                            draftData={result.result.draft_data}
+                            onConfirm={handleModalConfirm}
+                          />
+                        )}
+                      </Box>
+                    )}
 
-                  {/* Boutons compacts (seulement pour un seul élément, pas pour les listes) */}
-                  {isSuccess && entityUrl && !items.length && (
-                    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                    {/* Si c'est une liste, afficher un bouton pour ouvrir le modal */}
+                    {isSuccess && items.length > 0 && (
                       <Button
                         size="small"
                         variant="contained"
-                        startIcon={<Visibility sx={{ fontSize: 14 }} />}
-                        onClick={() => navigate(entityUrl)}
+                        startIcon={<ListIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => openModal(items, entityType, getModalTitle())}
                         sx={{
                           textTransform: 'none',
-                          fontSize: '0.75rem',
-                          py: 0.5,
-                          px: 1.5,
-                          minHeight: 28,
+                          fontSize: '0.8rem',
+                          py: 0.75,
+                          px: 2,
+                          mb: 1,
                         }}
                       >
-                        Voir
+                        Voir les {items.length} résultat{items.length !== 1 ? 's' : ''}
                       </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Edit sx={{ fontSize: 14 }} />}
-                        onClick={() => navigate(`${entityUrl}/edit`)}
+                    )}
+
+                    {/* Graphique simple (visualization) - Style Claude.ai */}
+                    {isSuccess && data.entity_type === 'visualization' && (
+                      <VisualizationCard
+                        chartType={data.chart_type}
+                        chartTitle={data.chart_title}
+                        chartData={data.chart_data}
+                        chartConfig={data.chart_config}
+                      />
+                    )}
+
+                    {/* Analyse business (insights + charts) */}
+                    {isSuccess && data.entity_type === 'business_analysis' && (
+                      <>
+                        {/* Afficher les insights */}
+                        {data.insights && data.insights.length > 0 && (
+                          <Box sx={{ mb: 2 }}>
+                            {data.insights.map((insight, idx) => (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  borderLeft: 3,
+                                  borderColor:
+                                    insight.type === 'alert'
+                                      ? '#ef4444'
+                                      : insight.type === 'warning'
+                                        ? '#f59e0b'
+                                        : '#10b981',
+                                  pl: 1.5,
+                                  py: 1,
+                                  mb: 1.5,
+                                  backgroundColor:
+                                    insight.type === 'alert'
+                                      ? '#fef2f2'
+                                      : insight.type === 'warning'
+                                        ? '#fffbeb'
+                                        : '#f0fdf4',
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, fontSize: '0.85rem', mb: 0.5 }}
+                                >
+                                  {insight.title}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontSize: '0.8rem', color: 'text.secondary' }}
+                                >
+                                  {insight.message}
+                                </Typography>
+                                {insight.priority && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontSize: '0.7rem',
+                                      color: 'text.disabled',
+                                      display: 'block',
+                                      mt: 0.5,
+                                    }}
+                                  >
+                                    Priorité: {insight.priority}/10
+                                  </Typography>
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+
+                        {/* Afficher les graphiques - Style Claude.ai */}
+                        {data.charts && data.charts.length > 0 && (
+                          <Box>
+                            {data.charts.map((chart, idx) => (
+                              <VisualizationCard
+                                key={idx}
+                                chartType={chart.chart_type}
+                                chartTitle={chart.chart_title}
+                                chartData={chart.chart_data}
+                                chartConfig={chart.chart_config}
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      </>
+                    )}
+
+                    {/* Statistiques (stats + charts optionnels) */}
+                    {isSuccess && data.entity_type === 'statistics' && (
+                      <>
+                        {/* Afficher les stats textuelles */}
+                        {data.stats && (
+                          <Box
+                            sx={{
+                              backgroundColor: '#f9fafb',
+                              p: 1.5,
+                              borderRadius: 1,
+                              mb: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              component="pre"
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontSize: '0.75rem',
+                                whiteSpace: 'pre-wrap',
+                                margin: 0,
+                              }}
+                            >
+                              {JSON.stringify(data.stats, null, 2)}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {/* Afficher les graphiques - Style Claude.ai */}
+                        {data.charts && data.charts.length > 0 && (
+                          <Box>
+                            {data.charts.map((chart, idx) => (
+                              <VisualizationCard
+                                key={idx}
+                                chartType={chart.chart_type}
+                                chartTitle={chart.chart_title}
+                                chartData={chart.chart_data}
+                                chartConfig={chart.chart_config}
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      </>
+                    )}
+
+                    {/* Détails compacts pour un seul élément */}
+                    {isSuccess && data.name && !items.length && (
+                      <Box
                         sx={{
-                          textTransform: 'none',
-                          fontSize: '0.75rem',
-                          py: 0.5,
-                          px: 1.5,
-                          minHeight: 28,
+                          backgroundColor: 'white',
+                          p: 1,
+                          borderRadius: 1,
+                          mb: 1,
                         }}
                       >
-                        Modifier
-                      </Button>
-                      {(entityType === 'invoice' || entityType === 'purchase_order') && (
+                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                          {data.name}
+                        </Typography>
+                        {data.email && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
+                            {data.email}
+                          </Typography>
+                        )}
+                        {data.invoice_number && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
+                            N° {data.invoice_number}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Boutons compacts (seulement pour un seul élément, pas pour les listes) */}
+                    {isSuccess && entityUrl && !items.length && (
+                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                         <Button
                           size="small"
-                          variant="outlined"
-                          color="success"
-                          startIcon={<GetApp sx={{ fontSize: 14 }} />}
-                          onClick={() => {
-                            const pdfUrl = entityType === 'invoice'
-                              ? `/api/invoices/${data.id}/pdf/`
-                              : `/api/purchase-orders/${data.id}/pdf/`;
-                            window.open(pdfUrl, '_blank');
-                          }}
+                          variant="contained"
+                          startIcon={<Visibility sx={{ fontSize: 14 }} />}
+                          onClick={() => navigate(entityUrl)}
                           sx={{
                             textTransform: 'none',
                             fontSize: '0.75rem',
@@ -470,48 +733,86 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
                             minHeight: 28,
                           }}
                         >
-                          PDF
+                          Voir
                         </Button>
-                      )}
-                    </Box>
-                  )}
-
-                  {/* Actions suggérées compactes */}
-                  {isSuccess && result.result?.success_actions && result.result.success_actions.length > 0 && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
-                        Actions suggérées
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                        {result.result.success_actions.slice(0, 2).map((action, idx) => {
-                          if (action.type === 'redirect_option') {
-                            return (
-                              <Button
-                                key={idx}
-                                size="small"
-                                variant="text"
-                                endIcon={<OpenInNew sx={{ fontSize: 12 }} />}
-                                onClick={() => navigate(action.url)}
-                                sx={{
-                                  textTransform: 'none',
-                                  fontSize: '0.7rem',
-                                  py: 0.25,
-                                  px: 1,
-                                  minHeight: 24,
-                                }}
-                              >
-                                {action.label}
-                              </Button>
-                            );
-                          }
-                          return null;
-                        })}
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<Edit sx={{ fontSize: 14 }} />}
+                          onClick={() => navigate(`${entityUrl}/edit`)}
+                          sx={{
+                            textTransform: 'none',
+                            fontSize: '0.75rem',
+                            py: 0.5,
+                            px: 1.5,
+                            minHeight: 28,
+                          }}
+                        >
+                          Modifier
+                        </Button>
+                        {(entityType === 'invoice' || entityType === 'purchase_order') && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="success"
+                            startIcon={<GetApp sx={{ fontSize: 14 }} />}
+                            onClick={() => {
+                              const pdfUrl = entityType === 'invoice'
+                                ? `/api/invoices/${data.id}/pdf/`
+                                : `/api/purchase-orders/${data.id}/pdf/`;
+                              window.open(pdfUrl, '_blank');
+                            }}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              py: 0.5,
+                              px: 1.5,
+                              minHeight: 28,
+                            }}
+                          >
+                            PDF
+                          </Button>
+                        )}
                       </Box>
-                    </Box>
-                  )}
+                    )}
+
+                    {/* Actions suggérées compactes */}
+                    {isSuccess && result.result?.success_actions && result.result.success_actions.length > 0 && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
+                          Actions suggérées
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                          {result.result.success_actions.slice(0, 2).map((action, idx) => {
+                            if (action.type === 'redirect_option') {
+                              return (
+                                <Button
+                                  key={idx}
+                                  size="small"
+                                  variant="text"
+                                  endIcon={<OpenInNew sx={{ fontSize: 12 }} />}
+                                  onClick={() => navigate(action.url)}
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontSize: '0.7rem',
+                                    py: 0.25,
+                                    px: 1,
+                                    minHeight: 24,
+                                  }}
+                                >
+                                  {action.label}
+                                </Button>
+                              );
+                            }
+                            return null;
+                          })}
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            </Paper>
+              </Paper>
+            </Fade>
           );
         })}
       </Box>
@@ -575,6 +876,142 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick }
         items={modalData.items}
         entityType={modalData.entityType}
       />
+
+      {/* Modal Fullscreen pour les graphiques */}
+      {fullscreenChart && (
+        <Box
+          onClick={() => setFullscreenChart(null)}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            p: { xs: 1, sm: 3 },
+            cursor: 'pointer',
+          }}
+        >
+          {/* Header Fullscreen */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: { xs: 1, sm: 2 },
+              px: { xs: 1, sm: 0 },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, minWidth: 0, flex: 1 }}>
+              <Box
+                sx={{
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#60a5fa',
+                  flexShrink: 0,
+                }}
+              >
+                {getChartIcon(fullscreenChart.chartType)}
+              </Box>
+              <Typography
+                variant="h5"
+                sx={{
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: { xs: '1rem', sm: '1.5rem' },
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {fullscreenChart.chartTitle}
+              </Typography>
+            </Box>
+            {/* Bouton fermer - IconButton sur mobile, Button sur desktop */}
+            {isMobile ? (
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFullscreenChart(null);
+                }}
+                sx={{
+                  color: 'white',
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                }}
+              >
+                <Close />
+              </IconButton>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<Close />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFullscreenChart(null);
+                }}
+                sx={{
+                  color: 'white',
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  flexShrink: 0,
+                  '&:hover': {
+                    borderColor: 'white',
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                Fermer
+              </Button>
+            )}
+          </Box>
+
+          {/* Graphique Fullscreen */}
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+              flexGrow: 1,
+              bgcolor: 'white',
+              borderRadius: { xs: 2, sm: 3 },
+              p: { xs: 1.5, sm: 4 },
+              overflow: 'auto',
+              cursor: 'default',
+            }}
+          >
+            <Box sx={{ height: '100%', minHeight: { xs: 300, sm: 500 } }}>
+              <ChartRenderer
+                chartType={fullscreenChart.chartType}
+                chartTitle={fullscreenChart.chartTitle}
+                chartData={fullscreenChart.chartData}
+                chartConfig={fullscreenChart.chartConfig}
+              />
+            </Box>
+          </Box>
+
+          {/* Instructions sur mobile */}
+          {isMobile && (
+            <Typography
+              sx={{
+                textAlign: 'center',
+                color: 'rgba(255,255,255,0.6)',
+                mt: 1,
+                fontSize: '0.75rem',
+              }}
+            >
+              Appuyez n'importe où pour fermer
+            </Typography>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };

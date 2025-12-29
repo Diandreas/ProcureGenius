@@ -283,22 +283,22 @@ class ProactiveConversationService:
         last_month_end = this_month_start - timedelta(seconds=1)
 
         this_month_items = InvoiceItem.objects.filter(
-            invoice__organization=organization,
+            invoice__client__organization=organization,
             invoice__created_at__gte=this_month_start
         )
         last_month_items = InvoiceItem.objects.filter(
-            invoice__organization=organization,
+            invoice__client__organization=organization,
             invoice__created_at__gte=last_month_start,
             invoice__created_at__lte=last_month_end
         )
 
-        # Calculer les marges (simplifié)
-        this_month_margin = this_month_items.aggregate(
-            margin=Sum(F('unit_price') - F('cost_price'), output_field=models.DecimalField())
+        # Calculer les marges (simplifié) - utilise product__cost_price car InvoiceItem n'a pas cost_price
+        this_month_margin = this_month_items.filter(product__isnull=False).aggregate(
+            margin=Sum(F('unit_price') - F('product__cost_price'), output_field=models.DecimalField())
         )['margin'] or 0
-        
-        last_month_margin = last_month_items.aggregate(
-            margin=Sum(F('unit_price') - F('cost_price'), output_field=models.DecimalField())
+
+        last_month_margin = last_month_items.filter(product__isnull=False).aggregate(
+            margin=Sum(F('unit_price') - F('product__cost_price'), output_field=models.DecimalField())
         )['margin'] or 0
 
         if last_month_margin > 0 and this_month_margin > 0:

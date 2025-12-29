@@ -30,7 +30,8 @@ class ChatView(APIView):
         
         user_message = serializer.validated_data['message']
         conversation_id = serializer.validated_data.get('conversation_id')
-        
+        confirmation_data = serializer.validated_data.get('confirmation_data')
+
         try:
             # Récupérer ou créer la conversation
             if conversation_id:
@@ -51,7 +52,97 @@ class ChatView(APIView):
                 content=user_message
             )
 
-            # NOUVEAU: Vérifier si c'est une réponse à une confirmation en attente
+            # NOUVEAU: Si confirmation_data est fourni directement, exécuter l'action immédiatement
+            if confirmation_data and confirmation_data.get('force_create'):
+                logger.info(f"Direct confirmation received with data: {confirmation_data}")
+
+                from .services import ActionExecutor, AsyncSafeUserContext
+                executor = ActionExecutor()
+                user_context = AsyncSafeUserContext.from_user(request.user)
+
+                # Déterminer le type d'entité à créer
+                entity_type = confirmation_data.get('entity_type')
+                action_name = None
+
+                # Si entity_type est explicitement fourni
+                if entity_type:
+                    action_name = f'create_{entity_type}'
+                # Sinon, détecter automatiquement
+                elif confirmation_data.get('client_name') or confirmation_data.get('due_date') or confirmation_data.get('title'):
+                    # C'est probablement une facture
+                    entity_type = 'invoice'
+                    action_name = 'create_invoice'
+                elif confirmation_data.get('supplier_name') or confirmation_data.get('expected_delivery_date'):
+                    # C'est un bon de commande
+                    entity_type = 'purchase_order'
+                    action_name = 'create_purchase_order'
+                elif confirmation_data.get('contact_person') and confirmation_data.get('name'):
+                    # C'est un fournisseur (avec contact_person)
+                    entity_type = 'supplier'
+                    action_name = 'create_supplier'
+                elif confirmation_data.get('name') and confirmation_data.get('email'):
+                    # C'est un client
+                    entity_type = 'client'
+                    action_name = 'create_client'
+                elif confirmation_data.get('name') and confirmation_data.get('reference'):
+                    # C'est un produit
+                    entity_type = 'product'
+                    action_name = 'create_product'
+
+                logger.info(f"Detected entity_type: {entity_type}, action_name: {action_name}")
+
+                if not action_name:
+                    # Fallback: retourner une erreur si le type n'est pas détecté
+                    logger.warning(f"Could not detect entity type from confirmation_data: {confirmation_data}")
+                    ai_response = Message.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content="⚠️ Je n'ai pas pu déterminer le type d'élément à créer. Veuillez réessayer en précisant le type (facture, client, fournisseur, etc.).",
+                        metadata={}
+                    )
+                    return Response({
+                        'message': MessageSerializer(ai_response).data,
+                        'action_results': [],
+                        'conversation_id': str(conversation.id)
+                    })
+
+                if action_name:
+                    # Exécuter l'action avec les données confirmées
+                    action_result = async_to_sync(executor.execute)(
+                        action=action_name,
+                        params=confirmation_data,
+                        user=user_context
+                    )
+
+                    # Formater la réponse
+                    if action_result.get('success'):
+                        final_response = f"✓ {action_result.get('message', 'Création réussie !')}"
+                    else:
+                        final_response = f"✗ {action_result.get('error', 'Une erreur est survenue')}"
+
+                    # Créer le message de réponse
+                    ai_response = Message.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content=final_response,
+                        metadata={
+                            'action_results': [{
+                                'action': action_name,
+                                'result': action_result
+                            }]
+                        }
+                    )
+
+                    return Response({
+                        'message': MessageSerializer(ai_response).data,
+                        'action_results': [{
+                            'action': action_name,
+                            'result': action_result
+                        }],
+                        'conversation_id': str(conversation.id)
+                    })
+
+            # Vérifier si c'est une réponse à une confirmation en attente
             last_assistant_msg = Message.objects.filter(
                 conversation=conversation,
                 role='assistant'
