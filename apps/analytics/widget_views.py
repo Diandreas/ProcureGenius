@@ -113,6 +113,64 @@ class DashboardLayoutViewSet(viewsets.ModelViewSet):
             return DashboardLayoutCreateSerializer
         return DashboardLayoutSerializer
 
+    def create(self, request, *args, **kwargs):
+        """Create or update layout - handles duplicate name gracefully"""
+        from django.db import IntegrityError
+
+        name = request.data.get('name', 'Mon tableau de bord')
+
+        try:
+            # Check if layout with same name exists
+            existing = DashboardLayout.objects.filter(
+                user=request.user,
+                name=name
+            ).first()
+
+            if existing:
+                # Update the existing layout instead of creating a duplicate
+                serializer = self.get_serializer(existing, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response({
+                    'success': True,
+                    'data': DashboardLayoutSerializer(existing).data,
+                    'message': 'Layout updated (already existed)'
+                })
+
+            # Create new layout
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
+
+            return Response({
+                'success': True,
+                'data': DashboardLayoutSerializer(serializer.instance).data
+            }, status=status.HTTP_201_CREATED)
+
+        except IntegrityError as e:
+            logger.warning(f"IntegrityError creating layout: {e}")
+            # Try to fetch and return the existing layout
+            existing = DashboardLayout.objects.filter(
+                user=request.user,
+                name=name
+            ).first()
+            if existing:
+                return Response({
+                    'success': True,
+                    'data': DashboardLayoutSerializer(existing).data,
+                    'message': 'Layout already exists'
+                })
+            return Response({
+                'success': False,
+                'error': 'Failed to create layout'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error creating layout: {e}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 

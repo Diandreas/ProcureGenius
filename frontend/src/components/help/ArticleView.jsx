@@ -343,7 +343,7 @@ const ArticleView = ({ articleId }) => {
             }}
           >
             {relatedArticles.map((relatedArticle) => {
-              const relatedCategory = documentationCategories.find(
+              const relatedCategory = documentationCategories().find(
                 (c) => c.id === relatedArticle.category
               );
               return (

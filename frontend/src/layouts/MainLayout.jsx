@@ -737,6 +737,9 @@ function MainLayout() {
               </IconButton>
             )}
 
+            {/* Tutorial Button */}
+            <TutorialButton variant="icon" size="small" />
+
             {/* Theme Toggle */}
             <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
               <IconButton

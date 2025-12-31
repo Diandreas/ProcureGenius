@@ -175,7 +175,7 @@ class OnboardingActionsCheckView(APIView):
         if has_e_sourcing:
             try:
                 from apps.e_sourcing.models import SourcingEvent
-                events_count = SourcingEvent.objects.filter(organization=organization).count()
+                events_count = SourcingEvent.objects.filter(created_by__organization=organization).count()
                 
                 actions_status['create_first_rfq'] = {
                     'completed': events_count >= 1,
@@ -194,7 +194,7 @@ class OnboardingActionsCheckView(APIView):
         if Modules.CONTRACTS in user_modules:
             try:
                 from apps.contracts.models import Contract
-                contracts_count = Contract.objects.filter(organization=organization).count()
+                contracts_count = Contract.objects.filter(created_by__organization=organization).count()
                 
                 actions_status['create_first_contract'] = {
                     'completed': contracts_count >= 1,
