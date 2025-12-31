@@ -77,7 +77,7 @@ function InvoiceForm() {
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
-    status: 'draft'
+    status: 'paid'
   });
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -251,11 +251,6 @@ function InvoiceForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.client) {
-      enqueueSnackbar(t('invoices:messages.selectClientRequired'), { variant: 'error' });
-      return;
-    }
-
     if (!formData.title.trim()) {
       enqueueSnackbar(t('invoices:messages.enterTitleRequired'), { variant: 'error' });
       return;
@@ -274,7 +269,7 @@ function InvoiceForm() {
 
       const payload = {
         ...formData,
-        client: formData.client.id,
+        client: formData.client ? formData.client.id : null,
         items: items.map(item => ({
           description: item.description,
           quantity: item.quantity,

@@ -675,6 +675,52 @@ function ProductForm() {
                                                         required
                                                     />
                                                 </Grid>
+
+                                                {/* Gestion de stock pour produits physiques */}
+                                                {values.product_type === 'physical' && (
+                                                    <>
+                                                        <Grid item xs={12}>
+                                                            <Divider sx={{ my: 1 }}>
+                                                                <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<Inventory />} size="small" />
+                                                            </Divider>
+                                                        </Grid>
+
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="stock_quantity"
+                                                                label={t('products:labels.stockQuantity')}
+                                                                type="number"
+                                                                value={values.stock_quantity}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.stock_quantity && Boolean(errors.stock_quantity)}
+                                                                helperText={touched.stock_quantity && errors.stock_quantity}
+                                                                required
+                                                                InputProps={{
+                                                                    startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
+                                                                }}
+                                                            />
+                                                        </Grid>
+
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="low_stock_threshold"
+                                                                label={t('products:labels.lowStockThreshold')}
+                                                                type="number"
+                                                                value={values.low_stock_threshold}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
+                                                                helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
+                                                                required
+                                                            />
+                                                        </Grid>
+                                                    </>
+                                                )}
                                             </Grid>
                                         </CardContent>
                                     </Card>
@@ -917,16 +963,15 @@ function ProductForm() {
                                                     </Grid>
                                                 )}
 
-                                                {/* SECTION STOCK - Seulement pour produits physiques */}
+                                                {/* Entrepôt - Seulement pour produits physiques */}
                                                 {values.product_type === 'physical' && (
                                                     <>
                                                         <Grid item xs={12}>
                                                             <Divider sx={{ my: 1 }}>
-                                                                <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<LocalShipping />} size="small" />
+                                                                <Chip label={t('products:labels.warehouse', 'Entrepôt')} icon={<Warehouse />} size="small" />
                                                             </Divider>
                                                         </Grid>
 
-                                                        {/* Entrepôt */}
                                                         <Grid item xs={12} md={6}>
                                                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                                                 <FormControl
@@ -986,43 +1031,6 @@ function ProductForm() {
                                                                     </IconButton>
                                                                 </Tooltip>
                                                             </Box>
-                                                        </Grid>
-
-                                                        {/* Stock */}
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="stock_quantity"
-                                                                label={t('products:labels.stockQuantity')}
-                                                                type="number"
-                                                                value={values.stock_quantity}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                                helperText={touched.stock_quantity && errors.stock_quantity}
-                                                                required
-                                                                InputProps={{
-                                                                    startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
-                                                                }}
-                                                            />
-                                                        </Grid>
-
-                                                        {/* Seuil stock bas */}
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="low_stock_threshold"
-                                                                label={t('products:labels.lowStockThreshold')}
-                                                                type="number"
-                                                                value={values.low_stock_threshold}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                                helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
-                                                                required
-                                                            />
                                                         </Grid>
                                                     </>
                                                 )}

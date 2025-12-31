@@ -147,7 +147,10 @@
     "actions": "Actions"
   },
   "tooltips": {
-    "clickProductDetails": "Cliquer pour voir les détails du produit"
+    "clickProductDetails": "Cliquer pour voir les détails du produit",
+    "noClientAssigned": "Aucun client associé à cette facture",
+    "noClientEmail": "Le client n'a pas d'adresse email",
+    "sendEmail": "Envoyer par email"
   },
   "dialogs": {
     "sendInvoice": "Envoyer la facture",

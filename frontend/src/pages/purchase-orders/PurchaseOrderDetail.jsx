@@ -289,27 +289,36 @@ function PurchaseOrderDetail() {
                   {t('purchaseOrders:buttons.generatePDF')}
                 </Button>
               </Tooltip>
-              <Tooltip title={t('purchaseOrders:tooltips.sendEmail')}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Email />}
-                  onClick={() => {
-                    const currentLanguage = i18n.language || 'fr';
-                    const lang = currentLanguage.split('-')[0];
-                    const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                      name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
-                      number: purchaseOrder.po_number
-                    });
-                    setEmailData({
-                      recipient_email: purchaseOrder.supplier?.email || '',
-                      custom_message: defaultMessage
-                    });
-                    setSendEmailDialogOpen(true);
-                  }}
-                  disabled={!purchaseOrder.supplier?.email}
-                >
-                  {t('purchaseOrders:buttons.sendEmail')}
-                </Button>
+              <Tooltip
+                title={
+                  !purchaseOrder.supplier?.email
+                    ? t('purchaseOrders:tooltips.noSupplierEmail', 'Le fournisseur n\'a pas d\'adresse email')
+                    : t('purchaseOrders:tooltips.sendEmail')
+                }
+                arrow
+              >
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Email />}
+                    onClick={() => {
+                      const currentLanguage = i18n.language || 'fr';
+                      const lang = currentLanguage.split('-')[0];
+                      const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                        name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                        number: purchaseOrder.po_number
+                      });
+                      setEmailData({
+                        recipient_email: purchaseOrder.supplier?.email || '',
+                        custom_message: defaultMessage
+                      });
+                      setSendEmailDialogOpen(true);
+                    }}
+                    disabled={!purchaseOrder.supplier?.email}
+                  >
+                    {t('purchaseOrders:buttons.sendEmail')}
+                  </Button>
+                </span>
               </Tooltip>
               <Tooltip title={t('purchaseOrders:tooltips.editPO')}>
                 <IconButton
@@ -355,23 +364,35 @@ function PurchaseOrderDetail() {
                   <PictureAsPdf fontSize="small" sx={{ mr: 1 }} />
                   {t('purchaseOrders:buttons.generatePDF')}
                 </MenuItem>
-                <MenuItem 
-                  onClick={() => {
-                    const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                      name: purchaseOrder.supplier?.name || 'Fournisseur',
-                      number: purchaseOrder.po_number
-                    });
-                    setEmailData({
-                      recipient_email: purchaseOrder.supplier?.email || '',
-                      custom_message: defaultMessage
-                    });
-                    setSendEmailDialogOpen(true);
-                  }}
-                  disabled={!purchaseOrder.supplier?.email}
+                <Tooltip
+                  title={
+                    !purchaseOrder.supplier?.email
+                      ? t('purchaseOrders:tooltips.noSupplierEmail', 'Le fournisseur n\'a pas d\'adresse email')
+                      : ''
+                  }
+                  arrow
+                  placement="left"
                 >
-                  <Email fontSize="small" sx={{ mr: 1 }} />
-                  {t('purchaseOrders:buttons.sendEmail')}
-                </MenuItem>
+                  <span>
+                    <MenuItem
+                      onClick={() => {
+                        const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                          name: purchaseOrder.supplier?.name || 'Fournisseur',
+                          number: purchaseOrder.po_number
+                        });
+                        setEmailData({
+                          recipient_email: purchaseOrder.supplier?.email || '',
+                          custom_message: defaultMessage
+                        });
+                        setSendEmailDialogOpen(true);
+                      }}
+                      disabled={!purchaseOrder.supplier?.email}
+                    >
+                      <Email fontSize="small" sx={{ mr: 1 }} />
+                      {t('purchaseOrders:buttons.sendEmail')}
+                    </MenuItem>
+                  </span>
+                </Tooltip>
                 <MenuItem onClick={handleEdit}>
                   <Edit fontSize="small" sx={{ mr: 1 }} />
                   {t('purchaseOrders:buttons.edit')}

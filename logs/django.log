@@ -1316,3 +1316,2412 @@ Not Found: /api/v1/analytics/layouts/default/
 "GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
 "GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
 "GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/warehouses/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/contracts/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"OPTIONS /api/v1/print-configurations/default/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/print-templates/default/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/print-configurations/default/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/print-templates/default/ HTTP/1.1" 200 0
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /media/organization/logos/logo.jpg HTTP/1.1" 200 30689
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 2532
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 2532
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 974
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 974
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 974
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 595
+"PUT /api/v1/accounts/organization/settings/ HTTP/1.1" 200 122
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/print-templates/default/ HTTP/1.1" 200 606
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/print-configurations/default/ HTTP/1.1" 200 568
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/usage/summary/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/suggestions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/suggestions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/usage/summary/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+Generated 0 intelligent insights for test_pme
+Generated 0 intelligent insights for test_pme
+Error checking suggestion conditions: Cannot resolve keyword 'organization' into field. Choices are: billing_address, client, client_id, created_at, created_by, created_by_id, currency, description, due_date, id, invoice_number, items, payment_method, payment_terms, payments, purchase_order, purchase_order_id, status, subtotal, tax_amount, title, total_amount, updated_at
+Error checking suggestion conditions: Cannot resolve keyword 'organization' into field. Choices are: billing_address, client, client_id, created_at, created_by, created_by_id, currency, description, due_date, id, invoice_number, items, payment_method, payment_terms, payments, purchase_order, purchase_order_id, status, subtotal, tax_amount, title, total_amount, updated_at
+Error checking suggestion conditions: Cannot resolve keyword 'organization' into field. Choices are: billing_address, client, client_id, created_at, created_by, created_by_id, currency, description, due_date, id, invoice_number, items, payment_method, payment_terms, payments, purchase_order, purchase_order_id, status, subtotal, tax_amount, title, total_amount, updated_at
+Error checking suggestion conditions: Cannot resolve keyword 'organization' into field. Choices are: billing_address, client, client_id, created_at, created_by, created_by_id, currency, description, due_date, id, invoice_number, items, payment_method, payment_terms, payments, purchase_order, purchase_order_id, status, subtotal, tax_amount, title, total_amount, updated_at
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 332
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"OPTIONS /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"OPTIONS /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 0
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status=published HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status=published HTTP/1.1" 200 486
+"OPTIONS /api/v1/e-sourcing/events/?page=1&search=&status=draft HTTP/1.1" 200 0
+"GET /api/v1/e-sourcing/events/?page=1&search=&status=draft HTTP/1.1" 200 52
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+Internal Server Error: /api/v1/warehouses/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 687, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\serializers.py", line 522, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\fields.py", line 1838, in to_representation
+    return method(value)
+  File "D:\project\BFMa\ProcureGenius\apps\api\serializers.py", line 594, in get_products_count
+    from apps.invoicing.models import ProductStock
+ImportError: cannot import name 'ProductStock' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"GET /api/v1/warehouses/ HTTP/1.1" 500 131344
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+D:\project\BFMa\ProcureGenius\apps\api\serializers.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1201
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2432
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"POST /api/v1/invoices/ HTTP/1.1" 201 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"OPTIONS /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 0
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"OPTIONS /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/ HTTP/1.1" 200 0
+Internal Server Error: /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 1440, in send
+    from .services.email_service import InvoiceEmailService
+  File "D:\project\BFMa\ProcureGenius\apps\api\services\email_service.py", line 81
+    if language == 'en':
+    ^^
+SyntaxError: expected 'except' or 'finally' block
+"POST /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/ HTTP/1.1" 500 106399
+Internal Server Error: /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 1440, in send
+    from .services.email_service import InvoiceEmailService
+  File "D:\project\BFMa\ProcureGenius\apps\api\services\email_service.py", line 81
+    if language == 'en':
+    ^^
+SyntaxError: expected 'except' or 'finally' block
+"POST /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/ HTTP/1.1" 500 106399
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/ HTTP/1.1" 200 469
+"GET /api/v1/clients/5b5d75b4-032b-4513-946c-fd5706a1624b/statistics/ HTTP/1.1" 200 871
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/e-sourcing/events/?page=1&search=&status= HTTP/1.1" 200 486
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/contracts/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=false HTTP/1.1" 200 30
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2
+"GET /api/v1/ai/proactive-conversations/ HTTP/1.1" 200 30
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/usage/summary/ HTTP/1.1" 200 137
+"GET /api/v1/ai/suggestions/ HTTP/1.1" 200 28
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 3749
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1195
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 300
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 556
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1195
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 1195
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2457
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2457
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/product-categories/ HTTP/1.1" 200 0
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+Internal Server Error: /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/
+Traceback (most recent call last):
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\api\views.py", line 1440, in send
+    from .services.email_service import InvoiceEmailService
+  File "D:\project\BFMa\ProcureGenius\apps\api\services\email_service.py", line 81
+    if language == 'en':
+    ^^
+SyntaxError: expected 'except' or 'finally' block
+"POST /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/send/ HTTP/1.1" 500 106399
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"OPTIONS /api/v1/ai/quick-actions/?category=products HTTP/1.1" 200 0
+User test_pme accessible modules: {'analytics', 'dashboard', 'contracts', 'invoices', 'clients', 'suppliers', 'e-sourcing', 'purchase-orders', 'products'}
+Total available actions: 4
+Filtered actions: 4 out of 4
+"GET /api/v1/ai/quick-actions/?category=products HTTP/1.1" 200 1152
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/a71d386c-1cc5-4d2e-b979-58208f4bb8f2/ HTTP/1.1" 200 864
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/products/ HTTP/1.1" 200 52
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1307
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1258
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1029
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 182
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/suppliers/ HTTP/1.1" 200 52
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/product-categories/ HTTP/1.1" 200 800
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/warehouses/ HTTP/1.1" 200 898
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/invoices/ HTTP/1.1" 200 916
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/clients/ HTTP/1.1" 200 521
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 616
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30

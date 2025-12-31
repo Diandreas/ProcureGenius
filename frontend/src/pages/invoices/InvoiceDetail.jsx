@@ -37,6 +37,7 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   Edit,
@@ -369,37 +370,50 @@ function InvoiceDetail() {
           >
             <PictureAsPdf sx={{ fontSize: '1.1rem' }} />
           </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => {
-              const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
-                name: invoice.client?.name || 'Client',
-                number: invoice.invoice_number
-              });
-              setEmailData({
-                recipient_email: invoice.client?.email || '',
-                custom_message: defaultMessage
-              });
-              setSendEmailDialogOpen(true);
-            }}
-            disabled={!invoice.client?.email}
-            sx={{
-              bgcolor: invoice.client?.email ? 'info.50' : 'grey.100',
-              color: invoice.client?.email ? 'info.main' : 'grey.400',
-              width: 32,
-              height: 32,
-              borderRadius: 1,
-              '&:hover': invoice.client?.email ? {
-                bgcolor: 'info.main',
-                color: 'white',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.25)'
-              } : {},
-              transition: 'all 0.2s'
-            }}
+          <Tooltip
+            title={
+              !invoice.client
+                ? t('invoices:tooltips.noClientAssigned', 'Aucun client associé à cette facture')
+                : !invoice.client?.email
+                  ? t('invoices:tooltips.noClientEmail', 'Le client n\'a pas d\'adresse email')
+                  : t('invoices:tooltips.sendEmail', 'Envoyer par email')
+            }
+            arrow
           >
-            <Email sx={{ fontSize: '1.1rem' }} />
-          </IconButton>
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
+                    name: invoice.client?.name || 'Client',
+                    number: invoice.invoice_number
+                  });
+                  setEmailData({
+                    recipient_email: invoice.client?.email || '',
+                    custom_message: defaultMessage
+                  });
+                  setSendEmailDialogOpen(true);
+                }}
+                disabled={!invoice.client?.email}
+                sx={{
+                  bgcolor: invoice.client?.email ? 'info.50' : 'grey.100',
+                  color: invoice.client?.email ? 'info.main' : 'grey.400',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1,
+                  '&:hover': invoice.client?.email ? {
+                    bgcolor: 'info.main',
+                    color: 'white',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 8px rgba(25, 118, 210, 0.25)'
+                  } : {},
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Email sx={{ fontSize: '1.1rem' }} />
+              </IconButton>
+            </span>
+          </Tooltip>
           <IconButton
             size="small"
             onClick={handleEdit}
@@ -514,13 +528,24 @@ function InvoiceDetail() {
             >
               {t('invoices:buttons.generatePdf')}
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Email />}
-              onClick={() => {
-                setEmailData({
-                  recipient_email: invoice.client?.email || '',
-                  custom_message: `Bonjour ${invoice.client?.name || 'Client'},
+            <Tooltip
+              title={
+                !invoice.client
+                  ? t('invoices:tooltips.noClientAssigned', 'Aucun client associé à cette facture')
+                  : !invoice.client?.email
+                    ? t('invoices:tooltips.noClientEmail', 'Le client n\'a pas d\'adresse email')
+                    : ''
+              }
+              arrow
+            >
+              <span>
+                <Button
+                  variant="outlined"
+                  startIcon={<Email />}
+                  onClick={() => {
+                    setEmailData({
+                      recipient_email: invoice.client?.email || '',
+                      custom_message: `Bonjour ${invoice.client?.name || 'Client'},
 
 Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
 
@@ -529,14 +554,16 @@ Le PDF de votre facture est joint à cet email.
 Pour toute question, n'hésitez pas à nous contacter.
 
 Cordialement`
-                });
-                setSendEmailDialogOpen(true);
-              }}
-              disabled={!invoice.client?.email}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              {t('invoices:buttons.sendEmail')}
-            </Button>
+                    });
+                    setSendEmailDialogOpen(true);
+                  }}
+                  disabled={!invoice.client?.email}
+                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                >
+                  {t('invoices:buttons.sendEmail')}
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               variant="outlined"
               startIcon={<Edit />}
@@ -545,16 +572,6 @@ Cordialement`
             >
               {t('invoices:buttons.edit')}
             </Button>
-            {invoice.status === 'draft' && (
-              <Button
-                variant="contained"
-                startIcon={<Send />}
-                onClick={() => setSendDialogOpen(true)}
-                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-              >
-                {t('invoices:buttons.send')}
-              </Button>
-            )}
             {(invoice.status === 'sent' || isOverdue()) && (
               <Button
                 variant="contained"

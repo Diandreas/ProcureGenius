@@ -148,7 +148,10 @@
     "actions": "Actions"
   },
   "tooltips": {
-    "clickProductDetails": "Click to view product details"
+    "clickProductDetails": "Click to view product details",
+    "noClientAssigned": "No client assigned to this invoice",
+    "noClientEmail": "The client has no email address",
+    "sendEmail": "Send by email"
   },
   "dialogs": {
     "sendInvoice": "Send invoice",

@@ -171,6 +171,7 @@
     "generatePDF": "Générer un PDF du bon de commande",
     "editPO": "Modifier le bon de commande",
     "approvePO": "Approuver le bon de commande",
-    "sendEmail": "Envoyer le bon de commande par email au fournisseur"
+    "sendEmail": "Envoyer le bon de commande par email au fournisseur",
+    "noSupplierEmail": "Le fournisseur n'a pas d'adresse email"
   }
 }

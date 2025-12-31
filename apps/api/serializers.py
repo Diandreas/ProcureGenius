@@ -591,8 +591,8 @@ class WarehouseSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_products_count(self, obj):
-        from apps.invoicing.models import ProductStock
-        return ProductStock.objects.filter(warehouse=obj).count()
+        from apps.invoicing.models import Product
+        return Product.objects.filter(warehouse=obj).count()
 
 
 # Serializers pour les statistiques et tableaux de bord

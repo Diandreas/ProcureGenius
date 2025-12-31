@@ -169,6 +169,8 @@
   "tooltips": {
     "generatePDF": "Generate purchase order PDF",
     "editPO": "Edit purchase order",
-    "approvePO": "Approve purchase order"
+    "approvePO": "Approve purchase order",
+    "sendEmail": "Send purchase order by email to supplier",
+    "noSupplierEmail": "The supplier has no email address"
   }
 }

@@ -50,7 +50,10 @@
     "billingAddress": "Adresse de facturation",
     "activeClient": "Client actif",
     "aiInfo": "Informations IA",
-    "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le client créé et qu'il aura un historique de transactions."
+    "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le client créé et qu'il aura un historique de transactions.",
+    "productUnavailable": "Produit non disponible",
+    "ref": "Réf",
+    "generatingLabel": "Génération du rapport en cours..."
   },
   "stats": {
     "totalRevenue": "CA Total",
@@ -108,11 +111,6 @@
     "totalQuantity": "Quantité totale",
     "purchaseCount": "Nombre d'achats",
     "totalSpent": "Total dépensé"
-  },
-  "labels": {
-    "productUnavailable": "Produit non disponible",
-    "ref": "Réf",
-    "generatingLabel": "Génération du rapport en cours..."
   },
   "messages": {
     "loading": "Chargement des clients...",
