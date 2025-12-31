@@ -28,6 +28,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
+// Instance axios pour les endpoints publics (sans authentification)
+const publicApi = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 function PublicBidSubmission() {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -76,7 +84,7 @@ function PublicBidSubmission() {
 
   const fetchEvent = async () => {
     try {
-      const response = await axios.get(`/api/v1/e-sourcing/public/${token}/`);
+      const response = await publicApi.get(`/e-sourcing/public/${token}/`);
       setEvent(response.data.event);
       setCanSubmit(response.data.can_submit);
       setLoading(false);
@@ -160,7 +168,7 @@ function PublicBidSubmission() {
         })),
       };
 
-      await axios.post(`/api/v1/e-sourcing/public/${token}/submit/`, payload);
+      await publicApi.post(`/e-sourcing/public/${token}/submit/`, payload);
 
       enqueueSnackbar(t('eSourcing:publicBid.submitSuccess'), { variant: 'success' });
 

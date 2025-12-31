@@ -2892,6 +2892,108 @@ class ActionExecutor:
             'message': f"Statistiques récupérées: {stats['total_invoices']} facture(s), {stats['total_suppliers']} fournisseur(s), {stats['total_clients']} client(s)"
         }
 
+    def _generate_ai_conseil(self, conseil_context: Dict) -> str:
+        """
+        Génère un conseil personnalisé et dynamique via l'IA basé sur le contexte des données.
+
+        Args:
+            conseil_context: Dict contenant le type d'insight et les données spécifiques
+
+        Returns:
+            str: Conseil professionnel généré par l'IA
+        """
+        try:
+            context_type = conseil_context.get('type', '')
+
+            # Construire le prompt basé sur le type de contexte
+            if context_type == 'factures_brouillon':
+                prompt = f"""En tant qu'expert comptable, donne un conseil concis et actionnable (2-3 phrases max) pour cette situation:
+
+L'entreprise a {conseil_context.get('count')} facture(s) brouillon en attente depuis {conseil_context.get('days_old')} jour(s),
+représentant {conseil_context.get('total_amount'):.2f}€ de trésorerie potentielle non encaissée.
+
+Donne un conseil professionnel personnalisé tenant compte du montant et du délai. Sois direct et pratique."""
+
+            elif context_type == 'rupture_stock':
+                products = conseil_context.get('products', [])
+                product_names = [p['name'] for p in products[:3]]
+                prompt = f"""En tant qu'expert en gestion de stock, donne un conseil concis (2-3 phrases max) pour cette situation:
+
+{conseil_context.get('count')} produit(s) en rupture imminente: {', '.join(product_names)}.
+Le produit le plus urgent ({conseil_context.get('most_urgent_product')}) sera en rupture dans {conseil_context.get('days_left')} jour(s).
+
+Donne un conseil professionnel tenant compte de l'urgence. Sois direct et actionnable."""
+
+            elif context_type == 'stock_dormant':
+                products = conseil_context.get('products', [])
+                product_info = [f"{p['name']} ({p['qty']} unités, {p['value']:.0f}€)" for p in products[:3]]
+                prompt = f"""En tant qu'expert en gestion financière, donne un conseil concis (2-3 phrases max) pour cette situation:
+
+{conseil_context.get('count')} produit(s) invendu(s) depuis {conseil_context.get('months_inactive')} mois.
+Valeur totale immobilisée: {conseil_context.get('total_value'):.2f}€
+Produits concernés: {', '.join(product_info)}
+
+Donne un conseil professionnel sur la gestion de ce stock dormant. Propose des actions concrètes."""
+
+            elif context_type == 'evolution_ca':
+                trend = conseil_context.get('trend')
+                change_pct = conseil_context.get('change_pct')
+                prompt = f"""En tant qu'expert financier, donne un conseil concis (2-3 phrases max) pour cette situation:
+
+Le chiffre d'affaires est en {trend} de {abs(change_pct):.1f}% ce mois.
+CA actuel: {conseil_context.get('current_revenue'):.2f}€ vs {conseil_context.get('previous_revenue'):.2f}€ le mois dernier.
+Différence: {conseil_context.get('difference'):.2f}€ sur {conseil_context.get('days_compared')} jours comparés.
+
+Donne un conseil professionnel adapté à cette {'croissance' if change_pct > 0 else 'baisse'}. Sois concret."""
+
+            elif context_type == 'baisse_marge':
+                prompt = f"""En tant qu'expert en rentabilité, donne un conseil concis (2-3 phrases max) pour cette situation:
+
+Baisse de marge détectée sur {conseil_context.get('count')} produit(s).
+Le produit {conseil_context.get('worst_product')} a perdu {conseil_context.get('margin_change_pct'):.1f}% de marge.
+Marge actuelle: {conseil_context.get('current_margin'):.2f}€/unité vs {conseil_context.get('previous_margin'):.2f}€/unité avant.
+
+Donne un conseil professionnel pour restaurer la rentabilité. Sois actionnable."""
+
+            elif context_type == 'top_produits':
+                products = conseil_context.get('products', [])
+                product_info = [f"{p['name']} ({p['qty']} vendus, {p['revenue']:.0f}€)" for p in products]
+                prompt = f"""En tant qu'expert commercial, donne un conseil concis (2-3 phrases max) pour cette situation:
+
+Top {len(products)} produits du mois générant {conseil_context.get('total_revenue'):.2f}€:
+{chr(10).join(['- ' + info for info in product_info])}
+
+Donne un conseil professionnel pour capitaliser sur ces produits phares. Sois stratégique."""
+
+            elif context_type == 'commandes_recurrentes':
+                prompt = f"""En tant qu'expert en négociation fournisseurs, donne un conseil concis (2-3 phrases max):
+
+Le fournisseur {conseil_context.get('supplier_name')} a reçu {conseil_context.get('order_count')} commandes
+pour un total de {conseil_context.get('total_amount'):.2f}€ (moyenne: {conseil_context.get('avg_order'):.2f}€/commande).
+
+Donne un conseil professionnel pour optimiser cette relation fournisseur. Sois stratégique."""
+
+            else:
+                return ""  # Pas de conseil si type inconnu
+
+            # Appeler l'API Mistral pour générer le conseil
+            response = self.client.chat.complete(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "Tu es un expert-comptable et conseiller financier d'entreprise. Réponds UNIQUEMENT avec le conseil demandé, sans introduction ni formule de politesse. Sois direct, professionnel et actionnable. Maximum 2-3 phrases."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=200,
+                temperature=0.7
+            )
+
+            conseil = response.choices[0].message.content.strip()
+            return conseil
+
+        except Exception as e:
+            logger.error(f"Erreur génération conseil IA: {e}")
+            return ""  # Retourner vide si erreur, l'insight sera affiché sans conseil
+
     async def analyze_business(self, params: Dict, user_context: Dict) -> Dict:
         """
         Analyse intelligente complète avec IntelligentInsightsEngine
@@ -3012,23 +3114,26 @@ class ActionExecutor:
                 # Grouper insights par type et priorité
                 alerts = [i for i in insights if i.get('type') == 'alert']
                 suggestions = [i for i in insights if i.get('type') == 'suggestion']
-
-                # Calculer les bénéfices potentiels
-                high_priority_count = len([i for i in insights if i.get('priority') == 'high'])
+                other_insights = [i for i in insights if i.get('type') not in ['alert', 'suggestion']]
 
                 message = f"📊 **Analyse complète de votre activité**\n\n"
                 message += f"J'ai analysé vos données et identifié **{insights_count} opportunité(s)** concrètes :\n"
                 message += f"- {len(alerts)} point(s) nécessitant une attention immédiate\n"
-                message += f"- {len(suggestions)} suggestion(s) pour optimiser votre performance\n\n"
+                message += f"- {len(suggestions) + len(other_insights)} suggestion(s) pour optimiser votre performance\n\n"
 
-                # Détailler les alertes avec conseils professionnels
+                # Détailler les alertes avec conseils générés par IA
                 if alerts:
                     message += f"🚨 **Points d'attention** :\n\n"
                     for idx, alert in enumerate(alerts[:3], 1):
                         title = alert.get('title', '').replace('🚨', '').replace('⚠️', '').replace('📉', '').replace('📝', '').strip()
                         detail_msg = alert.get('message', '').strip()
-                        conseil = alert.get('conseil', '').strip()
                         impact = alert.get('impact', '').strip()
+
+                        # Générer le conseil dynamiquement par IA si conseil_context existe
+                        conseil = ""
+                        conseil_context = alert.get('conseil_context')
+                        if conseil_context:
+                            conseil = self._generate_ai_conseil(conseil_context)
 
                         message += f"**{idx}. {title}**\n"
                         if detail_msg:
@@ -3039,13 +3144,22 @@ class ActionExecutor:
                             message += f"📊 *Impact* : {impact}\n"
                         message += "\n"
 
-                # Détailler les suggestions avec conseils
-                if suggestions:
+                        # Ajouter le conseil généré à l'insight pour l'affichage frontend
+                        alert['conseil'] = conseil
+
+                # Détailler les suggestions et autres insights avec conseils générés par IA
+                all_suggestions = suggestions + other_insights
+                if all_suggestions:
                     message += f"💡 **Opportunités identifiées** :\n\n"
-                    for idx, suggestion in enumerate(suggestions[:3], 1):
+                    for idx, suggestion in enumerate(all_suggestions[:3], 1):
                         title = suggestion.get('title', '').replace('⭐', '').replace('🎯', '').replace('💡', '').replace('🔄', '').replace('📦', '').strip()
                         detail_msg = suggestion.get('message', '').strip()
-                        conseil = suggestion.get('conseil', '').strip()
+
+                        # Générer le conseil dynamiquement par IA si conseil_context existe
+                        conseil = ""
+                        conseil_context = suggestion.get('conseil_context')
+                        if conseil_context:
+                            conseil = self._generate_ai_conseil(conseil_context)
 
                         message += f"**{idx}. {title}**\n"
                         if detail_msg:
@@ -3053,6 +3167,9 @@ class ActionExecutor:
                         if conseil:
                             message += f"\n💡 *Conseil* : {conseil}\n"
                         message += "\n"
+
+                        # Ajouter le conseil généré à l'insight pour l'affichage frontend
+                        suggestion['conseil'] = conseil
 
                 # Graphiques disponibles
                 if data.get('charts'):
@@ -4913,9 +5030,10 @@ ProcureGenius
 
         results = await search_products_sync()
 
-        # Message simple pour les listes (le modal affichera les détails)
+        # Message avec taux de similarité
         if results:
-            message = f"J'ai trouvé {len(results)} produit(s) correspondant à '{params.get('query')}'. Cliquez sur le bouton ci-dessous pour voir la liste."
+            top_result = results[0]
+            message = f"J'ai trouvé {len(results)} produit(s) pour '{params.get('query')}'. Le plus pertinent est '{top_result['name']}' ({top_result['score']}% de similarité)."
         else:
             message = f"Aucun produit trouvé pour '{params.get('query', '')}'"
 

@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import api from '../../services/api';
 
 function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -36,21 +37,14 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
 
     try {
       setSending(true);
-      const response = await fetch(`/api/invoices/${invoice.id}/send-email/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify({
-          recipient_email: recipientEmail,
-          subject: subject,
-          message: message,
-        }),
+      const response = await api.post(`/invoices/${invoice.id}/send-email/`, {
+        recipient_email: recipientEmail,
+        subject: subject,
+        message: message,
       });
 
-      const data = await response.json();
-      if (data.success || response.ok) {
+      const data = response.data;
+      if (data.success) {
         enqueueSnackbar(data.message || t('invoices:messages.invoiceSentSuccess'), { variant: 'success' });
         if (onSent) onSent();
         onClose();
@@ -59,7 +53,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
       }
     } catch (error) {
       console.error('Error sending invoice email:', error);
-      enqueueSnackbar(t('invoices:messages.emailError'), { variant: 'error' });
+      enqueueSnackbar(error.response?.data?.error || t('invoices:messages.emailError'), { variant: 'error' });
     } finally {
       setSending(false);
     }

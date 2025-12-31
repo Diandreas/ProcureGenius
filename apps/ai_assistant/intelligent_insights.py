@@ -292,25 +292,26 @@ class IntelligentInsightsEngine:
                         priority = 7
                         insight_type = 'alert'
 
-                    if change_pct > 0:
-                        conseil = ('Bonne dynamique ! Identifiez les facteurs de cette croissance '
-                                   '(nouveaux clients, produits phares, saisonnalité) pour la maintenir. '
-                                   'Vérifiez que votre trésorerie suit et anticipez vos besoins en stock.')
-                    else:
-                        conseil = ('Une baisse de CA peut avoir plusieurs causes : saisonnalité, perte de clients, '
-                                   'concurrence. Analysez vos ventes par produit et par client pour identifier '
-                                   'l\'origine. Ajustez vos charges variables en conséquence.')
-
                     insights.append({
                         'type': insight_type,
                         'priority': priority,
                         'title': f'{emoji} CA en {trend} de {abs(change_pct):.1f}%',
                         'message': f'Votre CA ce mois: **{current_revenue:.2f}€** vs **{previous_revenue:.2f}€** le mois dernier '
                                    f'(sur la même période de {days_in_current_month} jours).',
-                        'conseil': conseil,
                         'action_label': 'Analyser',
                         'action_url': '/ai-chat',
                         'impact': f'{trend.capitalize()} de {abs(current_revenue - previous_revenue):.2f}€',
+                        'insight_key': 'revenue_comparison',
+                        'conseil_context': {
+                            'type': 'evolution_ca',
+                            'trend': trend,
+                            'change_pct': float(change_pct),
+                            'current_revenue': float(current_revenue),
+                            'previous_revenue': float(previous_revenue),
+                            'difference': float(abs(current_revenue - previous_revenue)),
+                            'days_compared': days_in_current_month,
+                            'is_positive': change_pct > 0
+                        },
                         'data': {
                             'current_revenue': float(current_revenue),
                             'previous_revenue': float(previous_revenue),
@@ -393,13 +394,19 @@ class IntelligentInsightsEngine:
                     'title': f'📉 Marge en baisse sur {len(margin_drops)} produit(s)',
                     'message': f'Le produit **{worst["name"]}** a perdu **{abs(worst["change"]):.1f}%** de marge '
                                f'(de {worst["previous"]:.2f}€ à {worst["current"]:.2f}€/unité).',
-                    'conseil': 'La marge est le nerf de la guerre. Deux leviers possibles : '
-                               '(1) Renégociez vos prix d\'achat avec le fournisseur, '
-                               '(2) Ajustez vos prix de vente si le marché le permet. '
-                               'Attention à ne pas sacrifier la marge pour le volume sans calcul précis.',
                     'action_label': 'Analyser',
                     'action_url': '/ai-chat',
                     'impact': f'Érosion de marge: {abs(worst["change"]):.1f}%',
+                    'insight_key': 'margin_drop',
+                    'conseil_context': {
+                        'type': 'baisse_marge',
+                        'products': margin_drops[:3],
+                        'worst_product': worst['name'],
+                        'margin_change_pct': float(abs(worst['change'])),
+                        'current_margin': float(worst['current']),
+                        'previous_margin': float(worst['previous']),
+                        'count': len(margin_drops)
+                    },
                     'data': {
                         'products': margin_drops[:3],
                         'analysis_prompt': f'Analyse la baisse de marge sur {worst["name"]} et suggère des actions'
@@ -443,12 +450,18 @@ class IntelligentInsightsEngine:
                     'priority': 4,
                     'title': f'⭐ Top produits ce mois',
                     'message': f'Vos meilleurs produits représentent **{total_revenue:.2f}€** de CA:\n{product_list}',
-                    'conseil': 'Vos produits phares méritent une attention particulière : '
-                               'assurez un stock suffisant pour ne jamais être en rupture, '
-                               'surveillez leur marge, et envisagez des ventes additionnelles '
-                               '(accessoires, produits complémentaires) pour maximiser le panier moyen.',
                     'action_label': 'Voir analyse',
                     'action_url': '/ai-chat',
+                    'insight_key': 'top_products',
+                    'conseil_context': {
+                        'type': 'top_produits',
+                        'products': [
+                            {'name': p.name, 'qty': p.month_qty, 'revenue': float(p.month_revenue or 0)}
+                            for p in top_products[:3]
+                        ],
+                        'total_revenue': float(total_revenue),
+                        'count': len(list(top_products))
+                    },
                     'data': {
                         'products': [
                             {'name': p.name, 'qty': p.month_qty, 'revenue': float(p.month_revenue or 0), 'id': str(p.id)}
@@ -486,12 +499,16 @@ class IntelligentInsightsEngine:
                     'title': f'🔄 Commandes récurrentes: {top.name}',
                     'message': f'Vous avez passé **{top.po_count} commandes** chez {top.name} '
                                f'pour un total de **{top.total_amount or 0:.2f}€**.',
-                    'conseil': 'Un volume d\'achat régulier est un levier de négociation. '
-                               'Contactez ce fournisseur pour négocier des remises volume, '
-                               'des conditions de paiement plus favorables, ou des frais de port offerts. '
-                               'Montrez-lui votre historique de commandes.',
                     'action_label': 'Préparer commande',
                     'action_url': '/ai-chat',
+                    'insight_key': 'recurring_orders',
+                    'conseil_context': {
+                        'type': 'commandes_recurrentes',
+                        'supplier_name': top.name,
+                        'order_count': top.po_count,
+                        'total_amount': float(top.total_amount or 0),
+                        'avg_order': float((top.total_amount or 0) / top.po_count) if top.po_count > 0 else 0
+                    },
                     'data': {
                         'supplier_id': str(top.id),
                         'supplier_name': top.name,

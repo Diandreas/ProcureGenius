@@ -41,22 +41,10 @@ class PDFReportService {
    */
   async generateSupplierReport(supplier) {
     try {
-      const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
-
-      const response = await fetch(`${baseUrl}/suppliers/${supplier.id}/pdf-report/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-        },
+      const response = await api.get(`/suppliers/${supplier.id}/pdf-report/`, {
+        responseType: 'blob',
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      return blob;
+      return new Blob([response.data], { type: 'application/pdf' });
     } catch (error) {
       console.error('Erreur lors de la génération du rapport fournisseur:', error);
       throw error;
@@ -87,22 +75,10 @@ class PDFReportService {
    */
   async generateClientReport(client) {
     try {
-      const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
-
-      const response = await fetch(`${baseUrl}/clients/${client.id}/pdf-report/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-        },
+      const response = await api.get(`/clients/${client.id}/pdf-report/`, {
+        responseType: 'blob',
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      return blob;
+      return new Blob([response.data], { type: 'application/pdf' });
     } catch (error) {
       console.error('Erreur lors de la génération du rapport client:', error);
       throw error;
@@ -133,22 +109,10 @@ class PDFReportService {
    */
   async generateProductReport(product) {
     try {
-      const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
-
-      const response = await fetch(`${baseUrl}/products/${product.id}/pdf-report/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-        },
+      const response = await api.get(`/products/${product.id}/pdf-report/`, {
+        responseType: 'blob',
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      return blob;
+      return new Blob([response.data], { type: 'application/pdf' });
     } catch (error) {
       console.error('Erreur lors de la génération du rapport produit:', error);
       throw error;

@@ -1,4 +1,5 @@
 // PDF Service for generating and handling PDF documents
+import api from './api';
 
 export const TEMPLATE_TYPES = {
   INVOICE: 'invoice',
@@ -19,10 +20,9 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
     // Récupérer la devise de l'organisation
     let organizationCurrency = 'CAD'; // Devise par défaut
     try {
-      const api = (await import('./api')).default;
       const settingsResponse = await api.get('/accounts/organization/settings/');
-      organizationCurrency = settingsResponse.data.defaultCurrency || 
-                            settingsResponse.data.default_currency || 
+      organizationCurrency = settingsResponse.data.defaultCurrency ||
+                            settingsResponse.data.default_currency ||
                             'CAD';
       console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
@@ -31,19 +31,13 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 
     // Try to call backend API for PDF generation
     try {
-      const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || '';
-
-      const response = await fetch(`${baseUrl}/invoicing/${invoiceData.id}/pdf/?template=${selectedTemplate}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-        }
+      const response = await api.get(`/invoices/${invoiceData.id}/pdf/`, {
+        params: { template: selectedTemplate },
+        responseType: 'blob',
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        return blob;
+      if (response.data) {
+        return new Blob([response.data], { type: 'application/pdf' });
       }
     } catch (apiError) {
       console.warn('Backend PDF generation not available, using fallback:', apiError);
@@ -145,18 +139,17 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 };
 
 // Generate Purchase Order PDF
-export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTemplate = 'standard') => {
+export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTemplate = 'modern') => {
   try {
     console.log('Generating purchase order PDF for:', purchaseOrderData);
 
     // Récupérer la devise de l'organisation
     let organizationCurrency = 'CAD'; // Devise par défaut
     try {
-      const api = (await import('./api')).default;
       const settingsResponse = await api.get('/accounts/organization/settings/');
-      organizationCurrency = settingsResponse.data.defaultCurrency || 
-                            settingsResponse.data.default_currency || 
-                            purchaseOrderData.currency || 
+      organizationCurrency = settingsResponse.data.defaultCurrency ||
+                            settingsResponse.data.default_currency ||
+                            purchaseOrderData.currency ||
                             'CAD';
       console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
@@ -165,19 +158,13 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
 
     // Try to call backend API for PDF generation
     try {
-      const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || '';
-
-      const response = await fetch(`${baseUrl}/purchase-orders/${purchaseOrderData.id}/pdf/?template=${selectedTemplate}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-        }
+      const response = await api.get(`/purchase-orders/${purchaseOrderData.id}/pdf/`, {
+        params: { template: selectedTemplate },
+        responseType: 'blob',
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        return blob;
+      if (response.data) {
+        return new Blob([response.data], { type: 'application/pdf' });
       }
     } catch (apiError) {
       console.warn('Backend PDF generation not available, using fallback:', apiError);

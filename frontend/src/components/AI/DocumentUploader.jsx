@@ -16,6 +16,7 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import api from '../../services/api';
 
 const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
   const { t } = useTranslation(['aiChat', 'common']);
@@ -67,35 +68,24 @@ const DocumentUploader = ({ onUploadSuccess, onUploadError }) => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch('/api/ai-assistant/analyze-document/', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: formData,
-      });
+      const response = await api.post('/ai-assistant/analyze-document/', formData);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setUploadResult({
-          success: true,
-          message: t('aiChat:documentUploader.analyzeSuccess'),
-          data: result,
-        });
-        if (onUploadSuccess) {
-          onUploadSuccess(result);
-        }
-      } else {
-        throw new Error(result.error || t('aiChat:documentUploader.uploadError'));
+      const result = response.data;
+      setUploadResult({
+        success: true,
+        message: t('aiChat:documentUploader.analyzeSuccess'),
+        data: result,
+      });
+      if (onUploadSuccess) {
+        onUploadSuccess(result);
       }
     } catch (error) {
       setUploadResult({
         success: false,
-        message: error.message,
+        message: error.response?.data?.error || error.message || t('aiChat:documentUploader.uploadError'),
       });
       if (onUploadError) {
         onUploadError(error);

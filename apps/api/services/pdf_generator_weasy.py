@@ -28,12 +28,7 @@ class InvoiceWeasyPDFGenerator:
         Returns:
             BytesIO: Buffer contenant le PDF généré
         """
-        try:
-            from weasyprint import HTML, CSS
-        except ImportError:
-            print("⚠ WeasyPrint non disponible, utilisation de ReportLab fallback")
-            from .pdf_generator import generate_invoice_pdf
-            return generate_invoice_pdf(invoice, template_type)
+        from weasyprint import HTML, CSS
 
         # Récupérer les données de l'organisation
         org_data = self._get_organization_data(invoice)
@@ -83,9 +78,8 @@ class InvoiceWeasyPDFGenerator:
             return buffer
 
         except Exception as e:
-            print(f"⚠ Erreur WeasyPrint: {e}, utilisation de ReportLab fallback")
-            from .pdf_generator import generate_invoice_pdf
-            return generate_invoice_pdf(invoice, template_type)
+            print(f"✗ Erreur WeasyPrint: {e}")
+            raise
 
     def _generate_qr_code(self, invoice):
         """

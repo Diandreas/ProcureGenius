@@ -1,6 +1,7 @@
 // Service Worker pour PWA
 const CACHE_NAME = 'gestion-app-v1';
 const API_CACHE_NAME = 'gestion-app-api-v1';
+const DEBUG = false; // Mettre à true pour activer les logs de debug
 
 // URLs à mettre en cache lors de l'installation
 const urlsToCache = [
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Cache ouvert');
+        if (DEBUG) console.log('Cache ouvert');
         return cache.addAll(urlsToCache);
       })
       .then(() => self.skipWaiting())
@@ -30,7 +31,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
-            console.log('Suppression du cache:', cacheName);
+            if (DEBUG) console.log('Suppression du cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -100,7 +101,7 @@ async function cacheFirstStrategy(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.error('Erreur réseau:', error);
+    if (DEBUG) console.warn('Erreur réseau:', error.message);
     // Retourner une page offline si disponible
     const offlineResponse = await cache.match('/offline.html');
     return offlineResponse || new Response('Offline', { status: 503 });
@@ -119,15 +120,16 @@ async function networkFirstStrategy(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.error('Erreur réseau, utilisation du cache:', error);
-    
+    // Log silencieux - les erreurs réseau sont normales en mode offline
+    if (DEBUG) console.warn('Erreur réseau, tentative depuis le cache:', error.message);
+
     // Pour les requêtes non-GET vers l'API, laisser passer l'erreur réseau native
     // Ne pas retourner de 503 car cela masque les vraies erreurs du serveur
     if (request.url.includes('/api/') && request.method !== 'GET') {
       // Re-lancer l'erreur pour que le navigateur la gère normalement
       throw error;
     }
-    
+
     // Ne chercher dans le cache que pour les requêtes GET
     if (request.method === 'GET') {
       const cachedResponse = await cache.match(request);
@@ -185,7 +187,7 @@ self.addEventListener('push', (event) => {
 
 // Gestion des clics sur les notifications
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification cliquée:', event.action);
+  if (DEBUG) console.log('Notification cliquée:', event.action);
   event.notification.close();
 
   if (event.action === 'explore') {
@@ -205,7 +207,7 @@ self.addEventListener('sync', (event) => {
 
 async function syncData() {
   // Logique de synchronisation des données hors ligne
-  console.log('Synchronisation des données...');
+  if (DEBUG) console.log('Synchronisation des données...');
 
   // Récupérer les données en attente depuis IndexedDB
   // Envoyer les données au serveur

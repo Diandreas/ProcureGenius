@@ -1376,95 +1376,127 @@ function AIChat() {
           )}
         </Box>
 
-        {/* Zone de saisie */}
+        {/* Zone de saisie moderne et flottante */}
         <Box
           sx={{
-            p: 2,
-            bgcolor: 'background.paper',
-            borderTop: `1px solid ${theme.palette.divider}`,
+            p: 3,
+            pb: 4,
+            width: '100%',
           }}
         >
-          <Box
+          <Paper
+            elevation={0}
             sx={{
               maxWidth: 800,
               mx: 'auto',
               display: 'flex',
-              gap: 1,
+              gap: 1.5,
               alignItems: 'flex-end',
-              bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : '#f8fafc',
-              borderRadius: 2,
-              p: 1,
+              bgcolor: theme.palette.background.paper,
+              borderRadius: 3,
+              p: 1.5,
+              border: `1px solid ${isDark ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.08)}`,
+              boxShadow: isDark
+                ? '0 10px 40px -10px rgba(0,0,0,0.5)'
+                : '0 10px 40px -10px rgba(0,0,0,0.1)',
+              transition: 'all 0.3s ease',
+              '&:focus-within': {
+                borderColor: theme.palette.primary.main,
+                boxShadow: `0 12px 48px -12px ${alpha(theme.palette.primary.main, 0.25)}`,
+                transform: 'translateY(-2px)'
+              }
             }}
           >
+            <Tooltip title="Importer un document">
+              <IconButton
+                onClick={() => navigate('/ai-chat/document-import')}
+                disabled={loading}
+                size="small"
+                sx={{
+                  mb: 0.5,
+                  color: 'text.secondary',
+                  bgcolor: alpha(theme.palette.action.hover, 0.05),
+                  '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                }}
+              >
+                <AttachFile sx={{ fontSize: 22, transform: 'rotate(45deg)' }} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title={t('aiChat:input.voiceMessage')}>
+              <IconButton
+                onClick={() => setVoiceRecorderOpen(true)}
+                disabled={loading}
+                size="small"
+                sx={{
+                  mb: 0.5,
+                  color: 'text.secondary',
+                  bgcolor: alpha(theme.palette.action.hover, 0.05),
+                  '&:hover': { color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.1) }
+                }}
+              >
+                <Mic sx={{ fontSize: 22 }} />
+              </IconButton>
+            </Tooltip>
+
             <TextField
               fullWidth
               multiline
-              maxRows={3}
+              maxRows={6}
               placeholder={t('aiChat:input.placeholder')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage();
                 }
               }}
               disabled={loading}
-              size="small"
               variant="standard"
               InputProps={{
                 disableUnderline: true,
               }}
               sx={{
                 '& .MuiInputBase-root': {
-                  fontSize: '0.875rem',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.5,
+                  py: 1,
                   px: 1,
                 },
               }}
             />
 
-            <Tooltip title="Importer un document">
-              <IconButton
-                onClick={() => navigate('/ai-chat/document-import')}
-                disabled={loading}
-                size="small"
-                sx={{ color: 'text.secondary' }}
-              >
-                <DocumentScanner sx={{ fontSize: 20 }} />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={t('aiChat:input.voiceMessage')}>
-              <span>
-                <IconButton
-                  onClick={() => setVoiceRecorderOpen(true)}
-                  disabled={loading}
-                  size="small"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  <Mic sx={{ fontSize: 20 }} />
-                </IconButton>
-              </span>
-            </Tooltip>
-
             <IconButton
               onClick={() => handleSendMessage()}
               disabled={loading || !message.trim()}
               sx={{
+                mb: 0.5,
                 bgcolor: 'primary.main',
                 color: 'white',
-                width: 36,
-                height: 36,
-                '&:hover': { bgcolor: 'primary.dark' },
+                width: 40,
+                height: 40,
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                  transform: 'scale(1.05)',
+                  boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.6)}`
+                },
                 '&.Mui-disabled': {
                   bgcolor: isDark ? alpha(theme.palette.common.white, 0.1) : '#e2e8f0',
                   color: isDark ? alpha(theme.palette.common.white, 0.3) : '#94a3b8',
+                  boxShadow: 'none'
                 },
               }}
             >
-              <Send sx={{ fontSize: 18 }} />
+              {loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <Send sx={{ fontSize: 20, ml: 0.5 }} />
+              )}
             </IconButton>
-          </Box>
+          </Paper>
         </Box>
 
         {/* Enregistrement vocal */}

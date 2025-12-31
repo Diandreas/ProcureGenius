@@ -22,6 +22,7 @@ import {
   Tooltip,
   alpha,
   Badge,
+  Divider,
 } from '@mui/material';
 import {
   Add,
@@ -157,20 +158,9 @@ function MainLayout() {
 
   const fetchUserPermissions = async () => {
     try {
-      // #region agent log
-      const requestUrl = '/api/v1/accounts/profile/';
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainLayout.jsx:156', message: 'Before fetch profile request', data: { requestUrl, origin: window.location.origin }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
-      }
-      // #endregion
-      const response = await fetch(requestUrl, {
+      const response = await fetch('/api/v1/accounts/profile/', {
         headers: { 'Authorization': `Token ${localStorage.getItem('authToken')}` },
       });
-      // #region agent log
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainLayout.jsx:159', message: 'After fetch profile response', data: { status: response.status, statusText: response.statusText, ok: response.ok }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
-      }
-      // #endregion
       if (response.ok) {
         const data = await response.json();
         setUserPermissions(data.permissions);
@@ -319,15 +309,22 @@ function MainLayout() {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      bgcolor: 'background.paper',
+      // Liquid Glass Effect
+      bgcolor: alpha(theme.palette.background.paper, mode === 'dark' ? 0.6 : 0.8),
+      backdropFilter: 'blur(20px)',
+      background: mode === 'dark'
+        ? `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.8)} 100%)`
+        : `linear-gradient(160deg, ${alpha('#ffffff', 0.9)} 0%, ${alpha('#f8fafc', 0.85)} 100%)`,
+      borderRight: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+      boxShadow: `inset -1px 0 0 ${alpha(theme.palette.common.white, mode === 'dark' ? 0.05 : 0.5)}`, // Inner shimmer
     }}>
       {/* Logo */}
       <Box sx={{
-        px: 2,
-        py: 2,
+        px: 3,
+        py: 3,
         display: 'flex',
         alignItems: 'center',
-        gap: 1.5,
+        gap: 2,
       }}>
         <Box
           component="img"
@@ -337,20 +334,21 @@ function MainLayout() {
             e.target.style.display = 'none';
             if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
           }}
-          sx={{ width: 32, height: 32, objectFit: 'contain' }}
+          sx={{ width: 36, height: 36, objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
         />
         <Box
           sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            bgcolor: 'primary.main',
+            width: 36,
+            height: 36,
+            borderRadius: 2,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             display: 'none',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontWeight: 700,
-            fontSize: '0.875rem',
+            fontWeight: 800,
+            fontSize: '1rem',
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
           }}
         >
           P
@@ -358,9 +356,12 @@ function MainLayout() {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 700,
-            fontSize: '1rem',
-            color: 'text.primary',
+            fontWeight: 800,
+            fontSize: '1.25rem',
+            background: `linear-gradient(to right, ${theme.palette.text.primary}, ${theme.palette.text.secondary})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.02em',
           }}
         >
           Procura
@@ -368,41 +369,60 @@ function MainLayout() {
       </Box>
 
       {/* Navigation */}
-      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 1, px: 1 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
         <List disablePadding>
           {menuItems.filter(item => item.isCore || hasModule(item.moduleId)).map((item) => {
             const isSelected = location.pathname === item.path ||
               (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
             return (
-              <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
+              <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton
                   selected={isSelected}
                   onClick={() => handleModuleClick(item)}
                   data-tutorial={`menu-${item.moduleId}`}
                   sx={{
-                    minHeight: 40,
-                    px: 1.5,
-                    borderRadius: 1.5,
+                    minHeight: 48,
+                    px: 2,
+                    borderRadius: 3,
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      transform: 'translateX(4px)',
+                    },
                     '&.Mui-selected': {
-                      bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.15 : 0.08),
-                      '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                      bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        height: '50%',
+                        width: 4,
+                        borderRadius: '0 4px 4px 0',
+                        bgcolor: 'primary.main',
+                      },
+                      '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 700 },
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36 }}>
+                  <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
                     <IconImage
                       src={item.iconSrc}
                       alt={item.text}
-                      size={20}
+                      size={22}
                       withBackground={mode === 'dark'}
+                      style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
                     />
                   </ListItemIcon>
                   <ListItemText
                     primary={item.text}
                     primaryTypographyProps={{
-                      fontSize: '0.813rem',
-                      fontWeight: isSelected ? 600 : 500,
+                      fontSize: '0.9rem',
+                      fontWeight: isSelected ? 700 : 500,
                       color: isSelected ? 'primary.main' : 'text.secondary',
                     }}
                   />
@@ -414,30 +434,33 @@ function MainLayout() {
       </Box>
 
       {/* Bottom Section */}
-      <Box sx={{ px: 1, pb: 2 }}>
+      <Box sx={{ px: 2, pb: 3 }}>
         {userPermissions?.can_manage_users && (
-          <ListItem disablePadding sx={{ mb: 0.25 }}>
+          <ListItem disablePadding sx={{ mb: 1 }}>
             <ListItemButton
               onClick={() => navigate('/settings/users')}
-              sx={{ minHeight: 40, px: 1.5, borderRadius: 1.5 }}
+              sx={{
+                minHeight: 48, px: 2, borderRadius: 3,
+                '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+              }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
+              <ListItemIcon sx={{ minWidth: 40 }}>
                 {mode === 'dark' ? (
                   <Box sx={{
-                    width: 28, height: 28, borderRadius: '6px',
+                    width: 30, height: 30, borderRadius: '8px',
                     bgcolor: '#fef7ed',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <SupervisorAccount sx={{ fontSize: 18, color: '#475569' }} />
                   </Box>
                 ) : (
-                  <SupervisorAccount sx={{ fontSize: 20, color: 'text.secondary' }} />
+                  <SupervisorAccount sx={{ fontSize: 22, color: 'text.secondary' }} />
                 )}
               </ListItemIcon>
               <ListItemText
                 primary={t('navigation:menu.users')}
-                primaryTypographyProps={{ fontSize: '0.813rem', fontWeight: 500, color: 'text.secondary' }}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
               />
             </ListItemButton>
           </ListItem>
@@ -446,19 +469,22 @@ function MainLayout() {
           <ListItemButton
             onClick={() => navigate('/settings')}
             data-tutorial="menu-settings"
-            sx={{ minHeight: 40, px: 1.5, borderRadius: 1.5 }}
+            sx={{
+              minHeight: 48, px: 2, borderRadius: 3,
+              '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+            }}
           >
-            <ListItemIcon sx={{ minWidth: 36 }}>
+            <ListItemIcon sx={{ minWidth: 40 }}>
               <IconImage
                 src="/icon/setting.png"
                 alt="Settings"
-                size={20}
+                size={22}
                 withBackground={mode === 'dark'}
               />
             </ListItemIcon>
             <ListItemText
               primary={t('navigation:menu.settings')}
-              primaryTypographyProps={{ fontSize: '0.813rem', fontWeight: 500, color: 'text.secondary' }}
+              primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
             />
           </ListItemButton>
         </ListItem>
@@ -469,142 +495,152 @@ function MainLayout() {
   return (
     <AINotificationProvider>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Top Bar */}
+        {/* Top Bar - Liquid Glass Design */}
         <AppBar
           position="fixed"
           elevation={0}
           sx={{
             width: { md: `calc(100% - ${drawerWidth}px)` },
             ml: { md: `${drawerWidth}px` },
-            bgcolor: alpha(theme.palette.background.paper, 0.8),
-            backdropFilter: 'blur(12px)',
+            // Liquid Glass Style
+            bgcolor: alpha(theme.palette.background.paper, mode === 'dark' ? 0.6 : 0.65),
+            backdropFilter: 'blur(20px) saturate(180%)',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            boxShadow: mode === 'dark'
+              ? '0 4px 30px rgba(0, 0, 0, 0.4)'
+              : '0 4px 30px rgba(0, 0, 0, 0.03)',
             color: 'text.primary',
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            // Inner shine for 3D liquid feel
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 'inherit',
+              pointerEvents: 'none',
+              boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, mode === 'dark' ? 0.05 : 0.4)}`,
+            }
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 }, px: { xs: 2, sm: 3 } }}>
+          <Toolbar sx={{ minHeight: { xs: 64, sm: 64 }, px: { xs: 2.5, sm: 4 }, gap: 1 }}>
+
+            {/* Mobile Menu Toggle - Only show on small tablets, not on phones */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { xs: 'none', sm: 'block', md: 'none' }, borderRadius: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Titre de la page - Simple et Clean */}
             <Typography
               variant="h6"
               noWrap
               sx={{
                 flexGrow: 1,
                 fontWeight: 600,
-                fontSize: '0.938rem',
+                fontSize: '1.1rem',
                 color: 'text.primary',
+                letterSpacing: '-0.01em',
               }}
             >
               {contextualActions?.title || 'Procura'}
             </Typography>
 
-            {/* Boutons AI Chat dans la toolbar */}
+            {/* Actions AI Chat - Style Discret */}
             {isAIChatPage && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
-                {/* Import Reviews */}
-                <Tooltip title="Imports en attente">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>
+                <Tooltip title="Imports">
                   <IconButton
                     size="small"
                     onClick={handleAIChatImportReviewsClick}
                     sx={{
-                      p: 0.75,
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.action.hover, 0.05),
-                      }
+                      p: 1,
+                      borderRadius: 2,
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: alpha(theme.palette.success.main, 0.08), color: 'success.main' }
                     }}
                   >
-                    <Assignment sx={{ fontSize: 18, color: '#10b981' }} />
+                    <Assignment sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
 
-                {/* Notifications */}
-                <Tooltip title="Notifications IA">
+                <Tooltip title="Notifications">
                   <IconButton
                     size="small"
                     onClick={handleAIChatNotificationsClick}
                     sx={{
-                      p: 0.75,
-                      bgcolor: aiChatStats?.notifications_count > 0
-                        ? alpha('#f59e0b', 0.15)
-                        : 'transparent',
-                      '&:hover': {
-                        bgcolor: aiChatStats?.notifications_count > 0
-                          ? alpha('#f59e0b', 0.25)
-                          : alpha(theme.palette.action.hover, 0.05),
-                      }
+                      p: 1,
+                      borderRadius: 2,
+                      color: aiChatStats?.notifications_count > 0 ? 'warning.main' : 'text.secondary',
+                      '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.08) }
                     }}
                   >
-                    <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" max={9}>
-                      <Notifications sx={{ fontSize: 18 }} />
+                    <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" variant="dot">
+                      <Notifications sx={{ fontSize: 20 }} />
                     </Badge>
                   </IconButton>
                 </Tooltip>
 
-                {/* Suggestions */}
-                <Tooltip title="Suggestions actives">
+                <Tooltip title="Suggestions">
                   <IconButton
                     size="small"
                     onClick={handleAIChatSuggestionsClick}
                     sx={{
-                      p: 0.75,
-                      bgcolor: aiChatStats?.suggestions_count > 0
-                        ? alpha('#8b5cf6', 0.15)
-                        : 'transparent',
-                      '&:hover': {
-                        bgcolor: aiChatStats?.suggestions_count > 0
-                          ? alpha('#8b5cf6', 0.25)
-                          : alpha(theme.palette.action.hover, 0.05),
-                      }
+                      p: 1,
+                      borderRadius: 2,
+                      color: aiChatStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary',
+                      '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) }
                     }}
                   >
-                    <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" max={9}>
-                      <Lightbulb sx={{ fontSize: 18 }} />
+                    <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" variant="dot">
+                      <Lightbulb sx={{ fontSize: 20 }} />
                     </Badge>
-                  </IconButton>
-                </Tooltip>
-
-                {/* Burger menu pour conversations */}
-                <Tooltip title="Historique des conversations">
-                  <IconButton
-                    size="small"
-                    onClick={handleAIChatConversationsClick}
-                    sx={{
-                      p: 0.75,
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.action.hover, 0.05),
-                      }
-                    }}
-                  >
-                    <MenuIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Tooltip>
               </Box>
             )}
 
-            {/* Period controls for dashboard */}
+            {/* Period Controls - Clean Tabs Style */}
             {contextualActions?.periodControls && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mr: 3,
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                p: 0.5
+              }}>
                 {['last_7_days', 'last_30_days', 'this_month'].map((period, i) => (
                   <Button
                     key={period}
                     size="small"
                     onClick={() => contextualActions.onPeriodChange(period)}
-                    variant={contextualActions.currentPeriod === period ? 'contained' : 'text'}
                     sx={{
                       minWidth: 'auto',
-                      px: 1,
+                      px: 2,
                       py: 0.5,
-                      fontSize: '0.688rem',
-                      borderRadius: 1,
+                      fontSize: '0.75rem',
+                      borderRadius: 1.5,
                       fontWeight: 500,
-                      color: contextualActions.currentPeriod === period ? 'white' : 'text.secondary',
+                      color: contextualActions.currentPeriod === period ? 'text.primary' : 'text.secondary',
+                      bgcolor: contextualActions.currentPeriod === period ? alpha(theme.palette.action.active, 0.08) : 'transparent',
+                      '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
                     }}
                   >
                     {['7j', '30j', 'Mois'][i]}
                   </Button>
                 ))}
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
                 <Tooltip title="Actualiser">
                   <IconButton
                     onClick={contextualActions.onRefresh}
                     size="small"
-                    sx={{ ml: 0.5, color: 'text.secondary' }}
+                    sx={{ p: 0.5, color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                   >
                     <Refresh sx={{ fontSize: 18 }} />
                   </IconButton>
@@ -612,103 +648,126 @@ function MainLayout() {
               </Box>
             )}
 
-            {/* Actions */}
+            {/* Contextual Actions - Boutons Rectangles Adoucis */}
             {contextualActions?.actions?.map((action, index) => (
               action.isIconOnly ? (
                 <Tooltip key={index} title={action.tooltip || action.label}>
-                  <IconButton onClick={action.onClick} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
+                  <IconButton
+                    onClick={action.onClick}
+                    size="small"
+                    sx={{
+                      color: 'text.secondary',
+                      mr: 1,
+                      p: 1,
+                      borderRadius: 2,
+                      '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) }
+                    }}
+                  >
                     {action.icon}
                   </IconButton>
                 </Tooltip>
               ) : (
                 <Button
                   key={index}
-                  variant="contained"
+                  variant="outlined"
                   startIcon={action.icon}
                   onClick={action.onClick}
                   size="small"
-                  sx={{ borderRadius: 1.5, fontWeight: 500, px: 1.5, py: 0.5, fontSize: '0.75rem', mr: 0.5 }}
+                  sx={{
+                    borderRadius: 2, // Radius 8px standard
+                    fontWeight: 600,
+                    px: 2,
+                    py: 0.8,
+                    fontSize: '0.875rem',
+                    mr: 1.5,
+                    textTransform: 'none',
+                    borderColor: theme.palette.divider,
+                    color: 'text.primary',
+                    '&:hover': {
+                      borderColor: theme.palette.primary.main,
+                      bgcolor: alpha(theme.palette.primary.main, 0.04)
+                    }
+                  }}
                 >
                   {action.label}
                 </Button>
               )
             ))}
 
-            {/* Legacy action support - Label court sur mobile */}
+            {/* Legacy Primary Action - Solid Button */}
             {contextualActions?.action && !contextualActions?.actions && (
               <Button
                 variant="contained"
                 startIcon={contextualActions.action.icon}
                 onClick={contextualActions.action.onClick}
-                size="small"
                 disableElevation
                 sx={{
                   borderRadius: 2,
                   fontWeight: 600,
-                  px: { xs: 1.5, sm: 2 },
-                  py: 0.75,
-                  fontSize: '0.813rem',
-                  mr: 1.5,
+                  px: 3,
+                  py: 1,
+                  fontSize: '0.875rem',
+                  mr: 2,
                   bgcolor: 'primary.main',
                   color: 'white',
                   textTransform: 'none',
-                  letterSpacing: '0.01em',
                   '&:hover': {
                     bgcolor: 'primary.dark',
-                  },
+                  }
                 }}
               >
                 {isMobile ? t('navigation:topBar.new', 'Nouveau') : (contextualActions.action.label || t('navigation:topBar.new', 'Nouveau'))}
               </Button>
             )}
 
-            {/* Bouton Rapport PDF - Label court sur mobile */}
+            {/* Report Button */}
             {reportAction && (
-              <Button
-                variant="outlined"
-                startIcon={<PictureAsPdf fontSize="small" />}
+              <IconButton
                 onClick={reportAction.onClick}
-                size="small"
                 sx={{
+                  mr: 2,
                   borderRadius: 2,
-                  fontWeight: 500,
-                  px: { xs: 1.5, sm: 1.5 },
-                  py: 0.75,
-                  fontSize: '0.813rem',
-                  mr: 1.5,
-                  borderColor: 'text.secondary',
-                  color: 'text.primary',
-                  textTransform: 'none',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    bgcolor: alpha(theme.palette.primary.main, mode === 'dark' ? 0.1 : 0.05),
-                  },
+                  color: 'text.secondary',
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 1,
+                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.05), borderColor: 'text.primary' }
                 }}
               >
-                {isMobile ? t('navigation:topBar.report', 'Rapport') : reportAction.label}
-              </Button>
+                <PictureAsPdf sx={{ fontSize: 20 }} />
+              </IconButton>
             )}
 
             {/* Theme Toggle */}
             <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
-              <IconButton onClick={toggleColorMode} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
-                {mode === 'dark' ? <LightMode sx={{ fontSize: 20 }} /> : <DarkMode sx={{ fontSize: 20 }} />}
+              <IconButton
+                onClick={toggleColorMode}
+                sx={{
+                  color: 'text.secondary',
+                  mr: 1,
+                  p: 1,
+                  borderRadius: 2,
+                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+                }}
+              >
+                {mode === 'dark' ? <LightMode sx={{ fontSize: 22 }} /> : <DarkMode sx={{ fontSize: 22 }} />}
               </IconButton>
             </Tooltip>
 
-            {/* Tutorial Button */}
-            <TutorialButton variant="icon" size="small" />
-
-            {/* User Avatar */}
-            <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 0.5 }} data-tutorial="profile-menu">
+            {/* User Profile - Minimalist */}
+            <IconButton
+              onClick={handleMenuClick}
+              sx={{ ml: 0.5, p: 0.5 }}
+              data-tutorial="profile-menu"
+            >
               <Avatar
                 sx={{
-                  width: 34,
-                  height: 34,
-                  bgcolor: 'primary.main',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
+                  width: 38,
+                  height: 38,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
                 }}
               >
                 {useSelector((state) => {
@@ -730,22 +789,28 @@ function MainLayout() {
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               PaperProps={{
-                sx: { mt: 1, minWidth: 180 },
+                elevation: 3,
+                sx: {
+                  mt: 1.5,
+                  minWidth: 200,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
+                },
               }}
             >
               <MenuItem
                 onClick={() => { navigate('/settings'); handleMenuClose(); }}
-                data-tutorial="menu-settings-profile"
-                sx={{ py: 1, px: 2, fontSize: '0.813rem' }}
+                sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
               >
-                <ListItemIcon>
-                  <IconImage src="/icon/setting.png" alt="Settings" size={18} withBackground={mode === 'dark'} />
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <Tune fontSize="small" />
                 </ListItemIcon>
                 {t('navigation:userMenu.settings')}
               </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ py: 1, px: 2, fontSize: '0.813rem' }}>
-                <ListItemIcon>
-                  <IconImage src="/icon/logout.png" alt="Logout" size={18} withBackground={mode === 'dark'} />
+              <Divider sx={{ my: 0.5 }} />
+              <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5, color: 'error.main' }}>
+                <ListItemIcon sx={{ minWidth: 32, color: 'error.main' }}>
+                  <Box component="span" sx={{ fontSize: 20 }}>⏻</Box>
                 </ListItemIcon>
                 {t('navigation:userMenu.logout')}
               </MenuItem>

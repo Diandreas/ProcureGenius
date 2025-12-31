@@ -595,21 +595,9 @@ function App() {
         return;
       }
 
-      // #region agent log
-      const requestUrl = '/api/v1/accounts/profile/';
-      const fullUrl = window.location.origin + requestUrl;
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'App.jsx:594', message: 'Before fetch request', data: { requestUrl, fullUrl, origin: window.location.origin, protocol: window.location.protocol, host: window.location.host }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
-      }
-      // #endregion
-      const response = await fetch(requestUrl, {
+      const response = await fetch('/api/v1/accounts/profile/', {
         headers: { 'Authorization': `Token ${authToken}` },
       });
-      // #region agent log
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'App.jsx:598', message: 'After fetch response', data: { status: response.status, statusText: response.statusText, ok: response.ok, url: response.url }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
-      }
-      // #endregion
 
       if (response.ok) {
         const data = await response.json();

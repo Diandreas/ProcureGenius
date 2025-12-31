@@ -136,13 +136,9 @@ const SimpleTutorial = () => {
                     return;
                 }
 
-                // #region agent log
                 const profileUrl = '/api/v1/accounts/profile/';
                 const statsUrl = '/api/v1/dashboard/stats/';
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'SimpleTutorial.jsx:140', message: 'Before parallel fetch requests', data: { profileUrl, statsUrl, origin: window.location.origin }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
-                }
-                // #endregion
+
                 // Charger depuis plusieurs sources pour être sûr
                 const [profileResponse, statsResponse] = await Promise.allSettled([
                     fetch(profileUrl, {
@@ -152,11 +148,6 @@ const SimpleTutorial = () => {
                         headers: { 'Authorization': `Token ${authToken}` },
                     }),
                 ]);
-                // #region agent log
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'SimpleTutorial.jsx:148', message: 'After parallel fetch responses', data: { profileStatus: profileResponse.status, profileOk: profileResponse.value?.ok, statsStatus: statsResponse.status, statsOk: statsResponse.value?.ok }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
-                }
-                // #endregion
 
                 let modules = [];
 

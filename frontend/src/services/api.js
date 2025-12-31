@@ -30,12 +30,6 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    // #region agent log
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const fullUrl = (config.baseURL || '') + (config.url || '');
-      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:15', message: 'Axios request interceptor', data: { baseURL: config.baseURL, url: config.url, fullUrl, method: config.method, origin: window.location.origin }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-    }
-    // #endregion
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
@@ -57,20 +51,8 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => {
-    // #region agent log
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:37', message: 'Axios response success', data: { status: response.status, url: response.config.url, baseURL: response.config.baseURL }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-    }
-    // #endregion
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // #region agent log
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      fetch('http://127.0.0.1:7242/ingest/dfaf7dec-d0bf-4b5b-b3ba-9ed78f29cc9a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.js:42', message: 'Axios response error', data: { status: error.response?.status, statusText: error.response?.statusText, url: error.config?.url, baseURL: error.config?.baseURL, message: error.message }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-    }
-    // #endregion
     if (error.response?.status === 401) {
       // Redirect to login if unauthorized
       localStorage.removeItem('authToken');
