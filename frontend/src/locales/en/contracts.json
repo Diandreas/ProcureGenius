@@ -130,6 +130,7 @@
     }
   },
   "messages": {
+    "loading": "Loading contracts...",
     "loadingError": "Error loading contracts",
     "createSuccess": "Contract created successfully",
     "createError": "Error creating contract",

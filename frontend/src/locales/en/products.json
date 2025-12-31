@@ -101,7 +101,12 @@
     },
     "tooltips": {
         "editProduct": "Edit Product",
-        "deleteProduct": "Delete Product"
+        "deleteProduct": "Delete Product",
+        "downloadPdfReport": "Download PDF Report"
+    },
+    "pdf": {
+        "title": "Product PDF Report",
+        "description": "Generating PDF report..."
     },
     "status": {
         "available": "Available",

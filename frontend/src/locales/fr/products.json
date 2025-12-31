@@ -108,7 +108,12 @@
     },
     "tooltips": {
         "editProduct": "Modifier le produit",
-        "deleteProduct": "Supprimer le produit"
+        "deleteProduct": "Supprimer le produit",
+        "downloadPdfReport": "Télécharger le rapport PDF"
+    },
+    "pdf": {
+        "title": "Rapport PDF Produit",
+        "description": "Génération du rapport PDF..."
     },
     "status": {
         "available": "Disponible",

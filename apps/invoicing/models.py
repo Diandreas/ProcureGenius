@@ -67,6 +67,7 @@ class Warehouse(models.Model):
     postal_code = models.CharField(max_length=20, blank=True, verbose_name=_("Code postal"))
     country = models.CharField(max_length=100, default='Canada', verbose_name=_("Pays"))
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    is_default = models.BooleanField(default=False, verbose_name=_("Entrepôt par défaut"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

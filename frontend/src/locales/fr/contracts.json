@@ -130,6 +130,7 @@
     }
   },
   "messages": {
+    "loading": "Chargement des contrats...",
     "loadingError": "Erreur lors du chargement des contrats",
     "createSuccess": "Contrat créé avec succès",
     "createError": "Erreur lors de la création du contrat",
