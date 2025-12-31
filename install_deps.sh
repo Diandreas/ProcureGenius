@@ -39,7 +39,7 @@ pip install pandas openpyxl xlrd numpy
 pip install fuzzywuzzy python-Levenshtein jellyfish rapidfuzz
 
 # PDF et génération de code QR
-pip install reportlab weasyprint django-weasyprint xhtml2pdf qrcode
+pip install weasyprint django-weasyprint xhtml2pdf qrcode
 
 # Serveur
 pip install gunicorn

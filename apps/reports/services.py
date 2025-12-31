@@ -106,105 +106,40 @@ class SupplierReportService(BaseReportService):
     def _generate_pdf(self, data):
         """Générer un PDF"""
         try:
-            from reportlab.lib.pagesizes import A4, letter
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.units import inch
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-            from reportlab.lib import colors
+            from weasyprint import HTML, CSS
+            from django.template.loader import render_to_string
+            from django.conf import settings
 
-            buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=A4)
-            story = []
-            styles = getSampleStyleSheet()
+            # Préparer le contexte pour le template
+            context = {
+                'supplier': data['supplier'],
+                'total_orders': data['total_orders'],
+                'total_amount': data['total_amount'],
+                'avg_order_value': data['avg_order_value'],
+                'orders': data['orders'],
+                'date_start': data['date_start'],
+                'date_end': data['date_end'],
+                'generated_at': data['generated_at'],
+                # Ajouter les données nécessaires pour le template existant
+                'total_spent': data['total_amount'],
+                'po_by_status': [],  # On peut ajouter cette logique si nécessaire
+                'top_products': [],  # On peut ajouter cette logique si nécessaire
+                'recent_activity': data['orders'][:20],  # Utiliser les commandes comme activité récente
+                'organization': getattr(data['supplier'], 'organization', None),  # Si disponible
+            }
 
-            # Title
-            title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=colors.HexColor('#1976d2'),
-                spaceAfter=30,
-            )
-            story.append(Paragraph(f"Rapport Fournisseur: {data['supplier'].name}", title_style))
-            story.append(Spacer(1, 0.2 * inch))
+            # Rendu HTML
+            html_string = render_to_string('reports/pdf/supplier_report.html', context)
 
-            # Informations générales
-            info_data = [
-                ['Fournisseur', data['supplier'].name],
-                ['Email', data['supplier'].email or 'N/A'],
-                ['Téléphone', data['supplier'].phone or 'N/A'],
-                ['Ville', data['supplier'].city or 'N/A'],
-                ['Note', f"{data['supplier'].rating}/5" if data['supplier'].rating else 'N/A'],
-            ]
+            # Générer le PDF avec WeasyPrint
+            html = HTML(string=html_string, base_url=settings.BASE_DIR)
+            pdf_bytes = html.write_pdf()
 
-            info_table = Table(info_data, colWidths=[2*inch, 4*inch])
-            info_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.grey),
-                ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            story.append(info_table)
-            story.append(Spacer(1, 0.3 * inch))
-
-            # Statistiques
-            story.append(Paragraph("Statistiques", styles['Heading2']))
-            stats_data = [
-                ['Métrique', 'Valeur'],
-                ['Nombre de commandes', str(data['total_orders'])],
-                ['Montant total', f"{data['total_amount']:.2f} $"],
-                ['Valeur moyenne par commande', f"{data['avg_order_value']:.2f} $"],
-            ]
-
-            stats_table = Table(stats_data, colWidths=[3*inch, 3*inch])
-            stats_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            story.append(stats_table)
-            story.append(Spacer(1, 0.3 * inch))
-
-            # Dernières commandes
-            if data['orders'].exists():
-                story.append(Paragraph("Dernières commandes (max 20)", styles['Heading2']))
-                orders_data = [['N° BC', 'Date', 'Statut', 'Montant']]
-                for order in data['orders']:
-                    orders_data.append([
-                        order.po_number,
-                        order.created_at.strftime('%Y-%m-%d'),
-                        order.get_status_display(),
-                        f"{order.total_amount:.2f} $"
-                    ])
-
-                orders_table = Table(orders_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-                orders_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 9),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                ]))
-                story.append(orders_table)
-
-            # Build PDF
-            doc.build(story)
-            pdf_content = buffer.getvalue()
-            buffer.close()
-            return pdf_content
+            return pdf_bytes
 
         except ImportError:
-            # Fallback si reportlab n'est pas installé
-            return b"PDF generation requires reportlab. Please install: pip install reportlab"
+            # Fallback si weasyprint n'est pas installé
+            return b"PDF generation requires weasyprint. Please install: pip install weasyprint"
 
     def _generate_excel(self, data):
         """Générer un fichier Excel"""

@@ -677,49 +677,28 @@ def aging_report(request):
 # ===== FONCTIONS UTILITAIRES =====
 
 def _generate_invoice_pdf(invoice):
-    """Génère le PDF de la facture"""
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
+    """Génère le PDF de la facture avec WeasyPrint"""
+    from weasyprint import HTML, CSS
+    from django.template.loader import render_to_string
+    from django.conf import settings
     from io import BytesIO
-    
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    
-    # En-tête facture
-    p.drawString(100, 750, f"FACTURE {invoice.number}")
-    p.drawString(100, 730, f"Date: {invoice.invoice_date}")
-    p.drawString(100, 710, f"Échéance: {invoice.due_date}")
-    
-    # Client
-    p.drawString(100, 670, "FACTURÉ À:")
-    p.drawString(100, 650, invoice.client.name)
-    
-    # Lignes
-    y = 600
-    p.drawString(100, y, "ARTICLES:")
-    y -= 20
-    
-    for item in invoice.items.all():
-        p.drawString(100, y, item.description)
-        p.drawString(300, y, f"Qté: {item.quantity}")
-        p.drawString(400, y, f"Prix: {item.unit_price}")
-        p.drawString(500, y, f"Total: {item.total_price}")
-        y -= 20
-    
-    # Total
-    y -= 20
-    p.drawString(400, y, f"TOTAL: {invoice.total_amount}")
-    
-    # Lien PayPal si applicable
-    if invoice.get_balance_due().amount > 0:
-        y -= 40
-        p.drawString(100, y, "Payez en ligne avec PayPal:")
-        p.drawString(100, y-15, invoice.get_paypal_payment_url())
-    
-    p.showPage()
-    p.save()
-    
+
+    # Préparer le contexte pour le template
+    context = {
+        'invoice': invoice,
+    }
+
+    # Utiliser un template existant pour les factures
+    html_string = render_to_string('invoicing/pdf_templates/invoice_modern.html', context)
+
+    # Générer le PDF avec WeasyPrint
+    html = HTML(string=html_string, base_url=settings.BASE_DIR)
+    pdf_bytes = html.write_pdf()
+
+    # Convertir en BytesIO pour compatibilité
+    buffer = BytesIO(pdf_bytes)
     buffer.seek(0)
+
     return buffer.getvalue()
 
 

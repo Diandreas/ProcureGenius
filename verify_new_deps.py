@@ -50,7 +50,6 @@ def main():
         ("Python Levenshtein", "Levenshtein"),
         ("Jellyfish", "jellyfish"),
         ("RapidFuzz", "rapidfuzz"),
-        ("ReportLab", "reportlab"),
         ("WeasyPrint", "weasyprint"),
         ("Django WeasyPrint", "django_weasyprint"),
         ("XHTML2PDF", "xhtml2pdf"),

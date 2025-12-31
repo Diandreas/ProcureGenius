@@ -689,43 +689,28 @@ def _get_required_approval_level(amount):
 
 
 def _generate_purchase_order_pdf(purchase_order):
-    """Génère le PDF du bon de commande"""
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
+    """Génère le PDF du bon de commande avec WeasyPrint"""
+    from weasyprint import HTML, CSS
+    from django.template.loader import render_to_string
+    from django.conf import settings
     from io import BytesIO
-    
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    
-    # En-tête
-    p.drawString(100, 750, f"BON DE COMMANDE {purchase_order.number}")
-    p.drawString(100, 730, f"Date: {purchase_order.order_date}")
-    
-    # Fournisseur
-    p.drawString(100, 690, "FOURNISSEUR:")
-    p.drawString(100, 670, purchase_order.supplier.name)
-    p.drawString(100, 650, purchase_order.supplier.get_full_address())
-    
-    # Lignes de commande
-    y = 600
-    p.drawString(100, y, "ARTICLES COMMANDÉS:")
-    y -= 20
-    
-    for item in purchase_order.items.all():
-        p.drawString(100, y, f"{item.description}")
-        p.drawString(300, y, f"Qté: {item.quantity}")
-        p.drawString(400, y, f"Prix: {item.unit_price}")
-        p.drawString(500, y, f"Total: {item.total_price}")
-        y -= 20
-    
-    # Total
-    y -= 20
-    p.drawString(400, y, f"TOTAL: {purchase_order.total_amount}")
-    
-    p.showPage()
-    p.save()
-    
+
+    # Préparer le contexte pour le template
+    context = {
+        'purchase_order': purchase_order,
+    }
+
+    # Utiliser un template existant pour les bons de commande
+    html_string = render_to_string('purchase_orders/pdf_templates/po_modern.html', context)
+
+    # Générer le PDF avec WeasyPrint
+    html = HTML(string=html_string, base_url=settings.BASE_DIR)
+    pdf_bytes = html.write_pdf()
+
+    # Convertir en BytesIO pour compatibilité
+    buffer = BytesIO(pdf_bytes)
     buffer.seek(0)
+
     return buffer.getvalue()
 
 

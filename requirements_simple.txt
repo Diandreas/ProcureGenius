@@ -42,7 +42,6 @@ PyJWT==2.8.0
 
 # Utilitaires
 Pillow==10.2.0
-reportlab==4.1.0
 pandas==2.2.1
 requests==2.31.0
 python-dateutil==2.9.0

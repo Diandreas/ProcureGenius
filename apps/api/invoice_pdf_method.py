@@ -8,13 +8,13 @@ def generate_pdf(self, request, pk=None):
     """Générer un PDF de la facture"""
     try:
         from django.http import HttpResponse
-        from .services.pdf_generator import generate_invoice_pdf
+        from .services.pdf_generator_weasy import generate_invoice_pdf_weasy
 
         invoice = self.get_object()
         template_type = request.data.get('template', 'classic')
 
-        # Générer le PDF
-        pdf_buffer = generate_invoice_pdf(invoice, template_type)
+        # Générer le PDF avec WeasyPrint
+        pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type)
 
         # Créer la réponse HTTP avec le PDF
         response = HttpResponse(

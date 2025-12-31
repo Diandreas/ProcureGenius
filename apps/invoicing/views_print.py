@@ -264,20 +264,8 @@ def print_history_view(request):
 def download_invoice_pdf(request, invoice_id):
     """Télécharger la facture en PDF"""
     try:
-        # Importer weasyprint ou reportlab selon la disponibilité
-        try:
-            from weasyprint import HTML, CSS
-            USE_WEASYPRINT = True
-        except ImportError:
-            try:
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import letter
-                USE_WEASYPRINT = False
-            except ImportError:
-                return HttpResponse(
-                    "Aucune bibliothèque PDF disponible. Installez weasyprint ou reportlab.",
-                    status=500
-                )
+        # Toujours utiliser WeasyPrint
+        from weasyprint import HTML, CSS
 
         invoice = get_object_or_404(Invoice, id=invoice_id)
 
@@ -285,47 +273,39 @@ def download_invoice_pdf(request, invoice_id):
         if not (request.user == invoice.created_by or request.user.is_staff):
             raise Http404("Facture non trouvée")
 
-        if USE_WEASYPRINT:
-            # Récupérer les paramètres de l'organisation
-            from apps.core.models import OrganizationSettings
-            org_settings = None
-            if request.user.organization:
-                org_settings = OrganizationSettings.objects.filter(
-                    organization=request.user.organization
-                ).first()
+        # Récupérer les paramètres de l'organisation
+        from apps.core.models import OrganizationSettings
+        org_settings = None
+        if request.user.organization:
+            org_settings = OrganizationSettings.objects.filter(
+                organization=request.user.organization
+            ).first()
 
-            # Générer le HTML
-            html_content = render_to_string('invoicing/print_invoice.html', {
-                'invoice': invoice,
-                'template': PrintTemplate.objects.filter(
-                    template_type='invoice', is_default=True
-                ).first(),
-                'config': PrintConfiguration.objects.filter(is_default=True).first(),
-                'org_settings': org_settings
-            }, request=request)
+        # Générer le HTML
+        html_content = render_to_string('invoicing/print_invoice.html', {
+            'invoice': invoice,
+            'template': PrintTemplate.objects.filter(
+                template_type='invoice', is_default=True
+            ).first(),
+            'config': PrintConfiguration.objects.filter(is_default=True).first(),
+            'org_settings': org_settings
+        }, request=request)
 
-            # Convertir en PDF
-            html_doc = HTML(string=html_content, base_url=request.build_absolute_uri())
-            pdf_content = html_doc.write_pdf()
+        # Convertir en PDF
+        html_doc = HTML(string=html_content, base_url=request.build_absolute_uri())
+        pdf_content = html_doc.write_pdf()
 
-            # Retourner la réponse PDF
-            response = HttpResponse(pdf_content, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
+        # Retourner la réponse PDF
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
 
-            return response
-        else:
-            # Fallback avec reportlab (basique)
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
+        return response
 
-            p = canvas.Canvas(response, pagesize=letter)
-            p.drawString(100, 750, f"Facture {invoice.invoice_number}")
-            p.drawString(100, 730, f"Total: {invoice.total_amount} {invoice.currency}")
-            p.showPage()
-            p.save()
-
-            return response
-
+    except ImportError:
+        return HttpResponse(
+            "La bibliothèque weasyprint est requise pour la génération de PDF. Installez: pip install weasyprint",
+            status=500
+        )
     except Exception as e:
         return HttpResponse(f"Erreur lors de la génération du PDF: {str(e)}", status=500)
 
@@ -334,20 +314,8 @@ def download_invoice_pdf(request, invoice_id):
 def download_purchase_order_pdf(request, po_id):
     """Télécharger le bon de commande en PDF"""
     try:
-        # Même logique que pour les factures
-        try:
-            from weasyprint import HTML, CSS
-            USE_WEASYPRINT = True
-        except ImportError:
-            try:
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import letter
-                USE_WEASYPRINT = False
-            except ImportError:
-                return HttpResponse(
-                    "Aucune bibliothèque PDF disponible. Installez weasyprint ou reportlab.",
-                    status=500
-                )
+        # Toujours utiliser WeasyPrint
+        from weasyprint import HTML, CSS
 
         purchase_order = get_object_or_404(PurchaseOrder, id=po_id)
 
@@ -355,37 +323,29 @@ def download_purchase_order_pdf(request, po_id):
         if not (request.user == purchase_order.created_by or request.user.is_staff):
             raise Http404("Bon de commande non trouvé")
 
-        if USE_WEASYPRINT:
-            # Générer le HTML
-            html_content = render_to_string('purchase_orders/print_purchase_order.html', {
-                'purchase_order': purchase_order,
-                'template': PrintTemplate.objects.filter(
-                    template_type='purchase_order', is_default=True
-                ).first(),
-                'config': PrintConfiguration.objects.filter(is_default=True).first()
-            }, request=request)
+        # Générer le HTML
+        html_content = render_to_string('purchase_orders/print_purchase_order.html', {
+            'purchase_order': purchase_order,
+            'template': PrintTemplate.objects.filter(
+                template_type='purchase_order', is_default=True
+            ).first(),
+            'config': PrintConfiguration.objects.filter(is_default=True).first()
+        }, request=request)
 
-            # Convertir en PDF
-            html_doc = HTML(string=html_content, base_url=request.build_absolute_uri())
-            pdf_content = html_doc.write_pdf()
+        # Convertir en PDF
+        html_doc = HTML(string=html_content, base_url=request.build_absolute_uri())
+        pdf_content = html_doc.write_pdf()
 
-            # Retourner la réponse PDF
-            response = HttpResponse(pdf_content, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="bon_commande_{purchase_order.po_number}.pdf"'
+        # Retourner la réponse PDF
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="bon_commande_{purchase_order.po_number}.pdf"'
 
-            return response
-        else:
-            # Fallback avec reportlab (basique)
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="bon_commande_{purchase_order.po_number}.pdf"'
+        return response
 
-            p = canvas.Canvas(response, pagesize=letter)
-            p.drawString(100, 750, f"Bon de Commande {purchase_order.po_number}")
-            p.drawString(100, 730, f"Total: {purchase_order.total_amount} CAD")
-            p.showPage()
-            p.save()
-
-            return response
-
+    except ImportError:
+        return HttpResponse(
+            "La bibliothèque weasyprint est requise pour la génération de PDF. Installez: pip install weasyprint",
+            status=500
+        )
     except Exception as e:
         return HttpResponse(f"Erreur lors de la génération du PDF: {str(e)}", status=500)

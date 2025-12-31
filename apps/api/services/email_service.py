@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from io import BytesIO
-from .pdf_generator_weasy import generate_invoice_pdf_weasy
+from .pdf_generator_weasy import generate_invoice_pdf_weasy, generate_purchase_order_pdf_weasy
 from apps.core.email_utils import configure_django_email_settings, restore_django_email_settings
 import logging
 
@@ -391,65 +391,22 @@ class PurchaseOrderEmailService:
     @staticmethod
     def _generate_purchase_order_pdf(po, template_type='modern'):
         """
-        Génère le PDF d'un bon de commande en utilisant la vue Django
-        
+        Génère le PDF d'un bon de commande en utilisant WeasyPrint
+
         Args:
             po: Instance du modèle PurchaseOrder
             template_type: Type de template ('classic', 'modern', 'minimal', 'professional')
-            
+
         Returns:
             BytesIO: Buffer contenant le PDF généré
         """
         try:
-            from django.test import RequestFactory
-            from apps.purchase_orders.views_pdf import PurchaseOrderPDFView
-            from django.contrib.auth import get_user_model
-            
-            User = get_user_model()
-            
-            # Créer une requête factice pour la vue
-            factory = RequestFactory()
-            request = factory.get(f'/purchase-orders/{po.id}/pdf/?template={template_type}')
-            
-            # Créer un utilisateur factice si nécessaire
-            if hasattr(po, 'created_by') and po.created_by:
-                request.user = po.created_by
-            else:
-                # Créer un utilisateur anonyme pour la vue
-                request.user = User.objects.first() if User.objects.exists() else None
-            
-            # Appeler la vue pour générer le PDF
-            view = PurchaseOrderPDFView()
-            view.request = request
-            view.kwargs = {'pk': str(po.id)}
-            
-            response = view.get(request, pk=str(po.id))
-            
-            if response.status_code == 200:
-                # Convertir la réponse en BytesIO
-                pdf_buffer = BytesIO()
-                pdf_buffer.write(response.content)
-                pdf_buffer.seek(0)
-                return pdf_buffer
-            else:
-                raise Exception(f"Error generating PDF: HTTP {response.status_code}")
-                
+            # Générer le PDF avec WeasyPrint
+            pdf_buffer = generate_purchase_order_pdf_weasy(po, template_type)
+            return pdf_buffer
         except Exception as e:
-            logger.error(f"Error generating purchase order PDF: {e}")
-            # Fallback: créer un PDF simple
-            from reportlab.lib.pagesizes import A4
-            from reportlab.pdfgen import canvas
-            from io import BytesIO
-            
-            buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=A4)
-            p.drawString(100, 750, f"Bon de Commande {po.po_number}")
-            p.drawString(100, 730, f"Fournisseur: {po.supplier.name if po.supplier else 'N/A'}")
-            p.drawString(100, 710, f"Total: {po.total_amount}")
-            p.showPage()
-            p.save()
-            buffer.seek(0)
-            return buffer
+            logger.error(f"Error generating purchase order PDF with WeasyPrint: {e}")
+            raise
 
     @staticmethod
     def send_purchase_order_email(po, recipient_email=None, custom_message=None, template_type='modern'):
@@ -501,9 +458,12 @@ class PurchaseOrderEmailService:
             if po.supplier:
                 supplier_name = getattr(po.supplier, 'name', None) or 'Fournisseur'
 
+            # Définir la langue par défaut
+            language = 'fr'  # Langue par défaut pour les emails de bons de commande
+
             # Activer la langue pour les traductions
             translation.activate(language)
-            
+
             try:
                 # Générer le PDF
                 pdf_buffer = PurchaseOrderEmailService._generate_purchase_order_pdf(po, template_type)
@@ -765,9 +725,13 @@ ProcureGenius
             if original_settings:
                 restore_django_email_settings(original_settings)
             # Restaurer la langue
-            translation.deactivate()
-            
-            error_message = _('Error sending email') if language == 'en' else 'Erreur lors de l\'envoi de l\'email'
+            try:
+                translation.deactivate()
+            except:
+                pass  # Si la traduction n'était pas activée, ignorer
+
+            # Utiliser la langue par défaut pour le message d'erreur
+            error_message = _('Error sending email') if 'language' in locals() and language == 'en' else 'Erreur lors de l\'envoi de l\'email'
             return {
                 'success': False,
                 'message': f'{error_message}: {str(e)}'
