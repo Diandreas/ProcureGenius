@@ -8,6 +8,7 @@ import * as widgetsAPI from '../services/widgetsAPI';
 import WidgetLibrary from '../components/dashboard/WidgetLibrary';
 import WidgetWrapper from '../components/dashboard/WidgetWrapper';
 import GettingStartedWidget from '../components/dashboard/GettingStartedWidget';
+import MetricDetailModal from '../components/dashboard/MetricDetailModal';
 import EmptyState from '../components/EmptyState';
 import { Box } from '@mui/material';
 import '../styles/CustomizableDashboard.css';
@@ -77,6 +78,8 @@ const CustomizableDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSaveNotification, setShowSaveNotification] = useState(false);
   const [gridKey, setGridKey] = useState(0);
+  const [selectedMetric, setSelectedMetric] = useState(null);
+  const [metricDetailGenerator, setMetricDetailGenerator] = useState(null);
 
   // Load available widgets (already filtered by modules on backend)
   useEffect(() => {
@@ -369,6 +372,12 @@ const CustomizableDashboard = () => {
     }
   };
 
+  // Handle metric click from FinancialSummaryWidget
+  const handleMetricClick = ({ metric, generateDetailedData }) => {
+    setSelectedMetric(metric);
+    setMetricDetailGenerator(() => generateDetailedData);
+  };
+
   // Get widget component
   const getWidgetComponent = (widgetCode) => {
     const Component = WIDGET_COMPONENTS[widgetCode];
@@ -382,7 +391,13 @@ const CustomizableDashboard = () => {
         </div>
       );
     }
-    return <Component period={period} />;
+
+    // Pass onMetricClick to FinancialSummaryWidget
+    const extraProps = widgetCode === 'financial_summary'
+      ? { onMetricClick: handleMetricClick }
+      : {};
+
+    return <Component period={period} {...extraProps} />;
   };
 
   // Filter layout to only show widgets from availableWidgets (already filtered by modules)
@@ -521,6 +536,18 @@ const CustomizableDashboard = () => {
           <CheckCircle size={20} className="icon" />
           <span>{t('saveSuccess')}</span>
         </div>
+      )}
+
+      {/* Metric Detail Modal */}
+      {selectedMetric && metricDetailGenerator && (
+        <MetricDetailModal
+          metric={selectedMetric}
+          onClose={() => {
+            setSelectedMetric(null);
+            setMetricDetailGenerator(null);
+          }}
+          generateDetailedData={metricDetailGenerator}
+        />
       )}
     </div>
   );

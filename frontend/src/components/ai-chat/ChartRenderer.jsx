@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   LineChart,
   Line,
@@ -258,8 +258,8 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
     );
   };
 
-  // Router vers le bon type de graphique
-  const renderChart = () => {
+  // Router vers le bon type de graphique - Mémorisé pour éviter les re-renders
+  const memoizedChart = useMemo(() => {
     if (!chartData || chartData.length === 0) {
       return (
         <Box
@@ -302,7 +302,7 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
           </Box>
         );
     }
-  };
+  }, [chartType, chartData, chartConfig]);
 
   return (
     <Box
@@ -327,10 +327,19 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
         </Typography>
       )}
       <ResponsiveContainer width="100%" height={300}>
-        {renderChart()}
+        {memoizedChart}
       </ResponsiveContainer>
     </Box>
   );
 };
 
-export default ChartRenderer;
+// Mémorise le composant pour éviter les re-renders inutiles
+export default memo(ChartRenderer, (prevProps, nextProps) => {
+  // Ne re-render que si les données changent réellement
+  return (
+    prevProps.chartType === nextProps.chartType &&
+    prevProps.chartTitle === nextProps.chartTitle &&
+    JSON.stringify(prevProps.chartData) === JSON.stringify(nextProps.chartData) &&
+    JSON.stringify(prevProps.chartConfig) === JSON.stringify(nextProps.chartConfig)
+  );
+});

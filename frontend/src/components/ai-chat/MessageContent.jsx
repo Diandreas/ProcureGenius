@@ -472,9 +472,11 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                       {isSuccess ? 'Succès' : 'Échec'}
                     </Typography>
 
-                    <Typography variant="body2" sx={{ mb: 1, fontSize: '0.875rem' }}>
-                      {result.result?.message || result.result?.error || 'Action exécutée'}
-                    </Typography>
+                    <Box sx={{ mb: 1 }}>
+                      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
+                        {result.result?.message || result.result?.error || 'Action exécutée'}
+                      </ReactMarkdown>
+                    </Box>
 
 
                     {/* Confirmation d'entité - Preview Card + Modal */}

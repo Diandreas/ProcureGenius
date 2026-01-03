@@ -23,8 +23,25 @@ class ReportPDFGenerator:
             self.weasyprint_available = False
             print("⚠ WeasyPrint non disponible")
 
+        # Cache pour les données d'organisation et logos (optimization for bulk generation)
+        self._org_cache = {}
+        self._logo_cache = {}
+
+    def clear_cache(self):
+        """Vider les caches (utile entre différentes sessions de génération bulk)"""
+        self._org_cache.clear()
+        self._logo_cache.clear()
+        print("[INFO] Cache de génération PDF vidé")
+
     def _get_organization_data(self, user):
-        """Récupérer les données complètes de l'organisation (comme les factures)"""
+        """Récupérer les données complètes de l'organisation (comme les factures) avec cache"""
+        # Vérifier le cache (clé = user.organization.id)
+        cache_key = None
+        if user and hasattr(user, 'organization') and user.organization:
+            cache_key = str(user.organization.id)
+            if cache_key in self._org_cache:
+                return self._org_cache[cache_key]
+
         org_data = {
             'name': None,
             'address': None,
@@ -48,7 +65,7 @@ class ReportPDFGenerator:
             'bank_name': None,
             'bank_account': None,
         }
-        
+
         if not user or not hasattr(user, 'organization') or not user.organization:
             return org_data
         
@@ -122,17 +139,34 @@ class ReportPDFGenerator:
             print(f"Erreur récupération données organisation: {e}")
             import traceback
             traceback.print_exc()
-        
+
+        # Mettre en cache les données d'organisation
+        if cache_key:
+            self._org_cache[cache_key] = org_data
+
         return org_data
 
     def _get_logo_base64(self, org_data):
-        """Convertir le logo en base64 (comme les factures)"""
+        """Convertir le logo en base64 (comme les factures) avec cache"""
         if not org_data or not org_data.get('logo'):
             return None
 
         try:
             import os
             logo = org_data['logo']
+
+            # Générer une clé de cache basée sur le chemin du logo
+            cache_key = None
+            if hasattr(logo, 'path'):
+                cache_key = logo.path
+            elif isinstance(logo, str):
+                cache_key = logo
+
+            # Vérifier le cache
+            if cache_key and cache_key in self._logo_cache:
+                return self._logo_cache[cache_key]
+
+            logo_base64_result = None
 
             # Si c'est un champ FileField/ImageField Django
             if hasattr(logo, 'path'):
@@ -156,27 +190,31 @@ class ReportPDFGenerator:
                     mime_type = mime_types.get(ext, 'image/png')
 
                     logo_base64 = base64.b64encode(logo_data).decode('utf-8')
-                    return f"data:{mime_type};base64,{logo_base64}"
+                    logo_base64_result = f"data:{mime_type};base64,{logo_base64}"
             # Si c'est un objet avec méthode read()
             elif hasattr(logo, 'read'):
                 logo.seek(0)
                 logo_data = logo.read()
                 logo_base64 = base64.b64encode(logo_data).decode('utf-8')
-                return f"data:image/png;base64,{logo_base64}"
+                logo_base64_result = f"data:image/png;base64,{logo_base64}"
             # Si c'est déjà un chemin
             elif isinstance(logo, str):
                 if os.path.exists(logo):
                     with open(logo, 'rb') as f:
                         logo_data = f.read()
                     logo_base64 = base64.b64encode(logo_data).decode('utf-8')
-                    return f"data:image/png;base64,{logo_base64}"
+                    logo_base64_result = f"data:image/png;base64,{logo_base64}"
+
+            # Mettre en cache le résultat
+            if cache_key and logo_base64_result:
+                self._logo_cache[cache_key] = logo_base64_result
+
+            return logo_base64_result
         except Exception as e:
             print(f"Erreur lors de la conversion du logo: {e}")
             import traceback
             traceback.print_exc()
             return None
-        
-        return None
 
     def _generate_qr_code(self, data_string):
         """Générer un QR code"""

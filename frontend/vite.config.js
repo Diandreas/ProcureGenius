@@ -57,10 +57,15 @@ export default defineConfig(({ mode }) => {
       target: 'esnext',  // Cible moderne pour les modules ES
     },
     resolve: {
-      dedupe: ['react', 'react-dom', '@emotion/react', '@emotion/styled']
+      dedupe: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
+      alias: {
+        react: 'react',
+        'react-dom': 'react-dom'
+      }
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', '@emotion/react', '@emotion/styled']
+      include: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
+      force: true
     }
   };
 })

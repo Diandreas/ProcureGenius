@@ -49,6 +49,7 @@ import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
+import PeriodSelector from '../components/dashboard/PeriodSelector';
 
 const drawerWidth = 240;
 
@@ -604,43 +605,26 @@ function MainLayout() {
               </Box>
             )}
 
-            {/* Period Controls - Clean Tabs Style */}
+            {/* Period Selector - Global Dashboard Control */}
             {contextualActions?.periodControls && (
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                mr: 3,
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 2,
-                p: 0.5
-              }}>
-                {['last_7_days', 'last_30_days', 'this_month'].map((period, i) => (
-                  <Button
-                    key={period}
-                    size="small"
-                    onClick={() => contextualActions.onPeriodChange(period)}
-                    sx={{
-                      minWidth: 'auto',
-                      px: 2,
-                      py: 0.5,
-                      fontSize: '0.75rem',
-                      borderRadius: 1.5,
-                      fontWeight: 500,
-                      color: contextualActions.currentPeriod === period ? 'text.primary' : 'text.secondary',
-                      bgcolor: contextualActions.currentPeriod === period ? alpha(theme.palette.action.active, 0.08) : 'transparent',
-                      '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
-                    }}
-                  >
-                    {['7j', '30j', 'Mois'][i]}
-                  </Button>
-                ))}
-                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
+                <PeriodSelector
+                  period={contextualActions.currentPeriod}
+                  onChange={contextualActions.onPeriodChange}
+                />
                 <Tooltip title="Actualiser">
                   <IconButton
                     onClick={contextualActions.onRefresh}
                     size="small"
-                    sx={{ p: 0.5, color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                    sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      color: 'text.secondary',
+                      '&:hover': {
+                        color: 'primary.main',
+                        bgcolor: alpha(theme.palette.primary.main, 0.08)
+                      }
+                    }}
                   >
                     <Refresh sx={{ fontSize: 18 }} />
                   </IconButton>

@@ -1227,6 +1227,9 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 response = view.get(fake_request, pk=str(po.id))
 
                 if response.status_code == 200:
+                    # Rendre la réponse WeasyPrint avant d'accéder au contenu
+                    response.render()
+
                     # Retourner la réponse PDF
                     http_response = HttpResponse(
                         response.content,

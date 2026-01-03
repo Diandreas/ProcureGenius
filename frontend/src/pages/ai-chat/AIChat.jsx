@@ -57,6 +57,13 @@ import {
   Inventory,
   People,
   LocalShipping,
+  History,
+  Search,
+  Delete,
+  Edit,
+  MoreVert,
+  CalendarToday,
+  AccessTime,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +76,7 @@ import ProactiveConversationCard from '../../components/AI/ProactiveConversation
 import ArtifactsPanel from '../../components/ai-chat/ArtifactsPanel';
 
 // Composant Header compact avec navigation IA
-const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick, onArtifactsClick, artifactsCount }) => {
+const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick, onArtifactsClick, artifactsCount, onHistoryClick, conversationsCount }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -86,6 +93,46 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
         borderRadius: 1.5,
       }}
     >
+      {/* Bouton Historique */}
+      <Tooltip title="Historique des conversations">
+        <Button
+          size="small"
+          startIcon={<History />}
+          onClick={onHistoryClick}
+          variant="outlined"
+          sx={{
+            px: 2,
+            py: 0.75,
+            borderRadius: 1.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.813rem',
+            borderColor: alpha(theme.palette.primary.main, 0.3),
+            color: 'primary.main',
+            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            '&:hover': {
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              borderColor: 'primary.main',
+            },
+          }}
+        >
+          Historique
+          {conversationsCount > 0 && (
+            <Chip
+              label={conversationsCount}
+              size="small"
+              sx={{
+                ml: 1,
+                height: 18,
+                fontSize: '0.688rem',
+                bgcolor: alpha(theme.palette.primary.main, 0.15),
+                color: 'primary.main',
+              }}
+            />
+          )}
+        </Button>
+      </Tooltip>
+
       <Box sx={{ flexGrow: 1 }} />
 
       {/* Import Reviews - NOUVELLE FONCTIONNALITÉ */}
@@ -425,6 +472,322 @@ const NotificationsCenter = ({ open, onClose, notifications, onMarkRead }) => {
             </Box>
           )}
         </Box>
+      </Box>
+    </Drawer>
+  );
+};
+
+// Composant Historique Amélioré des Conversations
+const ConversationsHistory = ({ open, onClose, conversations, onSelectConversation, onDeleteConversation, onNewConversation, currentConversationId }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTab, setSelectedTab] = useState('all');
+  const { enqueueSnackbar } = useSnackbar();
+
+  // Grouper les conversations par période
+  const groupConversationsByDate = (convs) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const thisWeek = new Date(today);
+    thisWeek.setDate(thisWeek.getDate() - 7);
+
+    const groups = {
+      today: [],
+      yesterday: [],
+      thisWeek: [],
+      older: [],
+    };
+
+    convs.forEach(conv => {
+      const convDate = new Date(conv.last_message_at);
+      if (convDate >= today) {
+        groups.today.push(conv);
+      } else if (convDate >= yesterday) {
+        groups.yesterday.push(conv);
+      } else if (convDate >= thisWeek) {
+        groups.thisWeek.push(conv);
+      } else {
+        groups.older.push(conv);
+      }
+    });
+
+    return groups;
+  };
+
+  // Filtrer les conversations par recherche
+  const filteredConversations = conversations.filter(conv =>
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (conv.summary && conv.summary.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const groupedConversations = groupConversationsByDate(filteredConversations);
+
+  const handleDelete = async (convId, e) => {
+    e.stopPropagation();
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')) {
+      try {
+        await onDeleteConversation(convId);
+        enqueueSnackbar('Conversation supprimée', { variant: 'success' });
+      } catch (error) {
+        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+      }
+    }
+  };
+
+  const renderConversationItem = (conv) => {
+    const isActive = currentConversationId === conv.id;
+
+    return (
+      <Card
+        key={conv.id}
+        onClick={() => onSelectConversation(conv.id)}
+        sx={{
+          mb: 1,
+          cursor: 'pointer',
+          bgcolor: isActive
+            ? alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1)
+            : 'transparent',
+          border: isActive
+            ? `2px solid ${theme.palette.primary.main}`
+            : `1px solid ${theme.palette.divider}`,
+          borderRadius: 2,
+          transition: 'all 0.2s',
+          '&:hover': {
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.05),
+            borderColor: theme.palette.primary.main,
+            transform: 'translateX(4px)',
+          },
+        }}
+      >
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              fontWeight={isActive ? 600 : 500}
+              sx={{
+                flex: 1,
+                color: 'text.primary',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {conv.title}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={(e) => handleDelete(conv.id, e)}
+              sx={{
+                ml: 0.5,
+                opacity: 0.6,
+                '&:hover': { opacity: 1, color: 'error.main' }
+              }}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {conv.summary && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mb: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {conv.summary}
+            </Typography>
+          )}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AccessTime sx={{ fontSize: 12, color: 'text.disabled' }} />
+            <Typography variant="caption" color="text.disabled" fontSize="0.688rem">
+              {formatDateTime(conv.last_message_at)}
+            </Typography>
+            {conv.message_count && (
+              <Chip
+                label={`${conv.message_count} messages`}
+                size="small"
+                sx={{
+                  height: 16,
+                  fontSize: '0.65rem',
+                  ml: 'auto',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                }}
+              />
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderGroup = (title, conversations, icon) => {
+    if (conversations.length === 0) return null;
+
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, px: 0.5 }}>
+          {icon}
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.secondary"
+            sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
+            {title}
+          </Typography>
+          <Chip
+            label={conversations.length}
+            size="small"
+            sx={{
+              height: 18,
+              fontSize: '0.65rem',
+              bgcolor: alpha(theme.palette.text.secondary, 0.1),
+            }}
+          />
+        </Box>
+        {conversations.map(renderConversationItem)}
+      </Box>
+    );
+  };
+
+  const totalCount = conversations.length;
+  const todayCount = groupedConversations.today.length;
+
+  return (
+    <Drawer
+      anchor="left"
+      open={open}
+      onClose={onClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: 380,
+          bgcolor: 'background.paper',
+          borderRight: 'none',
+          boxShadow: isDark ? '4px 0 20px rgba(0,0,0,0.3)' : '4px 0 20px rgba(0,0,0,0.08)',
+        },
+      }}
+    >
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <History sx={{ color: 'primary.main' }} />
+              <Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Historique
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {totalCount} conversation{totalCount > 1 ? 's' : ''} {todayCount > 0 && `· ${todayCount} aujourd'hui`}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton onClick={onClose} size="small">
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {/* Nouvelle conversation */}
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={onNewConversation}
+            fullWidth
+            sx={{
+              mb: 2,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+            }}
+          >
+            Nouvelle conversation
+          </Button>
+
+          {/* Recherche */}
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Rechercher dans l'historique..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: <Search sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.02),
+              },
+            }}
+          />
+        </Box>
+
+        {/* Liste des conversations */}
+        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+          {filteredConversations.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <History sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {searchQuery ? 'Aucun résultat' : 'Aucune conversation'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {searchQuery ? 'Essayez une autre recherche' : 'Commencez une nouvelle conversation'}
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {renderGroup(
+                "Aujourd'hui",
+                groupedConversations.today,
+                <CalendarToday sx={{ fontSize: 14, color: 'primary.main' }} />
+              )}
+              {renderGroup(
+                'Hier',
+                groupedConversations.yesterday,
+                <AccessTime sx={{ fontSize: 14, color: 'warning.main' }} />
+              )}
+              {renderGroup(
+                'Cette semaine',
+                groupedConversations.thisWeek,
+                <CalendarToday sx={{ fontSize: 14, color: 'info.main' }} />
+              )}
+              {renderGroup(
+                'Plus ancien',
+                groupedConversations.older,
+                <History sx={{ fontSize: 14, color: 'text.secondary' }} />
+              )}
+            </>
+          )}
+        </Box>
+
+        {/* Footer avec statistiques */}
+        {totalCount > 0 && (
+          <Box
+            sx={{
+              p: 2,
+              borderTop: `1px solid ${theme.palette.divider}`,
+              bgcolor: isDark ? alpha(theme.palette.common.white, 0.02) : alpha(theme.palette.common.black, 0.01),
+            }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+              📊 Total: {totalCount} conversation{totalCount > 1 ? 's' : ''}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Drawer>
   );
@@ -922,77 +1285,22 @@ function AIChat() {
         overflow: 'hidden',
       }}
     >
-      {/* Drawer conversations */}
-      <Drawer
-        anchor="left"
+      {/* Historique amélioré des conversations */}
+      <ConversationsHistory
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: 280,
-            bgcolor: 'background.paper',
-            borderRight: 'none',
-            boxShadow: isDark ? '4px 0 20px rgba(0,0,0,0.3)' : '4px 0 20px rgba(0,0,0,0.08)',
-          },
+        conversations={conversations}
+        onSelectConversation={loadConversation}
+        onDeleteConversation={async (id) => {
+          await aiChatAPI.deleteConversation(id);
+          fetchConversations();
+          if (currentConversation?.id === id) {
+            startNewConversation();
+          }
         }}
-      >
-        <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight="600" color="text.primary">
-              {t('aiChat:drawer.conversations')}
-            </Typography>
-            <IconButton onClick={() => setDrawerOpen(false)} size="small">
-              <Close fontSize="small" />
-            </IconButton>
-          </Box>
-
-          <Button
-            variant="outlined"
-            startIcon={<Add />}
-            onClick={startNewConversation}
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            Nouvelle conversation
-          </Button>
-
-          <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-            <List dense disablePadding>
-              {conversations.map((conv) => (
-                <ListItemButton
-                  key={conv.id}
-                  selected={currentConversation?.id === conv.id}
-                  onClick={() => loadConversation(conv.id)}
-                  sx={{
-                    borderRadius: 1.5,
-                    mb: 0.5,
-                    py: 1,
-                    '&.Mui-selected': {
-                      bgcolor: alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1),
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={conv.title}
-                    secondary={formatDateTime(conv.last_message_at)}
-                    primaryTypographyProps={{
-                      noWrap: true,
-                      fontSize: '0.813rem',
-                      fontWeight: currentConversation?.id === conv.id ? 600 : 400,
-                      color: 'text.primary',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      fontSize: '0.688rem',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </Box>
-      </Drawer>
+        onNewConversation={startNewConversation}
+        currentConversationId={currentConversation?.id}
+      />
 
       {/* Suggestions Panel */}
       <SuggestionsPanel
@@ -1034,6 +1342,8 @@ function AIChat() {
           onImportReviewsClick={() => navigate('/ai-chat/import-reviews')}
           onArtifactsClick={() => setArtifactsPanelOpen(true)}
           artifactsCount={artifacts.filter(a => !a.archived).length}
+          onHistoryClick={() => setDrawerOpen(true)}
+          conversationsCount={conversations.length}
         />
 
         {/* Messages */}

@@ -521,6 +521,176 @@ class IntelligentInsightsEngine:
 
         return insights
 
+    def _identify_at_risk_clients(self):
+        """Identifie les clients à risque (baisse d'activité, retards de paiement)"""
+        from apps.accounts.models import Client
+        from apps.invoicing.models import Invoice
+
+        insights = []
+
+        try:
+            now = timezone.now()
+            last_30_days = now - timedelta(days=30)
+            previous_30_days = now - timedelta(days=60)
+
+            # Clients avec activité récente
+            clients = Client.objects.filter(
+                organization=self.organization
+            ).annotate(
+                recent_revenue=Sum('invoice__total_amount',
+                                  filter=Q(invoice__created_at__gte=last_30_days,
+                                          invoice__status__in=['sent', 'paid'])),
+                previous_revenue=Sum('invoice__total_amount',
+                                    filter=Q(invoice__created_at__gte=previous_30_days,
+                                            invoice__created_at__lt=last_30_days,
+                                            invoice__status__in=['sent', 'paid'])),
+                overdue_count=Count('invoice',
+                                   filter=Q(invoice__status='overdue'))
+            )
+
+            at_risk_clients = []
+
+            for client in clients:
+                risk_score = 0
+                reasons = []
+
+                # Baisse d'activité significative
+                if client.previous_revenue and client.previous_revenue > 0:
+                    if not client.recent_revenue or client.recent_revenue == 0:
+                        risk_score += 10
+                        reasons.append("Aucune commande ce mois")
+                    else:
+                        change_pct = ((client.recent_revenue - client.previous_revenue) / client.previous_revenue) * 100
+                        if change_pct < -30:
+                            risk_score += 7
+                            reasons.append(f"Baisse d'activité de {abs(change_pct):.0f}%")
+
+                # Factures en retard
+                if client.overdue_count and client.overdue_count > 0:
+                    risk_score += client.overdue_count * 3
+                    reasons.append(f"{client.overdue_count} facture(s) en retard")
+
+                if risk_score >= 7:
+                    at_risk_clients.append({
+                        'name': client.name,
+                        'risk_score': risk_score,
+                        'reasons': reasons,
+                        'recent_revenue': float(client.recent_revenue or 0),
+                        'previous_revenue': float(client.previous_revenue or 0),
+                        'overdue_count': client.overdue_count or 0,
+                        'id': str(client.id)
+                    })
+
+            if at_risk_clients:
+                at_risk_clients.sort(key=lambda x: x['risk_score'], reverse=True)
+                worst = at_risk_clients[0]
+
+                reasons_text = '\n'.join([f"• {r}" for r in worst['reasons'][:3]])
+
+                insights.append({
+                    'type': 'alert',
+                    'priority': 8,
+                    'title': f'⚠️ {len(at_risk_clients)} client(s) à risque',
+                    'message': f'**{worst["name"]}** nécessite votre attention:\n{reasons_text}',
+                    'action_label': 'Analyser',
+                    'action_url': '/ai-chat',
+                    'impact': f'Risque de perte: {worst["recent_revenue"]:.2f}€/mois',
+                    'insight_key': 'at_risk_clients',
+                    'conseil_context': {
+                        'type': 'clients_a_risque',
+                        'clients': at_risk_clients[:3],
+                        'worst_client': worst['name'],
+                        'risk_score': worst['risk_score'],
+                        'count': len(at_risk_clients)
+                    },
+                    'data': {
+                        'clients': at_risk_clients[:5],
+                        'analysis_prompt': f'Analyse les clients à risque et suggère des actions pour les fidéliser'
+                    }
+                })
+
+        except Exception as e:
+            logger.error(f"Erreur _identify_at_risk_clients: {e}")
+
+        return insights
+
+    def _analyze_product_performance(self):
+        """Analyse les performances des produits (ventes, marges, stock)"""
+        insights = []
+
+        try:
+            # Combiner plusieurs analyses produits
+            insights.extend(self._predict_stock_issues())
+            insights.extend(self._detect_dead_stock())
+            insights.extend(self._analyze_profitability())
+            insights.extend(self._analyze_top_products())
+
+        except Exception as e:
+            logger.error(f"Erreur _analyze_product_performance: {e}")
+
+        return insights
+
+    def _find_automation_opportunities(self):
+        """Identifie les opportunités d'automatisation basées sur les patterns"""
+        from apps.invoicing.models import Invoice, Product
+        from apps.purchase_orders.models import PurchaseOrder
+
+        insights = []
+
+        try:
+            now = timezone.now()
+            last_90_days = now - timedelta(days=90)
+
+            # Factures récurrentes avec le même client
+            recurring_invoices = Invoice.objects.filter(
+                created_by__organization=self.organization,
+                created_at__gte=last_90_days,
+                client__isnull=False
+            ).values('client').annotate(
+                count=Count('id'),
+                avg_amount=Avg('total_amount')
+            ).filter(count__gte=3).order_by('-count')[:3]
+
+            if recurring_invoices:
+                for rec in recurring_invoices:
+                    from apps.accounts.models import Client
+                    try:
+                        client = Client.objects.get(id=rec['client'])
+                        insights.append({
+                            'type': 'suggestion',
+                            'priority': 5,
+                            'title': f'🤖 Automatisation possible: {client.name}',
+                            'message': f'Ce client a **{rec["count"]} factures** en 90 jours '
+                                       f'(~{rec["avg_amount"]:.2f}€ en moyenne). '
+                                       f'Envisagez une facturation récurrente automatique.',
+                            'action_label': 'Configurer',
+                            'action_url': '/ai-chat',
+                            'insight_key': 'automation_recurring',
+                            'conseil_context': {
+                                'type': 'automatisation',
+                                'client_name': client.name,
+                                'invoice_count': rec['count'],
+                                'avg_amount': float(rec['avg_amount'] or 0),
+                                'period_days': 90
+                            },
+                            'data': {
+                                'client_id': str(client.id),
+                                'client_name': client.name,
+                                'invoice_count': rec['count'],
+                                'analysis_prompt': f'Propose un système de facturation récurrente pour {client.name}'
+                            }
+                        })
+                    except Client.DoesNotExist:
+                        pass
+
+            # Combiner avec d'autres patterns
+            insights.extend(self._find_recurring_orders())
+
+        except Exception as e:
+            logger.error(f"Erreur _find_automation_opportunities: {e}")
+
+        return insights
+
 
 def generate_intelligent_suggestions(user):
     """

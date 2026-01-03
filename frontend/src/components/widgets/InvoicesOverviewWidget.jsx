@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, CheckCircle, Clock, AlertCircle, FileEdit } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
@@ -83,6 +84,49 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
   const totalCount = data.total || 0;
   const totalAmount = data.total_amount || 0;
 
+  // Préparer les données pour le donut chart
+  const chartData = statuses
+    .filter(s => s.count > 0) // Ne montrer que les statuts avec des données
+    .map(s => ({
+      name: s.label,
+      value: s.count,
+      amount: s.amount,
+      color: s.color
+    }));
+
+  // Tooltip personnalisé pour le donut
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload;
+      return (
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px',
+          border: '1px solid #e0e0e0',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '13px', color: item.color }}>
+            {item.name}
+          </div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            {item.value} {t('widgets.invoices_label', { ns: 'dashboard', defaultValue: 'facture(s)' })}
+          </div>
+          <div style={{ fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
+            {formatCurrency(item.amount)}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Label personnalisé pour afficher le pourcentage
+  const renderLabel = (entry) => {
+    const percent = ((entry.value / totalCount) * 100).toFixed(0);
+    return `${percent}%`;
+  };
+
   return (
     <div className="overview-widget">
       <div className="overview-header blue">
@@ -98,7 +142,30 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
         <div className="header-amount">{formatCurrency(totalAmount)}</div>
       </div>
 
-      <div className="status-grid">
+      {chartData.length > 0 && (
+        <ResponsiveContainer width="100%" height={200}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={2}
+              dataKey="value"
+              label={renderLabel}
+              labelLine={false}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+
+      <div className="status-grid" style={{ marginTop: '10px' }}>
         {statuses.map((status) => {
           const Icon = status.icon;
           return (

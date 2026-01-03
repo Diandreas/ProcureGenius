@@ -123,8 +123,24 @@ else:
             context['paper_orientation'] = org_data.get('paper_orientation', 'portrait')
             context['print_margins'] = org_data.get('print_margins', 12)
 
-            # Ajouter le QR code en base64
-            context['qr_code'] = self._generate_qr_code(po)
+            # Ajouter le logo en base64 (comme pour les factures)
+            context['logo_base64'] = self._get_logo_base64(org_data)
+
+            # Ajouter le QR code en base64 (nom cohérent avec factures)
+            context['qr_code_base64'] = self._generate_qr_code(po)
+
+            # Ajouter les items du bon de commande explicitement
+            context['items'] = po.items.all() if hasattr(po, 'items') else []
+
+            # Ajouter le montant total
+            context['total_amount'] = getattr(po, 'total_amount', 0) or 0
+
+            # Ajouter les dates
+            context['created_date'] = getattr(po, 'created_at', None)
+            context['required_date'] = getattr(po, 'required_date', None)
+
+            # Ajouter le fournisseur
+            context['supplier'] = po.supplier if hasattr(po, 'supplier') else None
 
             # Ajouter le type de template pour styling conditionnel
             context['template_type'] = self.request.GET.get('template', 'modern')
@@ -243,7 +259,6 @@ else:
                             # Logo
                             if org_settings.company_logo:
                                 org_data['logo_path'] = org_settings.company_logo.path
-                                org_data['logo_base64'] = self._get_logo_base64(org_settings.company_logo.path)
 
                             # Couleur de marque
                             if hasattr(org_settings, 'brand_color') and org_settings.brand_color:
@@ -299,23 +314,27 @@ else:
 
             return org_data
 
-        def _get_logo_base64(self, logo_path):
+        def _get_logo_base64(self, org_data):
             """
             Convertit le logo en base64 pour l'inclure dans le HTML
+
+            Support complet des formats d'image: PNG, JPEG, GIF, SVG, WebP
+            Signature identique aux factures pour cohérence
             """
-            if not logo_path:
+            if not org_data.get('logo_path'):
                 return None
 
             try:
+                logo_path = org_data['logo_path']
                 if os.path.exists(logo_path):
                     with open(logo_path, 'rb') as f:
                         logo_data = f.read()
                         logo_base64 = base64.b64encode(logo_data).decode('utf-8')
 
-                        # Détecter le type MIME
+                        # Détecter le type MIME (support complet des formats image)
                         ext = os.path.splitext(logo_path)[1].lower()
                         mime_types = {
-                            '.png': 'image/png',
+                            '.png': 'image/png',  # PNG - Priorité 1
                             '.jpg': 'image/jpeg',
                             '.jpeg': 'image/jpeg',
                             '.gif': 'image/gif',
@@ -324,9 +343,9 @@ else:
                             '.bmp': 'image/bmp',
                             '.ico': 'image/x-icon',
                         }
-                        mime_type = mime_types.get(ext, 'image/png')
+                        mime_type = mime_types.get(ext, 'image/png')  # Défaut PNG
 
-                        print(f"[INFO] Logo charge: {os.path.basename(logo_path)} ({mime_type})")
+                        print(f"[INFO] Logo charge pour PO: {os.path.basename(logo_path)} ({mime_type})")
                         return f"data:{mime_type};base64,{logo_base64}"
                 else:
                     print(f"[WARN] Fichier logo introuvable: {logo_path}")

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Drawer,
   Box,
@@ -31,6 +31,7 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import ChartRenderer from './ChartRenderer';
+import html2canvas from 'html2canvas';
 
 /**
  * Panel d'artifacts type Claude.ai pour afficher les visualisations
@@ -49,14 +50,42 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
     setTabIndex(newValue);
   };
 
-  const handleDownload = (artifact) => {
-    // Export as PNG (simplified - in reality would use html2canvas or similar)
-    const chartTitle = artifact.chart_title || 'chart';
-    const filename = `${chartTitle.replace(/\s+/g, '_')}.png`;
+  const handleDownload = async (artifact, chartRef) => {
+    try {
+      const chartTitle = artifact.chart_title || 'chart';
+      const filename = `${chartTitle.replace(/\s+/g, '_')}.png`;
 
-    // For now, just show a message
-    console.log('Download triggered for:', filename);
-    // TODO: Implement actual chart export functionality
+      // Find the chart element to capture
+      const chartElement = chartRef?.current || document.querySelector(`[data-chart-id="${artifact.id}"]`);
+
+      if (!chartElement) {
+        console.error('Chart element not found for download');
+        return;
+      }
+
+      // Capture the chart as canvas using html2canvas
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+        allowTaint: true,
+        useCORS: true,
+      });
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error downloading chart:', error);
+    }
   };
 
   const handleFullscreen = (artifact) => {
@@ -254,6 +283,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
 
                     {/* Chart Preview */}
                     <Box
+                      data-chart-id={artifact.id}
                       sx={{
                         height: 180,
                         mt: 1.5,

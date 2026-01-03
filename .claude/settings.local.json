@@ -30,7 +30,14 @@
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
       "Bash(ls:*)",
-      "Bash(timeout 120 py:*)"
+      "Bash(timeout 120 py:*)",
+      "Bash(test:*)",
+      "Bash(venv/Scripts/pip install:*)",
+      "Bash(venv/Scripts/python.exe -m pip:*)",
+      "Bash(timeout 10 echo:*)",
+      "Bash(venv/Scripts/python manage.py runserver:*)",
+      "Bash(venv/Scripts/python manage.py check:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []

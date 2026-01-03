@@ -603,7 +603,6 @@ const Settings = () => {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
-                aspect={16 / 9}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
@@ -723,7 +722,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                 component="img"
                 src={settings.companyLogo}
                 alt="Logo"
-                sx={{ maxHeight: 60, maxWidth: 150, objectFit: 'contain' }}
+                sx={{ maxHeight: 120, maxWidth: 300, objectFit: 'contain' }}
               />
             )}
             <Button
