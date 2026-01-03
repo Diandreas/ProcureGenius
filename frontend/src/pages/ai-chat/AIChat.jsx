@@ -75,151 +75,217 @@ import VoiceRecorder from '../../components/VoiceRecorder';
 import ProactiveConversationCard from '../../components/AI/ProactiveConversationCard';
 import ArtifactsPanel from '../../components/ai-chat/ArtifactsPanel';
 
-// Composant Header compact avec navigation IA
+// Composant Header compact avec navigation IA - Design Premium Mobile-First
 const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick, onArtifactsClick, artifactsCount, onHistoryClick, conversationsCount }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 600;
 
   return (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1,
-        p: 1,
+        gap: { xs: 0.5, sm: 1 },
+        p: { xs: 0.75, sm: 1 },
         mb: 1.5,
-        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.primary.main, 0.03),
-        borderRadius: 1.5,
+        // Effet Glass morphism
+        bgcolor: isDark
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha('#ffffff', 0.7),
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderRadius: '16px',
+        border: `1px solid ${alpha(isDark ? '#ffffff' : '#000000', 0.06)}`,
+        boxShadow: isDark
+          ? `0 4px 16px ${alpha('#000000', 0.2)}`
+          : `0 4px 16px ${alpha('#000000', 0.05)}`,
       }}
     >
-      {/* Bouton Historique */}
+      {/* Bouton Historique - Design moderne */}
       <Tooltip title="Historique des conversations">
         <Button
           size="small"
-          startIcon={<History />}
+          startIcon={<History sx={{ fontSize: { xs: 16, sm: 18 } }} />}
           onClick={onHistoryClick}
-          variant="outlined"
           sx={{
-            px: 2,
+            px: { xs: 1.5, sm: 2 },
             py: 0.75,
-            borderRadius: 1.5,
+            borderRadius: '12px',
             textTransform: 'none',
             fontWeight: 600,
-            fontSize: '0.813rem',
-            borderColor: alpha(theme.palette.primary.main, 0.3),
+            fontSize: { xs: '0.75rem', sm: '0.813rem' },
             color: 'primary.main',
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
+            border: 'none',
+            minWidth: 'auto',
+            transition: 'all 0.2s ease',
             '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              borderColor: 'primary.main',
+              bgcolor: alpha(theme.palette.primary.main, 0.2),
+              transform: 'scale(1.02)',
             },
           }}
         >
-          Historique
+          {isMobile ? '' : 'Historique'}
           {conversationsCount > 0 && (
-            <Chip
-              label={conversationsCount}
-              size="small"
+            <Box
+              component="span"
               sx={{
-                ml: 1,
-                height: 18,
-                fontSize: '0.688rem',
-                bgcolor: alpha(theme.palette.primary.main, 0.15),
+                ml: isMobile ? 0 : 0.75,
+                px: 0.75,
+                py: 0.25,
+                borderRadius: '8px',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                bgcolor: alpha(theme.palette.primary.main, 0.2),
                 color: 'primary.main',
               }}
-            />
+            >
+              {conversationsCount}
+            </Box>
           )}
         </Button>
       </Tooltip>
 
       <Box sx={{ flexGrow: 1 }} />
 
-      {/* Import Reviews - NOUVELLE FONCTIONNALITÉ */}
-      <Tooltip title="Imports en attente">
-        <IconButton
-          size="small"
-          onClick={onImportReviewsClick}
-          sx={{
-            p: 0.75,
-            bgcolor: alpha('#10b981', 0.1),
-            '&:hover': {
-              bgcolor: alpha('#10b981', 0.2),
-            }
-          }}
-        >
-          <Assignment sx={{ fontSize: 18, color: '#10b981' }} />
-        </IconButton>
-      </Tooltip>
+      {/* Actions avec effet pill group */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          p: 0.5,
+          borderRadius: '14px',
+          bgcolor: alpha(isDark ? '#ffffff' : '#000000', 0.03),
+        }}
+      >
+        {/* Import Reviews */}
+        <Tooltip title="Imports en attente">
+          <IconButton
+            size="small"
+            onClick={onImportReviewsClick}
+            sx={{
+              p: { xs: 0.6, sm: 0.75 },
+              borderRadius: '10px',
+              bgcolor: alpha('#10b981', 0.12),
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha('#10b981', 0.2),
+                transform: 'scale(1.08)',
+              }
+            }}
+          >
+            <Assignment sx={{ fontSize: { xs: 16, sm: 18 }, color: '#10b981' }} />
+          </IconButton>
+        </Tooltip>
 
-      {/* Notifications */}
-      <Tooltip title="Notifications IA">
-        <IconButton
-          size="small"
-          onClick={onNotificationsClick}
-          sx={{
-            p: 0.75,
-            bgcolor: stats?.notifications_count > 0
-              ? alpha('#f59e0b', 0.15)
-              : 'transparent',
-            '&:hover': {
+        {/* Notifications */}
+        <Tooltip title="Notifications IA">
+          <IconButton
+            size="small"
+            onClick={onNotificationsClick}
+            sx={{
+              p: { xs: 0.6, sm: 0.75 },
+              borderRadius: '10px',
               bgcolor: stats?.notifications_count > 0
-                ? alpha('#f59e0b', 0.25)
-                : alpha(theme.palette.action.hover, 0.05),
-            }
-          }}
-        >
-          <Badge badgeContent={stats?.notifications_count || 0} color="warning" max={9}>
-            <Notifications sx={{ fontSize: 18 }} />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+                ? alpha('#f59e0b', 0.15)
+                : 'transparent',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha('#f59e0b', 0.2),
+                transform: 'scale(1.08)',
+              }
+            }}
+          >
+            <Badge
+              badgeContent={stats?.notifications_count || 0}
+              color="warning"
+              max={9}
+              sx={{
+                '& .MuiBadge-badge': {
+                  fontSize: '0.6rem',
+                  height: 16,
+                  minWidth: 16,
+                }
+              }}
+            >
+              <Notifications sx={{ fontSize: { xs: 16, sm: 18 } }} />
+            </Badge>
+          </IconButton>
+        </Tooltip>
 
-      {/* Suggestions */}
-      <Tooltip title="Suggestions actives">
-        <IconButton
-          size="small"
-          onClick={onSuggestionsClick}
-          sx={{
-            p: 0.75,
-            bgcolor: stats?.suggestions_count > 0
-              ? alpha('#8b5cf6', 0.15)
-              : 'transparent',
-            '&:hover': {
+        {/* Suggestions */}
+        <Tooltip title="Suggestions actives">
+          <IconButton
+            size="small"
+            onClick={onSuggestionsClick}
+            sx={{
+              p: { xs: 0.6, sm: 0.75 },
+              borderRadius: '10px',
               bgcolor: stats?.suggestions_count > 0
-                ? alpha('#8b5cf6', 0.25)
-                : alpha(theme.palette.action.hover, 0.05),
-            }
-          }}
-        >
-          <Badge badgeContent={stats?.suggestions_count || 0} color="secondary" max={9}>
-            <Lightbulb sx={{ fontSize: 18 }} />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+                ? alpha('#8b5cf6', 0.15)
+                : 'transparent',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha('#8b5cf6', 0.2),
+                transform: 'scale(1.08)',
+              }
+            }}
+          >
+            <Badge
+              badgeContent={stats?.suggestions_count || 0}
+              color="secondary"
+              max={9}
+              sx={{
+                '& .MuiBadge-badge': {
+                  fontSize: '0.6rem',
+                  height: 16,
+                  minWidth: 16,
+                }
+              }}
+            >
+              <Lightbulb sx={{ fontSize: { xs: 16, sm: 18 } }} />
+            </Badge>
+          </IconButton>
+        </Tooltip>
 
-      {/* Artifacts / Visualisations */}
-      <Tooltip title="Visualisations & Graphiques">
-        <IconButton
-          size="small"
-          onClick={onArtifactsClick}
-          sx={{
-            p: 0.75,
-            bgcolor: artifactsCount > 0
-              ? alpha('#3b82f6', 0.15)
-              : 'transparent',
-            '&:hover': {
+        {/* Artifacts / Visualisations */}
+        <Tooltip title="Visualisations & Graphiques">
+          <IconButton
+            size="small"
+            onClick={onArtifactsClick}
+            sx={{
+              p: { xs: 0.6, sm: 0.75 },
+              borderRadius: '10px',
               bgcolor: artifactsCount > 0
-                ? alpha('#3b82f6', 0.25)
-                : alpha(theme.palette.action.hover, 0.05),
-            }
-          }}
-        >
-          <Badge badgeContent={artifactsCount || 0} color="primary" max={9}>
-            <BarChart sx={{ fontSize: 18 }} />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+                ? alpha('#3b82f6', 0.15)
+                : 'transparent',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha('#3b82f6', 0.2),
+                transform: 'scale(1.08)',
+              }
+            }}
+          >
+            <Badge
+              badgeContent={artifactsCount || 0}
+              color="primary"
+              max={9}
+              sx={{
+                '& .MuiBadge-badge': {
+                  fontSize: '0.6rem',
+                  height: 16,
+                  minWidth: 16,
+                }
+              }}
+            >
+              <BarChart sx={{ fontSize: { xs: 16, sm: 18 } }} />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };
@@ -1686,11 +1752,11 @@ function AIChat() {
           )}
         </Box>
 
-        {/* Zone de saisie moderne et flottante */}
+        {/* Zone de saisie moderne et flottante - Design Premium Mobile-First */}
         <Box
           sx={{
-            p: 3,
-            pb: 4,
+            p: { xs: 1.5, sm: 3 },
+            pb: { xs: 2, sm: 4 },
             width: '100%',
           }}
         >
@@ -1700,54 +1766,96 @@ function AIChat() {
               maxWidth: 800,
               mx: 'auto',
               display: 'flex',
-              gap: 1.5,
+              gap: { xs: 0.75, sm: 1.5 },
               alignItems: 'flex-end',
-              bgcolor: theme.palette.background.paper,
-              borderRadius: 3,
-              p: 1.5,
-              border: `1px solid ${isDark ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.08)}`,
+              // Glass morphism avancé
+              bgcolor: isDark
+                ? alpha(theme.palette.background.paper, 0.8)
+                : alpha('#ffffff', 0.9),
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: { xs: '20px', sm: '24px' },
+              p: { xs: 1, sm: 1.5 },
+              border: `1px solid ${alpha(isDark ? '#ffffff' : '#000000', 0.08)}`,
               boxShadow: isDark
-                ? '0 10px 40px -10px rgba(0,0,0,0.5)'
-                : '0 10px 40px -10px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
+                ? `0 8px 32px ${alpha('#000000', 0.4)}, inset 0 1px 0 ${alpha('#ffffff', 0.05)}`
+                : `0 8px 32px ${alpha('#000000', 0.08)}, inset 0 1px 0 ${alpha('#ffffff', 0.8)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              // Effet shimmer en haut
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '10%',
+                right: '10%',
+                height: 1,
+                background: isDark
+                  ? `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.15)} 50%, transparent 100%)`
+                  : `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.9)} 50%, transparent 100%)`,
+                borderRadius: '24px',
+                pointerEvents: 'none',
+              },
               '&:focus-within': {
-                borderColor: theme.palette.primary.main,
-                boxShadow: `0 12px 48px -12px ${alpha(theme.palette.primary.main, 0.25)}`,
+                borderColor: alpha(theme.palette.primary.main, 0.5),
+                boxShadow: isDark
+                  ? `0 12px 48px ${alpha('#000000', 0.5)}, 0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`
+                  : `0 12px 48px ${alpha('#000000', 0.12)}, 0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
                 transform: 'translateY(-2px)'
               }
             }}
           >
-            <Tooltip title="Importer un document">
-              <IconButton
-                onClick={() => navigate('/ai-chat/document-import')}
-                disabled={loading}
-                size="small"
-                sx={{
-                  mb: 0.5,
-                  color: 'text.secondary',
-                  bgcolor: alpha(theme.palette.action.hover, 0.05),
-                  '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) }
-                }}
-              >
-                <AttachFile sx={{ fontSize: 22, transform: 'rotate(45deg)' }} />
-              </IconButton>
-            </Tooltip>
+            {/* Boutons d'action - Design pill */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 0.5,
+                mb: 0.5,
+              }}
+            >
+              <Tooltip title="Importer un document">
+                <IconButton
+                  onClick={() => navigate('/ai-chat/document-import')}
+                  disabled={loading}
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    bgcolor: alpha(isDark ? '#ffffff' : '#000000', 0.05),
+                    borderRadius: '12px',
+                    p: { xs: 0.75, sm: 1 },
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      transform: 'scale(1.08)',
+                    }
+                  }}
+                >
+                  <AttachFile sx={{ fontSize: { xs: 18, sm: 20 }, transform: 'rotate(45deg)' }} />
+                </IconButton>
+              </Tooltip>
 
-            <Tooltip title={t('aiChat:input.voiceMessage')}>
-              <IconButton
-                onClick={() => setVoiceRecorderOpen(true)}
-                disabled={loading}
-                size="small"
-                sx={{
-                  mb: 0.5,
-                  color: 'text.secondary',
-                  bgcolor: alpha(theme.palette.action.hover, 0.05),
-                  '&:hover': { color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.1) }
-                }}
-              >
-                <Mic sx={{ fontSize: 22 }} />
-              </IconButton>
-            </Tooltip>
+              <Tooltip title={t('aiChat:input.voiceMessage')}>
+                <IconButton
+                  onClick={() => setVoiceRecorderOpen(true)}
+                  disabled={loading}
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    bgcolor: alpha(isDark ? '#ffffff' : '#000000', 0.05),
+                    borderRadius: '12px',
+                    p: { xs: 0.75, sm: 1 },
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      color: '#ef4444',
+                      bgcolor: alpha('#ef4444', 0.12),
+                      transform: 'scale(1.08)',
+                    }
+                  }}
+                >
+                  <Mic sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
 
             <TextField
               fullWidth
@@ -1769,41 +1877,67 @@ function AIChat() {
               }}
               sx={{
                 '& .MuiInputBase-root': {
-                  fontSize: '0.95rem',
+                  fontSize: { xs: '0.9rem', sm: '0.95rem' },
                   lineHeight: 1.5,
-                  py: 1,
+                  py: { xs: 0.75, sm: 1 },
                   px: 1,
+                },
+                '& .MuiInputBase-input::placeholder': {
+                  color: 'text.disabled',
+                  opacity: 0.7,
                 },
               }}
             />
 
+            {/* Bouton envoyer - Design Premium avec gradient */}
             <IconButton
               onClick={() => handleSendMessage()}
               disabled={loading || !message.trim()}
               sx={{
                 mb: 0.5,
-                bgcolor: 'primary.main',
-                color: 'white',
-                width: 40,
-                height: 40,
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                  transform: 'scale(1.05)',
-                  boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.6)}`
+                background: message.trim()
+                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                  : (isDark ? alpha('#ffffff', 0.08) : '#e2e8f0'),
+                color: message.trim() ? 'white' : (isDark ? alpha('#ffffff', 0.3) : '#94a3b8'),
+                width: { xs: 38, sm: 42 },
+                height: { xs: 38, sm: 42 },
+                borderRadius: '14px',
+                boxShadow: message.trim()
+                  ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
+                  : 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
+                // Effet shimmer
+                '&::before': message.trim() ? {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '50%',
+                  background: `linear-gradient(180deg, ${alpha('#ffffff', 0.25)} 0%, transparent 100%)`,
+                  borderRadius: '14px 14px 0 0',
+                  pointerEvents: 'none',
+                } : {},
+                '&:hover': message.trim() ? {
+                  transform: 'scale(1.08)',
+                  boxShadow: `0 6px 24px ${alpha('#6366f1', 0.5)}`,
+                } : {},
+                '&:active': {
+                  transform: 'scale(0.95)',
                 },
                 '&.Mui-disabled': {
-                  bgcolor: isDark ? alpha(theme.palette.common.white, 0.1) : '#e2e8f0',
-                  color: isDark ? alpha(theme.palette.common.white, 0.3) : '#94a3b8',
+                  background: isDark ? alpha('#ffffff', 0.08) : '#e2e8f0',
+                  color: isDark ? alpha('#ffffff', 0.2) : '#94a3b8',
                   boxShadow: 'none'
                 },
               }}
             >
               {loading ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress size={18} sx={{ color: 'inherit' }} />
               ) : (
-                <Send sx={{ fontSize: 20, ml: 0.5 }} />
+                <Send sx={{ fontSize: { xs: 18, sm: 20 }, ml: 0.25 }} />
               )}
             </IconButton>
           </Paper>

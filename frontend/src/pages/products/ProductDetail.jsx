@@ -208,9 +208,9 @@ function ProductDetail() {
   const TypeIcon = typeConfig.icon;
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton onClick={() => navigate('/products')} size={isMobile ? 'small' : 'medium'}>
             <ArrowBack />
@@ -261,6 +261,69 @@ function ProductDetail() {
             </IconButton>
           </Tooltip>
         </Box>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/products')}
+            size="small"
+          >
+            {t('common:back')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {product.name}
+          </Typography>
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+            <IconButton
+              onClick={() => setPdfDialogOpen(true)}
+              size="small"
+              sx={{
+                color: 'success.main',
+                '&:hover': {
+                  bgcolor: 'success.light',
+                  color: 'white',
+                }
+              }}
+            >
+              <PictureAsPdf />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t('products:tooltips.editProduct')}>
+            <IconButton
+              onClick={() => navigate(`/products/${id}/edit`)}
+              size="small"
+              sx={{
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.light',
+                  color: 'white',
+                }
+              }}
+            >
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t('products:tooltips.deleteProduct')}>
+            <IconButton
+              onClick={handleDelete}
+              size="small"
+              sx={{
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.light',
+                  color: 'white',
+                }
+              }}
+            >
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Box>
 
       {/* Tabs */}

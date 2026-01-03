@@ -214,67 +214,69 @@ function SupplierDetail() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <IconButton onClick={() => navigate('/suppliers')} size={isMobile ? 'small' : 'medium'}>
+          <IconButton onClick={() => navigate('/suppliers')} size="medium">
             <ArrowBack />
           </IconButton>
-          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1 }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ flex: 1 }}>
             {supplier.name}
           </Typography>
-          {!isMobile && (
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                color="success"
-                startIcon={<PictureAsPdf />}
-                onClick={() => setPdfDialogOpen(true)}
-              >
-                {t('suppliers:actions.downloadPdf', 'Rapport PDF')}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={() => navigate(`/suppliers/${id}/edit`)}
-              >
-                {t('suppliers:actions.edit')}
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Delete />}
-                onClick={handleDelete}
-              >
-                {t('suppliers:actions.delete')}
-              </Button>
-            </Stack>
-          )}
-        </Box>
-        {isMobile && (
           <Stack direction="row" spacing={1}>
             <Button
-              fullWidth
+              variant="outlined"
+              color="success"
+              startIcon={<PictureAsPdf />}
+              onClick={() => setPdfDialogOpen(true)}
+            >
+              {t('suppliers:actions.downloadPdf', 'Rapport PDF')}
+            </Button>
+            <Button
               variant="outlined"
               startIcon={<Edit />}
               onClick={() => navigate(`/suppliers/${id}/edit`)}
-              size="small"
             >
               {t('suppliers:actions.edit')}
             </Button>
             <Button
-              fullWidth
               variant="outlined"
               color="error"
               startIcon={<Delete />}
               onClick={handleDelete}
-              size="small"
             >
               {t('suppliers:actions.delete')}
             </Button>
           </Stack>
-        )}
+        </Box>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={1}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<Edit />}
+            onClick={() => navigate(`/suppliers/${id}/edit`)}
+            size="small"
+            sx={{ borderRadius: 2 }}
+          >
+            {t('suppliers:actions.edit')}
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="error"
+            startIcon={<Delete />}
+            onClick={handleDelete}
+            size="small"
+            sx={{ borderRadius: 2 }}
+          >
+            {t('suppliers:actions.delete')}
+          </Button>
+        </Stack>
       </Box>
 
       {/* Quick Actions */}

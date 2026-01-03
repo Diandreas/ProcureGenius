@@ -1,8 +1,8 @@
 {
-  "title": "Bons de commande",
-  "newPO": "Nouveau bon de commande",
-  "editPO": "Modifier le bon de commande",
-  "poNumber": "N° BC",
+  "title": "Achats",
+  "newPO": "Nouvel achat",
+  "editPO": "Modifier l'achat",
+  "poNumber": "N° Achat",
   "status": {
     "draft": "Brouillon",
     "pending": "En attente",
@@ -23,18 +23,18 @@
     "dateFilter": "Filtre par date"
   },
   "search": {
-    "placeholder": "Rechercher un bon de commande..."
+    "placeholder": "Rechercher un achat..."
   },
   "messages": {
-    "loading": "Chargement des bons de commande...",
-    "loadingError": "Erreur lors du chargement du bon de commande",
-    "noPurchaseOrders": "Aucun bon de commande",
-    "noPOMatchSearch": "Aucun bon de commande ne correspond à vos critères de recherche.",
-    "poNotFound": "Bon de commande introuvable",
-    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce bon de commande ?",
-    "poDeletedSuccess": "Bon de commande supprimé avec succès",
+    "loading": "Chargement des achats...",
+    "loadingError": "Erreur lors du chargement de l'achat",
+    "noPurchaseOrders": "Aucun achat",
+    "noPOMatchSearch": "Aucun achat ne correspond à vos critères de recherche.",
+    "poNotFound": "Achat introuvable",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet achat ?",
+    "poDeletedSuccess": "Achat supprimé avec succès",
     "deleteError": "Erreur lors de la suppression",
-    "poApprovedSuccess": "Bon de commande approuvé avec succès",
+    "poApprovedSuccess": "Achat approuvé avec succès",
     "approvalError": "Erreur lors de l'approbation",
     "itemAddedSuccess": "Article ajouté avec succès",
     "itemAddError": "Erreur lors de l'ajout de l'article",
@@ -42,20 +42,20 @@
     "printWindowOpened": "Fenêtre d'impression ouverte",
     "printWindowError": "Impossible d'ouvrir la fenêtre d'impression",
     "pdfGenerationError": "Erreur lors de la génération du PDF",
-    "confirmApprove": "Êtes-vous sûr de vouloir approuver ce bon de commande ? Cette action ne peut pas être annulée.",
-    "pdfStyleInfo": "Choisissez le style de votre bon de commande. Le PDF sera généré avec un QR code de vérification.",
+    "confirmApprove": "Êtes-vous sûr de vouloir approuver cet achat ? Cette action ne peut pas être annulée.",
+    "pdfStyleInfo": "Choisissez le style de votre achat. Le PDF sera généré avec un QR code de vérification.",
     "suppliersLoadError": "Erreur lors du chargement des fournisseurs",
     "productsLoadError": "Erreur lors du chargement des produits",
     "supplierPreselected": "Fournisseur {{name}} pré-sélectionné",
     "warehousesLoadError": "Erreur lors du chargement des entrepôts:",
-    "poFormLoadError": "Erreur lors du chargement du bon de commande",
+    "poFormLoadError": "Erreur lors du chargement de l'achat",
     "supplierCreatedSuccess": "Fournisseur créé avec succès",
     "productCreatedSuccess": "Produit créé avec succès",
     "selectProduct": "Veuillez sélectionner ou créer un produit",
     "fillRequiredFields": "Veuillez remplir tous les champs requis",
     "completeFormValidation": "Veuillez remplir tous les champs obligatoires et ajouter au moins un article",
-    "poUpdatedSuccess": "Bon de commande modifié avec succès",
-    "poCreatedSuccess": "Bon de commande créé avec succès",
+    "poUpdatedSuccess": "Achat modifié avec succès",
+    "poCreatedSuccess": "Achat créé avec succès",
     "savingError": "Erreur lors de la sauvegarde",
     "noItemsAlert": "Aucun article ajouté. Cliquez sur \"Ajouter un article\" pour commencer.",
     "reportError": "Erreur lors de la génération du rapport",
@@ -70,16 +70,16 @@
     "generateReport": "Rapport PDF"
   },
   "report": {
-    "title": "Générer un Rapport de Bons de Commande",
-    "itemLabel": "bon de commande",
-    "itemsLabel": "bons de commande"
+    "title": "Générer un Rapport d'Achats",
+    "itemLabel": "achat",
+    "itemsLabel": "achats"
   },
   "labels": {
     "delivery": "Livraison:",
     "generalInformation": "Informations générales",
     "description": "Description",
     "orderedItems": "Articles commandés",
-    "noItemsInPO": "Aucun article dans ce bon de commande",
+    "noItemsInPO": "Aucun article dans cet achat",
     "financialSummary": "Résumé financier",
     "subtotal": "Sous-total",
     "taxes": "Taxes",
@@ -105,7 +105,7 @@
     "taxesLabel": "Taxes (15%):",
     "totalLabel": "Total:",
     "selectedSupplier": "Fournisseur sélectionné",
-    "poTemplate": "Modèle de bon de commande",
+    "poTemplate": "Modèle d'achat",
     "saving": "Sauvegarde...",
     "generating": "Génération...",
     "generatingLabel": "Génération du rapport en cours..."
@@ -134,19 +134,19 @@
     "actions": "Actions"
   },
   "dialogs": {
-    "approvePO": "Approuver le bon de commande",
+    "approvePO": "Approuver l'achat",
     "addItem": "Ajouter un article",
-    "generatePDF": "Générer un PDF du bon de commande",
+    "generatePDF": "Générer un PDF de l'achat",
     "generatePdf": "Générer un PDF du rapport",
     "quickCreateSupplier": "Créer un fournisseur rapidement",
     "quickCreateProduct": "Créer un produit rapidement",
     "sendEmail": {
-      "title": "Envoyer le bon de commande par email",
+      "title": "Envoyer l'achat par email",
       "recipient": "Email destinataire",
-      "recipientHelp": "Email du fournisseur qui recevra le bon de commande",
+      "recipientHelp": "Email du fournisseur qui recevra l'achat",
       "message": "Message personnalisé",
       "messageHelp": "Message qui sera inclus dans l'email (optionnel)",
-      "defaultMessage": "Bonjour {{name}},\n\nVeuillez trouver ci-joint votre bon de commande {{number}}.\n\nLe PDF de votre bon de commande est joint à cet email.\n\nPour toute question, n'hésitez pas à nous contacter.\n\nCordialement",
+      "defaultMessage": "Bonjour {{name}},\n\nVeuillez trouver ci-joint votre bon de commande {{number}}.\n\nLe PDF est joint à cet email.\n\nPour toute question, n'hésitez pas à nous contacter.\n\nCordialement",
       "send": "Envoyer"
     }
   },
@@ -168,10 +168,10 @@
     "financial": "Financier"
   },
   "tooltips": {
-    "generatePDF": "Générer un PDF du bon de commande",
-    "editPO": "Modifier le bon de commande",
-    "approvePO": "Approuver le bon de commande",
-    "sendEmail": "Envoyer le bon de commande par email au fournisseur",
+    "generatePDF": "Générer un PDF de l'achat",
+    "editPO": "Modifier l'achat",
+    "approvePO": "Approuver l'achat",
+    "sendEmail": "Envoyer l'achat par email au fournisseur",
     "noSupplierEmail": "Le fournisseur n'a pas d'adresse email"
   }
 }

@@ -41,7 +41,6 @@ import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
 import { useColorMode } from '../App';
 import MobileBottomNav from '../components/MobileBottomNav';
-import PermanentAIAssistant from '../components/PermanentAIAssistant';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
 import TutorialButton from '../components/tutorial/TutorialButton';
@@ -496,34 +495,54 @@ function MainLayout() {
   return (
     <AINotificationProvider>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Top Bar - Liquid Glass Design */}
+        {/* Top Bar - Design Premium avec effet Morphism */}
         <AppBar
           position="fixed"
           elevation={0}
           sx={{
-            width: { md: `calc(100% - ${drawerWidth}px)` },
+            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
             ml: { md: `${drawerWidth}px` },
-            // Liquid Glass Style
-            bgcolor: alpha(theme.palette.background.paper, mode === 'dark' ? 0.6 : 0.65),
-            backdropFilter: 'blur(20px) saturate(180%)',
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            // Design Glass Morphism avancé
+            bgcolor: mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha('#ffffff', 0.75),
+            backdropFilter: 'blur(24px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+            borderBottom: 'none',
             boxShadow: mode === 'dark'
-              ? '0 4px 30px rgba(0, 0, 0, 0.4)'
-              : '0 4px 30px rgba(0, 0, 0, 0.03)',
+              ? `0 1px 0 ${alpha('#ffffff', 0.05)}, 0 8px 32px ${alpha('#000000', 0.3)}`
+              : `0 1px 0 ${alpha('#000000', 0.03)}, 0 8px 32px ${alpha('#000000', 0.06)}`,
             color: 'text.primary',
-            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            // Inner shine for 3D liquid feel
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            // Effet de brillance premium en haut
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              background: mode === 'dark'
+                ? `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.1)} 50%, transparent 100%)`
+                : `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.8)} 50%, transparent 100%)`,
+              pointerEvents: 'none',
+            },
+            // Shimmer subtil sur le côté
             '&::after': {
               content: '""',
               position: 'absolute',
-              inset: 0,
-              borderRadius: 'inherit',
+              top: 0,
+              bottom: 0,
+              left: { md: 0, xs: 'auto' },
+              width: { md: 1, xs: 0 },
+              background: mode === 'dark'
+                ? alpha('#ffffff', 0.03)
+                : alpha('#000000', 0.02),
               pointerEvents: 'none',
-              boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, mode === 'dark' ? 0.05 : 0.4)}`,
             }
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 64, sm: 64 }, px: { xs: 2.5, sm: 4 }, gap: 1 }}>
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 4 }, gap: { xs: 0.5, sm: 1 } }}>
 
             {/* Mobile Menu Toggle - Only show on small tablets, not on phones */}
             <IconButton
@@ -536,20 +555,92 @@ function MainLayout() {
               <MenuIcon />
             </IconButton>
 
-            {/* Titre de la page - Simple et Clean */}
-            <Typography
-              variant="h6"
-              noWrap
-              sx={{
-                flexGrow: 1,
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                color: 'text.primary',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              {contextualActions?.title || 'Procura'}
-            </Typography>
+            {/* Navigation mobile - Bouton retour + Titre */}
+            {(() => {
+              const path = location.pathname;
+              // Pages principales (avec tab bar visible)
+              const mainPages = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/ai-chat', '/e-sourcing', '/contracts'];
+              const isMainPage = mainPages.some(page => path === page);
+
+              // Pages de détail (avec ID dans l'URL, ex: /suppliers/123)
+              const isDetailPage = !isMainPage && mainPages.some(page => path.startsWith(page + '/')) && !path.endsWith('/new') && !path.endsWith('/edit') && !path.includes('/edit/');
+
+              // Pages formulaire/wizard (tab bar cachée)
+              const isFormPage = path.endsWith('/new') || path.endsWith('/edit') || path.includes('/edit/');
+              const isWizardPage = path.includes('/wizard');
+
+              // Afficher bouton retour sur pages où navigation nécessaire
+              const showBackButton = isAIChatPage || isFormPage || isWizardPage || isDetailPage;
+              // Afficher titre sur mobile pour pages de détail et formulaires
+              const showTitleOnMobile = !isMainPage;
+
+              return (
+                <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1.5 } }}>
+                  {/* Bouton retour sur mobile */}
+                  {showBackButton && (
+                    <IconButton
+                      onClick={() => navigate(-1)}
+                      size="small"
+                      sx={{
+                        display: { xs: 'flex', md: 'none' },
+                        p: 0.75,
+                        borderRadius: '10px',
+                        color: 'text.primary',
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.15),
+                        }
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          lineHeight: 1,
+                        }}
+                      >
+                        ←
+                      </Box>
+                    </IconButton>
+                  )}
+
+                  {/* Indicateur de page actif - petit accent coloré (desktop only) */}
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 24,
+                      borderRadius: 2,
+                      background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.4)} 100%)`,
+                      boxShadow: `0 0 12px ${alpha(theme.palette.primary.main, 0.4)}`,
+                      display: { xs: 'none', md: 'block' },
+                    }}
+                  />
+
+                  {/* Titre de la page */}
+                  <Typography
+                    variant="h6"
+                    noWrap
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: { xs: '0.9rem', sm: '1.15rem' },
+                      maxWidth: { xs: 150, sm: 'none' },
+                      background: mode === 'dark'
+                        ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.text.primary, 0.7)} 100%)`
+                        : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.text.secondary} 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      letterSpacing: '-0.02em',
+                      // Cacher sur mobile pour les pages principales seulement
+                      display: { xs: showTitleOnMobile ? 'block' : 'none', md: 'block' },
+                    }}
+                  >
+                    {contextualActions?.title || 'Procura'}
+                  </Typography>
+                </Box>
+              );
+            })()}
 
             {/* Actions AI Chat - Style Discret */}
             {isAIChatPage && (
@@ -605,9 +696,26 @@ function MainLayout() {
               </Box>
             )}
 
-            {/* Period Selector - Global Dashboard Control */}
+            {/* Period Selector - Global Dashboard Control (optimisé mobile) */}
             {contextualActions?.periodControls && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 0.5, sm: 1.5 },
+                mr: { xs: 0, sm: 2 },
+                // Sur mobile, le sélecteur s'adapte
+                '& .period-selector-button': {
+                  px: { xs: '8px !important', sm: '12px !important' },
+                  py: { xs: '6px !important', sm: '8px !important' },
+                  fontSize: { xs: '0.75rem !important', sm: '0.875rem !important' },
+                  '& span': {
+                    maxWidth: { xs: 70, sm: 'none' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }
+                }
+              }}>
                 <PeriodSelector
                   period={contextualActions.currentPeriod}
                   onChange={contextualActions.onPeriodChange}
@@ -617,7 +725,7 @@ function MainLayout() {
                     onClick={contextualActions.onRefresh}
                     size="small"
                     sx={{
-                      p: 1,
+                      p: { xs: 0.75, sm: 1 },
                       borderRadius: 2,
                       color: 'text.secondary',
                       '&:hover': {
@@ -626,7 +734,7 @@ function MainLayout() {
                       }
                     }}
                   >
-                    <Refresh sx={{ fontSize: 18 }} />
+                    <Refresh sx={{ fontSize: { xs: 16, sm: 18 } }} />
                   </IconButton>
                 </Tooltip>
               </Box>
@@ -678,7 +786,7 @@ function MainLayout() {
               )
             ))}
 
-            {/* Legacy Primary Action - Solid Button */}
+            {/* Legacy Primary Action - Bouton Premium avec effet Glow */}
             {contextualActions?.action && !contextualActions?.actions && (
               <Button
                 variant="contained"
@@ -686,17 +794,38 @@ function MainLayout() {
                 onClick={contextualActions.action.onClick}
                 disableElevation
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: '12px',
                   fontWeight: 600,
-                  px: 3,
+                  px: { xs: 2, sm: 3 },
                   py: 1,
                   fontSize: '0.875rem',
                   mr: 2,
-                  bgcolor: 'primary.main',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                   color: 'white',
                   textTransform: 'none',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  // Effet shimmer
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '50%',
+                    background: `linear-gradient(180deg, ${alpha('#ffffff', 0.2)} 0%, transparent 100%)`,
+                    borderRadius: '12px 12px 0 0',
+                    pointerEvents: 'none',
+                  },
                   '&:hover': {
-                    bgcolor: 'primary.dark',
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.45)}`,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
                   }
                 }}
               >
@@ -721,53 +850,95 @@ function MainLayout() {
               </IconButton>
             )}
 
-            {/* Tutorial Button */}
+            {/* Tutorial Button - Visible partout */}
             <TutorialButton variant="icon" size="small" />
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle - Design Premium (compact sur mobile) */}
             <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
               <IconButton
                 onClick={toggleColorMode}
                 sx={{
                   color: 'text.secondary',
-                  mr: 1,
-                  p: 1,
-                  borderRadius: 2,
-                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+                  mr: { xs: 0.5, sm: 1 },
+                  p: { xs: 0.75, sm: 1 },
+                  borderRadius: { xs: '10px', sm: '12px' },
+                  bgcolor: mode === 'dark'
+                    ? alpha('#ffffff', 0.05)
+                    : alpha('#000000', 0.03),
+                  border: `1px solid ${alpha(mode === 'dark' ? '#ffffff' : '#000000', 0.06)}`,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: mode === 'dark'
+                      ? alpha('#ffffff', 0.1)
+                      : alpha('#000000', 0.06),
+                    transform: 'rotate(15deg)',
+                  }
                 }}
               >
-                {mode === 'dark' ? <LightMode sx={{ fontSize: 22 }} /> : <DarkMode sx={{ fontSize: 22 }} />}
+                {mode === 'dark' ? (
+                  <LightMode sx={{
+                    fontSize: { xs: 18, sm: 20 },
+                    color: '#f59e0b',
+                    filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))'
+                  }} />
+                ) : (
+                  <DarkMode sx={{
+                    fontSize: { xs: 18, sm: 20 },
+                    color: '#6366f1',
+                  }} />
+                )}
               </IconButton>
             </Tooltip>
 
-            {/* User Profile - Minimalist */}
-            <IconButton
-              onClick={handleMenuClick}
-              sx={{ ml: 0.5, p: 0.5 }}
-              data-tutorial="profile-menu"
-            >
-              <Avatar
+            {/* User Profile - Design Premium avec anneau (compact sur mobile) */}
+            <Tooltip title={t('navigation:userMenu.profile', 'Profil')}>
+              <IconButton
+                onClick={handleMenuClick}
                 sx={{
-                  width: 38,
-                  height: 38,
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: 'primary.main',
-                  fontWeight: 700,
-                  fontSize: '0.875rem',
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
-                }}
-              >
-                {useSelector((state) => {
-                  const user = state.auth.user;
-                  const orgName = user?.organization?.name;
-                  if (orgName) return orgName.substring(0, 2).toUpperCase();
-                  if (user?.first_name && user?.last_name) {
-                    return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+                  ml: { xs: 0, sm: 0.5 },
+                  p: 0.5,
+                  borderRadius: { xs: '12px', sm: '14px' },
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
                   }
-                  return user?.email?.[0]?.toUpperCase() || 'P';
-                })}
-              </Avatar>
-            </IconButton>
+                }}
+                data-tutorial="profile-menu"
+              >
+                <Box
+                  sx={{
+                    position: 'relative',
+                    p: { xs: 0.3, sm: 0.5 },
+                    borderRadius: { xs: '12px', sm: '14px' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      width: { xs: 28, sm: 34 },
+                      height: { xs: 28, sm: 34 },
+                      bgcolor: mode === 'dark'
+                        ? theme.palette.background.paper
+                        : '#ffffff',
+                      color: 'primary.main',
+                      fontWeight: 700,
+                      fontSize: { xs: '0.7rem', sm: '0.813rem' },
+                      border: 'none',
+                    }}
+                  >
+                    {useSelector((state) => {
+                      const user = state.auth.user;
+                      const orgName = user?.organization?.name;
+                      if (orgName) return orgName.substring(0, 2).toUpperCase();
+                      if (user?.first_name && user?.last_name) {
+                        return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+                      }
+                      return user?.email?.[0]?.toUpperCase() || 'P';
+                    })}
+                  </Avatar>
+                </Box>
+              </IconButton>
+            </Tooltip>
 
             <Menu
               anchorEl={anchorEl}
@@ -862,9 +1033,6 @@ function MainLayout() {
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav enabledModules={enabledModules} />
-
-        {/* Permanent AI Assistant */}
-        {!isMobile && <PermanentAIAssistant currentModule={currentModule} />}
 
         {/* Module Activation Dialog */}
         <ModuleActivationDialog

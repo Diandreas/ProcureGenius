@@ -13,8 +13,37 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const isDark = theme.palette.mode === 'dark';
   const [notificationsCount, setNotificationsCount] = useState(0);
 
+  // Pages où cacher la tab bar pour une meilleure UX
+  const shouldHideTabBar = () => {
+    const path = location.pathname;
+
+    // AI Chat - expérience immersive
+    if (path.startsWith('/ai-chat')) return true;
+
+    // Formulaires de création/édition - éviter perte de données
+    if (path.endsWith('/new')) return true;
+    if (path.endsWith('/edit')) return true;
+    if (path.includes('/edit/')) return true;
+
+    // Wizards et processus multi-étapes
+    if (path.includes('/wizard')) return true;
+
+    // Pages de détail (ex: /suppliers/123) - titre dans top navbar
+    const mainPaths = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/e-sourcing', '/contracts'];
+    const isDetailPage = mainPaths.some(mainPath =>
+      path.startsWith(mainPath + '/') && path !== mainPath
+    );
+    if (isDetailPage) return true;
+
+    return false;
+  };
+
+  // IMPORTANT: Tous les hooks DOIVENT être appelés AVANT tout return conditionnel
   // Récupérer le count de notifications au chargement et toutes les 30 secondes
   useEffect(() => {
+    // Ne pas fetch si on va cacher le composant
+    if (shouldHideTabBar()) return;
+
     const fetchNotificationsCount = async () => {
       try {
         const response = await aiChatAPI.getNotificationsCount();
@@ -28,7 +57,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     const interval = setInterval(fetchNotificationsCount, 30000); // Poll toutes les 30s
 
     return () => clearInterval(interval);
-  }, []);
+  }, [location.pathname]);
+
+  // Ne pas rendre le composant si on doit le cacher (APRÈS les hooks)
+  if (shouldHideTabBar()) {
+    return null;
+  }
 
   // Couleur beige/crème chaude
   const bgColor = '#fef7ed';

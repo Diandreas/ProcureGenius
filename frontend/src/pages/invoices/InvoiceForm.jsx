@@ -404,9 +404,9 @@ function InvoiceForm() {
   }
 
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton
             onClick={() => navigate('/invoices')}
@@ -441,6 +441,42 @@ function InvoiceForm() {
             {loading ? t('invoices:labels.savingLabel') : t('invoices:buttons.save')}
           </Button>
         </Box>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/invoices')}
+            size="small"
+          >
+            {t('common:back')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {isEdit ? t('invoices:editInvoice') : t('invoices:newInvoice')}
+          </Typography>
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/invoices')}
+            size="small"
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+          >
+            {t('invoices:buttons.cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Save />}
+            onClick={handleSubmit}
+            disabled={loading}
+            size="small"
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+          >
+            {loading ? t('invoices:labels.savingLabel') : t('invoices:buttons.save')}
+          </Button>
+        </Stack>
       </Box>
 
       <form onSubmit={handleSubmit}>

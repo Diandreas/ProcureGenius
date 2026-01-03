@@ -47,7 +47,7 @@
             "products": "Produits",
             "clients": "Clients",
             "invoices": "Factures",
-            "purchase_orders": "Bons de Commande",
+            "purchase_orders": "Achats",
             "ai": "Assistant IA"
         }
     },
@@ -72,10 +72,10 @@
         "overdue_invoices": "Factures en Retard",
         "payment_performance": "Performance Paiements",
         "recent_invoices": "Factures Récentes",
-        "po_overview": "Aperçu Bons de Commande",
-        "po_status": "Statut Bons de Commande",
+        "po_overview": "Aperçu Achats",
+        "po_status": "Statut Achats",
         "expenses_chart": "Dépenses Achats",
-        "overdue_po": "BCs en Retard",
+        "overdue_po": "Achats en Retard",
         "supplier_performance": "Performance Fournisseurs",
         "pending_approvals": "Approbations en Attente",
         "budget_tracking": "Suivi Budget",
@@ -118,7 +118,7 @@
         "po_status_approved": "Approuvés",
         "po_status_received": "Reçus",
         "po_status_cancelled": "Annulés",
-        "po_total": "bons de commande",
+        "po_total": "achats",
         "pareto_title": "Analyse Pareto 80/20",
         "pareto_subtitle": "Concentration du chiffre d'affaires",
         "pareto_clients_label": "des clients",
@@ -141,7 +141,7 @@
         "stock_alerts_empty": "Aucune alerte stock",
         "margin_analysis_empty": "Aucune donnée de marge",
         "overdue_invoices_empty": "Aucune facture en retard",
-        "overdue_po_empty": "Aucun BC en retard",
+        "overdue_po_empty": "Aucun achat en retard",
         "supplier_performance_empty": "Aucun fournisseur",
         "pending_approvals_empty": "Aucune approbation en attente"
     },
@@ -239,7 +239,7 @@
                 "description": "Enregistrez vos clients pour faciliter la facturation"
             },
             "create_first_po": {
-                "title": "Créer un bon de commande",
+                "title": "Créer un achat",
                 "description": "Passez votre première commande auprès d'un fournisseur"
             },
             "create_first_invoice": {

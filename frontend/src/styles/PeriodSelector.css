@@ -6,21 +6,50 @@
 .period-selector-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 6px;
+  padding: 8px 12px;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 500;
   color: #374151;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .period-selector-button {
+    padding: 6px 10px;
+    gap: 4px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  .period-selector-button svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .period-selector-button:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+}
+
+/* Dark mode support */
+[data-mui-color-scheme="dark"] .period-selector-button,
+.dark .period-selector-button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e5e7eb;
+}
+
+[data-mui-color-scheme="dark"] .period-selector-button:hover,
+.dark .period-selector-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .period-selector-overlay {
@@ -41,9 +70,25 @@
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   z-index: 9999;
-  min-width: 250px;
+  min-width: 220px;
   padding: 8px;
   animation: slideDown 0.2s ease-out;
+}
+
+/* Dark mode dropdown */
+[data-mui-color-scheme="dark"] .period-selector-dropdown,
+.dark .period-selector-dropdown {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Mobile dropdown */
+@media (max-width: 600px) {
+  .period-selector-dropdown {
+    min-width: 200px;
+    padding: 6px;
+  }
 }
 
 @keyframes slideDown {
@@ -69,12 +114,13 @@
   padding: 10px 12px;
   background: none;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 13px;
   color: #374151;
   text-align: left;
   cursor: pointer;
   transition: background 0.15s;
+  width: 100%;
 }
 
 .period-option:hover {
@@ -84,7 +130,24 @@
 .period-option.active {
   background: #eff6ff;
   color: #2563eb;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Dark mode options */
+[data-mui-color-scheme="dark"] .period-option,
+.dark .period-option {
+  color: #e5e7eb;
+}
+
+[data-mui-color-scheme="dark"] .period-option:hover,
+.dark .period-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-mui-color-scheme="dark"] .period-option.active,
+.dark .period-option.active {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
 }
 
 .custom-range-picker {
@@ -96,6 +159,41 @@
   font-size: 14px;
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Dark mode custom picker */
+[data-mui-color-scheme="dark"] .custom-range-picker h4,
+.dark .custom-range-picker h4 {
+  color: #f3f4f6;
+}
+
+[data-mui-color-scheme="dark"] .date-input-group label,
+.dark .date-input-group label {
+  color: #9ca3af;
+}
+
+[data-mui-color-scheme="dark"] .date-input-group input[type="date"],
+.dark .date-input-group input[type="date"] {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e5e7eb;
+}
+
+[data-mui-color-scheme="dark"] .date-input-group input[type="date"]:focus,
+.dark .date-input-group input[type="date"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+[data-mui-color-scheme="dark"] .btn-cancel,
+.dark .btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+}
+
+[data-mui-color-scheme="dark"] .btn-cancel:hover,
+.dark .btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .date-inputs {

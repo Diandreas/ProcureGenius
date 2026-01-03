@@ -542,14 +542,52 @@ function ProductForm() {
     );
 
     return (
-        <Box sx={{ maxWidth: 1400, mx: 'auto', p: isMobile ? 2 : 3 }}>
-            <Box sx={{ mb: 3 }}>
+        <Box sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 1.5, sm: 2, md: 3 } }}>
+            {/* Header - Caché sur mobile (géré par top navbar) */}
+            <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
                 <Typography variant={isMobile ? "h5" : "h4"} fontWeight={700} sx={{ mb: 0.5 }}>
                     {isEdit ? t('products:editProduct') : t('products:newProduct')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     {isEdit ? 'Modifiez les informations du produit' : 'Créez un nouveau produit pour votre catalogue'}
                 </Typography>
+            </Box>
+
+            {/* Actions Mobile - Affiché uniquement sur mobile */}
+            <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => navigate('/products')}
+                        size="small"
+                    >
+                        {t('common:back')}
+                    </Button>
+                    <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+                        {isEdit ? t('products:editProduct') : t('products:newProduct')}
+                    </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="outlined"
+                        onClick={() => navigate('/products')}
+                        size="small"
+                        startIcon={<Cancel />}
+                        sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+                    >
+                        {t('common:cancel')}
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={<Save />}
+                        disabled={isSubmitting}
+                        size="small"
+                        sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+                    >
+                        {isSubmitting ? t('common:saving') : t('common:save')}
+                    </Button>
+                </Stack>
             </Box>
 
             {/* Message d'information si warehouses manquants */}

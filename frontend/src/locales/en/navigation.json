@@ -30,6 +30,7 @@
         "report": "Report"
     },
     "userMenu": {
+        "profile": "Profile",
         "settings": "Settings",
         "logout": "Logout"
     },

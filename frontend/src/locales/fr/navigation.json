@@ -2,7 +2,7 @@
     "menu": {
         "dashboard": "Tableau de bord",
         "suppliers": "Fournisseurs",
-        "purchaseOrders": "Bons de commande",
+        "purchaseOrders": "Achats",
         "invoices": "Factures",
         "products": "Produits",
         "clients": "Clients",
@@ -15,7 +15,7 @@
     },
     "topBar": {
         "newSupplier": "Nouveau fournisseur",
-        "newPurchaseOrder": "Nouveau bon de commande",
+        "newPurchaseOrder": "Nouvel achat",
         "newInvoice": "Nouvelle facture",
         "newProduct": "Nouveau produit",
         "newClient": "Nouveau client",
@@ -30,6 +30,7 @@
         "report": "Rapport"
     },
     "userMenu": {
+        "profile": "Profil",
         "settings": "Paramètres",
         "logout": "Déconnexion"
     },

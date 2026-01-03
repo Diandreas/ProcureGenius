@@ -132,10 +132,29 @@ function ClientForm() {
     }
 
     return (
-        <Box>
-            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-                {isEdit ? t('clients:editClient') : t('clients:newClient')}
-            </Typography>
+        <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+            {/* Header - Caché sur mobile (géré par top navbar) */}
+            <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
+                    {isEdit ? t('clients:editClient') : t('clients:newClient')}
+                </Typography>
+            </Box>
+
+            {/* Actions Mobile - Affiché uniquement sur mobile */}
+            <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => navigate('/clients')}
+                        size="small"
+                    >
+                        {t('common:back')}
+                    </Button>
+                    <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+                        {isEdit ? t('clients:editClient') : t('clients:newClient')}
+                    </Typography>
+                </Stack>
+            </Box>
 
             <Formik
                 initialValues={initialValues}

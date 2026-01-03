@@ -501,9 +501,9 @@ function InvoiceDetail() {
   const actualStatus = isOverdue() ? 'overdue' : invoice.status;
 
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box p={{ xs: 1.5, sm: 2, md: 3 }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton
             onClick={() => navigate('/invoices')}
@@ -514,12 +514,11 @@ function InvoiceDetail() {
           >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 600 }}>
+          <Typography variant="h4" sx={{ fontSize: '2rem', fontWeight: 600 }}>
             {invoice.invoice_number}
           </Typography>
         </Box>
-        {!isMobile && (
-          <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
               startIcon={<PictureAsPdf />}
@@ -607,7 +606,6 @@ Cordialement`
               </MenuItem>
             </Menu>
           </Box>
-        )}
       </Box>
 
       {isMobile ? (

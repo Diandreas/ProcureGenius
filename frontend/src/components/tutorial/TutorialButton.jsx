@@ -177,13 +177,17 @@ const TutorialButton = ({
           size={size}
           color={color}
           data-tutorial="help-button"
+          sx={{
+            p: { xs: 0.75, sm: 1 },
+            borderRadius: { xs: '10px', sm: '12px' },
+          }}
         >
-          <Badge 
-            color="primary" 
-            variant="dot" 
+          <Badge
+            color="primary"
+            variant="dot"
             invisible={tutorialCompleted}
           >
-            <HelpOutline />
+            <HelpOutline sx={{ fontSize: { xs: 18, sm: 22 } }} />
           </Badge>
         </IconButton>
       </Tooltip>

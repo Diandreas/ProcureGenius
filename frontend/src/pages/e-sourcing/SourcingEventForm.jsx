@@ -140,21 +140,40 @@ function SourcingEventForm() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/e-sourcing/events')}
-        sx={{ mb: 2 }}
-      >
-        {t('common:backToList')}
-      </Button>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/e-sourcing/events')}
+          sx={{ mb: 2 }}
+        >
+          {t('common:backToList')}
+        </Button>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/e-sourcing/events')}
+            size="small"
+          >
+            {t('common:backToList')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {isEditMode ? t('eSourcing:form.title.edit') : t('eSourcing:form.title.new')}
+          </Typography>
+        </Stack>
+      </Box>
 
       <Card>
         <CardContent>
-          <Typography variant="h5" component="h1" gutterBottom>
+          <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
             {isEditMode ? t('eSourcing:form.title.edit') : t('eSourcing:form.title.new')}
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" color="text.secondary" paragraph sx={{ display: { xs: 'none', md: 'block' } }}>
             {isEditMode
               ? t('eSourcing:form.editDescription')
               : t('eSourcing:form.createDescription')}

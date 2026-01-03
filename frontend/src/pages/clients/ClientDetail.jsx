@@ -185,35 +185,18 @@ function ClientDetail() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 1.5 : 3 }}>
-      {/* Header avec design amélioré */}
-      <Box
-        sx={{
-          mb: isMobile ? 2 : 3,
-          p: { xs: 1.5, sm: 3 },
-          borderRadius: 2,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          boxShadow: 2
-        }}
-      >
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          <IconButton
-            onClick={() => navigate('/clients')}
-            size={isMobile ? 'small' : 'medium'}
-            sx={{
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
-            }}
-          >
+          <IconButton onClick={() => navigate('/clients')} size="medium">
             <ArrowBack />
           </IconButton>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
-              variant={isMobile ? 'h5' : 'h4'}
+              variant="h4"
               fontWeight="bold"
               sx={{
-                color: 'white',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap'
@@ -224,8 +207,8 @@ function ClientDetail() {
             {client.legal_name && client.legal_name !== client.name && (
               <Typography
                 variant="body2"
+                color="text.secondary"
                 sx={{
-                  color: 'rgba(255,255,255,0.8)',
                   mt: 0.5,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -241,11 +224,8 @@ function ClientDetail() {
               <IconButton
                 onClick={() => setPdfDialogOpen(true)}
                 sx={{
-                  color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
-                  }
+                  color: 'success.main',
+                  '&:hover': { bgcolor: 'success.light', color: 'white' }
                 }}
               >
                 <PictureAsPdf />
@@ -255,11 +235,8 @@ function ClientDetail() {
               <IconButton
                 onClick={() => navigate(`/clients/${id}/edit`)}
                 sx={{
-                  color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
-                  }
+                  color: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.light', color: 'white' }
                 }}
               >
                 <Edit />
@@ -269,11 +246,8 @@ function ClientDetail() {
               <IconButton
                 onClick={handleDeleteClick}
                 sx={{
-                  color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,0,0,0.3)',
-                  }
+                  color: 'error.main',
+                  '&:hover': { bgcolor: 'error.light', color: 'white' }
                 }}
               >
                 <Delete />
@@ -281,6 +255,37 @@ function ClientDetail() {
             </Tooltip>
           </Stack>
         </Box>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'flex-end', gap: 1 }}>
+        <Tooltip title={t('clients:tooltips.downloadPdfReport')}>
+          <IconButton
+            onClick={() => setPdfDialogOpen(true)}
+            size="small"
+            sx={{ color: 'success.main' }}
+          >
+            <PictureAsPdf />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={t('clients:tooltips.editClient')}>
+          <IconButton
+            onClick={() => navigate(`/clients/${id}/edit`)}
+            size="small"
+            sx={{ color: 'primary.main' }}
+          >
+            <Edit />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={t('clients:tooltips.deleteClient')}>
+          <IconButton
+            onClick={handleDeleteClick}
+            size="small"
+            sx={{ color: 'error.main' }}
+          >
+            <Delete />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Tabs */}
@@ -581,37 +586,20 @@ function ClientDetail() {
                 >
                   {t('clients:labels.generalInfo', 'Informations générales')}
                 </Typography>
-                <Grid container spacing={isMobile ? 1 : 2.5}>
+                <Grid container spacing={isMobile ? 1 : 2}>
                   <Grid item xs={6} sm={6}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        boxShadow: 3,
-                        transition: 'transform 0.2s',
-                        '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
-                      }}
-                    >
+                    <Card sx={{ borderRadius: 2, bgcolor: 'primary.50' }}>
                       <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                        <Receipt sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                        <Receipt sx={{ fontSize: isMobile ? 28 : 36, color: 'primary.main', mb: isMobile ? 0.5 : 1 }} />
                         <Typography
                           variant={isMobile ? 'h6' : 'h4'}
-                          color="white"
+                          color="primary.main"
                           fontWeight="bold"
                           sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
                         >
                           {statistics.sales_summary.total_invoices || 0}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'rgba(255,255,255,0.9)',
-                            fontWeight: 500,
-                            mt: 0.5,
-                            display: 'block',
-                            fontSize: isMobile ? '0.688rem' : undefined
-                          }}
-                        >
+                        <Typography variant="caption" color="text.secondary">
                           {t('clients:tabs.invoices')}
                         </Typography>
                       </CardContent>
@@ -619,38 +607,18 @@ function ClientDetail() {
                   </Grid>
 
                   <Grid item xs={6} sm={6}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                        boxShadow: 3,
-                        transition: 'transform 0.2s',
-                        '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
-                      }}
-                    >
+                    <Card sx={{ borderRadius: 2, bgcolor: 'success.50' }}>
                       <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                        <AttachMoney sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                        <AttachMoney sx={{ fontSize: isMobile ? 28 : 36, color: 'success.main', mb: isMobile ? 0.5 : 1 }} />
                         <Typography
                           variant={isMobile ? 'body2' : 'h5'}
-                          color="white"
+                          color="success.main"
                           fontWeight="bold"
-                          sx={{
-                            wordBreak: 'break-word',
-                            fontSize: isMobile ? '0.875rem' : undefined
-                          }}
+                          sx={{ wordBreak: 'break-word', fontSize: isMobile ? '0.875rem' : undefined }}
                         >
                           {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'rgba(255,255,255,0.9)',
-                            fontWeight: 500,
-                            mt: 0.5,
-                            display: 'block',
-                            fontSize: isMobile ? '0.688rem' : undefined
-                          }}
-                        >
+                        <Typography variant="caption" color="text.secondary">
                           {t('clients:stats.totalRevenue')}
                         </Typography>
                       </CardContent>
@@ -659,35 +627,18 @@ function ClientDetail() {
 
                   {statistics.sales_summary.unique_products > 0 && (
                     <Grid item xs={6} sm={6}>
-                      <Card
-                        sx={{
-                          borderRadius: 2,
-                          background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                          boxShadow: 3,
-                          transition: 'transform 0.2s',
-                          '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
-                        }}
-                      >
+                      <Card sx={{ borderRadius: 2, bgcolor: 'info.50' }}>
                         <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                          <Inventory sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                          <Inventory sx={{ fontSize: isMobile ? 28 : 36, color: 'info.main', mb: isMobile ? 0.5 : 1 }} />
                           <Typography
                             variant={isMobile ? 'h6' : 'h4'}
-                            color="white"
+                            color="info.main"
                             fontWeight="bold"
                             sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
                           >
                             {statistics.sales_summary.unique_products}
                           </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'rgba(255,255,255,0.9)',
-                              fontWeight: 500,
-                              mt: 0.5,
-                              display: 'block',
-                              fontSize: isMobile ? '0.688rem' : undefined
-                            }}
-                          >
+                          <Typography variant="caption" color="text.secondary">
                             {t('clients:stats.productsPurchased')}
                           </Typography>
                         </CardContent>
@@ -697,38 +648,18 @@ function ClientDetail() {
 
                   {statistics.sales_summary.average_invoice_amount > 0 && (
                     <Grid item xs={6} sm={6}>
-                      <Card
-                        sx={{
-                          borderRadius: 2,
-                          background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                          boxShadow: 3,
-                          transition: 'transform 0.2s',
-                          '&:hover': { transform: isMobile ? 'none' : 'translateY(-4px)' }
-                        }}
-                      >
+                      <Card sx={{ borderRadius: 2, bgcolor: 'warning.50' }}>
                         <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                          <TrendingUp sx={{ fontSize: isMobile ? 28 : 36, color: 'white', mb: isMobile ? 0.5 : 1, opacity: 0.9 }} />
+                          <TrendingUp sx={{ fontSize: isMobile ? 28 : 36, color: 'warning.main', mb: isMobile ? 0.5 : 1 }} />
                           <Typography
                             variant={isMobile ? 'body2' : 'h5'}
-                            color="white"
+                            color="warning.main"
                             fontWeight="bold"
-                            sx={{
-                              wordBreak: 'break-word',
-                              fontSize: isMobile ? '0.875rem' : undefined
-                            }}
+                            sx={{ wordBreak: 'break-word', fontSize: isMobile ? '0.875rem' : undefined }}
                           >
                             {formatCurrency(statistics.sales_summary.average_invoice_amount)}
                           </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'rgba(255,255,255,0.9)',
-                              fontWeight: 500,
-                              mt: 0.5,
-                              display: 'block',
-                              fontSize: isMobile ? '0.688rem' : undefined
-                            }}
-                          >
+                          <Typography variant="caption" color="text.secondary">
                             {t('clients:stats.averageBasket')}
                           </Typography>
                         </CardContent>

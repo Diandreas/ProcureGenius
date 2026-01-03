@@ -146,14 +146,33 @@ function SourcingEventDetail() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/e-sourcing/events')}
-        sx={{ mb: 2 }}
-      >
-        {t('common:backToList')}
-      </Button>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/e-sourcing/events')}
+          sx={{ mb: 2 }}
+        >
+          {t('common:backToList')}
+        </Button>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/e-sourcing/events')}
+            size="small"
+          >
+            {t('common:backToList')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {currentEvent.title}
+          </Typography>
+        </Stack>
+      </Box>
 
       <Grid container spacing={3}>
         {/* En-tête */}
@@ -162,10 +181,10 @@ function SourcingEventDetail() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                 <Box>
-                  <Typography variant="h5" component="h1" gutterBottom>
+                  <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
                     {currentEvent.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
                     {currentEvent.event_number} • {t('eSourcing:labels.createdBy')} {currentEvent.created_by_name}
                   </Typography>
                 </Box>

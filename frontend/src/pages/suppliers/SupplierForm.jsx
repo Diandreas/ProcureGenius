@@ -137,9 +137,9 @@ function SupplierForm() {
   }
 
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 2.5, display: { xs: 'none', md: 'block' } }}>
         <Typography variant="h4" sx={{
           fontSize: { xs: '1.75rem', md: '2.25rem' },
           fontWeight: 600,
@@ -155,6 +155,22 @@ function SupplierForm() {
         }}>
           {isEdit ? t('suppliers:form.subtitle.edit') : t('suppliers:form.subtitle.new')}
         </Typography>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/suppliers')}
+            size="small"
+          >
+            {t('common:back')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {isEdit ? t('suppliers:form.title.edit') : t('suppliers:form.title.new')}
+          </Typography>
+        </Stack>
       </Box>
 
       <Formik

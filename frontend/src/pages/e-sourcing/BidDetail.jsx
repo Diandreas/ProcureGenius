@@ -117,14 +117,33 @@ function BidDetail() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate(`/e-sourcing/events/${bid.sourcing_event}`)}
-        sx={{ mb: 2 }}
-      >
-        {t('eSourcing:bidComparison.backToEvent')}
-      </Button>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate(`/e-sourcing/events/${bid.sourcing_event}`)}
+          sx={{ mb: 2 }}
+        >
+          {t('eSourcing:bidComparison.backToEvent')}
+        </Button>
+      </Box>
+
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate(`/e-sourcing/events/${bid.sourcing_event}`)}
+            size="small"
+          >
+            {t('eSourcing:bidComparison.backToEvent')}
+          </Button>
+          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
+            {t('eSourcing:bidDetail.title', { supplier: bid.supplier_name })}
+          </Typography>
+        </Stack>
+      </Box>
 
       <Grid container spacing={3}>
         {/* En-tête */}
@@ -133,10 +152,10 @@ function BidDetail() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                 <Box>
-                  <Typography variant="h5" component="h1" gutterBottom>
+                  <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
                     {t('eSourcing:bidDetail.title', { supplier: bid.supplier_name })}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
                     {bid.supplier_email}
                   </Typography>
                 </Box>
