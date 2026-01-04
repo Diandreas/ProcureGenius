@@ -421,43 +421,44 @@ const CustomizableDashboard = () => {
     <div className="customizable-dashboard">
       {/* Edit mode hint */}
       {isEditMode && (
-        <div className="edit-mode-hint" style={{ marginBottom: '16px', padding: '12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Settings size={20} className="hint-icon" />
-          <span>{t('editHint')}</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+        <div className="edit-mode-hint">
+          <div className="edit-mode-header">
+            <Settings size={18} className="hint-icon" />
+            <span className="edit-mode-text">{t('editHint')}</span>
+          </div>
+          <div className="edit-mode-actions">
             <button
               onClick={() => setIsLibraryOpen(true)}
               className="toolbar-btn toolbar-btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+              title={t('addWidget')}
             >
               <Plus size={16} />
-              {t('addWidget')}
+              <span className="btn-text">{t('addWidget')}</span>
             </button>
             <button
               onClick={handleAddAllWidgets}
               className="toolbar-btn toolbar-btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
               title={t('addAllWidgetsTooltip')}
             >
               <Grid3x3 size={16} />
-              {t('addAllWidgets')}
+              <span className="btn-text">{t('addAllWidgets')}</span>
             </button>
             <button
               onClick={toggleEditMode}
               className="toolbar-btn"
-              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+              title={t('preview')}
             >
               <Eye size={16} />
-              {t('preview')}
+              <span className="btn-text">{t('preview')}</span>
             </button>
             <button
               onClick={handleSaveLayout}
               disabled={isSaving || !hasChanges}
               className="toolbar-btn toolbar-btn-success"
-              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+              title={isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}
             >
               <Save size={16} />
-              {isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}
+              <span className="btn-text">{isSaving ? t('saving') : hasChanges ? t('save') : t('saved')}</span>
             </button>
           </div>
         </div>

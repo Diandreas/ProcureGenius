@@ -23,6 +23,7 @@ import {
   ListItemIcon,
   useMediaQuery,
   useTheme,
+  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -214,7 +215,11 @@ function SupplierDetail() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{
+      p: { xs: 0, sm: 2, md: 3 },
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -252,31 +257,59 @@ function SupplierDetail() {
         </Box>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-        <Stack direction="row" spacing={1}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<Edit />}
+      {/* Actions Mobile - Style mobile app compact */}
+      <Box sx={{
+        mb: 1.5,
+        display: { xs: 'flex', md: 'none' },
+        justifyContent: 'flex-end',
+        gap: 0.5,
+        px: 2,
+        py: 1
+      }}>
+        <Tooltip title={t('suppliers:tooltips.editSupplier')}>
+          <IconButton
             onClick={() => navigate(`/suppliers/${id}/edit`)}
             size="small"
-            sx={{ borderRadius: 2 }}
+            sx={{
+              bgcolor: 'primary.50',
+              color: 'primary.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
           >
-            {t('suppliers:actions.edit')}
-          </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            color="error"
-            startIcon={<Delete />}
+            <Edit sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={t('suppliers:tooltips.deleteSupplier')}>
+          <IconButton
             onClick={handleDelete}
             size="small"
-            sx={{ borderRadius: 2 }}
+            sx={{
+              bgcolor: 'error.50',
+              color: 'error.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'error.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
           >
-            {t('suppliers:actions.delete')}
-          </Button>
-        </Stack>
+            <Delete sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Quick Actions */}
@@ -297,9 +330,9 @@ function SupplierDetail() {
                   textTransform: 'none',
                   fontWeight: 600,
                   py: 1.5,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  bgcolor: 'primary.main',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5568d3 0%, #63408a 100%)',
+                    bgcolor: 'primary.dark',
                   }
                 }}
               >
@@ -351,26 +384,67 @@ function SupplierDetail() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
+      {/* Tabs - Style mobile app */}
       <Tabs
         value={activeTab}
         onChange={(e, v) => setActiveTab(v)}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        sx={{
+          mb: isMobile ? 1.5 : 3,
+          px: isMobile ? 2 : 0,
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': {
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.75rem' : '0.875rem',
+            px: isMobile ? 1.5 : 2,
+            py: isMobile ? 1 : 1.5,
+            minHeight: isMobile ? 40 : 48,
+            borderRadius: isMobile ? 1.5 : 0,
+            mr: isMobile ? 0.5 : 0,
+            '&:hover': {
+              bgcolor: isMobile ? 'rgba(0,0,0,0.04)' : 'transparent',
+            },
+            transition: 'all 0.2s ease'
+          },
+          '& .MuiTabs-indicator': {
+            height: isMobile ? 3 : 2,
+            borderRadius: isMobile ? 1.5 : 0,
+          }
+        }}
       >
-        <Tab icon={<Info />} label={t('suppliers:tabs.info')} iconPosition="start" />
-        <Tab icon={<ShoppingCart />} label={t('suppliers:tabs.orders')} iconPosition="start" />
-        <Tab icon={<Inventory />} label={t('suppliers:tabs.products')} iconPosition="start" />
+        <Tab
+          icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label={t('suppliers:tabs.info')}
+          iconPosition="start"
+        />
+        <Tab
+          icon={<ShoppingCart sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label={t('suppliers:tabs.orders')}
+          iconPosition="start"
+        />
+        <Tab
+          icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label={t('suppliers:tabs.products')}
+          iconPosition="start"
+        />
       </Tabs>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
-        <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Card principale */}
-          <Grid item xs={12} md={8}>
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+        <Box sx={{ px: isMobile ? 2 : 0 }}>
+          <Grid container spacing={isMobile ? 1.5 : 3}>
+            {/* Card principale - Style mobile app */}
+            <Grid item xs={12} md={8}>
+              <Card sx={{
+                borderRadius: isMobile ? 2.5 : 2,
+                mb: isMobile ? 1.5 : 3,
+                boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              }}>
+                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                   <Avatar
                     sx={{
@@ -635,6 +709,7 @@ function SupplierDetail() {
             </Card>
           </Grid>
         </Grid>
+        </Box>
       )}
 
       {/* Tab: Commandes */}

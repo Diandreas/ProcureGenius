@@ -69,6 +69,7 @@ import i18n from '../../i18n/config';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
+import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -94,6 +95,7 @@ function InvoiceDetail() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [settings, setSettings] = useState(null);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -115,6 +117,19 @@ function InvoiceDetail() {
       fetchInvoice();
     }
   }, [id]);
+
+  // Charger les paramètres d'organisation pour détecter le format thermal
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await settingsAPI.getAll();
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Ouvrir le modal d'email si demandé depuis la navigation
   useEffect(() => {
@@ -660,43 +675,44 @@ Cordialement`
           )}
 
           {/* Financial Summary Mobile - Ultra Compact */}
-          <Card sx={{
-            mb: 1.5,
-            borderRadius: 2.5,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
-            overflow: 'hidden'
-          }}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Stack spacing={0.75}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                    {t('invoices:labels.subtotal')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+          <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+            <Grid item xs={4}>
+              <Card sx={{ borderRadius: 2, bgcolor: 'primary.50', boxShadow: 1 }}>
+                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="body2" color="primary.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
                     {formatCurrency(invoice.subtotal || 0)}
                   </Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                    {t('invoices:labels.taxes')}
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {t('invoices:labels.subtotal')}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={4}>
+              <Card sx={{ borderRadius: 2, bgcolor: 'warning.50', boxShadow: 1 }}>
+                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
                     {formatCurrency(invoice.tax_amount || 0)}
                   </Typography>
-                </Box>
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
-                    {t('invoices:labels.total')}
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {t('invoices:labels.taxes')}
                   </Typography>
-                  <Typography variant="h6" sx={{ fontSize: '1.1rem', color: 'white', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={4}>
+              <Card sx={{ borderRadius: 2, bgcolor: 'success.50', boxShadow: 1 }}>
+                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
                     {formatCurrency(invoice.total_amount || 0)}
                   </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {t('invoices:labels.total')}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
           {/* Items Table Mobile - Compact */}
           <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -1400,19 +1416,30 @@ Cordialement`
         <DialogTitle>{t('invoices:dialogs.generatePdf')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
-              <Select
-                value={selectedTemplate}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
-                label={t('invoices:fields.invoiceTemplate')}
-              >
-                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
-              </Select>
-            </FormControl>
+            {settings?.paperSize === 'thermal_80' || settings?.paperSize === 'thermal_58' ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  {t('invoices:messages.thermalPrintingMode', 'Format d\'impression thermique détecté. Le template de ticket thermal sera utilisé automatiquement.')}
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  {settings.paperSize === 'thermal_80' ? 'Format: 80mm' : 'Format: 58mm'}
+                </Typography>
+              </Alert>
+            ) : (
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
+                <Select
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  label={t('invoices:fields.invoiceTemplate')}
+                >
+                  <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
+                </Select>
+              </FormControl>
+            )}
             <Typography variant="body2" color="text.secondary">
               {t('invoices:messages.pdfGenerationHelpText')}
             </Typography>

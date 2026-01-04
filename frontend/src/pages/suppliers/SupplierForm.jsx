@@ -137,7 +137,11 @@ function SupplierForm() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{
+      p: { xs: 0, sm: 2, md: 3 },
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 2.5, display: { xs: 'none', md: 'block' } }}>
         <Typography variant="h4" sx={{
@@ -157,20 +161,15 @@ function SupplierForm() {
         </Typography>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/suppliers')}
-            size="small"
-          >
-            {t('common:back')}
-          </Button>
-          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-            {isEdit ? t('suppliers:form.title.edit') : t('suppliers:form.title.new')}
-          </Typography>
-        </Stack>
+      {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
+      <Box sx={{
+        mb: 1.5,
+        display: { xs: 'flex', md: 'none' },
+        justifyContent: 'flex-end',
+        px: 2,
+        py: 1
+      }}>
+        {/* Les actions sont gérées par le top navbar sur mobile */}
       </Box>
 
       <Formik
@@ -181,7 +180,8 @@ function SupplierForm() {
       >
         {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
           <Form>
-            <Grid container spacing={3}>
+            <Box sx={{ px: isMobile ? 2 : 0 }}>
+            <Grid container spacing={isMobile ? 1.5 : 3}>
               {/* Informations générales */}
               <Grid item xs={12} md={8}>
                 <Card sx={{
@@ -328,9 +328,22 @@ function SupplierForm() {
 
               {/* Évaluation et diversité */}
               <Grid item xs={12} md={4}>
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
+                <Card sx={{
+                  mb: isMobile ? 1.5 : 3,
+                  borderRadius: isMobile ? 2.5 : 2,
+                  boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                  backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                  border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      sx={{
+                        fontSize: isMobile ? '1rem' : undefined,
+                        mb: isMobile ? 1.5 : 2
+                      }}
+                    >
                       {t('suppliers:form.sections.rating')}
                     </Typography>
 
@@ -339,18 +352,34 @@ function SupplierForm() {
                         name="rating"
                         value={values.rating}
                         onChange={(e, newValue) => setFieldValue('rating', newValue)}
-                        size="large"
+                        size={isMobile ? 'medium' : 'large'}
                       />
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                      >
                         {values.rating} / 5
                       </Typography>
                     </Box>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
+                <Card sx={{
+                  borderRadius: isMobile ? 2.5 : 2,
+                  boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                  backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                  border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      sx={{
+                        fontSize: isMobile ? '1rem' : undefined,
+                        mb: isMobile ? 1.5 : 2
+                      }}
+                    >
                       {t('suppliers:form.sections.diversity')}
                     </Typography>
 
@@ -360,9 +389,16 @@ function SupplierForm() {
                           name="is_local"
                           checked={values.is_local}
                           onChange={handleChange}
+                          size={isMobile ? 'small' : 'medium'}
                         />
                       }
                       label={t('suppliers:labels.localSupplier')}
+                      sx={{
+                        '& .MuiTypography-root': {
+                          fontSize: isMobile ? '0.875rem' : undefined
+                        },
+                        mb: isMobile ? 0.5 : 1
+                      }}
                     />
 
                     <FormControlLabel
@@ -371,9 +407,16 @@ function SupplierForm() {
                           name="is_minority_owned"
                           checked={values.is_minority_owned}
                           onChange={handleChange}
+                          size={isMobile ? 'small' : 'medium'}
                         />
                       }
                       label={t('suppliers:labels.minorityOwned')}
+                      sx={{
+                        '& .MuiTypography-root': {
+                          fontSize: isMobile ? '0.875rem' : undefined
+                        },
+                        mb: isMobile ? 0.5 : 1
+                      }}
                     />
 
                     <FormControlLabel
@@ -382,9 +425,16 @@ function SupplierForm() {
                           name="is_woman_owned"
                           checked={values.is_woman_owned}
                           onChange={handleChange}
+                          size={isMobile ? 'small' : 'medium'}
                         />
                       }
                       label={t('suppliers:labels.womanOwned')}
+                      sx={{
+                        '& .MuiTypography-root': {
+                          fontSize: isMobile ? '0.875rem' : undefined
+                        },
+                        mb: isMobile ? 0.5 : 1
+                      }}
                     />
 
                     <FormControlLabel
@@ -393,32 +443,48 @@ function SupplierForm() {
                           name="is_indigenous"
                           checked={values.is_indigenous}
                           onChange={handleChange}
+                          size={isMobile ? 'small' : 'medium'}
                         />
                       }
                       label={t('suppliers:labels.indigenousOwned')}
+                      sx={{
+                        '& .MuiTypography-root': {
+                          fontSize: isMobile ? '0.875rem' : undefined
+                        }
+                      }}
                     />
                   </CardContent>
                 </Card>
               </Grid>
 
-              {/* Actions */}
+              {/* Actions - Style mobile app */}
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <Box sx={{
+                  display: 'flex',
+                  gap: isMobile ? 1 : 2,
+                  justifyContent: 'flex-end',
+                  flexDirection: isMobile ? 'column-reverse' : 'row',
+                  flexWrap: 'wrap',
+                  px: isMobile ? 2 : 0,
+                  pb: isMobile ? 2 : 0
+                }}>
                   <Button
                     variant="outlined"
                     startIcon={<Cancel />}
                     onClick={() => navigate('/suppliers')}
                     disabled={isSubmitting}
+                    fullWidth={isMobile}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: isMobile ? 2 : 2,
                       textTransform: 'none',
                       fontWeight: 500,
-                      px: 3,
-                      py: 1,
+                      px: isMobile ? 2 : 3,
+                      py: isMobile ? 1.25 : 1,
+                      fontSize: isMobile ? '0.875rem' : undefined,
                       transition: 'all 0.2s ease-in-out',
                       '&:hover': {
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        transform: isMobile ? 'none' : 'scale(1.02)',
+                        boxShadow: isMobile ? 2 : '0 2px 8px rgba(0,0,0,0.1)'
                       }
                     }}
                   >
@@ -427,26 +493,30 @@ function SupplierForm() {
                   <Button
                     type="submit"
                     variant="contained"
-                    startIcon={<Save />}
+                    startIcon={isSubmitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <Save />}
                     disabled={isSubmitting}
+                    fullWidth={isMobile}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: isMobile ? 2 : 2,
                       textTransform: 'none',
-                      fontWeight: 500,
-                      px: 3,
-                      py: 1,
+                      fontWeight: 600,
+                      px: isMobile ? 2 : 3,
+                      py: isMobile ? 1.25 : 1,
+                      fontSize: isMobile ? '0.875rem' : undefined,
+                      boxShadow: isMobile ? 2 : undefined,
                       transition: 'all 0.2s ease-in-out',
                       '&:hover': {
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                        transform: isMobile ? 'translateY(-1px)' : 'scale(1.02)',
+                        boxShadow: isMobile ? 4 : '0 4px 12px rgba(25, 118, 210, 0.3)'
                       }
                     }}
                   >
-                    {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('suppliers:form.buttons.save') : t('suppliers:form.buttons.create'))}
+                    {isSubmitting ? t('common:labels.saving', 'Enregistrement...') : (isEdit ? t('suppliers:form.buttons.save') : t('suppliers:form.buttons.create'))}
                   </Button>
                 </Box>
               </Grid>
             </Grid>
+            </Box>
           </Form>
         )}
       </Formik>

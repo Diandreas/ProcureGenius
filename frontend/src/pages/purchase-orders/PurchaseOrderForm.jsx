@@ -29,6 +29,9 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  Stack,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -54,6 +57,8 @@ function PurchaseOrderForm() {
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
   const [searchParams] = useSearchParams();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isEdit = Boolean(id);
   const supplierIdFromUrl = searchParams.get('supplier');
 
@@ -334,7 +339,11 @@ function PurchaseOrderForm() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{
+      p: { xs: 0, sm: 2, md: 3 },
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -364,53 +373,41 @@ function PurchaseOrderForm() {
         </Box>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/purchase-orders')}
-            size="small"
-          >
-            {t('common:back')}
-          </Button>
-          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-            {isEdit ? t('purchaseOrders:editPO') : t('purchaseOrders:newPO')}
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/purchase-orders')}
-            size="small"
-            startIcon={<Cancel />}
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-          >
-            {t('purchaseOrders:buttons.cancel')}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Save />}
-            onClick={handleSubmit}
-            disabled={saving}
-            size="small"
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-          >
-            {saving ? t('purchaseOrders:labels.saving') : t('purchaseOrders:buttons.save')}
-          </Button>
-        </Stack>
+      {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
+      <Box sx={{
+        mb: 1.5,
+        display: { xs: 'flex', md: 'none' },
+        justifyContent: 'flex-end',
+        px: 2,
+        py: 1
+      }}>
+        {/* Les actions sont gérées par le top navbar sur mobile */}
       </Box>
+      <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={isMobile ? 1.5 : 3}>
         {/* Main Form */}
         <Grid item xs={12} md={8}>
           {/* Basic Information */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{
+            mb: isMobile ? 1.5 : 3,
+            borderRadius: isMobile ? 2.5 : 2,
+            boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+            backdropFilter: isMobile ? 'blur(10px)' : 'none',
+            border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+          }}>
+            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontSize: isMobile ? '1rem' : undefined,
+                  mb: isMobile ? 1.5 : 2
+                }}
+              >
                 {t('purchaseOrders:labels.generalInformation')}
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={isMobile ? 1.5 : 2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -539,52 +536,152 @@ function PurchaseOrderForm() {
           </Card>
 
           {/* Items */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
+          <Card sx={{
+            borderRadius: isMobile ? 2.5 : 2,
+            boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+            backdropFilter: isMobile ? 'blur(10px)' : 'none',
+            border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+          }}>
+            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: isMobile ? 1.5 : 2
+              }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontSize: isMobile ? '1rem' : undefined
+                  }}
+                >
                   {t('purchaseOrders:labels.orderedItemsForm')}
                 </Typography>
                 <Button
                   startIcon={<Add />}
                   onClick={() => setAddItemDialogOpen(true)}
                   variant="contained"
-                  size="small"
+                  size={isMobile ? 'small' : 'small'}
+                  sx={{
+                    borderRadius: isMobile ? 2 : 1,
+                    fontSize: isMobile ? '0.813rem' : undefined,
+                    py: isMobile ? 0.75 : undefined,
+                    px: isMobile ? 1.5 : undefined,
+                    minWidth: isMobile ? 'auto' : undefined
+                  }}
                 >
                   {t('purchaseOrders:buttons.addItem')}
                 </Button>
               </Box>
 
               {items.length === 0 ? (
-                <Alert severity="info">
+                <Alert
+                  severity="info"
+                  sx={{
+                    borderRadius: isMobile ? 2 : 1,
+                    fontSize: isMobile ? '0.813rem' : undefined,
+                    py: isMobile ? 1 : undefined
+                  }}
+                >
                   {t('purchaseOrders:messages.noItemsAlert')}
                 </Alert>
               ) : (
-                <TableContainer component={Paper}>
-                  <Table>
+                <TableContainer
+                  component={Paper}
+                  sx={{
+                    borderRadius: isMobile ? 2 : 1,
+                    boxShadow: isMobile ? 'none' : undefined,
+                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none'
+                  }}
+                >
+                  <Table size={isMobile ? 'small' : 'medium'}>
                     <TableHead>
                       <TableRow>
-                        <TableCell>{t('purchaseOrders:columns.reference')}</TableCell>
-                        <TableCell>{t('purchaseOrders:columns.description')}</TableCell>
-                        <TableCell align="right">{t('purchaseOrders:columns.quantity')}</TableCell>
-                        <TableCell align="right">{t('purchaseOrders:columns.unitPrice')}</TableCell>
-                        <TableCell align="right">{t('purchaseOrders:columns.total')}</TableCell>
-                        <TableCell align="center">{t('purchaseOrders:columns.actions')}</TableCell>
+                        <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
+                          {t('purchaseOrders:columns.reference')}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
+                          {t('purchaseOrders:columns.description')}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                        >
+                          {t('purchaseOrders:columns.quantity')}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                        >
+                          {t('purchaseOrders:columns.unitPrice')}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                        >
+                          {t('purchaseOrders:columns.total')}
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                        >
+                          {t('purchaseOrders:columns.actions')}
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {items.map((item, index) => (
                         <TableRow key={index}>
-                          <TableCell>{item.product_reference || '-'}</TableCell>
-                          <TableCell>{item.description}</TableCell>
-                          <TableCell align="right">{item.quantity}</TableCell>
-                          <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
-                          <TableCell align="right">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
+                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
+                            {item.product_reference || '-'}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
+                            {item.description}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                          >
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                          >
+                            {formatCurrency(item.unit_price)}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                          >
+                            {formatCurrency(item.quantity * item.unit_price)}
+                          </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" onClick={() => handleEditItem(index)}>
+                            <IconButton
+                              size={isMobile ? 'small' : 'small'}
+                              onClick={() => handleEditItem(index)}
+                              sx={{
+                                width: isMobile ? 32 : undefined,
+                                height: isMobile ? 32 : undefined,
+                                '& .MuiSvgIcon-root': {
+                                  fontSize: isMobile ? '1rem' : undefined
+                                }
+                              }}
+                            >
                               <Edit />
                             </IconButton>
-                            <IconButton size="small" onClick={() => handleDeleteItem(index)} color="error">
+                            <IconButton
+                              size={isMobile ? 'small' : 'small'}
+                              onClick={() => handleDeleteItem(index)}
+                              color="error"
+                              sx={{
+                                width: isMobile ? 32 : undefined,
+                                height: isMobile ? 32 : undefined,
+                                '& .MuiSvgIcon-root': {
+                                  fontSize: isMobile ? '1rem' : undefined
+                                }
+                              }}
+                            >
                               <Delete />
                             </IconButton>
                           </TableCell>
@@ -628,22 +725,53 @@ function PurchaseOrderForm() {
 
           {/* Selected Supplier Info */}
           {formData.supplier && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+            <Card sx={{
+              borderRadius: isMobile ? 2.5 : 2,
+              boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: isMobile ? 'blur(10px)' : 'none',
+              border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontSize: isMobile ? '1rem' : undefined,
+                    mb: isMobile ? 1.5 : 2
+                  }}
+                >
                   {t('purchaseOrders:labels.selectedSupplier')}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Business color="primary" />
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: isMobile ? 1.5 : 2,
+                  mb: isMobile ? 1.5 : 2
+                }}>
+                  <Business color="primary" sx={{ fontSize: isMobile ? 20 : 24 }} />
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 'medium',
+                        fontSize: isMobile ? '0.938rem' : undefined
+                      }}
+                    >
                       {formData.supplier.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                    >
                       {formData.supplier.email}
                     </Typography>
                     {formData.supplier.phone && (
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                      >
                         {formData.supplier.phone}
                       </Typography>
                     )}
@@ -653,6 +781,11 @@ function PurchaseOrderForm() {
                   fullWidth
                   variant="outlined"
                   onClick={() => navigate(`/suppliers/${formData.supplier.id}`)}
+                  sx={{
+                    borderRadius: isMobile ? 2 : 1,
+                    fontSize: isMobile ? '0.875rem' : undefined,
+                    py: isMobile ? 1 : undefined
+                  }}
                 >
                   {t('purchaseOrders:buttons.viewSupplier')}
                 </Button>
@@ -661,6 +794,7 @@ function PurchaseOrderForm() {
           )}
         </Grid>
       </Grid>
+      </Box>
 
       {/* Add/Edit Item Dialog with Product Selection and Creation */}
       <ProductSelectionDialog

@@ -70,6 +70,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { purchaseOrdersAPI } from '../../services/api';
+import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -97,6 +98,7 @@ function PurchaseOrderDetail() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [settings, setSettings] = useState(null);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -111,6 +113,19 @@ function PurchaseOrderDetail() {
   useEffect(() => {
     fetchPurchaseOrder();
   }, [id]);
+
+  // Charger les paramètres d'organisation pour détecter le format thermal
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await settingsAPI.getAll();
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const fetchPurchaseOrder = async () => {
     setLoading(true);
@@ -262,23 +277,23 @@ function PurchaseOrderDetail() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      {/* Header - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          <IconButton onClick={() => navigate('/purchase-orders')} size={isMobile ? 'small' : 'medium'}>
+          <IconButton onClick={() => navigate('/purchase-orders')} size="medium">
             <ArrowBack />
           </IconButton>
-          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight="bold" sx={{ flex: 1, minWidth: 'fit-content' }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ flex: 1, minWidth: 'fit-content' }}>
             {purchaseOrder.po_number}
           </Typography>
           <Chip
             icon={getStatusIcon(purchaseOrder.status)}
             label={getStatusLabel(purchaseOrder.status)}
             color={getStatusColor(purchaseOrder.status)}
-            size={isMobile ? 'small' : 'medium'}
+            size="medium"
           />
-          {!isMobile && (
+          {(
             <>
               <Tooltip title={t('purchaseOrders:tooltips.generatePDF')}>
                 <Button
@@ -418,6 +433,80 @@ function PurchaseOrderDetail() {
         </Box>
       </Box>
 
+      {/* Actions Mobile - Affiché uniquement sur mobile */}
+      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'flex-end', gap: 1, alignItems: 'center' }}>
+        <Chip
+          icon={getStatusIcon(purchaseOrder.status)}
+          label={getStatusLabel(purchaseOrder.status)}
+          color={getStatusColor(purchaseOrder.status)}
+          size="small"
+        />
+        <Tooltip title={t('purchaseOrders:tooltips.generatePDF')}>
+          <IconButton
+            onClick={() => setPdfDialogOpen(true)}
+            size="small"
+            sx={{ color: 'success.main' }}
+          >
+            <PictureAsPdf />
+          </IconButton>
+        </Tooltip>
+        <Tooltip
+          title={
+            !purchaseOrder.supplier?.email
+              ? t('purchaseOrders:tooltips.noSupplierEmail', 'Le fournisseur n\'a pas d\'adresse email')
+              : t('purchaseOrders:tooltips.sendEmail')
+          }
+        >
+          <span>
+            <IconButton
+              onClick={() => {
+                const currentLanguage = i18n.language || 'fr';
+                const lang = currentLanguage.split('-')[0];
+                const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                  name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                  number: purchaseOrder.po_number
+                });
+                setEmailData({
+                  recipient_email: purchaseOrder.supplier?.email || '',
+                  custom_message: defaultMessage
+                });
+                setSendEmailDialogOpen(true);
+              }}
+              disabled={!purchaseOrder.supplier?.email}
+              size="small"
+              sx={{ color: 'info.main' }}
+            >
+              <Email />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={t('purchaseOrders:tooltips.editPO')}>
+          <IconButton
+            onClick={handleEdit}
+            size="small"
+            sx={{ color: 'primary.main' }}
+          >
+            <Edit />
+          </IconButton>
+        </Tooltip>
+        {purchaseOrder.status === 'draft' && (
+          <Tooltip title={t('purchaseOrders:tooltips.approvePO')}>
+            <IconButton
+              onClick={() => setApproveDialogOpen(true)}
+              size="small"
+              sx={{ color: 'success.main' }}
+            >
+              <Done />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title={t('common:buttons.moreActions')}>
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
+            <MoreVert />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
       {/* Tabs */}
       <Tabs
         value={activeTab}
@@ -458,7 +547,7 @@ function PurchaseOrderDetail() {
           {/* Main Content */}
           <Grid item xs={12} md={8}>
             {/* Order Info Card */}
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>
                   {purchaseOrder.title}
@@ -481,7 +570,7 @@ function PurchaseOrderDetail() {
           <Grid item xs={12} md={4}>
             {/* Supplier Info */}
             {purchaseOrder.supplier && (
-              <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+              <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Business sx={{ color: 'primary.main' }} />
@@ -515,7 +604,7 @@ function PurchaseOrderDetail() {
             )}
 
             {/* Dates */}
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
+            <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
                   {t('purchaseOrders:labels.importantDates')}
@@ -556,7 +645,7 @@ function PurchaseOrderDetail() {
 
             {/* Created By */}
             {purchaseOrder.created_by && (
-              <Card sx={{ borderRadius: 1 }}>
+              <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Typography variant="subtitle1" fontWeight="600" gutterBottom>
                     {t('purchaseOrders:labels.createdBy')}
@@ -584,7 +673,7 @@ function PurchaseOrderDetail() {
       {/* Tab: Items */}
       {activeTab === 1 && (
         <Box>
-          <Card sx={{ borderRadius: 1 }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <CardContent sx={{ p: isMobile ? 2 : 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -707,51 +796,41 @@ function PurchaseOrderDetail() {
       {/* Tab: Financial Summary */}
       {activeTab === 2 && (
         <Box>
-          <Card sx={{ borderRadius: 1 }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                <AttachMoney color="primary" />
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: isMobile ? 2 : 3 }}>
                 {t('purchaseOrders:labels.financialSummary')}
               </Typography>
-              <Grid container spacing={isMobile ? 2 : 3}>
+              <Grid container spacing={isMobile ? 1.5 : 2}>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <AttachMoney sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="primary.main" fontWeight="bold">
-                        {formatCurrency(purchaseOrder.subtotal || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('purchaseOrders:labels.subtotal')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'} color="primary.main" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(purchaseOrder.subtotal || 0)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('purchaseOrders:labels.subtotal')}
+                    </Typography>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <Receipt sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="warning.main" fontWeight="bold">
-                        {formatCurrency(purchaseOrder.tax_amount || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('purchaseOrders:labels.taxes')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'warning.50', borderRadius: 1 }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'} color="warning.main" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(purchaseOrder.tax_amount || 0)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('purchaseOrders:labels.taxes')}
+                    </Typography>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <AttachMoney sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="success.main" fontWeight="bold">
-                        {formatCurrency(purchaseOrder.total_amount || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('purchaseOrders:labels.total')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'} color="success.main" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(purchaseOrder.total_amount || 0)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('purchaseOrders:labels.total')}
+                    </Typography>
+                  </Box>
                 </Grid>
               </Grid>
             </CardContent>
@@ -836,19 +915,30 @@ function PurchaseOrderDetail() {
         <DialogTitle>{t('purchaseOrders:dialogs.generatePDF')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>{t('purchaseOrders:labels.poTemplate')}</InputLabel>
-              <Select
-                value={selectedTemplate}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
-                label={t('purchaseOrders:labels.poTemplate')}
-              >
-                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('purchaseOrders:templates.classic')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('purchaseOrders:templates.modern')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('purchaseOrders:templates.minimal')}</MenuItem>
-                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('purchaseOrders:templates.professional')}</MenuItem>
-              </Select>
-            </FormControl>
+            {settings?.paperSize === 'thermal_80' || settings?.paperSize === 'thermal_58' ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  {t('purchaseOrders:messages.thermalPrintingMode', 'Format d\'impression thermique détecté. Le template de ticket thermal sera utilisé automatiquement.')}
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  {settings.paperSize === 'thermal_80' ? 'Format: 80mm' : 'Format: 58mm'}
+                </Typography>
+              </Alert>
+            ) : (
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>{t('purchaseOrders:labels.poTemplate')}</InputLabel>
+                <Select
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  label={t('purchaseOrders:labels.poTemplate')}
+                >
+                  <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('purchaseOrders:templates.classic')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('purchaseOrders:templates.modern')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('purchaseOrders:templates.minimal')}</MenuItem>
+                  <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('purchaseOrders:templates.professional')}</MenuItem>
+                </Select>
+              </FormControl>
+            )}
             <Typography variant="body2" color="text.secondary">
               {t('purchaseOrders:messages.pdfStyleInfo')}
             </Typography>

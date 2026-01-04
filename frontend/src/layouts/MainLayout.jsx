@@ -46,6 +46,7 @@ import IconImage from '../components/IconImage';
 import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
+import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 import PeriodSelector from '../components/dashboard/PeriodSelector';
@@ -618,14 +619,14 @@ function MainLayout() {
                     }}
                   />
 
-                  {/* Titre de la page */}
+                  {/* Titre de la page - Utilise l'espace disponible */}
                   <Typography
                     variant="h6"
                     noWrap
                     sx={{
                       fontWeight: 700,
                       fontSize: { xs: '0.9rem', sm: '1.15rem' },
-                      maxWidth: { xs: 150, sm: 'none' },
+                      flex: 1, // Prend l'espace disponible
                       background: mode === 'dark'
                         ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.text.primary, 0.7)} 100%)`
                         : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.text.secondary} 100%)`,
@@ -642,9 +643,9 @@ function MainLayout() {
               );
             })()}
 
-            {/* Actions AI Chat - Style Discret */}
+            {/* Actions AI Chat - Masquer sur mobile pour éviter redondance avec les boutons dans l'interface AI */}
             {isAIChatPage && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5, mr: 2 }}>
                 <Tooltip title="Imports">
                   <IconButton
                     size="small"
@@ -1044,6 +1045,9 @@ function MainLayout() {
 
         {/* Tutorial System */}
         <SimpleTutorial />
+
+        {/* PWA Installation Prompt */}
+        <InstallPWAPrompt />
       </Box>
     </AINotificationProvider>
   );

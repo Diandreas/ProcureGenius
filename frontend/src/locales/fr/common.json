@@ -151,5 +151,17 @@
     "previousDay": "Jour précédent",
     "today": "Aujourd'hui",
     "nextDay": "Jour suivant"
+  },
+  "pwa": {
+    "install": {
+      "title": "Installer ProcureGenius",
+      "description": "Installez l'application pour un accès rapide et une meilleure expérience, même hors ligne.",
+      "descriptionIOS": "Pour installer l'application sur votre iPhone, appuyez sur le bouton Partager puis \"Sur l'écran d'accueil\"",
+      "button": "Installer",
+      "dismiss": "J'ai compris",
+      "later": "Plus tard",
+      "iosHint": "Appuyez sur ",
+      "iosHint2": " puis \"Sur l'écran d'accueil\""
+    }
   }
 }

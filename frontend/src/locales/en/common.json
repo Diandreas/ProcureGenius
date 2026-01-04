@@ -151,5 +151,17 @@
     "previousDay": "Previous day",
     "today": "Today",
     "nextDay": "Next day"
+  },
+  "pwa": {
+    "install": {
+      "title": "Install ProcureGenius",
+      "description": "Install the app for quick access and a better experience, even offline.",
+      "descriptionIOS": "To install the app on your iPhone, tap the Share button then \"Add to Home Screen\"",
+      "button": "Install",
+      "dismiss": "Got it",
+      "later": "Later",
+      "iosHint": "Tap ",
+      "iosHint2": " then \"Add to Home Screen\""
+    }
   }
 }

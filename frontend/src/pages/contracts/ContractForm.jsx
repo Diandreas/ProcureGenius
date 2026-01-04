@@ -36,6 +36,8 @@ function ContractForm() {
   const dispatch = useDispatch();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
   const { suppliers } = useSelector((state) => state.suppliers);
@@ -141,7 +143,11 @@ function ContractForm() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{
+      p: { xs: 0, sm: 2, md: 3 },
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
         <Button
@@ -153,22 +159,17 @@ function ContractForm() {
         </Button>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/contracts')}
-            size="small"
-          >
-            {t('common:back')}
-          </Button>
-          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-            {isEditMode ? t('contracts:form.title.edit') : t('contracts:form.title.new')}
-          </Typography>
-        </Stack>
+      {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
+      <Box sx={{
+        mb: 1.5,
+        display: { xs: 'flex', md: 'none' },
+        justifyContent: 'flex-end',
+        px: 2,
+        py: 1
+      }}>
+        {/* Les actions sont gérées par le top navbar sur mobile */}
       </Box>
-
+      <Box sx={{ px: isMobile ? 2 : 0 }}>
       <Card>
         <CardContent>
           <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -413,6 +414,7 @@ function ContractForm() {
           </form>
         </CardContent>
       </Card>
+      </Box>
     </Box>
   );
 }

@@ -478,7 +478,7 @@ function InvoiceForm() {
           </Button>
         </Stack>
       </Box>
-
+      <Box sx={{ px: isMobile ? 2 : 0 }}>
       <form onSubmit={handleSubmit}>
         {isMobile ? (
           <Box>
@@ -1022,6 +1022,7 @@ function InvoiceForm() {
         createFunction={productsAPI.quickCreate}
         title={t('invoices:dialogs.quickCreateProduct')}
       />
+      </Box>
     </Box>
   );
 }

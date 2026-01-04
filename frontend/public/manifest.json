@@ -1,8 +1,21 @@
 {
-  "short_name": "GestionApp",
-  "name": "Application de Gestion avec IA",
+  "short_name": "ProcureGenius",
+  "name": "ProcureGenius - Gestion d'entreprise avec IA",
   "description": "Application de gestion d'entreprise avec assistant IA intégré",
-  "icons": [],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
   "start_url": "/",
   "background_color": "#F9FAFB",
   "display": "standalone",
@@ -19,21 +32,39 @@
       "short_name": "Facture",
       "description": "Créer une nouvelle facture",
       "url": "/invoices/new",
-      "icons": []
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Assistant IA",
       "short_name": "IA",
       "description": "Ouvrir l'assistant IA",
       "url": "/ai-chat",
-      "icons": []
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Scanner document",
       "short_name": "Scanner",
       "description": "Scanner un document",
       "url": "/ai-chat?action=scan",
-      "icons": []
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {

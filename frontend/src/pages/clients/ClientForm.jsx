@@ -10,6 +10,7 @@ import {
     TextField,
     Button,
     Grid,
+    Stack,
     FormControl,
     InputLabel,
     Select,
@@ -19,6 +20,8 @@ import {
     CircularProgress,
     Alert,
     InputAdornment,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import {
     Save,
@@ -28,6 +31,7 @@ import {
     Email,
     Phone,
     Business,
+    ArrowBack,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +39,8 @@ import { clientsAPI } from '../../services/api';
 
 function ClientForm() {
     const { t } = useTranslation(['clients', 'common']);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Payment terms with translations
     const getPaymentTerms = () => [
@@ -132,7 +138,11 @@ function ClientForm() {
     }
 
     return (
-        <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+        <Box sx={{
+            p: { xs: 0, sm: 2, md: 3 },
+            bgcolor: 'background.default',
+            minHeight: '100vh'
+        }}>
             {/* Header - Caché sur mobile (géré par top navbar) */}
             <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
                 <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
@@ -140,20 +150,15 @@ function ClientForm() {
                 </Typography>
             </Box>
 
-            {/* Actions Mobile - Affiché uniquement sur mobile */}
-            <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                    <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => navigate('/clients')}
-                        size="small"
-                    >
-                        {t('common:back')}
-                    </Button>
-                    <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-                        {isEdit ? t('clients:editClient') : t('clients:newClient')}
-                    </Typography>
-                </Stack>
+            {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
+            <Box sx={{
+                mb: 1.5,
+                display: { xs: 'flex', md: 'none' },
+                justifyContent: 'flex-end',
+                px: 2,
+                py: 1
+            }}>
+                {/* Les actions sont gérées par le top navbar sur mobile */}
             </Box>
 
             <Formik
@@ -164,17 +169,34 @@ function ClientForm() {
             >
                 {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
                     <Form>
-                        <Grid container spacing={3}>
-                            {/* Informations générales */}
-                            <Grid item xs={12} md={8}>
-                                <Card sx={{ mb: 3 }}>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Business />
-                                            {t('clients:labels.generalInfo')}
-                                        </Typography>
+                        <Box sx={{ px: isMobile ? 2 : 0 }}>
+                            <Grid container spacing={isMobile ? 1.5 : 3}>
+                                {/* Informations générales */}
+                                <Grid item xs={12} md={8}>
+                                    <Card sx={{
+                                        mb: isMobile ? 1.5 : 3,
+                                        borderRadius: isMobile ? 2.5 : 2,
+                                        boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                        backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                        border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                    }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                            <Typography
+                                                variant="h6"
+                                                gutterBottom
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    fontSize: isMobile ? '1rem' : undefined,
+                                                    mb: isMobile ? 1.5 : 2
+                                                }}
+                                            >
+                                                <Business sx={{ fontSize: isMobile ? 20 : 24 }} />
+                                                {t('clients:labels.generalInfo')}
+                                            </Typography>
 
-                                        <Grid container spacing={2}>
+                                            <Grid container spacing={isMobile ? 1.5 : 2}>
                                             <Grid item xs={12}>
                                                 <TextField
                                                     fullWidth
@@ -219,14 +241,30 @@ function ClientForm() {
                                 </Card>
 
                                 {/* Contact */}
-                                <Card sx={{ mb: 3 }}>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Person />
+                                <Card sx={{
+                                    mb: isMobile ? 1.5 : 3,
+                                    borderRadius: isMobile ? 2.5 : 2,
+                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                }}>
+                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                        <Typography
+                                            variant="h6"
+                                            gutterBottom
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                fontSize: isMobile ? '1rem' : undefined,
+                                                mb: isMobile ? 1.5 : 2
+                                            }}
+                                        >
+                                            <Person sx={{ fontSize: isMobile ? 20 : 24 }} />
                                             {t('clients:labels.contactInfo')}
                                         </Typography>
 
-                                        <Grid container spacing={2}>
+                                        <Grid container spacing={isMobile ? 1.5 : 2}>
                                             <Grid item xs={12} md={6}>
                                                 <TextField
                                                     fullWidth
@@ -311,14 +349,29 @@ function ClientForm() {
                                 </Card>
 
                                 {/* Conditions commerciales */}
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <AttachMoney />
+                                <Card sx={{
+                                    borderRadius: isMobile ? 2.5 : 2,
+                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                }}>
+                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                        <Typography
+                                            variant="h6"
+                                            gutterBottom
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                fontSize: isMobile ? '1rem' : undefined,
+                                                mb: isMobile ? 1.5 : 2
+                                            }}
+                                        >
+                                            <AttachMoney sx={{ fontSize: isMobile ? 20 : 24 }} />
                                             {t('clients:labels.commercialConditions')}
                                         </Typography>
 
-                                        <Grid container spacing={2}>
+                                        <Grid container spacing={isMobile ? 1.5 : 2}>
                                             <Grid item xs={12} md={6}>
                                                 <FormControl fullWidth required>
                                                     <InputLabel>{t('clients:labels.paymentTerms')}</InputLabel>
@@ -361,9 +414,21 @@ function ClientForm() {
 
                             {/* Sidebar - Statut et options */}
                             <Grid item xs={12} md={4}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom>
+                                <Card sx={{
+                                    borderRadius: isMobile ? 2.5 : 2,
+                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                }}>
+                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                        <Typography
+                                            variant="h6"
+                                            gutterBottom
+                                            sx={{
+                                                fontSize: isMobile ? '1rem' : undefined,
+                                                mb: isMobile ? 1.5 : 2
+                                            }}
+                                        >
                                             {t('clients:labels.statusAndOptions')}
                                         </Typography>
 
@@ -376,14 +441,35 @@ function ClientForm() {
                                                 />
                                             }
                                             label={t('clients:labels.activeClient')}
-                                            sx={{ mb: 2 }}
+                                            sx={{
+                                                mb: isMobile ? 1.5 : 2,
+                                                '& .MuiTypography-root': {
+                                                    fontSize: isMobile ? '0.875rem' : undefined
+                                                }
+                                            }}
                                         />
 
-                                        <Alert severity="info" sx={{ mt: 2 }}>
-                                            <Typography variant="subtitle2" gutterBottom>
+                                        <Alert
+                                            severity="info"
+                                            sx={{
+                                                mt: isMobile ? 1.5 : 2,
+                                                borderRadius: isMobile ? 2 : 1,
+                                                '& .MuiAlert-message': {
+                                                    fontSize: isMobile ? '0.813rem' : undefined
+                                                }
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="subtitle2"
+                                                gutterBottom
+                                                sx={{ fontSize: isMobile ? '0.875rem' : undefined }}
+                                            >
                                                 {t('clients:labels.aiInfo')}
                                             </Typography>
-                                            <Typography variant="body2">
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontSize: isMobile ? '0.75rem' : undefined }}
+                                            >
                                                 {t('clients:labels.aiInfoDescription')}
                                             </Typography>
                                         </Alert>
@@ -391,28 +477,55 @@ function ClientForm() {
                                 </Card>
                             </Grid>
 
-                            {/* Actions */}
+                            {/* Actions - Style mobile app */}
                             <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                <Box sx={{
+                                    display: 'flex',
+                                    gap: isMobile ? 1 : 2,
+                                    justifyContent: 'flex-end',
+                                    flexDirection: isMobile ? 'column-reverse' : 'row',
+                                    px: isMobile ? 2 : 0,
+                                    pb: isMobile ? 2 : 0
+                                }}>
                                     <Button
                                         variant="outlined"
                                         startIcon={<Cancel />}
                                         onClick={() => navigate('/clients')}
                                         disabled={isSubmitting}
+                                        fullWidth={isMobile}
+                                        sx={{
+                                            borderRadius: isMobile ? 2 : undefined,
+                                            py: isMobile ? 1.25 : undefined,
+                                            fontSize: isMobile ? '0.875rem' : undefined
+                                        }}
                                     >
                                         {t('clients:actions.cancel')}
                                     </Button>
                                     <Button
                                         type="submit"
                                         variant="contained"
-                                        startIcon={<Save />}
+                                        startIcon={isSubmitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <Save />}
                                         disabled={isSubmitting}
+                                        fullWidth={isMobile}
+                                        sx={{
+                                            borderRadius: isMobile ? 2 : undefined,
+                                            py: isMobile ? 1.25 : undefined,
+                                            fontSize: isMobile ? '0.875rem' : undefined,
+                                            fontWeight: 600,
+                                            boxShadow: isMobile ? 2 : undefined,
+                                            '&:hover': {
+                                                boxShadow: isMobile ? 4 : undefined,
+                                                transform: isMobile ? 'translateY(-1px)' : 'none'
+                                            },
+                                            transition: 'all 0.2s ease'
+                                        }}
                                     >
-                                        {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('clients:actions.modify') : t('clients:actions.create'))}
+                                        {isSubmitting ? t('common:labels.saving', 'Enregistrement...') : (isEdit ? t('clients:actions.modify') : t('clients:actions.create'))}
                                     </Button>
                                 </Box>
                             </Grid>
                         </Grid>
+                        </Box>
                     </Form>
                 )}
             </Formik>

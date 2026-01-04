@@ -85,8 +85,31 @@ else:
         }
 
         def get_template_names(self):
-            """Sélectionne le template selon le paramètre 'template'"""
+            """Sélectionne le template selon le paramètre 'template' ou le format de papier"""
+            # Récupérer les paramètres d'impression pour détecter le format thermique
+            try:
+                po = self.get_object()
+                org_data = self._get_organization_data(po)
+                paper_size = org_data.get('paper_size', 'A4')
+
+                print(f"\n{'='*80}")
+                print(f"[DEBUG] get_template_names - Purchase Order PDF")
+                print(f"[DEBUG] paper_size from org_data: '{paper_size}'")
+                print(f"[DEBUG] Is thermal? {paper_size in ['thermal_80', 'thermal_58']}")
+                print(f"{'='*80}\n")
+
+                # Si format thermique, utiliser le template de ticket
+                if paper_size in ['thermal_80', 'thermal_58']:
+                    print(f"[INFO] ✓ Utilisation du template THERMAL pour bon de commande")
+                    return ['purchase_orders/pdf_templates/po_thermal.html']
+            except Exception as e:
+                print(f"[ERROR] Erreur dans get_template_names: {e}")
+                import traceback
+                traceback.print_exc()
+
+            # Sinon, utiliser le template spécifié par l'utilisateur
             template_type = self.request.GET.get('template', 'modern')
+            print(f"[INFO] Utilisation du template standard: {template_type}")
 
             # Mapping des 4 templates disponibles
             template_map = {

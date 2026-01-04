@@ -37,7 +37,9 @@
       "Bash(timeout 10 echo:*)",
       "Bash(venv/Scripts/python manage.py runserver:*)",
       "Bash(venv/Scripts/python manage.py check:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(venv\\\\Scripts\\\\python:*)",
+      "Bash(venv/Scripts/python.exe manage.py:*)"
     ],
     "deny": [],
     "ask": []

@@ -141,11 +141,21 @@
             font-weight: 700;
             margin: 5px 0;
         }
+
+        .logo {
+            margin: 5px auto 8px auto;
+            max-width: 60px;
+            max-height: 60px;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <!-- En-tête -->
     <div class="header">
+        {% if logo_base64 %}
+        <img src="{{ logo_base64 }}" alt="Logo" class="logo">
+        {% endif %}
         <div class="company-name">
             {% if organization.name %}
                 {{ organization.name }}

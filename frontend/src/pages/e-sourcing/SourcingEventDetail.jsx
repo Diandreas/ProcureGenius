@@ -146,7 +146,11 @@ function SourcingEventDetail() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{
+      p: { xs: 0, sm: 2, md: 3 },
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
         <Button
@@ -158,27 +162,117 @@ function SourcingEventDetail() {
         </Button>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <Button
-            startIcon={<ArrowBack />}
+      {/* Actions Mobile - Style mobile app compact */}
+      <Box sx={{
+        mb: 1.5,
+        display: { xs: 'flex', md: 'none' },
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        px: 2,
+        py: 1
+      }}>
+        <Tooltip title={t('common:backToList')}>
+          <IconButton
             onClick={() => navigate('/e-sourcing/events')}
             size="small"
+            sx={{
+              bgcolor: 'grey.50',
+              color: 'grey.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'grey.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
           >
-            {t('common:backToList')}
-          </Button>
-          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-            {currentEvent.title}
-          </Typography>
-        </Stack>
+            <ArrowBack sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        <Typography
+          variant="h6"
+          noWrap
+          sx={{
+            flex: 1,
+            mx: 1.5,
+            fontSize: '1rem',
+            fontWeight: 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {currentEvent.title}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title={t('eSourcing:actions.editEvent')}>
+            <IconButton
+              onClick={() => navigate(`/e-sourcing/events/${id}/edit`)}
+              size="small"
+              sx={{
+                bgcolor: 'primary.50',
+                color: 'primary.main',
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            >
+              <Edit sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          {currentEvent.status === 'draft' && (
+            <Tooltip title={t('eSourcing:actions.publishEvent')}>
+              <IconButton
+                onClick={handlePublish}
+                size="small"
+                sx={{
+                  bgcolor: 'success.50',
+                  color: 'success.main',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2,
+                  '&:hover': {
+                    bgcolor: 'success.main',
+                    color: 'white',
+                    transform: 'scale(1.05)',
+                  },
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              >
+                <Publish sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* En-tête */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
+      <Box sx={{ px: isMobile ? 2 : 0 }}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
+          {/* En-tête - Style mobile app */}
+          <Grid item xs={12}>
+            <Card sx={{
+              borderRadius: isMobile ? 2.5 : 2,
+              boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: isMobile ? 'blur(10px)' : 'none',
+              border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: isMobile ? 'translateY(-1px)' : 'none',
+                boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.12)' : 'none'
+              }
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                 <Box>
                   <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -569,6 +663,7 @@ function SourcingEventDetail() {
           </Card>
         </Grid>
       </Grid>
+      </Box>
     </Box>
   );
 }

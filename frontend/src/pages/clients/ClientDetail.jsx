@@ -697,7 +697,7 @@ function ClientDetail() {
                     textAlign: 'center',
                     p: isMobile ? 1.5 : 2.5,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    bgcolor: 'primary.main',
                     mb: client.credit_limit ? (isMobile ? 1.5 : 2) : 0,
                     boxShadow: 2
                   }}
@@ -729,7 +729,7 @@ function ClientDetail() {
                       textAlign: 'center',
                       p: isMobile ? 1.5 : 2.5,
                       borderRadius: 2,
-                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      bgcolor: 'info.main',
                       boxShadow: 2
                     }}
                   >

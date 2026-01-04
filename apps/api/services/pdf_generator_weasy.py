@@ -56,10 +56,26 @@ class InvoiceWeasyPDFGenerator:
             'template_type': template_type,  # Pour le styling conditionnel
             'brand_color': org_data.get('brand_color', '#2563eb'),  # Couleur de marque depuis les paramètres
             'language': language,  # Langue pour le template
+            'paper_size': org_data.get('paper_size', 'A4'),  # Format de papier
         }
 
-        # Sélectionner le template HTML selon le type
-        template_name = f'invoicing/pdf_templates/invoice_{template_type}.html'
+        # Détecter le format thermal et utiliser le template approprié
+        paper_size = org_data.get('paper_size', 'A4')
+        print(f"\n{'='*80}")
+        print(f"[DEBUG] generate_invoice_pdf - Invoice PDF")
+        print(f"[DEBUG] paper_size from org_data: '{paper_size}'")
+        print(f"[DEBUG] template_type requested: '{template_type}'")
+        print(f"[DEBUG] Is thermal? {paper_size in ['thermal_80', 'thermal_58']}")
+        print(f"{'='*80}\n")
+
+        # Si format thermique, utiliser le template de ticket
+        if paper_size in ['thermal_80', 'thermal_58']:
+            template_name = 'invoicing/pdf_templates/invoice_thermal.html'
+            print(f"[INFO] ✓ Utilisation du template THERMAL pour facture")
+        else:
+            # Sinon, utiliser le template spécifié par l'utilisateur
+            template_name = f'invoicing/pdf_templates/invoice_{template_type}.html'
+            print(f"[INFO] Utilisation du template standard: {template_type}")
 
         try:
             # Rendu HTML
@@ -137,6 +153,18 @@ class InvoiceWeasyPDFGenerator:
             'website': None,
             'logo_path': None,
             'brand_color': '#2563eb',  # Couleur par défaut
+            'paper_size': 'A4',  # Format de papier par défaut
+            'paper_orientation': 'portrait',
+            'tax_region': 'international',
+            'currency': 'CAD',
+            'niu': None,
+            'rc_number': None,
+            'rccm_number': None,
+            'tax_number': None,
+            'vat_number': None,
+            'gst_number': None,
+            'qst_number': None,
+            'neq': None,
         }
 
         try:
@@ -198,8 +226,41 @@ class InvoiceWeasyPDFGenerator:
                     elif print_template and print_template.primary_color:
                         org_data['brand_color'] = print_template.primary_color
 
+                    # Paramètres d'impression
+                    if org_settings:
+                        if hasattr(org_settings, 'paper_size') and org_settings.paper_size:
+                            org_data['paper_size'] = org_settings.paper_size
+                        if hasattr(org_settings, 'paper_orientation') and org_settings.paper_orientation:
+                            org_data['paper_orientation'] = org_settings.paper_orientation
+
+                        # Région fiscale et devise
+                        if hasattr(org_settings, 'tax_region') and org_settings.tax_region:
+                            org_data['tax_region'] = org_settings.tax_region
+                        if hasattr(org_settings, 'default_currency') and org_settings.default_currency:
+                            org_data['currency'] = org_settings.default_currency
+
+                        # Identifiants fiscaux
+                        if hasattr(org_settings, 'company_niu') and org_settings.company_niu:
+                            org_data['niu'] = org_settings.company_niu
+                        if hasattr(org_settings, 'company_rc_number') and org_settings.company_rc_number:
+                            org_data['rc_number'] = org_settings.company_rc_number
+                        if hasattr(org_settings, 'company_rccm_number') and org_settings.company_rccm_number:
+                            org_data['rccm_number'] = org_settings.company_rccm_number
+                        if hasattr(org_settings, 'company_tax_number') and org_settings.company_tax_number:
+                            org_data['tax_number'] = org_settings.company_tax_number
+                        if hasattr(org_settings, 'company_vat_number') and org_settings.company_vat_number:
+                            org_data['vat_number'] = org_settings.company_vat_number
+                        if hasattr(org_settings, 'company_gst_number') and org_settings.company_gst_number:
+                            org_data['gst_number'] = org_settings.company_gst_number
+                        if hasattr(org_settings, 'company_qst_number') and org_settings.company_qst_number:
+                            org_data['qst_number'] = org_settings.company_qst_number
+                        if hasattr(org_settings, 'company_neq') and org_settings.company_neq:
+                            org_data['neq'] = org_settings.company_neq
+
         except Exception as e:
             print(f"✗ Erreur lors de la récupération des données organisation: {e}")
+            import traceback
+            traceback.print_exc()
 
         return org_data
 
@@ -269,19 +330,35 @@ class PurchaseOrderWeasyPDFGenerator:
             'po': po,
             'organization': org_data,
             'logo_base64': self._get_logo_base64(org_data),
-            'qr_code': qr_code_base64,  # Ajouter le QR code au contexte
+            'qr_code_base64': qr_code_base64,  # Ajouter le QR code au contexte (nom cohérent avec factures)
             'items': po.items.all() if hasattr(po, 'items') else [],
             'total_amount': getattr(po, 'total_amount', 0) or 0,
-            'created_at': getattr(po, 'created_at', None),
+            'created_date': getattr(po, 'created_at', None),  # Nom cohérent avec le template
             'required_date': getattr(po, 'required_date', None),
             'supplier': po.supplier if hasattr(po, 'supplier') else None,
             'template_type': template_type,  # Pour le styling conditionnel
             'brand_color': org_data.get('brand_color', '#2563eb'),  # Couleur de marque depuis les paramètres
             'language': language,  # Langue pour le template
+            'paper_size': org_data.get('paper_size', 'A4'),  # Format de papier
         }
 
-        # Sélectionner le template HTML selon le type
-        template_name = f'purchase_orders/pdf_templates/po_{template_type}.html'
+        # Détecter le format thermal et utiliser le template approprié
+        paper_size = org_data.get('paper_size', 'A4')
+        print(f"\n{'='*80}")
+        print(f"[DEBUG] generate_purchase_order_pdf - Purchase Order PDF")
+        print(f"[DEBUG] paper_size from org_data: '{paper_size}'")
+        print(f"[DEBUG] template_type requested: '{template_type}'")
+        print(f"[DEBUG] Is thermal? {paper_size in ['thermal_80', 'thermal_58']}")
+        print(f"{'='*80}\n")
+
+        # Si format thermique, utiliser le template de ticket
+        if paper_size in ['thermal_80', 'thermal_58']:
+            template_name = 'purchase_orders/pdf_templates/po_thermal.html'
+            print(f"[INFO] ✓ Utilisation du template THERMAL pour bon de commande")
+        else:
+            # Sinon, utiliser le template spécifié par l'utilisateur
+            template_name = f'purchase_orders/pdf_templates/po_{template_type}.html'
+            print(f"[INFO] Utilisation du template standard: {template_type}")
 
         try:
             # Rendu HTML
@@ -419,8 +496,41 @@ class PurchaseOrderWeasyPDFGenerator:
                     elif print_template and print_template.primary_color:
                         org_data['brand_color'] = print_template.primary_color
 
+                    # Paramètres d'impression
+                    if org_settings:
+                        if hasattr(org_settings, 'paper_size') and org_settings.paper_size:
+                            org_data['paper_size'] = org_settings.paper_size
+                        if hasattr(org_settings, 'paper_orientation') and org_settings.paper_orientation:
+                            org_data['paper_orientation'] = org_settings.paper_orientation
+
+                        # Région fiscale et devise
+                        if hasattr(org_settings, 'tax_region') and org_settings.tax_region:
+                            org_data['tax_region'] = org_settings.tax_region
+                        if hasattr(org_settings, 'default_currency') and org_settings.default_currency:
+                            org_data['currency'] = org_settings.default_currency
+
+                        # Identifiants fiscaux
+                        if hasattr(org_settings, 'company_niu') and org_settings.company_niu:
+                            org_data['niu'] = org_settings.company_niu
+                        if hasattr(org_settings, 'company_rc_number') and org_settings.company_rc_number:
+                            org_data['rc_number'] = org_settings.company_rc_number
+                        if hasattr(org_settings, 'company_rccm_number') and org_settings.company_rccm_number:
+                            org_data['rccm_number'] = org_settings.company_rccm_number
+                        if hasattr(org_settings, 'company_tax_number') and org_settings.company_tax_number:
+                            org_data['tax_number'] = org_settings.company_tax_number
+                        if hasattr(org_settings, 'company_vat_number') and org_settings.company_vat_number:
+                            org_data['vat_number'] = org_settings.company_vat_number
+                        if hasattr(org_settings, 'company_gst_number') and org_settings.company_gst_number:
+                            org_data['gst_number'] = org_settings.company_gst_number
+                        if hasattr(org_settings, 'company_qst_number') and org_settings.company_qst_number:
+                            org_data['qst_number'] = org_settings.company_qst_number
+                        if hasattr(org_settings, 'company_neq') and org_settings.company_neq:
+                            org_data['neq'] = org_settings.company_neq
+
         except Exception as e:
             print(f"✗ Erreur lors de la récupération des données organisation: {e}")
+            import traceback
+            traceback.print_exc()
 
         return org_data
 
