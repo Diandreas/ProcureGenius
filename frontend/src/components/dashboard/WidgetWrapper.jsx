@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, GripVertical } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import { fadeInUp } from '../../animations/variants/scroll-reveal';
 
 // Widget titles mapping
 const getWidgetTitle = (t, widgetCode) => {
@@ -52,9 +54,17 @@ const getWidgetTitle = (t, widgetCode) => {
 const WidgetWrapper = ({ widgetCode, onRemove, isEditMode, children }) => {
   const { t } = useTranslation('dashboard');
   const widgetTitle = getWidgetTitle(t, widgetCode);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
-    <div className={`widget-wrapper ${isEditMode ? 'edit-mode' : ''}`}>
+    <motion.div
+      ref={ref}
+      variants={fadeInUp}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      className={`widget-wrapper ${isEditMode ? 'edit-mode' : ''}`}
+    >
       <div className="widget-header">
         {isEditMode && (
           <div className="widget-drag-handle">
@@ -78,7 +88,7 @@ const WidgetWrapper = ({ widgetCode, onRemove, isEditMode, children }) => {
       <div className="widget-content">
         {children}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

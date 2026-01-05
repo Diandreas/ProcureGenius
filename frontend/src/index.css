@@ -22,12 +22,12 @@ body.light,
   /* Secondary */
   --color-secondary: #64748b;
   
-  /* Backgrounds */
-  --color-bg: #f8fafc;
-  --color-bg-paper: #ffffff;
-  --color-bg-subtle: #f1f5f9;
+  /* Backgrounds - Neumorphism */
+  --color-bg: #e6e9ef;
+  --color-bg-paper: #e6e9ef;
+  --color-bg-subtle: #e6e9ef;
   --color-bg-hover: rgba(0, 0, 0, 0.04);
-  --color-bg-card: #ffffff;
+  --color-bg-card: #e6e9ef;
   
   /* Text */
   --color-text: #0f172a;
@@ -48,10 +48,11 @@ body.light,
   --color-info: #3b82f6;
   --color-info-bg: rgba(59, 130, 246, 0.1);
   
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  /* Shadows - Neumorphism Doux */
+  --shadow-sm: 3px 3px 6px #d1d5db, -3px -3px 6px #ffffff;
+  --shadow-md: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
+  --shadow-lg: 8px 8px 16px #d1d5db, -8px -8px 16px #ffffff;
+  --shadow-inset: inset 3px 3px 6px #d1d5db, inset -3px -3px 6px #ffffff;
   
   /* Scrollbar */
   --scrollbar-track: #f1f5f9;
@@ -77,12 +78,12 @@ body.dark,
   /* Secondary */
   --color-secondary: #94a3b8;
   
-  /* Backgrounds */
-  --color-bg: #0f172a;
-  --color-bg-paper: #1e293b;
-  --color-bg-subtle: #334155;
+  /* Backgrounds - Neumorphism */
+  --color-bg: #1e2530;
+  --color-bg-paper: #1e2530;
+  --color-bg-subtle: #1e2530;
   --color-bg-hover: rgba(255, 255, 255, 0.05);
-  --color-bg-card: #1e293b;
+  --color-bg-card: #1e2530;
   
   /* Text */
   --color-text: #f1f5f9;
@@ -103,10 +104,11 @@ body.dark,
   --color-info: #60a5fa;
   --color-info-bg: rgba(96, 165, 250, 0.15);
   
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  /* Shadows - Neumorphism Doux */
+  --shadow-sm: 3px 3px 6px #0f1419, -3px -3px 6px #2d3340;
+  --shadow-md: 5px 5px 10px #0f1419, -5px -5px 10px #2d3340;
+  --shadow-lg: 8px 8px 16px #0f1419, -8px -8px 16px #2d3340;
+  --shadow-inset: inset 3px 3px 6px #0f1419, inset -3px -3px 6px #2d3340;
   
   /* Scrollbar */
   --scrollbar-track: #1e293b;
@@ -139,7 +141,7 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===================================
@@ -270,22 +272,24 @@ pre {
 }
 
 /* ===================================
-   Card Styles (Generic)
+   Card Styles (Generic) - Neumorphism
    ================================= */
 
 .card {
   background: var(--color-bg-card);
-  border-radius: 10px;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease;
+  border-radius: 20px;
+  border: none;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 /* ===================================
-   Animation Keyframes
+   Animation Keyframes - Subtiles
    ================================= */
 
 @keyframes fadeIn {
@@ -294,35 +298,44 @@ pre {
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(8px); 
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .animate-slideUp {
-  animation: slideUp 0.2s ease-out;
+  animation: slideUp 0.3s ease-out;
 }
 
 .animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* Performance optimization */
+.motion-element {
+  will-change: transform, opacity;
+}
+
+.motion-layout {
+  will-change: transform, opacity, box-shadow;
 }
 
 /* ===================================
-   MUI Overrides for Theme Consistency
+   MUI Overrides - Neumorphism Global
    ================================= */
 
 .MuiTableCell-root {
@@ -331,11 +344,14 @@ pre {
 
 .MuiCard-root {
   background-color: var(--color-bg-card) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: 20px !important;
+  border: none !important;
 }
 
 .MuiPaper-root {
   background-color: var(--color-bg-paper);
+  border-radius: 20px !important;
 }
 
 .MuiListItemButton-root:hover {
@@ -345,6 +361,8 @@ pre {
 .MuiDialog-paper {
   margin: 16px;
   background-color: var(--color-bg-paper);
+  border-radius: 20px !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 /* ===================================

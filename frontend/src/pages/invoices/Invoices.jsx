@@ -289,7 +289,9 @@ function Invoices() {
         {/* Prix */}
         <Box
           sx={{
-            bgcolor: 'success.50',
+            bgcolor: (theme) => theme.palette.mode === 'dark'
+              ? 'rgba(52, 211, 153, 0.1)'
+              : 'rgba(16, 185, 129, 0.08)',
             borderRadius: 1,
             p: 1,
             mb: 1.5,
@@ -375,13 +377,15 @@ function Invoices() {
               onClick={() => handleQuickFilterClick('paid')}
               sx={{
                 borderRadius: 2,
-                bgcolor: 'success.50',
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(52, 211, 153, 0.12)'
+                  : 'rgba(16, 185, 129, 0.08)',
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: quickFilter === 'paid' ? 'success.main' : 'transparent',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'translateY(-1px)',
                   boxShadow: 3,
                   borderColor: 'success.main'
                 }
@@ -409,13 +413,15 @@ function Invoices() {
               onClick={() => handleQuickFilterClick('unpaid')}
               sx={{
                 borderRadius: 2,
-                bgcolor: 'warning.50',
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(251, 191, 36, 0.12)'
+                  : 'rgba(245, 158, 11, 0.08)',
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: quickFilter === 'unpaid' ? 'warning.main' : 'transparent',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'translateY(-1px)',
                   boxShadow: 3,
                   borderColor: 'warning.main'
                 }
@@ -443,13 +449,15 @@ function Invoices() {
               onClick={() => handleQuickFilterClick('overdue')}
               sx={{
                 borderRadius: 2,
-                bgcolor: 'error.50',
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(248, 113, 113, 0.12)'
+                  : 'rgba(239, 68, 68, 0.08)',
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: quickFilter === 'overdue' ? 'error.main' : 'transparent',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'translateY(-1px)',
                   boxShadow: 3,
                   borderColor: 'error.main'
                 }
@@ -477,13 +485,15 @@ function Invoices() {
               onClick={() => handleQuickFilterClick('draft')}
               sx={{
                 borderRadius: 2,
-                bgcolor: 'grey.50',
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.12)'
+                  : 'rgba(100, 116, 139, 0.08)',
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: quickFilter === 'draft' ? 'grey.600' : 'transparent',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'translateY(-1px)',
                   boxShadow: 3,
                   borderColor: 'grey.600'
                 }
@@ -511,13 +521,15 @@ function Invoices() {
               onClick={() => handleQuickFilterClick('')}
               sx={{
                 borderRadius: 2,
-                bgcolor: 'primary.50',
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(96, 165, 250, 0.12)'
+                  : 'rgba(37, 99, 235, 0.08)',
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'translateY(-1px)',
                   boxShadow: 3,
                   borderColor: 'primary.main'
                 }

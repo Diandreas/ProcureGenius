@@ -1,29 +1,31 @@
 /* Customizable Dashboard - Modern Clean Design with Dark Mode */
 
 /* ===================================
-   CSS Variables
+   CSS Variables - Neumorphism
    ================================= */
 :root {
-  --dashboard-bg: #f8fafc;
-  --dashboard-paper: #ffffff;
+  --dashboard-bg: #e6e9ef;
+  --dashboard-paper: #e6e9ef;
   --dashboard-border: rgba(0, 0, 0, 0.06);
-  --dashboard-text: #1e293b;
+  --dashboard-text: #0f172a;
   --dashboard-text-secondary: #64748b;
   --dashboard-primary: #2563eb;
-  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --dashboard-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --dashboard-shadow: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
+  --dashboard-shadow-soft: 3px 3px 6px #d1d5db, -3px -3px 6px #ffffff;
+  --dashboard-shadow-hover: 2px 2px 4px #d1d5db, -2px -2px 4px #ffffff;
 }
 
 [data-theme="dark"] .customizable-dashboard,
 .dark .customizable-dashboard {
-  --dashboard-bg: #0f172a;
-  --dashboard-paper: #1e293b;
+  --dashboard-bg: #1e2530;
+  --dashboard-paper: #1e2530;
   --dashboard-border: rgba(255, 255, 255, 0.06);
   --dashboard-text: #f1f5f9;
   --dashboard-text-secondary: #94a3b8;
   --dashboard-primary: #3b82f6;
-  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --dashboard-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --dashboard-shadow: 5px 5px 10px #0f1419, -5px -5px 10px #2d3340;
+  --dashboard-shadow-soft: 3px 3px 6px #0f1419, -3px -3px 6px #2d3340;
+  --dashboard-shadow-hover: 2px 2px 4px #0f1419, -2px -2px 4px #2d3340;
 }
 
 /* ===================================
@@ -72,18 +74,19 @@
   gap: 6px;
   padding: 6px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   background: var(--dashboard-paper);
   color: var(--dashboard-text-secondary);
-  border: 1px solid var(--dashboard-border);
+  box-shadow: var(--dashboard-shadow-soft);
 }
 
 .toolbar-btn:hover {
-  background: var(--dashboard-border);
+  box-shadow: var(--dashboard-shadow-hover);
+  transform: translateY(-1px);
   color: var(--dashboard-text);
 }
 
@@ -127,14 +130,15 @@
    ================================= */
 .edit-mode-hint {
   background: var(--dashboard-paper) !important;
-  border: 1px solid var(--dashboard-primary) !important;
-  border-radius: 8px !important;
+  border: 2px solid var(--dashboard-primary) !important;
+  border-radius: 16px !important;
   color: var(--dashboard-text) !important;
   margin-bottom: 16px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: var(--dashboard-shadow-soft);
 }
 
 .edit-mode-header {
@@ -169,20 +173,22 @@
 
 .dashboard-grid-item {
   background: var(--dashboard-paper);
-  border-radius: 10px;
+  border-radius: 20px;
+  border: none;
   box-shadow: var(--dashboard-shadow);
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dashboard-grid-item:hover {
-  box-shadow: var(--dashboard-shadow-hover);
+  box-shadow: var(--dashboard-shadow-soft);
+  transform: translateY(-1px);
 }
 
 .react-grid-item.react-grid-placeholder {
   background: var(--dashboard-primary);
   opacity: 0.15;
-  border-radius: 10px;
+  border-radius: 20px;
 }
 
 .react-grid-item.resizing,
@@ -199,6 +205,7 @@
   display: flex;
   flex-direction: column;
   background: var(--dashboard-paper);
+  border-radius: 20px;
 }
 
 .widget-wrapper.edit-mode {
@@ -311,7 +318,8 @@
   text-align: center;
   color: var(--dashboard-text-secondary);
   background: var(--dashboard-paper);
-  border-radius: 12px;
+  border-radius: 20px;
+  border: none;
   box-shadow: var(--dashboard-shadow);
   padding: 40px;
 }
@@ -344,8 +352,9 @@
   right: 24px;
   background: var(--dashboard-paper);
   padding: 12px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  border: none;
+  box-shadow: var(--dashboard-shadow);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -353,7 +362,6 @@
   font-size: 14px;
   z-index: 10000;
   color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .save-notification .icon {

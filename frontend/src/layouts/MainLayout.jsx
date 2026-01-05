@@ -24,6 +24,8 @@ import {
   Badge,
   Divider,
 } from '@mui/material';
+import { motion } from 'framer-motion';
+import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
 import {
   Add,
   SupervisorAccount,
@@ -310,14 +312,8 @@ function MainLayout() {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      // Liquid Glass Effect
-      bgcolor: alpha(theme.palette.background.paper, mode === 'dark' ? 0.6 : 0.8),
-      backdropFilter: 'blur(20px)',
-      background: mode === 'dark'
-        ? `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.8)} 100%)`
-        : `linear-gradient(160deg, ${alpha('#ffffff', 0.9)} 0%, ${alpha('#f8fafc', 0.85)} 100%)`,
-      borderRight: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-      boxShadow: `inset -1px 0 0 ${alpha(theme.palette.common.white, mode === 'dark' ? 0.05 : 0.5)}`, // Inner shimmer
+      bgcolor: 'background.paper',
+      borderRight: `1px solid ${theme.palette.divider}`,
     }}>
       {/* Logo */}
       <Box sx={{
@@ -503,44 +499,11 @@ function MainLayout() {
           sx={{
             width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
             ml: { md: `${drawerWidth}px` },
-            // Design Glass Morphism avancé
-            bgcolor: mode === 'dark'
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha('#ffffff', 0.75),
-            backdropFilter: 'blur(24px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-            borderBottom: 'none',
-            boxShadow: mode === 'dark'
-              ? `0 1px 0 ${alpha('#ffffff', 0.05)}, 0 8px 32px ${alpha('#000000', 0.3)}`
-              : `0 1px 0 ${alpha('#000000', 0.03)}, 0 8px 32px ${alpha('#000000', 0.06)}`,
+            bgcolor: 'background.paper',
+            border: 'none',
+            boxShadow: getNeumorphicShadow(mode === 'dark' ? 'dark' : 'light', 'soft'),
             color: 'text.primary',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            // Effet de brillance premium en haut
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 1,
-              background: mode === 'dark'
-                ? `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.1)} 50%, transparent 100%)`
-                : `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.8)} 50%, transparent 100%)`,
-              pointerEvents: 'none',
-            },
-            // Shimmer subtil sur le côté
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: { md: 0, xs: 'auto' },
-              width: { md: 1, xs: 0 },
-              background: mode === 'dark'
-                ? alpha('#ffffff', 0.03)
-                : alpha('#000000', 0.02),
-              pointerEvents: 'none',
-            }
           }}
         >
           <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 4 }, gap: { xs: 0.5, sm: 1 } }}>
@@ -821,7 +784,7 @@ function MainLayout() {
                     pointerEvents: 'none',
                   },
                   '&:hover': {
-                    transform: 'translateY(-2px)',
+                    transform: 'translateY(-1px)',
                     boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.45)}`,
                     background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                   },

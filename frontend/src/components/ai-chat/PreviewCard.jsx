@@ -8,10 +8,8 @@ import {
   Grid,
   Button,
   Chip,
-  Fade,
-  Grow,
-  Slide,
   alpha,
+  useTheme,
 } from '@mui/material';
 import {
   Receipt,
@@ -28,6 +26,10 @@ import {
   CalendarToday,
   Description,
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { scaleIn } from '../../animations/variants/scroll-reveal';
+import { buttonPress } from '../../animations/variants/micro-interactions';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 
 /**
  * Card de preview élégante pour les entités avant confirmation
@@ -156,37 +158,54 @@ const PreviewCard = ({
     return value;
   };
 
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = theme.breakpoints.down('sm');
+
+  // Adapt bgColor for dark mode
+  const getBgColor = (lightColor) => {
+    if (isDark) {
+      return alpha(config.color, 0.1);
+    }
+    return lightColor;
+  };
+
   return (
-    <Grow in timeout={400}>
-      <Slide direction="up" in timeout={300}>
-        <Paper
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            overflow: 'hidden',
-            mb: 2,
-            border: `2px solid ${config.color}`,
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            },
-          }}
-        >
+    <motion.div
+      variants={scaleIn}
+      initial="hidden"
+      animate="visible"
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          mb: 2,
+          border: `2px solid ${config.color}`,
+          bgcolor: 'background.paper',
+          boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium'),
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+            transform: 'translateY(-1px)',
+          },
+        }}
+      >
           {/* Header coloré */}
           <Box
             sx={{
-              bgcolor: config.bgColor,
-              p: 2,
+              bgcolor: getBgColor(config.bgColor),
+              p: { xs: 1.5, sm: 2 },
               borderBottom: `2px solid ${config.color}`,
             }}
           >
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={{ xs: 1.5, sm: 2 }}>
               <Avatar
                 sx={{
                   bgcolor: config.color,
-                  width: 56,
-                  height: 56,
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
                 }}
               >
                 {config.icon}
@@ -216,16 +235,16 @@ const PreviewCard = ({
           </Box>
 
           {/* Détails */}
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
             <Divider sx={{ mb: 2 }} />
 
-            <Grid container spacing={2}>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               {config.fields.map((field) => {
                 const value = draftData[field.value];
                 if (!value) return null; // Skip empty fields
 
                 return (
-                  <Grid item xs={field.fullWidth ? 12 : 6} key={field.value}>
+                  <Grid item xs={12} sm={field.fullWidth ? 12 : 6} key={field.value}>
                     <Box display="flex" alignItems="flex-start" gap={1}>
                       <Box sx={{ color: config.color, mt: 0.5 }}>{field.icon}</Box>
                       <Box>
@@ -250,10 +269,10 @@ const PreviewCard = ({
             {config.hasItems && draftData.items && draftData.items.length > 0 && (
               <>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: config.color }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: config.color, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   📋 Articles ({draftData.items.length})
                 </Typography>
-                <Box sx={{ bgcolor: config.bgColor, borderRadius: 1, p: 1.5 }}>
+                <Box sx={{ bgcolor: getBgColor(config.bgColor), borderRadius: 1, p: { xs: 1, sm: 1.5 } }}>
                   {draftData.items.map((item, index) => (
                     <Box
                       key={index}
@@ -318,9 +337,10 @@ const PreviewCard = ({
           {!isNested && onQuickConfirm && onModify && onCancel && (
             <Box
               sx={{
-                p: 2,
-                bgcolor: 'grey.50',
+                p: { xs: 1.5, sm: 2 },
+                bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : alpha(theme.palette.common.black, 0.02),
                 display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
                 gap: 1,
                 justifyContent: 'flex-end',
               }}
@@ -330,7 +350,8 @@ const PreviewCard = ({
                 color="error"
                 startIcon={<Cancel />}
                 onClick={onCancel}
-                sx={{ textTransform: 'none' }}
+                sx={{ textTransform: 'none', fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                fullWidth={{ xs: true, sm: false }}
               >
                 Annuler
               </Button>
@@ -340,13 +361,15 @@ const PreviewCard = ({
                 onClick={onModify}
                 sx={{
                   textTransform: 'none',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
                   borderColor: config.color,
                   color: config.color,
                   '&:hover': {
                     borderColor: config.color,
-                    bgcolor: config.bgColor,
+                    bgcolor: getBgColor(config.bgColor),
                   },
                 }}
+                fullWidth={{ xs: true, sm: false }}
               >
                 Modifier
               </Button>
@@ -356,12 +379,14 @@ const PreviewCard = ({
                 onClick={onQuickConfirm}
                 sx={{
                   textTransform: 'none',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
                   bgcolor: config.color,
                   '&:hover': {
                     bgcolor: config.color,
                     opacity: 0.9,
                   },
                 }}
+                fullWidth={{ xs: true, sm: false }}
               >
                 ✓ Confirmer
               </Button>
@@ -387,8 +412,7 @@ const PreviewCard = ({
             </Box>
           )}
         </Paper>
-      </Slide>
-    </Grow>
+    </motion.div>
   );
 };
 

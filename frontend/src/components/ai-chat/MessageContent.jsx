@@ -20,6 +20,10 @@ import {
   ZoomIn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { scaleIn, fadeInUp } from '../../animations/variants/scroll-reveal';
+import { hoverLift } from '../../animations/variants/micro-interactions';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import ListModal from './ListModal';
 import ChartRenderer from './ChartRenderer';
 import ConfirmationModal from './ConfirmationModal';
@@ -58,27 +62,34 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
       }
     };
 
+    const isDark = theme.palette.mode === 'dark';
+
     return (
-      <Grow in timeout={500}>
-        <Paper
-          elevation={0}
-          onClick={handleCardClick}
-          sx={{
-            mt: 2,
-            mb: 1,
-            borderRadius: 3,
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            cursor: isMobile ? 'pointer' : 'default',
-            '&:hover': {
-              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-              transform: 'translateY(-2px)',
-            },
-          }}
+      <motion.div
+        variants={scaleIn}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div
+          variants={hoverLift}
+          initial="rest"
+          whileHover="hover"
+          whileTap="tap"
         >
+          <Paper
+            elevation={0}
+            onClick={handleCardClick}
+            sx={{
+              mt: 2,
+              mb: 1,
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: 'none',
+              bgcolor: 'background.paper',
+              boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+              cursor: isMobile ? 'pointer' : 'default',
+            }}
+          >
           {/* Header du graphique */}
           <Box
             sx={{
@@ -202,7 +213,8 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
             )}
           </Box>
         </Paper>
-      </Grow>
+        </motion.div>
+      </motion.div>
     );
   };
 
@@ -438,15 +450,30 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                 sx={{
                   p: 2,
                   mb: 1.5,
-                  backgroundColor: isSuccess ? '#f0fdf4' : '#fef2f2',
+                  backgroundColor: (theme) =>
+                    isSuccess
+                      ? theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.success.main, 0.15)
+                        : alpha(theme.palette.success.main, 0.1)
+                      : theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.error.main, 0.15)
+                        : alpha(theme.palette.error.main, 0.1),
                   border: 1,
-                  borderColor: isSuccess ? '#86efac' : '#fca5a5',
+                  borderColor: (theme) =>
+                    isSuccess
+                      ? theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.success.main, 0.3)
+                        : alpha(theme.palette.success.main, 0.4)
+                      : theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.error.main, 0.3)
+                        : alpha(theme.palette.error.main, 0.4),
                   borderRadius: 2,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    boxShadow: isSuccess
-                      ? '0 4px 12px rgba(16, 185, 129, 0.15)'
-                      : '0 4px 12px rgba(239, 68, 68, 0.15)',
+                    boxShadow: (theme) =>
+                      isSuccess
+                        ? `0 4px 12px ${alpha(theme.palette.success.main, 0.2)}`
+                        : `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`,
                     transform: 'translateY(-1px)',
                   },
                 }}
@@ -585,19 +612,25 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                                   borderLeft: 3,
                                   borderColor:
                                     insight.type === 'alert'
-                                      ? '#ef4444'
+                                      ? 'error.main'
                                       : insight.type === 'warning'
-                                        ? '#f59e0b'
-                                        : '#10b981',
+                                        ? 'warning.main'
+                                        : 'success.main',
                                   pl: 1.5,
                                   py: 1,
                                   mb: 1.5,
-                                  backgroundColor:
+                                  backgroundColor: (theme) =>
                                     insight.type === 'alert'
-                                      ? '#fef2f2'
+                                      ? theme.palette.mode === 'dark'
+                                        ? alpha(theme.palette.error.main, 0.15)
+                                        : alpha(theme.palette.error.main, 0.1)
                                       : insight.type === 'warning'
-                                        ? '#fffbeb'
-                                        : '#f0fdf4',
+                                        ? theme.palette.mode === 'dark'
+                                          ? alpha(theme.palette.warning.main, 0.15)
+                                          : alpha(theme.palette.warning.main, 0.1)
+                                        : theme.palette.mode === 'dark'
+                                          ? alpha(theme.palette.success.main, 0.15)
+                                          : alpha(theme.palette.success.main, 0.1),
                                   borderRadius: 1,
                                 }}
                               >

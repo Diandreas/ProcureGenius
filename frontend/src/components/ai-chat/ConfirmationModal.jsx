@@ -27,6 +27,9 @@ import {
   alpha,
   Slide,
 } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { modalBackdrop, modalContent } from '../../animations/variants/modal';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import api from '../../services/api';
 import {
   Receipt,
@@ -46,10 +49,6 @@ import {
   Add,
   Delete,
 } from '@mui/icons-material';
-
-const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
 
 /**
  * Modal de confirmation universelle pour création d'entités
@@ -282,7 +281,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
       onClose={handleCancel}
       maxWidth="md"
       fullWidth
-      TransitionComponent={Transition}
+      TransitionComponent={Fade}
       PaperProps={{
         elevation: 0,
         sx: {
@@ -298,49 +297,58 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
     >
       <Box sx={{
         background: `linear-gradient(to right, ${alpha(config.color, 0.1)}, ${alpha(config.color, 0.05)})`,
-        p: 3,
+        p: { xs: 2, sm: 3 },
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={{ xs: 1.5, sm: 2 }}>
           <Avatar
             sx={{
               bgcolor: config.color,
-              width: 50,
-              height: 50,
+              width: { xs: 40, sm: 50 },
+              height: { xs: 40, sm: 50 },
               boxShadow: `0 4px 12px ${alpha(config.color, 0.4)}`
             }}
           >
             {config.icon}
           </Avatar>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Confirmer la création
             </Typography>
-            <Typography variant="body2" sx={{ color: config.color, fontWeight: 600, opacity: 0.9 }}>
+            <Typography variant="body2" sx={{ color: config.color, fontWeight: 600, opacity: 0.9, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
               {config.title.toUpperCase()}
             </Typography>
           </Box>
         </Box>
-        <IconButton onClick={handleCancel} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.5)', '&:hover': { bgcolor: 'white' } }}>
+        <IconButton
+          onClick={handleCancel}
+          size="small"
+          sx={{
+            bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.05),
+            '&:hover': {
+              bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.2) : alpha(theme.palette.common.black, 0.1)
+            }
+          }}
+        >
           <Delete sx={{ transform: 'rotate(45deg)' }} />
         </IconButton>
       </Box>
 
-      <DialogContent sx={{ p: 4 }}>
+      <DialogContent sx={{ p: { xs: 2, sm: 4 } }}>
         <Box sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           borderRadius: 2,
           bgcolor: alpha(theme.palette.info.main, 0.05),
           border: `1px dashed ${alpha(theme.palette.info.main, 0.3)}`,
           display: 'flex', alignItems: 'center', gap: 2,
           mb: 3
         }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             Veuillez vérifier les informations ci-dessous. Vous pouvez les modifier avant la validation.
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {config.fields.map((field) => (
             <Grid item xs={12} sm={field.fullWidth ? 12 : 6} key={field.name}>
               <TextField
@@ -463,7 +471,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                         placeholder="Rechercher un produit ou saisir..."
                         variant="outlined"
                         sx={{
-                          bgcolor: 'white',
+                          bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : theme.palette.background.paper,
                           '& .MuiOutlinedInput-root': { borderRadius: 1.5 }
                         }}
                       />
@@ -487,7 +495,10 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                     value={newItem.quantity}
                     onChange={(e) => setNewItem({ ...newItem, quantity: parseFloat(e.target.value) || 0 })}
                     inputProps={{ min: 0, step: 1 }}
-                    sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                    sx={{
+                      bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : theme.palette.background.paper,
+                      '& .MuiOutlinedInput-root': { borderRadius: 1.5 }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -499,7 +510,10 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                     value={newItem.unit_price}
                     onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
                     inputProps={{ min: 0, step: 0.01 }}
-                    sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                    sx={{
+                      bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : theme.palette.background.paper,
+                      '& .MuiOutlinedInput-root': { borderRadius: 1.5 }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={2}>
@@ -526,19 +540,25 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 2, bgcolor: theme.palette.background.paper, borderTop: `1px solid ${theme.palette.divider}` }}>
-        <Button onClick={handleCancel} sx={{ color: 'text.secondary', fontWeight: 600, borderRadius: 2 }}>
+      <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: 2, bgcolor: theme.palette.background.paper, borderTop: `1px solid ${theme.palette.divider}`, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
+        <Button
+          onClick={handleCancel}
+          fullWidth={{ xs: true, sm: false }}
+          sx={{ color: 'text.secondary', fontWeight: 600, borderRadius: 2, fontSize: { xs: '0.875rem', sm: '1rem' } }}
+        >
           Annuler
         </Button>
         <Button
           variant="contained"
           onClick={handleConfirm}
+          fullWidth={{ xs: true, sm: false }}
           sx={{
             py: 1, px: 3,
             bgcolor: config.color,
             borderRadius: 2,
             boxShadow: `0 8px 16px ${alpha(config.color, 0.25)}`,
             fontWeight: 700,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
             '&:hover': {
               bgcolor: config.color,
               boxShadow: `0 12px 20px ${alpha(config.color, 0.35)}`,

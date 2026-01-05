@@ -28,6 +28,11 @@ import {
   LinearProgress,
   Button,
 } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInUp, staggerContainer } from '../../animations/variants/scroll-reveal';
+import { messageIn, typingIndicator, avatarFloat } from '../../animations/variants/chat';
+import { buttonPress } from '../../animations/variants/micro-interactions';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import {
   Send,
   SmartToy,
@@ -83,26 +88,25 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
   const isMobile = window.innerWidth < 600;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: { xs: 0.5, sm: 1 },
-        p: { xs: 0.75, sm: 1 },
-        mb: 1.5,
-        // Effet Glass morphism
-        bgcolor: isDark
-          ? alpha(theme.palette.background.paper, 0.6)
-          : alpha('#ffffff', 0.7),
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: '16px',
-        border: `1px solid ${alpha(isDark ? '#ffffff' : '#000000', 0.06)}`,
-        boxShadow: isDark
-          ? `0 4px 16px ${alpha('#000000', 0.2)}`
-          : `0 4px 16px ${alpha('#000000', 0.05)}`,
-      }}
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeInUp}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 0.5, sm: 1 },
+          p: { xs: 0.75, sm: 1 },
+          mb: 1.5,
+          bgcolor: theme.palette.background.paper,
+          borderRadius: '20px',
+          border: 'none',
+          boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
       {/* Bouton Historique - Design moderne */}
       <Tooltip title="Historique des conversations">
         <Button
@@ -123,7 +127,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
             transition: 'all 0.2s ease',
             '&:hover': {
               bgcolor: alpha(theme.palette.primary.main, 0.2),
-              transform: 'scale(1.02)',
+              transform: 'scale(1.005)',
             },
           }}
         >
@@ -173,7 +177,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
               transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor: alpha('#10b981', 0.2),
-                transform: 'scale(1.08)',
+                transform: 'scale(1.05)',
               }
             }}
           >
@@ -195,7 +199,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
               transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor: alpha('#f59e0b', 0.2),
-                transform: 'scale(1.08)',
+                transform: 'scale(1.05)',
               }
             }}
           >
@@ -230,7 +234,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
               transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor: alpha('#8b5cf6', 0.2),
-                transform: 'scale(1.08)',
+                transform: 'scale(1.05)',
               }
             }}
           >
@@ -265,7 +269,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
               transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor: alpha('#3b82f6', 0.2),
-                transform: 'scale(1.08)',
+                transform: 'scale(1.05)',
               }
             }}
           >
@@ -287,6 +291,7 @@ const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImport
         </Tooltip>
       </Box>
     </Box>
+    </motion.div>
   );
 };
 
@@ -1635,21 +1640,29 @@ function AIChat() {
             </Fade>
           ) : (
             <List sx={{ maxWidth: 800, mx: 'auto', p: 0 }}>
-              {messages.map((msg, index) => (
-                <ListItem
-                  key={index}
-                  sx={{
-                    flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                    alignItems: 'flex-start',
-                    mb: 2,
-                    p: 0,
-                  }}
-                >
+              <AnimatePresence mode="popLayout">
+                {messages.map((msg, index) => (
+                  <motion.div
+                    key={index}
+                    variants={messageIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <ListItem
+                      sx={{
+                        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+                        alignItems: 'flex-start',
+                        mb: 2,
+                        p: 0,
+                      }}
+                    >
                   {msg.role === 'user' ? (
                     <Avatar
                       sx={{
-                        bgcolor: isDark ? '#475569' : '#e2e8f0',
-                        color: isDark ? '#e2e8f0' : '#475569',
+                        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.2) : alpha(theme.palette.primary.main, 0.1),
+                        color: isDark ? theme.palette.primary.light : theme.palette.primary.main,
                         ml: 1.5,
                         mr: 0,
                         width: 32,
@@ -1669,10 +1682,11 @@ function AIChat() {
                       p: 1.5,
                       maxWidth: '75%',
                       bgcolor: msg.role === 'user'
-                        ? (isDark ? alpha(theme.palette.common.white, 0.05) : '#f1f5f9')
+                        ? (isDark ? alpha(theme.palette.common.white, 0.08) : alpha(theme.palette.primary.main, 0.08))
                         : 'background.paper',
-                      border: msg.role === 'user' ? 'none' : `1px solid ${theme.palette.divider}`,
-                      borderRadius: 2,
+                      border: 'none',
+                      borderRadius: 3,
+                      boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
                     }}
                   >
                     <MessageContent
@@ -1702,14 +1716,21 @@ function AIChat() {
                     </Typography>
                   </Paper>
                 </ListItem>
-              ))}
+              </motion.div>
+            ))}
 
               {/* Indicateur de frappe */}
               {typingIndicator && (
-                <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
-                  <Box sx={{ mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Mascot pose="thinking" animation="pulse" size={32} />
-                  </Box>
+                <motion.div
+                  variants={messageIn}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
+                    <Box sx={{ mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Mascot pose="thinking" animation="pulse" size={32} />
+                    </Box>
                   <Paper
                     elevation={0}
                     sx={{
@@ -1746,8 +1767,10 @@ function AIChat() {
                     </Typography>
                   </Paper>
                 </ListItem>
-              )}
-              <div ref={messagesEndRef} />
+              </motion.div>
+            )}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
             </List>
           )}
         </Box>
@@ -1768,39 +1791,15 @@ function AIChat() {
               display: 'flex',
               gap: { xs: 0.75, sm: 1.5 },
               alignItems: 'flex-end',
-              // Glass morphism avancé
-              bgcolor: isDark
-                ? alpha(theme.palette.background.paper, 0.8)
-                : alpha('#ffffff', 0.9),
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              bgcolor: theme.palette.background.paper,
               borderRadius: { xs: '20px', sm: '24px' },
               p: { xs: 1, sm: 1.5 },
-              border: `1px solid ${alpha(isDark ? '#ffffff' : '#000000', 0.08)}`,
-              boxShadow: isDark
-                ? `0 8px 32px ${alpha('#000000', 0.4)}, inset 0 1px 0 ${alpha('#ffffff', 0.05)}`
-                : `0 8px 32px ${alpha('#000000', 0.08)}, inset 0 1px 0 ${alpha('#ffffff', 0.8)}`,
+              border: 'none',
+              boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium'),
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              // Effet shimmer en haut
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: '10%',
-                right: '10%',
-                height: 1,
-                background: isDark
-                  ? `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.15)} 50%, transparent 100%)`
-                  : `linear-gradient(90deg, transparent 0%, ${alpha('#ffffff', 0.9)} 50%, transparent 100%)`,
-                borderRadius: '24px',
-                pointerEvents: 'none',
-              },
               '&:focus-within': {
-                borderColor: alpha(theme.palette.primary.main, 0.5),
-                boxShadow: isDark
-                  ? `0 12px 48px ${alpha('#000000', 0.5)}, 0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`
-                  : `0 12px 48px ${alpha('#000000', 0.12)}, 0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
-                transform: 'translateY(-2px)'
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}, ${getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium')}`,
+                transform: 'translateY(-1px)'
               }
             }}
           >
@@ -1826,7 +1825,7 @@ function AIChat() {
                     '&:hover': {
                       color: 'primary.main',
                       bgcolor: alpha(theme.palette.primary.main, 0.12),
-                      transform: 'scale(1.08)',
+                      transform: 'scale(1.05)',
                     }
                   }}
                 >
@@ -1848,7 +1847,7 @@ function AIChat() {
                     '&:hover': {
                       color: '#ef4444',
                       bgcolor: alpha('#ef4444', 0.12),
-                      transform: 'scale(1.08)',
+                      transform: 'scale(1.05)',
                     }
                   }}
                 >
@@ -1890,56 +1889,42 @@ function AIChat() {
             />
 
             {/* Bouton envoyer - Design Premium avec gradient */}
-            <IconButton
-              onClick={() => handleSendMessage()}
-              disabled={loading || !message.trim()}
-              sx={{
-                mb: 0.5,
-                background: message.trim()
-                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
-                  : (isDark ? alpha('#ffffff', 0.08) : '#e2e8f0'),
-                color: message.trim() ? 'white' : (isDark ? alpha('#ffffff', 0.3) : '#94a3b8'),
-                width: { xs: 38, sm: 42 },
-                height: { xs: 38, sm: 42 },
-                borderRadius: '14px',
-                boxShadow: message.trim()
-                  ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
-                  : 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                // Effet shimmer
-                '&::before': message.trim() ? {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '50%',
-                  background: `linear-gradient(180deg, ${alpha('#ffffff', 0.25)} 0%, transparent 100%)`,
-                  borderRadius: '14px 14px 0 0',
-                  pointerEvents: 'none',
-                } : {},
-                '&:hover': message.trim() ? {
-                  transform: 'scale(1.08)',
-                  boxShadow: `0 6px 24px ${alpha('#6366f1', 0.5)}`,
-                } : {},
-                '&:active': {
-                  transform: 'scale(0.95)',
-                },
-                '&.Mui-disabled': {
-                  background: isDark ? alpha('#ffffff', 0.08) : '#e2e8f0',
-                  color: isDark ? alpha('#ffffff', 0.2) : '#94a3b8',
-                  boxShadow: 'none'
-                },
-              }}
+            <motion.div
+              variants={buttonPress}
+              initial="rest"
+              whileHover={message.trim() ? "hover" : "rest"}
+              whileTap={message.trim() ? "tap" : "rest"}
             >
-              {loading ? (
-                <CircularProgress size={18} sx={{ color: 'inherit' }} />
-              ) : (
-                <Send sx={{ fontSize: { xs: 18, sm: 20 }, ml: 0.25 }} />
-              )}
-            </IconButton>
+              <IconButton
+                onClick={() => handleSendMessage()}
+                disabled={loading || !message.trim()}
+                sx={{
+                  mb: 0.5,
+                  background: message.trim()
+                    ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                    : theme.palette.background.paper,
+                  color: message.trim() ? 'white' : 'text.disabled',
+                  width: { xs: 38, sm: 42 },
+                  height: { xs: 38, sm: 42 },
+                  borderRadius: '14px',
+                  boxShadow: message.trim()
+                    ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
+                    : getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&.Mui-disabled': {
+                    background: theme.palette.background.paper,
+                    color: 'text.disabled',
+                    boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                  },
+                }}
+              >
+                {loading ? (
+                  <CircularProgress size={18} sx={{ color: 'inherit' }} />
+                ) : (
+                  <Send sx={{ fontSize: { xs: 18, sm: 20 }, ml: 0.25 }} />
+                )}
+              </IconButton>
+            </motion.div>
           </Paper>
         </Box>
 

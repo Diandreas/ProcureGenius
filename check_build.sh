@@ -145,3 +145,4 @@ echo "4. Testez avec: curl -I http://votre-domaine/"
 echo ""
 echo "✅ Vérification terminée!"
 
+
