@@ -31,6 +31,7 @@ import {
   DialogActions,
   Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Search,
   FilterList,
@@ -121,7 +122,7 @@ function Invoices() {
     setReportConfigOpen(false);
     setGeneratingPdf(true);
     setReportDialogOpen(true);
-    
+
     try {
       const pdfBlob = await generateInvoicesBulkReport({
         itemIds: reportFilters.selectedInvoices.length > 0 ? reportFilters.selectedInvoices : undefined,
@@ -369,183 +370,307 @@ function Invoices() {
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Clickable Filters */}
-        <Grid container spacing={isMobile ? 1 : 2}>
+        {/* Stats Cards - Clickable Filters - Design Compact et Moderne */}
+        <Grid container spacing={isMobile ? 0.75 : 1.5}>
           {/* Payées */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('paid')}
               sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(52, 211, 153, 0.12)'
-                  : 'rgba(16, 185, 129, 0.08)',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'paid' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'paid' ? 'success.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
                   borderColor: 'success.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'paid' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {paidInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('invoices:filters.paid')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{
+                p: isMobile ? 1 : 1.5,
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <CheckCircle sx={{
+                    fontSize: isMobile ? 20 : 24,
+                    color: 'success.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography
+                    variant={isMobile ? 'h6' : 'h5'}
+                    fontWeight="700"
+                    sx={{
+                      color: 'success.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {paidInvoices}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('invoices:filters.paid')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Impayées */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('unpaid')}
               sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(251, 191, 36, 0.12)'
-                  : 'rgba(245, 158, 11, 0.08)',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'unpaid' ? 'warning.main' : theme => alpha(theme.palette.warning.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'unpaid' ? 'warning.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.warning.main, 0.3)}`,
                   borderColor: 'warning.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'unpaid' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.warning.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Warning sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
-                      {unpaidInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('invoices:filters.unpaid')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{
+                p: isMobile ? 1 : 1.5,
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Warning sx={{
+                    fontSize: isMobile ? 20 : 24,
+                    color: 'warning.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography
+                    variant={isMobile ? 'h6' : 'h5'}
+                    fontWeight="700"
+                    sx={{
+                      color: 'warning.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {unpaidInvoices}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('invoices:filters.unpaid')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* En retard */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('overdue')}
               sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(248, 113, 113, 0.12)'
-                  : 'rgba(239, 68, 68, 0.08)',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'overdue' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'overdue' ? 'error.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
                   borderColor: 'error.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'overdue' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Error sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
-                      {overdueInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('invoices:filters.overdue')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{
+                p: isMobile ? 1 : 1.5,
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Error sx={{
+                    fontSize: isMobile ? 20 : 24,
+                    color: 'error.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography
+                    variant={isMobile ? 'h6' : 'h5'}
+                    fontWeight="700"
+                    sx={{
+                      color: 'error.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {overdueInvoices}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('invoices:filters.overdue')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Brouillons */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('draft')}
               sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(148, 163, 184, 0.12)'
-                  : 'rgba(100, 116, 139, 0.08)',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.grey[500], 0.1)} 0%, ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'draft' ? 'grey.600' : theme => alpha(theme.palette.grey[500], 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'draft' ? 'grey.600' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.grey[500], 0.3)}`,
                   borderColor: 'grey.600'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'draft' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.grey[500], 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.grey[600]}, ${alpha(theme.palette.grey[400], 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'grey.600' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="grey.700">
-                      {draftInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('invoices:filters.drafts')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Toutes */}
-          <Grid item xs={6} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('')}
-              sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(96, 165, 250, 0.12)'
-                  : 'rgba(37, 99, 235, 0.08)',
-                cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 3,
-                  borderColor: 'primary.main'
-                }
-              }}
-            >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Receipt sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
-                      {totalInvoices}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('invoices:filters.allInvoices')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{
+                p: isMobile ? 1 : 1.5,
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Description sx={{
+                    fontSize: isMobile ? 20 : 24,
+                    color: 'grey.600',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography
+                    variant={isMobile ? 'h6' : 'h5'}
+                    fontWeight="700"
+                    sx={{
+                      color: 'grey.700',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {draftInvoices}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('invoices:filters.drafts')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
@@ -729,7 +854,7 @@ function Invoices() {
                   ? `${reportFilters.selectedInvoices.length} facture(s) sélectionnée(s)`
                   : 'Toutes les factures filtrées seront incluses'}
               </Typography>
-              
+
               <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
                 <FormControl component="fieldset" fullWidth>
                   <FormGroup>

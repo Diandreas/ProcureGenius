@@ -25,6 +25,7 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ArrowBack,
   Edit,
@@ -317,10 +318,30 @@ function ClientDetail() {
           <Grid item xs={12} md={8}>
             <Card
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 mb: isMobile ? 1.5 : 3,
-                boxShadow: 2,
-                overflow: 'hidden'
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                border: '1px solid',
+                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                backdropFilter: 'blur(20px)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  borderRadius: '3px 3px 0 0'
+                }
               }}
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
@@ -408,8 +429,14 @@ function ClientDetail() {
                           gap: isMobile ? 1 : 1.5,
                           p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
-                          bgcolor: 'grey.50',
-                          '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                           transition: 'background-color 0.2s'
                         }}
                       >
@@ -447,8 +474,14 @@ function ClientDetail() {
                           gap: isMobile ? 1 : 1.5,
                           p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
-                          bgcolor: 'grey.50',
-                          '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                           transition: 'background-color 0.2s'
                         }}
                       >
@@ -493,8 +526,14 @@ function ClientDetail() {
                           gap: isMobile ? 1 : 1.5,
                           p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
-                          bgcolor: 'grey.50',
-                          '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                           transition: 'background-color 0.2s'
                         }}
                       >
@@ -539,8 +578,14 @@ function ClientDetail() {
                           gap: isMobile ? 1 : 1.5,
                           p: isMobile ? 1 : 1.5,
                           borderRadius: 1,
-                          bgcolor: 'grey.50',
-                          '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                           transition: 'background-color 0.2s'
                         }}
                       >
@@ -588,18 +633,51 @@ function ClientDetail() {
                 </Typography>
                 <Grid container spacing={isMobile ? 1 : 2}>
                   <Grid item xs={6} sm={6}>
-                    <Card sx={{ borderRadius: 2, bgcolor: 'primary.50' }}>
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                        <Receipt sx={{ fontSize: isMobile ? 28 : 36, color: 'primary.main', mb: isMobile ? 0.5 : 1 }} />
+                    <Card sx={{
+                      borderRadius: 3,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                      border: '1px solid',
+                      borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                      boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 3,
+                        background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
+                        borderRadius: '3px 3px 0 0'
+                      }
+                    }}>
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
+                        <Receipt sx={{
+                          fontSize: isMobile ? 28 : 36,
+                          color: 'primary.main',
+                          mb: isMobile ? 1 : 1.5,
+                          opacity: 0.9
+                        }} />
                         <Typography
                           variant={isMobile ? 'h6' : 'h4'}
-                          color="primary.main"
-                          fontWeight="bold"
-                          sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: isMobile ? '1.125rem' : undefined,
+                            background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                          }}
                         >
                           {statistics.sales_summary.total_invoices || 0}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {t('clients:tabs.invoices')}
                         </Typography>
                       </CardContent>
@@ -607,18 +685,52 @@ function ClientDetail() {
                   </Grid>
 
                   <Grid item xs={6} sm={6}>
-                    <Card sx={{ borderRadius: 2, bgcolor: 'success.50' }}>
-                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                        <AttachMoney sx={{ fontSize: isMobile ? 28 : 36, color: 'success.main', mb: isMobile ? 0.5 : 1 }} />
+                    <Card sx={{
+                      borderRadius: 3,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                      border: '1px solid',
+                      borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                      boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 3,
+                        background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                        borderRadius: '3px 3px 0 0'
+                      }
+                    }}>
+                      <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
+                        <AttachMoney sx={{
+                          fontSize: isMobile ? 28 : 36,
+                          color: 'success.main',
+                          mb: isMobile ? 1 : 1.5,
+                          opacity: 0.9
+                        }} />
                         <Typography
-                          variant={isMobile ? 'body2' : 'h5'}
-                          color="success.main"
-                          fontWeight="bold"
-                          sx={{ wordBreak: 'break-word', fontSize: isMobile ? '0.875rem' : undefined }}
+                          variant={isMobile ? 'body2' : 'h4'}
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: isMobile ? '0.875rem' : undefined,
+                            wordBreak: 'break-word',
+                            background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                          }}
                         >
                           {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {t('clients:stats.totalRevenue')}
                         </Typography>
                       </CardContent>
@@ -627,18 +739,51 @@ function ClientDetail() {
 
                   {statistics.sales_summary.unique_products > 0 && (
                     <Grid item xs={6} sm={6}>
-                      <Card sx={{ borderRadius: 2, bgcolor: 'info.50' }}>
-                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                          <Inventory sx={{ fontSize: isMobile ? 28 : 36, color: 'info.main', mb: isMobile ? 0.5 : 1 }} />
+                      <Card sx={{
+                        borderRadius: 3,
+                        background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                        boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        },
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
+                          borderRadius: '3px 3px 0 0'
+                        }
+                      }}>
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
+                          <Inventory sx={{
+                            fontSize: isMobile ? 28 : 36,
+                            color: 'info.main',
+                            mb: isMobile ? 1 : 1.5,
+                            opacity: 0.9
+                          }} />
                           <Typography
                             variant={isMobile ? 'h6' : 'h4'}
-                            color="info.main"
-                            fontWeight="bold"
-                            sx={{ fontSize: isMobile ? '1.125rem' : undefined }}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: isMobile ? '1.125rem' : undefined,
+                              background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent'
+                            }}
                           >
                             {statistics.sales_summary.unique_products}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             {t('clients:stats.productsPurchased')}
                           </Typography>
                         </CardContent>
@@ -648,18 +793,52 @@ function ClientDetail() {
 
                   {statistics.sales_summary.average_invoice_amount > 0 && (
                     <Grid item xs={6} sm={6}>
-                      <Card sx={{ borderRadius: 2, bgcolor: 'warning.50' }}>
-                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2.5 }}>
-                          <TrendingUp sx={{ fontSize: isMobile ? 28 : 36, color: 'warning.main', mb: isMobile ? 0.5 : 1 }} />
+                      <Card sx={{
+                        borderRadius: 3,
+                        background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                        boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        },
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                          borderRadius: '3px 3px 0 0'
+                        }
+                      }}>
+                        <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
+                          <TrendingUp sx={{
+                            fontSize: isMobile ? 28 : 36,
+                            color: 'warning.main',
+                            mb: isMobile ? 1 : 1.5,
+                            opacity: 0.9
+                          }} />
                           <Typography
-                            variant={isMobile ? 'body2' : 'h5'}
-                            color="warning.main"
-                            fontWeight="bold"
-                            sx={{ wordBreak: 'break-word', fontSize: isMobile ? '0.875rem' : undefined }}
+                            variant={isMobile ? 'body2' : 'h4'}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: isMobile ? '0.875rem' : undefined,
+                              wordBreak: 'break-word',
+                              background: theme => `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent'
+                            }}
                           >
                             {formatCurrency(statistics.sales_summary.average_invoice_amount)}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             {t('clients:stats.averageBasket')}
                           </Typography>
                         </CardContent>
@@ -676,9 +855,30 @@ function ClientDetail() {
             {/* Conditions commerciales */}
             <Card
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 mb: isMobile ? 1.5 : 3,
-                boxShadow: 2
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                border: '1px solid',
+                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                backdropFilter: 'blur(20px)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  borderRadius: '3px 3px 0 0'
+                }
               }}
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
@@ -760,9 +960,30 @@ function ClientDetail() {
             {/* Actions rapides avec design amélioré */}
             <Card
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 mb: isMobile ? 1.5 : 3,
-                boxShadow: 2
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                border: '1px solid',
+                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                backdropFilter: 'blur(20px)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.info.main})`,
+                  borderRadius: '3px 3px 0 0'
+                }
               }}
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
@@ -838,8 +1059,29 @@ function ClientDetail() {
             {/* Dates avec design amélioré */}
             <Card
               sx={{
-                borderRadius: 2,
-                boxShadow: 2
+                borderRadius: 3,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                border: '1px solid',
+                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                backdropFilter: 'blur(20px)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.warning.main})`,
+                  borderRadius: '3px 3px 0 0'
+                }
               }}
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
@@ -859,8 +1101,14 @@ function ClientDetail() {
                     sx={{
                       p: isMobile ? 1 : 1.5,
                       borderRadius: 1,
-                      bgcolor: 'grey.50',
-                      '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                       transition: 'background-color 0.2s'
                     }}
                   >
@@ -886,8 +1134,14 @@ function ClientDetail() {
                     sx={{
                       p: isMobile ? 1 : 1.5,
                       borderRadius: 1,
-                      bgcolor: 'grey.50',
-                      '&:hover': { bgcolor: 'grey.100' },
+                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.divider, 0.1),
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                            },
                       transition: 'background-color 0.2s'
                     }}
                   >
@@ -926,10 +1180,15 @@ function ClientDetail() {
               gap: 1.5,
               mb: isMobile ? 2 : 3,
               p: isMobile ? 1.5 : 2,
-              borderRadius: 2,
-              bgcolor: 'primary.50',
+              borderRadius: 3,
+              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
               border: '1px solid',
-              borderColor: 'primary.100'
+              borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 118, 210, 0.15)'
+              }
             }}
           >
             <Receipt sx={{ color: 'primary.main', fontSize: isMobile ? 22 : 28 }} />
@@ -942,7 +1201,16 @@ function ClientDetail() {
               {t('clients:tabs.invoices')}
             </Typography>
           </Box>
-          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+            background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            border: '1px solid',
+            borderColor: theme => alpha(theme.palette.divider, 0.1),
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
             <CardContent sx={{ p: 0 }}>
               <ClientInvoicesTable
                 invoices={statistics?.recent_invoices}
@@ -963,10 +1231,15 @@ function ClientDetail() {
               gap: 1.5,
               mb: isMobile ? 2 : 3,
               p: isMobile ? 1.5 : 2,
-              borderRadius: 2,
-              bgcolor: 'info.50',
+              borderRadius: 3,
+              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
               border: '1px solid',
-              borderColor: 'info.100'
+              borderColor: theme => alpha(theme.palette.info.main, 0.2),
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 118, 210, 0.15)'
+              }
             }}
           >
             <Inventory sx={{ color: 'info.main', fontSize: isMobile ? 22 : 28 }} />
@@ -979,7 +1252,16 @@ function ClientDetail() {
               {t('clients:tabs.products')}
             </Typography>
           </Box>
-          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+            background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            border: '1px solid',
+            borderColor: theme => alpha(theme.palette.divider, 0.1),
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
             <CardContent sx={{ p: 0 }}>
               <ClientProductsTable
                 products={statistics?.top_products}

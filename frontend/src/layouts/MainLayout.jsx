@@ -489,6 +489,11 @@ function MainLayout() {
     </Box>
   );
 
+  // Calculer isMainPage pour utilisation dans plusieurs endroits
+  const path = location.pathname;
+  const mainPages = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/ai-chat', '/e-sourcing', '/contracts'];
+  const isMainPage = mainPages.some(page => path === page);
+
   return (
     <AINotificationProvider>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -508,23 +513,9 @@ function MainLayout() {
         >
           <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 4 }, gap: { xs: 0.5, sm: 1 } }}>
 
-            {/* Mobile Menu Toggle - Only show on small tablets, not on phones */}
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { xs: 'none', sm: 'block', md: 'none' }, borderRadius: 1 }}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            {/* Navigation mobile - Bouton retour + Titre */}
+            {/* Navigation mobile - Bouton menu/retour + Titre */}
             {(() => {
-              const path = location.pathname;
-              // Pages principales (avec tab bar visible)
-              const mainPages = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/ai-chat', '/e-sourcing', '/contracts'];
-              const isMainPage = mainPages.some(page => path === page);
+              // Utiliser isMainPage calculé en dehors
 
               // Pages de détail (avec ID dans l'URL, ex: /suppliers/123)
               const isDetailPage = !isMainPage && mainPages.some(page => path.startsWith(page + '/')) && !path.endsWith('/new') && !path.endsWith('/edit') && !path.includes('/edit/');
@@ -538,10 +529,13 @@ function MainLayout() {
               // Afficher titre sur mobile pour pages de détail et formulaires
               const showTitleOnMobile = !isMainPage;
 
+              // Vérifier si on est sur le dashboard
+              const isDashboard = path === '/dashboard';
+
               return (
                 <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1.5 } }}>
-                  {/* Bouton retour sur mobile */}
-                  {showBackButton && (
+                  {/* Bouton retour sur mobile OU contrôles période (dashboard) OU bouton "Nouveau" sur pages principales */}
+                  {showBackButton ? (
                     <IconButton
                       onClick={() => navigate(-1)}
                       size="small"
@@ -567,6 +561,102 @@ function MainLayout() {
                       >
                         ←
                       </Box>
+                    </IconButton>
+                  ) : isDashboard && contextualActions?.periodControls ? (
+                    // Afficher les contrôles de période à gauche sur mobile pour le dashboard
+                    <Box sx={{
+                      display: { xs: 'flex', md: 'none' },
+                      alignItems: 'center',
+                      gap: 0.5,
+                      mr: { xs: 0, sm: 1 },
+                      '& .period-selector-button': {
+                        px: '8px !important',
+                        py: '6px !important',
+                        fontSize: '0.75rem !important',
+                        '& span': {
+                          maxWidth: 70,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }
+                      }
+                    }}>
+                      <PeriodSelector
+                        period={contextualActions.currentPeriod}
+                        onChange={contextualActions.onPeriodChange}
+                      />
+                      <Tooltip title="Actualiser">
+                        <IconButton
+                          onClick={contextualActions.onRefresh}
+                          size="small"
+                          sx={{
+                            p: 0.75,
+                            borderRadius: 2,
+                            color: 'text.secondary',
+                            '&:hover': {
+                              color: 'primary.main',
+                              bgcolor: alpha(theme.palette.primary.main, 0.08)
+                            }
+                          }}
+                        >
+                          <Refresh sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  ) : isMainPage && contextualActions?.action ? (
+                    // Afficher le bouton "Nouveau" à gauche sur mobile pour les pages principales
+                    <Button
+                      variant="contained"
+                      startIcon={contextualActions.action.icon}
+                      onClick={contextualActions.action.onClick}
+                      disableElevation
+                      size="small"
+                      sx={{
+                        display: { xs: 'flex', md: 'none' },
+                        borderRadius: '10px',
+                        fontWeight: 600,
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: '0.75rem',
+                        mr: { xs: 0, sm: 1 },
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                        color: 'white',
+                        textTransform: 'none',
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-1px)',
+                          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                        },
+                        '& .MuiButton-startIcon': {
+                          marginRight: 0.5,
+                          '& svg': {
+                            fontSize: '1rem',
+                          }
+                        }
+                      }}
+                    >
+                      {t('navigation:topBar.new', 'Nouveau')}
+                    </Button>
+                  ) : (
+                    <IconButton
+                      color="inherit"
+                      aria-label="open drawer"
+                      edge="start"
+                      onClick={handleDrawerToggle}
+                      sx={{
+                        display: { xs: 'flex', md: 'none' },
+                        mr: { xs: 0, sm: 2 },
+                        borderRadius: 1,
+                        p: 0.75,
+                        color: 'text.primary',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.action.hover, 0.08),
+                        }
+                      }}
+                    >
+                      <MenuIcon />
                     </IconButton>
                   )}
 
@@ -663,7 +753,11 @@ function MainLayout() {
             {/* Period Selector - Global Dashboard Control (optimisé mobile) */}
             {contextualActions?.periodControls && (
               <Box sx={{
-                display: 'flex',
+                // Cacher sur mobile pour le dashboard (affiché à gauche à la place)
+                display: { 
+                  xs: isMainPage && path === '/dashboard' ? 'none' : 'flex',
+                  md: 'flex' 
+                },
                 alignItems: 'center',
                 gap: { xs: 0.5, sm: 1.5 },
                 mr: { xs: 0, sm: 2 },
@@ -764,6 +858,11 @@ function MainLayout() {
                   py: 1,
                   fontSize: '0.875rem',
                   mr: 2,
+                  // Cacher sur mobile pour les pages principales (affiché à gauche à la place)
+                  display: { 
+                    xs: isMainPage ? 'none' : 'flex',
+                    md: 'flex' 
+                  },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                   color: 'white',
                   textTransform: 'none',

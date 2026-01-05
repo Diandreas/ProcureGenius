@@ -58,7 +58,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9998;
+  z-index: 1300;
 }
 
 .period-selector-dropdown {
@@ -69,10 +69,14 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  z-index: 9999;
+  z-index: 1301;
   min-width: 220px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 120px);
   padding: 8px;
   animation: slideDown 0.2s ease-out;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Dark mode dropdown */
@@ -87,7 +91,20 @@
 @media (max-width: 600px) {
   .period-selector-dropdown {
     min-width: 200px;
+    max-width: calc(100vw - 16px);
     padding: 6px;
+    /* Le positionnement sera calculé dynamiquement via JavaScript */
+    /* Par défaut, position absolute mais peut être overridé par inline style */
+  }
+  
+  /* Quand le dropdown utilise position fixed, s'assurer qu'il est au-dessus */
+  .period-selector-dropdown[style*="position: fixed"] {
+    z-index: 1301 !important;
+  }
+  
+  /* Quand le dropdown est à gauche, ajuster le positionnement */
+  .period-selector {
+    position: relative;
   }
 }
 

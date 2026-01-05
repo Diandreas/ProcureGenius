@@ -38,7 +38,6 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  alpha,
 } from '@mui/material';
 import {
   Edit,
@@ -70,7 +69,6 @@ import i18n from '../../i18n/config';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
-import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -96,7 +94,6 @@ function InvoiceDetail() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [settings, setSettings] = useState(null);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -118,19 +115,6 @@ function InvoiceDetail() {
       fetchInvoice();
     }
   }, [id]);
-
-  // Charger les paramètres d'organisation pour détecter le format thermal
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await settingsAPI.getAll();
-        setSettings(response.data);
-      } catch (error) {
-        console.error('Error loading settings:', error);
-      }
-    };
-    fetchSettings();
-  }, []);
 
   // Ouvrir le modal d'email si demandé depuis la navigation
   useEffect(() => {
@@ -306,7 +290,9 @@ function InvoiceDetail() {
     <Card sx={{
       mb: 1.5,
       borderRadius: 1,
-      bgcolor: 'background.paper',
+      background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 252, 0.95))',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(200, 200, 220, 0.2)',
       boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       overflow: 'hidden'
     }}>
@@ -368,9 +354,7 @@ function InvoiceDetail() {
             size="small"
             onClick={() => setPdfDialogOpen(true)}
             sx={{
-              bgcolor: (theme) => theme.palette.mode === 'dark'
-                ? alpha(theme.palette.primary.main, 0.15)
-                : alpha(theme.palette.primary.main, 0.1),
+              bgcolor: 'primary.50',
               color: 'primary.main',
               width: 32,
               height: 32,
@@ -412,14 +396,8 @@ function InvoiceDetail() {
                 }}
                 disabled={!invoice.client?.email}
                 sx={{
-                  bgcolor: (theme) => invoice.client?.email
-                    ? (theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.info.main, 0.15)
-                      : alpha(theme.palette.info.main, 0.1))
-                    : (theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.05)
-                      : alpha(theme.palette.common.black, 0.05)),
-                  color: invoice.client?.email ? 'info.main' : 'text.disabled',
+                  bgcolor: invoice.client?.email ? 'info.50' : 'grey.100',
+                  color: invoice.client?.email ? 'info.main' : 'grey.400',
                   width: 32,
                   height: 32,
                   borderRadius: 1,
@@ -440,17 +418,13 @@ function InvoiceDetail() {
             size="small"
             onClick={handleEdit}
             sx={{
-              bgcolor: (theme) => theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.08)
-                : alpha(theme.palette.common.black, 0.05),
-              color: 'text.primary',
+              bgcolor: 'grey.100',
+              color: 'grey.700',
               width: 32,
               height: 32,
               borderRadius: 1,
               '&:hover': {
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.common.white, 0.15)
-                  : alpha(theme.palette.common.black, 0.8),
+                bgcolor: 'grey.700',
                 color: 'white',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 8px rgba(100, 100, 100, 0.25)'
@@ -465,9 +439,7 @@ function InvoiceDetail() {
               size="small"
               onClick={() => setSendDialogOpen(true)}
               sx={{
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.success.main, 0.15)
-                  : alpha(theme.palette.success.main, 0.1),
+                bgcolor: 'success.50',
                 color: 'success.main',
                 width: 32,
                 height: 32,
@@ -489,9 +461,7 @@ function InvoiceDetail() {
               size="small"
               onClick={() => setMarkPaidDialogOpen(true)}
               sx={{
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.warning.main, 0.15)
-                  : alpha(theme.palette.warning.main, 0.1),
+                bgcolor: 'warning.50',
                 color: 'warning.main',
                 width: 32,
                 height: 32,
@@ -538,14 +508,8 @@ function InvoiceDetail() {
           <IconButton
             onClick={() => navigate('/invoices')}
             sx={{
-              bgcolor: (theme) => theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.08)
-                : alpha(theme.palette.common.black, 0.05),
-              '&:hover': {
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.common.white, 0.12)
-                  : alpha(theme.palette.common.black, 0.08)
-              }
+              bgcolor: 'grey.100',
+              '&:hover': { bgcolor: 'grey.200' }
             }}
           >
             <ArrowBack />
@@ -621,14 +585,8 @@ Cordialement`
             <IconButton
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.common.white, 0.08)
-                  : alpha(theme.palette.common.black, 0.05),
-                '&:hover': {
-                  bgcolor: (theme) => theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.common.white, 0.12)
-                    : alpha(theme.palette.common.black, 0.08)
-                }
+                bgcolor: 'grey.100',
+                '&:hover': { bgcolor: 'grey.200' }
               }}
             >
               <MoreVert />
@@ -702,62 +660,43 @@ Cordialement`
           )}
 
           {/* Financial Summary Mobile - Ultra Compact */}
-          <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-            <Grid item xs={4}>
-              <Card sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.primary.main, 0.15)
-                  : alpha(theme.palette.primary.main, 0.1),
-                boxShadow: 1
-              }}>
-                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="body2" color="primary.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
-                    {formatCurrency(invoice.subtotal || 0)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+          <Card sx={{
+            mb: 1.5,
+            borderRadius: 2.5,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+            overflow: 'hidden'
+          }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Stack spacing={0.75}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                     {t('invoices:labels.subtotal')}
                   </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={4}>
-              <Card sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.warning.main, 0.15)
-                  : alpha(theme.palette.warning.main, 0.1),
-                boxShadow: 1
-              }}>
-                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
-                    {formatCurrency(invoice.tax_amount || 0)}
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                    {formatCurrency(invoice.subtotal || 0)}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                     {t('invoices:labels.taxes')}
                   </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={4}>
-              <Card sx={{
-                borderRadius: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.success.main, 0.15)
-                  : alpha(theme.palette.success.main, 0.1),
-                boxShadow: 1
-              }}>
-                <CardContent sx={{ p: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 0.5 }}>
-                    {formatCurrency(invoice.total_amount || 0)}
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                    {formatCurrency(invoice.tax_amount || 0)}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                </Box>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
                     {t('invoices:labels.total')}
                   </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', color: 'white', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                    {formatCurrency(invoice.total_amount || 0)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
 
           {/* Items Table Mobile - Compact */}
           <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -813,14 +752,7 @@ Cordialement`
                 </Box>
               ))}
               {(!invoice.items || invoice.items.length === 0) && (
-                <Box sx={{
-                  textAlign: 'center',
-                  py: 2,
-                  bgcolor: (theme) => theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.common.white, 0.03)
-                    : alpha(theme.palette.common.black, 0.02),
-                  borderRadius: 1
-                }}>
+                <Box sx={{ textAlign: 'center', py: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                     {t('invoices:labels.noItems')}
                   </Typography>
@@ -1020,14 +952,7 @@ Cordialement`
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{
-                      textAlign: 'center',
-                      p: 2,
-                      bgcolor: (theme) => theme.palette.mode === 'dark'
-                        ? alpha(theme.palette.primary.main, 0.15)
-                        : alpha(theme.palette.primary.main, 0.1),
-                      borderRadius: 1
-                    }}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.subtotal || 0)}
                       </Typography>
@@ -1037,14 +962,7 @@ Cordialement`
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{
-                      textAlign: 'center',
-                      p: 2,
-                      bgcolor: (theme) => theme.palette.mode === 'dark'
-                        ? alpha(theme.palette.warning.main, 0.15)
-                        : alpha(theme.palette.warning.main, 0.1),
-                      borderRadius: 1
-                    }}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.tax_amount || 0)}
                       </Typography>
@@ -1054,14 +972,7 @@ Cordialement`
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{
-                      textAlign: 'center',
-                      p: 2,
-                      bgcolor: (theme) => theme.palette.mode === 'dark'
-                        ? alpha(theme.palette.success.main, 0.15)
-                        : alpha(theme.palette.success.main, 0.1),
-                      borderRadius: 1
-                    }}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="success.main" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.total_amount || 0)}
                       </Typography>
@@ -1489,30 +1400,19 @@ Cordialement`
         <DialogTitle>{t('invoices:dialogs.generatePdf')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            {settings?.paperSize === 'thermal_80' || settings?.paperSize === 'thermal_58' ? (
-              <Alert severity="info" sx={{ mb: 3 }}>
-                <Typography variant="body2">
-                  {t('invoices:messages.thermalPrintingMode', 'Format d\'impression thermique détecté. Le template de ticket thermal sera utilisé automatiquement.')}
-                </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  {settings.paperSize === 'thermal_80' ? 'Format: 80mm' : 'Format: 58mm'}
-                </Typography>
-              </Alert>
-            ) : (
-              <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
-                <Select
-                  value={selectedTemplate}
-                  onChange={(e) => setSelectedTemplate(e.target.value)}
-                  label={t('invoices:fields.invoiceTemplate')}
-                >
-                  <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
-                  <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
-                  <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
-                  <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
-                </Select>
-              </FormControl>
-            )}
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>{t('invoices:fields.invoiceTemplate')}</InputLabel>
+              <Select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                label={t('invoices:fields.invoiceTemplate')}
+              >
+                <MenuItem value={TEMPLATE_TYPES.CLASSIC}>{t('invoices:templates.classic')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MODERN}>{t('invoices:templates.modern')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.MINIMAL}>{t('invoices:templates.minimal')}</MenuItem>
+                <MenuItem value={TEMPLATE_TYPES.PROFESSIONAL}>{t('invoices:templates.professional')}</MenuItem>
+              </Select>
+            </FormControl>
             <Typography variant="body2" color="text.secondary">
               {t('invoices:messages.pdfGenerationHelpText')}
             </Typography>

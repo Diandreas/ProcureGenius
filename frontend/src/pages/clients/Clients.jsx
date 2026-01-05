@@ -31,6 +31,7 @@ import {
   DialogActions,
   Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Search,
   FilterList,
@@ -400,173 +401,307 @@ function Clients() {
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Clickable Filters */}
-        <Grid container spacing={isMobile ? 1 : 2}>
+        {/* Stats Cards - Clickable Filters - Design Compact et Moderne */}
+        <Grid container spacing={isMobile ? 0.75 : 1.5}>
           {/* Actifs */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('active')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'success.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'active' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'active' ? 'success.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
                   borderColor: 'success.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'active' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {activeClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('clients:filters.active')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <CheckCircle sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'success.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'success.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {activeClients}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('clients:filters.active')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Inactifs */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('inactive')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'error.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'inactive' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'inactive' ? 'error.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
                   borderColor: 'error.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'inactive' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Block sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
-                      {inactiveClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('clients:filters.inactive')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Block sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'error.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'error.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {inactiveClients}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('clients:filters.inactive')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* VIP */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('vip')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'secondary.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'vip' ? 'secondary.main' : theme => alpha(theme.palette.secondary.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'vip' ? 'secondary.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.secondary.main, 0.3)}`,
                   borderColor: 'secondary.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'vip' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.secondary.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${alpha(theme.palette.secondary.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Star sx={{ fontSize: isMobile ? 20 : 24, color: 'secondary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="secondary.main">
-                      {vipClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('clients:filters.vip')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Star sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'secondary.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'secondary.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {vipClients}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('clients:filters.vip')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Nouveaux */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleQuickFilterClick('new')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'info.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: quickFilter === 'new' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === 'new' ? 'info.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
                   borderColor: 'info.main'
-                }
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(quickFilter === 'new' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <FiberNew sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
-                      {newClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('clients:filters.new')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Tous */}
-          <Grid item xs={6} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('')}
-              sx={{
-                borderRadius: 2,
-                bgcolor: 'primary.50',
-                cursor: 'pointer',
-                border: '2px solid',
-                borderColor: quickFilter === '' ? 'primary.main' : 'transparent',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'primary.main'
-                }
-              }}
-            >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary.main">
-                      {totalClients}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('clients:filters.all')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <FiberNew sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'info.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'info.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {newClients}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('clients:filters.new')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>

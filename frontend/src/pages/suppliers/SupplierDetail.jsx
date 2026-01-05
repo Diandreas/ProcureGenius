@@ -29,6 +29,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ArrowBack,
   Edit,
@@ -438,11 +439,30 @@ function SupplierDetail() {
             {/* Card principale - Style mobile app */}
             <Grid item xs={12} md={8}>
               <Card sx={{
-                borderRadius: isMobile ? 2.5 : 2,
-                mb: isMobile ? 1.5 : 3,
-                boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-                backdropFilter: isMobile ? 'blur(10px)' : 'none',
-                border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                borderRadius: isMobile ? 3 : 2.5,
+                mb: isMobile ? 2 : 3,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.12)' : '0 4px 20px rgba(0,0,0,0.08)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid',
+                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: isMobile ? 'translateY(-2px)' : 'translateY(-4px)',
+                  boxShadow: isMobile ? '0 12px 40px rgba(0,0,0,0.15)' : '0 8px 30px rgba(0,0,0,0.12)'
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  borderRadius: '2.5px 2.5px 0 0'
+                }
               }}>
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -575,13 +595,48 @@ function SupplierDetail() {
             {statistics?.financial_stats && (
               <Grid container spacing={isMobile ? 2 : 3}>
                 <Grid item xs={6} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
+                  <Card sx={{
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
                     <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <AttachMoney sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="primary" fontWeight="bold">
+                      <AttachMoney sx={{
+                        fontSize: isMobile ? 32 : 36,
+                        color: 'primary.main',
+                        mb: isMobile ? 1 : 1.5,
+                        opacity: 0.9
+                      }} />
+                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}>
                         {formatCurrency(statistics.financial_stats.total_spent || 0)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {t('suppliers:labels.totalSpent')}
                       </Typography>
                     </CardContent>
@@ -589,13 +644,48 @@ function SupplierDetail() {
                 </Grid>
 
                 <Grid item xs={6} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
+                  <Card sx={{
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
                     <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <ShoppingCart sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="success.main" fontWeight="bold">
+                      <ShoppingCart sx={{
+                        fontSize: isMobile ? 32 : 36,
+                        color: 'success.main',
+                        mb: isMobile ? 1 : 1.5,
+                        opacity: 0.9
+                      }} />
+                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}>
                         {statistics.financial_stats.total_orders || 0}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {t('suppliers:labels.orders')}
                       </Typography>
                     </CardContent>
@@ -603,13 +693,48 @@ function SupplierDetail() {
                 </Grid>
 
                 <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
+                  <Card sx={{
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
                     <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <TrendingUp sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} color="info.main" fontWeight="bold">
+                      <TrendingUp sx={{
+                        fontSize: isMobile ? 32 : 36,
+                        color: 'info.main',
+                        mb: isMobile ? 1 : 1.5,
+                        opacity: 0.9
+                      }} />
+                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}>
                         {formatCurrency(statistics.financial_stats.average_order_value || 0)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {t('suppliers:labels.averageValue')}
                       </Typography>
                     </CardContent>

@@ -40,6 +40,7 @@ import {
   useTheme,
   Tooltip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Edit,
   Delete,
@@ -547,17 +548,49 @@ function PurchaseOrderDetail() {
           {/* Main Content */}
           <Grid item xs={12} md={8}>
             {/* Order Info Card */}
-            <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{
+              borderRadius: 3,
+              mb: isMobile ? 2 : 3,
+              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+              boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+              border: '1px solid',
+              borderColor: theme => alpha(theme.palette.divider, 0.1),
+              backdropFilter: 'blur(20px)',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                borderRadius: '3px 3px 0 0'
+              }
+            }}>
               <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>
+                <Typography variant={isMobile ? 'h6' : 'h5'} sx={{
+                  fontWeight: 700,
+                  mb: 2,
+                  background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
                   {purchaseOrder.title}
                 </Typography>
                 {purchaseOrder.description && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                    <Typography variant="subtitle2" fontWeight="600" gutterBottom sx={{ color: 'text.primary' }}>
                       {t('purchaseOrders:labels.description')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                       {purchaseOrder.description}
                     </Typography>
                   </Box>
@@ -796,38 +829,177 @@ function PurchaseOrderDetail() {
       {/* Tab: Financial Summary */}
       {activeTab === 2 && (
         <Box>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+            background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            border: '1px solid',
+            borderColor: theme => alpha(theme.palette.divider, 0.1),
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.success.main})`,
+              borderRadius: '3px 3px 0 0'
+            }
+          }}>
             <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: isMobile ? 2 : 3 }}>
+              <Typography variant="h6" gutterBottom sx={{
+                fontWeight: 700,
+                mb: isMobile ? 2 : 3,
+                background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
                 {t('purchaseOrders:labels.financialSummary')}
               </Typography>
-              <Grid container spacing={isMobile ? 1.5 : 2}>
+              <Grid container spacing={isMobile ? 2 : 3}>
                 <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'} color="primary.main" sx={{ fontWeight: 600 }}>
+                  <Box sx={{
+                    textAlign: 'center',
+                    p: isMobile ? 2 : 3,
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme => `0 12px 28px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
+                    <AttachMoney sx={{
+                      fontSize: isMobile ? 32 : 40,
+                      color: 'primary.main',
+                      mb: isMobile ? 1 : 1.5,
+                      opacity: 0.9
+                    }} />
+                    <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                      fontWeight: 700,
+                      mb: 1,
+                      background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
                       {formatCurrency(purchaseOrder.subtotal || 0)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                       {t('purchaseOrders:labels.subtotal')}
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'warning.50', borderRadius: 1 }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'} color="warning.main" sx={{ fontWeight: 600 }}>
+                  <Box sx={{
+                    textAlign: 'center',
+                    p: isMobile ? 2 : 3,
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme => `0 12px 28px ${alpha(theme.palette.warning.main, 0.3)}`,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.15)} 0%, ${alpha(theme.palette.warning.main, 0.1)} 100%)`
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
+                    <Receipt sx={{
+                      fontSize: isMobile ? 32 : 40,
+                      color: 'warning.main',
+                      mb: isMobile ? 1 : 1.5,
+                      opacity: 0.9
+                    }} />
+                    <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                      fontWeight: 700,
+                      mb: 1,
+                      background: theme => `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
                       {formatCurrency(purchaseOrder.tax_amount || 0)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                       {t('purchaseOrders:labels.taxes')}
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Box sx={{ textAlign: 'center', p: isMobile ? 1.5 : 2, bgcolor: 'success.50', borderRadius: 1 }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'} color="success.main" sx={{ fontWeight: 600 }}>
+                  <Box sx={{
+                    textAlign: 'center',
+                    p: isMobile ? 2 : 3,
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme => `0 12px 28px ${alpha(theme.palette.success.main, 0.3)}`,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(theme.palette.success.main, 0.1)} 100%)`
+                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                      borderRadius: '3px 3px 0 0'
+                    }
+                  }}>
+                    <Payment sx={{
+                      fontSize: isMobile ? 32 : 40,
+                      color: 'success.main',
+                      mb: isMobile ? 1 : 1.5,
+                      opacity: 0.9
+                    }} />
+                    <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
+                      fontWeight: 700,
+                      mb: 1,
+                      background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
                       {formatCurrency(purchaseOrder.total_amount || 0)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                       {t('purchaseOrders:labels.total')}
                     </Typography>
                   </Box>

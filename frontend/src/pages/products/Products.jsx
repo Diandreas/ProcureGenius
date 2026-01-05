@@ -31,6 +31,7 @@ import {
   DialogActions,
   Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Search,
   FilterList,
@@ -474,173 +475,307 @@ function Products() {
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Cliquables pour filtrer */}
-        <Grid container spacing={isMobile ? 1 : 2}>
+        {/* Stats Cards - Cliquables pour filtrer - Design Compact et Moderne */}
+        <Grid container spacing={isMobile ? 0.75 : 1.5}>
           {/* En stock (OK) */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleStockFilterClick('ok')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'success.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: stockFilter === 'ok' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: stockFilter === 'ok' ? 'success.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'success.main',
-                }
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
+                  borderColor: 'success.main'
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(stockFilter === 'ok' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {inStock}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('products:filters.inStock')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <CheckCircle sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'success.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'success.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {inStock}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('products:filters.inStock')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Stock bas */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleStockFilterClick('low_stock')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'warning.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: stockFilter === 'low_stock' ? 'warning.main' : theme => alpha(theme.palette.warning.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: stockFilter === 'low_stock' ? 'warning.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'warning.main',
-                }
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.warning.main, 0.3)}`,
+                  borderColor: 'warning.main'
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(stockFilter === 'low_stock' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.warning.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Warning sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
-                      {lowStock}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('products:filters.lowStock')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Warning sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'warning.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'warning.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {lowStock}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('products:filters.lowStock')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Rupture de stock */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleStockFilterClick('out_of_stock')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'error.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: stockFilter === 'out_of_stock' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: stockFilter === 'out_of_stock' ? 'error.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'error.main',
-                }
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
+                  borderColor: 'error.main'
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(stockFilter === 'out_of_stock' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Error sx={{ fontSize: isMobile ? 20 : 24, color: 'error.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="error.main">
-                      {outOfStock}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('products:filters.outOfStock')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <Error sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'error.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'error.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {outOfStock}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('products:filters.outOfStock')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
           {/* Services / Digital */}
-          <Grid item xs={6} sm={2.4}>
+          <Grid item xs={3} sm={2.4}>
             <Card
               onClick={() => handleStockFilterClick('services')}
               sx={{
-                borderRadius: 2,
-                bgcolor: 'info.50',
+                borderRadius: isMobile ? 2 : 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                border: '1.5px solid',
+                borderColor: stockFilter === 'services' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
                 cursor: 'pointer',
-                border: '2px solid',
-                borderColor: stockFilter === 'services' ? 'info.main' : 'transparent',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'info.main',
-                }
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
+                  borderColor: 'info.main'
+                },
+                '&:active': {
+                  transform: 'translateY(0) scale(0.98)'
+                },
+                ...(stockFilter === 'services' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
+                    borderRadius: '2px 2px 0 0'
+                  }
+                })
               }}
             >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <DesignServices sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="info.main">
-                      {servicesCount}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('products:filters.services')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Total */}
-          <Grid item xs={6} sm={2.4}>
-            <Card
-              onClick={() => setStockFilter('')}
-              sx={{
-                borderRadius: 2,
-                bgcolor: stockFilter === '' ? 'primary.100' : 'primary.50',
-                cursor: 'pointer',
-                border: '2px solid',
-                borderColor: stockFilter === '' ? 'primary.main' : 'transparent',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 3,
-                  borderColor: 'primary.main',
-                }
-              }}
-            >
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Inventory sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalProducts}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
-                      {t('products:filters.all')}
-                    </Typography>
-                  </Box>
+              <CardContent sx={{ 
+                p: isMobile ? 1 : 1.5, 
+                '&:last-child': { pb: isMobile ? 1 : 1.5 },
+                textAlign: 'center'
+              }}>
+                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
+                  <DesignServices sx={{ 
+                    fontSize: isMobile ? 20 : 24, 
+                    color: 'info.main',
+                    mb: isMobile ? 0.25 : 0.5
+                  }} />
+                  <Typography 
+                    variant={isMobile ? 'h6' : 'h5'} 
+                    fontWeight="700" 
+                    sx={{
+                      color: 'info.main',
+                      fontSize: isMobile ? '1rem' : undefined,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {servicesCount}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: isMobile ? '0.625rem' : '0.7rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {t('products:filters.services')}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
