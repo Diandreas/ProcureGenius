@@ -44,6 +44,7 @@ import {
   PictureAsPdf,
   Print,
   Download,
+  AccessTime,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -425,28 +426,40 @@ function ClientDetail() {
                       <Box
                         sx={{
                           display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: isMobile ? 1 : 1.5,
-                          p: isMobile ? 1 : 1.5,
-                          borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                          transition: 'background-color 0.2s'
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                          }
                         }}
                       >
-                        <Person sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Person sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('clients:labels.contactPerson')}
                           </Typography>
@@ -455,7 +468,8 @@ function ClientDetail() {
                             fontWeight="600"
                             sx={{
                               mt: 0.5,
-                              fontSize: isMobile ? '0.813rem' : undefined
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary'
                             }}
                           >
                             {client.contact_person}
@@ -470,47 +484,58 @@ function ClientDetail() {
                       <Box
                         sx={{
                           display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: isMobile ? 1 : 1.5,
-                          p: isMobile ? 1 : 1.5,
-                          borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                          transition: 'background-color 0.2s'
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                          }
                         }}
                       >
-                        <Email sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'info.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Email sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('clients:labels.email')}
                           </Typography>
                           <Typography
                             variant="body2"
                             fontWeight="600"
+                            component="a"
+                            href={`mailto:${client.email}`}
                             sx={{
                               mt: 0.5,
-                              fontSize: isMobile ? '0.813rem' : undefined,
-                              '& a': {
-                                color: 'primary.main',
-                                textDecoration: 'none',
-                                '&:hover': { textDecoration: 'underline' }
-                              }
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'info.main',
+                              textDecoration: 'none',
+                              display: 'block',
+                              '&:hover': { textDecoration: 'underline' }
                             }}
                           >
-                            <a href={`mailto:${client.email}`}>
-                              {client.email}
-                            </a>
+                            {client.email}
                           </Typography>
                         </Box>
                       </Box>
@@ -522,47 +547,58 @@ function ClientDetail() {
                       <Box
                         sx={{
                           display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: isMobile ? 1 : 1.5,
-                          p: isMobile ? 1 : 1.5,
-                          borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                          transition: 'background-color 0.2s'
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.success.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.success.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.success.main, 0.2)}`
+                          }
                         }}
                       >
-                        <Phone sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'success.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Phone sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('clients:labels.phone')}
                           </Typography>
                           <Typography
                             variant="body2"
                             fontWeight="600"
+                            component="a"
+                            href={`tel:${client.phone}`}
                             sx={{
                               mt: 0.5,
-                              fontSize: isMobile ? '0.813rem' : undefined,
-                              '& a': {
-                                color: 'primary.main',
-                                textDecoration: 'none',
-                                '&:hover': { textDecoration: 'underline' }
-                              }
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'success.main',
+                              textDecoration: 'none',
+                              display: 'block',
+                              '&:hover': { textDecoration: 'underline' }
                             }}
                           >
-                            <a href={`tel:${client.phone}`}>
-                              {client.phone}
-                            </a>
+                            {client.phone}
                           </Typography>
                         </Box>
                       </Box>
@@ -574,28 +610,40 @@ function ClientDetail() {
                       <Box
                         sx={{
                           display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: isMobile ? 1 : 1.5,
-                          p: isMobile ? 1 : 1.5,
-                          borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                          transition: 'background-color 0.2s'
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.secondary.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.secondary.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.secondary.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.secondary.main, 0.2)}`
+                          }
                         }}
                       >
-                        <LocationOn sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'secondary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <LocationOn sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('clients:labels.address')}
                           </Typography>
@@ -604,7 +652,8 @@ function ClientDetail() {
                             fontWeight="600"
                             sx={{
                               mt: 0.5,
-                              fontSize: isMobile ? '0.813rem' : undefined
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary'
                             }}
                           >
                             {client.billing_address}
@@ -883,7 +932,18 @@ function ClientDetail() {
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: isMobile ? 1.5 : 2.5 }}>
-                  <CreditCard sx={{ color: 'primary.main', fontSize: isMobile ? 20 : 24 }} />
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 1.5,
+                      bgcolor: 'primary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <CreditCard sx={{ color: 'white', fontSize: isMobile ? 20 : 22 }} />
+                  </Box>
                   <Typography
                     variant="subtitle1"
                     fontWeight="600"
@@ -895,28 +955,46 @@ function ClientDetail() {
                 <Box
                   sx={{
                     textAlign: 'center',
-                    p: isMobile ? 1.5 : 2.5,
-                    borderRadius: 2,
-                    bgcolor: 'primary.main',
+                    p: isMobile ? 2 : 3,
+                    borderRadius: 2.5,
+                    background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     mb: client.credit_limit ? (isMobile ? 1.5 : 2) : 0,
-                    boxShadow: 2
+                    boxShadow: theme => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '50%',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)',
+                      borderRadius: '2.5px 2.5px 0 0'
+                    }
                   }}
                 >
                   <Typography
-                    variant="h6"
+                    variant="h5"
                     color="white"
                     fontWeight="bold"
                     gutterBottom
-                    sx={{ fontSize: isMobile ? '1rem' : undefined }}
+                    sx={{ 
+                      fontSize: isMobile ? '1.25rem' : '1.5rem',
+                      position: 'relative',
+                      zIndex: 1
+                    }}
                   >
                     {client.payment_terms || 'NET 30'}
                   </Typography>
                   <Typography
-                    variant="caption"
+                    variant="body2"
                     sx={{
-                      color: 'rgba(255,255,255,0.9)',
+                      color: 'rgba(255,255,255,0.95)',
                       fontWeight: 500,
-                      fontSize: isMobile ? '0.688rem' : undefined
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      position: 'relative',
+                      zIndex: 1
                     }}
                   >
                     {t('clients:labels.paymentTerms')}
@@ -927,27 +1005,45 @@ function ClientDetail() {
                   <Box
                     sx={{
                       textAlign: 'center',
-                      p: isMobile ? 1.5 : 2.5,
-                      borderRadius: 2,
-                      bgcolor: 'info.main',
-                      boxShadow: 2
+                      p: isMobile ? 2 : 3,
+                      borderRadius: 2.5,
+                      background: theme => `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                      boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.3)}`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '50%',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)',
+                        borderRadius: '2.5px 2.5px 0 0'
+                      }
                     }}
                   >
                     <Typography
-                      variant="h6"
+                      variant="h5"
                       color="white"
                       fontWeight="bold"
                       gutterBottom
-                      sx={{ fontSize: isMobile ? '1rem' : undefined }}
+                      sx={{ 
+                        fontSize: isMobile ? '1.125rem' : '1.375rem',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
                     >
                       {formatCurrency(client.credit_limit)}
                     </Typography>
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       sx={{
-                        color: 'rgba(255,255,255,0.9)',
+                        color: 'rgba(255,255,255,0.95)',
                         fontWeight: 500,
-                        fontSize: isMobile ? '0.688rem' : undefined
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
+                        position: 'relative',
+                        zIndex: 1
                       }}
                     >
                       {t('clients:labels.creditLimit')}
@@ -1099,69 +1195,105 @@ function ClientDetail() {
                 <Stack spacing={isMobile ? 1.5 : 2} sx={{ mt: 1 }}>
                   <Box
                     sx={{
-                      p: isMobile ? 1 : 1.5,
-                      borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                      transition: 'background-color 0.2s'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isMobile ? 1.5 : 2,
+                      p: isMobile ? 1.5 : 2,
+                      borderRadius: 2,
+                      bgcolor: theme => alpha(theme.palette.warning.main, 0.08),
+                      border: '1px solid',
+                      borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: theme => alpha(theme.palette.warning.main, 0.12),
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme => `0 4px 12px ${alpha(theme.palette.warning.main, 0.2)}`
+                      }
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      fontWeight="500"
-                      display="block"
-                      gutterBottom
-                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: 1.5,
+                        bgcolor: 'warning.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
                     >
-                      {t('clients:labels.createdOn')}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="600"
-                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                    >
-                      {formatDate(client.created_at)}
-                    </Typography>
+                      <Info sx={{ fontSize: isMobile ? 18 : 20, color: 'white' }} />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight="500"
+                        display="block"
+                        gutterBottom
+                        sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                      >
+                        {t('clients:labels.createdOn')}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="600"
+                        sx={{ fontSize: isMobile ? '0.875rem' : '0.938rem' }}
+                      >
+                        {formatDate(client.created_at)}
+                      </Typography>
+                    </Box>
                   </Box>
                   <Box
                     sx={{
-                      p: isMobile ? 1 : 1.5,
-                      borderRadius: 1,
-                            bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
-                            border: '1px solid',
-                            borderColor: theme => alpha(theme.palette.divider, 0.1),
-                            '&:hover': {
-                              bgcolor: theme => alpha(theme.palette.action.hover, 0.8),
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            },
-                      transition: 'background-color 0.2s'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isMobile ? 1.5 : 2,
+                      p: isMobile ? 1.5 : 2,
+                      borderRadius: 2,
+                      bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                      border: '1px solid',
+                      borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: theme => alpha(theme.palette.info.main, 0.12),
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                      }
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      fontWeight="500"
-                      display="block"
-                      gutterBottom
-                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: 1.5,
+                        bgcolor: 'info.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
                     >
-                      {t('clients:labels.updatedOn')}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="600"
-                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                    >
-                      {formatDate(client.updated_at)}
-                    </Typography>
+                      <AccessTime sx={{ fontSize: isMobile ? 18 : 20, color: 'white' }} />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight="500"
+                        display="block"
+                        gutterBottom
+                        sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                      >
+                        {t('clients:labels.updatedOn')}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="600"
+                        sx={{ fontSize: isMobile ? '0.875rem' : '0.938rem' }}
+                      >
+                        {formatDate(client.updated_at)}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Stack>
               </CardContent>
