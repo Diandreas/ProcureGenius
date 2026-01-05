@@ -7,10 +7,6 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h2>
-            <i class="bi bi-cart3 me-2"></i>
-            {% trans "Bons de commande" %}
-        </h2>
         <p class="text-muted">{% trans "Gérez vos commandes et approvisionnements" %}</p>
     </div>
     <div class="col-md-4 text-end">
@@ -79,12 +75,76 @@
     </div>
 </div>
 
+<!-- Formulaire de recherche -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-search me-2"></i>
+            {% trans "Rechercher des bons de commande" %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="search-form">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-3">
+                    {{ search_form.search }}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.status }}
+                </div>
+                <div class="col-md-3">
+                    {{ search_form.supplier }}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.priority }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>
+                        {% trans "Rechercher" %}
+                    </button>
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    <label class="form-label">{% trans "Date de" %}</label>
+                    {{ search_form.date_from }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% trans "Date à" %}</label>
+                    {{ search_form.date_to }}
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mt-4">
+                        {{ search_form.created_by_me }}
+                        <label class="form-check-label" for="{{ search_form.created_by_me.id_for_label }}">
+                            {% trans "Mes bons de commande uniquement" %}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'purchase_orders:list' %}" class="btn btn-outline-secondary mt-3">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        {% trans "Réinitialiser" %}
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Liste des bons de commande -->
 <div class="card">
     <div class="card-header">
         <div class="row align-items-center">
             <div class="col">
-                <h5 class="mb-0">{% trans "Liste des bons de commande" %}</h5>
+                <h5 class="mb-0">
+                    {% trans "Liste des bons de commande" %}
+                    {% if total_count %}
+                    <span class="badge bg-primary ms-2">{{ total_count }}</span>
+                    {% endif %}
+                </h5>
             </div>
             <div class="col-auto">
                 <div class="btn-group" role="group">
@@ -96,7 +156,7 @@
         </div>
     </div>
     <div class="card-body">
-        {% if purchase_orders %}
+        {% if page_obj %}
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -111,14 +171,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for po in purchase_orders %}
+                    {% for po in page_obj %}
                     <tr>
                         <td>
                             <a href="{% url 'purchase_orders:detail' po.pk %}" class="text-decoration-none">
-                                <strong>{{ po.number }}</strong>
+                                <strong>{{ po.po_number }}</strong>
                             </a>
                         </td>
-                        <td>{{ po.supplier.name }}</td>
+                        <td>
+                            {% if po.supplier %}
+                            <a href="{% url 'suppliers:detail' po.supplier.id %}" class="text-decoration-none">
+                                {{ po.supplier.name }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Aucun fournisseur</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="badge bg-{{ po.get_status_display_class }}">
                                 {{ po.get_status_display }}
@@ -148,7 +216,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         {% if purchase_orders.has_other_pages %}
         <nav>
@@ -160,11 +228,11 @@
                     </a>
                 </li>
                 {% endif %}
-                
+
                 <li class="page-item active">
                     <span class="page-link">{{ purchase_orders.number }}</span>
                 </li>
-                
+
                 {% if purchase_orders.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="?page={{ purchase_orders.next_page_number }}">
@@ -175,7 +243,7 @@
             </ul>
         </nav>
         {% endif %}
-        
+
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-cart3 display-1 text-muted"></i>
@@ -191,4 +259,5 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 {% endblock %}

@@ -1,2375 +1,623 @@
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-INFO 2025-09-19 13:52:09,342 autoreload 10640 7928 Watching for file changes with StatReloader
-INFO 2025-09-19 13:52:28,866 autoreload 10640 7928 D:\project\BFMa\ProcureGenius\saas_procurement\settings_simple.py changed, reloading.
-INFO 2025-09-19 13:52:30,727 autoreload 12000 37988 Watching for file changes with StatReloader
-INFO 2025-09-19 13:55:03,503 autoreload 12000 37988 D:\project\BFMa\ProcureGenius\saas_procurement\settings_simple.py changed, reloading.
-INFO 2025-09-19 13:55:07,563 autoreload 26860 32616 Watching for file changes with StatReloader
-INFO 2025-09-19 13:55:11,755 autoreload 16560 17060 Watching for file changes with StatReloader
-INFO 2025-09-19 13:55:14,268 autoreload 32524 14584 Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Internal Server Error: /
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_simple.py", line 17, in home
-    return render(request, 'core/home.html')
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'account_signup' not found. 'account_signup' is not a valid view function or pattern name.
-"GET / HTTP/1.1" 500 149779
-- Broken pipe from ('127.0.0.1', 56324)
-"GET /admin/ HTTP/1.1" 302 0
-Internal Server Error: /admin/login/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
-    return bound_method(*args, **kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
-    response = view_func(request, *args, **kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\admin\sites.py", line 421, in login
-    **self.each_context(request),
-      ~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\admin\sites.py", line 335, in each_context
-    "available_apps": self.get_app_list(request),
-                      ~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\admin\sites.py", line 537, in get_app_list
-    app_dict = self._build_app_dict(request, app_label)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\admin\sites.py", line 479, in _build_app_dict
-    has_module_perms = model_admin.has_module_permission(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\admin\options.py", line 638, in has_module_permission
-    return request.user.has_module_perms(self.opts.app_label)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\models.py", line 488, in has_module_perms
-    return _user_has_module_perms(self, module)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\models.py", line 231, in _user_has_module_perms
-    for backend in auth.get_backends():
-                   ~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\__init__.py", line 40, in get_backends
-    return _get_backends(return_tuples=False)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\__init__.py", line 29, in _get_backends
-    backend = load_backend(backend_path)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\__init__.py", line 23, in load_backend
-    return import_string(path)()
-           ~~~~~~~~~~~~~^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\utils\module_loading.py", line 30, in import_string
-    return cached_import(module_path, class_name)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\utils\module_loading.py", line 15, in cached_import
-    module = import_module(module_path)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py", line 88, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
-  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\auth_backends.py", line 10, in <module>
-    from .utils import filter_users_by_email, filter_users_by_username
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\utils.py", line 12, in <module>
-    from allauth.account.internal import flows
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\__init__.py", line 1, in <module>
-    from allauth.account.internal import flows
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\flows\__init__.py", line 1, in <module>
-    from allauth.account.internal.flows import (
-    ...<12 lines>...
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\flows\email_verification.py", line 10, in <module>
-    from allauth.account.internal.flows.manage_email import (
-    ...<3 lines>...
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\flows\manage_email.py", line 9, in <module>
-    from allauth.account.internal.flows.reauthentication import (
-        raise_if_reauthentication_required,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\flows\reauthentication.py", line 11, in <module>
-    from allauth.account.authentication import get_authentication_records
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\authentication.py", line 1, in <module>
-    from allauth.account.internal.flows.login import AUTHENTICATION_METHODS_SESSION_KEY
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\internal\flows\login.py", line 11, in <module>
-    from allauth.account.models import Login
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\allauth\account\models.py", line 20, in <module>
-    class EmailAddress(models.Model):
-    ...<99 lines>...
-                user_email(self.user, alt_email, commit=True)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\base.py", line 134, in __new__
-    raise RuntimeError(
-    ...<3 lines>...
-    )
-RuntimeError: Model class allauth.account.models.EmailAddress doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS.
-"GET /admin/login/?next=/admin/ HTTP/1.1" 500 288474
-- Broken pipe from ('127.0.0.1', 56326)
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-Watching for file changes with StatReloader
-"GET / HTTP/1.1" 200 28333
-Unauthorized: /api/v1/
-"GET /api/v1/ HTTP/1.1" 401 58
-"GET /purchase-orders/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/purchase-orders/ HTTP/1.1" 200 4255
-"GET /invoicing/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/invoicing/ HTTP/1.1" 200 4243
-"GET /admin/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/admin/ HTTP/1.1" 200 4235
-D:\project\BFMa\ProcureGenius\apps\invoicing\forms_simple.py changed, reloading.
-Watching for file changes with StatReloader
-"GET / HTTP/1.1" 200 28333
+"GET / HTTP/1.1" 200 28461
+"GET /static/css/theme.css HTTP/1.1" 200 34651
+"GET /static/css/admin.css HTTP/1.1" 200 21476
+"GET /static/css/mobile-improvements.css HTTP/1.1" 200 10913
 "GET /static/css/main.css HTTP/1.1" 200 4303
-"GET /static/css/theme.css HTTP/1.1" 200 33602
-"GET /static/js/forms.js HTTP/1.1" 200 34063
-"GET /static/js/mobile.js HTTP/1.1" 200 32122
-"GET /static/js/inline-editing.js HTTP/1.1" 200 36915
 "GET /static/js/main.js HTTP/1.1" 200 9177
+"GET /static/js/mobile.js HTTP/1.1" 200 32122
+"GET /static/js/forms.js HTTP/1.1" 200 34063
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 7317
+"GET /static/js/inline-editing.js HTTP/1.1" 200 36915
 "GET /static/js/components.js HTTP/1.1" 200 38765
 "GET /static/js/sw.js HTTP/1.1" 404 1884
 Not Found: /favicon.ico
-"GET /favicon.ico HTTP/1.1" 404 4525
-Not Found: /accounts/login/
-"GET /accounts/login/ HTTP/1.1" 404 4980
-D:\project\BFMa\ProcureGenius\apps\accounts\urls.py changed, reloading.
-Watching for file changes with StatReloader
-"GET /accounts/login/ HTTP/1.1" 200 19757
-"GET / HTTP/1.1" 200 28333
-"GET /purchase-orders/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/purchase-orders/ HTTP/1.1" 200 4255
-D:\project\BFMa\ProcureGenius\apps\accounts\urls.py changed, reloading.
-Watching for file changes with StatReloader
-"GET /accounts/login/ HTTP/1.1" 200 19829
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"POST /accounts/login/ HTTP/1.1" 200 20215
-"POST /accounts/login/ HTTP/1.1" 302 0
-"GET / HTTP/1.1" 302 0
-"GET /dashboard/ HTTP/1.1" 200 36091
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 12766
-"GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2682
-"GET /static/admin/css/base.css HTTP/1.1" 200 21544
-"GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
-"GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
-"GET /static/admin/css/responsive.css HTTP/1.1" 200 17905
-"GET /static/admin/js/theme.js HTTP/1.1" 200 1943
-"GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
-"GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
-"GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
-"GET /dashboard/? HTTP/1.1" 200 36091
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 12766
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 20561
-"GET /static/admin/css/forms.css HTTP/1.1" 200 9090
-"GET /static/admin/js/calendar.js HTTP/1.1" 200 9141
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /static/admin/css/widgets.css HTTP/1.1" 200 11800
-"GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
-"GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
-"GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 200 19319
-"GET /static/admin/js/core.js HTTP/1.1" 200 6208
-"GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
-"GET /static/admin/js/actions.js HTTP/1.1" 200 8067
-"GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
-"GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
-"GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
-"GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 200 392
-"GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
-"GET /static/admin/js/change_form.js HTTP/1.1" 200 606
-"GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
-"GET /static/admin/img/icon-calendar.svg HTTP/1.1" 200 1086
-"GET /static/admin/img/calendar-icons.svg HTTP/1.1" 200 1094
-"GET /admin/invoicing/ HTTP/1.1" 200 5242
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 20561
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 20561
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 20561
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"HEAD / HTTP/1.1" 200 0
-"GET / HTTP/1.1" 200 28461
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 200 10913
-"GET /static/css/admin.css HTTP/1.1" 200 21476
-"GET /static/css/theme.css HTTP/1.1" 200 34651
-"GET /static/js/sw.js HTTP/1.1" 404 1884
+"GET /favicon.ico HTTP/1.1" 404 7206
 "GET /accounts/login/ HTTP/1.1" 200 19957
 "GET /static/js/sw.js HTTP/1.1" 404 1884
-Watching for file changes with StatReloader
-"POST /accounts/login/ HTTP/1.1" 200 20464
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"POST /accounts/login/ HTTP/1.1" 200 20464
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"POST /accounts/login/ HTTP/1.1" 200 20464
-"POST /accounts/login/ HTTP/1.1" 200 20464
-"POST /accounts/login/ HTTP/1.1" 302 0
-"GET / HTTP/1.1" 302 0
-"GET /dashboard/ HTTP/1.1" 200 36219
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-Watching for file changes with StatReloader
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-D:\project\BFMa\ProcureGenius\saas_procurement\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\saas_procurement\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\saas_procurement\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"HEAD / HTTP/1.1" 200 0
-Forbidden (CSRF token from POST incorrect.): /accounts/login/
-"POST /accounts/login/ HTTP/1.1" 403 2540
-"GET /accounts/login/ HTTP/1.1" 200 25605
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"POST /accounts/login/ HTTP/1.1" 200 26112
-"HEAD /admin/ HTTP/1.1" 302 0
-"POST /accounts/login/ HTTP/1.1" 200 26112
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-"POST /accounts/login/ HTTP/1.1" 302 0
-"POST /accounts/login/ HTTP/1.1" 302 0
-"GET / HTTP/1.1" 302 0
-"GET / HTTP/1.1" 302 0
-"GET /dashboard/ HTTP/1.1" 200 36219
-"GET /dashboard/ HTTP/1.1" 200 36219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /admin/ HTTP/1.1" 302 0
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /admin/ HTTP/1.1" 200 12766
-"GET /static/admin/css/base.css HTTP/1.1" 304 0
-"GET /static/admin/js/theme.js HTTP/1.1" 304 0
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
-"GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
-"GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
-"GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
-"GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
-"GET /static/admin/css/dashboard.css HTTP/1.1" 304 0
-"GET /static/admin/css/responsive.css HTTP/1.1" 304 0
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-"GET /static/admin/js/calendar.js HTTP/1.1" 304 0
-"GET /static/admin/css/forms.css HTTP/1.1" 304 0
-"GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
-"GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 304 0
-"GET /static/admin/css/widgets.css HTTP/1.1" 304 0
-"GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
-"GET /static/admin/js/core.js HTTP/1.1" 304 0
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-- Broken pipe from ('127.0.0.1', 64292)
-"GET /static/admin/js/urlify.js HTTP/1.1" 304 0
-"GET /static/admin/js/actions.js HTTP/1.1" 304 0
-"GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
-"GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
-"GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 304 0
-"GET /static/admin/js/change_form.js HTTP/1.1" 304 0
-"GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 304 0
-"GET /static/admin/img/icon-calendar.svg HTTP/1.1" 304 0
-"GET /admin/ HTTP/1.1" 200 12766
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /admin/ HTTP/1.1" 200 12766
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /app/ HTTP/1.1" 200 36219
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 12766
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /admin/suppliers/supplier/add/ HTTP/1.1" 200 16591
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/suppliers/ HTTP/1.1" 200 5255
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET / HTTP/1.1" 302 0
-"GET /dashboard/ HTTP/1.1" 200 36219
-Not Found: /.well-known/appspecific/com.chrome.devtools.json
-"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4789
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /dashboard/ HTTP/1.1" 200 36219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 12766
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"POST /admin/invoicing/invoice/add/ HTTP/1.1" 302 0
-"GET /admin/invoicing/invoice/ HTTP/1.1" 200 19183
-"GET /static/admin/css/changelists.css HTTP/1.1" 304 0
-"GET /static/admin/img/search.svg HTTP/1.1" 304 0
-"GET /static/admin/js/filters.js HTTP/1.1" 304 0
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /static/admin/img/tooltag-add.svg HTTP/1.1" 304 0
-"GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
-"GET /static/admin/img/sorting-icons.svg HTTP/1.1" 304 0
-"GET /admin/invoicing/invoice/?q= HTTP/1.1" 200 19176
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/?q= HTTP/1.1" 200 19176
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/change/?_changelist_filters=q%3D HTTP/1.1" 200 28553
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/ HTTP/1.1" 200 18922
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/core/core/add/ HTTP/1.1" 200 12873
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/suppliers/supplier/add/ HTTP/1.1" 200 16591
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /app HTTP/1.1" 301 0
-"GET /app/ HTTP/1.1" 200 36219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-Not Found: /print/invoice/
-"GET /print/invoice/ HTTP/1.1" 404 6606
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Not Found: /print/invoice/
-"GET /print/invoice/ HTTP/1.1" 404 8516
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /app/ HTTP/1.1" 200 36219
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 13191
-"GET /admin/invoicing/invoice/060c04ac-06dc-456d-b355-43afc75b178e/change/ HTTP/1.1" 200 28381
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin/accounts/customuser/add/?_to_field=id&_popup=1 HTTP/1.1" 200 7041
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin-panel/ HTTP/1.1" 302 0
-"GET /admin/invoicing/invoice/ HTTP/1.1" 200 18922
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET / HTTP/1.1" 302 0
-"GET /dashboard/ HTTP/1.1" 200 36219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /dashboard/ HTTP/1.1" 200 36219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 13191
-"GET /admin/invoicing/invoice/add/ HTTP/1.1" 200 27952
-"GET /admin/jsi18n/ HTTP/1.1" 200 8985
-"GET /admin-panel HTTP/1.1" 301 0
-"GET /admin-panel/ HTTP/1.1" 200 20816
-"GET /admin-panel/analytics/ HTTP/1.1" 200 20816
-"GET /admin-panel/invoices/ HTTP/1.1" 200 20827
-"GET /admin-panel/purchase-orders/ HTTP/1.1" 200 20835
-"GET /admin-panel/suppliers/ HTTP/1.1" 200 20831
-"GET /admin-panel/users/ HTTP/1.1" 200 20831
-"GET /admin-panel/settings/ HTTP/1.1" 200 20818
-"GET /admin-panel/ HTTP/1.1" 200 20816
-"GET /admin-panel/purchase-orders/ HTTP/1.1" 200 20835
-"HEAD /admin-panel/ HTTP/1.1" 302 0
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"HEAD /app/ HTTP/1.1" 302 0
-"GET /admin-panel/purchase-orders/ HTTP/1.1" 200 20829
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /admin-panel/ HTTP/1.1" 200 20810
-"GET /admin-panel/analytics/ HTTP/1.1" 200 20810
-"GET /admin-panel/invoices/ HTTP/1.1" 200 20821
-"GET /admin-panel/purchase-orders/ HTTP/1.1" 200 20829
-"GET /admin-panel/suppliers/ HTTP/1.1" 200 20825
-"GET /admin-panel/users/ HTTP/1.1" 200 20825
-"GET /admin-panel/settings/ HTTP/1.1" 200 20812
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'create_invoice' not found. 'create_invoice' is not a valid view function or pattern name.
-"GET /app/ HTTP/1.1" 500 175505
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'create_invoice' not found. 'create_invoice' is not a valid view function or pattern name.
-"GET /app/ HTTP/1.1" 500 175642
-Not Found: /mes-factures//
-"GET //mes-factures// HTTP/1.1" 404 7532
-Internal Server Error: /mes-factures/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 96, in user_invoices
-    return render(request, 'core/user_invoices.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'create_invoice' not found. 'create_invoice' is not a valid view function or pattern name.
-"GET /mes-factures/ HTTP/1.1" 500 167179
-"HEAD /mes-factures/ HTTP/1.1" 302 0
-"GET /mes-factures/ HTTP/1.1" 200 34966
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-factures/?q=hh&status= HTTP/1.1" 200 29840
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-factures/ HTTP/1.1" 200 34966
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-Internal Server Error: /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 58, in invoice_detail
-    return render(request, 'invoicing/invoice_detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: invoicing/invoice_detail.html
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 500 91540
-"GET /mes-factures/ HTTP/1.1" 200 34966
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /dashboard/ HTTP/1.1" 200 31207
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-commandes/ HTTP/1.1" 200 35841
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /dashboard/ HTTP/1.1" 200 31207
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /app/ HTTP/1.1" 200 31219
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /admin/ HTTP/1.1" 200 13191
-"GET /static/admin/css/base.css HTTP/1.1" 304 0
-"GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
-"GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
-"GET /static/admin/css/dashboard.css HTTP/1.1" 304 0
-"GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
-"GET /static/admin/css/responsive.css HTTP/1.1" 304 0
-"GET /static/admin/js/theme.js HTTP/1.1" 304 0
-"GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
-"GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /app/ HTTP/1.1" 200 28137
-"GET /mes-commandes/ HTTP/1.1" 200 35841
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /app/ HTTP/1.1" 200 30928
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-Internal Server Error: /fournisseurs/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 175, in user_suppliers
-    return render(request, 'core/user_suppliers_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'create' not found. 'create' is not a valid view function or pattern name.
-"GET /fournisseurs/ HTTP/1.1" 500 164905
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-Internal Server Error: /fournisseurs/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 175, in user_suppliers
-    return render(request, 'core/user_suppliers_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'create' not found. 'create' is not a valid view function or pattern name.
-"GET /fournisseurs/ HTTP/1.1" 500 164906
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 78, in invoice_create
-    return render(request, 'invoicing/invoice_form.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: invoicing/invoice_form.html
-"GET /invoicing/create/ HTTP/1.1" 500 98789
-"GET /mes-factures/ HTTP/1.1" 200 28389
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-"GET / HTTP/1.1" 200 28461
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\signals.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\admin.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Not Found: /flavicon.ico
-"GET /flavicon.ico HTTP/1.1" 404 7526
-Not Found: /sw.js
-"GET /sw.js?v=2 HTTP/1.1" 404 7509
-"GET /app/ HTTP/1.1" 200 30928
-Not Found: /favicon.ico
-"GET /favicon.ico HTTP/1.1" 404 7523
-Not Found: /sw.js
-"GET /sw.js?v=2 HTTP/1.1" 404 7509
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 78, in invoice_create
-    return render(request, 'invoicing/invoice_form.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: invoicing/invoice_form.html
-"GET /invoicing/create/ HTTP/1.1" 500 91091
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 78, in invoice_create
-    return render(request, 'invoicing/invoice_form.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: invoicing/invoice_form.html
-"GET /invoicing/create/ HTTP/1.1" 500 91091
-D:\project\BFMa\ProcureGenius\apps\invoicing\admin.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\forms_simple.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-"GET /invoicing/create/ HTTP/1.1" 200 53706
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\forms_simple.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\admin.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\admin.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\admin.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-factures/ HTTP/1.1" 200 28389
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 106, in invoice_create
-    clients = User.objects.filter(is_staff=False, is_active=True).order_by('first_name', 'last_name')
-              ^^^^
-NameError: name 'User' is not defined
-"GET /invoicing/create/ HTTP/1.1" 500 74688
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 32165
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/print/ HTTP/1.1" 200 12575
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-Internal Server Error: /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-TypeError: purchase_order_detail() got an unexpected keyword argument 'po_id'
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 500 70717
-Internal Server Error: /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-TypeError: purchase_order_detail() got an unexpected keyword argument 'po_id'
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 500 70717
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 32165
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-Internal Server Error: /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/edit/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 150, in invoice_edit
-    if not invoice.can_be_edited():
-           ^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'Invoice' object has no attribute 'can_be_edited'
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/edit/ HTTP/1.1" 500 74891
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 106, in invoice_create
-    clients = User.objects.filter(is_staff=False, is_active=True).order_by('first_name', 'last_name')
-              ^^^^
-NameError: name 'User' is not defined
-"GET /invoicing/create/ HTTP/1.1" 500 74679
-Internal Server Error: /purchase-orders/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\purchase_orders\views.py", line 82, in purchase_order_create
-    return render(request, 'purchase_orders/purchase_order_form.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: purchase_orders/purchase_order_form.html
-"GET /purchase-orders/create/ HTTP/1.1" 500 91706
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 32165
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/? HTTP/1.1" 200 32165
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-Forbidden (CSRF token missing.): /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/
-"POST /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 403 2528
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/? HTTP/1.1" 200 32165
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 32165
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/print/ HTTP/1.1" 200 12575
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/print/ HTTP/1.1" 200 12575
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\models.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-Internal Server Error: /purchase-orders/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\purchase_orders\views.py", line 82, in purchase_order_create
-    return render(request, 'purchase_orders/purchase_order_form.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: purchase_orders/purchase_order_form.html
-"GET /purchase-orders/create/ HTTP/1.1" 500 91716
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /fournisseurs/?q=&active=all HTTP/1.1" 200 25483
-Internal Server Error: /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: suppliers/detail.html
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 500 91598
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-Internal Server Error: /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-TypeError: purchase_order_detail() got an unexpected keyword argument 'po_id'
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 500 70717
-Internal Server Error: /purchase-orders/c0328b60-01aa-43c0-af47-08df7c8686dc/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-TypeError: purchase_order_detail() got an unexpected keyword argument 'po_id'
-"GET /purchase-orders/c0328b60-01aa-43c0-af47-08df7c8686dc/ HTTP/1.1" 500 70717
-Internal Server Error: /purchase-orders/a4f78577-3333-46da-ae1c-894353f0f7b0/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-TypeError: purchase_order_detail() got an unexpected keyword argument 'po_id'
-"GET /purchase-orders/a4f78577-3333-46da-ae1c-894353f0f7b0/ HTTP/1.1" 500 70717
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 34743
-"GET /static/css/admin.css HTTP/1.1" 304 0
-"GET /static/css/theme.css HTTP/1.1" 304 0
-"GET /static/js/components.js HTTP/1.1" 304 0
-"GET /static/js/forms.js HTTP/1.1" 304 0
-"GET /static/css/mobile-improvements.css HTTP/1.1" 304 0
-"GET /static/js/mobile.js HTTP/1.1" 304 0
-"GET /static/js/inline-editing.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\purchase_orders\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 34743
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /purchase-orders/c0328b60-01aa-43c0-af47-08df7c8686dc/ HTTP/1.1" 200 34727
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 21466
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/print/ HTTP/1.1" 200 12575
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/edit/ HTTP/1.1" 200 54693
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-Internal Server Error: /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: suppliers/detail.html
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 500 91580
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /app/ HTTP/1.1" 200 30928
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 30928
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 21966
-"GET /app/ HTTP/1.1" 200 32117
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-Internal Server Error: /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'edit' not found. 'edit' is not a valid view function or pattern name.
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 500 173993
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 34743
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 34743
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-factures/ HTTP/1.1" 200 28389
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /app/ HTTP/1.1" 200 28898
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /app/ HTTP/1.1" 200 28898
-"GET /app/ HTTP/1.1" 200 28898
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 22516
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 24225
-"GET /invoicing/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 24225
-"GET /invoicing/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/edit/ HTTP/1.1" 200 53546
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/print/ HTTP/1.1" 200 12575
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 4317
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 22523
-Watching for file changes with StatReloader
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 33497
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /app/ HTTP/1.1" 200 40818
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /fournisseurs/ HTTP/1.1" 200 37407
-"GET /app/ HTTP/1.1" 200 40818
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /fournisseurs/ HTTP/1.1" 200 37407
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /app/ HTTP/1.1" 200 40818
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /app/ HTTP/1.1" 200 40818
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/ HTTP/1.1" 200 33497
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /invoicing/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 34752
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /app/ HTTP/1.1" 200 39245
-"GET /app/ HTTP/1.1" 200 39245
-"GET /app/ HTTP/1.1" 200 39245
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /fournisseurs/ HTTP/1.1" 200 37407
-Internal Server Error: /suppliers/2d9c289b-5090-4df0-8fc2-fceb1b0fb105/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'edit' not found. 'edit' is not a valid view function or pattern name.
-"GET /suppliers/2d9c289b-5090-4df0-8fc2-fceb1b0fb105/ HTTP/1.1" 500 173801
-Internal Server Error: /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'edit' not found. 'edit' is not a valid view function or pattern name.
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 500 173966
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 38118
-"GET /mes-commandes/ HTTP/1.1" 200 41063
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 154, in invoice_create
-    'clients_json': json.dumps(clients_data),
-                    ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 231, in dumps
-    return _default_encoder.encode(obj)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 261, in iterencode
-    return _iterencode(o, 0)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 180, in default
-    raise TypeError(f'Object of type {o.__class__.__name__} '
-                    f'is not JSON serializable')
-TypeError: Object of type UUID is not JSON serializable
-"GET /invoicing/create/ HTTP/1.1" 500 105171
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-factures/ HTTP/1.1" 200 40313
-"GET /mes-factures/ HTTP/1.1" 200 40313
-D:\project\BFMa\ProcureGenius\apps\suppliers\urls.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\invoicing\urls.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\urls.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\saas_procurement\urls.py changed, reloading.
-Watching for file changes with StatReloader
-"GET / HTTP/1.1" 302 0
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
+"OPTIONS /api/v1/auth/token/ HTTP/1.1" 200 0
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/stats/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/dashboard/recent/ HTTP/1.1" 200 0
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 0
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"OPTIONS /api/v1/ai/quick-actions/?category=suppliers HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/?category=suppliers HTTP/1.1" 200 1302
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/purchase-orders/ HTTP/1.1" 200 0
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/ HTTP/1.1" 200 0
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/ HTTP/1.1" 200 0
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1223
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1223
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/ai/quick-actions/?category=suppliers HTTP/1.1" 200 1302
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+Action execution error: You cannot call this from an async context - use a thread or sync_to_async.
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 421
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1561
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1561
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 421
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1899
+Mistral API error: API error occurred: Status 400
+{"object":"error","message":"At least one content or tool_calls should be non-empty. Got content='' and tool_calls=[]","type":"invalid_request_assistant_message","param":null,"code":"3240"}
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 311
+Mistral API error: API error occurred: Status 400
+{"object":"error","message":"At least one content or tool_calls should be non-empty. Got content='' and tool_calls=[]","type":"invalid_request_assistant_message","param":null,"code":"3240"}
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 311
+Mistral API error: API error occurred: Status 400
+{"object":"error","message":"At least one content or tool_calls should be non-empty. Got content='' and tool_calls=[]","type":"invalid_request_assistant_message","param":null,"code":"3240"}
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 311
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 72
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\views.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3300
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+Action execution error: You cannot call this from an async context - use a thread or sync_to_async.
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"OPTIONS /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 0
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/a3807cad-9464-48ea-9869-3adbb13397f4/ HTTP/1.1" 200 953
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+Not Found: /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/
+"POST /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/ HTTP/1.1" 404 7336
+Not Found: /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/
+"POST /api/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/pdf/ HTTP/1.1" 404 7336
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/87c7d4d2-6a0a-4ee2-8a8c-1fcea4e71959/ HTTP/1.1" 200 1110
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/products/253c2347-f687-4195-99b7-0f14dc6eda36/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/253c2347-f687-4195-99b7-0f14dc6eda36/ HTTP/1.1" 200 0
+"GET /api/v1/products/253c2347-f687-4195-99b7-0f14dc6eda36/ HTTP/1.1" 200 348
+"GET /api/v1/products/253c2347-f687-4195-99b7-0f14dc6eda36/ HTTP/1.1" 200 348
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"OPTIONS /api/v1/products/e1a33158-aad9-44ff-a6ed-57b1e8117d42/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/products/e1a33158-aad9-44ff-a6ed-57b1e8117d42/ HTTP/1.1" 200 0
+"GET /api/v1/products/e1a33158-aad9-44ff-a6ed-57b1e8117d42/ HTTP/1.1" 200 318
+"GET /api/v1/products/e1a33158-aad9-44ff-a6ed-57b1e8117d42/ HTTP/1.1" 200 318
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 567
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 567
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 1333
+"GET /api/v1/suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/statistics/ HTTP/1.1" 200 1333
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/ai/quick-actions/?category=suppliers HTTP/1.1" 200 1302
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"OPTIONS /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 0
+"GET /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 263
+"GET /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 263
+"GET /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 263
+"GET /api/v1/clients/b0a804ed-71c8-47ce-8f4d-a0cd13b70b67/ HTTP/1.1" 200 263
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 381
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/statistics/ HTTP/1.1" 200 381
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"OPTIONS /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/ HTTP/1.1" 200 507
+"GET /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/ HTTP/1.1" 200 507
+"GET /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/statistics/ HTTP/1.1" 200 380
+"GET /api/v1/suppliers/ae48e822-73c0-455a-b24b-625b6d33526a/statistics/ HTTP/1.1" 200 380
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/f8fb632d-7243-4a4a-ab0a-b35a95d1af12/ HTTP/1.1" 200 537
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/clients/ HTTP/1.1" 200 842
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/products/ HTTP/1.1" 200 3819
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 562
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 3791
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/purchase-orders/ HTTP/1.1" 200 5388
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/invoices/ HTTP/1.1" 200 2677
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 1957
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 809
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2355
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1057
+Mistral API error: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+Full traceback: Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 247, in complete
+    raise models.SDKError(
+        "API error occurred", http_res.status_code, http_res_text, http_res
+    )
+mistralai.models.sdkerror.SDKError: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
 
-During handling of the above exception, another exception occurred:
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 485
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"GET /api/v1/suppliers/?page=1&search=&status= HTTP/1.1" 200 4282
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 0
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 490
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 369
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/ HTTP/1.1" 200 490
+"GET /api/v1/suppliers/8a0237ea-e03f-4b1e-b59a-990559f17115/statistics/ HTTP/1.1" 200 369
+"POST /api/v1/auth/token/ HTTP/1.1" 200 52
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 1053
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 184
+"GET /api/v1/dashboard/recent/ HTTP/1.1" 200 1053
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2361
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2361
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1496
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2805
+Action execution error: cannot import name 'Client' from 'apps.invoicing.models' (D:\project\BFMa\ProcureGenius\apps\invoicing\models.py)
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 627
+D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py changed, reloading.
+Watching for file changes with StatReloader
+Nouvel utilisateur créé: entreprise.abc
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/conversations/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/ai/quick-actions/ HTTP/1.1" 200 0
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 2808
+"OPTIONS /api/v1/ai/chat/ HTTP/1.1" 200 0
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1422
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3252
+Mistral API error: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
+Full traceback: Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\apps\ai_assistant\services.py", line 229, in chat
+    response = self.client.chat.complete(
+        model=self.model,
+    ...<4 lines>...
+        max_tokens=1500
+    )
+  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\mistralai\chat.py", line 247, in complete
+    raise models.SDKError(
+        "API error occurred", http_res.status_code, http_res_text, http_res
+    )
+mistralai.models.sdkerror.SDKError: API error occurred: Status 429
+{"object":"error","message":"Service tier capacity exceeded for this model.","type":"service_tier_capacity_exceeded","param":null,"code":"3505"}
 
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212163
-Not Found: /favicon.ico
-"GET /favicon.ico HTTP/1.1" 404 7366
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212300
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212300
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212300
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212300
-Internal Server Error: /app/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 502, in parse
-    compile_func = self.tags[command]
-                   ~~~~~~~~~^^^^^^^^^
-KeyError: 'static'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 55, in user_dashboard
-    return render(request, 'core/user_panel_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 134, in render
-    compiled_parent = self.get_parent(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
-    return self.find_template(parent, context)
-           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
-    template, origin = context.template.engine.find_template(
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        template_name,
-        ^^^^^^^^^^^^^^
-        skip=history,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 504, in parse
-    self.invalid_block_tag(token, command, parse_until)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 565, in invalid_block_tag
-    raise self.error(
-    ...<3 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 13: 'static'. Did you forget to register or load this tag?
-"GET /app/ HTTP/1.1" 500 212300
-"GET /app/ HTTP/1.1" 302 0
-"GET /admin/login/?next=/app/ HTTP/1.1" 200 4231
-"GET /app/ HTTP/1.1" 200 46567
-"GET /static/css/modern-styles.css HTTP/1.1" 200 9999
-Internal Server Error: /mes-factures/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\smartif.py", line 180, in translate_token
-    op = OPERATORS[token]
-         ~~~~~~~~~^^^^^^^
-KeyError: "status_filter=='draft'"
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\core\views_user_panel.py", line 96, in user_invoices
-    return render(request, 'core/user_invoices_tailwind.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 15, in get_template
-    return engine.get_template(template_name)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 33, in get_template
-    return Template(self.engine.get_template(template_name), self)
-                    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 177, in get_template
-    template, origin = self.find_template(template_name)
-                       ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\engine.py", line 159, in find_template
-    template = loader.get_template(name, skip=skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
-    template = super().get_template(template_name, skip)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
-    return Template(
-        contents,
-    ...<2 lines>...
-        self.engine,
-    )
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 154, in __init__
-    self.nodelist = self.compile_nodelist()
-                    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
-    return parser.parse()
-           ~~~~~~~~~~~~^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 510, in parse
-    raise self.error(token, e)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 508, in parse
-    compiled_result = compile_func(self, token)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 295, in do_extends
-    nodelist = parser.parse()
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 510, in parse
-    raise self.error(token, e)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 508, in parse
-    compiled_result = compile_func(self, token)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
-    nodelist = parser.parse(("endblock",))
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 510, in parse
-    raise self.error(token, e)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 508, in parse
-    compiled_result = compile_func(self, token)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 960, in do_if
-    condition = TemplateIfParser(parser, bits).parse()
-                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 893, in __init__
-    super().__init__(*args, **kwargs)
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\smartif.py", line 171, in __init__
-    mapped_tokens.append(self.translate_token(token))
-                         ~~~~~~~~~~~~~~~~~~~~^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\smartif.py", line 182, in translate_token
-    return self.create_var(token)
-           ~~~~~~~~~~~~~~~^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 896, in create_var
-    return TemplateLiteral(self.template_parser.compile_filter(value), value)
-                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 597, in compile_filter
-    return FilterExpression(token, self)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 698, in __init__
-    raise TemplateSyntaxError(
-    ...<2 lines>...
-    )
-django.template.exceptions.TemplateSyntaxError: Could not parse the remainder: '=='draft'' from 'status_filter=='draft''
-"GET /mes-factures/ HTTP/1.1" 500 307430
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-D:\project\BFMa\ProcureGenius\saas_procurement\settings.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 28898
-Internal Server Error: /invoicing/create/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\invoicing\views.py", line 142, in invoice_create
-    'clients_json': json.dumps(clients_data),
-                    ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 231, in dumps
-    return _default_encoder.encode(obj)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 261, in iterencode
-    return _iterencode(o, 0)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\json\encoder.py", line 180, in default
-    raise TypeError(f'Object of type {o.__class__.__name__} '
-                    f'is not JSON serializable')
-TypeError: Object of type UUID is not JSON serializable
-"GET /invoicing/create/ HTTP/1.1" 500 105161
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /invoicing/060c04ac-06dc-456d-b355-43afc75b178e/edit/ HTTP/1.1" 200 39580
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 26225
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\invoicing\views.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /purchase-orders/create/ HTTP/1.1" 200 14562
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /purchase-orders/a4f78577-3333-46da-ae1c-894353f0f7b0/ HTTP/1.1" 200 26269
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-Internal Server Error: /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 28, in supplier_detail
-    return render(request, 'suppliers/detail.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
-    return template.render(context, request)
-           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\backends\django.py", line 61, in render
-    return self.template.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 171, in render
-    return self._render(context)
-           ~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 159, in render
-    return compiled_parent._render(context)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 163, in _render
-    return self.nodelist.render(context)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader_tags.py", line 65, in render
-    result = block.nodelist.render(context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 1000, in render
-    return SafeString("".join([node.render_annotated(context) for node in self]))
-                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\base.py", line 961, in render_annotated
-    return self.render(context)
-           ~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\defaulttags.py", line 479, in render
-    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\base.py", line 88, in reverse
-    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
-    raise NoReverseMatch(msg)
-django.urls.exceptions.NoReverseMatch: Reverse for 'edit' not found. 'edit' is not a valid view function or pattern name.
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 500 173993
-D:\project\BFMa\ProcureGenius\apps\suppliers\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\views.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\views.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-D:\project\BFMa\ProcureGenius\apps\suppliers\forms.py changed, reloading.
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-Watching for file changes with StatReloader
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 30413
-"GET /static/css/main.css HTTP/1.1" 304 0
-"GET /static/js/main.js HTTP/1.1" 304 0
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-Internal Server Error: /suppliers/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 18, in supplier_list
-    return render(request, 'suppliers/list.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: suppliers/list.html
-"GET /suppliers/ HTTP/1.1" 500 91158
-Internal Server Error: /suppliers/
-Traceback (most recent call last):
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
-    return view_func(request, *args, **kwargs)
-  File "D:\project\BFMa\ProcureGenius\apps\suppliers\views.py", line 18, in supplier_list
-    return render(request, 'suppliers/list.html', context)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
-    content = loader.render_to_string(template_name, context, request, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
-    template = get_template(template_name, using=using)
-  File "C:\Users\david\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
-    raise TemplateDoesNotExist(template_name, chain=chain)
-django.template.exceptions.TemplateDoesNotExist: suppliers/list.html
-"GET /suppliers/ HTTP/1.1" 500 91295
-"GET /app/ HTTP/1.1" 200 28898
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /fournisseurs/ HTTP/1.1" 200 25483
-"GET /suppliers/a860471d-9584-4d79-a4f2-e5ac5ee58fea/ HTTP/1.1" 200 30413
-"GET /static/js/sw.js HTTP/1.1" 404 1884
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /purchase-orders/03e5dfcb-e81d-46df-b531-87894b3cc85e/ HTTP/1.1" 200 26225
-"GET /mes-commandes/ HTTP/1.1" 200 29139
-"GET /mes-factures/ HTTP/1.1" 200 28389
-"GET /app/ HTTP/1.1" 200 28898
-"GET /purchase-orders/create/ HTTP/1.1" 200 14562
-"GET /app/ HTTP/1.1" 200 28898
-"GET /mes-factures/ HTTP/1.1" 200 28389
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 485
+Nouvel utilisateur créé: zambo.
+"POST /api/v1/ai/chat/ HTTP/1.1" 200 1315
+Not Found: /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/pdf/
+"GET /api/v1/invoices/56423c8d-c407-41d4-b9ca-483785f6fe31/pdf/ HTTP/1.1" 404 21006
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/quick-actions/ HTTP/1.1" 200 2143
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"GET /api/v1/ai/conversations/ HTTP/1.1" 200 3226
+"OPTIONS /api/v1/ai/conversations/e8b7c7e1-ac3a-49f0-9676-e06d21890430/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/e8b7c7e1-ac3a-49f0-9676-e06d21890430/ HTTP/1.1" 200 3000
+"OPTIONS /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 0
+"GET /api/v1/ai/conversations/c9ae0fc8-17c6-42fc-8a84-7cda3b142990/ HTTP/1.1" 200 2892

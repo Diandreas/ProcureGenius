@@ -30,9 +30,9 @@ urlpatterns += i18n_patterns(
     path('invoicing/', include('apps.invoicing.urls')),
     path('print/', include('apps.invoicing.urls_print')),
     path('suppliers/', include('apps.suppliers.urls')),
-    path('analytics/', include('apps.analytics.urls')),
-    path('ai/', include('apps.ai_assistant.urls')),
-    path('integrations/', include('apps.integrations.urls')),
+    # path('analytics/', include('apps.analytics.urls')),  # Temporairement commenté
+    path('ai/', include('apps.ai_assistant.urls')),  # IA Assistant activé
+    # path('integrations/', include('apps.integrations.urls')),  # Temporairement commenté
     
     # Fallback pour URLs sans préfixe
     prefix_default_language=False,

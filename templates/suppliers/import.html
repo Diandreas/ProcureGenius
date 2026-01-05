@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Importer des fournisseurs" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="bi bi-upload me-2"></i>
+            {% trans "Importer des fournisseurs" %}
+        </h2>
+        <p class="text-muted">{% trans "Importez plusieurs fournisseurs à partir d'un fichier CSV" %}</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'suppliers:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            {% trans "Retour à la liste" %}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{% trans "Télécharger un fichier CSV" %}</h5>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="csv_file" class="form-label">{% trans "Fichier CSV" %}</label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                        <div class="form-text">
+                            {% trans "Le fichier doit être au format CSV avec les colonnes : name, contact_person, email, phone, address, city, status" %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">{% trans "Format du fichier CSV" %}</h6>
+                        <p>{% trans "La première ligne doit contenir les en-têtes de colonnes. Voici un exemple :" %}</p>
+                        <pre class="mb-0">name,contact_person,email,phone,address,city,status
+Fournisseur ABC,Jean Dupont,contact@abc.com,514-555-0123,123 rue Example,Montréal,active
+Fournisseur XYZ,Marie Martin,info@xyz.com,418-555-0456,456 avenue Test,Québec,pending</pre>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i>
+                            {% trans "Importer le fichier" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">{% trans "Instructions" %}</h5>
+                <ol class="mb-0">
+                    <li>{% trans "Préparez votre fichier CSV avec les colonnes requises" %}</li>
+                    <li>{% trans "Assurez-vous que les emails sont uniques" %}</li>
+                    <li>{% trans "Les fournisseurs existants (même email) seront ignorés" %}</li>
+                    <li>{% trans "Utilisez UTF-8 pour l'encodage du fichier" %}</li>
+                </ol>
+                
+                <hr>
+                
+                <h6>{% trans "Valeurs acceptées pour le statut :" %}</h6>
+                <ul class="mb-0">
+                    <li><code>active</code> - {% trans "Actif" %}</li>
+                    <li><code>pending</code> - {% trans "En attente" %}</li>
+                    <li><code>inactive</code> - {% trans "Inactif" %}</li>
+                    <li><code>blocked</code> - {% trans "Bloqué" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,6 @@
 
 {% block admin_content %}
 <div class="admin-header">
-    <h1>{% trans "Gestion des Factures" %}</h1>
     <div class="header-actions">
         <a href="{% url 'invoicing:create_invoice' %}" class="btn btn-primary">
             <i class="icon">➕</i> {% trans "Nouvelle Facture" %}
@@ -20,17 +19,21 @@
             <label for="status">{% trans "Statut" %}</label>
             <select name="status" id="status">
                 <option value="">{% trans "Tous les statuts" %}</option>
-                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>{% trans "Brouillon" %}</option>
-                <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>{% trans "Envoyée" %}</option>
-                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>{% trans "Payée" %}</option>
-                <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>{% trans "En retard" %}</option>
-                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>{% trans "Annulée" %}</option>
+                <option value="draft" {% if status_filter=='draft' %}selected{% endif %}>{% trans "Brouillon" %}
+                </option>
+                <option value="sent" {% if status_filter=='sent' %}selected{% endif %}>{% trans "Envoyée" %}</option>
+                <option value="paid" {% if status_filter=='paid' %}selected{% endif %}>{% trans "Payée" %}</option>
+                <option value="overdue" {% if status_filter=='overdue' %}selected{% endif %}>{% trans "En retard" %}
+                </option>
+                <option value="cancelled" {% if status_filter=='cancelled' %}selected{% endif %}>{% trans "Annulée" %}
+                </option>
             </select>
         </div>
 
         <div class="filter-group">
             <label for="q">{% trans "Recherche" %}</label>
-            <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="{% trans 'Numéro, titre, description...' %}">
+            <input type="text" name="q" id="q" value="{{ search_query }}"
+                placeholder="{% trans 'Numéro, titre, description...' %}">
         </div>
 
         <div class="filter-group">
@@ -108,9 +111,12 @@
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <a href="{% url 'invoicing:view_invoice' invoice.pk %}" class="btn btn-sm btn-outline" title="{% trans 'Voir' %}">👁️</a>
-                        <a href="{% url 'invoicing:edit_invoice' invoice.pk %}" class="btn btn-sm btn-secondary" title="{% trans 'Modifier' %}">✏️</a>
-                        <a href="{% url 'invoicing:print_invoice' invoice.pk %}" class="btn btn-sm btn-primary" title="{% trans 'Imprimer' %}">🖨️</a>
+                        <a href="{% url 'invoicing:view_invoice' invoice.pk %}" class="btn btn-sm btn-outline"
+                            title="{% trans 'Voir' %}">👁️</a>
+                        <a href="{% url 'invoicing:edit_invoice' invoice.pk %}" class="btn btn-sm btn-secondary"
+                            title="{% trans 'Modifier' %}">✏️</a>
+                        <a href="{% url 'invoicing:print_invoice' invoice.pk %}" class="btn btn-sm btn-primary"
+                            title="{% trans 'Imprimer' %}">🖨️</a>
                     </div>
                 </td>
             </tr>
@@ -130,8 +136,10 @@
 <div class="pagination-container">
     <div class="pagination">
         {% if page_obj.has_previous %}
-            <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⏮️</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⬅️</a>
+        <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+            class="page-link">⏮️</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+            class="page-link">⬅️</a>
         {% endif %}
 
         <span class="page-info">
@@ -139,42 +147,63 @@
         </span>
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">➡️</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">⏭️</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+            class="page-link">➡️</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+            class="page-link">⏭️</a>
         {% endif %}
     </div>
 </div>
 {% endif %}
 
 <style>
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
 
-.status-draft { background-color: #f0f0f0; color: #666; }
-.status-sent { background-color: #e3f2fd; color: #1976d2; }
-.status-paid { background-color: #e8f5e8; color: #388e3c; }
-.status-overdue { background-color: #ffebee; color: #d32f2f; }
-.status-cancelled { background-color: #fafafa; color: #757575; }
+    .status-draft {
+        background-color: #f0f0f0;
+        color: #666;
+    }
 
-.due-date.overdue {
-    color: #d32f2f;
-    font-weight: bold;
-}
+    .status-sent {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
 
-.action-buttons {
-    display: flex;
-    gap: 4px;
-}
+    .status-paid {
+        background-color: #e8f5e8;
+        color: #388e3c;
+    }
 
-.invoice-description {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
+    .status-overdue {
+        background-color: #ffebee;
+        color: #d32f2f;
+    }
+
+    .status-cancelled {
+        background-color: #fafafa;
+        color: #757575;
+    }
+
+    .due-date.overdue {
+        color: #d32f2f;
+        font-weight: bold;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 4px;
+    }
+
+    .invoice-description {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
 </style>
 {% endblock %}

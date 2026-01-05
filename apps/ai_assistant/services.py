@@ -1,720 +1,662 @@
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
-from django.conf import settings
-from django.utils.translation import gettext as _
-from django.utils import timezone
+"""
+Service d'intégration avec Mistral AI
+"""
+import os
 import json
+from typing import Dict, List, Any, Optional
+from mistralai import Mistral
+from django.conf import settings
+from django.core.cache import cache
+from .action_manager import action_manager
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
 
-class MistralAIService:
-    """Service principal pour l'intégration Mistral AI"""
+class MistralService:
+    """Service pour interagir avec l'API Mistral AI"""
     
     def __init__(self):
-        """Initialise le client Mistral AI"""
-        self.client = MistralClient(api_key=settings.MISTRAL_API_KEY)
-        self.default_model = "mistral-medium"
-        self.default_temperature = 0.7
-        self.max_tokens = 2000
-    
-    def process_user_request(self, user_message, user_context):
-        """
-        Traite une demande utilisateur et détermine l'action à effectuer
+        api_key = getattr(settings, 'MISTRAL_API_KEY', os.getenv('MISTRAL_API_KEY'))
+        if not api_key:
+            raise ValueError("MISTRAL_API_KEY not configured")
         
-        Args:
-            user_message (str): Message de l'utilisateur
-            user_context (dict): Contexte utilisateur (rôle, historique, etc.)
+        self.client = Mistral(api_key=api_key)
+        self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
+        self.tools = self._define_tools()
         
-        Returns:
-            dict: Réponse contenant le message IA et l'action éventuelle
-        """
-        try:
-            start_time = time.time()
-            
-            # Construire le contexte système
-            system_message = self._build_system_context(user_context)
-            
-            # Préparer les messages pour Mistral
-            messages = [
-                ChatMessage(role="system", content=system_message),
-                ChatMessage(role="user", content=user_message)
-            ]
-            
-            # Ajouter l'historique de conversation
-            if user_context.get('conversation_history'):
-                for msg in user_context['conversation_history'][-5:]:  # 5 derniers messages
-                    messages.insert(-1, ChatMessage(
-                        role=msg['role'], 
-                        content=msg['content']
-                    ))
-            
-            # Appel à Mistral AI
-            response = self.client.chat(
-                model=self.default_model,
-                messages=messages,
-                temperature=self.default_temperature,
-                max_tokens=self.max_tokens
-            )
-            
-            response_time = int((time.time() - start_time) * 1000)
-            
-            # Analyser la réponse pour détecter les actions
-            ai_response = response.choices[0].message.content
-            action_data = self._extract_action_from_response(ai_response, user_message, user_context)
-            
-            result = {
-                'message': ai_response,
-                'model': self.default_model,
-                'tokens': response.usage.total_tokens if hasattr(response, 'usage') else 0,
-                'response_time': response_time,
-                'action': action_data.get('action'),
-                'parameters': action_data.get('parameters', {}),
-                'confidence': action_data.get('confidence', 0.8)
-            }
-            
-            logger.info(f"Requête IA traitée avec succès - Tokens: {result['tokens']}, Temps: {response_time}ms")
-            return result
-            
-        except Exception as e:
-            logger.error(f"Erreur lors du traitement de la requête IA: {str(e)}")
-            return {
-                'message': _("Désolé, je rencontre un problème technique. Pouvez-vous reformuler votre demande ?"),
-                'error': str(e),
-                'model': self.default_model,
-                'tokens': 0,
-                'response_time': 0
-            }
-    
-    def _build_system_context(self, user_context):
-        """Construit le message système avec le contexte utilisateur"""
+    def create_system_prompt(self) -> str:
+        """Crée le prompt système pour l'assistant"""
+        return """Tu es un assistant IA pour une application de gestion d'entreprise. Tu peux aider les utilisateurs à :
         
-        system_prompt = f"""Tu es un assistant IA spécialisé dans la gestion des achats et de la facturation pour l'application ProcureGenius.
+1. Gérer les fournisseurs (créer, rechercher, modifier, supprimer)
+2. Créer et suivre les bons de commande
+3. Gérer les factures et la facturation
+4. Consulter les produits et stocks
+5. Gérer les clients
+6. Analyser les données et statistiques
 
-CONTEXTE UTILISATEUR:
-- Rôle: {user_context.get('user_role', 'utilisateur')}
-- Langue: {user_context.get('language', 'français')}
-- Entreprise: {user_context.get('tenant_name', 'Non spécifiée')}
+Tu peux exécuter des actions dans le système en retournant des commandes JSON structurées.
 
-TES CAPACITÉS:
-1. BONS DE COMMANDE:
-   - Créer des bons de commande à partir de descriptions
-   - Suggérer des fournisseurs appropriés
-   - Analyser et optimiser les commandes
-   - Suivre les livraisons
+Format des commandes :
+{
+    "action": "create_supplier" | "search_supplier" | "create_invoice" | etc.,
+    "params": {
+        // Paramètres spécifiques à l'action
+    }
+}
 
-2. FACTURATION:
-   - Générer des factures depuis les bons de commande
-   - Calculer les taxes canadiennes (TPS/TVH/TVQ)
-   - Gérer les relances automatiques
-   - Intégrer les paiements PayPal
+Réponds toujours en français et sois professionnel mais amical."""
 
-3. FOURNISSEURS:
-   - Rechercher et évaluer des fournisseurs
-   - Analyser les performances
-   - Suggérer des alternatives
-   - Négocier les prix
-
-4. ANALYTICS:
-   - Analyser les dépenses
-   - Identifier les tendances
-   - Détecter les anomalies
-   - Générer des rapports
-
-ACTIONS DISPONIBLES:
-- create_purchase_order: Créer un bon de commande
-- create_invoice: Créer une facture
-- send_reminder: Envoyer une relance
-- analyze_spend: Analyser les dépenses
-- suggest_supplier: Suggérer un fournisseur
-- search_products: Rechercher des produits
-- generate_report: Générer un rapport
-
-RÈGLES IMPORTANTES:
-1. Réponds toujours en {user_context.get('language', 'français')}
-2. Sois précis et actionnable
-3. Demande confirmation avant les actions importantes
-4. Utilise les données du contexte pour personnaliser tes réponses
-5. Respecte les permissions selon le rôle utilisateur
-
-Si tu peux exécuter une action concrète, termine ta réponse par:
-ACTION: nom_action
-PARAMETERS: {{paramètres au format JSON}}
-CONFIDENCE: score de confiance (0.0 à 1.0)
-"""
-        
-        return system_prompt
-    
-    def _extract_action_from_response(self, ai_response, user_message, user_context):
-        """Extrait une action potentielle de la réponse IA"""
-        
-        action_data = {}
-        
-        # Rechercher les marqueurs d'action dans la réponse
-        lines = ai_response.split('\n')
-        for i, line in enumerate(lines):
-            if line.startswith('ACTION:'):
-                action_data['action'] = line.replace('ACTION:', '').strip()
-            elif line.startswith('PARAMETERS:'):
-                try:
-                    params_str = line.replace('PARAMETERS:', '').strip()
-                    action_data['parameters'] = json.loads(params_str)
-                except json.JSONDecodeError:
-                    action_data['parameters'] = {}
-            elif line.startswith('CONFIDENCE:'):
-                try:
-                    confidence_str = line.replace('CONFIDENCE:', '').strip()
-                    action_data['confidence'] = float(confidence_str)
-                except ValueError:
-                    action_data['confidence'] = 0.8
-        
-        # Si aucune action explicite, essayer de détecter par analyse du texte
-        if not action_data.get('action'):
-            action_data = self._detect_implicit_action(user_message, user_context)
-        
-        return action_data
-    
-    def _detect_implicit_action(self, user_message, user_context):
-        """Détecte implicitement une action basée sur le message utilisateur"""
-        
-        message_lower = user_message.lower()
-        
-        # Patterns de détection d'actions
-        if any(word in message_lower for word in ['créer', 'nouveau', 'commande', 'commander']):
-            if any(word in message_lower for word in ['bon', 'commande', 'bc']):
-                return {
-                    'action': 'create_purchase_order',
-                    'parameters': {'description': user_message},
-                    'confidence': 0.7
+    def _define_tools(self) -> List[Dict]:
+        """Définit tous les tools/functions disponibles pour Mistral"""
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_supplier",
+                    "description": "Crée un nouveau fournisseur dans le système",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Nom du fournisseur (obligatoire)"},
+                            "contact_person": {"type": "string", "description": "Nom de la personne de contact"},
+                            "email": {"type": "string", "description": "Adresse email du fournisseur"},
+                            "phone": {"type": "string", "description": "Numéro de téléphone"},
+                            "address": {"type": "string", "description": "Adresse complète"},
+                            "city": {"type": "string", "description": "Ville"},
+                            "website": {"type": "string", "description": "Site web"},
+                            "notes": {"type": "string", "description": "Notes additionnelles"}
+                        },
+                        "required": ["name"]
+                    }
                 }
-        
-        if any(word in message_lower for word in ['facture', 'facturer', 'invoice']):
-            return {
-                'action': 'create_invoice',
-                'parameters': {'description': user_message},
-                'confidence': 0.7
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_supplier",
+                    "description": "Recherche des fournisseurs par nom, contact ou email",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Terme de recherche"},
+                            "status": {
+                                "type": "string",
+                                "enum": ["active", "pending", "inactive"],
+                                "description": "Filtrer par statut"
+                            },
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 5)"}
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_invoice",
+                    "description": "Crée une nouvelle facture pour un client",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "client_name": {"type": "string", "description": "Nom du client"},
+                            "description": {"type": "string", "description": "Description de la facture"},
+                            "amount": {"type": "number", "description": "Montant total"},
+                            "due_date": {"type": "string", "description": "Date d'échéance (format: YYYY-MM-DD)"},
+                            "items": {
+                                "type": "array",
+                                "description": "Liste des articles/services",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {"type": "string"},
+                                        "quantity": {"type": "number"},
+                                        "unit_price": {"type": "number"}
+                                    }
+                                }
+                            },
+                            "tax_rate": {"type": "number", "description": "Taux de TVA (défaut: 20)"}
+                        },
+                        "required": ["client_name", "description"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_purchase_order",
+                    "description": "Crée un nouveau bon de commande pour un fournisseur",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "supplier_name": {"type": "string", "description": "Nom du fournisseur"},
+                            "description": {"type": "string", "description": "Description de la commande"},
+                            "total_amount": {"type": "number", "description": "Montant total"},
+                            "delivery_date": {"type": "string", "description": "Date de livraison souhaitée (YYYY-MM-DD)"},
+                            "items": {
+                                "type": "array",
+                                "description": "Liste des articles commandés",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {"type": "string"},
+                                        "quantity": {"type": "number"},
+                                        "unit_price": {"type": "number"}
+                                    }
+                                }
+                            },
+                            "notes": {"type": "string", "description": "Notes pour le fournisseur"}
+                        },
+                        "required": ["supplier_name", "description"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_statistics",
+                    "description": "Affiche les statistiques de l'entreprise",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "period": {
+                                "type": "string",
+                                "enum": ["today", "week", "month", "year"],
+                                "description": "Période des statistiques"
+                            },
+                            "category": {
+                                "type": "string",
+                                "enum": ["suppliers", "invoices", "revenue", "purchase_orders", "all"],
+                                "description": "Catégorie de statistiques"
+                            }
+                        },
+                        "required": ["period"]
+                    }
+                }
             }
+        ]
+
+    def parse_ai_response(self, response: str) -> tuple[str, Optional[Dict]]:
+        """Parse la réponse de l'IA pour extraire le texte et les actions"""
+        # Chercher du JSON dans la réponse
+        try:
+            # Essayer de trouver un bloc JSON dans la réponse
+            import re
+            json_pattern = r'\{[^{}]*\}'
+            matches = re.findall(json_pattern, response)
+            
+            for match in matches:
+                try:
+                    action_data = json.loads(match)
+                    if 'action' in action_data:
+                        # Retirer le JSON du texte de réponse
+                        clean_response = response.replace(match, '').strip()
+                        return clean_response, action_data
+                except json.JSONDecodeError:
+                    continue
+        except Exception as e:
+            logger.error(f"Error parsing AI response: {e}")
         
-        if any(word in message_lower for word in ['analyse', 'rapport', 'statistique', 'dépense']):
-            return {
-                'action': 'analyze_spend',
-                'parameters': {'query': user_message},
-                'confidence': 0.6
-            }
-        
-        if any(word in message_lower for word in ['fournisseur', 'supplier', 'cherche', 'trouve']):
-            return {
-                'action': 'suggest_supplier',
-                'parameters': {'requirements': user_message},
-                'confidence': 0.6
-            }
-        
-        return {}
-    
-    def create_po_from_natural_request(self, user_request, user):
+        return response, None
+
+    async def chat(self,
+                   message: str,
+                   conversation_history: List[Dict] = None,
+                   user_context: Dict = None) -> Dict[str, Any]:
         """
-        Crée un bon de commande à partir d'une demande en langage naturel
-        
-        Args:
-            user_request (str): Demande utilisateur
-            user (User): Utilisateur faisant la demande
-        
-        Returns:
-            dict: Données du bon de commande à créer
+        Envoie un message à Mistral avec function calling et retourne la réponse
         """
         try:
-            # Prompt spécialisé pour extraction de données de bon de commande
-            extraction_prompt = f"""
-Analyse cette demande de bon de commande et extrais les informations structurées:
-
-DEMANDE: "{user_request}"
-
-Extrais et formate les informations suivantes au format JSON:
-{{
-    "items": [
-        {{
-            "description": "description du produit/service",
-            "quantity": nombre,
-            "unit": "unité (ex: pièce, kg, m²)",
-            "estimated_unit_price": prix_estimé_ou_null
-        }}
-    ],
-    "supplier_requirements": "critères pour choisir le fournisseur",
-    "priority": "low|medium|high|urgent",
-    "expected_delivery": "YYYY-MM-DD ou null",
-    "notes": "notes additionnelles",
-    "confidence": score_de_confiance_0_à_1
-}}
-
-Réponds UNIQUEMENT avec le JSON, sans autre texte.
-"""
-            
+            # Construire les messages
             messages = [
-                ChatMessage(role="system", content="Tu es un expert en extraction de données pour les bons de commande."),
-                ChatMessage(role="user", content=extraction_prompt)
+                {"role": "system", "content": self.create_system_prompt()}
             ]
-            
-            response = self.client.chat(
-                model="mistral-small",  # Modèle plus rapide pour l'extraction
+
+            # Ajouter l'historique si disponible
+            if conversation_history:
+                for msg in conversation_history[-10:]:
+                    messages.append({
+                        "role": msg.get('role', 'user'),
+                        "content": msg.get('content', '') if msg.get('content') else None,
+                        "tool_calls": msg.get('tool_calls') if msg.get('tool_calls') else None
+                    })
+
+            # Ajouter le message actuel
+            messages.append({"role": "user", "content": message})
+
+            # Appeler Mistral avec tools
+            response = self.client.chat.complete(
+                model=self.model,
                 messages=messages,
-                temperature=0.3,  # Plus déterministe
+                tools=self.tools,
+                tool_choice="auto",
+                temperature=0.7,
+                max_tokens=1500
+            )
+
+            # Extraire la réponse
+            choice = response.choices[0]
+            message_response = choice.message
+
+            result = {
+                'success': True,
+                'response': message_response.content if message_response.content else "",
+                'tool_calls': None,
+                'finish_reason': choice.finish_reason
+            }
+
+            # Si l'IA a décidé d'appeler des fonctions
+            if message_response.tool_calls:
+                result['tool_calls'] = [
+                    {
+                        'id': tool_call.id,
+                        'function': tool_call.function.name,
+                        'arguments': json.loads(tool_call.function.arguments)
+                    }
+                    for tool_call in message_response.tool_calls
+                ]
+
+                # Si pas de contenu textuel, générer un message par défaut
+                if not result['response']:
+                    # Créer un message descriptif basé sur les tool_calls
+                    action_descriptions = {
+                        'create_supplier': "Je vais créer le fournisseur",
+                        'create_invoice': "Je vais créer la facture",
+                        'create_purchase_order': "Je vais créer le bon de commande",
+                        'search_supplier': "Je recherche les fournisseurs",
+                        'get_statistics': "Je récupère les statistiques"
+                    }
+
+                    actions = [action_descriptions.get(tc['function'], f"J'exécute {tc['function']}")
+                              for tc in result['tool_calls']]
+                    result['response'] = " et ".join(actions) + "..."
+
+            return result
+
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            logger.error(f"Mistral API error: {e}")
+            logger.error(f"Full traceback: {error_details}")
+            return {
+                'response': f"Désolé, j'ai rencontré une erreur: {str(e)}",
+                'tool_calls': None,
+                'success': False,
+                'error': str(e),
+                'error_details': error_details
+            }
+    
+    def analyze_document(self, text: str, document_type: str) -> Dict[str, Any]:
+        """
+        Analyse un document scanné pour extraire les informations
+        
+        Args:
+            text: Texte extrait par OCR
+            document_type: Type de document (invoice, purchase_order, etc.)
+            
+        Returns:
+            Dict avec les données extraites
+        """
+        prompts = {
+            'invoice': """Analyse cette facture et extrais les informations suivantes au format JSON:
+            - invoice_number: numéro de facture
+            - date: date de la facture
+            - client_name: nom du client
+            - items: liste des articles avec description, quantité, prix unitaire
+            - subtotal: sous-total
+            - tax: taxes
+            - total: total
+            
+            Texte de la facture:
+            """,
+            'purchase_order': """Analyse ce bon de commande et extrais les informations suivantes au format JSON:
+            - po_number: numéro du bon de commande
+            - date: date
+            - supplier_name: nom du fournisseur
+            - items: liste des articles avec description, quantité, prix
+            - total: montant total
+            
+            Texte du bon de commande:
+            """,
+            'supplier_list': """Analyse cette liste de fournisseurs et extrais les informations au format JSON:
+            - suppliers: liste avec pour chaque fournisseur:
+              - name: nom
+              - contact: personne contact
+              - email: email
+              - phone: téléphone
+              - address: adresse
+            
+            Texte:
+            """
+        }
+        
+        prompt = prompts.get(document_type, prompts['invoice'])
+        
+        try:
+            response = self.client.chat.complete(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Tu es un expert en extraction de données de documents. Retourne uniquement du JSON valide."
+                    },
+                    {"role": "user", "content": prompt + text}
+                ],
+                temperature=0.3,  # Plus déterministe pour l'extraction
                 max_tokens=1000
             )
             
-            # Parser la réponse JSON
-            extracted_data = json.loads(response.choices[0].message.content)
+            # Extraire et parser le JSON
+            json_str = response.choices[0].message.content
+            # Nettoyer le JSON si nécessaire
+            json_str = json_str.strip()
+            if json_str.startswith('```json'):
+                json_str = json_str[7:]
+            if json_str.endswith('```'):
+                json_str = json_str[:-3]
             
-            # Suggérer un fournisseur approprié
-            supplier = self._suggest_best_supplier(extracted_data.get('supplier_requirements', ''))
+            data = json.loads(json_str)
             
-            if supplier:
-                po_data = {
-                    'supplier': supplier.id,
-                    'priority': extracted_data.get('priority', 'medium'),
-                    'expected_delivery': extracted_data.get('expected_delivery'),
-                    'notes': extracted_data.get('notes', ''),
-                    'order_date': timezone.now().date(),
-                    'created_by_ai': True,
-                    'ai_confidence_score': extracted_data.get('confidence', 0.8),
-                    'items': extracted_data.get('items', [])
-                }
-                
-                return po_data
-            else:
-                raise Exception(_("Aucun fournisseur approprié trouvé"))
-                
-        except Exception as e:
-            logger.error(f"Erreur création BC via IA: {str(e)}")
-            raise e
-    
-    def generate_invoice_from_po(self, purchase_order):
-        """
-        Génère une facture à partir d'un bon de commande
-        
-        Args:
-            purchase_order: Instance de PurchaseOrder
-        
-        Returns:
-            dict: Données de la facture à créer
-        """
-        try:
-            # Utiliser les données du BC pour créer la facture
-            invoice_data = {
-                'purchase_order': purchase_order.id,
-                'billing_address': purchase_order.billing_address,
-                'payment_terms': purchase_order.payment_terms,
-                'notes': f'Facture générée automatiquement depuis le BC {purchase_order.number}',
-                'invoice_date': timezone.now().date(),
-                'generated_by_ai': True,
-                'items': []
-            }
-            
-            # Copier les lignes du BC
-            for item in purchase_order.items.all():
-                invoice_data['items'].append({
-                    'description': item.description,
-                    'quantity': float(item.quantity_received or item.quantity),
-                    'unit_price': float(item.unit_price.amount),
-                    'account_code': ''
-                })
-            
-            return invoice_data
-            
-        except Exception as e:
-            logger.error(f"Erreur génération facture via IA: {str(e)}")
-            raise e
-    
-    def analyze_purchase_order(self, purchase_order):
-        """
-        Analyse un bon de commande avec l'IA
-        
-        Args:
-            purchase_order: Instance de PurchaseOrder
-        
-        Returns:
-            dict: Analyse détaillée
-        """
-        try:
-            # Construire le prompt d'analyse
-            analysis_prompt = f"""
-Analyse ce bon de commande et fournis des insights:
-
-BON DE COMMANDE:
-- Numéro: {purchase_order.number}
-- Fournisseur: {purchase_order.supplier.name}
-- Montant total: {purchase_order.total_amount}
-- Statut: {purchase_order.get_status_display()}
-- Priorité: {purchase_order.get_priority_display()}
-
-ARTICLES:
-{chr(10).join([f"- {item.description}: {item.quantity} x {item.unit_price}" for item in purchase_order.items.all()])}
-
-Analyse et fournis:
-1. Évaluation du prix (comparé au marché)
-2. Risques potentiels
-3. Recommandations d'optimisation
-4. Score de qualité global (0-100)
-
-Format JSON:
-{{
-    "price_analysis": "analyse des prix",
-    "risks": ["risque1", "risque2"],
-    "recommendations": ["recommandation1", "recommandation2"],
-    "quality_score": score_0_à_100,
-    "summary": "résumé en 2-3 phrases"
-}}
-"""
-            
-            messages = [
-                ChatMessage(role="system", content="Tu es un expert en analyse d'achats et procurement."),
-                ChatMessage(role="user", content=analysis_prompt)
-            ]
-            
-            response = self.client.chat(
-                model="mistral-medium",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=1500
-            )
-            
-            analysis = json.loads(response.choices[0].message.content)
-            analysis['analyzed_at'] = timezone.now().isoformat()
-            analysis['analyzed_by_ai'] = True
-            
-            return analysis
-            
-        except Exception as e:
-            logger.error(f"Erreur analyse BC via IA: {str(e)}")
             return {
-                'error': str(e),
-                'summary': _("Impossible d'analyser ce bon de commande pour le moment."),
-                'analyzed_at': timezone.now().isoformat()
+                'success': True,
+                'data': data,
+                'document_type': document_type
             }
-    
-    def suggest_suppliers_for_request(self, requirements):
-        """
-        Suggère des fournisseurs appropriés pour une demande
-        
-        Args:
-            requirements (str): Description des besoins
-        
-        Returns:
-            list: Liste des fournisseurs suggérés avec scores
-        """
-        try:
-            from apps.suppliers.models import Supplier
-            
-            # Récupérer les fournisseurs actifs
-            suppliers = Supplier.objects.filter(is_active=True).prefetch_related('categories')
-            
-            # Utiliser l'IA pour scorer chaque fournisseur
-            suggestions = []
-            
-            for supplier in suppliers[:20]:  # Limiter pour éviter trop d'appels API
-                score = self._score_supplier_for_requirements(supplier, requirements)
-                if score > 0.3:  # Seuil minimum
-                    suggestions.append({
-                        'supplier': supplier,
-                        'score': score,
-                        'reasoning': f"Score de pertinence: {score:.2f}"
-                    })
-            
-            # Trier par score décroissant
-            suggestions.sort(key=lambda x: x['score'], reverse=True)
-            
-            return suggestions[:5]  # Top 5
             
         except Exception as e:
-            logger.error(f"Erreur suggestion fournisseurs: {str(e)}")
-            return []
-    
-    def _score_supplier_for_requirements(self, supplier, requirements):
-        """
-        Score un fournisseur pour des exigences données
-        
-        Args:
-            supplier: Instance de Supplier
-            requirements (str): Exigences
-        
-        Returns:
-            float: Score de 0.0 à 1.0
-        """
-        try:
-            # Construire le profil du fournisseur
-            supplier_profile = f"""
-Fournisseur: {supplier.name}
-Catégories: {', '.join([cat.name for cat in supplier.categories.all()])}
-Localisation: {supplier.city}, {supplier.get_province_display()}
-Note: {supplier.rating}/5
-Performance IA: {supplier.ai_performance_score}/100
-Local: {'Oui' if supplier.is_local else 'Non'}
-"""
-            
-            scoring_prompt = f"""
-Évalue la pertinence de ce fournisseur pour ces exigences:
-
-FOURNISSEUR:
-{supplier_profile}
-
-EXIGENCES:
-{requirements}
-
-Donne un score de 0.0 à 1.0 basé sur:
-- Correspondance des catégories de produits
-- Localisation géographique
-- Performance historique
-- Capacités estimées
-
-Réponds UNIQUEMENT avec le score numérique (ex: 0.85)
-"""
-            
-            messages = [
-                ChatMessage(role="system", content="Tu es un expert en évaluation de fournisseurs."),
-                ChatMessage(role="user", content=scoring_prompt)
-            ]
-            
-            response = self.client.chat(
-                model="mistral-small",
-                messages=messages,
-                temperature=0.1,
-                max_tokens=50
-            )
-            
-            score_text = response.choices[0].message.content.strip()
-            return float(score_text)
-            
-        except Exception as e:
-            logger.error(f"Erreur scoring fournisseur {supplier.name}: {str(e)}")
-            return 0.0
-    
-    def _suggest_best_supplier(self, requirements):
-        """Suggère le meilleur fournisseur pour des exigences"""
-        
-        suggestions = self.suggest_suppliers_for_request(requirements)
-        
-        if suggestions:
-            return suggestions[0]['supplier']
-        
-        return None
-    
-    def extract_invoice_data_from_document(self, document_content):
-        """
-        Extrait les données de facture depuis un document (OCR + IA)
-        
-        Args:
-            document_content (str): Contenu du document
-        
-        Returns:
-            dict: Données extraites
-        """
-        try:
-            extraction_prompt = f"""
-Extrais les informations de cette facture:
-
-CONTENU DOCUMENT:
-{document_content}
-
-Extrais au format JSON:
-{{
-    "invoice_number": "numéro de facture",
-    "supplier_name": "nom du fournisseur",
-    "invoice_date": "YYYY-MM-DD",
-    "due_date": "YYYY-MM-DD",
-    "total_amount": montant_total,
-    "tax_amount": montant_taxes,
-    "items": [
-        {{
-            "description": "description",
-            "quantity": nombre,
-            "unit_price": prix_unitaire,
-            "total": total_ligne
-        }}
-    ],
-    "confidence": score_confiance_0_à_1
-}}
-
-Si certaines informations sont manquantes, utilise null.
-"""
-            
-            messages = [
-                ChatMessage(role="system", content="Tu es un expert en extraction de données de factures."),
-                ChatMessage(role="user", content=extraction_prompt)
-            ]
-            
-            response = self.client.chat(
-                model="mistral-medium",
-                messages=messages,
-                temperature=0.2,
-                max_tokens=1500
-            )
-            
-            return json.loads(response.choices[0].message.content)
-            
-        except Exception as e:
-            logger.error(f"Erreur extraction données facture: {str(e)}")
-            return {'error': str(e), 'confidence': 0.0}
-    
-    def generate_spend_analysis(self, period_data):
-        """
-        Génère une analyse des dépenses avec insights IA
-        
-        Args:
-            period_data (dict): Données de dépenses sur une période
-        
-        Returns:
-            dict: Analyse et recommandations
-        """
-        try:
-            analysis_prompt = f"""
-Analyse ces données de dépenses et fournis des insights:
-
-DONNÉES DE DÉPENSES:
-{json.dumps(period_data, indent=2)}
-
-Fournis une analyse au format JSON:
-{{
-    "key_insights": ["insight1", "insight2", "insight3"],
-    "trends": {{
-        "direction": "increasing|decreasing|stable",
-        "percentage_change": pourcentage,
-        "main_drivers": ["facteur1", "facteur2"]
-    }},
-    "recommendations": [
-        {{
-            "action": "action recommandée",
-            "impact": "impact estimé",
-            "priority": "high|medium|low"
-        }}
-    ],
-    "anomalies": ["anomalie1", "anomalie2"],
-    "summary": "résumé exécutif en 2-3 phrases"
-}}
-"""
-            
-            messages = [
-                ChatMessage(role="system", content="Tu es un expert en analyse financière et procurement."),
-                ChatMessage(role="user", content=analysis_prompt)
-            ]
-            
-            response = self.client.chat(
-                model="mistral-medium",
-                messages=messages,
-                temperature=0.4,
-                max_tokens=2000
-            )
-            
-            analysis = json.loads(response.choices[0].message.content)
-            analysis['generated_at'] = timezone.now().isoformat()
-            
-            return analysis
-            
-        except Exception as e:
-            logger.error(f"Erreur analyse dépenses: {str(e)}")
+            logger.error(f"Document analysis error: {e}")
             return {
+                'success': False,
                 'error': str(e),
-                'summary': _("Impossible d'analyser les dépenses pour le moment.")
+                'document_type': document_type
+            }
+
+
+class ActionExecutor:
+    """Exécute les actions demandées par l'IA"""
+    
+    def __init__(self):
+        self.actions = {
+            'create_supplier': self.create_supplier,
+            'search_supplier': self.search_supplier,
+            'create_invoice': self.create_invoice,
+            'search_invoice': self.search_invoice,
+            'create_purchase_order': self.create_purchase_order,
+            'search_purchase_order': self.search_purchase_order,
+            'get_stats': self.get_stats,
+            # Ajouter d'autres actions ici
+        }
+    
+    async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
+        """Exécute une action avec les paramètres donnés"""
+        # Valider l'action et ses paramètres
+        is_valid, errors = action_manager.validate_action_params(action, params)
+        if not is_valid:
+            return {
+                'success': False,
+                'error': '; '.join(errors)
+            }
+
+        if action not in self.actions:
+            return {
+                'success': False,
+                'error': f"Action '{action}' non reconnue"
+            }
+
+        try:
+            handler = self.actions[action]
+            result = await handler(params, user)
+
+            # Si l'action a réussi, générer les actions de suivi
+            if result.get('success'):
+                success_actions = action_manager.generate_success_actions(action, result.get('data', {}))
+                result['success_actions'] = success_actions
+
+            return result
+        except Exception as e:
+            logger.error(f"Action execution error: {e}")
+            return {
+                'success': False,
+                'error': str(e)
             }
     
-    def generate_smart_reminders(self, overdue_invoices):
-        """
-        Génère des relances intelligentes personnalisées
-        
-        Args:
-            overdue_invoices: QuerySet des factures en retard
-        
-        Returns:
-            dict: Relances personnalisées par facture
-        """
+    async def create_supplier(self, params: Dict, user) -> Dict:
+        """Crée un nouveau fournisseur"""
+        from apps.suppliers.models import Supplier
+        from asgiref.sync import sync_to_async
+
         try:
-            reminders = {}
-            
-            for invoice in overdue_invoices[:10]:  # Limiter à 10 pour éviter trop d'appels
-                # Analyser l'historique de paiement du client
-                client_history = self._get_client_payment_history(invoice.client)
-                
-                reminder_prompt = f"""
-Génère une relance personnalisée pour cette facture en retard:
-
-FACTURE:
-- Numéro: {invoice.number}
-- Client: {invoice.client.name}
-- Montant: {invoice.total_amount}
-- Date d'échéance: {invoice.due_date}
-- Jours de retard: {(timezone.now().date() - invoice.due_date).days}
-
-HISTORIQUE CLIENT:
-{client_history}
-
-Génère une relance au ton approprié (ferme mais professionnel) au format JSON:
-{{
-    "subject": "sujet email",
-    "body": "corps du message",
-    "tone": "friendly|firm|urgent",
-    "recommended_action": "action recommandée"
-}}
-"""
-                
-                messages = [
-                    ChatMessage(role="system", content="Tu es un expert en recouvrement de créances professionnel."),
-                    ChatMessage(role="user", content=reminder_prompt)
-                ]
-                
-                response = self.client.chat(
-                    model="mistral-small",
-                    messages=messages,
-                    temperature=0.6,
-                    max_tokens=800
+            # Utiliser sync_to_async pour les opérations Django ORM
+            @sync_to_async
+            def create_supplier_sync():
+                return Supplier.objects.create(
+                    name=params.get('name'),
+                    contact_person=params.get('contact_person', ''),
+                    email=params.get('email', ''),
+                    phone=params.get('phone', ''),
+                    address=params.get('address', ''),
+                    city=params.get('city', ''),
+                    status='pending'
                 )
-                
-                reminder_data = json.loads(response.choices[0].message.content)
-                reminders[str(invoice.id)] = reminder_data
-            
-            return reminders
-            
+
+            supplier = await create_supplier_sync()
+
+            return {
+                'success': True,
+                'message': f"Fournisseur '{supplier.name}' créé avec succès",
+                'data': {
+                    'id': str(supplier.id),
+                    'name': supplier.name,
+                    'contact_person': supplier.contact_person,
+                    'email': supplier.email,
+                    'entity_type': 'supplier'
+                }
+            }
         except Exception as e:
-            logger.error(f"Erreur génération relances: {str(e)}")
-            return {}
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
-    def _get_client_payment_history(self, client):
-        """Récupère l'historique de paiement d'un client"""
+    async def search_supplier(self, params: Dict, user) -> Dict:
+        """Recherche des fournisseurs"""
+        from apps.suppliers.models import Supplier
+        from django.db.models import Q
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def search_suppliers_sync():
+            query = params.get('query', '')
+            suppliers = Supplier.objects.filter(
+                Q(name__icontains=query) |
+                Q(contact_person__icontains=query) |
+                Q(email__icontains=query)
+            )[:5]  # Limiter à 5 résultats
+
+            return [{
+                'id': str(s.id),
+                'name': s.name,
+                'contact': s.contact_person,
+                'email': s.email,
+                'status': s.status
+            } for s in suppliers]
+
+        results = await search_suppliers_sync()
+
+        return {
+            'success': True,
+            'data': results,
+            'count': len(results)
+        }
+    
+    async def create_invoice(self, params: Dict, user) -> Dict:
+        """Crée une nouvelle facture"""
+        from apps.invoicing.models import Invoice
+        from apps.accounts.models import CustomUser
+        from asgiref.sync import sync_to_async
+        from datetime import datetime, timedelta
+
+        try:
+            @sync_to_async
+            def create_invoice_sync():
+                # Trouver ou créer le client (CustomUser)
+                client_name = params.get('client_name')
+                client_email = params.get('client_email', '')
+
+                # Chercher un client existant par nom ou email
+                client = None
+                if client_email:
+                    client = CustomUser.objects.filter(email=client_email).first()
+
+                if not client:
+                    # Chercher par nom complet
+                    clients = CustomUser.objects.filter(
+                        first_name__icontains=client_name.split()[0] if ' ' in client_name else client_name
+                    )
+                    if clients.exists():
+                        client = clients.first()
+
+                # Si pas trouvé, créer un nouveau client
+                if not client:
+                    # Extraire prénom et nom
+                    name_parts = client_name.split(' ', 1)
+                    first_name = name_parts[0]
+                    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                    # Générer un username unique
+                    username = f"{first_name.lower()}.{last_name.lower()}".replace(' ', '')
+                    base_username = username
+                    counter = 1
+                    while CustomUser.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+
+                    client = CustomUser.objects.create_user(
+                        username=username,
+                        email=client_email or f"{username}@client.local",
+                        first_name=first_name,
+                        last_name=last_name,
+                        phone=params.get('client_phone', ''),
+                        company=params.get('client_company', client_name),
+                        password=CustomUser.objects.make_random_password()
+                    )
+
+                # Créer la facture
+                title = params.get('title', f'Facture pour {client_name}')
+                description = params.get('description', '')
+                amount = params.get('amount', 0)
+                due_date = params.get('due_date')
+
+                # Parser la date d'échéance
+                if due_date:
+                    if isinstance(due_date, str):
+                        try:
+                            # Essayer plusieurs formats
+                            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                                try:
+                                    due_date = datetime.strptime(due_date, fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                        except:
+                            due_date = (datetime.now() + timedelta(days=30)).date()
+                else:
+                    due_date = (datetime.now() + timedelta(days=30)).date()
+
+                invoice = Invoice.objects.create(
+                    title=title,
+                    client=client,
+                    description=description,
+                    created_by=user,
+                    due_date=due_date,
+                    subtotal=amount,
+                    total_amount=amount,
+                    status='draft'
+                )
+
+                # Ajouter des items si fournis
+                items = params.get('items', [])
+                if items:
+                    for item in items:
+                        invoice.add_item(
+                            service_code=item.get('service_code', 'SVC-001'),
+                            description=item.get('description', ''),
+                            quantity=item.get('quantity', 1),
+                            unit_price=item.get('unit_price', 0)
+                        )
+                    invoice.recalculate_totals()
+
+                return {
+                    'id': str(invoice.id),
+                    'invoice_number': invoice.invoice_number,
+                    'client_name': client.get_full_name() or client.username
+                }
+
+            result = await create_invoice_sync()
+
+            return {
+                'success': True,
+                'message': f"Facture '{result['invoice_number']}' créée avec succès",
+                'data': {
+                    **result,
+                    'entity_type': 'invoice'
+                }
+            }
+        except Exception as e:
+            import traceback
+            logger.error(f"Error creating invoice: {e}")
+            logger.error(traceback.format_exc())
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def search_invoice(self, params: Dict, user) -> Dict:
+        """Recherche des factures"""
+        from apps.invoicing.models import Invoice
         
-        from apps.invoicing.models import Invoice, Payment
+        # Implémentation similaire à search_supplier
+        pass
+    
+    async def create_purchase_order(self, params: Dict, user) -> Dict:
+        """Crée un bon de commande"""
+        from apps.purchase_orders.models import PurchaseOrder
+        from apps.suppliers.models import Supplier
         
-        # Statistiques de paiement du client
-        client_invoices = Invoice.objects.filter(client=client)
-        total_invoices = client_invoices.count()
-        paid_invoices = client_invoices.filter(status='paid').count()
+        # Implémentation similaire à create_invoice
+        pass
+    
+    async def search_purchase_order(self, params: Dict, user) -> Dict:
+        """Recherche des bons de commande"""
+        from apps.purchase_orders.models import PurchaseOrder
         
-        if total_invoices > 0:
-            payment_rate = (paid_invoices / total_invoices) * 100
-            
-            # Délai moyen de paiement
-            paid_with_payments = client_invoices.filter(
-                status='paid',
-                payments__isnull=False
-            ).distinct()
-            
-            avg_payment_days = 0
-            if paid_with_payments.exists():
-                total_days = 0
-                count = 0
-                for invoice in paid_with_payments:
-                    last_payment = invoice.payments.order_by('-payment_date').first()
-                    if last_payment:
-                        days = (last_payment.payment_date - invoice.invoice_date).days
-                        total_days += days
-                        count += 1
-                
-                if count > 0:
-                    avg_payment_days = total_days / count
-            
-            return f"""
-Historique de paiement:
-- Taux de paiement: {payment_rate:.1f}% ({paid_invoices}/{total_invoices} factures)
-- Délai moyen de paiement: {avg_payment_days:.0f} jours
-- Comportement: {'Bon payeur' if payment_rate > 80 and avg_payment_days < 45 else 'Attention requise'}
-"""
-        else:
-            return "Nouveau client - Pas d'historique de paiement"
+        # Implémentation similaire à search_supplier
+        pass
+    
+    async def get_stats(self, params: Dict, user) -> Dict:
+        """Récupère les statistiques"""
+        from apps.suppliers.models import Supplier
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+        from django.db.models import Sum
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_stats_sync():
+            return {
+                'total_suppliers': Supplier.objects.count(),
+                'active_suppliers': Supplier.objects.filter(status='active').count(),
+                'total_invoices': Invoice.objects.count(),
+                'unpaid_invoices': Invoice.objects.filter(status='sent').count(),
+                'total_revenue': Invoice.objects.filter(status='paid').aggregate(
+                    Sum('total_amount')
+                )['total_amount__sum'] or 0
+            }
+
+        stats = await get_stats_sync()
+
+        return {
+            'success': True,
+            'data': stats
+        }

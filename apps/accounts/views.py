@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from .models import CustomUser, UserPreferences
+from .models import CustomUser
 
 
 def profile(request):
@@ -33,7 +33,7 @@ def api_profile(request):
             'email': request.user.email,
             'first_name': request.user.first_name,
             'last_name': request.user.last_name,
-            'role': request.user.role,
-            'language': request.user.language,
+            'phone': request.user.phone,
+            'company': request.user.company,
         })
     return JsonResponse({'error': 'Non authentifié'}, status=401)

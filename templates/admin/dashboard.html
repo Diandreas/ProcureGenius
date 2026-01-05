@@ -5,7 +5,6 @@
 
 {% block admin_content %}
 <div class="admin-header">
-    <h1>{% trans "Dashboard Administrateur" %}</h1>
     <p class="subtitle">{% trans "Vue d'ensemble de votre système" %}</p>
 </div>
 
@@ -121,50 +120,50 @@
 </div>
 
 <script>
-// Données pour le graphique
-const dailyStats = {{ daily_stats|safe }};
+    // Données pour le graphique
+    const dailyStats = {{ daily_stats| safe }};
 
-// Configuration du graphique
-const ctx = document.getElementById('invoiceChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: dailyStats.map(item => new Date(item.date).toLocaleDateString()),
-        datasets: [{
-            label: 'Factures',
-            data: dailyStats.map(item => item.invoices_total),
-            borderColor: '#0066cc',
-            backgroundColor: 'rgba(0, 102, 204, 0.1)',
-            tension: 0.4,
-            fill: true
-        }, {
-            label: 'Commandes',
-            data: dailyStats.map(item => item.pos_total),
-            borderColor: '#00d4ff',
-            backgroundColor: 'rgba(0, 212, 255, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
-            }
+    // Configuration du graphique
+    const ctx = document.getElementById('invoiceChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailyStats.map(item => new Date(item.date).toLocaleDateString()),
+            datasets: [{
+                label: 'Factures',
+                data: dailyStats.map(item => item.invoices_total),
+                borderColor: '#0066cc',
+                backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Commandes',
+                data: dailyStats.map(item => item.pos_total),
+                borderColor: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return value.toLocaleString() + ' CAD';
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return value.toLocaleString() + ' CAD';
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
 </script>
 {% endblock %}
