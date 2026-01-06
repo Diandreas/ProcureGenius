@@ -144,8 +144,12 @@ class Client(models.Model):
     address = models.TextField(blank=True, verbose_name=_("Adresse"))
     contact_person = models.CharField(max_length=100, blank=True, verbose_name=_("Personne contact"))
     tax_id = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro de taxe"))
-    payment_terms = models.CharField(max_length=100, default="Net 30", blank=True, verbose_name=_("Conditions de paiement"))
+    payment_terms = models.CharField(max_length=100, default="CASH", blank=True, verbose_name=_("Conditions de paiement"))
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    # Champs pour l'automatisation du statut
+    last_activity_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière activité"))
+    auto_inactive_since = models.DateTimeField(null=True, blank=True, verbose_name=_("Inactif automatiquement depuis"))
+    is_manually_active = models.BooleanField(default=False, verbose_name=_("Statut manuel"), help_text=_("Si True, le statut actif/inactif est géré manuellement et ne sera pas modifié automatiquement"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -195,6 +199,59 @@ class Client(models.Model):
         """Solde restant à payer"""
         from decimal import Decimal
         return sum(invoice.get_balance_due() for invoice in self.invoices.filter(status__in=['sent', 'overdue']))
+
+    def update_activity_status(self, inactivity_days=180):
+        """
+        Met à jour automatiquement le statut actif/inactif basé sur l'activité récente.
+        
+        Args:
+            inactivity_days: Nombre de jours sans activité pour considérer comme inactif (défaut: 180)
+        
+        Returns:
+            bool: True si le statut a été modifié, False sinon
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Si le statut est géré manuellement, ne pas modifier
+        if self.is_manually_active:
+            return False
+        
+        # Trouver la date de la dernière activité (facture)
+        last_invoice = self.invoices.exclude(status='cancelled').order_by('-created_at').first()
+        
+        # Calculer la dernière date d'activité
+        if last_invoice:
+            last_activity = last_invoice.created_at
+        else:
+            # Si aucune facture, utiliser la date de création du client
+            last_activity = self.created_at
+        
+        # Mettre à jour last_activity_date
+        self.last_activity_date = last_activity
+        
+        # Calculer si le client est inactif
+        cutoff_date = timezone.now() - timedelta(days=inactivity_days)
+        was_active = self.is_active
+        
+        if last_activity < cutoff_date:
+            # Client inactif
+            self.is_active = False
+            if not self.auto_inactive_since:
+                self.auto_inactive_since = timezone.now()
+        else:
+            # Client actif
+            self.is_active = True
+            self.auto_inactive_since = None
+        
+        # Sauvegarder seulement si le statut a changé
+        if was_active != self.is_active:
+            self.save(update_fields=['is_active', 'last_activity_date', 'auto_inactive_since', 'updated_at'])
+            return True
+        else:
+            # Sauvegarder quand même pour mettre à jour last_activity_date
+            self.save(update_fields=['last_activity_date', 'updated_at'])
+            return False
 
 
 class UserPreferences(models.Model):

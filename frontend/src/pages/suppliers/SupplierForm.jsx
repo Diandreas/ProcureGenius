@@ -347,21 +347,58 @@ function SupplierForm() {
                       {t('suppliers:form.sections.rating')}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Rating
-                        name="rating"
-                        value={values.rating}
-                        onChange={(e, newValue) => setFieldValue('rating', newValue)}
-                        size={isMobile ? 'medium' : 'large'}
-                      />
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: isMobile ? 1.5 : 2,
+                        borderRadius: isMobile ? 2 : 1,
+                        '& .MuiAlert-message': {
+                          fontSize: isMobile ? '0.813rem' : undefined
+                        }
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        gutterBottom
+                        sx={{ fontSize: isMobile ? '0.875rem' : undefined, fontWeight: 600 }}
+                      >
+                        {t('suppliers:labels.autoRatingTitle')}
+                      </Typography>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
-                        sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                        sx={{ fontSize: isMobile ? '0.75rem' : undefined, mb: 1 }}
                       >
-                        {values.rating} / 5
+                        {t('suppliers:labels.autoRatingDescription')}
                       </Typography>
-                    </Box>
+                      {values.rating > 0 && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                          <Rating
+                            value={values.rating}
+                            readOnly
+                            size={isMobile ? 'small' : 'medium'}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                          >
+                            {values.rating} / 5
+                          </Typography>
+                        </Box>
+                      )}
+                      {values.rating_details && (
+                        <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                          <Typography variant="caption" sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block' }}>
+                            {t('suppliers:labels.punctuality')}: {values.rating_details.punctuality_score}/5
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block' }}>
+                            {t('suppliers:labels.quality')}: {values.rating_details.quality_score}/5
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block' }}>
+                            {t('suppliers:labels.payment')}: {values.rating_details.payment_score}/5
+                          </Typography>
+                        </Box>
+                      )}
+                    </Alert>
                   </CardContent>
                 </Card>
 

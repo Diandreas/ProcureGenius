@@ -79,6 +79,10 @@ class Supplier(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    # Champs pour l'automatisation du statut
+    last_activity_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière activité"))
+    auto_inactive_since = models.DateTimeField(null=True, blank=True, verbose_name=_("Inactif automatiquement depuis"))
+    is_manually_active = models.BooleanField(default=False, verbose_name=_("Statut manuel"), help_text=_("Si True, le statut est géré manuellement et ne sera pas modifié automatiquement"))
 
     class Meta:
         verbose_name = _("Fournisseur")
@@ -98,6 +102,84 @@ class Supplier(models.Model):
             return {'text': 'Bon', 'class': 'warning'}
         else:
             return {'text': 'À améliorer', 'class': 'danger'}
+
+    def update_activity_status(self, inactivity_days=180):
+        """
+        Met à jour automatiquement le statut basé sur l'activité récente.
+        
+        Args:
+            inactivity_days: Nombre de jours sans activité pour considérer comme inactif (défaut: 180)
+        
+        Returns:
+            bool: True si le statut a été modifié, False sinon
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Si le statut est géré manuellement, ne pas modifier
+        if self.is_manually_active:
+            return False
+        
+        # Trouver la date de la dernière activité
+        # Vérifier les purchase orders
+        last_po = None
+        try:
+            from apps.purchase_orders.models import PurchaseOrder
+            last_po = PurchaseOrder.objects.filter(
+                supplier=self
+            ).exclude(status='cancelled').order_by('-created_at').first()
+        except:
+            pass
+        
+        # Vérifier les factures fournisseurs (si elles existent)
+        last_invoice = None
+        try:
+            from apps.invoicing.models import Invoice
+            # Les factures peuvent être liées via purchase_order
+            if last_po:
+                last_invoice = Invoice.objects.filter(
+                    purchase_order=last_po
+                ).exclude(status='cancelled').order_by('-created_at').first()
+        except:
+            pass
+        
+        # Calculer la dernière date d'activité
+        last_activity = None
+        if last_invoice:
+            last_activity = last_invoice.created_at
+        elif last_po:
+            last_activity = last_po.created_at
+        else:
+            # Si aucune activité, utiliser la date de création
+            last_activity = self.created_at
+        
+        # Mettre à jour last_activity_date
+        self.last_activity_date = last_activity
+        
+        # Calculer si le fournisseur est inactif
+        cutoff_date = timezone.now() - timedelta(days=inactivity_days)
+        old_status = self.status
+        
+        if last_activity < cutoff_date:
+            # Fournisseur inactif (mais ne pas changer si blocked)
+            if self.status != 'blocked':
+                self.status = 'inactive'
+                if not self.auto_inactive_since:
+                    self.auto_inactive_since = timezone.now()
+        else:
+            # Fournisseur actif (mais ne pas changer si blocked ou pending)
+            if self.status == 'inactive' and not self.is_manually_active:
+                self.status = 'active'
+            self.auto_inactive_since = None
+        
+        # Sauvegarder seulement si le statut a changé
+        if old_status != self.status:
+            self.save(update_fields=['status', 'last_activity_date', 'auto_inactive_since', 'updated_at'])
+            return True
+        else:
+            # Sauvegarder quand même pour mettre à jour last_activity_date
+            self.save(update_fields=['last_activity_date', 'updated_at'])
+            return False
 
 
 class SupplierProduct(models.Model):

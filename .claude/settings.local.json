@@ -39,7 +39,14 @@
       "Bash(venv/Scripts/python manage.py check:*)",
       "Bash(npm ls:*)",
       "Bash(venv\\\\Scripts\\\\python:*)",
-      "Bash(venv/Scripts/python.exe manage.py:*)"
+      "Bash(venv/Scripts/python.exe manage.py:*)",
+      "Bash(venv/Scripts/python manage.py makemigrations:*)",
+      "Bash(venv/Scripts/python:*)",
+      "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\suppliers\\\\SupplierDetail.jsx'' | Measure-Object -Line\\).Lines\")",
+      "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\products\\\\ProductDetail.jsx'' | Measure-Object -Line\\).Lines\")",
+      "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\invoices\\\\InvoiceDetail.jsx'' | Measure-Object -Line\\).Lines\")",
+      "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\purchase-orders\\\\PurchaseOrderDetail.jsx'' | Measure-Object -Line\\).Lines\")",
+      "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\clients\\\\Clients.jsx'' | Measure-Object -Line\\).Lines\")"
     ],
     "deny": [],
     "ask": []

@@ -137,6 +137,7 @@ function ProductForm() {
         // Prix
         price: '',
         cost_price: '',
+        price_editable: false,
 
         // Relations et stock
         supplier_id: '',
@@ -439,6 +440,7 @@ function ProductForm() {
                 source_type: values.source_type,
                 price: parseFloat(values.price),
                 cost_price: parseFloat(values.cost_price) || 0,
+                price_editable: values.price_editable,
                 category: values.category_id || null,
                 is_active: values.is_active,
             };
@@ -556,7 +558,7 @@ function ProductForm() {
                     {isEdit ? t('products:editProduct') : t('products:newProduct')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    {isEdit ? 'Modifiez les informations du produit' : 'Créez un nouveau produit pour votre catalogue'}
+                    {isEdit ? t('products:messages.editProductDescription') : t('products:messages.createProductDescription')}
                 </Typography>
             </Box>
 
@@ -812,6 +814,27 @@ function ProductForm() {
                                                         }}
                                                     />
                                                 </Grid>
+                                                <Grid item xs={12}>
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                name="price_editable"
+                                                                checked={values.price_editable || false}
+                                                                onChange={handleChange}
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Box>
+                                                                <Typography variant="body2">
+                                                                    {t('products:labels.priceEditable')}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {t('products:labels.priceEditableHelp')}
+                                                                </Typography>
+                                                            </Box>
+                                                        }
+                                                    />
+                                                </Grid>
 
                                             </Grid>
                                         </CardContent>
@@ -820,8 +843,8 @@ function ProductForm() {
                                     {/* Badge type visible pour non-physiques */}
                                     {values.product_type !== 'physical' && (
                                         <Alert severity="info" sx={{ mb: 2 }}>
-                                            Type: {values.product_type === 'service' ? 'Service' : 'Produit Digital'}
-                                            {' - '}Aucune gestion de stock nécessaire
+                                            {t('products:labels.type')}: {values.product_type === 'service' ? t('products:labels.service') : t('products:labels.digitalProduct')}
+                                            {' - '}{t('products:messages.noStockManagement')}
                                         </Alert>
                                     )}
 
@@ -1288,7 +1311,7 @@ function ProductForm() {
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={supplier.name}
-                                            secondary={supplier.email || 'Aucun email'}
+                                            secondary={supplier.email || t('common:labels.noEmail')}
                                         />
                                     </ListItemButton>
                                 </ListItem>
@@ -1297,7 +1320,7 @@ function ProductForm() {
                             <ListItem>
                                 <ListItemText
                                     primary={t('products:messages.noSuppliers', 'Aucun fournisseur disponible')}
-                                    secondary="Cliquez sur 'Ajouter' pour créer votre premier fournisseur"
+                                    secondary={t('products:messages.clickAddToCreateFirstSupplier')}
                                 />
                             </ListItem>
                         )}
@@ -1449,7 +1472,7 @@ function ProductForm() {
                             <ListItem>
                                 <ListItemText
                                     primary={t('products:messages.noWarehouses', 'Aucun entrepôt disponible')}
-                                    secondary="Cliquez sur 'Ajouter' pour créer votre premier entrepôt"
+                                    secondary={t('products:messages.clickAddToCreateFirstWarehouse')}
                                 />
                             </ListItem>
                         )}
@@ -1499,7 +1522,7 @@ function ProductForm() {
                                 {editingWarehouse ? t('products:modals.editWarehouse', 'Modifier l\'entrepôt') : t('products:modals.newWarehouse', 'Nouvel entrepôt')}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {editingWarehouse ? 'Modifiez les informations de l\'entrepôt' : 'Créez un nouvel entrepôt pour gérer vos stocks'}
+                                {editingWarehouse ? t('products:messages.editWarehouseDescription') : t('products:messages.createWarehouseDescription')}
                             </Typography>
                         </Box>
                     </Box>
@@ -1528,7 +1551,7 @@ function ProductForm() {
                                     required
                                     variant="outlined"
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                    helperText="Code unique"
+                                    helperText={t('products:messages.uniqueCode')}
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -1556,7 +1579,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Province"
+                                    label={t('common:labels.province')}
                                     value={warehouseFormData.province}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, province: e.target.value })}
                                     variant="outlined"
@@ -1566,7 +1589,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Code postal"
+                                    label={t('common:labels.postalCode')}
                                     value={warehouseFormData.postal_code}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, postal_code: e.target.value })}
                                     variant="outlined"
@@ -1576,7 +1599,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Pays"
+                                    label={t('common:labels.country')}
                                     value={warehouseFormData.country}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, country: e.target.value })}
                                     variant="outlined"
@@ -1704,8 +1727,8 @@ function ProductForm() {
                                     </Box>
                                 </ListItemIcon>
                                 <ListItemText
-                                    primary={t('products:labels.uncategorized', 'Sans catégorie')}
-                                    secondary="Produit non catégorisé"
+                                    primary={t('products:labels.uncategorized')}
+                                    secondary={t('products:messages.uncategorizedProduct')}
                                 />
                             </ListItemButton>
                         </ListItem>
@@ -1768,7 +1791,7 @@ function ProductForm() {
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={category.name}
-                                            secondary={category.description || 'Aucune description'}
+                                            secondary={category.description || t('common:labels.noDescription')}
                                         />
                                     </ListItemButton>
                                 </ListItem>
@@ -1777,7 +1800,7 @@ function ProductForm() {
                             <ListItem>
                                 <ListItemText
                                     primary={t('products:messages.noCategories', 'Aucune catégorie disponible')}
-                                    secondary="Cliquez sur 'Ajouter' pour créer votre première catégorie"
+                                    secondary={t('products:messages.clickAddToCreateFirstCategory')}
                                 />
                             </ListItem>
                         )}
@@ -1827,7 +1850,7 @@ function ProductForm() {
                                 {editingCategory ? t('products:modals.editCategory', 'Modifier la catégorie') : t('products:modals.newCategory', 'Nouvelle catégorie')}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {editingCategory ? 'Modifiez les informations de la catégorie' : 'Organisez vos produits par catégories'}
+                                {editingCategory ? t('products:messages.editCategoryDescription') : t('products:messages.createCategoryDescription')}
                             </Typography>
                         </Box>
                     </Box>

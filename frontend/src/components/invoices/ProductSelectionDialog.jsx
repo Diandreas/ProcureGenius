@@ -26,6 +26,7 @@ import {
   filterProductsByType,
 } from '../../utils/productHelpers';
 import useCurrency from '../../hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -51,6 +52,7 @@ function ProductSelectionDialog({
   onCreateProduct,
   editingItemIndex,
 }) {
+  const { t } = useTranslation(['invoices', 'products', 'common']);
   const { format: formatCurrency } = useCurrency();
   const [tabValue, setTabValue] = useState(0);
   const [stockError, setStockError] = useState('');
@@ -135,7 +137,7 @@ function ProductSelectionDialog({
               <Typography variant="body1">{option.name}</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Réf: {option.reference}
+                  {t('invoices:labels.reference')}: {option.reference}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   • {formatCurrency(option.price)}
@@ -167,7 +169,7 @@ function ProductSelectionDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ fontWeight: 600 }}>
-        {editingItemIndex >= 0 ? "Modifier l'article" : 'Ajouter un article'}
+        {editingItemIndex >= 0 ? t('invoices:dialogs.editItem') : t('invoices:dialogs.addItem')}
       </DialogTitle>
       <DialogContent>
         {/* Tabs pour séparer Produits et Services */}
@@ -178,12 +180,12 @@ function ProductSelectionDialog({
         >
           <Tab
             icon={<Inventory />}
-            label={`Produits physiques (${physicalProducts.length})`}
+            label={`${t('invoices:labels.physicalProducts')} (${physicalProducts.length})`}
             iconPosition="start"
           />
           <Tab
             icon={<Build />}
-            label={`Services & Digital (${servicesAndDigital.length})`}
+            label={`${t('invoices:labels.servicesAndDigital')} (${servicesAndDigital.length})`}
             iconPosition="start"
           />
         </Tabs>
@@ -206,7 +208,7 @@ function ProductSelectionDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Rechercher un produit"
+                        label={t('invoices:labels.searchProduct')}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         InputProps={{
                           ...params.InputProps,
@@ -240,7 +242,7 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Référence produit"
+                  label={t('invoices:labels.productReference')}
                   value={newItem.product_reference}
                   onChange={(e) =>
                     setNewItem({ ...newItem, product_reference: e.target.value })
@@ -251,7 +253,7 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Quantité"
+                  label={t('invoices:labels.quantity')}
                   type="number"
                   required
                   value={newItem.quantity}
@@ -265,7 +267,7 @@ function ProductSelectionDialog({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label={t('invoices:labels.description')}
                   required
                   value={newItem.description}
                   onChange={(e) =>
@@ -277,15 +279,21 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Prix unitaire HT"
+                  label={t('invoices:labels.unitPriceExclTax')}
                   type="number"
                   required
                   value={newItem.unit_price}
                   onChange={(e) =>
                     setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
                   }
-                  disabled={newItem.product !== null}
-                  helperText={newItem.product ? "Prix du catalogue (non modifiable)" : ""}
+                  disabled={newItem.product !== null && !newItem.product?.price_editable}
+                  helperText={
+                    newItem.product
+                      ? newItem.product.price_editable
+                        ? t('invoices:messages.priceEditableByProduct')
+                        : t('invoices:messages.priceFixedFromCatalog')
+                      : ""
+                  }
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
@@ -303,7 +311,7 @@ function ProductSelectionDialog({
                     {formatCurrency((newItem.quantity || 0) * (newItem.unit_price || 0))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total ligne
+                    {t('invoices:labels.lineTotal')}
                   </Typography>
                 </Box>
               </Grid>
@@ -324,7 +332,7 @@ function ProductSelectionDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Rechercher un service"
+                        label={t('invoices:labels.searchService')}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         InputProps={{
                           ...params.InputProps,
@@ -352,7 +360,7 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Référence service"
+                  label={t('invoices:labels.serviceReference')}
                   value={newItem.product_reference}
                   onChange={(e) =>
                     setNewItem({ ...newItem, product_reference: e.target.value })
@@ -363,7 +371,7 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Quantité"
+                  label={t('invoices:labels.quantity')}
                   type="number"
                   required
                   value={newItem.quantity}
@@ -377,7 +385,7 @@ function ProductSelectionDialog({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label={t('invoices:labels.description')}
                   required
                   value={newItem.description}
                   onChange={(e) =>
@@ -389,15 +397,21 @@ function ProductSelectionDialog({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Prix unitaire HT"
+                  label={t('invoices:labels.unitPriceExclTax')}
                   type="number"
                   required
                   value={newItem.unit_price}
                   onChange={(e) =>
                     setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
                   }
-                  disabled={newItem.product !== null}
-                  helperText={newItem.product ? "Prix du catalogue (non modifiable)" : ""}
+                  disabled={newItem.product !== null && !newItem.product?.price_editable}
+                  helperText={
+                    newItem.product
+                      ? newItem.product.price_editable
+                        ? t('invoices:messages.priceEditableByProduct')
+                        : t('invoices:messages.priceFixedFromCatalog')
+                      : ""
+                  }
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
@@ -415,7 +429,7 @@ function ProductSelectionDialog({
                     {formatCurrency((newItem.quantity || 0) * (newItem.unit_price || 0))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total ligne
+                    {t('invoices:labels.lineTotal')}
                   </Typography>
                 </Box>
               </Grid>
@@ -425,7 +439,7 @@ function ProductSelectionDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ borderRadius: 2, textTransform: 'none' }}>
-          Annuler
+          {t('common:buttons.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
@@ -433,7 +447,7 @@ function ProductSelectionDialog({
           disabled={!isFormValid}
           sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
         >
-          {editingItemIndex >= 0 ? 'Modifier' : 'Ajouter'}
+          {editingItemIndex >= 0 ? t('common:buttons.edit') : t('common:buttons.add')}
         </Button>
       </DialogActions>
     </Dialog>

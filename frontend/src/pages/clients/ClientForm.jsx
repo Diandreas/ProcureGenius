@@ -65,7 +65,7 @@ function ClientForm() {
         email: '',
         phone: '',
         billing_address: '',
-        payment_terms: 'NET 30',
+        payment_terms: 'CASH',
         credit_limit: '',
         is_active: true,
     });
@@ -432,15 +432,48 @@ function ClientForm() {
                                             {t('clients:labels.statusAndOptions')}
                                         </Typography>
 
+                                        <Alert
+                                            severity="info"
+                                            sx={{
+                                                mb: isMobile ? 1.5 : 2,
+                                                borderRadius: isMobile ? 2 : 1,
+                                                '& .MuiAlert-message': {
+                                                    fontSize: isMobile ? '0.813rem' : undefined
+                                                }
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="subtitle2"
+                                                gutterBottom
+                                                sx={{ fontSize: isMobile ? '0.875rem' : undefined, fontWeight: 600 }}
+                                            >
+                                                {t('clients:labels.autoStatusTitle')}
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontSize: isMobile ? '0.75rem' : undefined, mb: 1 }}
+                                            >
+                                                {t('clients:labels.autoStatusDescription')}
+                                            </Typography>
+                                            {values.last_activity_date && (
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block', mt: 0.5 }}
+                                                >
+                                                    {t('clients:labels.lastActivity')}: {new Date(values.last_activity_date).toLocaleDateString()}
+                                                </Typography>
+                                            )}
+                                        </Alert>
+
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
-                                                    name="is_active"
-                                                    checked={values.is_active}
+                                                    name="is_manually_active"
+                                                    checked={values.is_manually_active || false}
                                                     onChange={handleChange}
                                                 />
                                             }
-                                            label={t('clients:labels.activeClient')}
+                                            label={t('clients:labels.manualStatus')}
                                             sx={{
                                                 mb: isMobile ? 1.5 : 2,
                                                 '& .MuiTypography-root': {
@@ -448,6 +481,26 @@ function ClientForm() {
                                                 }
                                             }}
                                         />
+
+                                        {values.is_manually_active && (
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        name="is_active"
+                                                        checked={values.is_active}
+                                                        onChange={handleChange}
+                                                    />
+                                                }
+                                                label={t('clients:labels.activeClient')}
+                                                sx={{
+                                                    mb: isMobile ? 1.5 : 2,
+                                                    ml: 2,
+                                                    '& .MuiTypography-root': {
+                                                        fontSize: isMobile ? '0.875rem' : undefined
+                                                    }
+                                                }}
+                                            />
+                                        )}
 
                                         <Alert
                                             severity="info"

@@ -40,19 +40,39 @@ class SupplierSerializer(serializers.ModelSerializer):
     )
     performance_badge = serializers.SerializerMethodField()
 
+    rating_details = serializers.SerializerMethodField()
+
     class Meta:
         model = Supplier
         fields = [
             'id', 'name', 'contact_person', 'email', 'phone',
             'address', 'city', 'province', 'status', 'rating',
             'is_local', 'is_minority_owned', 'is_woman_owned', 'is_indigenous',
-            'categories', 'category_ids', 'performance_badge',
+            'categories', 'category_ids', 'performance_badge', 'rating_details',
+            'last_activity_date', 'auto_inactive_since', 'is_manually_active',
             'created_at', 'updated_at', 'is_active'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'performance_badge']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'performance_badge',
+            'rating_details', 'last_activity_date', 'auto_inactive_since', 'rating'
+        ]
 
     def get_performance_badge(self, obj):
         return obj.get_performance_badge()
+
+    def get_rating_details(self, obj):
+        """Retourne les détails du calcul du rating"""
+        try:
+            from apps.suppliers.services import SupplierRatingService
+            result = SupplierRatingService.calculate_rating(obj)
+            return {
+                'punctuality_score': result['punctuality_score'],
+                'quality_score': result['quality_score'],
+                'payment_score': result['payment_score'],
+                'weights': result['details']
+            }
+        except Exception:
+            return None
 
 
 class SupplierProductSerializer(serializers.ModelSerializer):
@@ -104,6 +124,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     stock_status = serializers.CharField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
+    price_editable = serializers.SerializerMethodField(read_only=True)
     
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
@@ -128,7 +149,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'id', 'name', 'reference', 'description', 'barcode',
             'product_type', 'source_type', 'supplier', 'supplier_name',
             'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
-            'price', 'cost_price', 'margin', 'margin_percent',
+            'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_active',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
@@ -140,8 +161,26 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'stock_status', 'is_low_stock', 'is_out_of_stock',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
-            'last_sale_date', 'active_contracts_count'
+            'last_sale_date', 'active_contracts_count', 'price_editable'
         ]
+    
+    def to_representation(self, instance):
+        """Surcharger pour gérer price_editable de manière sécurisée"""
+        representation = super().to_representation(instance)
+        # S'assurer que price_editable est toujours présent même si le champ n'existe pas
+        if 'price_editable' not in representation:
+            representation['price_editable'] = False
+        return representation
+    
+    def get_price_editable(self, obj):
+        """Retourne price_editable si le champ existe, sinon False par défaut"""
+        try:
+            # Vérifier si le champ existe dans le modèle en utilisant getattr avec une valeur par défaut
+            # Cela évite toute erreur si le champ n'existe pas encore en DB
+            return getattr(obj, 'price_editable', False)
+        except Exception:
+            # En cas d'erreur quelconque, retourner False
+            return False
     
     def validate(self, attrs):
         """Validation stricte des produits selon leur type"""
@@ -243,12 +282,14 @@ class ClientSerializer(serializers.ModelSerializer):
             'contact_person', 'tax_id', 'payment_terms', 'is_active',
             'total_invoices', 'total_sales_amount', 'total_paid_amount',
             'total_outstanding', 'last_invoice_date',
+            'last_activity_date', 'auto_inactive_since', 'is_manually_active',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at',
             'total_invoices', 'total_sales_amount', 'total_paid_amount',
-            'total_outstanding', 'last_invoice_date'
+            'total_outstanding', 'last_invoice_date',
+            'last_activity_date', 'auto_inactive_since'
         ]
 
     def validate_name(self, value):

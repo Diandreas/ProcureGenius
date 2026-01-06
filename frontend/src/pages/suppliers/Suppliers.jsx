@@ -207,15 +207,54 @@ function Suppliers() {
       sx={{
         cursor: 'pointer',
         height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
+        borderRadius: 3,
+        background: theme => supplier.status === 'active'
+          ? `linear-gradient(145deg,
+              ${alpha(theme.palette.background.paper, 0.95)} 0%,
+              ${alpha(theme.palette.primary.main, 0.03)} 50%,
+              ${alpha(theme.palette.background.paper, 0.95)} 100%)`
+          : `linear-gradient(145deg,
+              ${alpha(theme.palette.background.paper, 0.9)} 0%,
+              ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
+        boxShadow: theme => supplier.status === 'active'
+          ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
+          : `0 4px 16px ${alpha(theme.palette.common.black, 0.06)}`,
+        backdropFilter: 'blur(20px)',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
+          transform: 'translateY(-8px) scale(1.02)',
+          boxShadow: theme => supplier.status === 'active'
+            ? `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}, 0 8px 16px ${alpha(theme.palette.common.black, 0.08)}`
+            : `0 12px 32px ${alpha(theme.palette.common.black, 0.12)}`,
         },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 4,
+          background: theme => supplier.status === 'active'
+            ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+            : `linear-gradient(90deg, ${theme.palette.grey[400]}, ${theme.palette.grey[500]})`,
+          borderRadius: '3px 3px 0 0',
+          boxShadow: theme => supplier.status === 'active'
+            ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+            : 'none'
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: theme => `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 70%)`,
+          pointerEvents: 'none',
+          opacity: supplier.status === 'active' ? 1 : 0.3
+        }
       }}
     >
       <CardContent sx={{ p: 2 }}>

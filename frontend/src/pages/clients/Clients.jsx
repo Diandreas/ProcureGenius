@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
   Card,
@@ -160,53 +161,111 @@ function Clients() {
   const totalRevenue = clients.reduce((sum, c) => sum + (c.total_sales_amount || 0), 0);
   const totalInvoices = clients.reduce((sum, c) => sum + (c.total_invoices || 0), 0);
 
-  const ClientCard = ({ client }) => (
-    <Card
-      onClick={() => navigate(`/clients/${client.id}`)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-        },
+  const ClientCard = ({ client, index }) => (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.05,
+        ease: [0.6, 0.05, 0.01, 0.9]
       }}
+      whileHover={{
+        boxShadow: client.is_active
+          ? '0 20px 60px rgba(25, 118, 210, 0.2)'
+          : '0 20px 60px rgba(0, 0, 0, 0.15)'
+      }}
+      style={{ height: '100%' }}
     >
+      <Card
+        component={motion.div}
+        layoutId={`client-card-${client.id}`}
+        onClick={() => navigate(`/clients/${client.id}`)}
+        sx={{
+          cursor: 'pointer',
+          height: '100%',
+          borderRadius: 3,
+          background: theme => client.is_active
+            ? `linear-gradient(145deg,
+                ${alpha(theme.palette.background.paper, 0.95)} 0%,
+                ${alpha(theme.palette.primary.main, 0.03)} 50%,
+                ${alpha(theme.palette.background.paper, 0.95)} 100%)`
+            : `linear-gradient(145deg,
+                ${alpha(theme.palette.background.paper, 0.9)} 0%,
+                ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
+          boxShadow: theme => client.is_active
+            ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
+            : `0 4px 16px ${alpha(theme.palette.common.black, 0.06)}`,
+          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          overflow: 'hidden',
+          transition: 'box-shadow 0.3s ease',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: theme => client.is_active
+              ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              : `linear-gradient(90deg, ${theme.palette.grey[400]}, ${theme.palette.grey[500]})`,
+            borderRadius: '3px 3px 0 0',
+            boxShadow: theme => client.is_active
+              ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+              : 'none'
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: theme => `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 70%)`,
+            pointerEvents: 'none',
+            opacity: client.is_active ? 1 : 0.3
+          }
+        }}
+      >
       <CardContent sx={{ p: 2 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
-              bgcolor: 'primary.main',
-              borderRadius: 1,
-              fontSize: isMobile ? '1.2rem' : '1.5rem',
-            }}
-          >
-            {client.name?.charAt(0)?.toUpperCase() || '?'}
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
+          <motion.div layoutId={`client-avatar-${client.id}`}>
+            <Avatar
               sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
+                width: isMobile ? 48 : 56,
+                height: isMobile ? 48 : 56,
+                bgcolor: 'primary.main',
+                borderRadius: 2,
+                fontSize: isMobile ? '1.2rem' : '1.5rem',
+                fontWeight: 'bold',
+                boxShadow: 2,
               }}
             >
-              {client.name}
-            </Typography>
+              {client.name?.charAt(0)?.toUpperCase() || '?'}
+            </Avatar>
+          </motion.div>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <motion.div layoutId={`client-name-${client.id}`}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  mb: 0.5,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  fontSize: isMobile ? '0.875rem' : '0.95rem',
+                }}
+              >
+                {client.name}
+              </Typography>
+            </motion.div>
             {client.legal_name && client.legal_name !== client.name && (
               <Typography
                 variant="caption"
@@ -280,17 +339,42 @@ function Clients() {
         {(client.total_invoices > 0 || client.total_sales_amount > 0) && (
           <Box
             sx={{
-              bgcolor: 'success.50',
-              borderRadius: 1,
-              p: 1,
+              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.12)} 0%, ${alpha(theme.palette.success.main, 0.06)} 100%)`,
+              borderRadius: 2,
+              p: 1.5,
               mb: 1.5,
+              border: '1px solid',
+              borderColor: theme => alpha(theme.palette.success.main, 0.2),
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 3,
+                background: theme => theme.palette.success.main,
+                borderRadius: '2px 0 0 2px'
+              }
             }}
           >
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
               {client.total_invoices > 0 && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Receipt sx={{ fontSize: 16, color: 'success.main' }} />
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Box
+                    sx={{
+                      p: 0.75,
+                      borderRadius: 1,
+                      bgcolor: 'success.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Receipt sx={{ fontSize: 16, color: 'white' }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 700, color: 'success.main' }}>
                     {client.total_invoices}
                   </Typography>
                 </Box>
@@ -298,7 +382,14 @@ function Clients() {
               {client.total_sales_amount > 0 && (
                 <Typography
                   variant="body2"
-                  sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'success.main' }}
+                  sx={{
+                    fontSize: '0.938rem',
+                    fontWeight: 800,
+                    background: theme => `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
                 >
                   {formatCurrency(client.total_sales_amount)}
                 </Typography>
@@ -323,6 +414,7 @@ function Clients() {
         </Box>
       </CardContent>
     </Card>
+    </motion.div>
   );
 
   if (loading && clients.length === 0) {
@@ -817,11 +909,13 @@ function Clients() {
         />
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredClients.map((client) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={client.id}>
-              <ClientCard client={client} />
-            </Grid>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredClients.map((client, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={client.id}>
+                <ClientCard client={client} index={index} />
+              </Grid>
+            ))}
+          </AnimatePresence>
         </Grid>
       )}
 

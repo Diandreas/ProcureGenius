@@ -545,31 +545,47 @@ function ProductDetail() {
                   </Box>
                 )}
 
-                {/* Informations détaillées - Style mobile compact */}
-                <Grid container spacing={isMobile ? 1.5 : 2}>
+                {/* Informations détaillées - Style moderne */}
+                <Grid container spacing={isMobile ? 1.5 : 2.5}>
                   {product.supplier_name && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isMobile ? 1 : 1.5,
-                        p: isMobile ? 1 : 0,
-                        borderRadius: isMobile ? 1.5 : 0,
-                        bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <Business sx={{
-                          fontSize: isMobile ? 18 : 20,
-                          color: 'primary.main',
-                          bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                          borderRadius: 1,
-                          p: 0.5
-                        }} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Business sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('products:labels.supplier')}
                           </Typography>
@@ -577,7 +593,9 @@ function ProductDetail() {
                             variant="body2"
                             fontWeight="600"
                             sx={{
-                              fontSize: isMobile ? '0.813rem' : undefined,
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap'
@@ -592,27 +610,43 @@ function ProductDetail() {
 
                   {product.warehouse_name && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isMobile ? 1 : 1.5,
-                        p: isMobile ? 1 : 0,
-                        borderRadius: isMobile ? 1.5 : 0,
-                        bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <Warehouse sx={{
-                          fontSize: isMobile ? 18 : 20,
-                          color: 'info.main',
-                          bgcolor: theme => alpha(theme.palette.info.main, 0.1),
-                          borderRadius: 1,
-                          p: 0.5
-                        }} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'info.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Warehouse sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('products:labels.warehouse')}
                           </Typography>
@@ -620,7 +654,9 @@ function ProductDetail() {
                             variant="body2"
                             fontWeight="600"
                             sx={{
-                              fontSize: isMobile ? '0.813rem' : undefined,
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap'
@@ -635,27 +671,43 @@ function ProductDetail() {
 
                   {product.lead_time_days && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isMobile ? 1 : 1.5,
-                        p: isMobile ? 1 : 0,
-                        borderRadius: isMobile ? 1.5 : 0,
-                        bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <LocalShipping sx={{
-                          fontSize: isMobile ? 18 : 20,
-                          color: 'warning.main',
-                          bgcolor: theme => alpha(theme.palette.warning.main, 0.1),
-                          borderRadius: 1,
-                          p: 0.5
-                        }} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.warning.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.warning.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.warning.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'warning.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <LocalShipping sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
                           >
                             {t('products:labels.leadTime')}
                           </Typography>
@@ -663,7 +715,9 @@ function ProductDetail() {
                             variant="body2"
                             fontWeight="600"
                             sx={{
-                              fontSize: isMobile ? '0.813rem' : undefined
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary'
                             }}
                           >
                             {product.lead_time_days} {t('products:labels.days')}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Box,
   Card,
@@ -318,6 +319,11 @@ function ClientDetail() {
           {/* Card principale avec design amélioré */}
           <Grid item xs={12} md={8}>
             <Card
+              component={motion.div}
+              layoutId={`client-card-${client.id}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
               sx={{
                 borderRadius: 3,
                 mb: isMobile ? 1.5 : 3,
@@ -348,33 +354,47 @@ function ClientDetail() {
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 {/* En-tête avec Avatar */}
                 <Box sx={{ display: 'flex', gap: isMobile ? 1.5 : 2, mb: isMobile ? 2 : 3, alignItems: 'flex-start' }}>
-                  <Avatar
-                    sx={{
-                      width: isMobile ? 56 : 100,
-                      height: isMobile ? 56 : 100,
-                      bgcolor: 'primary.main',
-                      borderRadius: 2,
-                      fontSize: isMobile ? '1.5rem' : '2.5rem',
-                      fontWeight: 'bold',
-                      boxShadow: 2,
-                      flexShrink: 0
-                    }}
+                  <motion.div
+                    layoutId={`client-avatar-${client.id}`}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    {client.name?.charAt(0)?.toUpperCase() || '?'}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle1' : 'h5'}
-                      fontWeight="bold"
-                      gutterBottom
+                    <Avatar
                       sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        fontSize: isMobile ? '1rem' : undefined
+                        width: isMobile ? 56 : 100,
+                        height: isMobile ? 56 : 100,
+                        bgcolor: 'primary.main',
+                        borderRadius: 2,
+                        fontSize: isMobile ? '1.5rem' : '2.5rem',
+                        fontWeight: 'bold',
+                        boxShadow: 2,
+                        flexShrink: 0
                       }}
                     >
-                      {client.name}
-                    </Typography>
+                      {client.name?.charAt(0)?.toUpperCase() || '?'}
+                    </Avatar>
+                  </motion.div>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <motion.div
+                      layoutId={`client-name-${client.id}`}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <Typography
+                        variant={isMobile ? 'subtitle1' : 'h5'}
+                        fontWeight="bold"
+                        gutterBottom
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontSize: isMobile ? '1rem' : undefined
+                        }}
+                      >
+                        {client.name}
+                      </Typography>
+                    </motion.div>
                     {client.legal_name && client.legal_name !== client.name && (
                       <Typography
                         variant="body2"
@@ -394,12 +414,38 @@ function ClientDetail() {
                         label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
                         color={client.is_active ? 'success' : 'default'}
                         size="small"
+                        icon={client.is_manually_active ? undefined : <AccessTime sx={{ fontSize: isMobile ? 12 : 14 }} />}
                         sx={{
                           fontWeight: 500,
                           fontSize: isMobile ? '0.688rem' : undefined,
                           height: isMobile ? 20 : undefined
                         }}
                       />
+                      {client.is_manually_active && (
+                        <Chip
+                          label={t('clients:labels.manualStatus')}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: isMobile ? '0.688rem' : undefined,
+                            height: isMobile ? 20 : undefined
+                          }}
+                        />
+                      )}
+                      {client.auto_inactive_since && (
+                        <Chip
+                          label={`${t('clients:labels.autoInactiveSince')} ${formatDate(client.auto_inactive_since)}`}
+                          size="small"
+                          color="warning"
+                          variant="outlined"
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: isMobile ? '0.688rem' : undefined,
+                            height: isMobile ? 20 : undefined
+                          }}
+                        />
+                      )}
                       {client.business_number && (
                         <Chip
                           icon={<Business sx={{ fontSize: isMobile ? 14 : 16 }} />}
@@ -979,13 +1025,13 @@ function ClientDetail() {
                     color="white"
                     fontWeight="bold"
                     gutterBottom
-                    sx={{ 
+                    sx={{
                       fontSize: isMobile ? '1.25rem' : '1.5rem',
                       position: 'relative',
                       zIndex: 1
                     }}
                   >
-                    {client.payment_terms || 'NET 30'}
+                    {client.payment_terms || 'CASH'}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -1295,6 +1341,45 @@ function ClientDetail() {
                       </Typography>
                     </Box>
                   </Box>
+                  {client.last_activity_date && (
+                    <>
+                      <Divider sx={{ my: isMobile ? 1 : 1.5 }} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.primary.main, 0.05),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.primary.main, 0.1)
+                        }}
+                      >
+                        <AccessTime sx={{
+                          fontSize: isMobile ? 20 : 24,
+                          color: 'primary.main'
+                        }} />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            gutterBottom
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                          >
+                            {t('clients:labels.lastActivity')}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{ fontSize: isMobile ? '0.875rem' : '0.938rem' }}
+                          >
+                            {formatDate(client.last_activity_date)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </>
+                  )}
                 </Stack>
               </CardContent>
             </Card>

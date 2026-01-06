@@ -482,11 +482,35 @@ function SupplierDetail() {
                       {supplier.name}
                     </Typography>
                     {parseRating(supplier.rating) > 0 && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Rating value={parseRating(supplier.rating)} readOnly size={isMobile ? 'small' : 'medium'} />
-                        <Typography variant="body2" color="text.secondary">
-                          ({parseRating(supplier.rating).toFixed(1)}/5)
-                        </Typography>
+                      <Box sx={{ mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Rating value={parseRating(supplier.rating)} readOnly size={isMobile ? 'small' : 'medium'} />
+                          <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                            {parseRating(supplier.rating).toFixed(1)}/5
+                          </Typography>
+                          {supplier.rating_details && (
+                            <Chip
+                              label={t('suppliers:labels.autoCalculated')}
+                              size="small"
+                              variant="outlined"
+                              color="info"
+                              sx={{ ml: 1 }}
+                            />
+                          )}
+                        </Box>
+                        {supplier.rating_details && (
+                          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              {t('suppliers:labels.punctuality')}: {supplier.rating_details.punctuality_score}/5 ({Math.round(supplier.rating_details.weights.punctuality_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {t('suppliers:labels.quality')}: {supplier.rating_details.quality_score}/5 ({Math.round(supplier.rating_details.weights.quality_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {t('suppliers:labels.payment')}: {supplier.rating_details.payment_score}/5 ({Math.round(supplier.rating_details.weights.payment_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
                     )}
                     <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -514,16 +538,58 @@ function SupplierDetail() {
                 <Divider sx={{ my: 2 }} />
 
                 {/* Informations de contact */}
-                <Grid container spacing={2}>
+                <Grid container spacing={isMobile ? 1.5 : 2.5}>
                   {supplier.contact_person && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Person sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Person sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                          >
                             {t('suppliers:labels.contactPerson')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary'
+                            }}
+                          >
                             {supplier.contact_person}
                           </Typography>
                         </Box>
@@ -533,16 +599,61 @@ function SupplierDetail() {
 
                   {supplier.email && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Email sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'info.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Email sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                          >
                             {t('suppliers:labels.email')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
-                            <a href={`mailto:${supplier.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                              {supplier.email}
-                            </a>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            component="a"
+                            href={`mailto:${supplier.email}`}
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'info.main',
+                              textDecoration: 'none',
+                              display: 'block',
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            {supplier.email}
                           </Typography>
                         </Box>
                       </Box>
@@ -551,16 +662,61 @@ function SupplierDetail() {
 
                   {supplier.phone && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Phone sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.success.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.success.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.success.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'success.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Phone sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                          >
                             {t('suppliers:labels.phone')}
                           </Typography>
-                          <Typography variant="body2" fontWeight="500">
-                            <a href={`tel:${supplier.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                              {supplier.phone}
-                            </a>
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            component="a"
+                            href={`tel:${supplier.phone}`}
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'success.main',
+                              textDecoration: 'none',
+                              display: 'block',
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            {supplier.phone}
                           </Typography>
                         </Box>
                       </Box>
@@ -569,18 +725,68 @@ function SupplierDetail() {
 
                   {(supplier.address || supplier.city || supplier.province) && (
                     <Grid item xs={12} sm={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <LocationOn sx={{ fontSize: 20, color: 'text.secondary' }} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 1.5 : 2,
+                          p: isMobile ? 1.5 : 2,
+                          borderRadius: 2,
+                          bgcolor: theme => alpha(theme.palette.secondary.main, 0.08),
+                          border: '1px solid',
+                          borderColor: theme => alpha(theme.palette.secondary.main, 0.2),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: theme => alpha(theme.palette.secondary.main, 0.12),
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.secondary.main, 0.2)}`
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            bgcolor: 'secondary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <LocationOn sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight="500"
+                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                          >
                             {t('suppliers:labels.address')}
                           </Typography>
                           {supplier.address && (
-                            <Typography variant="body2" fontWeight="500">
+                            <Typography
+                              variant="body2"
+                              fontWeight="600"
+                              sx={{
+                                mt: 0.5,
+                                fontSize: isMobile ? '0.875rem' : '0.938rem',
+                                color: 'text.primary'
+                              }}
+                            >
                               {supplier.address}
                             </Typography>
                           )}
-                          <Typography variant="body2" fontWeight="500">
+                          <Typography
+                            variant="body2"
+                            fontWeight="600"
+                            sx={{
+                              mt: 0.5,
+                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              color: 'text.primary'
+                            }}
+                          >
                             {[supplier.city, supplier.province].filter(Boolean).join(', ')}
                           </Typography>
                         </Box>
@@ -737,6 +943,68 @@ function SupplierDetail() {
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {t('suppliers:labels.averageValue')}
                       </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* Détails du rating calculé */}
+            {supplier?.rating_details && (
+              <Grid container spacing={isMobile ? 2 : 3} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Card sx={{
+                    borderRadius: 3,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                  }}>
+                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                      <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600 }}>
+                        {t('suppliers:labels.ratingDetails')}
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                              {supplier.rating_details.punctuality_score}/5
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                              {t('suppliers:labels.punctuality')}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {Math.round(supplier.rating_details.weights.punctuality_weight * 100)}% {t('suppliers:labels.ofScore')}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                              {supplier.rating_details.quality_score}/5
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                              {t('suppliers:labels.quality')}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {Math.round(supplier.rating_details.weights.quality_weight * 100)}% {t('suppliers:labels.ofScore')}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                              {supplier.rating_details.payment_score}/5
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                              {t('suppliers:labels.payment')}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {Math.round(supplier.rating_details.weights.payment_weight * 100)}% {t('suppliers:labels.ofScore')}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
                     </CardContent>
                   </Card>
                 </Grid>

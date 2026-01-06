@@ -218,6 +218,42 @@ class PurchaseOrder(models.Model):
             'total_updated': len(movements)
         }
 
+    def update_status_automatically(self):
+        """
+        Met à jour automatiquement les statuts 'received' et 'invoiced' basé sur les items et factures.
+        
+        Returns:
+            bool: True si le statut a été modifié, False sinon
+        """
+        old_status = self.status
+        
+        # Ne pas modifier si déjà annulé
+        if self.status == 'cancelled':
+            return False
+        
+        # Vérifier si tous les items sont reçus
+        all_items_received = all(
+            item.quantity_received >= item.quantity
+            for item in self.items.all()
+        ) if self.items.exists() else False
+        
+        # Vérifier si une facture est liée
+        has_invoice = self.invoices.exists()
+        
+        # Mettre à jour le statut
+        if has_invoice and self.status != 'invoiced':
+            # Si une facture est liée, marquer comme facturé
+            self.status = 'invoiced'
+            self.save(update_fields=['status', 'updated_at'])
+            return True
+        elif all_items_received and self.status not in ['received', 'invoiced']:
+            # Si tous les items sont reçus, marquer comme reçu
+            self.status = 'received'
+            self.save(update_fields=['status', 'updated_at'])
+            return True
+        
+        return False
+
 
 class PurchaseOrderItem(models.Model):
     """Article d'un bon de commande"""

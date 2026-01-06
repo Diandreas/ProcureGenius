@@ -132,6 +132,11 @@ class Product(models.Model):
     # Prix
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de vente")
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix d'achat")
+    price_editable = models.BooleanField(
+        default=False,
+        verbose_name="Prix modifiable",
+        help_text="Si activé, le prix peut être modifié lors de la création de facture"
+    )
     
     # Stock (pour produits physiques)
     stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
@@ -509,6 +514,35 @@ class Invoice(models.Model):
         if self.status in ['paid', 'cancelled', 'draft']:
             return False
         return self.due_date < timezone.now().date()
+
+    def update_overdue_status(self):
+        """
+        Met à jour automatiquement le statut en 'overdue' si la date d'échéance est dépassée.
+        
+        Returns:
+            bool: True si le statut a été modifié, False sinon
+        """
+        from django.utils import timezone
+        
+        # Ne pas modifier si déjà payée, annulée ou en brouillon
+        if self.status in ['paid', 'cancelled', 'draft']:
+            return False
+        
+        # Vérifier si la date d'échéance est dépassée
+        if self.due_date < timezone.now().date():
+            if self.status != 'overdue':
+                old_status = self.status
+                self.status = 'overdue'
+                self.save(update_fields=['status', 'updated_at'])
+                return True
+        elif self.status == 'overdue':
+            # Si la facture n'est plus en retard (cas rare, mais possible si la date est modifiée)
+            # Remettre en 'sent'
+            self.status = 'sent'
+            self.save(update_fields=['status', 'updated_at'])
+            return True
+        
+        return False
 
     @property
     def days_overdue(self):
