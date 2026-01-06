@@ -24,7 +24,7 @@ import {
   Badge,
   Divider,
 } from '@mui/material';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
 import {
   Add,
@@ -1091,18 +1091,7 @@ function MainLayout() {
           <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div
-                  key={location.pathname}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ width: '100%' }}
-                >
-                  <Outlet />
-                </motion.div>
-              </AnimatePresence>
+              <Outlet />
             </LayoutGroup>
           </Box>
         </Box>

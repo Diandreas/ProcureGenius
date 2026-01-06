@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
   FormControl, FormGroup, FormControlLabel, Checkbox, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
@@ -197,23 +198,64 @@ function PurchaseOrders() {
   const cancelledPOs = purchaseOrders.filter(po => po.status === 'cancelled').length;
   const totalAmount = purchaseOrders.reduce((sum, po) => sum + (po.total_amount || 0), 0);
 
-  const POCard = ({ po }) => (
-    <Card
-      onClick={() => navigate(`/purchase-orders/${po.id}`)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-        },
-      }}
-    >
+  const POCard = ({ po, index }) => {
+    const statusColor = po.status === 'approved' ? '#10b981' :
+                       po.status === 'sent' ? '#f59e0b' :
+                       po.status === 'cancelled' ? '#ef4444' : '#6b7280';
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.05,
+          ease: [0.6, 0.05, 0.01, 0.9]
+        }}
+        whileHover={{
+          boxShadow: `0 20px 60px ${alpha(statusColor, 0.2)}`
+        }}
+        style={{ height: '100%' }}
+      >
+        <Card
+          onClick={() => navigate(`/purchase-orders/${po.id}`)}
+          sx={{
+            cursor: 'pointer',
+            height: '100%',
+            borderRadius: 3,
+            background: theme => `linear-gradient(145deg,
+              ${alpha(theme.palette.background.paper, 0.95)} 0%,
+              ${alpha(statusColor, 0.03)} 50%,
+              ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            boxShadow: theme => `0 4px 20px ${alpha(statusColor, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'box-shadow 0.3s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.5)})`,
+              borderRadius: '3px 3px 0 0',
+              boxShadow: `0 2px 8px ${alpha(statusColor, 0.3)}`
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `radial-gradient(circle at top right, ${alpha(statusColor, 0.05)} 0%, transparent 70%)`,
+              pointerEvents: 'none'
+            }
+          }}
+        >
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
           <Avatar
@@ -221,7 +263,8 @@ function PurchaseOrders() {
               width: isMobile ? 48 : 56,
               height: isMobile ? 48 : 56,
               bgcolor: 'primary.main',
-              borderRadius: 1,
+              borderRadius: 2,
+              boxShadow: 2,
             }}
           >
             <ShoppingCart />
@@ -309,7 +352,9 @@ function PurchaseOrders() {
         </Box>
       </CardContent>
     </Card>
-  );
+      </motion.div>
+    );
+  };
 
   if (loading) {
     return <LoadingState message={t('purchaseOrders:messages.loading', 'Chargement des bons de commande...')} />;
@@ -740,11 +785,13 @@ function PurchaseOrders() {
         />
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredPurchaseOrders.map((po) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={po.id}>
-              <POCard po={po} />
-            </Grid>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredPurchaseOrders.map((po, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={po.id}>
+                <POCard po={po} index={index} />
+              </Grid>
+            ))}
+          </AnimatePresence>
         </Grid>
       )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
   Card,
@@ -229,23 +230,62 @@ function Invoices() {
   const draftInvoices = invoices.filter(i => i.status === 'draft').length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
-  const InvoiceCard = ({ invoice }) => (
-    <Card
-      onClick={() => navigate(`/invoices/${invoice.id}`)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-        },
-      }}
-    >
+  const InvoiceCard = ({ invoice, index }) => {
+    const statusColor = invoice.status === 'paid' ? '#10b981' : invoice.status === 'sent' ? '#2563eb' : '#f59e0b';
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.05,
+          ease: [0.6, 0.05, 0.01, 0.9]
+        }}
+        whileHover={{
+          boxShadow: `0 20px 60px ${alpha(statusColor, 0.2)}`
+        }}
+        style={{ height: '100%' }}
+      >
+        <Card
+          onClick={() => navigate(`/invoices/${invoice.id}`)}
+          sx={{
+            cursor: 'pointer',
+            height: '100%',
+            borderRadius: 3,
+            background: theme => `linear-gradient(145deg,
+              ${alpha(theme.palette.background.paper, 0.95)} 0%,
+              ${alpha(statusColor, 0.03)} 50%,
+              ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            boxShadow: theme => `0 4px 20px ${alpha(statusColor, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'box-shadow 0.3s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.5)})`,
+              borderRadius: '3px 3px 0 0',
+              boxShadow: `0 2px 8px ${alpha(statusColor, 0.3)}`
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `radial-gradient(circle at top right, ${alpha(statusColor, 0.05)} 0%, transparent 70%)`,
+              pointerEvents: 'none'
+            }
+          }}
+        >
       <CardContent sx={{ p: 2 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
@@ -254,7 +294,8 @@ function Invoices() {
               width: isMobile ? 48 : 56,
               height: isMobile ? 48 : 56,
               bgcolor: 'primary.main',
-              borderRadius: 1,
+              borderRadius: 2,
+              boxShadow: 2,
             }}
           >
             <Receipt />
@@ -348,7 +389,9 @@ function Invoices() {
         </Box>
       </CardContent>
     </Card>
-  );
+      </motion.div>
+    );
+  };
 
   if (loading && invoices.length === 0) {
     return <LoadingState message={t('invoices:messages.loading', 'Chargement des factures...')} />;
@@ -794,11 +837,13 @@ function Invoices() {
         />
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredInvoices.map((invoice) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={invoice.id}>
-              <InvoiceCard invoice={invoice} />
-            </Grid>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredInvoices.map((invoice, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={invoice.id}>
+                <InvoiceCard invoice={invoice} index={index} />
+              </Grid>
+            ))}
+          </AnimatePresence>
         </Grid>
       )}
 

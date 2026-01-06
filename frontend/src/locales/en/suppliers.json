@@ -80,7 +80,13 @@
     "topProducts": "Top Products Purchased",
     "totalProducts": "{{count}} product(s)",
     "noOrders": "No orders for this supplier",
-    "noProducts": "No products purchased from this supplier"
+    "noProducts": "No products purchased from this supplier",
+    "autoRatingTitle": "Auto Rating",
+    "autoRatingDescription": "Rating details based on performance",
+    "punctuality": "Punctuality",
+    "quality": "Quality",
+    "payment": "Payment",
+    "ofScore": "of score"
   },
   "form": {
     "title": {

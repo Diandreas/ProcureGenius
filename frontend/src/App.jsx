@@ -6,6 +6,7 @@ import { SnackbarProvider } from 'notistack';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from './store/store';
 import { ModuleProvider } from './contexts/ModuleContext';
+import { SharedElementProvider } from './contexts/SharedElementContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { fetchSettings } from './store/slices/settingsSlice';
@@ -674,9 +675,10 @@ function App() {
             >
               <AppInitializer>
                 <ModuleProvider>
-                  <AdSenseScript />
-                  {onboardingChecked && (
-                    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <SharedElementProvider>
+                    <AdSenseScript />
+                    {onboardingChecked && (
+                      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <Routes>
                         {/* Public Routes */}
                         <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
@@ -770,9 +772,10 @@ function App() {
                         {/* 404 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
-                      <PWAInstallPrompt />
-                    </Router>
-                  )}
+                        <PWAInstallPrompt />
+                      </Router>
+                    )}
+                  </SharedElementProvider>
                 </ModuleProvider>
               </AppInitializer>
             </SnackbarProvider>

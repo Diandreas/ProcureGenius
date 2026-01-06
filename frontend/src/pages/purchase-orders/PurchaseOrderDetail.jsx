@@ -66,6 +66,7 @@ import {
   Info,
   Inventory,
   LocalShipping,
+  Payment,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';

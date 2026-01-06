@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSharedElement } from '../../contexts/SharedElementContext';
 import {
   Box,
   Card,
@@ -66,6 +68,7 @@ function Suppliers() {
   const { t } = useTranslation(['suppliers', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { registerSharedElement } = useSharedElement();
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -201,9 +204,42 @@ function Suppliers() {
     }
   };
 
-  const SupplierCard = ({ supplier }) => (
-    <Card
-      onClick={() => navigate(`/suppliers/${supplier.id}`)}
+  const handleCardClick = useCallback((event, supplier) => {
+    const cardElement = event.currentTarget;
+    const rect = cardElement.getBoundingClientRect();
+
+    // Enregistrer la position et TOUTES les données du supplier
+    registerSharedElement(`supplier-${supplier.id}`, rect, {
+      ...supplier,
+      avatar: supplier.name?.charAt(0)?.toUpperCase() || '?',
+    });
+
+    // Naviguer vers la page de détails
+    navigate(`/suppliers/${supplier.id}`);
+  }, [registerSharedElement, navigate]);
+
+  const SupplierCard = ({ supplier, index }) => (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.05,
+        ease: [0.6, 0.05, 0.01, 0.9]
+      }}
+      whileHover={{
+        boxShadow: supplier.status === 'active'
+          ? '0 20px 60px rgba(25, 118, 210, 0.2)'
+          : '0 20px 60px rgba(0, 0, 0, 0.15)'
+      }}
+      style={{ height: '100%' }}
+    >
+      <Card
+        component={motion.div}
+        layoutId={`supplier-card-${supplier.id}`}
+        onClick={(e) => handleCardClick(e, supplier)}
       sx={{
         cursor: 'pointer',
         height: '100%',
@@ -222,13 +258,7 @@ function Suppliers() {
         backdropFilter: 'blur(20px)',
         position: 'relative',
         overflow: 'hidden',
-        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        '&:hover': {
-          transform: 'translateY(-8px) scale(1.02)',
-          boxShadow: theme => supplier.status === 'active'
-            ? `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}, 0 8px 16px ${alpha(theme.palette.common.black, 0.08)}`
-            : `0 12px 32px ${alpha(theme.palette.common.black, 0.12)}`,
-        },
+        transition: 'box-shadow 0.3s ease',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -260,19 +290,24 @@ function Suppliers() {
       <CardContent sx={{ p: 2 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
-              bgcolor: 'primary.main',
-              borderRadius: 1,
-              fontSize: isMobile ? '1.2rem' : '1.5rem',
-            }}
-          >
-            {supplier.name?.charAt(0)?.toUpperCase() || '?'}
-          </Avatar>
+          <motion.div layoutId={`supplier-avatar-${supplier.id}`}>
+            <Avatar
+              sx={{
+                width: isMobile ? 48 : 56,
+                height: isMobile ? 48 : 56,
+                bgcolor: 'primary.main',
+                borderRadius: 2,
+                fontSize: isMobile ? '1.2rem' : '1.5rem',
+                fontWeight: 'bold',
+                boxShadow: 2,
+              }}
+            >
+              {supplier.name?.charAt(0)?.toUpperCase() || '?'}
+            </Avatar>
+          </motion.div>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
+            <motion.div layoutId={`supplier-name-${supplier.id}`}>
+              <Typography
               variant="subtitle2"
               sx={{
                 fontWeight: 600,
@@ -287,6 +322,7 @@ function Suppliers() {
             >
               {supplier.name}
             </Typography>
+            </motion.div>
             {parseRating(supplier.rating) > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Rating
@@ -405,6 +441,7 @@ function Suppliers() {
         </Box>
       </CardContent>
     </Card>
+    </motion.div>
   );
 
   const handlePdfAction = (action) => {
@@ -928,11 +965,13 @@ function Suppliers() {
         />
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredSuppliers.map((supplier) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={supplier.id}>
-              <SupplierCard supplier={supplier} />
-            </Grid>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredSuppliers.map((supplier, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={supplier.id}>
+                <SupplierCard supplier={supplier} index={index} />
+              </Grid>
+            ))}
+          </AnimatePresence>
         </Grid>
       )}
 

@@ -81,7 +81,13 @@
     "topProducts": "Produits les plus achetés",
     "totalProducts": "{{count}} produit(s)",
     "noOrders": "Aucune commande pour ce fournisseur",
-    "noProducts": "Aucun produit acheté auprès de ce fournisseur"
+    "noProducts": "Aucun produit acheté auprès de ce fournisseur",
+    "autoRatingTitle": "Évaluation automatique",
+    "autoRatingDescription": "Détails de l'évaluation basés sur les performances",
+    "punctuality": "Ponctualité",
+    "quality": "Qualité",
+    "payment": "Paiement",
+    "ofScore": "du score"
   },
   "form": {
     "title": {

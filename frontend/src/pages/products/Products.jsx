@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
   Card,
@@ -248,29 +249,63 @@ function Products() {
     }
   };
 
-  const ProductCard = ({ product }) => {
+  const ProductCard = ({ product, index }) => {
     const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
     const TypeIcon = typeConfig.icon;
 
     return (
-      <Card
-        onClick={() => navigate(`/products/${product.id}`)}
-        sx={{
-          cursor: 'pointer',
-          height: '100%',
-          borderRadius: 1,
-          borderLeft: `4px solid ${typeConfig.color}`,
-          backgroundColor: typeConfig.bgColor,
-          border: '1px solid',
-          borderColor: 'divider',
-          transition: 'all 0.2s',
-          '&:hover': {
-            borderColor: typeConfig.color,
-            boxShadow: 2,
-            transform: 'translateY(-2px)',
-          },
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.05,
+          ease: [0.6, 0.05, 0.01, 0.9]
         }}
+        whileHover={{
+          boxShadow: `0 20px 60px ${alpha(typeConfig.color, 0.2)}`
+        }}
+        style={{ height: '100%' }}
       >
+        <Card
+          onClick={() => navigate(`/products/${product.id}`)}
+          sx={{
+            cursor: 'pointer',
+            height: '100%',
+            borderRadius: 3,
+            background: theme => `linear-gradient(145deg,
+              ${alpha(theme.palette.background.paper, 0.95)} 0%,
+              ${alpha(typeConfig.color, 0.03)} 50%,
+              ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+            boxShadow: theme => `0 4px 20px ${alpha(typeConfig.color, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'box-shadow 0.3s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              background: `linear-gradient(90deg, ${typeConfig.color}, ${alpha(typeConfig.color, 0.5)})`,
+              borderRadius: '3px 3px 0 0',
+              boxShadow: `0 2px 8px ${alpha(typeConfig.color, 0.3)}`
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `radial-gradient(circle at top right, ${alpha(typeConfig.color, 0.05)} 0%, transparent 70%)`,
+              pointerEvents: 'none'
+            }
+          }}
+        >
         <CardContent sx={{ p: 2 }}>
           {/* Header */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
@@ -431,6 +466,7 @@ function Products() {
           </Box>
         </CardContent>
       </Card>
+      </motion.div>
     );
   };
 
@@ -906,11 +942,13 @@ function Products() {
         />
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredProducts.map((product) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-              <ProductCard product={product} />
-            </Grid>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+                <ProductCard product={product} index={index} />
+              </Grid>
+            ))}
+          </AnimatePresence>
         </Grid>
       )}
 
