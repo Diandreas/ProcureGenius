@@ -844,13 +844,26 @@ function Products() {
         )}
       </Box>
 
-      {/* Search & Filters */}
-      <Card sx={{ mb: 3, borderRadius: 1 }}>
+      {/* Search & Filters - Design Neumorphique Amélioré */}
+      <Card
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          boxShadow: theme => theme.palette.mode === 'dark'
+            ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+            : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+          border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+        }}
+      >
         <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
           <Stack spacing={2}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{
+              display: 'flex',
+              gap: 1,
+              flexWrap: 'wrap',
+              alignItems: 'stretch',
+            }}>
               <TextField
-                fullWidth
                 size="small"
                 placeholder={t('products:search.placeholder')}
                 value={searchTerm}
@@ -862,16 +875,40 @@ function Products() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                sx={{
+                  flex: '1 1 auto',
+                  minWidth: isMobile ? '100%' : '250px',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: theme => alpha(theme.palette.primary.main, 0.2) + ' 0px 0px 0px 3px',
+                    }
+                  }
+                }}
               />
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}
                 sx={{
                   bgcolor: showFilters ? 'primary.main' : 'transparent',
                   color: showFilters ? 'white' : 'inherit',
+                  borderRadius: 2,
+                  minWidth: 40,
+                  height: 40,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: showFilters
+                    ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                    : 'none',
                   '&:hover': {
                     bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                    transform: 'scale(1.05)',
                   },
+                  '&:active': {
+                    transform: 'scale(0.95)',
+                  }
                 }}
               >
                 <FilterList />
@@ -879,54 +916,79 @@ function Products() {
             </Box>
 
             {showFilters && (
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('products:filters.statusLabel')}</InputLabel>
-                    <Select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      label={t('products:filters.statusLabel')}
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <MenuItem value="">{t('products:filters.all')}</MenuItem>
-                      <MenuItem value="available">{t('products:status.available')}</MenuItem>
-                      <MenuItem value="unavailable">{t('products:status.unavailable')}</MenuItem>
-                    </Select>
-                  </FormControl>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('products:filters.statusLabel')}</InputLabel>
+                      <Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        label={t('products:filters.statusLabel')}
+                        sx={{
+                          borderRadius: 2,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                          },
+                        }}
+                      >
+                        <MenuItem value="">{t('products:filters.all')}</MenuItem>
+                        <MenuItem value="available">{t('products:status.available')}</MenuItem>
+                        <MenuItem value="unavailable">{t('products:status.unavailable')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('products:filters.categoryLabel')}</InputLabel>
+                      <Select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        label={t('products:filters.categoryLabel')}
+                        sx={{
+                          borderRadius: 2,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                          },
+                        }}
+                      >
+                        <MenuItem value="">{t('products:filters.allCategories')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('products:filters.warehouseLabel')}</InputLabel>
+                      <Select
+                        value={warehouseFilter}
+                        onChange={(e) => setWarehouseFilter(e.target.value)}
+                        label={t('products:filters.warehouseLabel')}
+                        sx={{
+                          borderRadius: 2,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                          },
+                        }}
+                      >
+                        <MenuItem value="">{t('products:filters.allWarehouses')}</MenuItem>
+                        {warehouses.map((warehouse) => (
+                          <MenuItem key={warehouse.id} value={warehouse.id}>
+                            {warehouse.code}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('products:filters.categoryLabel')}</InputLabel>
-                    <Select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      label={t('products:filters.categoryLabel')}
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <MenuItem value="">{t('products:filters.allCategories')}</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('products:filters.warehouseLabel')}</InputLabel>
-                    <Select
-                      value={warehouseFilter}
-                      onChange={(e) => setWarehouseFilter(e.target.value)}
-                      label={t('products:filters.warehouseLabel')}
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <MenuItem value="">{t('products:filters.allWarehouses')}</MenuItem>
-                      {warehouses.map((warehouse) => (
-                        <MenuItem key={warehouse.id} value={warehouse.id}>
-                          {warehouse.code}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+              </motion.div>
             )}
           </Stack>
         </CardContent>

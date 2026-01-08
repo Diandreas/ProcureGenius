@@ -53,7 +53,8 @@
     "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le client créé et qu'il aura un historique de transactions.",
     "productUnavailable": "Produit non disponible",
     "ref": "Réf",
-    "generatingLabel": "Génération du rapport en cours..."
+    "generatingLabel": "Génération du rapport en cours...",
+    "lastActivity": "Dernière activité"
   },
   "stats": {
     "totalRevenue": "CA Total",

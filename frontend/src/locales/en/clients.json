@@ -43,7 +43,11 @@
         "billingAddress": "Billing Address",
         "activeClient": "Active Client",
         "aiInfo": "AI Information",
-        "aiInfoDescription": "Payment risk scores and behavior patterns will be automatically calculated by AI once the client is created and has a transaction history."
+        "aiInfoDescription": "Payment risk scores and behavior patterns will be automatically calculated by AI once the client is created and has a transaction history.",
+        "productUnavailable": "Product unavailable",
+        "ref": "Ref",
+        "generatingLabel": "Generating report...",
+        "lastActivity": "Last Activity"
     },
     "stats": {
         "totalRevenue": "Total Revenue",
@@ -100,11 +104,6 @@
         "totalQuantity": "Total Quantity",
         "purchaseCount": "Purchase Count",
         "totalSpent": "Total Spent"
-    },
-    "labels": {
-        "productUnavailable": "Product unavailable",
-        "ref": "Ref",
-        "generatingLabel": "Generating report..."
     },
     "messages": {
         "noClients": "No clients",

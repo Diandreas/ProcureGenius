@@ -968,38 +968,28 @@ function MainLayout() {
                 }}
                 data-tutorial="profile-menu"
               >
-                <Box
+                <Avatar
                   sx={{
-                    position: 'relative',
-                    p: { xs: 0.3, sm: 0.5 },
-                    borderRadius: { xs: '12px', sm: '14px' },
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                    width: { xs: 28, sm: 34 },
+                    height: { xs: 28, sm: 34 },
+                    bgcolor: mode === 'dark'
+                      ? theme.palette.background.paper
+                      : '#ffffff',
+                    border: 'none',
+                    p: 0.5,
                   }}
                 >
-                  <Avatar
+                  <Box
+                    component="img"
+                    src="/icon/ai-assistant.png"
+                    alt="Profile"
                     sx={{
-                      width: { xs: 28, sm: 34 },
-                      height: { xs: 28, sm: 34 },
-                      bgcolor: mode === 'dark'
-                        ? theme.palette.background.paper
-                        : '#ffffff',
-                      color: 'primary.main',
-                      fontWeight: 700,
-                      fontSize: { xs: '0.7rem', sm: '0.813rem' },
-                      border: 'none',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
                     }}
-                  >
-                    {useSelector((state) => {
-                      const user = state.auth.user;
-                      const orgName = user?.organization?.name;
-                      if (orgName) return orgName.substring(0, 2).toUpperCase();
-                      if (user?.first_name && user?.last_name) {
-                        return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-                      }
-                      return user?.email?.[0]?.toUpperCase() || 'P';
-                    })}
-                  </Avatar>
-                </Box>
+                  />
+                </Avatar>
               </IconButton>
             </Tooltip>
 

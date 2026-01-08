@@ -38,6 +38,7 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  alpha,
 } from '@mui/material';
 import {
   Edit,
@@ -289,12 +290,13 @@ function InvoiceDetail() {
   const MobileInvoiceInfoCard = ({ invoice }) => (
     <Card sx={{
       mb: 1.5,
-      borderRadius: 1,
-      background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 252, 0.95))',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(200, 200, 220, 0.2)',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-      overflow: 'hidden'
+      borderRadius: 3,
+      boxShadow: theme => theme.palette.mode === 'dark'
+        ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+        : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+      border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+      overflow: 'hidden',
+      transition: 'all 0.3s ease'
     }}>
       <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
@@ -614,7 +616,15 @@ Cordialement`
 
           {/* Client Info Mobile */}
           {invoice.client ? (
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Card sx={{
+              mb: 2,
+              borderRadius: 3,
+              boxShadow: theme => theme.palette.mode === 'dark'
+                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+              border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+              transition: 'all 0.3s ease'
+            }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                   {t('invoices:labels.client')}
@@ -644,7 +654,16 @@ Cordialement`
               </CardContent>
             </Card>
           ) : (
-            <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '1px dashed', borderColor: 'warning.main' }}>
+            <Card sx={{
+              mb: 2,
+              borderRadius: 3,
+              boxShadow: theme => theme.palette.mode === 'dark'
+                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+              border: '2px dashed',
+              borderColor: 'warning.main',
+              transition: 'all 0.3s ease'
+            }}>
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Warning color="warning" fontSize="small" />
@@ -662,10 +681,15 @@ Cordialement`
           {/* Financial Summary Mobile - Ultra Compact */}
           <Card sx={{
             mb: 1.5,
-            borderRadius: 2.5,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
-            overflow: 'hidden'
+            borderRadius: 3,
+            background: theme => theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #5568d3 0%, #6941a8 100%)'
+              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: theme => theme.palette.mode === 'dark'
+              ? '4px 4px 12px rgba(0,0,0,0.6), -2px -2px 10px rgba(102, 126, 234, 0.1)'
+              : '6px 6px 16px rgba(102, 126, 234, 0.3), -4px -4px 12px rgba(255,255,255,0.5)',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease'
           }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Stack spacing={0.75}>
@@ -699,7 +723,15 @@ Cordialement`
           </Card>
 
           {/* Items Table Mobile - Compact */}
-          <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <Card sx={{
+            mb: 1.5,
+            borderRadius: 3,
+            boxShadow: theme => theme.palette.mode === 'dark'
+              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            transition: 'all 0.3s ease'
+          }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
                 {t('invoices:labels.itemsCount', { count: invoice.items?.length || 0 })}
@@ -762,7 +794,15 @@ Cordialement`
           </Card>
 
           {/* Dates Mobile - Compact */}
-          <Card sx={{ mb: 1.5, borderRadius: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <Card sx={{
+            mb: 1.5,
+            borderRadius: 3,
+            boxShadow: theme => theme.palette.mode === 'dark'
+              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            transition: 'all 0.3s ease'
+          }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
                 {t('invoices:labels.datesLabel')}

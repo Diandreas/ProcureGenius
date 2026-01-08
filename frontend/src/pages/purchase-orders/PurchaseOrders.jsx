@@ -695,12 +695,26 @@ function PurchaseOrders() {
         )}
       </Box>
 
-      <Card sx={{ mb: 3, borderRadius: 1 }}>
+      {/* Search & Filters - Design Neumorphique Amélioré */}
+      <Card
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          boxShadow: theme => theme.palette.mode === 'dark'
+            ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+            : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+          border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+        }}
+      >
         <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
           <Stack spacing={2}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{
+              display: 'flex',
+              gap: 1,
+              flexWrap: 'wrap',
+              alignItems: 'stretch',
+            }}>
               <TextField
-                fullWidth
                 size="small"
                 placeholder={t('purchaseOrders:search.placeholder')}
                 value={searchTerm}
@@ -713,9 +727,18 @@ function PurchaseOrders() {
                   ),
                 }}
                 sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: 1 },
-                  minWidth: isMobile ? '100%' : '200px',
-                  flex: 1,
+                  flex: '1 1 auto',
+                  minWidth: isMobile ? 'calc(100% - 140px)' : '200px',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: theme => alpha(theme.palette.primary.main, 0.2) + ' 0px 0px 0px 3px',
+                    }
+                  }
                 }}
               />
               <DateNavigator
@@ -727,9 +750,20 @@ function PurchaseOrders() {
                 sx={{
                   bgcolor: showFilters ? 'primary.main' : 'transparent',
                   color: showFilters ? 'white' : 'inherit',
+                  borderRadius: 2,
+                  minWidth: 40,
+                  height: 40,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: showFilters
+                    ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                    : 'none',
                   '&:hover': {
                     bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                    transform: 'scale(1.05)',
                   },
+                  '&:active': {
+                    transform: 'scale(0.95)',
+                  }
                 }}
               >
                 <FilterList />
@@ -752,25 +786,38 @@ function PurchaseOrders() {
             )}
 
             {showFilters && (
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('purchaseOrders:filters.statusLabel')}</InputLabel>
-                    <Select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      label={t('purchaseOrders:filters.statusLabel')}
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <MenuItem value="">{t('purchaseOrders:filters.allStatuses')}</MenuItem>
-                      <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
-                      <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
-                      <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
-                      <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
-                    </Select>
-                  </FormControl>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('purchaseOrders:filters.statusLabel')}</InputLabel>
+                      <Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        label={t('purchaseOrders:filters.statusLabel')}
+                        sx={{
+                          borderRadius: 2,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                          },
+                        }}
+                      >
+                        <MenuItem value="">{t('purchaseOrders:filters.allStatuses')}</MenuItem>
+                        <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
+                        <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
+                        <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
+                        <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
                 </Grid>
-              </Grid>
+              </motion.div>
             )}
           </Stack>
         </CardContent>

@@ -96,21 +96,29 @@ function ClientDetail() {
 
   // Mesurer la position cible après le premier rendu
   useLayoutEffect(() => {
-    if (targetCardRef.current && sharedElementData) {
+    if (targetCardRef.current && sharedElementData && !loading && client) {
       const rect = targetCardRef.current.getBoundingClientRect();
       setTargetRect(rect);
     }
-  }, [sharedElementData, loading]);
+  }, [sharedElementData, loading, client]);
 
   // Terminer l'animation
   const handleAnimationComplete = () => {
-    setIsAnimating(false);
-    clearSharedElement();
+    // Ajouter un petit délai pour s'assurer que l'animation est complètement terminée
+    setTimeout(() => {
+      setIsAnimating(false);
+      clearSharedElement();
+    }, 50); // 50ms delay to ensure smooth transition
   };
 
   useEffect(() => {
-    fetchClient();
-    fetchStatistics();
+    // Only start fetching after we've processed the shared element
+    const fetchClientData = async () => {
+      await fetchClient();
+      await fetchStatistics();
+    };
+
+    fetchClientData();
   }, [id]);
 
   const fetchClient = async () => {
@@ -251,6 +259,7 @@ function ClientDetail() {
               ease: [0.4, 0, 0.2, 1],
             }}
             onAnimationComplete={handleAnimationComplete}
+            style={{ pointerEvents: 'none' }} // Prevent interaction during animation
           >
             {/* Barre de couleur en haut */}
             <Box
@@ -592,7 +601,9 @@ function ClientDetail() {
                   height: 4,
                   background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   borderRadius: '3px 3px 0 0'
-                }
+                },
+                opacity: isAnimating ? 0 : 1, // Hide during animation
+                visibility: isAnimating ? 'hidden' : 'visible' // Ensure it's not taking up space during animation
               }}
             >
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>

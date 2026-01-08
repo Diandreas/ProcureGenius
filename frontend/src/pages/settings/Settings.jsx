@@ -69,6 +69,7 @@ import {
   Email as EmailIcon,
   CheckCircle,
   Warning,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
@@ -103,6 +104,7 @@ const createImage = (url) =>
 const Settings = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const dispatch = useDispatch();
   const { t } = useTranslation(['settings', 'common']);
 
@@ -413,16 +415,14 @@ const Settings = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  // Configuration des onglets
+  // Configuration des onglets - Fusionnés pour tablette
   const tabs = [
     { label: t('settings:tabs.general'), icon: <BusinessIcon /> },
     { label: 'Modules', icon: <AppsIcon /> },
     { label: t('settings:tabs.print'), icon: <PrintIcon /> },
-    { label: t('settings:tabs.notifications'), icon: <NotificationsIcon /> },
-    { label: t('settings:tabs.appearance'), icon: <AppearanceIcon /> },
-    { label: 'Email', icon: <EmailIcon /> },
-    { label: 'Profil', icon: <SecurityIcon /> },
-    { label: 'Migration de données', icon: <BackupIcon /> },
+    { label: 'Mail', icon: <EmailIcon /> },
+    { label: 'Migration', icon: <BackupIcon /> },
+    { label: 'Profil', icon: <PersonIcon /> },
   ];
 
   // Loading state
@@ -443,7 +443,7 @@ const Settings = () => {
   }
 
   return (
-    <Box p={isMobile ? 1.5 : 3}>
+    <Box p={{ xs: 1.5, sm: 2, md: 3 }}>
       <Card
         sx={{
           borderRadius: 1,
@@ -457,34 +457,34 @@ const Settings = () => {
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          variant={isMobile ? 'fullWidth' : 'standard'}
-          scrollButtons={false}
+          variant={isMobile ? 'fullWidth' : 'fullWidth'}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
-            minHeight: isMobile ? 48 : 64,
+            minHeight: { xs: 48, sm: 56, md: 64 },
             '& .MuiTab-root': {
-              minHeight: isMobile ? 48 : 64,
-              minWidth: isMobile ? 'auto' : 90,
-              padding: isMobile ? '6px 4px' : '12px 16px',
+              minHeight: { xs: 48, sm: 56, md: 64 },
+              minWidth: 0,
+              padding: { xs: '6px 4px', sm: '8px 12px', md: '12px 16px' },
               textTransform: 'none',
-              fontSize: '0.95rem',
+              fontSize: { xs: '0.7rem', sm: '0.85rem', md: '0.95rem' },
+              flex: 1,
             },
             '& .MuiTab-iconWrapper': {
-              marginBottom: isMobile ? '0 !important' : undefined,
-              marginRight: isMobile ? 0 : undefined,
+              marginBottom: isMobile ? '2px !important' : undefined,
+              marginRight: isMobile ? 0 : '8px',
             },
           }}
         >
           {tabs.map((tab, index) => (
             <Tab
               key={index}
-              label={isMobile ? '' : tab.label}
+              label={tab.label}
               icon={tab.icon}
               iconPosition={isMobile ? 'top' : 'start'}
               sx={{
                 '& .MuiSvgIcon-root': {
-                  fontSize: isMobile ? '1.25rem' : '1.5rem',
+                  fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem' },
                 },
               }}
             />
@@ -492,7 +492,7 @@ const Settings = () => {
         </Tabs>
 
         {/* Contenu de la section active */}
-        <Box p={isMobile ? 2 : 3}>
+        <Box p={{ xs: 2, sm: 2.5, md: 3 }}>
           {/* Section Général */}
           {activeTab === 0 && (
             <GeneralSection
@@ -519,44 +519,42 @@ const Settings = () => {
             />
           )}
 
-          {/* Section Notifications */}
+          {/* Section Notifications - Fusionné (Notifications + Email) */}
           {activeTab === 3 && (
-            <NotificationSection
-              settings={settings}
-              onUpdate={handleUpdateSetting}
-            />
-          )}
-
-          {/* Section Apparence */}
-          {activeTab === 4 && (
-            <AppearanceSection
-              settings={settings}
-              onUpdate={handleUpdateSetting}
-            />
-          )}
-
-          {/* Section Email */}
-          {activeTab === 5 && (
-            <EmailSection
-              settings={settings}
-              showSnackbar={showSnackbar}
-            />
-          )}
-
-          {/* Section Profil (mot de passe, etc.) */}
-          {activeTab === 6 && (
-            <ProfileSection
-              settings={settings}
-              onUpdate={handleUpdateSetting}
-            />
+            <>
+              <NotificationSection
+                settings={settings}
+                onUpdate={handleUpdateSetting}
+              />
+              <Divider sx={{ my: 4 }} />
+              <EmailSection
+                settings={settings}
+                showSnackbar={showSnackbar}
+              />
+            </>
           )}
 
           {/* Section Migration de données */}
-          {activeTab === 7 && (
+          {activeTab === 4 && (
             <DataSection
               settings={settings}
               showSnackbar={showSnackbar}
             />
+          )}
+
+          {/* Section Profil - Fusionné (Profil + Apparence) */}
+          {activeTab === 5 && (
+            <>
+              <ProfileSection
+                settings={settings}
+                onUpdate={handleUpdateSetting}
+              />
+              <Divider sx={{ my: 4 }} />
+              <AppearanceSection
+                settings={settings}
+                onUpdate={handleUpdateSetting}
+              />
+            </>
           )}
 
           {/* Bouton de sauvegarde */}
@@ -1598,6 +1596,8 @@ const DataSection = ({ settings, showSnackbar }) => {
 // Email Section Component
 const EmailSection = ({ settings, showSnackbar }) => {
   const { t } = useTranslation(['settings', 'common']);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [emailConfig, setEmailConfig] = useState(null);
   const [configExists, setConfigExists] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -1828,25 +1828,26 @@ const EmailSection = ({ settings, showSnackbar }) => {
           />
         </Grid>
         <Grid item xs={12}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={emailConfig?.use_tls !== false}
-                onChange={(e) => setEmailConfig({ ...emailConfig, use_tls: e.target.checked })}
-              />
-            }
-            label="Utiliser TLS"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={emailConfig?.use_ssl || false}
-                onChange={(e) => setEmailConfig({ ...emailConfig, use_ssl: e.target.checked })}
-              />
-            }
-            label="Utiliser SSL"
-            sx={{ ml: 2 }}
-          />
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={emailConfig?.use_tls !== false}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, use_tls: e.target.checked })}
+                />
+              }
+              label="Utiliser TLS"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={emailConfig?.use_ssl || false}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, use_ssl: e.target.checked })}
+                />
+              }
+              label="Utiliser SSL"
+            />
+          </Box>
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
@@ -1871,25 +1872,34 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
       <Divider sx={{ my: 3 }} />
 
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <Chip
           label={emailConfig?.is_verified ? 'Vérifié' : 'Non vérifié'}
           color={emailConfig?.is_verified ? 'success' : 'default'}
           icon={emailConfig?.is_verified ? <CheckCircle /> : undefined}
         />
         {emailConfig?.last_verified_at && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
             Dernière vérification: {new Date(emailConfig.last_verified_at).toLocaleString()}
           </Typography>
         )}
       </Box>
 
-      <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{
+          mt: 3,
+          flexWrap: 'wrap',
+          alignItems: { xs: 'stretch', sm: 'center' }
+        }}
+      >
         <Button
           variant="contained"
           onClick={handleSave}
           disabled={saving}
           startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+          fullWidth={isMobile}
         >
           Sauvegarder
         </Button>
@@ -1898,6 +1908,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           onClick={handleVerify}
           disabled={testing}
           startIcon={testing ? <CircularProgress size={16} /> : <CheckCircle />}
+          fullWidth={isMobile}
         >
           Vérifier la connexion
         </Button>
@@ -1907,13 +1918,17 @@ const EmailSection = ({ settings, showSnackbar }) => {
           type="email"
           value={testEmail}
           onChange={(e) => setTestEmail(e.target.value)}
-          sx={{ flex: 1, maxWidth: 300 }}
+          sx={{
+            flex: { xs: '1 1 100%', sm: '1 1 auto' },
+            maxWidth: { xs: '100%', sm: 300 }
+          }}
         />
         <Button
           variant="outlined"
           onClick={handleTest}
           disabled={testing || !testEmail}
           startIcon={testing ? <CircularProgress size={16} /> : <EmailIcon />}
+          fullWidth={isMobile}
         >
           Envoyer test
         </Button>
