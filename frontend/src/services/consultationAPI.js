@@ -15,7 +15,7 @@ const consultationAPI = {
 
     // Create new consultation (Start/End)
     createConsultation: async (data) => {
-        const response = await api.post('/healthcare/consultations/create_visit/', data);
+        const response = await api.post('/healthcare/consultations/', data);
         return response.data;
     },
 
@@ -39,7 +39,15 @@ const consultationAPI = {
         return response.data;
     },
 
-    // Get Patient Medical History PDF (reused from patientAPI but good to have here too)
+    // Get Consultation Report PDF
+    getConsultationReportPDF: async (id) => {
+        const response = await api.get(`/healthcare/consultations/${id}/report/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
+    // Get Patient Medical History PDF
     getHistoryPDF: async (patientId) => {
         const response = await api.get(`/healthcare/consultations/patient/${patientId}/history-pdf/`, {
             responseType: 'blob'

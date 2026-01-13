@@ -11,9 +11,6 @@ import {
     Tab,
     Divider,
     List,
-    ListItem,
-    ListItemText,
-    ListItemIcon,
     Avatar
 } from '@mui/material';
 import {
@@ -26,7 +23,9 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
-// import { DocumentImport } from '../ai-chat/DocumentImport'; // Reuse if needed
+import VisitHistory from './VisitHistory';
+import PatientDocuments from './PatientDocuments';
+import PrintModal from '../../../components/PrintModal';
 
 const PatientDetail = () => {
     const { t } = useTranslation();
@@ -37,6 +36,10 @@ const PatientDetail = () => {
     const [history, setHistory] = useState(null);
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(true);
+
+    // Print Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -58,18 +61,38 @@ const PatientDetail = () => {
         }
     };
 
-    const handleDownloadHistory = async () => {
+    const handlePrintAction = async (action) => {
+        setGeneratingPdf(true);
         try {
-            const blob = await patientAPI.getPatientHistoryPDF(id);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `medical_history_${patient.patient_number}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const blob = await patientAPI.getPatientSummaryPDF(id);
+            const filename = `dossier_medical_${patient.patient_number}.pdf`;
+
+            if (action === 'download') {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else if (action === 'preview' || action === 'print') {
+                const url = window.URL.createObjectURL(blob);
+                const printWindow = window.open(url, '_blank');
+
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+
+            setPrintModalOpen(false);
         } catch (error) {
             console.error('Error downloading PDF:', error);
+            alert('Erreur lors de la génération du PDF');
+        } finally {
+            setGeneratingPdf(false);
         }
     };
 
@@ -86,11 +109,11 @@ const PatientDetail = () => {
                 <Box>
                     <Button
                         startIcon={<PdfIcon />}
-                        onClick={handleDownloadHistory}
+                        onClick={() => setPrintModalOpen(true)}
                         sx={{ mr: 2 }}
                         variant="outlined"
                     >
-                        Exporter PDF
+                        Imprimer Dossier
                     </Button>
                     <Button
                         variant="contained"
@@ -196,17 +219,27 @@ const PatientDetail = () => {
                     )}
                 </Box>
 
-                {/* Tab Panel 1: Visits (Placeholder) */}
+                {/* Tab Panel 1: Visits */}
                 <Box role="tabpanel" hidden={tabValue !== 1} sx={{ p: 3 }}>
-                    {tabValue === 1 && <Typography>Historique des visites (TODO)</Typography>}
+                    {tabValue === 1 && <VisitHistory patientId={id} />}
                 </Box>
 
                 {/* Tab Panel 2: Docs */}
                 <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
-                    {tabValue === 2 && <Typography>Documents (TODO)</Typography>}
+                    {tabValue === 2 && <PatientDocuments patientId={id} />}
                 </Box>
             </Card>
 
+            <PrintModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                title="Imprimer Dossier Patient"
+                loading={generatingPdf}
+                onPreview={() => handlePrintAction('preview')}
+                onPrint={() => handlePrintAction('print')}
+                onDownload={() => handlePrintAction('download')}
+                helpText="Générer le dossier médical complet du patient (résumé, historique, etc)."
+            />
         </Box>
     );
 };

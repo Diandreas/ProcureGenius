@@ -496,3 +496,39 @@ class DispensingPDFView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class GeneratePharmacyInvoiceView(APIView):
+    """Generate invoice for pharmacy dispensing (manual trigger)"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from apps.healthcare.invoice_services import PharmacyInvoiceService
+
+        try:
+            dispensing = PharmacyDispensing.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except PharmacyDispensing.DoesNotExist:
+            return Response(
+                {'error': 'Dispensing not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            invoice = PharmacyInvoiceService.generate_invoice(dispensing)
+            return Response({
+                'message': 'Facture créée avec succès',
+                'invoice_id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'total_amount': float(invoice.total_amount)
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': f"Erreur lors de la création de facture: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

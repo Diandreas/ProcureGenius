@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultation - {{ consultation.consultation_number }}</title>
+    <style>
+        @page {
+            {% if paper_size == 'thermal_58' %}
+            size: 58mm 297mm;
+            margin: 3mm 2mm;
+            {% else %}
+            size: 80mm 297mm;
+            margin: 5mm 3mm;
+            {% endif %}
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .header {
+            border-bottom: 2px dashed #000;
+            padding-bottom: 5mm;
+            margin-bottom: 3mm;
+        }
+
+        .company-name {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2mm;
+        }
+
+        .title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 3mm 0;
+            text-decoration: underline;
+        }
+
+        .section {
+            border-top: 1px dashed #000;
+            padding: 2mm 0;
+            text-align: left;
+        }
+
+        .info-row {
+            font-size: 9pt;
+            margin: 1mm 0;
+        }
+
+        .vital-signs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1mm;
+            font-size: 8pt;
+        }
+
+        .qr-code img {
+            width: 40mm;
+            height: 40mm;
+            margin: 3mm auto;
+        }
+
+        .footer {
+            border-top: 2px dashed #000;
+            padding-top: 3mm;
+            margin-top: 5mm;
+            font-size: 8pt;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        {% if logo_base64 %}
+        <img src="{{ logo_base64 }}" style="max-width: 40mm; margin-bottom: 2mm;" alt="Logo">
+        {% endif %}
+        <div class="company-name">{{ organization.company_name }}</div>
+        <div style="font-size: 8pt;">
+            {{ organization.company_address }}<br>
+            Tél: {{ organization.company_phone }}
+        </div>
+    </div>
+
+    <!-- Title -->
+    <div class="title">FICHE DE CONSULTATION</div>
+
+    <!-- Consultation Info -->
+    <div class="section">
+        <div class="info-row"><strong>N°: {{ consultation.consultation_number }}</strong></div>
+        <div class="info-row">Date: {{ consultation.consultation_date|date:"d/m/Y H:i" }}</div>
+        <div class="info-row">Médecin: {{ doctor.get_full_name }}</div>
+    </div>
+
+    <!-- Patient Info -->
+    <div class="section">
+        <div class="info-row"><strong>Patient: {{ patient.get_full_name }}</strong></div>
+        {% if patient.date_of_birth %}
+        <div class="info-row">Âge: {{ patient.get_age }} ans</div>
+        {% endif %}
+    </div>
+
+    <!-- Vital Signs -->
+    <div class="section">
+        <div style="font-weight: bold; margin-bottom: 2mm;">SIGNES VITAUX:</div>
+        <div class="vital-signs">
+            {% if vital_signs.temperature %}
+            <div>Temp: {{ vital_signs.temperature }}°C</div>
+            {% endif %}
+            {% if vital_signs.blood_pressure %}
+            <div>TA: {{ vital_signs.blood_pressure }}</div>
+            {% endif %}
+            {% if vital_signs.heart_rate %}
+            <div>FC: {{ vital_signs.heart_rate }} bpm</div>
+            {% endif %}
+            {% if vital_signs.weight %}
+            <div>Poids: {{ vital_signs.weight }} kg</div>
+            {% endif %}
+            {% if vital_signs.bmi %}
+            <div>IMC: {{ vital_signs.bmi }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chief Complaint -->
+    {% if consultation.chief_complaint %}
+    <div class="section">
+        <div style="font-weight: bold;">Motif:</div>
+        <div style="font-size: 9pt;">{{ consultation.chief_complaint }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Diagnosis -->
+    {% if consultation.diagnosis %}
+    <div class="section">
+        <div style="font-weight: bold;">Diagnostic:</div>
+        <div style="font-size: 9pt;">{{ consultation.diagnosis }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Treatment Plan -->
+    {% if consultation.treatment_plan %}
+    <div class="section">
+        <div style="font-weight: bold;">Traitement:</div>
+        <div style="font-size: 9pt;">{{ consultation.treatment_plan }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Follow-up -->
+    {% if consultation.follow_up_required %}
+    <div class="section">
+        <div class="info-row">
+            <strong>⚠ Suivi requis</strong>
+            {% if consultation.follow_up_date %}
+            <br>Date: {{ consultation.follow_up_date|date:"d/m/Y" }}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Invoice Reference -->
+    {% if consultation.consultation_invoice %}
+    <div class="section">
+        <div class="info-row">
+            Facture: {{ consultation.consultation_invoice.invoice_number }}
+            <br>Montant: {{ consultation.consultation_invoice.total_amount }} $
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- QR Code -->
+    {% if qr_code_base64 %}
+    <div class="qr-code">
+        <img src="{{ qr_code_base64 }}" alt="QR Code">
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        Signature médecin:<br>
+        _______________________<br>
+        {{ doctor.get_full_name }}<br>
+        {{ now|date:"d/m/Y H:i" }}
+    </div>
+</body>
+</html>

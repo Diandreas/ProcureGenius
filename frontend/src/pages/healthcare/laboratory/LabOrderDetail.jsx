@@ -32,7 +32,9 @@ import {
     PictureAsPdf as PdfIcon,
     ArrowBack as ArrowBackIcon,
     Delete as DeleteIcon,
-    Add as AddIcon
+    Add as AddIcon,
+    Print as PrintIcon,
+    QrCode as QrCodeIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -128,7 +130,7 @@ const LabOrderDetail = () => {
                 ...results[itemId]
             }));
 
-            await laboratoryAPI.enterResults(id, { items: itemsToUpdate });
+            await laboratoryAPI.enterResults(id, { results: itemsToUpdate });
             enqueueSnackbar('Résultats enregistrés', { variant: 'success' });
             fetchOrder(); // Refresh to update status/flags
         } catch (error) {
@@ -164,6 +166,30 @@ const LabOrderDetail = () => {
         } catch (error) {
             console.error('Error downloading PDF:', error);
             enqueueSnackbar('Erreur de téléchargement du PDF', { variant: 'error' });
+        }
+    };
+
+    const handlePrintBarcodes = async () => {
+        try {
+            enqueueSnackbar('Génération des étiquettes...', { variant: 'info' });
+            const blob = await laboratoryAPI.getBarcodesPDF(id);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error printing barcodes:', error);
+            enqueueSnackbar('Erreur lors de la génération des étiquettes', { variant: 'error' });
+        }
+    };
+
+    const handlePrintBenchSheet = async () => {
+        try {
+            enqueueSnackbar('Génération de la fiche de paillasse...', { variant: 'info' });
+            const blob = await laboratoryAPI.getBenchSheetPDF(id);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error printing bench sheet:', error);
+            enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
         }
     };
 
@@ -412,6 +438,17 @@ const LabOrderDetail = () => {
                         <Button variant="outlined" startIcon={<PdfIcon />} onClick={downloadPDF} sx={{ mr: 1 }}>
                             PDF
                         </Button>
+                    )}
+
+                    {!isNewOrder && (
+                        <>
+                            <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={handlePrintBarcodes} sx={{ mr: 1 }}>
+                                Étiquettes
+                            </Button>
+                            <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrintBenchSheet} sx={{ mr: 1 }}>
+                                Fiche Paillasse
+                            </Button>
+                        </>
                     )}
 
                     {canEdit && (

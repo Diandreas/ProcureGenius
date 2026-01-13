@@ -27,7 +27,7 @@ const patientAPI = {
 
     // Get patient medical history
     getPatientHistory: async (id) => {
-        const response = await api.get(`/healthcare/consultations/patient/${id}/history/`);
+        const response = await api.get(`/healthcare/patients/${id}/history/`);
         return response.data;
     },
 
@@ -39,9 +39,29 @@ const patientAPI = {
         return response.data;
     },
 
+    // Generate Patient Summary PDF (A4)
+    getPatientSummaryPDF: async (id) => {
+        const response = await api.get(`/healthcare/patients/${id}/summary/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // Register visit
     registerVisit: async (data) => {
         const response = await api.post('/healthcare/patients/visits/check-in/', data);
+        return response.data;
+    },
+
+    // Update visit details (e.g. vitals)
+    updateVisit: async (id, data) => {
+        const response = await api.patch(`/healthcare/patients/visits/${id}/`, data);
+        return response.data;
+    },
+
+    // Update visit status (e.g. start consultation)
+    updateVisitStatus: async (id, action, notes) => {
+        const response = await api.post(`/healthcare/patients/visits/${id}/status/`, { action, notes });
         return response.data;
     },
 

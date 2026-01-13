@@ -8,7 +8,8 @@ import {
     TextField,
     Typography,
     MenuItem,
-    CircularProgress
+    CircularProgress,
+    Autocomplete
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -27,9 +28,32 @@ const VisitForm = () => {
     const [formData, setFormData] = useState({
         patient: patientId || '',
         reason: '',
-        priority: 'normal',
+        priority: 'routine',
         notes: ''
     });
+
+    // Patient Search State
+    const [patientOptions, setPatientOptions] = useState([]);
+    const [patientSearch, setPatientSearch] = useState('');
+    const [searching, setSearching] = useState(false);
+
+    useEffect(() => {
+        if (!patientId) {
+            searchPatients('');
+        }
+    }, [patientId]);
+
+    const searchPatients = async (query) => {
+        setSearching(true);
+        try {
+            const response = await patientAPI.getPatients({ search: query, page_size: 20 });
+            setPatientOptions(response.results || []);
+        } catch (error) {
+            console.error('Error searching patients:', error);
+        } finally {
+            setSearching(false);
+        }
+    };
 
     useEffect(() => {
         if (patientId) {
@@ -60,7 +84,7 @@ const VisitForm = () => {
         try {
             await patientAPI.registerVisit({
                 patient_id: formData.patient,
-                reason: formData.reason,
+                chief_complaint: formData.reason,
                 priority: formData.priority,
                 notes: formData.notes
             });
@@ -68,6 +92,9 @@ const VisitForm = () => {
             navigate('/healthcare/reception');
         } catch (error) {
             console.error('Error registering visit:', error);
+            if (error.response?.data) {
+                console.error('Validation errors:', error.response.data);
+            }
             enqueueSnackbar(error?.response?.data?.message || 'Erreur lors de l\'enregistrement', { variant: 'error' });
         } finally {
             setLoading(false);
@@ -114,7 +141,7 @@ const VisitForm = () => {
                                     value={formData.priority}
                                     onChange={handleChange}
                                 >
-                                    <MenuItem value="normal">Normale</MenuItem>
+                                    <MenuItem value="routine">Normale</MenuItem>
                                     <MenuItem value="urgent">Urgente</MenuItem>
                                     <MenuItem value="emergency">Urgence</MenuItem>
                                 </TextField>
@@ -149,6 +176,62 @@ const VisitForm = () => {
                                         {loading ? <CircularProgress size={24} /> : 'Enregistrer'}
                                     </Button>
                                 </Box>
+
+                                {!patientId && (
+                                    <Card sx={{ mb: 3 }}>
+                                        <CardContent>
+                                            <Autocomplete
+                                                options={patientOptions}
+                                                getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
+                                                loading={searching}
+                                                onInputChange={(e, value) => {
+                                                    setPatientSearch(value);
+                                                    searchPatients(value);
+                                                }}
+                                                onChange={(e, value) => {
+                                                    if (value) {
+                                                        setPatient(value);
+                                                        setFormData(prev => ({ ...prev, patient: value.id }));
+                                                    } else {
+                                                        setPatient(null);
+                                                        setFormData(prev => ({ ...prev, patient: '' }));
+                                                    }
+                                                }}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Rechercher un Patient"
+                                                        placeholder="Nom ou Numéro"
+                                                        required
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <React.Fragment>
+                                                                    {searching ? <CircularProgress color="inherit" size={20} /> : null}
+                                                                    {params.InputProps.endAdornment}
+                                                                </React.Fragment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {patient && (
+                                    <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+                                        <Typography variant="h6" color="primary">
+                                            Patient sélectionné:
+                                        </Typography>
+                                        <Typography variant="body1" fontWeight="bold">
+                                            {patient.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            ID: {patient.patient_number} | Tél: {patient.phone}
+                                        </Typography>
+                                    </Box>
+                                )}
                             </Grid>
                         </Grid>
                     </form>

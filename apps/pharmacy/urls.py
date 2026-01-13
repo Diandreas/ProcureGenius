@@ -3,6 +3,7 @@ URL patterns for Pharmacy app
 """
 from django.urls import path
 from . import api
+from .views_pdf import PharmacyDispensingReceiptView
 
 app_name = 'pharmacy'
 
@@ -13,6 +14,12 @@ urlpatterns = [
     path('dispensings/<uuid:pk>/', api.DispensingDetailView.as_view(), name='dispensing-detail'),
     path('dispensings/<uuid:pk>/cancel/', api.DispensingCancelView.as_view(), name='dispensing-cancel'),
     path('dispensings/<uuid:pk>/pdf/', api.DispensingPDFView.as_view(), name='dispensing-pdf'),
+
+    # Dispensing receipt (thermal PDF)
+    path('dispensings/<uuid:pk>/receipt/', PharmacyDispensingReceiptView.as_view(), name='dispensing-receipt'),
+
+    # Generate invoice (manual)
+    path('dispensings/<uuid:pk>/generate-invoice/', api.GeneratePharmacyInvoiceView.as_view(), name='generate-invoice'),
 
     # Medication endpoints (accessible at /healthcare/pharmacy/medications/)
     path('medications/', api.MedicationListView.as_view(), name='medication-list'),

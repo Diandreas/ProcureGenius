@@ -160,6 +160,24 @@ function StockMovementsTab({ productId, productType }) {
     );
   }
 
+  const [filterType, setFilterType] = useState('all');
+
+  // Filter types options
+  const filterOptions = [
+    { value: 'all', label: 'Tous les mouvements' },
+    { value: 'reception', label: 'Réceptions' },
+    { value: 'sale', label: 'Ventes' },
+    { value: 'adjustment', label: 'Ajustements' },
+    { value: 'return', label: 'Retours' },
+    { value: 'loss', label: 'Pertes' },
+    { value: 'initial', label: 'Stock initial' },
+  ];
+
+  const filteredMovements = movements.filter(m => {
+    if (filterType === 'all') return true;
+    return m.movement_type === filterType;
+  });
+
   return (
     <Box>
       <Box
@@ -174,29 +192,53 @@ function StockMovementsTab({ productId, productType }) {
         <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
           Historique des mouvements
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<SwapVert />}
-          onClick={() => setAdjustDialogOpen(true)}
-          size="medium"
-          sx={{
-            minWidth: { xs: '100%', sm: 'auto' },
-            fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-          }}
-        >
-          Mouvement de stock
-        </Button>
+
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          <TextField
+            select
+            size="small"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            SelectProps={{ native: true }}
+            variant="outlined"
+            sx={{ minWidth: 200 }}
+          >
+            {filterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </TextField>
+
+          <Button
+            variant="contained"
+            startIcon={<SwapVert />}
+            onClick={() => setAdjustDialogOpen(true)}
+            size="medium"
+            sx={{
+              minWidth: { xs: '100%', sm: 'auto' },
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
+            Mouvement de stock
+          </Button>
+        </Box>
       </Box>
 
-      {movements.length === 0 ? (
+      {filteredMovements.length === 0 ? (
         <Box p={3}>
-          <Alert severity="info">Aucun mouvement de stock enregistré</Alert>
+          <Alert severity="info">
+            {filterType === 'all'
+              ? 'Aucun mouvement de stock enregistré'
+              : 'Aucun mouvement trouvé pour ce filtre'}
+          </Alert>
         </Box>
       ) : isMobile ? (
         // Vue mobile avec cartes
         <Box>
-          {movements.map((movement) => (
+          {filteredMovements.map((movement) => (
             <Card key={movement.id} sx={{ mb: 1.5, borderRadius: 2, boxShadow: 1 }}>
+              {/* ... existing card content ... */}
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Stack spacing={1.5}>
                   {/* Header: Date et Type */}
@@ -280,7 +322,7 @@ function StockMovementsTab({ productId, productType }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {movements.map((movement) => (
+              {filteredMovements.map((movement) => (
                 <TableRow key={movement.id} hover>
                   <TableCell>
                     {formatDate(movement.created_at)}

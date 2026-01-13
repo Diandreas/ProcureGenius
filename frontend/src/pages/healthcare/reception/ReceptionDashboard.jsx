@@ -28,6 +28,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
+import TriageModal from './TriageModal';
+import { useSnackbar } from 'notistack';
 
 const StatCard = ({ title, value, icon, color }) => (
     <Card sx={{ height: '100%', borderRadius: 3 }}>
@@ -50,8 +52,14 @@ const StatCard = ({ title, value, icon, color }) => (
 const ReceptionDashboard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [visits, setVisits] = useState([]);
+
+    // Triage Modal State
+    const [triageModalOpen, setTriageModalOpen] = useState(false);
+    const [selectedVisit, setSelectedVisit] = useState(null);
+
     const [stats, setStats] = useState({
         total: 0,
         waiting: 0,
@@ -104,6 +112,22 @@ const ReceptionDashboard = () => {
         return <Chip label={config.label} color={config.color} size="small" variant="outlined" />;
     };
 
+    const handleOpenTriage = (visit) => {
+        setSelectedVisit(visit);
+        setTriageModalOpen(true);
+    };
+
+    const handleStartConsultation = async (visit) => {
+        try {
+            await patientAPI.updateVisitStatus(visit.id, 'start_consultation');
+            enqueueSnackbar('Consultation démarrée', { variant: 'success' });
+            fetchVisits();
+        } catch (error) {
+            console.error('Error starting consultation:', error);
+            enqueueSnackbar('Erreur lors du démarrage', { variant: 'error' });
+        }
+    };
+
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
@@ -122,7 +146,7 @@ const ReceptionDashboard = () => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => navigate('/healthcare/patients')} // Or direct check-in page
+                        onClick={() => navigate('/healthcare/visits/new')} // Direct check-in page
                         sx={{ borderRadius: 2 }}
                     >
                         {t('reception.new_checkin', 'Nouvelle Arrivée')}
@@ -212,11 +236,24 @@ const ReceptionDashboard = () => {
                                     <TableCell>{visit.doctor_name || '-'}</TableCell>
                                     <TableCell align="right">
                                         {/* Actions based on status */}
-                                        {['checked_in'].includes(visit.status) && (
-                                            <Button size="small" variant="text">Tri (Vitals)</Button>
+                                        {['checked_in', 'registered'].includes(visit.status) && (
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() => handleOpenTriage(visit)}
+                                            >
+                                                Tri (Vitals)
+                                            </Button>
                                         )}
                                         {['waiting_doctor'].includes(visit.status) && (
-                                            <Button size="small" variant="contained" color="primary">Consulter</Button>
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={() => handleStartConsultation(visit)}
+                                            >
+                                                Consulter
+                                            </Button>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -225,6 +262,16 @@ const ReceptionDashboard = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Triage Modal */}
+            {selectedVisit && (
+                <TriageModal
+                    open={triageModalOpen}
+                    onClose={() => setTriageModalOpen(false)}
+                    visit={selectedVisit}
+                    onVitalsSaved={fetchVisits}
+                />
+            )}
         </Box>
     );
 };

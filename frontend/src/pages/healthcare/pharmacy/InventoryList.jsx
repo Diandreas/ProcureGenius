@@ -69,22 +69,22 @@ const InventoryList = () => {
     // Derived Logic
     const filteredMedications = medications.filter(med => {
         if (!quickFilter) return true;
-        if (quickFilter === 'low_stock') return med.current_stock <= (med.min_stock_level || 5) && med.current_stock > 0;
-        if (quickFilter === 'out_of_stock') return med.current_stock <= 0;
-        if (quickFilter === 'in_stock') return med.current_stock > (med.min_stock_level || 5);
+        if (quickFilter === 'low_stock') return med.stock_quantity <= (med.low_stock_threshold || 5) && med.stock_quantity > 0;
+        if (quickFilter === 'out_of_stock') return med.stock_quantity <= 0;
+        if (quickFilter === 'in_stock') return med.stock_quantity > (med.low_stock_threshold || 5);
         return true;
     });
 
     const totalItems = medications.length;
-    const lowStockCount = medications.filter(m => m.current_stock <= (m.min_stock_level || 5) && m.current_stock > 0).length;
-    const outStockCount = medications.filter(m => m.current_stock <= 0).length;
-    const totalValue = medications.reduce((sum, m) => sum + (m.current_stock * m.unit_price), 0);
+    const lowStockCount = medications.filter(m => m.stock_quantity <= (m.low_stock_threshold || 5) && m.stock_quantity > 0).length;
+    const outStockCount = medications.filter(m => m.stock_quantity <= 0).length;
+    const totalValue = medications.reduce((sum, m) => sum + (m.stock_quantity * m.price), 0);
 
     const formatCurrency = (amount) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(amount);
 
     const MedicationCard = ({ med, index }) => {
-        const isLow = med.current_stock <= (med.min_stock_level || 5) && med.current_stock > 0;
-        const isOut = med.current_stock <= 0;
+        const isLow = med.stock_quantity <= (med.low_stock_threshold || 5) && med.stock_quantity > 0;
+        const isOut = med.stock_quantity <= 0;
 
         let statusColor = 'success';
         if (isLow) statusColor = 'warning';
@@ -121,12 +121,12 @@ const InventoryList = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                             <Typography variant="caption" color="text.secondary">Stock Level</Typography>
                             <Typography variant="caption" fontWeight="bold" color={`${statusColor}.main`}>
-                                {med.current_stock} / {med.min_stock_level || 5}
+                                {med.stock_quantity} / {med.low_stock_threshold || 5}
                             </Typography>
                         </Box>
                         <LinearProgress
                             variant="determinate"
-                            value={Math.min(100, (med.current_stock / (med.min_stock_level * 2 || 20)) * 100)}
+                            value={Math.min(100, (med.stock_quantity / (med.low_stock_threshold * 2 || 20)) * 100)}
                             color={statusColor}
                             sx={{ height: 6, borderRadius: 3, bgcolor: alpha(theme.palette[statusColor].main, 0.1) }}
                         />
@@ -162,7 +162,7 @@ const InventoryList = () => {
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Prix Unitaire</Typography>
                                 <Typography variant="body2" fontWeight="600">
-                                    {formatCurrency(med.unit_price)}
+                                    {formatCurrency(med.price)}
                                 </Typography>
                             </Box>
                             {isOut ? (

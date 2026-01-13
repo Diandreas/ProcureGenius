@@ -236,6 +236,42 @@ class EndConsultationView(APIView):
         return Response(ConsultationSerializer(consultation).data)
 
 
+class GenerateConsultationInvoiceView(APIView):
+    """Generate invoice for consultation (manual trigger)"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from apps.healthcare.invoice_services import ConsultationInvoiceService
+
+        try:
+            consultation = Consultation.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except Consultation.DoesNotExist:
+            return Response(
+                {'error': 'Consultation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            invoice = ConsultationInvoiceService.generate_invoice(consultation)
+            return Response({
+                'message': 'Facture créée avec succès',
+                'invoice_id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'total_amount': float(invoice.total_amount)
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': f"Erreur lors de la création de facture: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # =============================================================================
 # Prescription Views
 # =============================================================================

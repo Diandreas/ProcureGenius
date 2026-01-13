@@ -6,14 +6,7 @@ import {
     CardContent,
     Grid,
     Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Divider,
-    Paper
+    Divider
 } from '@mui/material';
 import {
     Edit as EditIcon,
@@ -23,6 +16,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import consultationAPI from '../../../services/consultationAPI';
+import PrintModal from '../../../components/PrintModal';
 
 const ConsultationDetail = () => {
     const { t } = useTranslation();
@@ -31,6 +25,11 @@ const ConsultationDetail = () => {
 
     const [loading, setLoading] = useState(true);
     const [consultation, setConsultation] = useState(null);
+
+    // Print Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [printModalType, setPrintModalType] = useState(null); // 'report' or 'prescription'
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -48,19 +47,60 @@ const ConsultationDetail = () => {
         }
     };
 
-    const downloadPrescription = async () => {
+    const handleOpenPrintModal = (type) => {
+        setPrintModalType(type);
+        setPrintModalOpen(true);
+    };
+
+    const handlePrintAction = async (action) => {
+        if (!printModalType) return;
+
+        setGeneratingPdf(true);
         try {
-            // Assuming prescription ID is linked or we use consultation ID endpoint
-            const blob = await consultationAPI.getPrescriptionPDF(id);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `prescription_${consultation.patient_name}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            let blob;
+            let filename;
+
+            if (printModalType === 'report') {
+                blob = await consultationAPI.getConsultationReportPDF(id);
+                filename = `rapport_consultation_${consultation.consultation_number}.pdf`;
+            } else if (printModalType === 'prescription') {
+                if (consultation.prescriptions && consultation.prescriptions.length > 0) {
+                    const prescriptionId = consultation.prescriptions[0].id;
+                    blob = await consultationAPI.getPrescriptionPDF(prescriptionId);
+                    filename = `ordonnance_${consultation.consultation_number}.pdf`;
+                } else {
+                    alert('Aucune ordonnance trouvée');
+                    setGeneratingPdf(false);
+                    return;
+                }
+            }
+
+            if (action === 'download') {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else if (action === 'preview' || action === 'print') {
+                const url = window.URL.createObjectURL(blob);
+                const printWindow = window.open(url, '_blank');
+
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+
+            setPrintModalOpen(false);
         } catch (error) {
-            console.error('Error downloading prescription:', error);
+            console.error('Error handling PDF action:', error);
+            alert('Erreur lors de la génération du PDF');
+        } finally {
+            setGeneratingPdf(false);
         }
     };
 
@@ -78,9 +118,24 @@ const ConsultationDetail = () => {
                     </Typography>
                 </Box>
                 <Box>
-                    <Button variant="outlined" startIcon={<PdfIcon />} onClick={downloadPrescription} sx={{ mr: 1 }}>
-                        Ordonnance PDF
+                    <Button
+                        variant="outlined"
+                        startIcon={<PdfIcon />}
+                        onClick={() => handleOpenPrintModal('report')}
+                        sx={{ mr: 1 }}
+                    >
+                        Imprimer Rapport
                     </Button>
+                    {consultation.prescriptions && consultation.prescriptions.length > 0 && (
+                        <Button
+                            variant="outlined"
+                            startIcon={<PdfIcon />}
+                            onClick={() => handleOpenPrintModal('prescription')}
+                            sx={{ mr: 1 }}
+                        >
+                            Imprimer Ordonnance
+                        </Button>
+                    )}
                     <Button
                         variant="contained"
                         startIcon={<EditIcon />}
@@ -132,8 +187,6 @@ const ConsultationDetail = () => {
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Prescription (Ordonnance)</Typography>
-                            {/* We need to fetch prescriptions linked to this consult or embedded in serializer */}
-                            {/* For now assuming basic list available or TODO */}
                             <Typography color="text.secondary" fontStyle="italic">
                                 Voir la section modification pour les détails des médicaments.
                             </Typography>
@@ -141,6 +194,17 @@ const ConsultationDetail = () => {
                     </Card>
                 </Grid>
             </Grid>
+
+            <PrintModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                title={printModalType === 'report' ? "Imprimer Rapport" : "Imprimer Ordonnance"}
+                loading={generatingPdf}
+                onPreview={() => handlePrintAction('preview')}
+                onPrint={() => handlePrintAction('print')}
+                onDownload={() => handlePrintAction('download')}
+                helpText={printModalType === 'report' ? "Générer le rapport complet de consultation." : "Générer l'ordonnance médicale."}
+            />
         </Box>
     );
 };

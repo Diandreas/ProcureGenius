@@ -2,7 +2,7 @@
 URL patterns for Patients app
 """
 from django.urls import path
-from . import api
+from . import api, views_pdf
 
 app_name = 'patients'
 
@@ -21,4 +21,11 @@ urlpatterns = [
 
     # Check-in endpoint
     path('visits/check-in/', api.CheckInView.as_view(), name='check-in'),
+
+    # Document endpoints
+    path('<uuid:patient_id>/documents/', api.PatientDocumentListCreateView.as_view(), name='patient-documents'),
+    path('documents/<uuid:pk>/', api.PatientDocumentDetailView.as_view(), name='patient-document-detail'),
+    
+    # PDF
+    path('<uuid:pk>/summary/', views_pdf.PatientSummaryView.as_view(), name='patient-summary'),
 ]

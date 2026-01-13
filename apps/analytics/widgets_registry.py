@@ -1,5 +1,5 @@
 """
-Registry of all available widgets - 16 widgets essentiels
+Registry of all available widgets - 21 widgets (16 standard + 5 healthcare)
 Optimisé pour un dashboard focalisé et actionnable
 """
 
@@ -174,6 +174,58 @@ WIDGETS_REGISTRY = {
         'default_size': {'w': 2, 'h': 2},
         'icon': 'Lightbulb',
         'component': 'AIProactiveSuggestionsWidget'
+    },
+
+    # ========== HEALTHCARE WIDGETS (5) ==========
+    'patients_overview': {
+        'code': 'patients_overview',
+        'name': 'Vue Patients',
+        'description': 'Statistiques patients et visites en cours',
+        'module': 'patients',
+        'type': 'stats',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Users',
+        'component': 'PatientsOverviewWidget'
+    },
+    'consultations_summary': {
+        'code': 'consultations_summary',
+        'name': 'Consultations',
+        'description': 'Résumé des consultations médicales',
+        'module': 'consultations',
+        'type': 'stats',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Activity',
+        'component': 'ConsultationsSummaryWidget'
+    },
+    'lab_orders_status': {
+        'code': 'lab_orders_status',
+        'name': 'Laboratoire',
+        'description': 'Commandes de labo par statut et résultats critiques',
+        'module': 'laboratory',
+        'type': 'stats',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Microscope',
+        'component': 'LabOrdersStatusWidget'
+    },
+    'pharmacy_dispensing': {
+        'code': 'pharmacy_dispensing',
+        'name': 'Pharmacie',
+        'description': 'Dispensations et médicaments populaires',
+        'module': 'pharmacy',
+        'type': 'stats',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'Pill',
+        'component': 'PharmacyDispensingWidget'
+    },
+    'healthcare_revenue': {
+        'code': 'healthcare_revenue',
+        'name': 'Revenus Santé',
+        'description': 'Revenus par module de santé (consultations, labo, pharmacie)',
+        'module': 'global',  # Visible si au moins un module santé actif
+        'type': 'chart',
+        'default_size': {'w': 2, 'h': 2},
+        'icon': 'DollarSign',
+        'component': 'HealthcareRevenueWidget'
     },
 }
 

@@ -85,6 +85,19 @@ class DashboardStatsService:
         if 'invoices' in enabled_modules or 'purchase_orders' in enabled_modules:
             stats['financial'] = self.get_financial_stats()
 
+        # Healthcare modules
+        if 'patients' in enabled_modules:
+            stats['patients'] = self.get_patients_stats()
+
+        if 'consultations' in enabled_modules:
+            stats['consultations'] = self.get_consultations_stats()
+
+        if 'laboratory' in enabled_modules:
+            stats['laboratory'] = self.get_laboratory_stats()
+
+        if 'pharmacy' in enabled_modules:
+            stats['pharmacy'] = self.get_pharmacy_stats()
+
         # Performance globale
         stats['performance'] = self.get_performance_metrics()
 
@@ -726,3 +739,242 @@ class DashboardStatsService:
         }
 
         return stats
+
+    def get_patients_stats(self) -> Dict:
+        """Statistiques patients et visites"""
+        if not self.organization:
+            return {}
+
+        from apps.accounts.models import Client
+        from apps.patients.models import PatientVisit
+
+        # Total patients
+        patients = Client.objects.filter(
+            organization=self.organization,
+            client_type__in=['patient', 'both']
+        )
+
+        patients_count = patients.count()
+
+        # Nouveaux patients dans la période
+        new_patients = patients.filter(
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        ).count()
+
+        # Visites par statut
+        visits = PatientVisit.objects.filter(
+            organization=self.organization,
+            visit_date__gte=self.start_date,
+            visit_date__lte=self.end_date
+        )
+
+        visits_by_status = {
+            'waiting': visits.filter(status='waiting').count(),
+            'in_consultation': visits.filter(status='in_consultation').count(),
+            'at_lab': visits.filter(status='at_lab').count(),
+            'at_pharmacy': visits.filter(status='at_pharmacy').count(),
+            'completed': visits.filter(status='completed').count(),
+            'cancelled': visits.filter(status='cancelled').count(),
+        }
+
+        return {
+            'patients_count': patients_count,
+            'new_patients': new_patients,
+            'total_visits': visits.count(),
+            'visits_by_status': visits_by_status,
+            'active_patients': patients.filter(
+                visits__visit_date__gte=self.start_date - timedelta(days=90)
+            ).distinct().count()
+        }
+
+    def get_consultations_stats(self) -> Dict:
+        """Statistiques consultations médicales"""
+        if not self.organization:
+            return {}
+
+        from apps.consultations.models import Consultation
+        from apps.invoicing.models import Invoice
+
+        consultations = Consultation.objects.filter(
+            organization=self.organization,
+            consultation_date__gte=self.start_date,
+            consultation_date__lte=self.end_date
+        )
+
+        total_count = consultations.count()
+
+        # Revenus consultations
+        consultation_invoices = Invoice.objects.filter(
+            organization=self.organization,
+            invoice_type='healthcare_consultation',
+            issue_date__gte=self.start_date,
+            issue_date__lte=self.end_date
+        )
+
+        revenue = consultation_invoices.filter(
+            status__in=['paid', 'sent']
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+        # Consultations par docteur
+        by_doctor = consultations.values(
+            'doctor__first_name', 'doctor__last_name'
+        ).annotate(count=Count('id')).order_by('-count')[:5]
+
+        # Follow-ups
+        follow_ups_required = consultations.filter(follow_up_required=True).count()
+        follow_ups_done = consultations.filter(
+            follow_up_required=True,
+            follow_up_date__isnull=False
+        ).count()
+
+        return {
+            'total_consultations': total_count,
+            'revenue': float(revenue),
+            'top_doctors': list(by_doctor),
+            'follow_up_rate': (follow_ups_done / follow_ups_required * 100) if follow_ups_required > 0 else 0,
+            'avg_per_day': total_count / self.period_days if self.period_days > 0 else 0
+        }
+
+    def get_laboratory_stats(self) -> Dict:
+        """Statistiques laboratoire (LIMS)"""
+        if not self.organization:
+            return {}
+
+        from apps.laboratory.models import LabOrder, LabOrderItem
+        from apps.invoicing.models import Invoice
+
+        lab_orders = LabOrder.objects.filter(
+            organization=self.organization,
+            order_date__gte=self.start_date,
+            order_date__lte=self.end_date
+        )
+
+        # Par statut
+        by_status = {
+            'pending': lab_orders.filter(status='pending').count(),
+            'sample_collected': lab_orders.filter(status='sample_collected').count(),
+            'in_progress': lab_orders.filter(status='in_progress').count(),
+            'completed': lab_orders.filter(status='completed').count(),
+            'results_ready': lab_orders.filter(status='results_ready').count(),
+            'results_delivered': lab_orders.filter(status='results_delivered').count(),
+        }
+
+        # Revenus laboratoire
+        lab_invoices = Invoice.objects.filter(
+            organization=self.organization,
+            invoice_type='healthcare_laboratory',
+            issue_date__gte=self.start_date,
+            issue_date__lte=self.end_date
+        )
+
+        revenue = lab_invoices.filter(
+            status__in=['paid', 'sent']
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+        # Tests les plus demandés
+        top_tests = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__order_date__lte=self.end_date
+        ).values('lab_test__name').annotate(count=Count('id')).order_by('-count')[:5]
+
+        # Résultats critiques
+        critical_results = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__order_date__lte=self.end_date,
+            is_critical=True
+        ).count()
+
+        # Temps moyen de traitement (turnaround time)
+        completed_orders = lab_orders.filter(
+            status__in=['completed', 'results_ready', 'results_delivered'],
+            results_completed_at__isnull=False
+        )
+
+        avg_turnaround = None
+        if completed_orders.exists():
+            turnaround_times = [
+                (order.results_completed_at - order.order_date).total_seconds() / 3600
+                for order in completed_orders
+                if order.results_completed_at and order.order_date
+            ]
+            avg_turnaround = sum(turnaround_times) / len(turnaround_times) if turnaround_times else None
+
+        return {
+            'total_orders': lab_orders.count(),
+            'by_status': by_status,
+            'revenue': float(revenue),
+            'top_tests': list(top_tests),
+            'critical_results': critical_results,
+            'avg_turnaround_hours': round(avg_turnaround, 2) if avg_turnaround else None
+        }
+
+    def get_pharmacy_stats(self) -> Dict:
+        """Statistiques pharmacie"""
+        if not self.organization:
+            return {}
+
+        from apps.pharmacy.models import PharmacyDispensing, DispensingItem
+        from apps.consultations.models import Prescription
+        from apps.invoicing.models import Invoice
+
+        dispensings = PharmacyDispensing.objects.filter(
+            organization=self.organization,
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        )
+
+        total_dispensings = dispensings.count()
+
+        # Revenus pharmacie
+        pharmacy_invoices = Invoice.objects.filter(
+            organization=self.organization,
+            invoice_type='healthcare_pharmacy',
+            issue_date__gte=self.start_date,
+            issue_date__lte=self.end_date
+        )
+
+        revenue = pharmacy_invoices.filter(
+            status__in=['paid', 'sent']
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+        # Médicaments les plus dispensés
+        top_medications = DispensingItem.objects.filter(
+            dispensing__organization=self.organization,
+            dispensing__created_at__gte=self.start_date,
+            dispensing__created_at__lte=self.end_date
+        ).values('medication__name').annotate(
+            total_qty=Sum('quantity_dispensed')
+        ).order_by('-total_qty')[:5]
+
+        # Taux de remplissage des prescriptions
+        prescriptions = Prescription.objects.filter(
+            organization=self.organization,
+            created_at__gte=self.start_date,
+            created_at__lte=self.end_date
+        )
+
+        filled_prescriptions = prescriptions.filter(status='filled').count()
+        total_prescriptions = prescriptions.count()
+        fill_rate = (filled_prescriptions / total_prescriptions * 100) if total_prescriptions > 0 else 0
+
+        # Marge profit (estimée via DispensingItem.profit property)
+        total_profit = sum(
+            item.profit for item in DispensingItem.objects.filter(
+                dispensing__organization=self.organization,
+                dispensing__created_at__gte=self.start_date,
+                dispensing__created_at__lte=self.end_date
+            ) if item.profit
+        )
+
+        return {
+            'total_dispensings': total_dispensings,
+            'revenue': float(revenue),
+            'profit': float(total_profit),
+            'profit_margin': (total_profit / revenue * 100) if revenue > 0 else 0,
+            'top_medications': list(top_medications),
+            'prescription_fill_rate': round(fill_rate, 2),
+            'pending_prescriptions': prescriptions.filter(status='pending').count()
+        }

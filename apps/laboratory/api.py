@@ -277,6 +277,32 @@ class LabOrderStatusUpdateView(APIView):
         
         if action == 'collect_sample':
             order.collect_sample(collected_by=request.user)
+            
+            # Auto-deduct stock for linked products
+            try:
+                from apps.invoicing.models import Product, StockMovement
+                for item in order.items.all():
+                    if item.lab_test.linked_product:
+                        product = item.lab_test.linked_product
+                        quantity = 1 # Default 1 unit per test
+                        
+                        # Create movement
+                        StockMovement.objects.create(
+                            organization=request.user.organization,
+                            product=product,
+                            movement_type='out',
+                            quantity=quantity,
+                            reason=f"Lab Order #{order.order_number} - {item.lab_test.test_code}",
+                            performed_by=request.user
+                        )
+                        
+                        # Update stock
+                        product.quantity -= quantity
+                        product.save()
+            except Exception as e:
+                print(f"Error deducting stock for lab order {order.order_number}: {e}")
+                # Don't fail the request, just log
+
         elif action == 'start_processing':
             order.start_processing()
         elif action == 'complete':
@@ -456,4 +482,40 @@ class LabResultPDFView(APIView):
                 {'error': f'PDF Generation failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class GenerateLabOrderInvoiceView(APIView):
+    """Generate invoice for lab order (manual trigger)"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from apps.healthcare.invoice_services import LabOrderInvoiceService
+
+        try:
+            lab_order = LabOrder.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except LabOrder.DoesNotExist:
+            return Response(
+                {'error': 'Lab order not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            invoice = LabOrderInvoiceService.generate_invoice(lab_order)
+            return Response({
+                'message': 'Facture créée avec succès',
+                'invoice_id': str(invoice.id),
+                'invoice_number': invoice.invoice_number,
+                'total_amount': float(invoice.total_amount)
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': f"Erreur lors de la création de facture: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

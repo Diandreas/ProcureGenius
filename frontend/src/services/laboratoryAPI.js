@@ -29,7 +29,7 @@ const laboratoryAPI = {
 
     // Update order status
     updateStatus: async (id, statusData) => {
-        const response = await api.patch(`/healthcare/laboratory/orders/${id}/status/`, statusData);
+        const response = await api.post(`/healthcare/laboratory/orders/${id}/status/`, statusData);
         return response.data;
     },
 
@@ -44,6 +44,22 @@ const laboratoryAPI = {
     getResultsPDF: async (id, params = {}) => {
         const response = await api.get(`/healthcare/laboratory/orders/${id}/pdf/`, {
             params,
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
+    // Generate Barcodes PDF
+    getBarcodesPDF: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/barcodes/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
+    // Generate Bench Sheet PDF
+    getBenchSheetPDF: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/bench-sheet/`, {
             responseType: 'blob'
         });
         return response.data;

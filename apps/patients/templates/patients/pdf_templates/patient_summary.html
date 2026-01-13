@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dossier Médical - {{ patient.name }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+
+            @bottom-right {
+                content: "Page " counter(page) " / " counter(pages);
+                font-family: 'Helvetica', sans-serif;
+                font-size: 8pt;
+                color: #888;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #2d3748;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Header --- */
+        .header-container {
+            width: 100%;
+            display: table;
+            margin-bottom: 30px;
+
+            /* Border color set via inline style */
+            border-bottom: 3px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .header-logo-cell {
+            display: table-cell;
+            width: 30%;
+            vertical-align: middle;
+        }
+
+        .header-info-cell {
+            display: table-cell;
+            width: 70%;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .org-name {
+            font-size: 20pt;
+            font-weight: 700;
+
+            /* Color set via inline style */
+            color: #2d3748;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 5px 0;
+        }
+
+        .org-details {
+            font-size: 9pt;
+            color: #718096;
+            line-height: 1.3;
+        }
+
+        /* --- Title --- */
+        .doc-title-container {
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+
+            /* Border color set via inline style */
+            border-left: 5px solid #e2e8f0;
+        }
+
+        .doc-title {
+            font-size: 18pt;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .doc-meta {
+            font-size: 9pt;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* --- Sections --- */
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            font-size: 12pt;
+            font-weight: 700;
+            color: #fff;
+
+            /* Background color set via inline style */
+            background-color: #2563eb;
+            padding: 8px 15px;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 0;
+        }
+
+        .section-content {
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            padding: 15px;
+            background-color: #fff;
+        }
+
+        /* --- Patient Grid --- */
+        .patient-grid {
+            display: table;
+            width: 100%;
+        }
+
+        .patient-col {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .info-group {
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #718096;
+            font-size: 9pt;
+            text-transform: uppercase;
+            display: block;
+        }
+
+        .info-value {
+            font-size: 11pt;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        /* --- Tables --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+
+        th {
+            background-color: #edf2f7;
+            color: #4a5568;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #cbd5e0;
+            font-size: 8pt;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: 600;
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .alert-text {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 8pt;
+            color: #a0aec0;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header with Organization Details -->
+    <div class="header-container" style="border-bottom: 3px solid {{ brand_color }};">
+        <div class="header-logo-cell">
+            {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" style="max-height: 90px; max-width: 250px;" alt="Logo" />
+            {% else %}
+            <div style="font-size: 24pt; font-weight: bold; color: #ccc;">LOGO</div>
+            {% endif %}
+        </div>
+        <div class="header-info-cell">
+            {# Use company_name as per pdf_helpers.py dictionary #}
+            <h1 class="org-name" style="color: {{ brand_color }};">{{ organization.company_name }}</h1>
+            <div class="org-details">
+                {{ organization.company_address }}<br>
+                {{ organization.company_phone }}<br>
+                {{ organization.company_email|default:'' }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Title -->
+    <div class="doc-title-container" style="border-left: 5px solid {{ brand_color }};">
+        <h2 class="doc-title">Dossier Médical Complet</h2>
+        <div class="doc-meta">Généré le {% now "d/m/Y à H:i" %}</div>
+    </div>
+
+    <!-- Patient Details Section -->
+    <div class="section">
+        <div class="section-header" style="background-color: {{ brand_color }};">Information Patient</div>
+        <div class="section-content">
+            <div class="patient-grid">
+                <div class="patient-col" style="padding-right: 20px;">
+                    <div class="info-group">
+                        <span class="info-label">Nom Complet</span>
+                        <div class="info-value">{{ patient.name }}</div>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Numéro Patient</span>
+                        <div class="info-value">{{ patient.patient_number }}</div>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Date de Naissance</span>
+                        <div class="info-value">{{ patient.birth_date|date:"d/m/Y" }} ({{ patient.get_age }} ans)</div>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Sexe / Groupe Sanguin</span>
+                        <div class="info-value">{{ patient.gender }} / {{ patient.blood_type|default:"-" }}</div>
+                    </div>
+                </div>
+                <div class="patient-col">
+                    <div class="info-group">
+                        <span class="info-label">Coordonnées</span>
+                        <div class="info-value">
+                            {{ patient.address|default:"-" }}<br>
+                            Tél: {{ patient.phone|default:"-" }}
+                            {% if patient.whatsapp %} / WA: {{ patient.whatsapp }}{% endif %}<br>
+                            {{ patient.email|default:"" }}
+                        </div>
+                    </div>
+                    <div class="info-group" style="margin-top: 10px;">
+                        <span class="info-label">Contact d'Urgence</span>
+                        <div class="info-value">
+                            {{ patient.emergency_contact_name|default:"-" }}
+                            {% if patient.emergency_contact_phone %}
+                            <br>Tél: {{ patient.emergency_contact_phone }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if patient.referring_hospital %}
+                    <div class="info-group" style="margin-top: 10px;">
+                        <span class="info-label">Hôpital Référent</span>
+                        <div class="info-value">{{ patient.referring_hospital }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0;">
+                <div class="patient-grid">
+                    <div class="patient-col" style="padding-right: 20px;">
+                        <span class="info-label">Allergies</span>
+                        <div class="info-value alert-text">{{ patient.allergies|default:"Aucune" }}</div>
+                    </div>
+                    <div class="patient-col">
+                        <span class="info-label">Conditions Chroniques</span>
+                        <div class="info-value">{{ patient.chronic_conditions|default:"Aucun antécédent majeur signalé."
+                            }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consultations History (Full) -->
+    {% if recent_consultations %}
+    <div class="section">
+        <div class="section-header" style="background-color: {{ brand_color }};">Historique des Consultations</div>
+        <div class="section-content" style="padding: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 25%;">Médecin</th>
+                        <th style="width: 30%;">Motif</th>
+                        <th style="width: 30%;">Diagnostic</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cons in recent_consultations %}
+                    <tr>
+                        <td>{{ cons.consultation_date|date:"d/m/Y" }}</td>
+                        <td>{{ cons.doctor.get_full_name }}</td>
+                        <td>{{ cons.chief_complaint|truncatechars:40 }}</td>
+                        <td>{{ cons.diagnosis|truncatechars:40 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Prescriptions History (Full) -->
+    {% if all_prescriptions %}
+    <div class="section">
+        <div class="section-header" style="background-color: {{ brand_color }};">Historique des Prescriptions</div>
+        <div class="section-content" style="padding: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 20%;">N° Ordonnance</th>
+                        <th style="width: 30%;">Prescripteur</th>
+                        <th style="width: 20%;">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in all_prescriptions %}
+                    <tr>
+                        <td>{{ rx.prescribed_date|date:"d/m/Y" }}</td>
+                        <td>#{{ rx.prescription_number }}</td>
+                        <td>{{ rx.prescriber.get_full_name }}</td>
+                        <td><span class="status-badge">{{ rx.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lab Orders History (Full with Detailed Results) -->
+    {% if all_lab_orders %}
+    <div class="section">
+        <div class="section-header" style="background-color: {{ brand_color }};">Historique des Examens de Laboratoire
+        </div>
+        <div class="section-content">
+            {% for order in all_lab_orders %}
+            <div style="margin-bottom: 20px;">
+                <div style="background-color: #f7fafc; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>{{ order.order_number }}</strong> - {{ order.order_date|date:"d/m/Y" }}
+                    <span style="float: right; font-size: 9pt;">Statut: <span class="status-badge">{{
+                            order.get_status_display }}</span></span>
+                </div>
+
+                {% if order.items.all %}
+                <table style="font-size: 9pt;">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Test</th>
+                            <th style="width: 20%;">Résultat</th>
+                            <th style="width: 25%;">Référence</th>
+                            <th style="width: 15%;">Unité</th>
+                            <th style="width: 10%;">État</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td><strong>{{ item.lab_test.name }}</strong></td>
+                            <td>{{ item.result_value|default:"-" }}</td>
+                            <td>{{ item.reference_range|default:"-" }}</td>
+                            <td>{{ item.result_unit|default:"-" }}</td>
+                            <td>
+                                {% if item.is_abnormal %}
+                                <span style="color: #e53e3e; font-weight: bold;">⚠</span>
+                                {% else %}
+                                <span style="color: #48bb78;">✓</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if item.interpretation %}
+                        <tr>
+                            <td colspan="5" style="font-size: 8pt; color: #718096; padding-left: 20px;">
+                                <em>Note: {{ item.interpretation }}</em>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #a0aec0; font-style: italic; font-size: 9pt;">Résultats en attente</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Documents / Attachments -->
+    {% if all_documents %}
+    <div class="section">
+        <div class="section-header" style="background-color: {{ brand_color }};">Documents & Pièces Jointes</div>
+        <div class="section-content" style="padding: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Date</th>
+                        <th style="width: 40%;">Titre</th>
+                        <th style="width: 40%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in all_documents %}
+                    <tr>
+                        <td>{{ doc.uploaded_at|date:"d/m/Y" }}</td>
+                        <td>{{ doc.title }}</td>
+                        <td>{{ doc.description|default:"-"|truncatechars:50 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        Document confidentiel - Usage médical uniquement.<br />
+        © {{ organization.company_name }} - Tous droits réservés.
+    </div>
+
+</body>
+
+</html>

@@ -79,18 +79,28 @@ const DispensingForm = () => {
 
     const handleItemChange = (index, field, value) => {
         const newItems = [...formData.items];
-        newItems[index][field] = value;
+
+        if (field === 'quantity') {
+            // Ensure quantity is a number
+            newItems[index][field] = parseInt(value) || 1;
+        } else {
+            newItems[index][field] = value;
+        }
 
         // Update price if medication changes
         if (field === 'medication' && value) {
-            newItems[index].price = value.unit_price;
+            newItems[index].price = parseFloat(value.unit_price) || 0;
         }
 
         setFormData(prev => ({ ...prev, items: newItems }));
     };
 
     const calculateTotal = () => {
-        return formData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        return formData.items.reduce((sum, item) => {
+            const quantity = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.price) || 0;
+            return sum + (quantity * price);
+        }, 0);
     };
 
     const handleSubmit = async () => {
@@ -242,10 +252,10 @@ const DispensingForm = () => {
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    {item.price} XAF
+                                                    {(item.price || 0)} XAF
                                                 </TableCell>
                                                 <TableCell fontWeight="bold">
-                                                    {item.quantity * item.price}
+                                                    {(item.quantity || 0) * (item.price || 0)}
                                                 </TableCell>
                                                 <TableCell>
                                                     <IconButton color="error" onClick={() => removeItem(index)}>

@@ -135,6 +135,13 @@ class PatientVisitSerializer(serializers.ModelSerializer):
             'completed_at',
             'wait_time',
             'consultation_duration',
+            'vitals_weight',
+            'vitals_height',
+            'vitals_temperature',
+            'vitals_systolic',
+            'vitals_diastolic',
+            'vitals_heart_rate',
+            'vitals_spo2',
             'created_at',
             'updated_at',
         ]

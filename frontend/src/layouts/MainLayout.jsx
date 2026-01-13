@@ -129,6 +129,7 @@ function MainLayout() {
     { text: 'Réception', iconSrc: '/icon/support.png', path: '/healthcare/reception', moduleId: 'reception', isCore: false },
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/inventory', moduleId: 'pharmacy', isCore: false },
+    { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
 
     { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },

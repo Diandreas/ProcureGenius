@@ -10,6 +10,7 @@
   "search": "Rechercher...",
   "backToList": "Retour à la liste",
   "viewDetails": "Voir les détails",
+  "searchPlaceholder": "Rechercher par nom, ID ou téléphone...",
   "buttons": {
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -82,7 +83,9 @@
     "active": "Actif",
     "inactive": "Inactif",
     "search": "Rechercher...",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "visitHistory": "Historique des visites",
+    "documents": "Documents"
   },
   "messages": {
     "success": "Opération réussie",
@@ -175,7 +178,7 @@
   },
   "reception": {
     "dashboard": "Réception & Urgences",
-    "new_checkin": "Nouvelle Arrivée",
+    "new_checkin": "Enregistrer Patient (Arrivée)",
     "total_today": "Total Aujourd'hui",
     "waiting": "En Salle d'Attente",
     "consulting": "En Consultation",
@@ -184,5 +187,12 @@
   "pharmacy": {
     "inventory": "Pharmacie Stock",
     "dispense": "Nouvelle Dispensation"
+  },
+  "laboratory": {
+    "title": "Commandes de Laboratoire",
+    "new_order": "Nouvelle Commande"
+  },
+  "common": {
+    "search": "Rechercher une commande, un patient..."
   }
 }

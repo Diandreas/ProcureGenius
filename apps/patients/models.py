@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 import uuid
-
+from .models_documents import PatientDocument
 
 class PatientVisit(models.Model):
     """
@@ -98,6 +98,49 @@ class PatientVisit(models.Model):
         verbose_name=_("Notes"),
         help_text=_("Notes additionnelles pour cette visite")
     )
+
+    # Vital Signs (Triage)
+    vitals_weight = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        verbose_name=_("Poids (kg)")
+    )
+    vitals_height = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        verbose_name=_("Taille (cm)")
+    )
+    vitals_temperature = models.DecimalField(
+        max_digits=4, 
+        decimal_places=1, 
+        null=True, 
+        blank=True, 
+        verbose_name=_("Température (°C)")
+    )
+    vitals_systolic = models.IntegerField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("Systolique (mmHg)")
+    )
+    vitals_diastolic = models.IntegerField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("Diastolique (mmHg)")
+    )
+    vitals_heart_rate = models.IntegerField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("Fréquence Cardiaque (bpm)")
+    )
+    vitals_spo2 = models.IntegerField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("SpO2 (%)")
+    )
     
     # Staff assignments
     assigned_doctor = models.ForeignKey(
@@ -183,11 +226,18 @@ class PatientVisit(models.Model):
         if last_visit and last_visit.visit_number:
             try:
                 last_num = int(last_visit.visit_number.split('-')[-1])
-                return f"{prefix}-{last_num + 1:04d}"
+                next_num = last_num + 1
             except (ValueError, IndexError):
-                pass
-        
-        return f"{prefix}-0001"
+                next_num = 1
+        else:
+            next_num = 1
+
+        # Ensure uniqueness
+        while True:
+            candidate = f"{prefix}-{next_num:04d}"
+            if not PatientVisit.objects.filter(visit_number=candidate).exists():
+                return candidate
+            next_num += 1
     
     def __str__(self):
         return f"{self.visit_number} - {self.patient.name}"

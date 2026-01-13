@@ -12,6 +12,8 @@ from django.utils import timezone
 
 from apps.accounts.models import Client
 from .models import PatientVisit
+# Import the new model to register it
+from .models_documents import PatientDocument
 from .serializers import (
     PatientSerializer,
     PatientListSerializer,
@@ -339,3 +341,43 @@ class PatientHistoryView(APIView):
             'statistics': stats,
             'visits': PatientVisitSerializer(visits, many=True).data,
         })
+
+
+from .models_documents import PatientDocument
+from .serializers_documents import PatientDocumentSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+
+class PatientDocumentListCreateView(generics.ListCreateAPIView):
+    """
+    List or create documents for a patient
+    """
+    serializer_class = PatientDocumentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+    
+    def get_queryset(self):
+        patient_id = self.kwargs.get('patient_id')
+        return PatientDocument.objects.filter(
+            organization=self.request.user.organization,
+            patient_id=patient_id
+        )
+    
+    def perform_create(self, serializer):
+        patient_id = self.kwargs.get('patient_id')
+        patient = Client.objects.get(id=patient_id, organization=self.request.user.organization)
+        serializer.save(
+            organization=self.request.user.organization,
+            patient=patient
+        )
+
+class PatientDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Manage single document
+    """
+    serializer_class = PatientDocumentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return PatientDocument.objects.filter(
+            organization=self.request.user.organization
+        )

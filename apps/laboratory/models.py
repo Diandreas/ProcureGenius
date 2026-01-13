@@ -103,6 +103,18 @@ class LabTest(models.Model):
         verbose_name=_("Prix"),
         help_text=_("Prix du test en devise locale")
     )
+
+    # Inventory Link
+    # Inventory Link
+    linked_product = models.ForeignKey(
+        'invoicing.Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_lab_tests',
+        verbose_name=_("Produit lié"),
+        help_text=_("Produit à déduire du stock automatiquement lors du prélèvement")
+    )
     
     # Reference ranges (can vary by gender/age)
     normal_range_male = models.CharField(
@@ -219,6 +231,36 @@ class LabTest(models.Model):
         if gender == 'F' and self.normal_range_female:
             return self.normal_range_female
         return self.normal_range_general or self.normal_range_male or self.normal_range_female
+        
+    def save(self, *args, **kwargs):
+        # Auto-create linked product if missing (Consumable tracking)
+        if not self.linked_product:
+            from apps.invoicing.models import Product, ProductCategory
+            
+            # Try to find or create a default category for Lab Consumables
+            category, _ = ProductCategory.objects.get_or_create(
+                organization=self.organization,
+                name="Consommables Laboratoire",
+                defaults={'slug': 'lab-consumables'}
+            )
+            
+            # Create the product
+            product_name = f"Kit {self.test_code} - {self.name}"[:200]
+            new_product = Product.objects.create(
+                organization=self.organization,
+                name=product_name,
+                description=f"Consommable généré automatiquement pour le test {self.test_code}",
+                product_type='physical',
+                category=category,
+                price=0, # Cost/Price to be adjusted by admin
+                cost_price=0,
+                stock_quantity=0, # Start with 0 stock
+                low_stock_threshold=10, 
+                is_active=True
+            )
+            self.linked_product = new_product
+            
+        super().save(*args, **kwargs)
 
 
 class LabOrder(models.Model):
@@ -425,12 +467,31 @@ class LabOrder(models.Model):
     
     # Status transition methods
     def collect_sample(self, collected_by=None):
-        """Mark sample as collected"""
+        """Mark sample as collected and deduct inventory"""
         self.status = 'sample_collected'
         self.sample_collected_at = timezone.now()
         if collected_by:
             self.sample_collected_by = collected_by
         self.save()
+
+        # Deduct inventory for linked products
+        try:
+            for item in self.items.all():
+                if item.lab_test.linked_product:
+                    product = item.lab_test.linked_product
+                    # Deduct 1 unit per test (modify logic if multiple reagents needed per test)
+                    # Using 'sale' type as it is a consumption for revenue generation
+                    product.adjust_stock(
+                        quantity=-1,
+                        movement_type='sale', 
+                        reference_type='manual', # Using manual since lab_order is not an enum choice yet
+                        reference_id=self.id,
+                        notes=f"Consommation Labo - Commande {self.order_number} - Test {item.lab_test.test_code}",
+                        user=collected_by
+                    )
+        except Exception as e:
+            # Log error but don't block flow
+            print(f"Error deducting stock for LabOrder {self.order_number}: {e}")
     
     def start_processing(self):
         """Mark order as in progress"""
