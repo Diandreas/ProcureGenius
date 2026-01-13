@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dossier Médical - {{ patient.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+
+            @bottom-center {
+                content: "Page " counter(page) " / " counter(pages);
+            }
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+        }
+
+        .header {
+            text-align: center;
+
+            border-bottom: 2px solid {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+
+        .title {
+            font-size: 18pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            text-transform: uppercase;
+        }
+
+        .patient-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .consultation-block {
+            margin-bottom: 30px;
+
+            border-left: 4px solid {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            padding-left: 15px;
+        }
+
+        .consultation-header {
+            font-weight: bold;
+            font-size: 12pt;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .section-label {
+            font-weight: bold;
+            color: #666;
+            margin-top: 10px;
+            text-transform: uppercase;
+            font-size: 9pt;
+        }
+
+        .diagnosis-box {
+            background: #eef2ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+
+        .prescriptions-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .prescriptions-list li {
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="title">Historique Médical</div>
+        <div style="color: #666; margin-top: 5px;">{{ organization.name }}</div>
+    </div>
+
+    <div class="patient-box">
+        <h3 style="margin: 0 0 10px 0;">{{ patient.name }}</h3>
+        <div>NE: {{ patient.patient_number }} | {{ patient.get_age }} ans | {{ patient.gender }}</div>
+        <div>Groupe Sanguin: {{ patient.blood_type|default:"N/A" }} | Allergies: {{ patient.allergies|default:"Aucune"
+            }}</div>
+    </div>
+
+    {% for consult in consultations %}
+    <div class="consultation-block">
+        <div class="consultation-header">
+            Consultation du {{ consult.consultation_date|date:"d/m/Y H:i" }}
+            <span style="font-weight: normal; font-size: 10pt; color: #666;">
+                - Dr. {{ consult.doctor.get_full_name }}
+            </span>
+        </div>
+
+        <div class="section-label">Plaintes Principales</div>
+        <div>{{ consult.chief_complaint }}</div>
+
+        {% if consult.diagnosis %}
+        <div class="section-label">Diagnostic</div>
+        <div class="diagnosis-box">{{ consult.diagnosis }}</div>
+        {% endif %}
+
+        {% if consult.prescriptions.exists %}
+        <div class="section-label">Prescriptions</div>
+        <ul class="prescriptions-list">
+            {% for pres in consult.prescriptions.all %}
+            {% for item in pres.items.all %}
+            <li>
+                <strong>{{ item.medication_name }}</strong> - {{ item.dosage }}
+                {% if item.duration %} ({{ item.duration }}){% endif %}
+            </li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; color: #999;">
+        Aucune consultation enregistrée.
+    </div>
+    {% endfor %}
+
+    <div style="margin-top: 50px; text-align: center; color: #999; font-size: 9pt;">
+        Généré le {% now "d/m/Y H:i" %} par {{ organization.name }}
+    </div>
+</body>
+
+</html>

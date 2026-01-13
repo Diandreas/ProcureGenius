@@ -19,6 +19,13 @@ class Modules:
     CONTRACTS = 'contracts'
     ANALYTICS = 'analytics'
     
+    # Healthcare modules
+    PATIENTS = 'patients'
+    CONSULTATIONS = 'consultations'
+    LABORATORY = 'laboratory'
+    PHARMACY = 'pharmacy'
+    RECEPTION = 'reception'
+    
     # Always available to admins (not controllable by profiles)
     AI_ASSISTANT = 'ai-assistant'
     INTEGRATIONS = 'integrations'
@@ -81,6 +88,37 @@ MODULE_METADATA = {
         'icon': 'analytics',
         'always_enabled': False,
     },
+    # Healthcare modules
+    Modules.PATIENTS: {
+        'name': _('Patients'),
+        'description': _('Gestion des patients'),
+        'icon': 'person',
+        'always_enabled': False,
+    },
+    Modules.CONSULTATIONS: {
+        'name': _('Consultations'),
+        'description': _('Consultations médicales'),
+        'icon': 'medical_services',
+        'always_enabled': False,
+    },
+    Modules.LABORATORY: {
+        'name': _('Laboratoire'),
+        'description': _('Gestion LIMS'),
+        'icon': 'science',
+        'always_enabled': False,
+    },
+    Modules.PHARMACY: {
+        'name': _('Pharmacie'),
+        'description': _('Dispensation de médicaments'),
+        'icon': 'local_pharmacy',
+        'always_enabled': False,
+    },
+    Modules.RECEPTION: {
+        'name': _('Réception'),
+        'description': _('Accueil et caisse'),
+        'icon': 'point_of_sale',
+        'always_enabled': False,
+    },
 }
 
 # Admin-only modules (always available)
@@ -100,6 +138,7 @@ class ProfileTypes:
     PROFESSIONAL = 'professional'
     STRATEGIC = 'strategic'
     ENTERPRISE = 'enterprise'
+    HEALTHCARE = 'healthcare'  # New healthcare profile
 
 
 # Profile to Module Mapping
@@ -147,6 +186,17 @@ PROFILE_MODULES = {
         Modules.CLIENTS,
         Modules.E_SOURCING,
         Modules.CONTRACTS,
+        Modules.ANALYTICS,
+    ],
+    ProfileTypes.HEALTHCARE: [
+        Modules.DASHBOARD,
+        Modules.PATIENTS,
+        Modules.CONSULTATIONS,
+        Modules.LABORATORY,
+        Modules.PHARMACY,
+        Modules.RECEPTION,
+        Modules.PRODUCTS,
+        Modules.INVOICES,
         Modules.ANALYTICS,
     ],
 }
@@ -205,6 +255,17 @@ PROFILE_METADATA = {
             _('Tous les modules'),
             _('Fonctionnalités avancées'),
             _('Support prioritaire'),
+        ],
+    },
+    ProfileTypes.HEALTHCARE: {
+        'name': _('Santé'),
+        'description': _('Solution LIMS + HMS + Pharmacie'),
+        'features': [
+            _('Gestion des patients'),
+            _('Laboratoire (LIMS)'),
+            _('Pharmacie'),
+            _('Consultations médicales'),
+            _('Réception et caisse'),
         ],
     },
 }

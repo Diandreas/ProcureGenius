@@ -43,6 +43,11 @@ TENANT_APPS = [
     'apps.contracts',
     'apps.data_migration',
     'apps.reports',
+    # Healthcare apps
+    'apps.patients',
+    'apps.laboratory',
+    'apps.pharmacy',
+    'apps.consultations',
 ]
 
 SHARED_APPS = [

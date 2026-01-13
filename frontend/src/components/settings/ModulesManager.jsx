@@ -25,6 +25,11 @@ import {
   BarChart,
   Search,
   Assignment,
+  Person as PersonIcon, // Patients
+  Support as SupportIcon, // Reception
+  Science as ScienceIcon, // Laboratory
+  LocalPharmacy as PharmacyIcon, // Pharmacy
+  MedicalServices as MedicalServicesIcon, // Consultations
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
@@ -39,6 +44,13 @@ const AVAILABLE_MODULES = [
   { code: 'contracts', name: 'Contrats', description: 'Gestion des contrats', IconComponent: Description },
   { code: 'e-sourcing', name: 'E-Sourcing', description: 'Appels d\'offres', IconComponent: Gavel },
   { code: 'analytics', name: 'Analytics', description: 'Rapports et analyses', IconComponent: BarChart },
+
+  // Healthcare Modules
+  { code: 'patients', name: 'Gestion Patients', description: 'Dossiers et admissions', IconComponent: PersonIcon },
+  { code: 'reception', name: 'Réception', description: 'Files d\'attente et accueil', IconComponent: SupportIcon },
+  { code: 'laboratory', name: 'Laboratoire', description: 'Analyses et LIMS', IconComponent: ScienceIcon },
+  { code: 'pharmacy', name: 'Pharmacie', description: 'Stocks et délivrance', IconComponent: PharmacyIcon },
+  { code: 'consultations', name: 'Consultations', description: 'Dossiers médicaux', IconComponent: MedicalServicesIcon },
 ];
 
 const ModulesManager = () => {

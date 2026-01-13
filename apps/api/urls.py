@@ -90,6 +90,18 @@ urlpatterns = [
     # Core - Currencies and system utilities
     path('core/', include('apps.core.api_urls')),
 
+    # Healthcare - Patients module
+    path('healthcare/', include('apps.patients.urls')),
+
+    # Healthcare - Laboratory (LIMS)
+    path('laboratory/', include('apps.laboratory.urls')),
+
+    # Healthcare - Pharmacy
+    path('pharmacy/', include('apps.pharmacy.urls')),
+
+    # Healthcare - Consultations
+    path('consultations/', include('apps.consultations.urls')),
+
     # Keep existing endpoints if they exist
     # path('integrations/', include('apps.integrations.api_urls')),
 ]

@@ -103,6 +103,12 @@ class CustomUser(AbstractUser):
             ('buyer', _('Acheteur')),
             ('accountant', _('Comptable')),
             ('viewer', _('Consultation')),
+            # Healthcare roles
+            ('doctor', _('Médecin')),
+            ('nurse', _('Infirmier/Infirmière')),
+            ('lab_tech', _('Technicien de laboratoire')),
+            ('pharmacist', _('Pharmacien')),
+            ('receptionist', _('Réceptionniste')),
         ],
         default='buyer',
         verbose_name=_("Rôle")
@@ -124,7 +130,37 @@ User = CustomUser
 
 
 class Client(models.Model):
-    """Modèle pour les clients"""
+    """Modèle pour les clients et patients"""
+    
+    # Client type choices
+    CLIENT_TYPES = [
+        ('b2b', _('Entreprise (B2B)')),
+        ('patient', _('Patient')),
+        ('both', _('Les deux')),
+    ]
+    
+    # Gender choices
+    GENDER_CHOICES = [
+        ('M', _('Masculin')),
+        ('F', _('Féminin')),
+        ('O', _('Autre')),
+    ]
+    
+    # Blood type choices
+    BLOOD_TYPES = [
+        ('A+', 'A+'), ('A-', 'A-'),
+        ('B+', 'B+'), ('B-', 'B-'),
+        ('AB+', 'AB+'), ('AB-', 'AB-'),
+        ('O+', 'O+'), ('O-', 'O-'),
+    ]
+    
+    # Registration source choices
+    REGISTRATION_SOURCES = [
+        ('internal', _('Interne')),
+        ('external', _('Externe (autre hôpital)')),
+        ('emergency', _('Urgence')),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
         Organization,
@@ -134,6 +170,8 @@ class Client(models.Model):
         related_name='clients',
         verbose_name=_("Organisation")
     )
+    
+    # === Basic Information ===
     name = models.CharField(
         max_length=200,
         verbose_name=_("Nom"),
@@ -145,11 +183,93 @@ class Client(models.Model):
     contact_person = models.CharField(max_length=100, blank=True, verbose_name=_("Personne contact"))
     tax_id = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro de taxe"))
     payment_terms = models.CharField(max_length=100, default="CASH", blank=True, verbose_name=_("Conditions de paiement"))
+    
+    # === Client Type (B2B vs Patient) ===
+    client_type = models.CharField(
+        max_length=20,
+        choices=CLIENT_TYPES,
+        default='b2b',
+        verbose_name=_("Type de client")
+    )
+    
+    # === Patient-specific fields ===
+    patient_number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        unique=True,
+        verbose_name=_("Numéro patient"),
+        help_text=_("Généré automatiquement pour les patients")
+    )
+    date_of_birth = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date de naissance")
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        blank=True,
+        verbose_name=_("Sexe")
+    )
+    blood_type = models.CharField(
+        max_length=3,
+        choices=BLOOD_TYPES,
+        blank=True,
+        verbose_name=_("Groupe sanguin")
+    )
+    allergies = models.TextField(
+        blank=True,
+        verbose_name=_("Allergies"),
+        help_text=_("Liste des allergies connues")
+    )
+    chronic_conditions = models.TextField(
+        blank=True,
+        verbose_name=_("Conditions chroniques"),
+        help_text=_("Maladies chroniques ou conditions permanentes")
+    )
+    
+    # === Emergency Contact ===
+    emergency_contact_name = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Contact d'urgence - Nom")
+    )
+    emergency_contact_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("Contact d'urgence - Téléphone")
+    )
+    
+    # === Communication ===
+    whatsapp = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("WhatsApp"),
+        help_text=_("Numéro WhatsApp pour notifications")
+    )
+    
+    # === Registration Source ===
+    registration_source = models.CharField(
+        max_length=20,
+        choices=REGISTRATION_SOURCES,
+        blank=True,
+        verbose_name=_("Source d'inscription")
+    )
+    referring_hospital = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Hôpital référent"),
+        help_text=_("Pour les patients externes")
+    )
+    
+    # === Status & Activity ===
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
-    # Champs pour l'automatisation du statut
     last_activity_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière activité"))
     auto_inactive_since = models.DateTimeField(null=True, blank=True, verbose_name=_("Inactif automatiquement depuis"))
     is_manually_active = models.BooleanField(default=False, verbose_name=_("Statut manuel"), help_text=_("Si True, le statut actif/inactif est géré manuellement et ne sera pas modifié automatiquement"))
+    
+    # === Timestamps ===
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -175,13 +295,58 @@ class Client(models.Model):
         self.name = ' '.join(self.name.split())
 
     def save(self, *args, **kwargs):
-        """Sauvegarder avec validation"""
+        """Sauvegarder avec validation et génération du numéro patient"""
         self.full_clean()
+        
+        # Generate patient number for patients
+        if self.client_type in ['patient', 'both'] and not self.patient_number:
+            self.patient_number = self._generate_patient_number()
+        
         super().save(*args, **kwargs)
+    
+    def _generate_patient_number(self):
+        """Generate unique patient number: PAT-YYYYMM-0001"""
+        from django.utils import timezone
+        now = timezone.now()
+        prefix = f"PAT-{now.year}{now.month:02d}"
+        
+        # Find last patient number with this prefix
+        last_patient = Client.objects.filter(
+            patient_number__startswith=prefix
+        ).order_by('-patient_number').first()
+        
+        if last_patient and last_patient.patient_number:
+            try:
+                last_num = int(last_patient.patient_number.split('-')[-1])
+                return f"{prefix}-{last_num + 1:04d}"
+            except (ValueError, IndexError):
+                pass
+        
+        return f"{prefix}-0001"
 
     def get_full_name(self):
         """Retourne le nom complet du client (alias pour cohérence avec User)"""
         return self.name
+    
+    def get_age(self):
+        """Calcule l'âge du patient à partir de la date de naissance"""
+        if not self.date_of_birth:
+            return None
+        from django.utils import timezone
+        from datetime import date
+        today = timezone.now().date()
+        born = self.date_of_birth
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    
+    @property
+    def is_patient(self):
+        """Check if this client is a patient"""
+        return self.client_type in ['patient', 'both']
+    
+    @property
+    def is_b2b(self):
+        """Check if this client is B2B"""
+        return self.client_type in ['b2b', 'both']
 
     @property
     def invoices_count(self):

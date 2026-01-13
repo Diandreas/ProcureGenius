@@ -123,6 +123,14 @@ function MainLayout() {
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
     { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
     { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
+
+    // Healthcare
+    { text: 'Patients', iconSrc: '/icon/user.png', path: '/healthcare/patients', moduleId: 'patients', isCore: false },
+    { text: 'Réception', iconSrc: '/icon/support.png', path: '/healthcare/reception', moduleId: 'reception', isCore: false },
+    { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
+    { text: 'Pharmacie', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/inventory', moduleId: 'pharmacy', isCore: false },
+    { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
+
     { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
 
@@ -754,9 +762,9 @@ function MainLayout() {
             {contextualActions?.periodControls && (
               <Box sx={{
                 // Cacher sur mobile pour le dashboard (affiché à gauche à la place)
-                display: { 
+                display: {
                   xs: isMainPage && path === '/dashboard' ? 'none' : 'flex',
-                  md: 'flex' 
+                  md: 'flex'
                 },
                 alignItems: 'center',
                 gap: { xs: 0.5, sm: 1.5 },
@@ -859,9 +867,9 @@ function MainLayout() {
                   fontSize: '0.875rem',
                   mr: 2,
                   // Cacher sur mobile pour les pages principales (affiché à gauche à la place)
-                  display: { 
+                  display: {
                     xs: isMainPage ? 'none' : 'flex',
-                    md: 'flex' 
+                    md: 'flex'
                   },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                   color: 'white',

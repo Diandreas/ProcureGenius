@@ -74,6 +74,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: t('navigation:mobile.invoices'), value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
     { label: t('navigation:mobile.products'), value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
     { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
+    // Healthcare
+    { label: 'Patients', value: '/healthcare/patients', icon: '/icon/user.png', moduleId: 'patients', isCore: false },
+    { label: 'Réception', value: '/healthcare/reception', icon: '/icon/support.png', moduleId: 'reception', isCore: false },
+    { label: 'Laboratoire', value: '/healthcare/laboratory', icon: '/icon/analysis.png', moduleId: 'laboratory', isCore: false },
+    { label: 'Pharmacie', value: '/healthcare/pharmacy/inventory', icon: '/icon/product.png', moduleId: 'pharmacy', isCore: false },
+    { label: 'Consultations', value: '/healthcare/consultations', icon: '/icon/contract.png', moduleId: 'consultations', isCore: false },
   ];
 
   const aiItem = {
@@ -110,11 +116,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         // Ombres neumorphiques douces
         boxShadow: isSelected
           ? (isDark
-              ? 'inset 2px 2px 5px rgba(0,0,0,0.3), inset -2px -2px 5px rgba(255,255,255,0.1)'
-              : 'inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7)')
+            ? 'inset 2px 2px 5px rgba(0,0,0,0.3), inset -2px -2px 5px rgba(255,255,255,0.1)'
+            : 'inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7)')
           : (isDark
-              ? '3px 3px 6px rgba(0,0,0,0.4), -2px -2px 6px rgba(255,255,255,0.05)'
-              : '3px 3px 6px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.9)'),
+            ? '3px 3px 6px rgba(0,0,0,0.4), -2px -2px 6px rgba(255,255,255,0.05)'
+            : '3px 3px 6px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.9)'),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -172,11 +178,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
       }}
       elevation={0}
     >
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        px: 0.5, 
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 0.5,
         py: 0.75,
         maxWidth: 500,
         mx: 'auto',
@@ -273,16 +279,16 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
                 boxShadow: isAIActive
                   ? `0 6px 20px ${alpha(theme.palette.primary.main, 0.45)}, 0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
                   : (isDark
-                      ? '4px 4px 10px rgba(0,0,0,0.5), -3px -3px 10px rgba(255,255,255,0.08)'
-                      : '5px 5px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,1)'),
+                    ? '4px 4px 10px rgba(0,0,0,0.5), -3px -3px 10px rgba(255,255,255,0.08)'
+                    : '5px 5px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,1)'),
                 transform: isAIActive ? 'translateY(-6px) scale(1.05)' : 'translateY(0)',
                 '&:hover': {
                   transform: isAIActive ? 'translateY(-7px) scale(1.08)' : 'translateY(-2px) scale(1.03)',
                   boxShadow: isAIActive
                     ? `0 8px 24px ${alpha(theme.palette.primary.main, 0.5)}`
                     : (isDark
-                        ? '6px 6px 14px rgba(0,0,0,0.6), -4px -4px 12px rgba(255,255,255,0.1)'
-                        : '6px 6px 16px rgba(0,0,0,0.12), -4px -4px 12px rgba(255,255,255,1)'),
+                      ? '6px 6px 14px rgba(0,0,0,0.6), -4px -4px 12px rgba(255,255,255,0.1)'
+                      : '6px 6px 16px rgba(0,0,0,0.12), -4px -4px 12px rgba(255,255,255,1)'),
                 }
               }}
             >

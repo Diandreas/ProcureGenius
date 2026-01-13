@@ -60,6 +60,21 @@ import FAQ from './pages/FAQ';
 import KeyboardShortcuts from './pages/KeyboardShortcuts';
 import Support from './pages/Support';
 
+// Healthcare Pages
+import PatientList from './pages/healthcare/patients/PatientList';
+import PatientForm from './pages/healthcare/patients/PatientForm';
+import PatientDetail from './pages/healthcare/patients/PatientDetail';
+import ReceptionDashboard from './pages/healthcare/reception/ReceptionDashboard';
+import LabOrderList from './pages/healthcare/laboratory/LabOrderList';
+import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
+import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
+import InventoryList from './pages/healthcare/pharmacy/InventoryList';
+import DispensingList from './pages/healthcare/pharmacy/DispensingList';
+import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
+import ConsultationList from './pages/healthcare/consultations/ConsultationList';
+import ConsultationForm from './pages/healthcare/consultations/ConsultationForm';
+import ConsultationDetail from './pages/healthcare/consultations/ConsultationDetail';
+
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
@@ -679,99 +694,122 @@ function App() {
                     <AdSenseScript />
                     {onboardingChecked && (
                       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                      <Routes>
-                        {/* Public Routes */}
-                        <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
-                        <Route path="/pricing" element={<Pricing />} />
+                        <Routes>
+                          {/* Public Routes */}
+                          <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+                          <Route path="/pricing" element={<Pricing />} />
 
-                        {/* Auth Routes */}
-                        <Route element={<AuthLayout />}>
-                          <Route path="/login" element={<LoginEnhanced />} />
-                          <Route path="/register" element={<Register />} />
-                        </Route>
-
-                        {/* Onboarding */}
-                        <Route element={<PrivateRoute />}>
-                          <Route path="/onboarding" element={<OnboardingSetup />} />
-                        </Route>
-
-                        {/* Protected Routes */}
-                        <Route element={<PrivateRoute />}>
-                          <Route element={<MainLayout />}>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<CustomizableDashboard />} />
-                            <Route path="/dashboard-old" element={<OldDashboard />} />
-
-                            {/* Suppliers */}
-                            <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
-                            <Route path="/suppliers/new" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
-                            <Route path="/suppliers/:id" element={<ModuleRoute module="suppliers"><SupplierDetail /></ModuleRoute>} />
-                            <Route path="/suppliers/:id/edit" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
-
-                            {/* Purchase Orders */}
-                            <Route path="/purchase-orders" element={<ModuleRoute module="purchase-orders"><PurchaseOrders /></ModuleRoute>} />
-                            <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
-                            <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
-                            <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
-
-                            {/* Invoices */}
-                            <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />
-                            <Route path="/invoices/new" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
-                            <Route path="/invoices/:id" element={<ModuleRoute module="invoices"><InvoiceDetail /></ModuleRoute>} />
-                            <Route path="/invoices/:id/edit" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
-
-                            {/* Products */}
-                            <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
-                            <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
-                            <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
-                            <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
-
-                            {/* Clients */}
-                            <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
-                            <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
-                            <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
-                            <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
-
-                            {/* E-Sourcing */}
-                            <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
-                            <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                            <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
-                            <Route path="/e-sourcing/events/:id/edit" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                            <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
-                            <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
-
-                            {/* Contracts */}
-                            <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
-                            <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
-                            <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
-                            <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
-
-                            {/* Data Migration */}
-                            <Route path="/migration/jobs" element={<MigrationJobs />} />
-                            <Route path="/migration/wizard" element={<MigrationWizard />} />
-
-                            {/* AI Chat */}
-                            <Route path="/ai-chat" element={<AIChat />} />
-                            <Route path="/ai-chat/import-reviews" element={<ImportReviews />} />
-                            <Route path="/ai-chat/document-import" element={<DocumentImport />} />
-
-                            {/* Settings */}
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/settings/users" element={<UserManagement />} />
-                            <Route path="/settings/import" element={<DataImportPage />} />
-
-                            {/* Help & Documentation */}
-                            <Route path="/help" element={<Help />} />
-                            <Route path="/help/:articleId" element={<Help />} />
-                            <Route path="/help/faq" element={<FAQ />} />
-                            <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
-                            <Route path="/support" element={<Support />} />
+                          {/* Auth Routes */}
+                          <Route element={<AuthLayout />}>
+                            <Route path="/login" element={<LoginEnhanced />} />
+                            <Route path="/register" element={<Register />} />
                           </Route>
-                        </Route>
 
-                        {/* 404 */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
+                          {/* Onboarding */}
+                          <Route element={<PrivateRoute />}>
+                            <Route path="/onboarding" element={<OnboardingSetup />} />
+                          </Route>
+
+                          {/* Protected Routes */}
+                          <Route element={<PrivateRoute />}>
+                            <Route element={<MainLayout />}>
+                              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                              <Route path="/dashboard" element={<CustomizableDashboard />} />
+                              <Route path="/dashboard-old" element={<OldDashboard />} />
+
+                              {/* Suppliers */}
+                              <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
+                              <Route path="/suppliers/new" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
+                              <Route path="/suppliers/:id" element={<ModuleRoute module="suppliers"><SupplierDetail /></ModuleRoute>} />
+                              <Route path="/suppliers/:id/edit" element={<ModuleRoute module="suppliers"><SupplierForm /></ModuleRoute>} />
+
+                              {/* Purchase Orders */}
+                              <Route path="/purchase-orders" element={<ModuleRoute module="purchase-orders"><PurchaseOrders /></ModuleRoute>} />
+                              <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
+                              <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
+                              <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
+
+                              {/* Invoices */}
+                              <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />
+                              <Route path="/invoices/new" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
+                              <Route path="/invoices/:id" element={<ModuleRoute module="invoices"><InvoiceDetail /></ModuleRoute>} />
+                              <Route path="/invoices/:id/edit" element={<ModuleRoute module="invoices"><InvoiceForm /></ModuleRoute>} />
+
+                              {/* Products */}
+                              <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
+                              <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                              <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
+                              <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+
+                              {/* Clients */}
+                              <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
+                              <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
+                              <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
+                              <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
+
+                              {/* E-Sourcing */}
+                              <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
+                              <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
+                              <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
+                              <Route path="/e-sourcing/events/:id/edit" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
+                              <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
+                              <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
+
+                              {/* Contracts */}
+                              <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
+                              <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
+                              <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
+                              <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
+
+                              {/* Data Migration */}
+                              <Route path="/migration/jobs" element={<MigrationJobs />} />
+                              <Route path="/migration/wizard" element={<MigrationWizard />} />
+
+                              {/* AI Chat */}
+                              <Route path="/ai-chat" element={<AIChat />} />
+                              <Route path="/ai-chat/import-reviews" element={<ImportReviews />} />
+                              <Route path="/ai-chat/document-import" element={<DocumentImport />} />
+
+                              {/* Settings */}
+                              <Route path="/settings" element={<Settings />} />
+                              <Route path="/settings/users" element={<UserManagement />} />
+                              <Route path="/settings/import" element={<DataImportPage />} />
+
+                              {/* Help & Documentation */}
+                              <Route path="/help" element={<Help />} />
+                              <Route path="/help/:articleId" element={<Help />} />
+                              <Route path="/help/faq" element={<FAQ />} />
+                              <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
+                              <Route path="/support" element={<Support />} />
+
+                              {/* Healthcare Modules */}
+                              <Route path="/healthcare/patients" element={<PatientList />} />
+                              <Route path="/healthcare/patients/new" element={<PatientForm />} />
+                              <Route path="/healthcare/patients/:id" element={<PatientDetail />} />
+                              <Route path="/healthcare/patients/:id/edit" element={<PatientForm />} />
+                              <Route path="/healthcare/reception" element={<ReceptionDashboard />} />
+
+                              {/* Laboratory */}
+                              <Route path="/healthcare/laboratory" element={<LabOrderList />} />
+                              <Route path="/healthcare/laboratory/catalog" element={<LabTestCatalog />} />
+                              <Route path="/healthcare/laboratory/:id" element={<LabOrderDetail />} />
+
+                              {/* Pharmacy */}
+                              <Route path="/healthcare/pharmacy/inventory" element={<InventoryList />} />
+                              <Route path="/healthcare/pharmacy/dispensing" element={<DispensingList />} />
+                              <Route path="/healthcare/pharmacy/dispense/new" element={<DispensingForm />} />
+
+                              {/* Consultations */}
+                              <Route path="/healthcare/consultations" element={<ConsultationList />} />
+                              <Route path="/healthcare/consultations/new" element={<ConsultationForm />} />
+                              <Route path="/healthcare/consultations/:id" element={<ConsultationDetail />} />
+                              <Route path="/healthcare/consultations/:id/edit" element={<ConsultationForm />} />
+                            </Route>
+                          </Route>
+
+                          {/* 404 */}
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
                         <PWAInstallPrompt />
                       </Router>
                     )}
