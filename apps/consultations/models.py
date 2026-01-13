@@ -171,6 +171,16 @@ class Consultation(models.Model):
         help_text=_("Instructions à remettre au patient")
     )
     
+    # Billing
+    consultation_invoice = models.ForeignKey(
+        'invoicing.Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='consultations',
+        verbose_name=_("Facture consultation")
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

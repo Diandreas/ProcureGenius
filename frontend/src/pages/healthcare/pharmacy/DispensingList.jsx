@@ -54,7 +54,10 @@ const DispensingList = () => {
             weekAgo.setDate(weekAgo.getDate() - 7);
             return txDate >= weekAgo;
         }).length,
-        totalRevenue: transactions.reduce((sum, tx) => sum + (tx.total_amount || 0), 0)
+        totalRevenue: transactions.reduce((sum, tx) => {
+            const amount = parseFloat(tx.total_amount) || 0;
+            return sum + (isNaN(amount) ? 0 : amount);
+        }, 0)
     };
 
     useEffect(() => {
@@ -95,7 +98,7 @@ const DispensingList = () => {
         { label: '7 derniers jours', count: stats.thisWeek, filter: 'thisWeek', icon: ReceiptIcon, color: 'success' },
         {
             label: 'Revenu Total',
-            count: `${new Intl.NumberFormat('fr-FR').format(stats.totalRevenue)} XAF`,
+            count: `${new Intl.NumberFormat('fr-FR').format(isNaN(stats.totalRevenue) ? 0 : stats.totalRevenue)} XAF`,
             filter: null,
             icon: PharmacyIcon,
             color: 'warning',
@@ -447,7 +450,7 @@ const DispensingList = () => {
                                                         WebkitTextFillColor: 'transparent'
                                                     }}
                                                 >
-                                                    {new Intl.NumberFormat('fr-FR').format(tx.total_amount || 0)} XAF
+                                                    {new Intl.NumberFormat('fr-FR').format(isNaN(parseFloat(tx.total_amount)) ? 0 : parseFloat(tx.total_amount))} XAF
                                                 </Typography>
                                             </Box>
 

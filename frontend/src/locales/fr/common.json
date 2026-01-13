@@ -41,7 +41,8 @@
     "details": "Détails",
     "saving": "Enregistrement...",
     "preview": "Aperçu",
-    "moreActions": "Plus d'actions"
+    "moreActions": "Plus d'actions",
+    "edit": "Modifier"
   },
   "success": "Succès",
   "failed": "Échec",
@@ -79,7 +80,9 @@
     "required": "Requis",
     "all": "Tous",
     "active": "Actif",
-    "inactive": "Inactif"
+    "inactive": "Inactif",
+    "search": "Rechercher...",
+    "loading": "Chargement..."
   },
   "messages": {
     "success": "Opération réussie",
@@ -163,5 +166,23 @@
       "iosHint": "Appuyez sur ",
       "iosHint2": " puis \"Sur l'écran d'accueil\""
     }
+  },
+  "patients": {
+    "title": "Gestion des Patients",
+    "new": "Nouveau Patient",
+    "loading": "Chargement des patients...",
+    "search": "Rechercher par nom, ID ou téléphone..."
+  },
+  "reception": {
+    "dashboard": "Réception & Urgences",
+    "new_checkin": "Nouvelle Arrivée",
+    "total_today": "Total Aujourd'hui",
+    "waiting": "En Salle d'Attente",
+    "consulting": "En Consultation",
+    "completed": "Terminés"
+  },
+  "pharmacy": {
+    "inventory": "Pharmacie Stock",
+    "dispense": "Nouvelle Dispensation"
   }
 }

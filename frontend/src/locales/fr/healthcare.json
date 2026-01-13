@@ -1,0 +1,45 @@
+{
+  "patients": {
+    "title": "Gestion des Patients",
+    "new": "Nouveau Patient",
+    "loading": "Chargement des patients...",
+    "search": "Rechercher par nom, ID ou téléphone...",
+    "full_name": "Nom complet",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "dob": "Date de Naissance",
+    "gender": "Sexe",
+    "phone": "Téléphone",
+    "email": "Email",
+    "address": "Adresse",
+    "blood_type": "Groupe Sanguin",
+    "allergies": "Allergies Connues",
+    "chronic": "Conditions Chroniques / Antécédents",
+    "create_success": "Patient créé avec succès",
+    "update_success": "Patient mis à jour avec succès"
+  },
+  "consultations": {
+    "title": "Consultations Médicales",
+    "new": "Nouvelle Consultation",
+    "loading": "Chargement des consultations...",
+    "search": "Rechercher par patient, motif, médecin..."
+  },
+  "reception": {
+    "dashboard": "Réception & Urgences",
+    "new_checkin": "Nouvelle Arrivée",
+    "total_today": "Total Aujourd'hui",
+    "waiting": "En Salle d'Attente",
+    "consulting": "En Consultation",
+    "completed": "Terminés"
+  },
+  "pharmacy": {
+    "inventory": "Pharmacie Stock",
+    "dispense": "Nouvelle Dispensation"
+  },
+  "laboratory": {
+    "title": "Ordres de Laboratoire",
+    "orders": "Ordres de Laboratoire",
+    "new_order": "Nouvel Ordre",
+    "results": "Résultats"
+  }
+} 

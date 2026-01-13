@@ -167,6 +167,52 @@ class DispensingCreateView(APIView):
             visit.status = 'at_pharmacy'
             visit.save()
         
+        # Auto-create invoice for dispensing
+        try:
+            from apps.invoicing.models import Invoice, InvoiceItem
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Prepare invoice title
+            patient_name = patient.name if patient else "Vente comptoir"
+            invoice_title = f"Dispensation {dispensing.dispensing_number} - {patient_name}"
+            
+            # Create invoice
+            invoice = Invoice.objects.create(
+                created_by=request.user,
+                client=patient,
+                title=invoice_title,
+                description=f"Dispensation pharmacie #{dispensing.dispensing_number}",
+                due_date=timezone.now().date() + timedelta(days=30),
+                subtotal=0,
+                total_amount=0,
+                status='paid' if not patient else 'draft',  # Walk-in = paid immediately
+                currency='XAF',
+            )
+            
+            # Add invoice items from dispensing items
+            for item in dispensing.items.all():
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=item.medication,
+                    service_code=item.medication.reference or 'MED',
+                    description=item.medication.name,
+                    quantity=item.quantity_dispensed,
+                    unit_price=item.unit_price,
+                    total_price=item.total_price,
+                )
+            
+            # Recalculate invoice totals
+            invoice.recalculate_totals()
+            
+            # Link invoice to dispensing
+            dispensing.pharmacy_invoice = invoice
+            dispensing.save(update_fields=['pharmacy_invoice'])
+            
+        except Exception as e:
+            # Don't fail the dispensing if invoice creation fails
+            print(f"Error creating pharmacy invoice: {e}")
+        
         return Response(
             PharmacyDispensingSerializer(dispensing).data,
             status=status.HTTP_201_CREATED
@@ -403,3 +449,50 @@ class PatientPharmacyHistoryView(APIView):
             'total_dispensings': dispensings.count(),
             'dispensings': PharmacyDispensingSerializer(dispensings, many=True).data,
         })
+
+
+class DispensingPDFView(APIView):
+    """Generate PDF receipt for a dispensing"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        from django.http import HttpResponse
+        from .services import PharmacyPDFGenerator
+        
+        try:
+            dispensing = PharmacyDispensing.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except PharmacyDispensing.DoesNotExist:
+            return Response(
+                {'error': 'Dispensing not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        service = PharmacyPDFGenerator()
+        try:
+            pdf_buffer = service.generate_dispensing_pdf(
+                dispensing,
+                template_type=request.query_params.get('template', 'receipt'),
+                language=request.query_params.get('lang', 'fr')
+            )
+            
+            patient_name = dispensing.patient.name if dispensing.patient else 'VenteComptoir'
+            filename = f"dispensation_{dispensing.dispensing_number}_{patient_name}.pdf"
+            
+            response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+            
+            if request.query_params.get('download', 'true') == 'false':
+                response['Content-Disposition'] = f'inline; filename="{filename}"'
+            else:
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            return response
+            
+        except Exception as e:
+            return Response(
+                {'error': f'PDF Generation failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+

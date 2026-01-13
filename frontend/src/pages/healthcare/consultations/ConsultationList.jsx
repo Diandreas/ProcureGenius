@@ -99,7 +99,7 @@ const ConsultationList = () => {
 
     const quickFilterCards = [
         { label: 'Toutes', count: stats.all, filter: 'all', icon: HospitalIcon, color: 'info' },
-        { label: 'À Venir', count: stats.scheduled, filter: 'scheduled', icon: CalendarIcon, color: 'default' },
+        { label: 'À Venir', count: stats.scheduled, filter: 'scheduled', icon: CalendarIcon, color: 'grey' },
         { label: 'En Cours', count: stats.in_progress, filter: 'in_progress', icon: StethoscopeIcon, color: 'primary' },
         { label: 'Terminées', count: stats.completed, filter: 'completed', icon: HistoryIcon, color: 'success' }
     ];
@@ -175,17 +175,29 @@ const ConsultationList = () => {
                                     sx={{
                                         cursor: 'pointer',
                                         borderRadius: 3,
-                                        background: theme => isActive
-                                            ? `linear-gradient(135deg, ${alpha(theme.palette[card.color].main, 0.15)} 0%, ${alpha(theme.palette[card.color].main, 0.08)} 100%)`
-                                            : `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                                        border: `2px solid ${isActive ? theme.palette[card.color].main : 'transparent'}`,
-                                        boxShadow: isActive
-                                            ? `0 4px 16px ${alpha(theme.palette[card.color].main, 0.3)}`
-                                            : `0 2px 8px ${alpha(theme.palette.common.black, 0.05)}`,
+                                        background: theme => {
+                                            const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                            return isActive
+                                                ? `linear-gradient(135deg, ${alpha(colorPalette.main || '#9e9e9e', 0.15)} 0%, ${alpha(colorPalette.main || '#9e9e9e', 0.08)} 100%)`
+                                                : `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`;
+                                        },
+                                        border: theme => {
+                                            const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                            return `2px solid ${isActive ? (colorPalette.main || '#9e9e9e') : 'transparent'}`;
+                                        },
+                                        boxShadow: theme => {
+                                            const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                            return isActive
+                                                ? `0 4px 16px ${alpha(colorPalette.main || '#9e9e9e', 0.3)}`
+                                                : `0 2px 8px ${alpha(theme.palette.common.black, 0.05)}`;
+                                        },
                                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                         '&:hover': {
                                             transform: 'translateY(-4px)',
-                                            boxShadow: `0 8px 24px ${alpha(theme.palette[card.color].main, 0.25)}`
+                                            boxShadow: theme => {
+                                                const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                                return `0 8px 24px ${alpha(colorPalette.main || '#9e9e9e', 0.25)}`;
+                                            }
                                         }
                                     }}
                                 >
@@ -193,7 +205,10 @@ const ConsultationList = () => {
                                         <Icon
                                             sx={{
                                                 fontSize: isMobile ? 28 : 36,
-                                                color: theme.palette[card.color].main,
+                                                color: theme => {
+                                                    const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                                    return colorPalette.main || '#9e9e9e';
+                                                },
                                                 mb: 1
                                             }}
                                         />
@@ -202,7 +217,12 @@ const ConsultationList = () => {
                                             sx={{
                                                 fontWeight: 700,
                                                 mb: 0.5,
-                                                background: `linear-gradient(135deg, ${theme.palette[card.color].main}, ${theme.palette[card.color].dark})`,
+                                                background: theme => {
+                                                    const colorPalette = theme.palette[card.color] || theme.palette.text;
+                                                    const mainColor = colorPalette.main || '#9e9e9e';
+                                                    const darkColor = colorPalette.dark || '#616161';
+                                                    return `linear-gradient(135deg, ${mainColor}, ${darkColor})`;
+                                                },
                                                 backgroundClip: 'text',
                                                 WebkitBackgroundClip: 'text',
                                                 WebkitTextFillColor: 'transparent'

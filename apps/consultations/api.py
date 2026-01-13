@@ -193,6 +193,46 @@ class EndConsultationView(APIView):
             else:
                 consultation.visit.complete_visit()
         
+        # Auto-create invoice for consultation
+        if not consultation.consultation_invoice:
+            try:
+                from apps.invoicing.models import Invoice, InvoiceItem
+                from datetime import timedelta
+                
+                # Default consultation fee (can be configured per organization)
+                consultation_fee = 5000  # XAF - default fee
+                
+                # Create invoice
+                invoice = Invoice.objects.create(
+                    created_by=request.user,
+                    client=consultation.patient,
+                    title=f"Consultation médicale - {consultation.consultation_number}",
+                    description=f"Consultation du {consultation.consultation_date.strftime('%d/%m/%Y')}",
+                    due_date=timezone.now().date() + timedelta(days=30),
+                    subtotal=consultation_fee,
+                    total_amount=consultation_fee,
+                    status='draft',
+                    currency='XAF',
+                )
+                
+                # Add consultation as invoice item
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    service_code='CONSULT',
+                    description=f"Consultation médicale - Dr. {consultation.doctor.get_full_name() if consultation.doctor else 'N/A'}",
+                    quantity=1,
+                    unit_price=consultation_fee,
+                    total_price=consultation_fee,
+                )
+                
+                # Link invoice to consultation
+                consultation.consultation_invoice = invoice
+                consultation.save(update_fields=['consultation_invoice'])
+                
+            except Exception as e:
+                # Don't fail consultation end if invoice creation fails
+                print(f"Error creating consultation invoice: {e}")
+        
         return Response(ConsultationSerializer(consultation).data)
 
 

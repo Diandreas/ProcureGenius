@@ -94,10 +94,6 @@ const DispensingForm = () => {
     };
 
     const handleSubmit = async () => {
-        if (!formData.patient) {
-            enqueueSnackbar('Veuillez sélectionner un patient', { variant: 'warning' });
-            return;
-        }
         if (formData.items.length === 0) {
             enqueueSnackbar('Veuillez ajouter au moins un médicament', { variant: 'warning' });
             return;
@@ -106,7 +102,7 @@ const DispensingForm = () => {
         setLoading(true);
         try {
             const payload = {
-                patient_id: formData.patient.id,
+                patient_id: formData.patient?.id || null,
                 items: formData.items.map(item => ({
                     medication_id: item.medication.id,
                     quantity: parseInt(item.quantity),
@@ -154,7 +150,10 @@ const DispensingForm = () => {
                 <Grid item xs={12} md={4}>
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Patient</Typography>
+                            <Typography variant="h6" gutterBottom>Patient (Optionnel)</Typography>
+                            <Typography variant="caption" color="text.secondary" gutterBottom display="block" sx={{ mb: 1 }}>
+                                Laisser vide pour une vente directe sans patient
+                            </Typography>
                             <Autocomplete
                                 options={patients}
                                 getOptionLabel={(option) => `${option.name} (${option.patient_number})`}

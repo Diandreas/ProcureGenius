@@ -5,44 +5,44 @@ const laboratoryAPI = {
 
     // Get all orders with pagination/filtering
     getOrders: async (params) => {
-        const response = await api.get('/laboratory/orders/', { params });
+        const response = await api.get('/healthcare/laboratory/orders/', { params });
         return response.data; // { results: [], count: ... } or [] depending on backend pagination
     },
 
     // Get filtered orders (e.g. today's pending)
     getTodayOrders: async () => {
-        const response = await api.get('/laboratory/orders/today/');
+        const response = await api.get('/healthcare/laboratory/orders/today/');
         return response.data;
     },
 
     // Get single order details
     getOrder: async (id) => {
-        const response = await api.get(`/laboratory/orders/${id}/`);
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/`);
         return response.data;
     },
 
     // Create new order
     createOrder: async (data) => {
-        const response = await api.post('/laboratory/orders/create/', data);
+        const response = await api.post('/healthcare/laboratory/orders/create/', data);
         return response.data;
     },
 
     // Update order status
     updateStatus: async (id, statusData) => {
-        const response = await api.patch(`/laboratory/orders/${id}/status/`, statusData);
+        const response = await api.patch(`/healthcare/laboratory/orders/${id}/status/`, statusData);
         return response.data;
     },
 
     // Enter results
     enterResults: async (id, resultsData) => {
         // resultsData: { items: [{ item_id, result_value, ... }, ...] }
-        const response = await api.post(`/laboratory/orders/${id}/results/`, resultsData);
+        const response = await api.post(`/healthcare/laboratory/orders/${id}/results/`, resultsData);
         return response.data;
     },
 
     // Generate Result PDF
     getResultsPDF: async (id, params = {}) => {
-        const response = await api.get(`/laboratory/orders/${id}/pdf/`, {
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/pdf/`, {
             params,
             responseType: 'blob'
         });
@@ -53,13 +53,13 @@ const laboratoryAPI = {
 
     // Get all lab tests (for selection)
     getTests: async (params) => {
-        const response = await api.get('/laboratory/tests/', { params });
+        const response = await api.get('/healthcare/laboratory/tests/', { params });
         return response.data;
     },
 
     // Get categories
     getCategories: async () => {
-        const response = await api.get('/laboratory/categories/');
+        const response = await api.get('/healthcare/laboratory/categories/');
         return response.data;
     }
 };

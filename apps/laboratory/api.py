@@ -210,6 +210,47 @@ class LabOrderCreateView(APIView):
         if visit:
             visit.send_to_lab()
         
+        # Auto-create invoice for lab order
+        try:
+            from apps.invoicing.models import Invoice, InvoiceItem
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Create invoice
+            invoice = Invoice.objects.create(
+                created_by=request.user,
+                client=patient,
+                title=f"Analyses laboratoire - {order.order_number}",
+                description=f"Commande laboratoire #{order.order_number}",
+                due_date=timezone.now().date() + timedelta(days=30),
+                subtotal=0,
+                total_amount=0,
+                status='draft',
+                currency='XAF',
+            )
+            
+            # Add invoice items from lab tests
+            for test in tests:
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    service_code=test.test_code or 'LAB',
+                    description=test.name,
+                    quantity=1,
+                    unit_price=test.price,
+                    total_price=test.price,
+                )
+            
+            # Recalculate invoice totals
+            invoice.recalculate_totals()
+            
+            # Link invoice to lab order
+            order.lab_invoice = invoice
+            order.save(update_fields=['lab_invoice'])
+            
+        except Exception as e:
+            # Don't fail the order if invoice creation fails
+            print(f"Error creating lab invoice: {e}")
+        
         return Response(
             LabOrderSerializer(order).data,
             status=status.HTTP_201_CREATED

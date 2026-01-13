@@ -15,7 +15,8 @@ import {
     useMediaQuery,
     Button,
     alpha,
-    LinearProgress
+    LinearProgress,
+    Paper
 } from '@mui/material';
 import {
     Add as AddIcon,

@@ -27,8 +27,7 @@ const PatientForm = () => {
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
+        name: '',
         date_of_birth: '',
         gender: 'M',
         phone: '',
@@ -52,8 +51,7 @@ const PatientForm = () => {
             setLoading(true);
             const data = await patientAPI.getPatient(id);
             setFormData({
-                first_name: data.first_name || '',
-                last_name: data.last_name || '',
+                name: data.name || '',
                 date_of_birth: data.date_of_birth || '',
                 gender: data.gender || 'M',
                 phone: data.phone || '',
@@ -82,7 +80,7 @@ const PatientForm = () => {
         e.preventDefault();
 
         // Basic validation
-        if (!formData.first_name || !formData.last_name || !formData.date_of_birth) {
+        if (!formData.name || !formData.date_of_birth) {
             enqueueSnackbar(t('validation.required_fields'), { variant: 'warning' });
             return;
         }
@@ -99,7 +97,9 @@ const PatientForm = () => {
             navigate('/healthcare/patients');
         } catch (error) {
             console.error('Error saving patient:', error);
-            enqueueSnackbar(t('common.error_saving'), { variant: 'error' });
+            // Show more specific error message if available
+            const errorMessage = error.response?.data?.detail || error.response?.data?.non_field_errors?.[0] || t('common.error_saving');
+            enqueueSnackbar(errorMessage, { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -133,23 +133,13 @@ const PatientForm = () => {
                     <Divider sx={{ mb: 3 }} />
 
                     <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                             <TextField
                                 required
                                 fullWidth
-                                label={t('patients.first_name', 'Prénom')}
-                                name="first_name"
-                                value={formData.first_name}
-                                onChange={handleChange}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label={t('patients.last_name', 'Nom')}
-                                name="last_name"
-                                value={formData.last_name}
+                                label={t('patients.full_name', 'Nom complet')}
+                                name="name"
+                                value={formData.name}
                                 onChange={handleChange}
                             />
                         </Grid>

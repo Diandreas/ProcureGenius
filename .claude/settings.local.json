@@ -47,7 +47,11 @@
       "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\invoices\\\\InvoiceDetail.jsx'' | Measure-Object -Line\\).Lines\")",
       "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\purchase-orders\\\\PurchaseOrderDetail.jsx'' | Measure-Object -Line\\).Lines\")",
       "Bash(powershell -Command \"\\(Get-Content ''frontend\\\\src\\\\pages\\\\clients\\\\Clients.jsx'' | Measure-Object -Line\\).Lines\")",
-      "Bash(python manage.py showmigrations:*)"
+      "Bash(python manage.py showmigrations:*)",
+      "Bash(python manage.py create_julianna_healthcare:*)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" manage.py create_julianna_healthcare)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" -c:*)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" manage.py create_julianna_healthcare --reset)"
     ],
     "deny": [],
     "ask": []

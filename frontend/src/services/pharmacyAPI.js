@@ -5,19 +5,19 @@ const pharmacyAPI = {
 
     // Get dispensing history / list
     getDispensingList: async (params) => {
-        const response = await api.get('/healthcare/pharmacy/dispensing/', { params });
+        const response = await api.get('/healthcare/pharmacy/dispensings/', { params });
         return response.data;
     },
 
     // Get single dispensing record
     getDispensing: async (id) => {
-        const response = await api.get(`/healthcare/pharmacy/dispensing/${id}/`);
+        const response = await api.get(`/healthcare/pharmacy/dispensings/${id}/`);
         return response.data;
     },
 
     // Process dispensing (Create)
     createDispensing: async (data) => {
-        const response = await api.post('/healthcare/pharmacy/dispensing/create/', data);
+        const response = await api.post('/healthcare/pharmacy/dispensings/create/', data);
         return response.data;
     },
 

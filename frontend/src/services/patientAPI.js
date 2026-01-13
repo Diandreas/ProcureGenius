@@ -41,13 +41,13 @@ const patientAPI = {
 
     // Register visit
     registerVisit: async (data) => {
-        const response = await api.post('/healthcare/visits/check-in/', data);
+        const response = await api.post('/healthcare/patients/visits/check-in/', data);
         return response.data;
     },
 
     // Get Today's Visits (Dashboard)
     getTodayVisits: async () => {
-        const response = await api.get('/healthcare/visits/today/');
+        const response = await api.get('/healthcare/patients/visits/today/');
         return response.data;
     }
 };

@@ -16,18 +16,29 @@ import {
     Chip,
     Paper,
     Divider,
-    Alert
+    Alert,
+    Autocomplete,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    IconButton,
+    Checkbox,
+    Stack
 } from '@mui/material';
 import {
     Save as SaveIcon,
     CheckCircle as VerifyIcon,
     PictureAsPdf as PdfIcon,
-    ArrowBack as ArrowBackIcon
+    ArrowBack as ArrowBackIcon,
+    Delete as DeleteIcon,
+    Add as AddIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import patientAPI from '../../../services/patientAPI';
 
 const LabOrderDetail = () => {
     const { t } = useTranslation();
@@ -38,10 +49,41 @@ const LabOrderDetail = () => {
     const [loading, setLoading] = useState(true);
     const [order, setOrder] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
+    const isNewOrder = id === 'new';
+
+    // New order form state
+    const [patients, setPatients] = useState([]);
+    const [availableTests, setAvailableTests] = useState([]);
+    const [selectedPatient, setSelectedPatient] = useState(null);
+    const [selectedTests, setSelectedTests] = useState([]);
+    const [priority, setPriority] = useState('routine');
+    const [clinicalNotes, setClinicalNotes] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        fetchOrder();
-    }, [id]);
+        if (!isNewOrder) {
+            fetchOrder();
+        } else {
+            fetchPatientsAndTests();
+        }
+    }, [id, isNewOrder]);
+
+    const fetchPatientsAndTests = async () => {
+        setLoading(true);
+        try {
+            const [patientsData, testsData] = await Promise.all([
+                patientAPI.getPatients({ page_size: 1000 }),
+                laboratoryAPI.getTests({ is_active: true, page_size: 1000 })
+            ]);
+            setPatients(Array.isArray(patientsData) ? patientsData : patientsData.results || []);
+            setAvailableTests(Array.isArray(testsData) ? testsData : testsData.results || []);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            enqueueSnackbar('Erreur de chargement des données', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchOrder = async () => {
         try {
@@ -125,8 +167,232 @@ const LabOrderDetail = () => {
         }
     };
 
+    const handleCreateOrder = async () => {
+        if (!selectedPatient) {
+            enqueueSnackbar('Veuillez sélectionner un patient', { variant: 'warning' });
+            return;
+        }
+        if (selectedTests.length === 0) {
+            enqueueSnackbar('Veuillez sélectionner au moins un test', { variant: 'warning' });
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const orderData = {
+                patient_id: selectedPatient.id,
+                test_ids: selectedTests.map(t => t.id),
+                priority: priority,
+                clinical_notes: clinicalNotes
+            };
+
+            const newOrder = await laboratoryAPI.createOrder(orderData);
+            enqueueSnackbar('Commande créée avec succès', { variant: 'success' });
+            navigate(`/healthcare/laboratory/${newOrder.id}`);
+        } catch (error) {
+            console.error('Error creating order:', error);
+            enqueueSnackbar('Erreur lors de la création de la commande', { variant: 'error' });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleTestToggle = (test) => {
+        const exists = selectedTests.find(t => t.id === test.id);
+        if (exists) {
+            setSelectedTests(selectedTests.filter(t => t.id !== test.id));
+        } else {
+            setSelectedTests([...selectedTests, test]);
+        }
+    };
+
+    const getTotalPrice = () => {
+        return selectedTests.reduce((sum, test) => sum + parseFloat(test.price || 0), 0);
+    };
+
     if (loading) return <Typography>Chargement...</Typography>;
-    if (!order) return <Typography>Commande introuvable</Typography>;
+    if (!order && !isNewOrder) return <Typography>Commande introuvable</Typography>;
+
+    // Handle new order creation
+    if (isNewOrder) {
+        return (
+            <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/laboratory')} sx={{ mr: 2 }}>
+                            Retour
+                        </Button>
+                        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+                            Nouvelle Commande de Laboratoire
+                        </Typography>
+                    </Box>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<SaveIcon />}
+                        onClick={handleCreateOrder}
+                        disabled={submitting || !selectedPatient || selectedTests.length === 0}
+                    >
+                        {submitting ? 'Création...' : 'Créer la commande'}
+                    </Button>
+                </Box>
+
+                <Grid container spacing={3}>
+                    {/* Patient Selection */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>Informations Patient</Typography>
+                                <Autocomplete
+                                    options={patients}
+                                    getOptionLabel={(option) => `${option.name} ${option.patient_number ? `(${option.patient_number})` : ''}`}
+                                    value={selectedPatient}
+                                    onChange={(e, newValue) => setSelectedPatient(newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Sélectionner un patient"
+                                            required
+                                            fullWidth
+                                        />
+                                    )}
+                                    sx={{ mb: 2 }}
+                                />
+
+                                {selectedPatient && (
+                                    <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                                        <Typography variant="body2"><strong>Nom:</strong> {selectedPatient.name}</Typography>
+                                        <Typography variant="body2"><strong>Âge:</strong> {selectedPatient.age || 'N/A'}</Typography>
+                                        <Typography variant="body2"><strong>Genre:</strong> {selectedPatient.gender || 'N/A'}</Typography>
+                                        {selectedPatient.patient_number && (
+                                            <Typography variant="body2"><strong>N° Patient:</strong> {selectedPatient.patient_number}</Typography>
+                                        )}
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Order Details */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>Détails de la Commande</Typography>
+
+                                <FormControl fullWidth sx={{ mb: 2 }}>
+                                    <InputLabel>Priorité</InputLabel>
+                                    <Select
+                                        value={priority}
+                                        label="Priorité"
+                                        onChange={(e) => setPriority(e.target.value)}
+                                    >
+                                        <MenuItem value="routine">Routine</MenuItem>
+                                        <MenuItem value="urgent">Urgent</MenuItem>
+                                        <MenuItem value="stat">STAT (Immédiat)</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    label="Notes cliniques"
+                                    value={clinicalNotes}
+                                    onChange={(e) => setClinicalNotes(e.target.value)}
+                                    placeholder="Informations pertinentes pour le laboratoire..."
+                                />
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Test Selection */}
+                    <Grid item xs={12}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6">Sélection des Tests</Typography>
+                                    <Chip
+                                        label={`${selectedTests.length} test(s) sélectionné(s)`}
+                                        color="primary"
+                                        variant="outlined"
+                                    />
+                                </Box>
+
+                                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell padding="checkbox">Sélection</TableCell>
+                                                <TableCell>Code</TableCell>
+                                                <TableCell>Nom du Test</TableCell>
+                                                <TableCell>Catégorie</TableCell>
+                                                <TableCell>Prix</TableCell>
+                                                <TableCell>À jeun requis</TableCell>
+                                                <TableCell>Délai estimé</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {availableTests.map((test) => {
+                                                const isSelected = selectedTests.some(t => t.id === test.id);
+                                                return (
+                                                    <TableRow
+                                                        key={test.id}
+                                                        hover
+                                                        selected={isSelected}
+                                                        onClick={() => handleTestToggle(test)}
+                                                        sx={{ cursor: 'pointer' }}
+                                                    >
+                                                        <TableCell padding="checkbox">
+                                                            <Checkbox checked={isSelected} />
+                                                        </TableCell>
+                                                        <TableCell>{test.test_code}</TableCell>
+                                                        <TableCell><strong>{test.name}</strong></TableCell>
+                                                        <TableCell>{test.category_name || '-'}</TableCell>
+                                                        <TableCell>{test.price} FCFA</TableCell>
+                                                        <TableCell>
+                                                            {test.fasting_required ? (
+                                                                <Chip label="Oui" size="small" color="warning" />
+                                                            ) : (
+                                                                <Chip label="Non" size="small" />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>{test.estimated_turnaround_hours}h</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                            {availableTests.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} align="center">
+                                                        <Typography color="text.secondary">Aucun test disponible</Typography>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+                                {/* Summary */}
+                                {selectedTests.length > 0 && (
+                                    <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={12} sm={6}>
+                                                <Typography variant="body2" color="text.secondary">Tests sélectionnés</Typography>
+                                                <Typography variant="h6">{selectedTests.length}</Typography>
+                                            </Grid>
+                                            <Grid item xs={12} sm={6}>
+                                                <Typography variant="body2" color="text.secondary">Prix total estimé</Typography>
+                                                <Typography variant="h6">{getTotalPrice().toFixed(0)} FCFA</Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </Box>
+        );
+    }
 
     const canEdit = ['pending', 'sample_collected', 'received', 'analyzing', 'results_entered'].includes(order.status);
 

@@ -15,7 +15,8 @@ import {
     useTheme,
     useMediaQuery,
     Button,
-    alpha
+    alpha,
+    Paper
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -233,7 +234,7 @@ const PatientList = () => {
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Dossier Médical">
-                            <IconButton size="small" color="info" onClick={() => navigate(`/healthcare/patients/${patient.id}/history`)}>
+                            <IconButton size="small" color="info" onClick={() => navigate(`/healthcare/patients/${patient.id}`)}>
                                 <HistoryIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>

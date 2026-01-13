@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ language }}">
+
 <head>
     <meta charset="UTF-8">
     <title>Lab Result - {{ order.order_number }}</title>
@@ -7,6 +8,7 @@
         @page {
             size: A4;
             margin: 2cm;
+
             @bottom-center {
                 content: "Page " counter(page) " / " counter(pages);
                 font-family: 'Helvetica', sans-serif;
@@ -14,51 +16,72 @@
                 color: #666;
             }
         }
-        
+
         body {
             font-family: 'Helvetica', sans-serif;
             font-size: 10pt;
             line-height: 1.4;
             color: #333;
         }
-        
+
         .header {
             width: 100%;
             margin-bottom: 30px;
-            border-bottom: 2px solid {{ brand_color }};
+
+            border-bottom: 2px solid {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
             padding-bottom: 10px;
         }
-        
+
         .logo {
             max-height: 60px;
         }
-        
+
         .org-info {
             text-align: right;
             font-size: 9pt;
             color: #555;
         }
-        
+
         .org-name {
             font-size: 14pt;
             font-weight: bold;
-            color: {{ brand_color }};
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
             margin-bottom: 5px;
         }
-        
+
         .title-section {
             text-align: center;
             margin-bottom: 30px;
         }
-        
+
         .doc-title {
             font-size: 18pt;
             font-weight: bold;
             text-transform: uppercase;
-            color: {{ brand_color }};
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
             letter-spacing: 2px;
         }
-        
+
         .info-grid {
             display: table;
             width: 100%;
@@ -67,64 +90,70 @@
             border-radius: 5px;
             padding: 15px;
         }
-        
+
         .info-col {
             display: table-cell;
             width: 50%;
             vertical-align: top;
         }
-        
+
         .info-label {
             font-weight: bold;
             color: #666;
             font-size: 8pt;
             text-transform: uppercase;
         }
-        
+
         .info-value {
             margin-bottom: 10px;
             font-weight: 500;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
         }
-        
+
         th {
-            background-color: {{ brand_color }};
+            background-color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
             color: white;
             text-align: left;
             padding: 8px;
             font-size: 9pt;
             text-transform: uppercase;
         }
-        
+
         td {
             padding: 8px;
             border-bottom: 1px solid #eee;
         }
-        
+
         .category-row {
             background-color: #f0f0f0;
             font-weight: bold;
         }
-        
+
         .flag-high {
             color: #dc2626;
             font-weight: bold;
         }
-        
+
         .flag-low {
             color: #2563eb;
             font-weight: bold;
         }
-        
+
         .flag-normal {
             color: #059669;
         }
-        
+
         .footer {
             margin-top: 50px;
             border-top: 1px solid #ddd;
@@ -132,13 +161,13 @@
             display: table;
             width: 100%;
         }
-        
+
         .signature-box {
             display: table-cell;
             width: 50%;
             vertical-align: top;
         }
-        
+
         .qr-code {
             position: absolute;
             top: 2cm;
@@ -156,6 +185,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <table style="width: 100%; border: none; margin: 0;">
@@ -187,16 +217,17 @@
             <div class="info-label">Patient</div>
             <div class="info-value">
                 {{ patient.name }}<br>
-                {{ patient.gender }} | {{ patient.get_age }} ans<br>
-                ID: {{ patient.patient_number }}
+                {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{%
+                endif %}<br>
+                ID: {{ patient.patient_number|default:"-" }}
             </div>
-            
+
             <div class="info-label">Médecin Prescripteur</div>
             <div class="info-value">
                 {% if order.ordered_by %}
-                    Dr. {{ order.ordered_by.get_full_name }}
+                Dr. {{ order.ordered_by.get_full_name }}
                 {% else %}
-                    -
+                -
                 {% endif %}
             </div>
         </div>
@@ -207,7 +238,7 @@
                 Date: {{ order.order_date|date:"d/m/Y H:i" }}<br>
                 Priorité: {{ order.get_priority_display }}
             </div>
-            
+
             {% if qr_code_base64 %}
             <div style="margin-top: 10px;">
                 <img src="{{ qr_code_base64 }}" width="80" alt="QR">
@@ -228,34 +259,39 @@
         </thead>
         <tbody>
             {% regroup items by lab_test.category as category_list %}
-            
+
             {% for category in category_list %}
-                <tr class="category-row">
-                    <td colspan="5">{{ category.grouper.name }}</td>
-                </tr>
-                {% for item in category.list %}
-                <tr>
-                    <td style="padding-left: 20px;">{{ item.lab_test.name }}</td>
-                    <td>
-                        <strong>{{ item.result_value }}</strong>
-                    </td>
-                    <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
-                    <td>
-                        {% if patient.gender == 'M' and item.lab_test.normal_range_male %}
-                            {{ item.lab_test.normal_range_male }}
-                        {% elif patient.gender == 'F' and item.lab_test.normal_range_female %}
-                            {{ item.lab_test.normal_range_female }}
-                        {% else %}
-                            {{ item.lab_test.normal_range_general|default:"-" }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if item.is_abnormal %}
-                            <span class="flag-high">ANORMAL</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
+            <tr class="category-row">
+                <td colspan="5">{% if category.grouper %}{{ category.grouper.name }}{% else %}Autres Tests{% endif %}
+                </td>
+            </tr>
+            {% for item in category.list %}
+            <tr>
+                <td style="padding-left: 20px;">{{ item.lab_test.name }}</td>
+                <td>
+                    <strong>{{ item.result_value|default:"-" }}</strong>
+                </td>
+                <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
+                <td>
+                    {% if patient.gender == 'M' and item.lab_test.normal_range_male %}
+                    {{ item.lab_test.normal_range_male }}
+                    {% elif patient.gender == 'F' and item.lab_test.normal_range_female %}
+                    {{ item.lab_test.normal_range_female }}
+                    {% else %}
+                    {{ item.lab_test.normal_range_general|default:"-" }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.is_abnormal %}
+                    <span class="flag-high">ANORMAL</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #666;">Aucun résultat disponible</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -279,4 +315,5 @@
         </div>
     </div>
 </body>
+
 </html>

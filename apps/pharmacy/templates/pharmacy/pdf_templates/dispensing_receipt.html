@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reçu Dispensation - {{ dispensing.dispensing_number }}</title>
+    <style>
+        @page {
+            size: A5 portrait;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .header {
+            width: 100%;
+            margin-bottom: 20px;
+
+            border-bottom: 2px solid {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            padding-bottom: 10px;
+        }
+
+        .logo {
+            max-height: 50px;
+        }
+
+        .org-info {
+            text-align: right;
+            font-size: 9pt;
+            color: #555;
+        }
+
+        .org-name {
+            font-size: 14pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            margin-bottom: 5px;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .doc-title {
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            letter-spacing: 1px;
+        }
+
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: #f9fafb;
+            border-radius: 5px;
+            padding: 12px;
+        }
+
+        .info-col {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 8pt;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            color: white;
+            text-align: left;
+            padding: 8px;
+            font-size: 9pt;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .totals {
+            text-align: right;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-radius: 5px;
+        }
+
+        .total-row {
+            margin-bottom: 5px;
+        }
+
+        .total-label {
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .grand-total {
+            font-size: 14pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+
+            border-top: 2px solid {
+                    {
+                    brand_color
+                }
+            }
+
+            ;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+        }
+
+        .qr-code {
+            position: absolute;
+            top: 1.5cm;
+            right: 1.5cm;
+            width: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <table style="width: 100%; border: none; margin: 0;">
+            <tr>
+                <td style="width: 50%; border: none;">
+                    {% if logo_base64 %}
+                    <img src="{{ logo_base64 }}" class="logo" alt="Logo">
+                    {% else %}
+                    <div class="org-name">{{ organization.name }}</div>
+                    {% endif %}
+                </td>
+                <td style="width: 50%; border: none; text-align: right;">
+                    <div class="org-info">
+                        <strong>{{ organization.name }}</strong><br>
+                        {{ organization.address }}<br>
+                        {{ organization.phone }} | {{ organization.email }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    {% if qr_code_base64 %}
+    <img src="{{ qr_code_base64 }}" class="qr-code" alt="QR">
+    {% endif %}
+
+    <div class="title-section">
+        <div class="doc-title">Reçu de Dispensation</div>
+        <div style="margin-top: 5px; color: #666;">N° {{ dispensing.dispensing_number }}</div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-col">
+            <div class="info-label">Patient / Client</div>
+            <div class="info-value">
+                {% if patient %}
+                {{ patient.name }}<br>
+                {% if patient.patient_number %}ID: {{ patient.patient_number }}{% endif %}
+                {% else %}
+                <em>Vente comptoir</em>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-col">
+            <div class="info-label">Détails</div>
+            <div class="info-value">
+                Date: {{ dispensing.dispensed_at|date:"d/m/Y H:i" }}<br>
+                Pharmacien: {{ dispensing.dispensed_by.get_full_name|default:"-" }}<br>
+                Statut: {{ dispensing.get_status_display }}
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 50%">Médicament</th>
+                <th style="width: 15%">Qté</th>
+                <th style="width: 15%">P.U.</th>
+                <th style="width: 20%">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <strong>{{ item.medication.name }}</strong>
+                    {% if item.instructions %}
+                    <br><small style="color: #666;">{{ item.instructions }}</small>
+                    {% endif %}
+                </td>
+                <td>{{ item.quantity_dispensed }}</td>
+                <td>{{ item.unit_price|floatformat:0 }} XAF</td>
+                <td><strong>{{ item.total_price|floatformat:0 }} XAF</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #999;">Aucun médicament</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span class="total-label">Sous-total:</span>
+            <span>{{ subtotal|floatformat:0 }} XAF</span>
+        </div>
+        <div class="grand-total">
+            <span class="total-label">TOTAL:</span>
+            <span>{{ total|floatformat:0 }} XAF</span>
+        </div>
+    </div>
+
+    {% if dispensing.notes %}
+    <div
+        style="margin-top: 15px; padding: 10px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 4px; font-size: 9pt;">
+        <strong>Notes:</strong> {{ dispensing.notes }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Merci de votre confiance!</p>
+        <p>{{ organization.name }} - {{ organization.phone }}</p>
+        <p style="font-size: 8pt;">Édité le {% now "d/m/Y H:i" %}</p>
+    </div>
+
+</body>
+
+</html>

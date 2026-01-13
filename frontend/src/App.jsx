@@ -64,9 +64,11 @@ import Support from './pages/Support';
 import PatientList from './pages/healthcare/patients/PatientList';
 import PatientForm from './pages/healthcare/patients/PatientForm';
 import PatientDetail from './pages/healthcare/patients/PatientDetail';
+import VisitForm from './pages/healthcare/patients/VisitForm';
 import ReceptionDashboard from './pages/healthcare/reception/ReceptionDashboard';
 import LabOrderList from './pages/healthcare/laboratory/LabOrderList';
 import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
+import LabOrderForm from './pages/healthcare/laboratory/LabOrderForm';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
 import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
@@ -787,10 +789,12 @@ function App() {
                               <Route path="/healthcare/patients/new" element={<PatientForm />} />
                               <Route path="/healthcare/patients/:id" element={<PatientDetail />} />
                               <Route path="/healthcare/patients/:id/edit" element={<PatientForm />} />
+                              <Route path="/healthcare/visits/new" element={<VisitForm />} />
                               <Route path="/healthcare/reception" element={<ReceptionDashboard />} />
 
                               {/* Laboratory */}
                               <Route path="/healthcare/laboratory" element={<LabOrderList />} />
+                              <Route path="/healthcare/laboratory/new" element={<LabOrderForm />} />
                               <Route path="/healthcare/laboratory/catalog" element={<LabTestCatalog />} />
                               <Route path="/healthcare/laboratory/:id" element={<LabOrderDetail />} />
 
