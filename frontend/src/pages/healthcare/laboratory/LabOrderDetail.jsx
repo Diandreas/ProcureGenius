@@ -181,17 +181,6 @@ const LabOrderDetail = () => {
         }
     };
 
-    const handlePrintBenchSheet = async () => {
-        try {
-            enqueueSnackbar('Génération de la fiche de paillasse...', { variant: 'info' });
-            const blob = await laboratoryAPI.getBenchSheetPDF(id);
-            const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        } catch (error) {
-            console.error('Error printing bench sheet:', error);
-            enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
-        }
-    };
 
     const handleCreateOrder = async () => {
         if (!selectedPatient) {
@@ -444,9 +433,6 @@ const LabOrderDetail = () => {
                         <>
                             <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={handlePrintBarcodes} sx={{ mr: 1 }}>
                                 Étiquettes
-                            </Button>
-                            <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrintBenchSheet} sx={{ mr: 1 }}>
-                                Fiche Paillasse
                             </Button>
                         </>
                     )}

@@ -24,6 +24,7 @@ urlpatterns = [
     path('orders/<uuid:pk>/status/', api.LabOrderStatusUpdateView.as_view(), name='order-status'),
     path('orders/<uuid:pk>/results/', api.EnterLabResultsView.as_view(), name='enter-results'),
     path('orders/<uuid:pk>/pdf/', LabResultPDFView.as_view(), name='order-pdf'),
+    path('orders/<uuid:pk>/receipt/', views_pdf.LabOrderReceiptView.as_view(), name='order-receipt'),
     path('orders/<uuid:pk>/barcodes/', views_pdf.LabBarcodeView.as_view(), name='order-barcodes'),
     path('orders/<uuid:pk>/bench-sheet/', views_pdf.LabBenchSheetView.as_view(), name='order-bench-sheet'),
     path('orders/<uuid:pk>/generate-invoice/', api.GenerateLabOrderInvoiceView.as_view(), name='generate-invoice'),

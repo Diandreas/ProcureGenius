@@ -48311,3 +48311,103 @@ Watching for file changes with StatReloader
 Watching for file changes with StatReloader
 Watching for file changes with StatReloader
 Watching for file changes with StatReloader
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/settings/all/ HTTP/1.1" 200 1272
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/254bea9d-5f07-4963-8944-497e9b8d0157/ HTTP/1.1" 200 2004
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/healthcare/consultations/254bea9d-5f07-4963-8944-497e9b8d0157/ HTTP/1.1" 200 2004
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/healthcare/patients/cb1b900d-a863-49ba-a73f-7dd510a1f046/ HTTP/1.1" 200 786
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/patients/cb1b900d-a863-49ba-a73f-7dd510a1f046/history/ HTTP/1.1" 200 3289
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/healthcare/patients/cb1b900d-a863-49ba-a73f-7dd510a1f046/ HTTP/1.1" 200 786
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/patients/e1051cd7-2434-4938-a4bc-a6a3f829cd58/ HTTP/1.1" 200 782
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/healthcare/patients/cb1b900d-a863-49ba-a73f-7dd510a1f046/history/ HTTP/1.1" 200 3289
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/healthcare/patients/e1051cd7-2434-4938-a4bc-a6a3f829cd58/ HTTP/1.1" 200 782
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/modules/ HTTP/1.1" 200 1851
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/healthcare/patients/e1051cd7-2434-4938-a4bc-a6a3f829cd58/history/ HTTP/1.1" 200 8167
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/healthcare/patients/e1051cd7-2434-4938-a4bc-a6a3f829cd58/history/ HTTP/1.1" 200 8167
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader

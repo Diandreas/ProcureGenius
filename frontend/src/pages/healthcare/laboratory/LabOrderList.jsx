@@ -28,10 +28,12 @@ import {
     Error as UrgentIcon,
     CalendarToday,
     Person as PersonIcon,
-    ArrowForward
+    ArrowForward,
+    Print as PrintIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
 import { motion } from 'framer-motion';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import LoadingState from '../../../components/LoadingState';
@@ -39,6 +41,7 @@ import LoadingState from '../../../components/LoadingState';
 const LabOrderList = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -73,6 +76,19 @@ const LabOrderList = () => {
 
     const handleQuickFilterClick = (filter) => {
         setQuickFilter(filter === quickFilter ? '' : filter);
+    };
+
+    const handlePrintBenchSheet = async (e, orderId) => {
+        e.stopPropagation(); // Prevent card click navigation
+        try {
+            enqueueSnackbar('Génération de la fiche de paillasse...', { variant: 'info' });
+            const blob = await laboratoryAPI.getBenchSheetPDF(orderId);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error printing bench sheet:', error);
+            enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
+        }
     };
 
     // Stats (Mocked or calculated from current set if possible, ideally should be from API)
@@ -175,10 +191,24 @@ const LabOrderList = () => {
                     </Stack>
 
                     <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">
-                            {order.priority === 'urgent' ? 'Urgent Priority' : 'Normal Priority'}
-                        </Typography>
-                        <ArrowForward className="action-icon" sx={{ fontSize: 18, color: 'primary.main', transition: 'transform 0.2s' }} />
+                        <Tooltip title="Imprimer Fiche Paillasse">
+                            <IconButton
+                                size="small"
+                                onClick={(e) => handlePrintBenchSheet(e, order.id)}
+                                sx={{
+                                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15) }
+                                }}
+                            >
+                                <PrintIcon sx={{ fontSize: 18 }} />
+                            </IconButton>
+                        </Tooltip>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">
+                                {order.priority === 'urgent' ? 'Urgent' : 'Normal'}
+                            </Typography>
+                            <ArrowForward className="action-icon" sx={{ fontSize: 18, color: 'primary.main', transition: 'transform 0.2s' }} />
+                        </Box>
                     </Box>
                 </CardContent>
             </Card>
