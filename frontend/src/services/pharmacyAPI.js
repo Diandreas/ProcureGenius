@@ -21,6 +21,12 @@ const pharmacyAPI = {
         return response.data;
     },
 
+    // Generate Invoice (manual)
+    generateInvoice: async (id) => {
+        const response = await api.post(`/healthcare/pharmacy/dispensings/${id}/generate-invoice/`);
+        return response.data;
+    },
+
     // --- Inventory / Medications ---
 
     // Get medications list with stock

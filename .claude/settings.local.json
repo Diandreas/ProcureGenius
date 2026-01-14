@@ -56,7 +56,8 @@
       "Bash(./venv/Scripts/python.exe manage.py makemigrations:*)",
       "Bash(./venv/Scripts/python.exe manage.py migrate:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

@@ -74,6 +74,12 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Generate Invoice (manual)
+    generateInvoice: async (id) => {
+        const response = await api.post(`/healthcare/laboratory/orders/${id}/generate-invoice/`);
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

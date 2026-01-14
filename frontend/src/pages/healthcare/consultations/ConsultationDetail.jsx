@@ -11,7 +11,9 @@ import {
 import {
     Edit as EditIcon,
     PictureAsPdf as PdfIcon,
-    ArrowBack as ArrowBackIcon
+    ArrowBack as ArrowBackIcon,
+    Receipt as ReceiptIcon,
+    AttachMoney as InvoiceIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -104,6 +106,24 @@ const ConsultationDetail = () => {
         }
     };
 
+    const handlePrintReceipt = () => {
+        // Ouvrir le reçu thermal dans un nouvel onglet
+        window.open(`/healthcare/consultations/${id}/receipt/`, '_blank');
+    };
+
+    const handleGenerateInvoice = async () => {
+        try {
+            const response = await consultationAPI.generateInvoice(id);
+            alert(`Facture ${response.invoice_number} créée avec succès!`);
+            // Recharger les données pour afficher la facture
+            fetchData();
+        } catch (error) {
+            console.error('Error generating invoice:', error);
+            const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
+            alert(errorMsg);
+        }
+    };
+
     if (loading || !consultation) return <Typography>Chargement...</Typography>;
 
     return (
@@ -120,12 +140,23 @@ const ConsultationDetail = () => {
                 <Box>
                     <Button
                         variant="outlined"
+                        color="primary"
+                        startIcon={<ReceiptIcon />}
+                        onClick={handlePrintReceipt}
+                        sx={{ mr: 1 }}
+                    >
+                        Imprimer Reçu
+                    </Button>
+
+                    <Button
+                        variant="outlined"
                         startIcon={<PdfIcon />}
                         onClick={() => handleOpenPrintModal('report')}
                         sx={{ mr: 1 }}
                     >
-                        Imprimer Rapport
+                        Rapport Complet
                     </Button>
+
                     {consultation.prescriptions && consultation.prescriptions.length > 0 && (
                         <Button
                             variant="outlined"
@@ -133,9 +164,32 @@ const ConsultationDetail = () => {
                             onClick={() => handleOpenPrintModal('prescription')}
                             sx={{ mr: 1 }}
                         >
-                            Imprimer Ordonnance
+                            Ordonnance
                         </Button>
                     )}
+
+                    {consultation.consultation_invoice ? (
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            startIcon={<InvoiceIcon />}
+                            onClick={() => navigate(`/invoices/${consultation.consultation_invoice.id}`)}
+                            sx={{ mr: 1 }}
+                        >
+                            Voir Facture
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<InvoiceIcon />}
+                            onClick={handleGenerateInvoice}
+                            sx={{ mr: 1 }}
+                        >
+                            Générer Facture
+                        </Button>
+                    )}
+
                     <Button
                         variant="contained"
                         startIcon={<EditIcon />}

@@ -34,7 +34,9 @@ import {
     Delete as DeleteIcon,
     Add as AddIcon,
     Print as PrintIcon,
-    QrCode as QrCodeIcon
+    QrCode as QrCodeIcon,
+    Receipt as ReceiptIcon,
+    AttachMoney as InvoiceIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -178,6 +180,26 @@ const LabOrderDetail = () => {
         } catch (error) {
             console.error('Error printing barcodes:', error);
             enqueueSnackbar('Erreur lors de la génération des étiquettes', { variant: 'error' });
+        }
+    };
+
+    const handlePrintReceipt = () => {
+        // Ouvrir le reçu thermal dans un nouvel onglet
+        window.open(`/healthcare/laboratory/orders/${id}/receipt/`, '_blank');
+        enqueueSnackbar('Ouverture du reçu...', { variant: 'info' });
+    };
+
+    const handleGenerateInvoice = async () => {
+        try {
+            enqueueSnackbar('Génération de la facture...', { variant: 'info' });
+            const response = await laboratoryAPI.generateInvoice(id);
+            enqueueSnackbar(`Facture ${response.invoice_number} créée avec succès!`, { variant: 'success' });
+            // Recharger les données de la commande pour afficher la facture
+            fetchOrder();
+        } catch (error) {
+            console.error('Error generating invoice:', error);
+            const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
+            enqueueSnackbar(errorMsg, { variant: 'error' });
         }
     };
 
@@ -425,15 +447,47 @@ const LabOrderDetail = () => {
                 <Box>
                     {['results_entered', 'verified', 'results_delivered'].includes(order.status) && (
                         <Button variant="outlined" startIcon={<PdfIcon />} onClick={downloadPDF} sx={{ mr: 1 }}>
-                            PDF
+                            Rapport Complet
                         </Button>
                     )}
 
                     {!isNewOrder && (
                         <>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<ReceiptIcon />}
+                                onClick={handlePrintReceipt}
+                                sx={{ mr: 1 }}
+                            >
+                                Imprimer Reçu
+                            </Button>
+
                             <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={handlePrintBarcodes} sx={{ mr: 1 }}>
                                 Étiquettes
                             </Button>
+
+                            {order.lab_invoice ? (
+                                <Button
+                                    variant="outlined"
+                                    color="success"
+                                    startIcon={<InvoiceIcon />}
+                                    onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Voir Facture
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<InvoiceIcon />}
+                                    onClick={handleGenerateInvoice}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Générer Facture
+                                </Button>
+                            )}
                         </>
                     )}
 

@@ -27,7 +27,8 @@ import {
     LocalPharmacy as PharmacyIcon,
     CalendarToday as CalendarIcon,
     Print as PrintIcon,
-    Download as DownloadIcon
+    Download as DownloadIcon,
+    AttachMoney as InvoiceIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -64,10 +65,31 @@ const DispensingDetail = () => {
         }
     };
 
+    const handlePrintReceipt = () => {
+        // Ouvrir le reçu thermal dans un nouvel onglet
+        window.open(`/healthcare/pharmacy/dispensings/${id}/receipt/`, '_blank');
+        enqueueSnackbar('Ouverture du reçu...', { variant: 'info' });
+    };
+
+    const handleGenerateInvoice = async () => {
+        try {
+            enqueueSnackbar('Génération de la facture...', { variant: 'info' });
+            const response = await pharmacyAPI.generateInvoice(id);
+            enqueueSnackbar(`Facture ${response.invoice_number} créée avec succès!`, { variant: 'success' });
+            // Recharger les données pour afficher la facture
+            fetchDispensing();
+        } catch (error) {
+            console.error('Error generating invoice:', error);
+            const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
+            enqueueSnackbar(errorMsg, { variant: 'error' });
+        }
+    };
+
     const handleDownloadPDF = async () => {
         try {
-            // TODO: Implement PDF download
             enqueueSnackbar('Téléchargement du PDF...', { variant: 'info' });
+            // Peut utiliser l'API pour obtenir un rapport détaillé si besoin
+            window.open(`/healthcare/pharmacy/dispensings/${id}/pdf/`, '_blank');
         } catch (error) {
             enqueueSnackbar('Erreur lors du téléchargement', { variant: 'error' });
         }
@@ -115,19 +137,38 @@ const DispensingDetail = () => {
                 <Stack direction="row" spacing={2}>
                     <Button
                         variant="outlined"
+                        color="primary"
+                        startIcon={<ReceiptIcon />}
+                        onClick={handlePrintReceipt}
+                    >
+                        Imprimer Reçu
+                    </Button>
+                    <Button
+                        variant="outlined"
                         startIcon={<PrintIcon />}
                         onClick={handleDownloadPDF}
                     >
-                        Imprimer
+                        Rapport Complet
                     </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<DownloadIcon />}
-                        onClick={handleDownloadPDF}
-                        sx={{ bgcolor: 'success.main' }}
-                    >
-                        Télécharger PDF
-                    </Button>
+                    {dispensing.pharmacy_invoice ? (
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            startIcon={<InvoiceIcon />}
+                            onClick={() => navigate(`/invoices/${dispensing.pharmacy_invoice.id}`)}
+                        >
+                            Voir Facture
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<InvoiceIcon />}
+                            onClick={handleGenerateInvoice}
+                        >
+                            Générer Facture
+                        </Button>
+                    )}
                 </Stack>
             </Box>
 

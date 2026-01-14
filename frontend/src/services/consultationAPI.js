@@ -53,6 +53,12 @@ const consultationAPI = {
             responseType: 'blob'
         });
         return response.data;
+    },
+
+    // Generate Invoice (manual)
+    generateInvoice: async (id) => {
+        const response = await api.post(`/healthcare/consultations/${id}/generate-invoice/`);
+        return response.data;
     }
 };
 
