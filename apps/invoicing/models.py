@@ -370,9 +370,17 @@ class Invoice(models.Model):
         ('cancelled', _('Annulée')),
     ]
 
+    INVOICE_TYPES = [
+        ('standard', _('Standard')),
+        ('healthcare_consultation', _('Consultation médicale')),
+        ('healthcare_laboratory', _('Laboratoire')),
+        ('healthcare_pharmacy', _('Pharmacie')),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     invoice_number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro de facture"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
+    invoice_type = models.CharField(max_length=30, choices=INVOICE_TYPES, default='standard', verbose_name=_("Type de facture"))
     
     # Informations générales
     title = models.CharField(max_length=200, verbose_name=_("Titre"))
@@ -390,6 +398,14 @@ class Invoice(models.Model):
     
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='invoices_by_org',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
     client = models.ForeignKey('accounts.Client', on_delete=models.CASCADE, related_name='invoices', null=True, blank=True, verbose_name=_("Client"))
     purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, related_name='invoices', null=True, blank=True, verbose_name=_("Bon de commande associé"))
 

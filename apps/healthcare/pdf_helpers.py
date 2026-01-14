@@ -151,6 +151,7 @@ class HealthcarePDFMixin:
     def _get_logo_base64(self, org_data):
         """
         Convertit logo en base64 pour embedding HTML
+        Aligned with invoice pattern - uses file path approach
 
         Args:
             org_data: dict avec 'company_logo' (ImageField)
@@ -158,28 +159,49 @@ class HealthcarePDFMixin:
         Returns:
             str: data URL base64 ou None
         """
-        logo = org_data.get('company_logo')
-        if not logo:
+        import os
+        import base64
+        
+        logo_field = org_data.get('company_logo')
+        if not logo_field:
             return None
 
         try:
-            # Ouvrir fichier image
-            image = Image.open(logo)
+            # Get the file path from the ImageField
+            if hasattr(logo_field, 'path'):
+                logo_path = logo_field.path
+            else:
+                # Fallback if it's already a string path
+                logo_path = str(logo_field)
+            
+            if os.path.exists(logo_path):
+                with open(logo_path, 'rb') as f:
+                    logo_data = f.read()
+                    logo_base64 = base64.b64encode(logo_data).decode('utf-8')
 
-            # Convertir en RGB si nécessaire
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+                    # Detect MIME type
+                    ext = os.path.splitext(logo_path)[1].lower()
+                    mime_types = {
+                        '.png': 'image/png',
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.gif': 'image/gif',
+                        '.svg': 'image/svg+xml',
+                        '.webp': 'image/webp',
+                        '.bmp': 'image/bmp',
+                    }
+                    mime_type = mime_types.get(ext, 'image/png')
 
-            # Convertir en base64
-            buffered = BytesIO()
-            image.save(buffered, format="PNG")
-            # Convertir en base64
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-
-            return f"data:image/png;base64,{img_str}"
+                    print(f"[INFO] Logo loaded: {os.path.basename(logo_path)} ({mime_type})")
+                    return f"data:{mime_type};base64,{logo_base64}"
+            else:
+                print(f"[WARN] Logo file not found: {logo_path}")
         except Exception as e:
             print(f"[ERROR] Logo conversion failed: {e}")
-            return None
+            import traceback
+            traceback.print_exc()
+
+        return None
 
     def _generate_qr_code(self, instance, data_dict):
         """

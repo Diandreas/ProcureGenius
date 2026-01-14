@@ -52,7 +52,10 @@
       "Bash(\"venv\\\\Scripts\\\\python.exe\" manage.py create_julianna_healthcare)",
       "Bash(\"venv\\\\Scripts\\\\python.exe\" -c:*)",
       "Bash(\"venv\\\\Scripts\\\\python.exe\" manage.py create_julianna_healthcare --reset)",
-      "Bash(if not exist appshealthcare mkdir appshealthcare)"
+      "Bash(if not exist appshealthcare mkdir appshealthcare)",
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations:*)",
+      "Bash(./venv/Scripts/python.exe manage.py migrate:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

@@ -27,14 +27,7 @@
         .header {
             width: 100%;
             margin-bottom: 30px;
-
-            border-bottom: 2px solid {
-                    {
-                    brand_color
-                }
-            }
-
-            ;
+            border-bottom: 2px solid {{ brand_color|default:"#2563eb" }};
             padding-bottom: 10px;
         }
 
@@ -51,14 +44,7 @@
         .org-name {
             font-size: 14pt;
             font-weight: bold;
-
-            color: {
-                    {
-                    brand_color
-                }
-            }
-
-            ;
+            color: {{ brand_color|default:"#2563eb" }};
             margin-bottom: 5px;
         }
 
@@ -71,14 +57,7 @@
             font-size: 18pt;
             font-weight: bold;
             text-transform: uppercase;
-
-            color: {
-                    {
-                    brand_color
-                }
-            }
-
-            ;
+            color: {{ brand_color|default:"#2563eb" }};
             letter-spacing: 2px;
         }
 
@@ -116,13 +95,7 @@
         }
 
         th {
-            background-color: {
-                    {
-                    brand_color
-                }
-            }
-
-            ;
+            background-color: {{ brand_color|default:"#2563eb" }};
             color: white;
             text-align: left;
             padding: 8px;

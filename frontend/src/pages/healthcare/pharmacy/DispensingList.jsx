@@ -298,6 +298,7 @@ const DispensingList = () => {
                                     style={{ height: '100%' }}
                                 >
                                     <Card
+                                        onClick={() => navigate(`/healthcare/pharmacy/dispensing/${tx.id}`)}
                                         sx={{
                                             height: '100%',
                                             cursor: 'pointer',

@@ -20,14 +20,7 @@
         .header {
             width: 100%;
             margin-bottom: 20px;
-
-            border-bottom: 2px solid {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            border-bottom: 2px solid {{ organization.brand_color|default:"#2563eb" }};
             padding-bottom: 10px;
             display: table;
         }
@@ -50,14 +43,7 @@
         .org-name {
             font-size: 16pt;
             font-weight: bold;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
         }
 
         .doc-title {

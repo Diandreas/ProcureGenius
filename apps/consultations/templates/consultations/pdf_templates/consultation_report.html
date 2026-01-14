@@ -20,14 +20,7 @@
         .header {
             width: 100%;
             margin-bottom: 30px;
-
-            border-bottom: 2px solid {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            border-bottom: 2px solid {{ organization.brand_color|default:"#2563eb" }};
             padding-bottom: 20px;
             display: table;
         }
@@ -48,14 +41,7 @@
         .org-name {
             font-size: 18pt;
             font-weight: bold;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
             margin-bottom: 5px;
         }
 
@@ -75,14 +61,7 @@
         .section-title {
             font-size: 12pt;
             font-weight: bold;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
             border-bottom: 1px solid #eee;
             margin-bottom: 10px;
             padding-bottom: 3px;
