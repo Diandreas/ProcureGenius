@@ -48411,3 +48411,289 @@ Watching for file changes with StatReloader
 Watching for file changes with StatReloader
 Watching for file changes with StatReloader
 Watching for file changes with StatReloader
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/healthcare/consultations/254bea9d-5f07-4963-8944-497e9b8d0157/report/ HTTP/1.1" 200 128094
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/prescriptions/6cbdbaae-b012-4415-9fa0-00b1271f8b96/pdf/ HTTP/1.1" 200 137344
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"OPTIONS /api/v1/healthcare/consultations/63ef602c-4565-438d-9e59-24c166fdaa60/ HTTP/1.1" 200 0
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/63ef602c-4565-438d-9e59-24c166fdaa60/ HTTP/1.1" 200 2094
+"GET /api/v1/healthcare/consultations/63ef602c-4565-438d-9e59-24c166fdaa60/ HTTP/1.1" 200 2094
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"OPTIONS /api/v1/healthcare/consultations/75584cff-978e-4415-9149-b8caf1d99eeb/ HTTP/1.1" 200 0
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/75584cff-978e-4415-9149-b8caf1d99eeb/ HTTP/1.1" 200 2004
+"GET /api/v1/healthcare/consultations/75584cff-978e-4415-9149-b8caf1d99eeb/ HTTP/1.1" 200 2004
+"GET /api/v1/healthcare/patients/?page_size=100 HTTP/1.1" 200 480
+"GET /api/v1/healthcare/pharmacy/medications/?page_size=100 HTTP/1.1" 200 6851
+"GET /api/v1/healthcare/patients/?page_size=100 HTTP/1.1" 200 480
+"GET /api/v1/healthcare/consultations/75584cff-978e-4415-9149-b8caf1d99eeb/ HTTP/1.1" 200 2004
+"GET /api/v1/healthcare/pharmacy/medications/?page_size=100 HTTP/1.1" 200 6851
+"GET /api/v1/healthcare/consultations/75584cff-978e-4415-9149-b8caf1d99eeb/ HTTP/1.1" 200 2004
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"GET /api/v1/healthcare/consultations/?search= HTTP/1.1" 200 1881
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/73e12e8c-b8c1-4170-aea5-f8a3cd6808d8/ HTTP/1.1" 200 2315
+"GET /api/v1/healthcare/laboratory/orders/73e12e8c-b8c1-4170-aea5-f8a3cd6808d8/ HTTP/1.1" 200 2315
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"OPTIONS /api/v1/healthcare/laboratory/orders/f60ecae3-d384-4f4c-a255-5404d89334a0/bench-sheet/ HTTP/1.1" 200 0
+"GET /api/v1/healthcare/laboratory/orders/f60ecae3-d384-4f4c-a255-5404d89334a0/bench-sheet/ HTTP/1.1" 200 133699
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"OPTIONS /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/ HTTP/1.1" 200 0
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/ HTTP/1.1" 200 3108
+"GET /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/ HTTP/1.1" 200 3108
+"OPTIONS /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/barcodes/ HTTP/1.1" 200 0
+Internal Server Error: /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/barcodes/
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\healthcare\pdf_helpers.py", line 61, in get
+    return super().get(request, *args, **kwargs)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\detail.py", line 109, in get
+    context = self.get_context_data(object=self.object)
+  File "D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py", line 115, in get_context_data
+    'barcode_base64': self._generate_barcode(code_value) # Helper method needed or use template tag
+                      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py", line 124, in _generate_barcode
+    from barcode import Code128
+ModuleNotFoundError: No module named 'barcode'
+"GET /api/v1/healthcare/laboratory/orders/68df043b-e96f-4220-a949-84ab2ee096ea/barcodes/ HTTP/1.1" 500 104509
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/73e12e8c-b8c1-4170-aea5-f8a3cd6808d8/ HTTP/1.1" 200 2315
+"GET /api/v1/healthcare/laboratory/orders/73e12e8c-b8c1-4170-aea5-f8a3cd6808d8/ HTTP/1.1" 200 2315
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/ HTTP/1.1" 200 4344
+"GET /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/ HTTP/1.1" 200 4344
+Internal Server Error: /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/pdf/
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django_weasyprint\views.py", line 138, in rendered_content
+    document = self.get_document()
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django_weasyprint\views.py", line 118, in get_document
+    string=super().rendered_content,
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: laboratory/pdf_templates/lab_result_report.html
+"GET /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/pdf/ HTTP/1.1" 500 105128
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+Internal Server Error: /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/barcodes/
+Traceback (most recent call last):
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "D:\project\BFMa\ProcureGenius\apps\healthcare\pdf_helpers.py", line 61, in get
+    return super().get(request, *args, **kwargs)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\venv\Lib\site-packages\django\views\generic\detail.py", line 109, in get
+    context = self.get_context_data(object=self.object)
+  File "D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py", line 115, in get_context_data
+    'barcode_base64': self._generate_barcode(code_value) # Helper method needed or use template tag
+                      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py", line 124, in _generate_barcode
+    from barcode import Code128
+ModuleNotFoundError: No module named 'barcode'
+"GET /api/v1/healthcare/laboratory/orders/cda59357-a53b-4e5a-afea-3864d648f2b7/barcodes/ HTTP/1.1" 500 104564
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"OPTIONS /api/v1/healthcare/laboratory/orders/59adc663-0364-4702-8127-1c6bc2147d5c/ HTTP/1.1" 200 0
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/59adc663-0364-4702-8127-1c6bc2147d5c/ HTTP/1.1" 200 3108
+"GET /api/v1/healthcare/laboratory/orders/59adc663-0364-4702-8127-1c6bc2147d5c/ HTTP/1.1" 200 3108
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 1980
+"OPTIONS /api/v1/healthcare/laboratory/tests/?page_size=1000 HTTP/1.1" 200 0
+"OPTIONS /api/v1/healthcare/patients/?page_size=1000 HTTP/1.1" 200 0
+"OPTIONS /api/v1/healthcare/laboratory/categories/ HTTP/1.1" 200 0
+"GET /api/v1/healthcare/patients/?page_size=1000 HTTP/1.1" 200 480
+"GET /api/v1/healthcare/laboratory/tests/?page_size=1000 HTTP/1.1" 200 3196
+"GET /api/v1/healthcare/patients/?page_size=1000 HTTP/1.1" 200 480
+"GET /api/v1/healthcare/laboratory/categories/ HTTP/1.1" 200 1584
+"GET /api/v1/healthcare/laboratory/tests/?page_size=1000 HTTP/1.1" 200 3196
+"GET /api/v1/healthcare/laboratory/categories/ HTTP/1.1" 200 1584
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"OPTIONS /api/v1/healthcare/laboratory/orders/create/ HTTP/1.1" 200 0
+"POST /api/v1/healthcare/laboratory/orders/create/ HTTP/1.1" 201 2803
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 2353
+"GET /api/v1/healthcare/laboratory/orders/?search=&page_size=50&status_in=pending,sample_collected,received HTTP/1.1" 200 2353
+"OPTIONS /api/v1/healthcare/laboratory/orders/475968e7-b419-43d2-a081-ff4474fb227d/ HTTP/1.1" 200 0
+"OPTIONS /api/v1/healthcare/laboratory/orders/475968e7-b419-43d2-a081-ff4474fb227d/ HTTP/1.1" 200 0
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/laboratory/orders/475968e7-b419-43d2-a081-ff4474fb227d/ HTTP/1.1" 200 2803
+"GET /api/v1/healthcare/laboratory/orders/475968e7-b419-43d2-a081-ff4474fb227d/ HTTP/1.1" 200 2803
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/pharmacy/medications/?search=&page_size=50 HTTP/1.1" 200 6851
+"GET /api/v1/healthcare/pharmacy/medications/?search=&page_size=50 HTTP/1.1" 200 6851
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\views_pdf.py changed, reloading.
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/pharmacy/dispensings/?search= HTTP/1.1" 200 1153
+"GET /api/v1/healthcare/pharmacy/dispensings/?search= HTTP/1.1" 200 1153
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 4071
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 4071
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 570
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 384
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 570
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 384
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2493
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2493
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/healthcare/pharmacy/dispensings/?search= HTTP/1.1" 200 1153
+"GET /api/v1/healthcare/pharmacy/dispensings/?search= HTTP/1.1" 200 1153
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/profile/ HTTP/1.1" 200 1022
+"GET /api/v1/dashboard/stats/ HTTP/1.1" 200 66
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 4071
+"GET /api/v1/analytics/layouts/default/ HTTP/1.1" 200 476
+"GET /api/v1/analytics/widgets/ HTTP/1.1" 200 4071
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 384
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 570
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/analytics/widget-data/alerts_notifications/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 384
+"GET /api/v1/analytics/widget-data/financial_summary/?period=last_30_days&limit=10&compare=true HTTP/1.1" 200 570
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2493
+"GET /api/v1/onboarding/check-actions/ HTTP/1.1" 200 784
+"GET /api/v1/analytics/widget-data/invoices_overview/?period=last_30_days&limit=10&compare=false HTTP/1.1" 200 2493
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+D:\project\BFMa\ProcureGenius\apps\laboratory\urls.py changed, reloading.
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+"GET /api/v1/ai/notifications/?unread_only=true HTTP/1.1" 200 30
+"GET /api/v1/ai/notifications/count/ HTTP/1.1" 200 37
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+"GET /api/v1/accounts/organization/settings/ HTTP/1.1" 200 608
+Watching for file changes with StatReloader

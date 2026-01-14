@@ -29,7 +29,8 @@ import {
     CalendarToday,
     Person as PersonIcon,
     ArrowForward,
-    Print as PrintIcon
+    Print as PrintIcon,
+    Description as DescriptionIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -88,6 +89,30 @@ const LabOrderList = () => {
         } catch (error) {
             console.error('Error printing bench sheet:', error);
             enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
+        }
+    };
+
+    const handlePrintBulkBenchSheets = async () => {
+        try {
+            enqueueSnackbar('Génération des fiches de paillasse groupées...', { variant: 'info' });
+
+            // Build params based on current filter
+            let params = {};
+            if (quickFilter === 'pending') {
+                params.status = 'pending,sample_collected,received';
+            } else if (quickFilter === 'processing') {
+                params.status = 'analyzing';
+            } else if (quickFilter === 'urgent') {
+                params.priority = 'urgent';
+            }
+
+            const blob = await laboratoryAPI.getBulkBenchSheetsPDF(params);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            enqueueSnackbar('Fiches générées avec succès', { variant: 'success' });
+        } catch (error) {
+            console.error('Error printing bulk bench sheets:', error);
+            enqueueSnackbar('Erreur lors de la génération des fiches groupées', { variant: 'error' });
         }
     };
 
@@ -254,22 +279,43 @@ const LabOrderList = () => {
                         Gestion des analyses et résultats
                     </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    size="large"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate('/healthcare/laboratory/new')}
-                    sx={{
-                        borderRadius: 3,
-                        px: 3,
-                        py: 1.5,
-                        background: theme => `linear-gradient(45deg, ${theme.palette.error.main}, ${theme.palette.error.light})`,
-                        boxShadow: theme => `0 8px 20px -4px ${alpha(theme.palette.error.main, 0.5)}`,
-                        '&:hover': { boxShadow: theme => `0 12px 24px -6px ${alpha(theme.palette.error.main, 0.6)}` }
-                    }}
-                >
-                    {t('laboratory.new_order', 'Nouvelle Commande')}
-                </Button>
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        startIcon={<DescriptionIcon />}
+                        onClick={handlePrintBulkBenchSheets}
+                        sx={{
+                            borderRadius: 3,
+                            px: 3,
+                            py: 1.5,
+                            borderColor: 'error.main',
+                            color: 'error.main',
+                            '&:hover': {
+                                borderColor: 'error.dark',
+                                bgcolor: alpha(theme.palette.error.main, 0.08)
+                            }
+                        }}
+                    >
+                        Fiches Groupées
+                    </Button>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/healthcare/laboratory/new')}
+                        sx={{
+                            borderRadius: 3,
+                            px: 3,
+                            py: 1.5,
+                            background: theme => `linear-gradient(45deg, ${theme.palette.error.main}, ${theme.palette.error.light})`,
+                            boxShadow: theme => `0 8px 20px -4px ${alpha(theme.palette.error.main, 0.5)}`,
+                            '&:hover': { boxShadow: theme => `0 12px 24px -6px ${alpha(theme.palette.error.main, 0.6)}` }
+                        }}
+                    >
+                        {t('laboratory.new_order', 'Nouvelle Commande')}
+                    </Button>
+                </Stack>
             </Stack>
 
             {/* Filters Grid */}

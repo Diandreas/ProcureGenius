@@ -136,21 +136,79 @@ class LabBenchSheetView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Deta
     model = LabOrder
     template_name = 'laboratory/pdf_templates/lab_bench_sheet.html'
     pdf_attachment = False
-    
+
     def get_pdf_filename(self):
         return f'bench-sheet-{self.get_object().order_number}.pdf'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lab_order = self.get_object()
-        
+
         # Organization data
         org_data = self._get_organization_data(lab_order)
         context['organization'] = org_data
         context['logo_base64'] = self._get_logo_base64(org_data)
-        
+
         context['lab_order'] = lab_order
         context['patient'] = lab_order.patient
         context['items'] = lab_order.items.all().order_by('lab_test__category', 'lab_test__name')
-        
+
+        return context
+
+
+class LabBulkBenchSheetView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+    """
+    Génère des fiches de paillasse groupées pour plusieurs commandes
+    Format: Une page par commande, toutes dans un seul PDF
+    """
+    model = LabOrder  # Dummy model, won't actually use DetailView logic
+    template_name = 'laboratory/pdf_templates/lab_bulk_bench_sheet.html'
+    pdf_attachment = False
+
+    def get_pdf_filename(self):
+        from django.utils import timezone
+        return f'fiches-paillasse-{timezone.now().strftime("%Y%m%d-%H%M")}.pdf'
+
+    def get(self, request, *args, **kwargs):
+        """Override get to handle query parameters instead of single object"""
+        return self.render_to_response(self.get_context_data())
+
+    def get_context_data(self, **kwargs):
+        context = {}
+
+        # Get filter parameters from query string
+        status = self.request.GET.get('status', 'pending,sample_collected,received')
+        priority = self.request.GET.get('priority')
+
+        # Build query
+        from django.db.models import Q
+        query = Q(status__in=status.split(','))
+
+        if priority:
+            query &= Q(priority=priority)
+
+        # Get orders
+        orders = LabOrder.objects.filter(
+            query,
+            organization=self.request.user.organization
+        ).select_related('patient').prefetch_related('items__lab_test__category').order_by('priority', 'order_date')
+
+        # Get organization data from first order if available
+        if orders.exists():
+            org_data = self._get_organization_data(orders.first())
+        else:
+            org_data = {
+                'company_name': self.request.user.organization.name,
+                'brand_color': '#2563eb'
+            }
+
+        context['organization'] = org_data
+        context['logo_base64'] = self._get_logo_base64(org_data) if orders.exists() else None
+        context['orders'] = orders
+        context['total_orders'] = orders.count()
+
+        # Generate date for header
+        from django.utils import timezone
+        context['generated_date'] = timezone.now()
+
         return context

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiches de Paillasse Groupées</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        .header {
+            width: 100%;
+            margin-bottom: 20px;
+            border-bottom: 2px solid {{ organization.brand_color|default:"#2563eb" }};
+            padding-bottom: 10px;
+            display: table;
+        }
+
+        .header-left {
+            display: table-cell;
+            width: 70%;
+            vertical-align: top;
+        }
+
+        .header-right {
+            display: table-cell;
+            width: 30%;
+            text-align: right;
+            vertical-align: top;
+        }
+
+        .org-name {
+            font-size: 14pt;
+            font-weight: bold;
+            color: {{ organization.brand_color|default:"#2563eb" }};
+            margin-bottom: 5px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 15px 0;
+            text-transform: uppercase;
+            color: {{ organization.brand_color|default:"#2563eb" }};
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .order-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            background: #f9fafb;
+        }
+
+        .order-header {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        .order-info {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .priority-urgent {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #666;
+            font-size: 8pt;
+            text-transform: uppercase;
+            display: inline-block;
+            width: 100px;
+        }
+
+        .value {
+            font-size: 10pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: {{ organization.brand_color|default:"#2563eb" }};
+            color: white;
+            text-align: left;
+            padding: 6px;
+            font-size: 9pt;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 6px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .test-code {
+            font-weight: bold;
+            color: {{ organization.brand_color|default:"#2563eb" }};
+        }
+
+        .sample-type {
+            font-size: 8pt;
+            color: #666;
+            font-style: italic;
+        }
+
+        .result-input {
+            min-height: 30px;
+            border: 1px dashed #cbd5e0;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        .footer-note {
+            margin-top: 30px;
+            padding: 10px;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            font-size: 8pt;
+            color: #92400e;
+        }
+
+        /* Page d'index */
+        .index-page {
+            margin-bottom: 30px;
+        }
+
+        .index-table {
+            margin-top: 20px;
+        }
+
+        .index-table th {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 8px;
+        }
+
+        .index-table td {
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page d'index -->
+    <div class="header">
+        <div class="header-left">
+            <div class="org-name">{{ organization.company_name }}</div>
+            <div style="font-size: 9pt; color: #666;">Laboratoire d'Analyses Médicales</div>
+        </div>
+        <div class="header-right">
+            {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" style="max-height: 60px; max-width: 120px; height: auto; width: auto;" alt="Logo">
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="title">Fiches de Paillasse - Résumé</div>
+    <div class="subtitle">
+        Généré le {{ generated_date|date:"d/m/Y à H:i" }} | Total: {{ total_orders }} commande(s)
+    </div>
+
+    <div class="index-page">
+        <table class="index-table">
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th width="15%">N° Commande</th>
+                    <th width="25%">Patient</th>
+                    <th width="10%">Date</th>
+                    <th width="8%">Priorité</th>
+                    <th width="8%">Tests</th>
+                    <th width="20%">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><strong>{{ order.order_number }}</strong></td>
+                    <td>{{ order.patient.name }}</td>
+                    <td>{{ order.order_date|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if order.priority == 'urgent' %}
+                        <span style="color: #dc2626; font-weight: bold;">URGENT</span>
+                        {% else %}
+                        Normal
+                        {% endif %}
+                    </td>
+                    <td>{{ order.items.count }}</td>
+                    <td>{{ order.get_status_display }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #999;">Aucune commande à traiter</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer-note">
+        <strong>Instructions:</strong> Remplir les résultats sur chaque fiche. Vérifier et valider dans le système après analyse.
+    </div>
+
+    {% if orders %}
+    <div class="page-break"></div>
+    {% endif %}
+
+    <!-- Pages individuelles pour chaque commande -->
+    {% for order in orders %}
+    <div class="header">
+        <div class="header-left">
+            <div class="org-name">{{ organization.company_name }}</div>
+            <div style="font-size: 9pt; color: #666;">Fiche de Paillasse</div>
+        </div>
+        <div class="header-right">
+            <div style="font-size: 12pt; font-weight: bold;">N° {{ order.order_number }}</div>
+            <div style="font-size: 9pt;">{{ generated_date|date:"d/m/Y" }}</div>
+        </div>
+    </div>
+
+    <div class="title" style="font-size: 14pt;">
+        Fiche de Paillasse #{{ forloop.counter }}
+        {% if order.priority == 'urgent' %}
+        <span class="priority-urgent">URGENT</span>
+        {% endif %}
+    </div>
+
+    <div class="order-section">
+        <div class="order-header">
+            <div class="order-info">
+                <div style="margin-bottom: 8px;">
+                    <span class="label">Patient:</span>
+                    <span class="value" style="font-weight: bold;">{{ order.patient.name }}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span class="label">Âge/Sexe:</span>
+                    <span class="value">{{ order.patient.get_age }} ans / {{ order.patient.gender }}</span>
+                </div>
+                <div>
+                    <span class="label">ID Patient:</span>
+                    <span class="value">{{ order.patient.patient_number }}</span>
+                </div>
+            </div>
+            <div class="order-info">
+                <div style="margin-bottom: 8px;">
+                    <span class="label">Date commande:</span>
+                    <span class="value">{{ order.order_date|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span class="label">Prescripteur:</span>
+                    <span class="value">{% if order.ordered_by %}Dr. {{ order.ordered_by.get_full_name }}{% else %}N/A{% endif %}</span>
+                </div>
+                <div>
+                    <span class="label">Statut:</span>
+                    <span class="value">{{ order.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if order.clinical_notes %}
+        <div style="margin-top: 10px; padding: 10px; background: #fffbeb; border-left: 3px solid #f59e0b;">
+            <div style="font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #92400e; margin-bottom: 5px;">
+                Notes Cliniques
+            </div>
+            <div style="font-size: 9pt; color: #78350f;">{{ order.clinical_notes }}</div>
+        </div>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th width="25%">Test</th>
+                    <th width="15%">Échantillon</th>
+                    <th width="15%">Méthode</th>
+                    <th width="40%">Résultat / Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="test-code">{{ item.lab_test.test_code }}</div>
+                        <div style="font-size: 9pt;">{{ item.lab_test.name }}</div>
+                    </td>
+                    <td class="sample-type">{{ item.lab_test.sample_type|default:"-" }}</td>
+                    <td style="font-size: 8pt;">{{ item.lab_test.test_method|default:"-" }}</td>
+                    <td>
+                        <div class="result-input"></div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999;">Aucun test</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 30px; display: table; width: 100%;">
+        <div style="display: table-cell; width: 50%; padding-right: 20px;">
+            <div style="border-top: 1px solid #ccc; padding-top: 5px; text-align: center; font-size: 9pt;">
+                Technicien: ___________________________
+            </div>
+            <div style="margin-top: 5px; text-align: center; font-size: 8pt; color: #666;">
+                Date: ___/___/_____  Heure: ___:___
+            </div>
+        </div>
+        <div style="display: table-cell; width: 50%; padding-left: 20px;">
+            <div style="border-top: 1px solid #ccc; padding-top: 5px; text-align: center; font-size: 9pt;">
+                Validation: ___________________________
+            </div>
+            <div style="margin-top: 5px; text-align: center; font-size: 8pt; color: #666;">
+                Date: ___/___/_____  Heure: ___:___
+            </div>
+        </div>
+    </div>
+
+    {% if not forloop.last %}
+    <div class="page-break"></div>
+    {% endif %}
+    {% endfor %}
+</body>
+</html>

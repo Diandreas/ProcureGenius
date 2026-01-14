@@ -121,7 +121,7 @@
         </div>
         <div class="header-right">
             {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" height="60" alt="Logo">
+            <img src="{{ logo_base64 }}" style="max-height: 70px; max-width: 140px; height: auto; width: auto;" alt="Logo">
             {% endif %}
             <div style="margin-top: 10px;">
                 {{ prescription.prescribed_date|date:"d/m/Y" }}

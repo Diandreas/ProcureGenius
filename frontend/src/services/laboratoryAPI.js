@@ -65,6 +65,15 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Generate Bulk Bench Sheets PDF
+    getBulkBenchSheetsPDF: async (params = {}) => {
+        const response = await api.get('/healthcare/laboratory/orders/bulk-bench-sheets/', {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

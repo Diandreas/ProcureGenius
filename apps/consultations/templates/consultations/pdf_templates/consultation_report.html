@@ -126,7 +126,7 @@
         </div>
         <div class="header-right">
             {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" height="70" alt="Logo">
+            <img src="{{ logo_base64 }}" style="max-height: 80px; max-width: 150px; height: auto; width: auto;" alt="Logo">
             {% endif %}
             <div style="margin-top: 15px; font-weight: bold;">
                 Consultation N°: {{ consultation.consultation_number }}
@@ -181,8 +181,9 @@
         </div>
         <div>
             <span class="label" style="vertical-align: top;">Histoire:</span>
-            <span style="display: inline-block; width: 80%;">{{ consultation.history_of_present_illness|default:"Non
-                spécifié" }}</span>
+            <div style="display: inline-block; width: 80%; vertical-align: top;">
+                {{ consultation.history_of_present_illness|default:"Non spécifié" }}
+            </div>
         </div>
     </div>
 

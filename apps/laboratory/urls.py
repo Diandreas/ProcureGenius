@@ -27,6 +27,7 @@ urlpatterns = [
     path('orders/<uuid:pk>/receipt/', views_pdf.LabOrderReceiptView.as_view(), name='order-receipt'),
     path('orders/<uuid:pk>/barcodes/', views_pdf.LabBarcodeView.as_view(), name='order-barcodes'),
     path('orders/<uuid:pk>/bench-sheet/', views_pdf.LabBenchSheetView.as_view(), name='order-bench-sheet'),
+    path('orders/bulk-bench-sheets/', views_pdf.LabBulkBenchSheetView.as_view(), name='bulk-bench-sheets'),
     path('orders/<uuid:pk>/generate-invoice/', api.GenerateLabOrderInvoiceView.as_view(), name='generate-invoice'),
 
     # Dashboard views
