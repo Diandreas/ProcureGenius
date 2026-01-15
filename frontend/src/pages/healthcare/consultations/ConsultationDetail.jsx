@@ -18,6 +18,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import consultationAPI from '../../../services/consultationAPI';
+import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
 
 const ConsultationDetail = () => {
@@ -30,7 +31,7 @@ const ConsultationDetail = () => {
 
     // Print Modal State
     const [printModalOpen, setPrintModalOpen] = useState(false);
-    const [printModalType, setPrintModalType] = useState(null); // 'report' or 'prescription'
+    const [printModalType, setPrintModalType] = useState(null); // 'report', 'prescription', or 'receipt'
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
@@ -65,6 +66,9 @@ const ConsultationDetail = () => {
             if (printModalType === 'report') {
                 blob = await consultationAPI.getConsultationReportPDF(id);
                 filename = `rapport_consultation_${consultation.consultation_number}.pdf`;
+            } else if (printModalType === 'receipt') {
+                blob = await consultationAPI.getConsultationReceiptPDF(id);
+                filename = `recu_consultation_${consultation.consultation_number}.pdf`;
             } else if (printModalType === 'prescription') {
                 if (consultation.prescriptions && consultation.prescriptions.length > 0) {
                     const prescriptionId = consultation.prescriptions[0].id;
@@ -106,11 +110,6 @@ const ConsultationDetail = () => {
         }
     };
 
-    const handlePrintReceipt = () => {
-        // Ouvrir le reçu thermal dans un nouvel onglet
-        window.open(`/healthcare/consultations/${id}/receipt/`, '_blank');
-    };
-
     const handleGenerateInvoice = async () => {
         try {
             const response = await consultationAPI.generateInvoice(id);
@@ -121,6 +120,24 @@ const ConsultationDetail = () => {
             console.error('Error generating invoice:', error);
             const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
             alert(errorMsg);
+        }
+    };
+
+    const handleMarkInvoicePaid = async () => {
+        if (!consultation.consultation_invoice) return;
+        
+        try {
+            const paymentData = {
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_method: 'cash',
+                notes: `Paiement pour consultation ${consultation.consultation_number}`
+            };
+            await invoicesAPI.markPaid(consultation.consultation_invoice.id, paymentData);
+            alert('Facture marquée comme payée');
+            fetchData(); // Refresh to update invoice status
+        } catch (error) {
+            console.error('Error marking invoice as paid:', error);
+            alert('Erreur lors du marquage de la facture');
         }
     };
 
@@ -142,7 +159,7 @@ const ConsultationDetail = () => {
                         variant="outlined"
                         color="primary"
                         startIcon={<ReceiptIcon />}
-                        onClick={handlePrintReceipt}
+                        onClick={() => handleOpenPrintModal('receipt')}
                         sx={{ mr: 1 }}
                     >
                         Imprimer Reçu
@@ -169,15 +186,28 @@ const ConsultationDetail = () => {
                     )}
 
                     {consultation.consultation_invoice ? (
-                        <Button
-                            variant="outlined"
-                            color="success"
-                            startIcon={<InvoiceIcon />}
-                            onClick={() => navigate(`/invoices/${consultation.consultation_invoice.id}`)}
-                            sx={{ mr: 1 }}
-                        >
-                            Voir Facture
-                        </Button>
+                        <>
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                startIcon={<InvoiceIcon />}
+                                onClick={() => navigate(`/invoices/${consultation.consultation_invoice.id}`)}
+                                sx={{ mr: 1 }}
+                            >
+                                Voir Facture
+                            </Button>
+                            {consultation.consultation_invoice.status !== 'paid' && (
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<InvoiceIcon />}
+                                    onClick={handleMarkInvoicePaid}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Marquer Payée
+                                </Button>
+                            )}
+                        </>
                     ) : (
                         <Button
                             variant="contained"
@@ -252,12 +282,17 @@ const ConsultationDetail = () => {
             <PrintModal
                 open={printModalOpen}
                 onClose={() => setPrintModalOpen(false)}
-                title={printModalType === 'report' ? "Imprimer Rapport" : "Imprimer Ordonnance"}
+                title={
+                    printModalType === 'report' ? "Rapport Complet" :
+                    printModalType === 'receipt' ? "Reçu de Consultation" :
+                    printModalType === 'prescription' ? "Ordonnance" :
+                    "Document"
+                }
                 loading={generatingPdf}
                 onPreview={() => handlePrintAction('preview')}
                 onPrint={() => handlePrintAction('print')}
                 onDownload={() => handlePrintAction('download')}
-                helpText={printModalType === 'report' ? "Générer le rapport complet de consultation." : "Générer l'ordonnance médicale."}
+                helpText="Choisissez une action pour générer le document"
             />
         </Box>
     );

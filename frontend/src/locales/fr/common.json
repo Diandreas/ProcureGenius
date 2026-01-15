@@ -41,9 +41,9 @@
     "view": "Voir",
     "details": "Détails",
     "saving": "Enregistrement...",
+    "generating": "Génération...",
     "preview": "Aperçu",
-    "moreActions": "Plus d'actions",
-    "edit": "Modifier"
+    "moreActions": "Plus d'actions"
   },
   "success": "Succès",
   "failed": "Échec",
@@ -83,7 +83,6 @@
     "active": "Actif",
     "inactive": "Inactif",
     "search": "Rechercher...",
-    "loading": "Chargement...",
     "visitHistory": "Historique des visites",
     "documents": "Documents"
   },

@@ -22,6 +22,9 @@ from apps.pharmacy.models import PharmacyDispensing, DispensingItem
 from apps.patients.models import PatientVisit
 from apps.invoicing.models import Product, ProductCategory, StockMovement
 
+# Import de la configuration des tests et services
+from .julianna_tests_config import LAB_CATEGORIES, LAB_TESTS, MEDICAL_SERVICES, ORGANIZATION_INFO
+
 User = get_user_model()
 
 
@@ -105,18 +108,10 @@ class Command(BaseCommand):
         self.stdout.write('\n[ETAPE 1] Creation de l\'organisation...')
 
         self.organization, created = Organization.objects.get_or_create(
-            name='Centre de Santé JULIANNA',
+            name=ORGANIZATION_INFO['name'],
             defaults={
-                'subscription_type': 'strategic',
-                'enabled_modules': [
-                    'dashboard',
-                    'healthcare_patients',
-                    'consultations',
-                    'laboratory',
-                    'pharmacy',
-                    'invoices',
-                    'analytics',
-                ]
+                'subscription_type': ORGANIZATION_INFO['subscription_type'],
+                'enabled_modules': ORGANIZATION_INFO['enabled_modules'],
             }
         )
 
@@ -125,6 +120,7 @@ class Command(BaseCommand):
             self.stdout.write(f'    - ID: {self.organization.id}')
             self.stdout.write(f'    - Type: {self.organization.subscription_type}')
             self.stdout.write(f'    - Modules: {len(self.organization.enabled_modules)}')
+            self.stdout.write(f'    - Localisation: {ORGANIZATION_INFO["city"]}, {ORGANIZATION_INFO["country"]}')
         else:
             self.stdout.write(self.style.WARNING(f'  [WARN] Organisation existante: {self.organization.name}'))
 
@@ -204,19 +200,11 @@ class Command(BaseCommand):
             self.users[user.role] = user
 
     def _create_lab_catalog(self):
-        """Crée le catalogue complet de tests de laboratoire"""
-        self.stdout.write('\n[LAB] ÉTAPE 3: Création du catalogue de tests...')
+        """Crée le catalogue complet de 82 tests de laboratoire"""
+        self.stdout.write('\n[LAB] ÉTAPE 3: Création du catalogue de tests (82 tests)...')
 
-        # Catégories de tests
-        categories_config = [
-            {'name': 'Hématologie', 'slug': 'hematologie', 'order': 1},
-            {'name': 'Biochimie', 'slug': 'biochimie', 'order': 2},
-            {'name': 'Sérologie', 'slug': 'serologie', 'order': 3},
-            {'name': 'Parasitologie', 'slug': 'parasitologie', 'order': 4},
-            {'name': 'Bactériologie', 'slug': 'bacteriologie', 'order': 5},
-        ]
-
-        for cat_data in categories_config:
+        # Créer les catégories depuis la configuration
+        for cat_data in LAB_CATEGORIES:
             category, created = LabTestCategory.objects.get_or_create(
                 organization=self.organization,
                 slug=cat_data['slug'],
@@ -231,175 +219,22 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'  [OK] Catégorie: {category.name}')
 
-        # Tests de laboratoire
-        tests_config = [
-            # Hématologie
-            {
-                'code': 'HEM-NFS',
-                'name': 'Numération Formule Sanguine (NFS)',
-                'short_name': 'NFS',
-                'category': 'hematologie',
-                'price': 3500,
-                'sample_type': 'blood',
-                'container': 'edta',
-                'sample_volume': '3 ml',
-                'fasting': False,
-                'turnaround': 2,
-                'unit': 'G/L',
-                'normal_male': '4.5-5.5',
-                'normal_female': '4.0-5.0',
-                'methodology': 'Automate hématologie',
-            },
-            {
-                'code': 'HEM-HB',
-                'name': 'Hémoglobine',
-                'short_name': 'Hb',
-                'category': 'hematologie',
-                'price': 1500,
-                'sample_type': 'blood',
-                'container': 'edta',
-                'sample_volume': '2 ml',
-                'fasting': False,
-                'turnaround': 1,
-                'unit': 'g/dL',
-                'normal_male': '13-17',
-                'normal_female': '12-15',
-                'methodology': 'Spectrophotométrie',
-            },
-            {
-                'code': 'HEM-VS',
-                'name': 'Vitesse de Sédimentation',
-                'short_name': 'VS',
-                'category': 'hematologie',
-                'price': 1000,
-                'sample_type': 'blood',
-                'container': 'citrate',
-                'sample_volume': '2 ml',
-                'fasting': False,
-                'turnaround': 2,
-                'unit': 'mm/h',
-                'normal_male': '0-15',
-                'normal_female': '0-20',
-                'methodology': 'Méthode de Westergren',
-            },
-            # Biochimie
-            {
-                'code': 'BIO-GLU',
-                'name': 'Glycémie à jeun',
-                'short_name': 'Glycémie',
-                'category': 'biochimie',
-                'price': 1500,
-                'sample_type': 'blood',
-                'container': 'fluoride',
-                'sample_volume': '2 ml',
-                'fasting': True,
-                'fasting_hours': 8,
-                'turnaround': 2,
-                'unit': 'g/L',
-                'normal_general': '0.70-1.10',
-                'methodology': 'Méthode enzymatique GOD-POD',
-            },
-            {
-                'code': 'BIO-CREAT',
-                'name': 'Créatinine',
-                'short_name': 'Créat',
-                'category': 'biochimie',
-                'price': 2000,
-                'sample_type': 'blood',
-                'container': 'serum',
-                'sample_volume': '3 ml',
-                'fasting': False,
-                'turnaround': 3,
-                'unit': 'mg/L',
-                'normal_male': '7-13',
-                'normal_female': '6-11',
-                'methodology': 'Méthode de Jaffé',
-            },
-            {
-                'code': 'BIO-UREE',
-                'name': 'Urée',
-                'short_name': 'Urée',
-                'category': 'biochimie',
-                'price': 1500,
-                'sample_type': 'blood',
-                'container': 'serum',
-                'sample_volume': '2 ml',
-                'fasting': False,
-                'turnaround': 2,
-                'unit': 'g/L',
-                'normal_general': '0.15-0.45',
-                'methodology': 'Méthode enzymatique à l\'uréase',
-            },
-            # Sérologie
-            {
-                'code': 'SERO-HIV',
-                'name': 'Sérologie VIH (HIV 1 et 2)',
-                'short_name': 'HIV',
-                'category': 'serologie',
-                'price': 5000,
-                'sample_type': 'blood',
-                'container': 'serum',
-                'sample_volume': '5 ml',
-                'fasting': False,
-                'turnaround': 24,
-                'unit': 'Qualitatif',
-                'normal_general': 'Négatif',
-                'methodology': 'Test rapide immunochromatographique',
-            },
-            {
-                'code': 'SERO-HBS',
-                'name': 'Ag HBs (Hépatite B)',
-                'short_name': 'HBs',
-                'category': 'serologie',
-                'price': 4000,
-                'sample_type': 'blood',
-                'container': 'serum',
-                'sample_volume': '5 ml',
-                'fasting': False,
-                'turnaround': 24,
-                'unit': 'Qualitatif',
-                'normal_general': 'Négatif',
-                'methodology': 'ELISA',
-            },
-            # Parasitologie
-            {
-                'code': 'PARA-PALU',
-                'name': 'Goutte Épaisse / Frottis (Paludisme)',
-                'short_name': 'GE Palu',
-                'category': 'parasitologie',
-                'price': 1500,
-                'sample_type': 'blood',
-                'container': 'edta',
-                'sample_volume': '2 ml',
-                'fasting': False,
-                'turnaround': 1,
-                'unit': 'Parasites/µL',
-                'normal_general': 'Absence de parasites',
-                'methodology': 'Microscopie',
-            },
-            {
-                'code': 'PARA-SELLES',
-                'name': 'Examen Parasitologique des Selles',
-                'short_name': 'EPS',
-                'category': 'parasitologie',
-                'price': 2500,
-                'sample_type': 'stool',
-                'container': 'stool_cup',
-                'sample_volume': '5 g',
-                'fasting': False,
-                'turnaround': 24,
-                'unit': 'Qualitatif',
-                'normal_general': 'Absence de parasites',
-                'methodology': 'Examen direct et concentration',
-            },
-        ]
+        # Créer les 82 tests depuis la configuration
+        tests_created = 0
+        for test_data in LAB_TESTS:
+            category_slug = test_data['category']
+            category = self.lab_categories.get(category_slug)
+            
+            if not category:
+                self.stdout.write(self.style.WARNING(
+                    f'  [WARN] Catégorie non trouvée: {category_slug} pour {test_data["name"]}'
+                ))
+                continue
 
-        for test_data in tests_config:
-            category_slug = test_data.pop('category')
-            category = self.lab_categories[category_slug]
-
-            fasting = test_data.pop('fasting', False)
-            fasting_hours = test_data.pop('fasting_hours', 0)
+            # Gérer le prix spécial "Sur devis"
+            price = test_data['price']
+            if price == -1:
+                price = 0  # Prix sur devis
 
             test, created = LabTest.objects.get_or_create(
                 organization=self.organization,
@@ -408,12 +243,12 @@ class Command(BaseCommand):
                     'category': category,
                     'name': test_data['name'],
                     'short_name': test_data['short_name'],
-                    'price': test_data['price'],
-                    'sample_type': test_data['sample_type'],
+                    'price': price,
+                    'sample_type': test_data.get('sample_type', 'blood'),
                     'container_type': test_data.get('container', 'serum'),
                     'sample_volume': test_data.get('sample_volume', ''),
-                    'fasting_required': fasting,
-                    'fasting_hours': fasting_hours,
+                    'fasting_required': test_data.get('fasting', False),
+                    'fasting_hours': test_data.get('fasting_hours', 0),
                     'estimated_turnaround_hours': test_data.get('turnaround', 24),
                     'unit_of_measurement': test_data.get('unit', ''),
                     'normal_range_male': test_data.get('normal_male', ''),
@@ -428,10 +263,14 @@ class Command(BaseCommand):
             self.lab_tests[test_data['code']] = test
 
             if created:
-                self.stdout.write(f'  [OK] Test: {test.short_name} ({test.price} FCFA)')
+                tests_created += 1
+                if price > 0:
+                    self.stdout.write(f'  [OK] {test.short_name} ({test.price} FCFA)')
+                else:
+                    self.stdout.write(f'  [OK] {test.short_name} (Sur devis)')
 
         self.stdout.write(self.style.SUCCESS(
-            f'\n  Total: {len(self.lab_categories)} catégories, {len(self.lab_tests)} tests'
+            f'\n  Total: {len(self.lab_categories)} catégories, {tests_created} tests créés'
         ))
 
     def _create_medication_catalog(self):

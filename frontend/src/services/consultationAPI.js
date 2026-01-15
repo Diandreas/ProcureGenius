@@ -47,6 +47,14 @@ const consultationAPI = {
         return response.data;
     },
 
+    // Get Consultation Receipt PDF (thermal)
+    getConsultationReceiptPDF: async (id) => {
+        const response = await api.get(`/healthcare/consultations/${id}/receipt/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // Get Patient Medical History PDF
     getHistoryPDF: async (patientId) => {
         const response = await api.get(`/healthcare/consultations/patient/${patientId}/history-pdf/`, {

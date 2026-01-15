@@ -27,11 +27,33 @@ const pharmacyAPI = {
         return response.data;
     },
 
+    // Generate Receipt PDF (thermal)
+    getReceiptPDF: async (id) => {
+        const response = await api.get(`/healthcare/pharmacy/dispensings/${id}/receipt/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
+    // Generate Dispensing Report PDF
+    getReportPDF: async (id) => {
+        const response = await api.get(`/healthcare/pharmacy/dispensings/${id}/pdf/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // --- Inventory / Medications ---
 
     // Get medications list with stock
     getMedications: async (params) => {
         const response = await api.get('/healthcare/pharmacy/medications/', { params });
+        return response.data;
+    },
+
+    // Get single medication detail
+    getMedication: async (id) => {
+        const response = await api.get(`/healthcare/pharmacy/medications/${id}/`);
         return response.data;
     },
 

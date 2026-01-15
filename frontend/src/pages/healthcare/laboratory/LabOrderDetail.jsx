@@ -43,6 +43,8 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
+import { invoicesAPI } from '../../../services/api';
+import PrintModal from '../../../components/PrintModal';
 
 const LabOrderDetail = () => {
     const { t } = useTranslation();
@@ -63,6 +65,11 @@ const LabOrderDetail = () => {
     const [priority, setPriority] = useState('routine');
     const [clinicalNotes, setClinicalNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    // Print Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'barcodes'
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
         if (!isNewOrder) {
@@ -101,7 +108,7 @@ const LabOrderDetail = () => {
                 data.items.forEach(item => {
                     initialResults[item.id] = {
                         result_value: item.result_value || '',
-                        remarks: item.remarks || ''
+                        technician_notes: item.technician_notes || ''
                     };
                 });
             }
@@ -146,7 +153,7 @@ const LabOrderDetail = () => {
             if (!window.confirm('Voulez-vous valider ces résultats ? Cette action est définitive.')) return;
 
             await saveResults(); // Save first
-            await laboratoryAPI.updateStatus(id, { status: 'verified' }); // Or results_delivered
+            await laboratoryAPI.updateStatus(id, { action: 'verify' });
             enqueueSnackbar('Résultats validés', { variant: 'success' });
             navigate('/healthcare/laboratory');
         } catch (error) {
@@ -155,38 +162,57 @@ const LabOrderDetail = () => {
         }
     };
 
-    const downloadPDF = async () => {
-        try {
-            const blob = await laboratoryAPI.getResultsPDF(id);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `lab_result_${order.order_number}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error('Error downloading PDF:', error);
-            enqueueSnackbar('Erreur de téléchargement du PDF', { variant: 'error' });
-        }
+    const handleOpenPrintModal = (type) => {
+        setPrintModalType(type);
+        setPrintModalOpen(true);
     };
 
-    const handlePrintBarcodes = async () => {
-        try {
-            enqueueSnackbar('Génération des étiquettes...', { variant: 'info' });
-            const blob = await laboratoryAPI.getBarcodesPDF(id);
-            const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        } catch (error) {
-            console.error('Error printing barcodes:', error);
-            enqueueSnackbar('Erreur lors de la génération des étiquettes', { variant: 'error' });
-        }
-    };
+    const handlePrintAction = async (action) => {
+        if (!printModalType) return;
 
-    const handlePrintReceipt = () => {
-        // Ouvrir le reçu thermal dans un nouvel onglet
-        window.open(`/healthcare/laboratory/orders/${id}/receipt/`, '_blank');
-        enqueueSnackbar('Ouverture du reçu...', { variant: 'info' });
+        setGeneratingPdf(true);
+        try {
+            let blob;
+            let filename;
+
+            if (printModalType === 'report') {
+                blob = await laboratoryAPI.getResultsPDF(id);
+                filename = `lab_result_${order.order_number}.pdf`;
+            } else if (printModalType === 'receipt') {
+                blob = await laboratoryAPI.getReceiptPDF(id);
+                filename = `recu_labo_${order.order_number}.pdf`;
+            } else if (printModalType === 'barcodes') {
+                blob = await laboratoryAPI.getBarcodesPDF(id);
+                filename = `barcodes_${order.order_number}.pdf`;
+            }
+
+            if (action === 'download') {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else if (action === 'preview' || action === 'print') {
+                const url = window.URL.createObjectURL(blob);
+                const printWindow = window.open(url, '_blank');
+
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+
+            setPrintModalOpen(false);
+        } catch (error) {
+            console.error('Error handling print action:', error);
+            enqueueSnackbar('Erreur lors de la génération du document', { variant: 'error' });
+        } finally {
+            setGeneratingPdf(false);
+        }
     };
 
     const handleGenerateInvoice = async () => {
@@ -200,6 +226,24 @@ const LabOrderDetail = () => {
             console.error('Error generating invoice:', error);
             const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
             enqueueSnackbar(errorMsg, { variant: 'error' });
+        }
+    };
+
+    const handleMarkInvoicePaid = async () => {
+        if (!order.lab_invoice) return;
+        
+        try {
+            const paymentData = {
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_method: 'cash',
+                notes: `Paiement pour commande labo ${order.order_number}`
+            };
+            await invoicesAPI.markPaid(order.lab_invoice.id, paymentData);
+            enqueueSnackbar('Facture marquée comme payée', { variant: 'success' });
+            fetchOrder(); // Refresh to update invoice status
+        } catch (error) {
+            console.error('Error marking invoice as paid:', error);
+            enqueueSnackbar('Erreur lors du marquage de la facture', { variant: 'error' });
         }
     };
 
@@ -446,7 +490,7 @@ const LabOrderDetail = () => {
                 </Box>
                 <Box>
                     {['results_entered', 'verified', 'results_delivered'].includes(order.status) && (
-                        <Button variant="outlined" startIcon={<PdfIcon />} onClick={downloadPDF} sx={{ mr: 1 }}>
+                        <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
                             Rapport Complet
                         </Button>
                     )}
@@ -457,26 +501,39 @@ const LabOrderDetail = () => {
                                 variant="outlined"
                                 color="primary"
                                 startIcon={<ReceiptIcon />}
-                                onClick={handlePrintReceipt}
+                                onClick={() => handleOpenPrintModal('receipt')}
                                 sx={{ mr: 1 }}
                             >
                                 Imprimer Reçu
                             </Button>
 
-                            <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={handlePrintBarcodes} sx={{ mr: 1 }}>
+                            <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={() => handleOpenPrintModal('barcodes')} sx={{ mr: 1 }}>
                                 Étiquettes
                             </Button>
 
                             {order.lab_invoice ? (
-                                <Button
-                                    variant="outlined"
-                                    color="success"
-                                    startIcon={<InvoiceIcon />}
-                                    onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
-                                    sx={{ mr: 1 }}
-                                >
-                                    Voir Facture
-                                </Button>
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        color="success"
+                                        startIcon={<InvoiceIcon />}
+                                        onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
+                                        sx={{ mr: 1 }}
+                                    >
+                                        Voir Facture
+                                    </Button>
+                                    {order.lab_invoice.status !== 'paid' && (
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            startIcon={<InvoiceIcon />}
+                                            onClick={handleMarkInvoicePaid}
+                                            sx={{ mr: 1 }}
+                                        >
+                                            Marquer Payée
+                                        </Button>
+                                    )}
+                                </>
                             ) : (
                                 <Button
                                     variant="contained"
@@ -588,11 +645,12 @@ const LabOrderDetail = () => {
                                         <TextField
                                             fullWidth
                                             size="small"
-                                            value={results[item.id]?.remarks || ''}
-                                            onChange={(e) => handleResultChange(item.id, 'remarks', e.target.value)}
+                                            value={results[item.id]?.technician_notes || ''}
+                                            onChange={(e) => handleResultChange(item.id, 'technician_notes', e.target.value)}
+                                            placeholder="Commentaires du technicien"
                                         />
                                     ) : (
-                                        item.remarks
+                                        item.technician_notes || '-'
                                     )}
                                 </TableCell>
                                 <TableCell>
@@ -603,6 +661,23 @@ const LabOrderDetail = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Print Modal */}
+            <PrintModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                title={
+                    printModalType === 'report' ? 'Rapport Complet' :
+                    printModalType === 'receipt' ? 'Reçu Labo' :
+                    printModalType === 'barcodes' ? 'Étiquettes Code-Barres' :
+                    'Document'
+                }
+                loading={generatingPdf}
+                onPreview={() => handlePrintAction('preview')}
+                onPrint={() => handlePrintAction('print')}
+                onDownload={() => handlePrintAction('download')}
+                helpText="Choisissez une action pour générer le document"
+            />
         </Box>
     );
 };

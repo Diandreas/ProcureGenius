@@ -38,6 +38,7 @@ import { useSnackbar } from 'notistack';
 import { motion } from 'framer-motion';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import LoadingState from '../../../components/LoadingState';
+import PrintModal from '../../../components/PrintModal';
 
 const LabOrderList = () => {
     const { t } = useTranslation();
@@ -79,23 +80,17 @@ const LabOrderList = () => {
         setQuickFilter(filter === quickFilter ? '' : filter);
     };
 
-    const handlePrintBenchSheet = async (e, orderId) => {
-        e.stopPropagation(); // Prevent card click navigation
-        try {
-            enqueueSnackbar('Génération de la fiche de paillasse...', { variant: 'info' });
-            const blob = await laboratoryAPI.getBenchSheetPDF(orderId);
-            const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        } catch (error) {
-            console.error('Error printing bench sheet:', error);
-            enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
-        }
+    // Print Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleOpenPrintModal = () => {
+        setPrintModalOpen(true);
     };
 
-    const handlePrintBulkBenchSheets = async () => {
+    const handlePrintAction = async (action) => {
+        setIsGenerating(true);
         try {
-            enqueueSnackbar('Génération des fiches de paillasse groupées...', { variant: 'info' });
-
             // Build params based on current filter
             let params = {};
             if (quickFilter === 'pending') {
@@ -107,12 +102,50 @@ const LabOrderList = () => {
             }
 
             const blob = await laboratoryAPI.getBulkBenchSheetsPDF(params);
+
+            // Format Filename
+            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const filename = `fiches-paillasse-${dateStr}.pdf`;
+
+            if (action === 'download') {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                enqueueSnackbar('Fichier téléchargé avec succès', { variant: 'success' });
+            } else if (action === 'preview' || action === 'print') {
+                const url = window.URL.createObjectURL(blob);
+                const printWindow = window.open(url, '_blank');
+
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+            setPrintModalOpen(false);
+        } catch (error) {
+            console.error('Error generating bulk bench sheets:', error);
+            enqueueSnackbar('Erreur lors de la génération des fiches', { variant: 'error' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handlePrintBenchSheet = async (e, orderId) => {
+        e.stopPropagation(); // Prevent card click navigation
+        try {
+            enqueueSnackbar('Génération de la fiche de paillasse...', { variant: 'info' });
+            const blob = await laboratoryAPI.getBenchSheetPDF(orderId);
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
-            enqueueSnackbar('Fiches générées avec succès', { variant: 'success' });
         } catch (error) {
-            console.error('Error printing bulk bench sheets:', error);
-            enqueueSnackbar('Erreur lors de la génération des fiches groupées', { variant: 'error' });
+            console.error('Error printing bench sheet:', error);
+            enqueueSnackbar('Erreur lors de la génération de la fiche', { variant: 'error' });
         }
     };
 
@@ -284,7 +317,7 @@ const LabOrderList = () => {
                         variant="outlined"
                         size="large"
                         startIcon={<DescriptionIcon />}
-                        onClick={handlePrintBulkBenchSheets}
+                        onClick={handleOpenPrintModal}
                         sx={{
                             borderRadius: 3,
                             px: 3,
@@ -379,6 +412,17 @@ const LabOrderList = () => {
                     ))
                 )}
             </Grid>
+            {/* Print Modal */}
+            <PrintModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                title="Imprimer Fiches Groupées"
+                helpText="Générez un PDF contenant les fiches de paillasse pour toutes les commandes filtrées."
+                loading={isGenerating}
+                onPreview={() => handlePrintAction('preview')}
+                onPrint={() => handlePrintAction('print')}
+                onDownload={() => handlePrintAction('download')}
+            />
         </Box>
     );
 };

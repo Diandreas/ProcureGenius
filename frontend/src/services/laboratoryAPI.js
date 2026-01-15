@@ -49,6 +49,14 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Generate Receipt PDF (thermal)
+    getReceiptPDF: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/receipt/`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // Generate Barcodes PDF
     getBarcodesPDF: async (id) => {
         const response = await api.get(`/healthcare/laboratory/orders/${id}/barcodes/`, {

@@ -585,36 +585,43 @@ class Invoice(models.Model):
     def create_with_items(cls, created_by, title, due_date, items_data, **kwargs):
         """
         Crée une facture avec plusieurs éléments en une seule opération
-        
-        Args:
-            created_by: Utilisateur qui crée la facture
-            title: Titre de la facture
-            due_date: Date d'échéance
-            items_data: Liste de dictionnaires avec les données des éléments
-                        [{"service_code": "SVC-001", "description": "...", "quantity": 1, "unit_price": 100.00}, ...]
-            **kwargs: Autres champs de la facture
-            
-        Returns:
-            Invoice: La facture créée avec tous ses éléments
         """
-        # Créer la facture principale
         invoice = cls.objects.create(
             created_by=created_by,
             title=title,
             due_date=due_date,
-            subtotal=0,  # Sera recalculé
-            total_amount=0,  # Sera recalculé
+            subtotal=0,
+            total_amount=0,
             **kwargs
         )
-        
-        # Ajouter tous les éléments
         for item_data in items_data:
             invoice.add_item(**item_data)
         
-        # Recalculer les totaux finaux
         invoice.recalculate_totals()
-        
         return invoice
+
+    def add_item(self, description, quantity, unit_price, service_code=None, 
+                 detailed_description="", product=None, unit_of_measure="unité", 
+                 discount_percent=0, tax_rate=0, notes=""):
+        """
+        Ajoute un élément à la facture
+        """
+        from .models import InvoiceItem
+        item = InvoiceItem.objects.create(
+            invoice=self,
+            product=product,
+            service_code=service_code,
+            description=description,
+            detailed_description=detailed_description or "",
+            quantity=quantity,
+            unit_price=unit_price,
+            unit_of_measure=unit_of_measure,
+            discount_percent=discount_percent,
+            tax_rate=tax_rate,
+            notes=notes
+        )
+        self.recalculate_totals()
+        return item
 
     def clone_with_items(self, created_by=None, **override_fields):
         """
@@ -673,23 +680,6 @@ class Invoice(models.Model):
     def qr_code_data(self):
         """Retourne les données QR code encodées en base64"""
         return self.generate_qr_code()
-
-    def add_item(self, service_code, description, quantity, unit_price, 
-                 detailed_description="", unit_of_measure="unité", 
-                 discount_percent=0, tax_rate=0, notes=""):
-        """Ajoute un nouvel élément à la facture"""
-        return InvoiceItem.objects.create(
-            invoice=self,
-            service_code=service_code,
-            description=description,
-            detailed_description=detailed_description,
-            quantity=quantity,
-            unit_price=unit_price,
-            unit_of_measure=unit_of_measure,
-            discount_percent=discount_percent,
-            tax_rate=tax_rate,
-            notes=notes
-        )
 
     def remove_item(self, item_id):
         """Supprime un élément de la facture"""
@@ -1059,7 +1049,27 @@ class Payment(models.Model):
         blank=True,
         verbose_name=_("Numéro de référence")
     )
+    transaction_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name=_("ID de transaction")
+    )
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    
+    # Statut du paiement
+    STATUS_CHOICES = [
+        ('pending', _('En attente')),
+        ('success', _('Réussi')),
+        ('failed', _('Échoué')),
+        ('refunded', _('Remboursé')),
+    ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='success',
+        verbose_name=_("Statut")
+    )
     
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views_pdf import InvoicePDFView
+from .views_pdf import InvoicePDFView, InvoiceReceiptView
 from .views_debug import debug_organization_data
 
 app_name = 'invoicing'
@@ -19,6 +19,7 @@ urlpatterns = [
 
     # PDF URLs - WeasyPrint
     path('<uuid:pk>/pdf/', InvoicePDFView.as_view(), name='invoice_pdf'),
+    path('<uuid:pk>/receipt/', InvoiceReceiptView.as_view(), name='invoice_receipt'),
 
     # Print URLs
     path('print/latest/', views.invoice_print_latest, name='invoice_print_latest'),

@@ -8,9 +8,11 @@ import json
 import base64
 from io import BytesIO
 from django.views.generic import DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 
 from .models import Invoice
+from apps.healthcare.pdf_helpers import TokenAuthMixin, TokenLoginRequiredMixin
 
 # Configurer le PATH pour GTK3 avant d'importer WeasyPrint
 def configure_gtk3_path():
@@ -46,7 +48,7 @@ except (ImportError, OSError) as e:
 
 if not WEASYPRINT_AVAILABLE:
     # Si WeasyPrint n'est pas disponible, créer une vue qui retourne une erreur
-    class InvoicePDFView(DetailView):
+    class InvoicePDFView(LoginRequiredMixin, DetailView):
         """Vue d'erreur si WeasyPrint n'est pas disponible"""
         model = Invoice
 
@@ -72,7 +74,7 @@ if not WEASYPRINT_AVAILABLE:
             )
 else:
     # WeasyPrint disponible - créer la vue normale
-    class InvoicePDFView(WeasyTemplateResponseMixin, DetailView):
+    class InvoicePDFView(TokenLoginRequiredMixin, WeasyTemplateResponseMixin, DetailView):
         """
         Vue pour générer un PDF de facture avec WeasyPrint et django-weasyprint
 
@@ -426,3 +428,28 @@ else:
                 traceback.print_exc()
 
             return None
+
+
+class InvoiceReceiptView(InvoicePDFView):
+    """
+    Vue spécifique pour générer un reçu thermal de facture
+    Force l'utilisation du template thermal indépendamment des paramètres d'organisation
+    """
+    template_name = 'invoicing/pdf_templates/invoice_thermal.html'
+
+    def get_template_names(self):
+        """Force toujours le template thermal pour les reçus"""
+        return ['invoicing/pdf_templates/invoice_thermal.html']
+
+    def get_pdf_filename(self):
+        """Génère le nom du fichier avec 'recu' au lieu de 'facture'"""
+        invoice = self.get_object()
+        return f'recu-{invoice.invoice_number}.pdf'
+
+    def get_context_data(self, **kwargs):
+        """Ajoute un contexte spécifique pour les reçus"""
+        context = super().get_context_data(**kwargs)
+        # Force le format thermal pour le reçu
+        context['paper_size'] = 'thermal_80'
+        context['is_receipt'] = True
+        return context

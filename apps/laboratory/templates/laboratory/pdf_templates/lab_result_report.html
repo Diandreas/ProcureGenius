@@ -190,8 +190,7 @@
             <div class="info-label">Patient</div>
             <div class="info-value">
                 {{ patient.name }}<br>
-                {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{%
-                endif %}<br>
+                {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{% endif %}<br>
                 ID: {{ patient.patient_number|default:"-" }}
             </div>
 

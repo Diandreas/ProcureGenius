@@ -274,7 +274,21 @@ class LabOrderStatusUpdateView(APIView):
             )
         
         action = request.data.get('action')
-        
+
+        # ✅ VALIDATION: Si facture existe, elle doit être payée avant completion
+        if action in ['complete', 'verify', 'deliver']:
+            if order.lab_invoice:
+                if order.lab_invoice.status != 'paid':
+                    return Response(
+                        {
+                            'error': 'La facture doit être payée avant de marquer la commande comme terminée',
+                            'invoice_number': order.lab_invoice.invoice_number,
+                            'invoice_status': order.lab_invoice.status,
+                            'invoice_id': str(order.lab_invoice.id)
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
         if action == 'collect_sample':
             order.collect_sample(collected_by=request.user)
             

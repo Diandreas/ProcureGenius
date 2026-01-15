@@ -1,9 +1,11 @@
 from django.views.generic import DetailView
 from .models import Consultation, Prescription
-from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin
+from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, TokenAuthMixin, TokenLoginRequiredMixin
 
 
-class ConsultationReceiptView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class ConsultationReceiptView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère REÇU thermal pour consultation (petit ticket de caisse)
     """
@@ -46,7 +48,7 @@ class ConsultationReceiptView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin
         return context
 
 
-class ConsultationReportView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class ConsultationReportView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère le rapport de consultation complet (A4)
     """
@@ -73,7 +75,7 @@ class ConsultationReportView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin,
         return context
 
 
-class PrescriptionPDFView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class PrescriptionPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère l'ordonnance (A4)
     """

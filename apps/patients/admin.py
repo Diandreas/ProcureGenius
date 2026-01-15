@@ -3,6 +3,7 @@ Admin configuration for Patients app
 """
 from django.contrib import admin
 from .models import PatientVisit
+from .models_care import PatientCareService
 
 
 @admin.register(PatientVisit)
@@ -64,3 +65,32 @@ class PatientVisitAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+@admin.register(PatientCareService)
+class PatientCareServiceAdmin(admin.ModelAdmin):
+    list_display = [
+        'patient',
+        'service_name',
+        'service_type',
+        'provided_at',
+        'provided_by',
+        'is_billed',
+    ]
+    list_filter = [
+        'service_type',
+        'is_billed',
+        'provided_at',
+    ]
+    search_fields = [
+        'patient__name',
+        'service_name',
+        'notes',
+    ]
+    readonly_fields = [
+        'id',
+        'created_at',
+        'updated_at',
+    ]
+    date_hierarchy = 'provided_at'
+    ordering = ['-provided_at']

@@ -1482,20 +1482,122 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
-        """Marquer une facture comme payée"""
-        invoice = self.get_object()
-        if invoice.status == 'sent':
-            invoice.status = 'paid'
-            invoice.paid_date = timezone.now().date()
-            invoice.payment_method = request.data.get('payment_method', 'other')
-            invoice.payment_reference = request.data.get('payment_reference', '')
-            invoice.save()
+        """Marquer une facture comme payée en créant un enregistrement de paiement"""
+        from apps.invoicing.models import Payment
+        from datetime import datetime, date
+        from decimal import Decimal
+        
+        try:
+            invoice = self.get_object()
+            
+            # Vérifier que la facture peut être marquée comme payée
+            if invoice.status == 'paid':
+                return Response(
+                    {'error': 'Invoice is already marked as paid'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if invoice.status == 'cancelled':
+                return Response(
+                    {'error': 'Cancelled invoices cannot be marked as paid'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Récupérer les informations de paiement depuis la requête
+            payment_method = request.data.get('payment_method', 'cash')
+            payment_date_str = request.data.get('payment_date')
+            notes = request.data.get('notes', '')
+            reference_number = request.data.get('reference_number', '')
+            transaction_id = request.data.get('transaction_id', '')
+            
+            # Convertir payment_date en objet date
+            if payment_date_str:
+                try:
+                    if isinstance(payment_date_str, str):
+                        # Gérer les formats ISO avec ou sans timezone
+                        payment_date_str = payment_date_str.replace('Z', '+00:00')
+                        payment_date = datetime.fromisoformat(payment_date_str).date()
+                    elif isinstance(payment_date_str, date):
+                        payment_date = payment_date_str
+                    else:
+                        payment_date = timezone.now().date()
+                except (ValueError, AttributeError):
+                    payment_date = timezone.now().date()
+            else:
+                payment_date = timezone.now().date()
+            
+            # Calculer le montant à payer (solde dû)
+            # Utiliser la même méthode que Payment.clean() pour éviter les problèmes de précision
+            total_payments = sum(Decimal(str(p.amount)) for p in invoice.payments.all())
+            total_amount = Decimal(str(invoice.total_amount))
+            balance_due = total_amount - total_payments
+            
+            # Arrondir à 2 décimales pour éviter les problèmes de précision
+            balance_due = balance_due.quantize(Decimal('0.01'))
+            
+            # Vérifier que le montant est valide
+            if balance_due <= 0:
+                return Response(
+                    {'error': 'Invoice balance is already zero or negative'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Créer le paiement avec validation explicite
+            payment = Payment(
+                invoice=invoice,
+                amount=balance_due,
+                payment_date=payment_date,
+                payment_method=payment_method,
+                reference_number=reference_number,
+                transaction_id=transaction_id,
+                notes=notes,
+                created_by=request.user,
+                status='success'  # Statut pour un paiement réussi
+            )
+            
+            # Valider avant de sauvegarder
+            try:
+                payment.full_clean()
+            except Exception as validation_error:
+                # Si la validation échoue à cause de la précision, essayer avec un montant légèrement inférieur
+                if 'dépasse le solde dû' in str(validation_error):
+                    # Réduire légèrement le montant pour tenir compte de la précision
+                    balance_due = balance_due - Decimal('0.01')
+                    if balance_due > 0:
+                        payment.amount = balance_due
+                        payment.full_clean()
+                    else:
+                        return Response(
+                            {'error': f'Payment validation failed: {str(validation_error)}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                else:
+                    return Response(
+                        {'error': f'Payment validation failed: {str(validation_error)}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Sauvegarder le paiement
+            payment.save()
+            
+            # Le statut de la facture sera automatiquement mis à jour via update_status_from_payments()
+            # dans la méthode save() du Payment
+            
+            # Rafraîchir l'invoice depuis la base de données pour obtenir le statut mis à jour
+            invoice.refresh_from_db()
+            
             serializer = self.get_serializer(invoice)
             return Response(serializer.data)
-        return Response(
-            {'error': 'Only sent invoices can be marked as paid'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"[ERROR] Error in mark_paid: {e}")
+            print(error_traceback)
+            return Response(
+                {'error': f'Error marking invoice as paid: {str(e)}', 'details': error_traceback},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=True, methods=['get'], url_path='pdf')
     def generate_pdf(self, request, pk=None):
@@ -1532,6 +1634,89 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {'error': f'Error generating PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['get'], url_path='receipt')
+    def generate_receipt(self, request, pk=None):
+        """Générer un reçu thermal de la facture avec WeasyPrint"""
+        try:
+            from django.http import HttpResponse
+            from django.template.loader import render_to_string
+            from weasyprint import HTML
+            from django.conf import settings
+            import base64
+            import qrcode
+            import json
+            from io import BytesIO
+
+            invoice = self.get_object()
+
+            # Utiliser le générateur pour obtenir les données d'organisation
+            from .services.pdf_generator_weasy import InvoiceWeasyPDFGenerator
+            generator = InvoiceWeasyPDFGenerator()
+            
+            # Récupérer les données de l'organisation
+            org_data = generator._get_organization_data(invoice)
+            
+            # Forcer le format thermal pour le reçu
+            org_data['paper_size'] = 'thermal_80'
+            
+            # Générer le QR code
+            qr_code_base64 = generator._generate_qr_code(invoice)
+
+            # Préparer le contexte pour le template thermal
+            context = {
+                'invoice': invoice,
+                'organization': org_data,
+                'logo_base64': generator._get_logo_base64(org_data),
+                'qr_code_base64': qr_code_base64,
+                'items': invoice.items.all() if hasattr(invoice, 'items') else [],
+                'subtotal': getattr(invoice, 'subtotal', 0) or 0,
+                'tax_amount': getattr(invoice, 'tax_amount', 0) or 0,
+                'total_amount': getattr(invoice, 'total_amount', 0) or 0,
+                'issue_date': getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None),
+                'due_date': getattr(invoice, 'due_date', None),
+                'client': invoice.client if hasattr(invoice, 'client') else None,
+                'template_type': 'thermal',
+                'brand_color': org_data.get('brand_color', '#2563eb'),
+                'paper_size': 'thermal_80',
+                'is_receipt': True,  # Indicateur que c'est un reçu
+            }
+
+            # Utiliser le template thermal
+            template_name = 'invoicing/pdf_templates/invoice_thermal.html'
+
+            # Rendu HTML
+            html_string = render_to_string(template_name, context)
+
+            # Générer le PDF avec WeasyPrint
+            html = HTML(string=html_string, base_url=settings.BASE_DIR)
+            pdf_bytes = html.write_pdf()
+
+            # Créer la réponse HTTP avec le PDF
+            response = HttpResponse(
+                pdf_bytes,
+                content_type='application/pdf'
+            )
+
+            # Définir les en-têtes pour le téléchargement
+            filename = f"recu-{invoice.invoice_number}.pdf"
+            response['Content-Disposition'] = f'inline; filename="{filename}"'
+            response['Content-Length'] = len(response.content)
+
+            return response
+
+        except ImportError as e:
+            return Response(
+                {'error': 'PDF generation service not available', 'details': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Error generating receipt: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

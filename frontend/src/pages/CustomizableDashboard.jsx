@@ -36,6 +36,11 @@ import SupplierPerformanceWidget from '../components/widgets/SupplierPerformance
 import PendingApprovalsWidget from '../components/widgets/PendingApprovalsWidget';
 // IA (1)
 import AIProactiveSuggestionsWidget from '../components/widgets/AIProactiveSuggestionsWidget';
+// Healthcare (4)
+import PatientsOverviewWidget from '../components/widgets/healthcare/PatientsOverviewWidget';
+import ConsultationsSummaryWidget from '../components/widgets/healthcare/ConsultationsSummaryWidget';
+import LabOrdersStatusWidget from '../components/widgets/healthcare/LabOrdersStatusWidget';
+import PharmacyDispensingWidget from '../components/widgets/healthcare/PharmacyDispensingWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -63,6 +68,11 @@ const WIDGET_COMPONENTS = {
   pending_approvals: PendingApprovalsWidget,
   // IA (1)
   ai_suggestions: AIProactiveSuggestionsWidget,
+  // Healthcare (4)
+  patients_overview: PatientsOverviewWidget,
+  consultations_summary: ConsultationsSummaryWidget,
+  lab_orders_status: LabOrdersStatusWidget,
+  pharmacy_dispensing: PharmacyDispensingWidget,
 };
 
 const CustomizableDashboard = () => {

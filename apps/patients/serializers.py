@@ -199,13 +199,37 @@ class CheckInSerializer(serializers.Serializer):
     assigned_doctor_id = serializers.UUIDField(required=False, allow_null=True)
 
 
-class PatientSearchSerializer(serializers.Serializer):
+from .models_care import PatientCareService
+
+class PatientCareServiceSerializer(serializers.ModelSerializer):
     """
-    Serializer for patient search results
+    Serializer for PatientCareService model
     """
-    id = serializers.UUIDField()
-    name = serializers.CharField()
-    patient_number = serializers.CharField()
-    phone = serializers.CharField()
-    date_of_birth = serializers.DateField()
-    gender = serializers.CharField()
+    provided_by_name = serializers.SerializerMethodField()
+    service_type_display = serializers.CharField(source='get_service_type_display', read_only=True)
+    
+    class Meta:
+        model = PatientCareService
+        fields = [
+            'id',
+            'patient',
+            'service_product',
+            'service_type',
+            'service_type_display',
+            'service_name',
+            'service_category',
+            'provided_by',
+            'provided_by_name',
+            'provided_at',
+            'is_billed',
+            'quantity',
+            'notes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_provided_by_name(self, obj):
+        if obj.provided_by:
+            return obj.provided_by.get_full_name() or obj.provided_by.username
+        return None

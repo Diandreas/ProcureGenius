@@ -140,6 +140,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     tests_count = serializers.IntegerField(read_only=True)
     all_results_entered = serializers.BooleanField(read_only=True)
+    lab_invoice = serializers.SerializerMethodField()
     
     class Meta:
         model = LabOrder
@@ -183,6 +184,16 @@ class LabOrderSerializer(serializers.ModelSerializer):
     def get_ordered_by_name(self, obj):
         if obj.ordered_by:
             return obj.ordered_by.get_full_name() or obj.ordered_by.username
+        return None
+
+    def get_lab_invoice(self, obj):
+        if obj.lab_invoice:
+            return {
+                'id': str(obj.lab_invoice.id),
+                'invoice_number': obj.lab_invoice.invoice_number,
+                'status': obj.lab_invoice.status,
+                'total_amount': str(obj.lab_invoice.total_amount)
+            }
         return None
 
 

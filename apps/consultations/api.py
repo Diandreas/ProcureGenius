@@ -175,7 +175,20 @@ class EndConsultationView(APIView):
                 {'error': 'Consultation not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
+        # ✅ VALIDATION: Si facture existe, elle doit être payée avant de terminer
+        if consultation.consultation_invoice:
+            if consultation.consultation_invoice.status != 'paid':
+                return Response(
+                    {
+                        'error': 'La facture doit être payée avant de terminer la consultation',
+                        'invoice_number': consultation.consultation_invoice.invoice_number,
+                        'invoice_status': consultation.consultation_invoice.status,
+                        'invoice_id': str(consultation.consultation_invoice.id)
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         # Update visit if linked
         if consultation.visit:
             consultation.visit.end_consultation()

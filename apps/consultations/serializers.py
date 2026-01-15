@@ -113,6 +113,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
     blood_pressure = serializers.CharField(read_only=True)
     bmi = serializers.DecimalField(max_digits=4, decimal_places=1, read_only=True)
     bmi_category = serializers.CharField(read_only=True)
+    consultation_invoice = serializers.SerializerMethodField()
     
     class Meta:
         model = Consultation
@@ -155,15 +156,27 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'patient_instructions',
             # Prescriptions
             'prescriptions',
+            # Invoice
+            'consultation_invoice',
             # Timestamps
             'created_at',
             'updated_at',
         ]
         read_only_fields = ['id', 'consultation_number', 'created_at', 'updated_at']
-    
+
     def get_doctor_name(self, obj):
         if obj.doctor:
             return obj.doctor.get_full_name() or obj.doctor.username
+        return None
+
+    def get_consultation_invoice(self, obj):
+        if obj.consultation_invoice:
+            return {
+                'id': str(obj.consultation_invoice.id),
+                'invoice_number': obj.consultation_invoice.invoice_number,
+                'status': obj.consultation_invoice.status,
+                'total_amount': str(obj.consultation_invoice.total_amount)
+            }
         return None
 
 

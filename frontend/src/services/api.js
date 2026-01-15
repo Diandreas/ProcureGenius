@@ -111,6 +111,7 @@ export const invoicesAPI = {
   send: (id, data) => api.post(`/invoices/${id}/send/`, data),
   sendEmail: (id, data) => api.post(`/invoices/${id}/send/`, data),
   markPaid: (id, data) => api.post(`/invoices/${id}/mark_paid/`, data),
+  getReceiptPDF: (id) => api.get(`/invoices/${id}/receipt/`, { responseType: 'blob' }),
 };
 
 // Products API

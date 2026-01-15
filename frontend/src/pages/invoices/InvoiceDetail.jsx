@@ -73,6 +73,7 @@ import { invoicesAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
+import PrintModal from '../../components/PrintModal';
 
 function InvoiceDetail() {
   const { t } = useTranslation(['invoices', 'common']);
@@ -95,6 +96,10 @@ function InvoiceDetail() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Receipt Print Modal State
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [generatingReceipt, setGeneratingReceipt] = useState(false);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -182,7 +187,7 @@ function InvoiceDetail() {
       // Récupérer la langue actuelle depuis i18n
       const currentLanguage = i18n.language || 'fr';
       const language = currentLanguage.split('-')[0]; // 'en-US' -> 'en'
-      
+
       const response = await invoicesAPI.sendEmail(id, {
         recipient_email: emailData.recipient_email,
         custom_message: emailData.custom_message || undefined,
@@ -261,6 +266,42 @@ function InvoiceDetail() {
       enqueueSnackbar(t('invoices:messages.pdfGenerationError'), { variant: 'error' });
     } finally {
       setGeneratingPdf(false);
+    }
+  };
+
+  const handlePrintReceipt = async (action) => {
+    setGeneratingReceipt(true);
+    try {
+      const response = await invoicesAPI.getReceiptPDF(id);
+      const pdfBlob = response.data;
+      const filename = `recu-${invoice.invoice_number}.pdf`;
+
+      if (action === 'download') {
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      } else if (action === 'preview' || action === 'print') {
+        const url = window.URL.createObjectURL(pdfBlob);
+        const printWindow = window.open(url, '_blank');
+
+        if (printWindow && action === 'print') {
+          printWindow.onload = () => {
+            printWindow.print();
+          };
+        }
+      }
+
+      setReceiptModalOpen(false);
+    } catch (error) {
+      console.error('Error printing receipt:', error);
+      enqueueSnackbar('Erreur lors de la génération du reçu', { variant: 'error' });
+    } finally {
+      setGeneratingReceipt(false);
     }
   };
 
@@ -451,12 +492,12 @@ function InvoiceDetail() {
                   color: 'white',
                   transform: 'translateY(-2px)',
                   boxShadow: '0 4px 8px rgba(46, 125, 50, 0.25)'
-              },
-              transition: 'all 0.2s'
-            }}
-          >
-            <Send sx={{ fontSize: '1.1rem' }} />
-          </IconButton>
+                },
+                transition: 'all 0.2s'
+              }}
+            >
+              <Send sx={{ fontSize: '1.1rem' }} />
+            </IconButton>
           )}
           {(invoice.status === 'sent' || isOverdue()) && (
             <IconButton
@@ -521,32 +562,41 @@ function InvoiceDetail() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<PictureAsPdf />}
-              onClick={() => setPdfDialogOpen(true)}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              {t('invoices:buttons.generatePdf')}
-            </Button>
-            <Tooltip
-              title={
-                !invoice.client
-                  ? t('invoices:tooltips.noClientAssigned', 'Aucun client associé à cette facture')
-                  : !invoice.client?.email
-                    ? t('invoices:tooltips.noClientEmail', 'Le client n\'a pas d\'adresse email')
-                    : ''
-              }
-              arrow
-            >
-              <span>
-                <Button
-                  variant="outlined"
-                  startIcon={<Email />}
-                  onClick={() => {
-                    setEmailData({
-                      recipient_email: invoice.client?.email || '',
-                      custom_message: `Bonjour ${invoice.client?.name || 'Client'},
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdf />}
+            onClick={() => setPdfDialogOpen(true)}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {t('invoices:buttons.generatePdf')}
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<Receipt />}
+            onClick={() => setReceiptModalOpen(true)}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            Imprimer Reçu
+          </Button>
+          <Tooltip
+            title={
+              !invoice.client
+                ? t('invoices:tooltips.noClientAssigned', 'Aucun client associé à cette facture')
+                : !invoice.client?.email
+                  ? t('invoices:tooltips.noClientEmail', 'Le client n\'a pas d\'adresse email')
+                  : ''
+            }
+            arrow
+          >
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<Email />}
+                onClick={() => {
+                  setEmailData({
+                    recipient_email: invoice.client?.email || '',
+                    custom_message: `Bonjour ${invoice.client?.name || 'Client'},
 
 Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
 
@@ -555,59 +605,59 @@ Le PDF de votre facture est joint à cet email.
 Pour toute question, n'hésitez pas à nous contacter.
 
 Cordialement`
-                    });
-                    setSendEmailDialogOpen(true);
-                  }}
-                  disabled={!invoice.client?.email}
-                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                >
-                  {t('invoices:buttons.sendEmail')}
-                </Button>
-              </span>
-            </Tooltip>
-            <Button
-              variant="outlined"
-              startIcon={<Edit />}
-              onClick={handleEdit}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              {t('invoices:buttons.edit')}
-            </Button>
-            {(invoice.status === 'sent' || isOverdue()) && (
-              <Button
-                variant="contained"
-                startIcon={<Payment />}
-                onClick={() => setMarkPaidDialogOpen(true)}
-                color="success"
+                  });
+                  setSendEmailDialogOpen(true);
+                }}
+                disabled={!invoice.client?.email}
                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
               >
-                {t('invoices:buttons.markPaid')}
+                {t('invoices:buttons.sendEmail')}
               </Button>
-            )}
-            <IconButton
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                bgcolor: 'grey.100',
-                '&:hover': { bgcolor: 'grey.200' }
-              }}
+            </span>
+          </Tooltip>
+          <Button
+            variant="outlined"
+            startIcon={<Edit />}
+            onClick={handleEdit}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {t('invoices:buttons.edit')}
+          </Button>
+          {(invoice.status === 'sent' || isOverdue()) && (
+            <Button
+              variant="contained"
+              startIcon={<Payment />}
+              onClick={() => setMarkPaidDialogOpen(true)}
+              color="success"
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
-              <MoreVert />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-            >
-              <MenuItem onClick={() => setAddItemDialogOpen(true)} disabled={invoice.status !== 'draft'}>
-                <Add fontSize="small" sx={{ mr: 1 }} />
-                {t('invoices:buttons.addItem')}
-              </MenuItem>
-              <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-                <Delete fontSize="small" sx={{ mr: 1 }} />
-                {t('invoices:buttons.delete')}
-              </MenuItem>
-            </Menu>
-          </Box>
+              {t('invoices:buttons.markPaid')}
+            </Button>
+          )}
+          <IconButton
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{
+              bgcolor: 'grey.100',
+              '&:hover': { bgcolor: 'grey.200' }
+            }}
+          >
+            <MoreVert />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+          >
+            <MenuItem onClick={() => setAddItemDialogOpen(true)} disabled={invoice.status !== 'draft'}>
+              <Add fontSize="small" sx={{ mr: 1 }} />
+              {t('invoices:buttons.addItem')}
+            </MenuItem>
+            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+              <Delete fontSize="small" sx={{ mr: 1 }} />
+              {t('invoices:buttons.delete')}
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       {isMobile ? (
@@ -1248,10 +1298,10 @@ Cordialement`
       </Dialog>
 
       {/* Send Email Dialog */}
-      <Dialog 
-        open={sendEmailDialogOpen} 
-        onClose={() => setSendEmailDialogOpen(false)} 
-        maxWidth="md" 
+      <Dialog
+        open={sendEmailDialogOpen}
+        onClose={() => setSendEmailDialogOpen(false)}
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1308,11 +1358,11 @@ Cordialement`
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
+          <Button
             onClick={() => {
               setSendEmailDialogOpen(false);
               setEmailData({ recipient_email: '', custom_message: '' });
-            }} 
+            }}
             sx={{ borderRadius: 2, textTransform: 'none' }}
           >
             {t('invoices:buttons.cancel')}
@@ -1489,6 +1539,18 @@ Cordialement`
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Receipt Print Modal */}
+      <PrintModal
+        open={receiptModalOpen}
+        onClose={() => setReceiptModalOpen(false)}
+        title="Reçu de Facture"
+        loading={generatingReceipt}
+        onPreview={() => handlePrintReceipt('preview')}
+        onPrint={() => handlePrintReceipt('print')}
+        onDownload={() => handlePrintReceipt('download')}
+        helpText="Choisissez une action pour générer le reçu thermal"
+      />
     </Box>
   );
 }

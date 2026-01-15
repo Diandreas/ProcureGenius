@@ -48,6 +48,7 @@ class PharmacyDispensingSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     total_amount = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     items_count = serializers.IntegerField(read_only=True)
+    pharmacy_invoice = serializers.SerializerMethodField()
     
     class Meta:
         model = PharmacyDispensing
@@ -81,6 +82,16 @@ class PharmacyDispensingSerializer(serializers.ModelSerializer):
     def get_dispensed_by_name(self, obj):
         if obj.dispensed_by:
             return obj.dispensed_by.get_full_name() or obj.dispensed_by.username
+        return None
+
+    def get_pharmacy_invoice(self, obj):
+        if obj.pharmacy_invoice:
+            return {
+                'id': str(obj.pharmacy_invoice.id),
+                'invoice_number': obj.pharmacy_invoice.invoice_number,
+                'status': obj.pharmacy_invoice.status,
+                'total_amount': str(obj.pharmacy_invoice.total_amount)
+            }
         return None
 
 

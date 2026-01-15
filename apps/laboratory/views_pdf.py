@@ -2,11 +2,12 @@
 Vues PDF pour laboratoire: résultats détaillés ET reçus thermal
 """
 from django.views.generic import DetailView
-from .models import LabOrder
-from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import LabOrder # Imports checked
+from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, TokenAuthMixin, TokenLoginRequiredMixin
 
 
-class LabOrderReceiptView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class LabOrderReceiptView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère REÇU thermal pour commande labo (petit ticket de caisse)
     """
@@ -52,7 +53,7 @@ class LabOrderReceiptView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, De
         return context
 
 
-class LabResultPDFView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère le rapport de RÉSULTATS (A4)
     """
@@ -77,7 +78,7 @@ class LabResultPDFView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Detai
         return context
 
 
-class LabBarcodeView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère une planche d'étiquettes code-barres pour les échantillons
     """
@@ -129,7 +130,7 @@ class LabBarcodeView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailV
         return base64.b64encode(buffer.getvalue()).decode()
 
 
-class LabBenchSheetView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class LabBenchSheetView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère une fiche de paillasse (A4) pour l'usage interne
     """
@@ -156,7 +157,7 @@ class LabBenchSheetView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Deta
         return context
 
 
-class LabBulkBenchSheetView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+class LabBulkBenchSheetView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère des fiches de paillasse groupées pour plusieurs commandes
     Format: Une page par commande, toutes dans un seul PDF

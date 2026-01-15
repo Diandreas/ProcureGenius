@@ -23,6 +23,7 @@ urlpatterns = [
 
     # Medication endpoints (accessible at /healthcare/pharmacy/medications/)
     path('medications/', api.MedicationListView.as_view(), name='medication-list'),
+    path('medications/<uuid:pk>/', api.MedicationDetailView.as_view(), name='medication-detail'),
     path('medications/search/', api.MedicationSearchView.as_view(), name='medication-search'),
     path('medications/check-stock/', api.StockCheckView.as_view(), name='check-stock'),
     path('medications/low-stock/', api.LowStockMedicationsView.as_view(), name='low-stock'),

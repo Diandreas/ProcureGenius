@@ -46,10 +46,13 @@ class ConsultationInvoiceService:
             client=consultation.patient,
             invoice_type='healthcare_consultation',
             created_by=consultation.doctor or consultation.created_by,
-            issue_date=timezone.now(),
-            due_date=timezone.now(),  # Payable immédiatement
+            title=f"Consultation {consultation.consultation_number}",
+            description=f"Consultation médicale - Dr {consultation.doctor.get_full_name() if consultation.doctor else 'N/A'}",
+            due_date=timezone.now().date(),  # Payable immédiatement
             status='sent',
-            notes=f"Consultation {consultation.consultation_number} - {consultation.doctor.get_full_name() if consultation.doctor else 'N/A'}"
+            subtotal=0,
+            tax_amount=0,
+            total_amount=0
         )
 
         # Créer ligne de facture
@@ -100,11 +103,14 @@ class LabOrderInvoiceService:
             organization=lab_order.organization,
             client=lab_order.patient,
             invoice_type='healthcare_laboratory',
-            created_by=lab_order.ordered_by or lab_order.created_by,
-            issue_date=timezone.now(),
-            due_date=timezone.now(),
+            created_by=lab_order.ordered_by,
+            title=f"Analyses laboratoire {lab_order.order_number}",
+            description=f"Commande laboratoire #{lab_order.order_number}",
+            due_date=timezone.now().date(),
             status='sent',
-            notes=f"Analyses laboratoire {lab_order.order_number}"
+            subtotal=0,
+            tax_amount=0,
+            total_amount=0
         )
 
         # Créer lignes de facture pour chaque test
@@ -157,11 +163,14 @@ class PharmacyInvoiceService:
             organization=dispensing.organization,
             client=dispensing.patient,  # Peut être None pour vente comptoir
             invoice_type='healthcare_pharmacy',
-            created_by=dispensing.dispensed_by or dispensing.created_by,
-            issue_date=timezone.now(),
-            due_date=timezone.now(),
+            created_by=dispensing.dispensed_by,
+            title=f"Dispensation {dispensing.dispensing_number}",
+            description=f"Dispensation pharmacie #{dispensing.dispensing_number}",
+            due_date=timezone.now().date(),
             status='sent',
-            notes=f"Dispensation {dispensing.dispensing_number}"
+            subtotal=0,
+            tax_amount=0,
+            total_amount=0
         )
 
         # Créer lignes de facture pour chaque médicament

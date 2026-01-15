@@ -49,6 +49,7 @@ function StockMovementsTab({ productId, productType }) {
   const [adjustQuantity, setAdjustQuantity] = useState('');
   const [adjustNotes, setAdjustNotes] = useState('');
   const [movementType, setMovementType] = useState('add'); // 'add' or 'remove'
+  const [filterType, setFilterType] = useState('all');
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -160,7 +161,7 @@ function StockMovementsTab({ productId, productType }) {
     );
   }
 
-  const [filterType, setFilterType] = useState('all');
+
 
   // Filter types options
   const filterOptions = [

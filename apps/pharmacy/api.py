@@ -291,6 +291,31 @@ class MedicationListView(generics.ListAPIView):
         return queryset
 
 
+class MedicationDetailView(generics.RetrieveAPIView):
+    """Retrieve a single medication (Product) detail"""
+    serializer_class = MedicationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Product.objects.filter(
+            organization=self.request.user.organization,
+            is_active=True,
+            product_type='physical',  # Medications are physical products
+        )
+        
+        # Filter by medication category if it exists
+        try:
+            med_category = ProductCategory.objects.get(
+                organization=self.request.user.organization,
+                slug='medications'
+            )
+            queryset = queryset.filter(category=med_category)
+        except ProductCategory.DoesNotExist:
+            pass
+        
+        return queryset
+
+
 class MedicationSearchView(APIView):
     """Quick search for medications"""
     permission_classes = [IsAuthenticated]

@@ -34,6 +34,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import { invoicesAPI } from '../../../services/api';
+import PrintModal from '../../../components/PrintModal';
 
 const DispensingDetail = () => {
     const { t } = useTranslation();
@@ -44,6 +46,11 @@ const DispensingDetail = () => {
 
     const [loading, setLoading] = useState(false);
     const [dispensing, setDispensing] = useState(null);
+
+    // Print Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [printModalType, setPrintModalType] = useState(null); // 'receipt' or 'report'
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -65,10 +72,54 @@ const DispensingDetail = () => {
         }
     };
 
-    const handlePrintReceipt = () => {
-        // Ouvrir le reçu thermal dans un nouvel onglet
-        window.open(`/healthcare/pharmacy/dispensings/${id}/receipt/`, '_blank');
-        enqueueSnackbar('Ouverture du reçu...', { variant: 'info' });
+    const handleOpenPrintModal = (type) => {
+        setPrintModalType(type);
+        setPrintModalOpen(true);
+    };
+
+    const handlePrintAction = async (action) => {
+        if (!printModalType) return;
+
+        setGeneratingPdf(true);
+        try {
+            let blob;
+            let filename;
+
+            if (printModalType === 'receipt') {
+                blob = await pharmacyAPI.getReceiptPDF(id);
+                filename = `recu_dispensation_${dispensing.dispensing_number}.pdf`;
+            } else if (printModalType === 'report') {
+                blob = await pharmacyAPI.getReportPDF(id);
+                filename = `rapport_dispensation_${dispensing.dispensing_number}.pdf`;
+            }
+
+            if (action === 'download') {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else if (action === 'preview' || action === 'print') {
+                const url = window.URL.createObjectURL(blob);
+                const printWindow = window.open(url, '_blank');
+
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+
+            setPrintModalOpen(false);
+        } catch (error) {
+            console.error('Error handling print action:', error);
+            enqueueSnackbar('Erreur lors de la génération du document', { variant: 'error' });
+        } finally {
+            setGeneratingPdf(false);
+        }
     };
 
     const handleGenerateInvoice = async () => {
@@ -85,13 +136,21 @@ const DispensingDetail = () => {
         }
     };
 
-    const handleDownloadPDF = async () => {
+    const handleMarkInvoicePaid = async () => {
+        if (!dispensing.pharmacy_invoice) return;
+        
         try {
-            enqueueSnackbar('Téléchargement du PDF...', { variant: 'info' });
-            // Peut utiliser l'API pour obtenir un rapport détaillé si besoin
-            window.open(`/healthcare/pharmacy/dispensings/${id}/pdf/`, '_blank');
+            const paymentData = {
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_method: 'cash',
+                notes: `Paiement pour dispensation ${dispensing.dispensing_number}`
+            };
+            await invoicesAPI.markPaid(dispensing.pharmacy_invoice.id, paymentData);
+            enqueueSnackbar('Facture marquée comme payée', { variant: 'success' });
+            fetchDispensing(); // Refresh to update invoice status
         } catch (error) {
-            enqueueSnackbar('Erreur lors du téléchargement', { variant: 'error' });
+            console.error('Error marking invoice as paid:', error);
+            enqueueSnackbar('Erreur lors du marquage de la facture', { variant: 'error' });
         }
     };
 
@@ -139,26 +198,38 @@ const DispensingDetail = () => {
                         variant="outlined"
                         color="primary"
                         startIcon={<ReceiptIcon />}
-                        onClick={handlePrintReceipt}
+                        onClick={() => handleOpenPrintModal('receipt')}
                     >
                         Imprimer Reçu
                     </Button>
                     <Button
                         variant="outlined"
                         startIcon={<PrintIcon />}
-                        onClick={handleDownloadPDF}
+                        onClick={() => handleOpenPrintModal('report')}
                     >
                         Rapport Complet
                     </Button>
                     {dispensing.pharmacy_invoice ? (
-                        <Button
-                            variant="outlined"
-                            color="success"
-                            startIcon={<InvoiceIcon />}
-                            onClick={() => navigate(`/invoices/${dispensing.pharmacy_invoice.id}`)}
-                        >
-                            Voir Facture
-                        </Button>
+                        <>
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                startIcon={<InvoiceIcon />}
+                                onClick={() => navigate(`/invoices/${dispensing.pharmacy_invoice.id}`)}
+                            >
+                                Voir Facture
+                            </Button>
+                            {dispensing.pharmacy_invoice.status !== 'paid' && (
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<InvoiceIcon />}
+                                    onClick={handleMarkInvoicePaid}
+                                >
+                                    Marquer Payée
+                                </Button>
+                            )}
+                        </>
                     ) : (
                         <Button
                             variant="contained"
@@ -419,6 +490,22 @@ const DispensingDetail = () => {
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* Print Modal */}
+            <PrintModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                title={
+                    printModalType === 'receipt' ? 'Reçu de Dispensation' :
+                    printModalType === 'report' ? 'Rapport Complet' :
+                    'Document'
+                }
+                loading={generatingPdf}
+                onPreview={() => handlePrintAction('preview')}
+                onPrint={() => handlePrintAction('print')}
+                onDownload={() => handlePrintAction('download')}
+                helpText="Choisissez une action pour générer le document"
+            />
         </Box>
     );
 };

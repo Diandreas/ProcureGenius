@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
 import VisitHistory from './VisitHistory';
 import PatientDocuments from './PatientDocuments';
+import PatientCareHistory from './PatientCareHistory';
 import PrintModal from '../../../components/PrintModal';
 
 const PatientDetail = () => {
@@ -186,6 +187,7 @@ const PatientDetail = () => {
                     <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
                         <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique Consultations" />
                         <Tab icon={<HospitalIcon />} iconPosition="start" label="Visites" />
+                        <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique des Soins" />
                         <Tab icon={<FileIcon />} iconPosition="start" label="Documents" />
                     </Tabs>
                 </Box>
@@ -224,9 +226,14 @@ const PatientDetail = () => {
                     {tabValue === 1 && <VisitHistory patientId={id} />}
                 </Box>
 
-                {/* Tab Panel 2: Docs */}
+                {/* Tab Panel 2: Care History */}
                 <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
-                    {tabValue === 2 && <PatientDocuments patientId={id} />}
+                    {tabValue === 2 && <PatientCareHistory patientId={id} />}
+                </Box>
+
+                {/* Tab Panel 3: Docs */}
+                <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
+                    {tabValue === 3 && <PatientDocuments patientId={id} />}
                 </Box>
             </Card>
 

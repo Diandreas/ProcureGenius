@@ -69,6 +69,12 @@ const patientAPI = {
     getTodayVisits: async () => {
         const response = await api.get('/healthcare/patients/visits/today/');
         return response.data;
+    },
+
+    // Get patient care service history
+    getPatientCareHistory: async (patientId) => {
+        const response = await api.get(`/healthcare/patients/${patientId}/care-history/`);
+        return response.data;
     }
 };
 

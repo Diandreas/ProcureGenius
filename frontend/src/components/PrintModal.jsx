@@ -44,7 +44,7 @@ const PrintModal = ({
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {title || t('common:print', 'Imprimer')}
+                {title || t('common:buttons.print', 'Imprimer')}
             </DialogTitle>
             <DialogContent>
                 <Box sx={{ mt: 2 }}>
@@ -55,7 +55,7 @@ const PrintModal = ({
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color="inherit">
-                    {t('common:cancel', 'Annuler')}
+                    {t('common:buttons.cancel', 'Annuler')}
                 </Button>
 
                 {onPreview && (
@@ -65,7 +65,7 @@ const PrintModal = ({
                         disabled={loading}
                         startIcon={<Receipt />}
                     >
-                        {t('common:preview', 'Aperçu')}
+                        {t('common:buttons.preview', 'Aperçu')}
                     </Button>
                 )}
 
@@ -77,7 +77,7 @@ const PrintModal = ({
                         disabled={loading}
                         startIcon={<Print />}
                     >
-                        {t('common:print', 'Imprimer')}
+                        {t('common:buttons.print', 'Imprimer')}
                     </Button>
                 )}
 
@@ -88,7 +88,7 @@ const PrintModal = ({
                         disabled={loading}
                         startIcon={loading ? <CircularProgress size={20} /> : <Download />}
                     >
-                        {loading ? t('common:generating', 'Génération...') : t('common:download', 'Télécharger')}
+                        {loading ? t('common:buttons.generating', 'Génération...') : t('common:buttons.download', 'Télécharger')}
                     </Button>
                 )}
             </DialogActions>

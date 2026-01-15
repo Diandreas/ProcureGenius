@@ -5,3 +5,6 @@ class PharmacyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.pharmacy'
     verbose_name = 'Pharmacie'
+    
+    def ready(self):
+        import apps.pharmacy.signals  # noqa

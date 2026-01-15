@@ -13,7 +13,7 @@ const PharmacyDispensingWidget = ({ period = 'last_30_days' }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try:
+      try {
         setLoading(true);
         const response = await widgetsAPI.getWidgetData('pharmacy_dispensing', {
           period,

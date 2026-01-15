@@ -6,7 +6,9 @@ from .models import PharmacyDispensing
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin
 
 
-class PharmacyDispensingReceiptView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class PharmacyDispensingReceiptView(LoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère REÇU thermal pour dispensation pharmacie (petit ticket de caisse)
     """

@@ -11,6 +11,78 @@ from io import BytesIO
 from django.conf import settings
 from django.http import HttpResponse
 from PIL import Image
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+from django.utils.functional import SimpleLazyObject
+from django.contrib.auth.mixins import AccessMixin
+from django.http import HttpResponse
+
+class TokenAuthMixin:
+    """
+    Mixin to authenticate requests using Token Authentication (DRF).
+    This allows standard Django Views to accept the Token sent by frontend.
+    Checks 'Authorization' header or 'token' query parameter.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        # 1. Check for Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        token = None
+
+        if auth_header and auth_header.startswith('Token '):
+            token = auth_header.split(' ')[1]
+        
+        # 2. Check for query parameter (for window.open)
+        if not token:
+            token = request.GET.get('token')
+
+        if token:
+            try:
+                # Manually authenticate using DRF's TokenAuthentication logic
+                user, auth = TokenAuthentication().authenticate_credentials(token)
+                request.user = user
+                request.auth = auth
+                print(f"[AUTH] Token auth successful for user: {user.username}")
+            except AuthenticationFailed:
+                print(f"[AUTH] Invalid token provided: {token}")
+                pass
+            except Exception as e:
+                print(f"[AUTH] Unexpected error during token auth: {e}")
+
+        return super().dispatch(request, *args, **kwargs)
+
+class TokenLoginRequiredMixin(TokenAuthMixin, AccessMixin):
+    """
+    Mixin that performs Token Authentication and then verifies login.
+    If not authenticated, returns 401 Unauthorized instead of redirecting (302) to login page.
+    Using 401 allows the frontend (Axios/JS) to handle the error properly.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        # 1. Run Token Auth first (via super of TokenAuthMixin's super which is problematic)
+        # Actually TokenAuthMixin.dispatch calls super().dispatch.
+        # So we should rely on MRO or call auth logic directly.
+        
+        # Let's call the auth logic directly or ensure the mixin order logic
+        # If we use `class View(TokenLoginRequiredMixin, DetailView)`, MRO is:
+        # TokenLoginRequiredMixin -> TokenAuthMixin -> AccessMixin -> DetailView
+        
+        # So super().dispatch() in TokenAuthMixin calls AccessMixin.dispatch? No, AccessMixin has dispatch.
+        # But AccessMixin doesn't have a useful dispatch for us to just "run".
+        
+        # Better approach: Manually run auth logic here or rely on TokenAuthMixin being first.
+        # We can inheritance: TokenLoginRequiredMixin(AccessMixin)
+        # And we copy the TokenAuthMixin logic or import it.
+        # Let's just inherit TokenAuthMixin and override dispatch to check `request.user.is_authenticated`.
+        
+        # Call parent dispatch to run TokenAuth
+        response = super().dispatch(request, *args, **kwargs)
+        
+        # Check authentication (after TokenAuthMixin ran)
+        if not request.user.is_authenticated:
+            print("[AUTH] User not authenticated, returning 401")
+            return HttpResponse('Unauthorized: Valid Token Required', status=401)
+            
+        return response
+
 
 # =============================================================================
 # GTK3 CONFIGURATION (CRITICAL FOR WINDOWS)
@@ -45,6 +117,7 @@ try:
     print("[OK] WeasyPrint (Healthcare) charge avec succes!")
 except (ImportError, OSError) as e:
     print(f"[ERROR] WeasyPrint non disponible (Healthcare): {e}")
+    # Packages might be missing, check pip install
     WEASYPRINT_AVAILABLE = False
     WeasyTemplateResponseMixin = object
 

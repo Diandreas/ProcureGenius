@@ -14,21 +14,35 @@ from apps.accounts.models import Client
 from .models import PatientVisit
 # Import the new model to register it
 from .models_documents import PatientDocument
+from .models_care import PatientCareService
 from .serializers import (
     PatientSerializer,
     PatientListSerializer,
     PatientVisitSerializer,
     PatientVisitListSerializer,
     CheckInSerializer,
+    PatientCareServiceSerializer,
 )
+
+
+class PatientCareHistoryView(generics.ListAPIView):
+    """
+    Get complete care service history for a patient
+    """
+    serializer_class = PatientCareServiceSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        patient_id = self.kwargs.get('patient_id')
+        return PatientCareService.objects.filter(
+            patient_id=patient_id,
+            patient__organization=self.request.user.organization
+        ).order_by('-provided_at').select_related('provided_by', 'service_product')
 
 
 class PatientListCreateView(generics.ListCreateAPIView):
     """
     List all patients or create a new patient
-    
-    GET: List patients with search and filtering
-    POST: Create a new patient
     """
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -343,7 +357,6 @@ class PatientHistoryView(APIView):
         })
 
 
-from .models_documents import PatientDocument
 from .serializers_documents import PatientDocumentSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 
