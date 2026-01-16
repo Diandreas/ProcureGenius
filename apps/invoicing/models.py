@@ -1044,6 +1044,18 @@ class Payment(models.Model):
         default='bank_transfer',
         verbose_name=_("Mode de paiement")
     )
+    bank_name = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name=_("Nom de la banque")
+    )
+    check_number = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name=_("Numéro de chèque")
+    )
     reference_number = models.CharField(
         max_length=100,
         blank=True,

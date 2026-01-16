@@ -1509,6 +1509,8 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             notes = request.data.get('notes', '')
             reference_number = request.data.get('reference_number', '')
             transaction_id = request.data.get('transaction_id', '')
+            bank_name = request.data.get('bank_name', '')
+            check_number = request.data.get('check_number', '')
             
             # Convertir payment_date en objet date
             if payment_date_str:
@@ -1552,7 +1554,9 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 transaction_id=transaction_id,
                 notes=notes,
                 created_by=request.user,
-                status='success'  # Statut pour un paiement réussi
+                status='success',  # Statut pour un paiement réussi
+                bank_name=bank_name,
+                check_number=check_number,
             )
             
             # Valider avant de sauvegarder
