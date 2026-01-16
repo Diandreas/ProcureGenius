@@ -475,7 +475,7 @@ const LabOrderDetail = () => {
         );
     }
 
-    const canEdit = ['pending', 'sample_collected', 'received', 'analyzing', 'results_entered', 'completed'].includes(order.status);
+    const canEdit = ['pending', 'sample_collected', 'received', 'analyzing', 'results_entered', 'completed', 'results_ready'].includes(order.status);
 
     return (
         <Box>
@@ -489,7 +489,7 @@ const LabOrderDetail = () => {
                     </Typography>
                 </Box>
                 <Box>
-                    {['results_entered', 'verified', 'results_delivered', 'completed'].includes(order.status) && (
+                    {['results_entered', 'verified', 'results_delivered', 'completed', 'results_ready'].includes(order.status) && (
                         <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
                             Rapport Complet
                         </Button>
