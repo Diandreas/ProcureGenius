@@ -25,7 +25,13 @@ const PatientCareHistory = ({ patientId }) => {
             try {
                 setLoading(true);
                 const data = await patientAPI.getPatientCareHistory(patientId);
-                setCareHistory(data || []);
+                if (data && Array.isArray(data.results)) {
+                    setCareHistory(data.results);
+                } else if (Array.isArray(data)) {
+                    setCareHistory(data);
+                } else {
+                    setCareHistory([]);
+                }
             } catch (err) {
                 console.error('Error fetching care history:', err);
                 setError('Erreur lors du chargement de l\'historique des soins');
