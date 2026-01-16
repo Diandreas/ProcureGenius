@@ -119,7 +119,15 @@
     "vatRateField": "Taux de TVA (%)",
     "invoiceStatusField": "Statut de la facture",
     "savingLabel": "Enregistrement...",
-    "generatingLabel": "Génération..."
+    "generatingLabel": "Génération...",
+    "physicalProducts": "Produits physiques",
+    "servicesAndDigital": "Services et numériques",
+    "productReference": "Référence produit",
+    "quantity": "Quantité",
+    "unitPriceExclTax": "Prix unitaire HT",
+    "lineTotal": "Total ligne",
+    "serviceReference": "Référence service",
+    "searchProduct": "Rechercher un produit..."
   },
   "buttons": {
     "generatePdf": "Générer PDF",

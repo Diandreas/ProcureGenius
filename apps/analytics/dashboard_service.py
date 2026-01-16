@@ -765,8 +765,8 @@ class DashboardStatsService:
         # Visites par statut
         visits = PatientVisit.objects.filter(
             organization=self.organization,
-            visit_date__gte=self.start_date,
-            visit_date__lte=self.end_date
+            arrived_at__gte=self.start_date,
+            arrived_at__lte=self.end_date
         )
 
         visits_by_status = {
@@ -784,7 +784,7 @@ class DashboardStatsService:
             'total_visits': visits.count(),
             'visits_by_status': visits_by_status,
             'active_patients': patients.filter(
-                visits__visit_date__gte=self.start_date - timedelta(days=90)
+                visits__arrived_at__gte=self.start_date - timedelta(days=90)
             ).distinct().count()
         }
 

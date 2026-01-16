@@ -74,6 +74,7 @@ import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
 import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
+import MedicationDetail from './pages/healthcare/pharmacy/MedicationDetail';
 import ConsultationList from './pages/healthcare/consultations/ConsultationList';
 import ConsultationForm from './pages/healthcare/consultations/ConsultationForm';
 import ConsultationDetail from './pages/healthcare/consultations/ConsultationDetail';
@@ -801,6 +802,7 @@ function App() {
 
                               {/* Pharmacy */}
                               <Route path="/healthcare/pharmacy/inventory" element={<InventoryList />} />
+                              <Route path="/healthcare/pharmacy/medications/:id" element={<MedicationDetail />} />
                               <Route path="/healthcare/pharmacy/dispensing" element={<DispensingList />} />
                               <Route path="/healthcare/pharmacy/dispense/new" element={<DispensingForm />} />
                               <Route path="/healthcare/pharmacy/dispensing/:id" element={<DispensingDetail />} />

@@ -114,7 +114,7 @@ const InventoryList = () => {
                             borderColor: `${statusColor}.main`,
                         }
                     }}
-                // onClick={() => navigate(`/healthcare/pharmacy/medications/${med.id}`)} // Assuming detail page exists
+                    onClick={() => navigate(`/healthcare/pharmacy/medications/${med.id}`)}
                 >
                     {/* Stock Level Indicator Bar */}
                     <Box sx={{ px: 2, pt: 2 }}>

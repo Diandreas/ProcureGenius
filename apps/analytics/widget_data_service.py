@@ -22,7 +22,7 @@ class WidgetDataService:
     def get_widget_data(self, widget_code: str, limit: int = 10, compare: bool = False) -> Dict[str, Any]:
         """Route to appropriate widget data method"""
 
-        # Map widget codes to methods - 16 widgets essentiels
+        # Map widget codes to methods - 21 widgets (16 standard + 5 healthcare)
         widget_methods = {
             # Global widgets (3)
             'financial_summary': self.get_financial_summary,
@@ -51,6 +51,13 @@ class WidgetDataService:
 
             # AI widget (1)
             'ai_suggestions': self.get_ai_suggestions,
+
+            # Healthcare widgets (5)
+            'patients_overview': self.get_patients_overview,
+            'consultations_summary': self.get_consultations_summary,
+            'lab_orders_status': self.get_lab_orders_status,
+            'pharmacy_dispensing': self.get_pharmacy_dispensing,
+            'healthcare_revenue': self.get_healthcare_revenue,
         }
 
         method = widget_methods.get(widget_code)
@@ -865,4 +872,101 @@ class WidgetDataService:
                 'suggestions': [],
                 'count': 0,
                 'message': 'Erreur lors du chargement des suggestions'
+            }
+
+    # ========== HEALTHCARE WIDGETS ==========
+
+    def get_patients_overview(self, **kwargs):
+        """Patients overview widget"""
+        try:
+            stats = self.stats_service.get_patients_stats()
+            return stats if stats else {}
+        except Exception as e:
+            logger.error(f"Error in get_patients_overview: {e}")
+            return {}
+
+    def get_consultations_summary(self, **kwargs):
+        """Consultations summary widget"""
+        try:
+            stats = self.stats_service.get_consultations_stats()
+            return stats if stats else {}
+        except Exception as e:
+            logger.error(f"Error in get_consultations_summary: {e}")
+            return {}
+
+    def get_lab_orders_status(self, **kwargs):
+        """Laboratory orders status widget"""
+        try:
+            stats = self.stats_service.get_laboratory_stats()
+            return stats if stats else {}
+        except Exception as e:
+            logger.error(f"Error in get_lab_orders_status: {e}")
+            return {}
+
+    def get_pharmacy_dispensing(self, **kwargs):
+        """Pharmacy dispensing widget"""
+        try:
+            stats = self.stats_service.get_pharmacy_stats()
+            return stats if stats else {}
+        except Exception as e:
+            logger.error(f"Error in get_pharmacy_dispensing: {e}")
+            return {}
+
+    def get_healthcare_revenue(self, **kwargs):
+        """Healthcare revenue breakdown"""
+        try:
+            from apps.invoicing.models import Invoice
+            from decimal import Decimal
+            from django.db.models import Sum
+
+            # Get healthcare-related invoices
+            consultation_revenue = Invoice.objects.filter(
+                created_by__organization=self.stats_service.organization,
+                invoice_type='healthcare_consultation',
+                created_at__gte=self.start_date,
+                created_at__lte=self.end_date,
+                status__in=['paid', 'sent']
+            ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+            laboratory_revenue = Invoice.objects.filter(
+                created_by__organization=self.stats_service.organization,
+                invoice_type='healthcare_laboratory',
+                created_at__gte=self.start_date,
+                created_at__lte=self.end_date,
+                status__in=['paid', 'sent']
+            ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+            pharmacy_revenue = Invoice.objects.filter(
+                created_by__organization=self.stats_service.organization,
+                invoice_type='healthcare_pharmacy',
+                created_at__gte=self.start_date,
+                created_at__lte=self.end_date,
+                status__in=['paid', 'sent']
+            ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
+            total_revenue = float(consultation_revenue + laboratory_revenue + pharmacy_revenue)
+
+            return {
+                'consultation_revenue': float(consultation_revenue),
+                'laboratory_revenue': float(laboratory_revenue),
+                'pharmacy_revenue': float(pharmacy_revenue),
+                'total_revenue': total_revenue,
+                'breakdown': [
+                    {'name': 'Consultations', 'value': float(consultation_revenue)},
+                    {'name': 'Laboratoire', 'value': float(laboratory_revenue)},
+                    {'name': 'Pharmacie', 'value': float(pharmacy_revenue)}
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Error in get_healthcare_revenue: {e}")
+            return {
+                'consultation_revenue': 0,
+                'laboratory_revenue': 0,
+                'pharmacy_revenue': 0,
+                'total_revenue': 0,
+                'breakdown': [
+                    {'name': 'Consultations', 'value': 0},
+                    {'name': 'Laboratoire', 'value': 0},
+                    {'name': 'Pharmacie', 'value': 0}
+                ]
             }
