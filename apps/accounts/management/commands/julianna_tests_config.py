@@ -15,7 +15,7 @@ LAB_CATEGORIES = [
     {'name': 'Électrophorèses', 'slug': 'electrophorese', 'order': 8},
 ]
 
-# 82 Tests d'analyse médicale complets
+# 81 Tests d'analyse médicale complets
 LAB_TESTS = [
     # BIOCHIMIE GÉNÉRALE (Tests 1-15)
     {
@@ -534,7 +534,7 @@ LAB_TESTS = [
     {
         'code': 'HORM-HCG',
         'name': 'HCG GROSSESSE',
-        'short_name': 'β-HCG',
+        'short_name': 'Beta-HCG',
         'category': 'hormonologie',
         'price': 6800,
         'sample_type': 'blood',

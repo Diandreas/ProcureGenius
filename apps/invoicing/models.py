@@ -24,7 +24,7 @@ class ProductCategory(models.Model):
         verbose_name=_("Organisation")
     )
     name = models.CharField(max_length=100, verbose_name=_("Nom"))
-    slug = models.SlugField(max_length=100, unique=True, verbose_name=_("Slug"))
+    slug = models.SlugField(max_length=100, verbose_name=_("Slug"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
     parent = models.ForeignKey(
         'self',

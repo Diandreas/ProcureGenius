@@ -9,13 +9,17 @@ Usage:
 import random
 from datetime import datetime, timedelta, date
 from decimal import Decimal
+import traceback
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify # Add this import
+import uuid # This is already imported, but ensure it is there.
 
 # Import des modèles
 from apps.accounts.models import Organization, Client
+from apps.core.models import OrganizationSettings
 from apps.laboratory.models import LabTestCategory, LabTest, LabOrder, LabOrderItem
 from apps.consultations.models import Consultation, Prescription, PrescriptionItem
 from apps.pharmacy.models import PharmacyDispensing, DispensingItem
@@ -64,7 +68,6 @@ class Command(BaseCommand):
             self._delete_existing_data()
 
         try:
-            with transaction.atomic():
                 # 1. Créer l'organisation
                 self._create_organization()
 
@@ -76,6 +79,9 @@ class Command(BaseCommand):
 
                 # 4. Créer le catalogue de médicaments
                 self._create_medication_catalog()
+
+                # 4.1 Créer les services medicaux
+                self._create_medical_services()
 
                 # 5. Créer les patients (Fabrice et Angel)
                 self._create_patients()
@@ -90,6 +96,7 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'\n[ERROR] ERREUR: {str(e)}'))
+            traceback.print_exc()
             raise
 
     def _delete_existing_data(self):
@@ -117,12 +124,29 @@ class Command(BaseCommand):
 
         if created:
             self.stdout.write(self.style.SUCCESS(f'  [OK] Organisation créée: {self.organization.name}'))
-            self.stdout.write(f'    - ID: {self.organization.id}')
-            self.stdout.write(f'    - Type: {self.organization.subscription_type}')
-            self.stdout.write(f'    - Modules: {len(self.organization.enabled_modules)}')
-            self.stdout.write(f'    - Localisation: {ORGANIZATION_INFO["city"]}, {ORGANIZATION_INFO["country"]}')
         else:
             self.stdout.write(self.style.WARNING(f'  [WARN] Organisation existante: {self.organization.name}'))
+        
+        settings, created_settings = OrganizationSettings.objects.update_or_create(
+            organization=self.organization,
+            defaults={
+                'company_name': ORGANIZATION_INFO.get('name'),
+                'company_address': ORGANIZATION_INFO.get('address'),
+                'company_phone': ORGANIZATION_INFO.get('phone_orange'),
+                'company_email': ORGANIZATION_INFO.get('email'),
+                'company_website': ORGANIZATION_INFO.get('website'),
+                'default_currency': 'XAF', # Set currency to XAF
+            }
+        )
+        if created_settings:
+            self.stdout.write(self.style.SUCCESS(f'  [OK] Paramètres de l\'organisation créés (Devise: XAF)'))
+        else:
+            self.stdout.write(self.style.SUCCESS(f'  [OK] Paramètres de l\'organisation mis à jour (Devise: XAF)'))
+        
+        self.stdout.write(f'    - ID: {self.organization.id}')
+        self.stdout.write(f'    - Type: {self.organization.subscription_type}')
+        self.stdout.write(f'    - Modules: {len(self.organization.enabled_modules)}')
+        self.stdout.write(f'    - Localisation: {ORGANIZATION_INFO["city"]}, {ORGANIZATION_INFO["country"]}')
 
     def _create_users(self):
         """Crée les 4 utilisateurs du CSJ (1 admin + 3 staff)"""
@@ -280,8 +304,9 @@ class Command(BaseCommand):
         # Créer la catégorie Médicaments
         med_category, _ = ProductCategory.objects.get_or_create(
             organization=self.organization,
-            name='Médicaments',
+            slug='medicaments',
             defaults={
+                'name': 'Médicaments',
                 'description': 'Produits pharmaceutiques',
                 'is_active': True,
             }
@@ -383,6 +408,53 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f'\n  Total: {len(self.medications)} médicaments en stock'
+        ))
+
+    def _create_medical_services(self):
+        """Crée le catalogue des services et soins médicaux"""
+        self.stdout.write('\n[SERVICES] ÉTAPE 4.1: Création du catalogue de services médicaux...')
+
+        # Créer la catégorie "Services Médicaux"
+        service_category, _ = ProductCategory.objects.get_or_create(
+            organization=self.organization,
+            slug='services-medicaux',
+            defaults={
+                'name': 'Services Médicaux',
+                'description': 'Consultations, soins, imagerie, etc.',
+                'is_active': True,
+            }
+        )
+
+        services_created = 0
+        for service_data in MEDICAL_SERVICES:
+            # Generate a unique reference for the service
+            base_ref = slugify(service_data['name']).upper()
+            # Ensure uniqueness by appending a random string/number
+            reference = f"SVC-{base_ref[:20]}-{uuid.uuid4().hex[:6].upper()}"
+            
+            product, created = Product.objects.get_or_create(
+                organization=self.organization,
+                reference=reference, # Use the generated reference for lookup
+                defaults={
+                    'name': service_data['name'],
+                    'product_type': 'service',
+                    'category': service_category,
+                    'price': service_data['price'],
+                    'description': f'Service médical: {service_data["name"]}',
+                    'is_active': True,
+                    'stock_quantity': 0, # Service products do not have stock, set to 0
+                    'low_stock_threshold': 0, # Service products do not have stock, set to 0
+                }
+            )
+
+            if created:
+                services_created += 1
+                self.stdout.write(
+                    f'  [OK] Service: {product.name} ({product.price} FCFA)'
+                )
+
+        self.stdout.write(self.style.SUCCESS(
+            f'\n  Total: {services_created} services médicaux créés'
         ))
 
     def _create_patients(self):
