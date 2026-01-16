@@ -921,7 +921,7 @@ class Command(BaseCommand):
         # Créatinine
         LabOrderItem.objects.create(
             lab_order=lab_order,
-            lab_test=self.lab_tests['BIO-CREAT'],
+            lab_test=self.lab_tests['BIO-CREAS'],
             result_value='8.5',
             result_numeric=Decimal('8.5'),
             result_unit='mg/L',

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0007_add_payment_terms_if_missing'),
+        ('accounts', '0006_client_organization_client_payment_terms'),
         ('invoicing', '0014_add_payment_model'),
         ('purchase_orders', '0004_purchaseorderitem_product'),
     ]
