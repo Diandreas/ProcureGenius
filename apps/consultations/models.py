@@ -448,9 +448,11 @@ class PrescriptionItem(models.Model):
         'invoicing.Product',
         on_delete=models.PROTECT,
         related_name='prescription_items',
-        verbose_name=_("Médicament")
+        verbose_name=_("Médicament"),
+        null=True,
+        blank=True
     )
-    
+
     # Alternative: free-text medication name (for external medications)
     medication_name = models.CharField(
         max_length=200,
@@ -458,7 +460,14 @@ class PrescriptionItem(models.Model):
         verbose_name=_("Nom du médicament"),
         help_text=_("Utilisé si le médicament n'est pas dans l'inventaire")
     )
-    
+
+    # Indicateur de médicament externe
+    is_external_medication = models.BooleanField(
+        default=False,
+        verbose_name=_("Médicament externe"),
+        help_text=_("Si True, le médicament n'est pas disponible dans l'inventaire")
+    )
+
     # Dosage
     dosage = models.CharField(
         max_length=100,
@@ -525,13 +534,18 @@ class PrescriptionItem(models.Model):
         # Auto-set medication_name from medication if linked
         if self.medication and not self.medication_name:
             self.medication_name = self.medication.name
-        
+            self.is_external_medication = False
+
+        # If medication is None but medication_name is provided, mark as external
+        if not self.medication and self.medication_name:
+            self.is_external_medication = True
+
         # Update is_dispensed based on quantities
         if self.quantity_dispensed >= self.quantity_prescribed:
             self.is_dispensed = True
-        
+
         super().save(*args, **kwargs)
-        
+
         # Update parent prescription status
         if self.prescription_id:
             self.prescription.update_status()

@@ -1031,3 +1031,124 @@ class DashboardStatsService:
             'ratio': round(ratio, 2),  # Pourcentage de paiements en Mobile Money
             'total_amount': float(total_amount)
         }
+
+    def get_detailed_stock_stats(self) -> Dict:
+        """Statistiques stock avancées pour page dédiée"""
+        from apps.invoicing.models import Product, StockMovement
+        from django.db.models import Q, F, Sum, Count, Avg
+        from django.db.models.functions import Abs
+        from datetime import timedelta
+
+        products = Product.objects.filter(
+            organization=self.organization,
+            product_type='physical',
+            is_active=True
+        )
+
+        # 1. Produits à commander (stock bas ou rupture)
+        to_order = products.filter(
+            Q(stock_quantity__lte=F('low_stock_threshold')) | Q(stock_quantity=0)
+        ).annotate(
+            shortage=F('low_stock_threshold') - F('stock_quantity'),
+            value_to_order=F('shortage') * F('cost_price'),
+            stock_in_sell_units=F('stock_quantity') / F('conversion_factor')
+        ).order_by('-value_to_order')[:20]
+
+        to_order_list = []
+        for product in to_order:
+            to_order_list.append({
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'current_stock': product.stock_quantity,
+                'stock_in_sell_units': round(product.stock_in_sell_units, 2),
+                'base_unit': product.get_base_unit_display(),
+                'sell_unit': product.get_sell_unit_display(),
+                'threshold': product.low_stock_threshold,
+                'shortage': max(0, product.shortage),
+                'estimated_cost': float(product.value_to_order) if product.value_to_order else 0,
+                'supplier_name': product.supplier.name if product.supplier else None
+            })
+
+        # 2. Produits à risque (rupture fréquente dans les 90 derniers jours)
+        ninety_days_ago = self.start_date - timedelta(days=90)
+        risk_products = Product.objects.filter(
+            organization=self.organization,
+            product_type='physical',
+            stock_movements__movement_type='loss',
+            stock_movements__created_at__gte=ninety_days_ago
+        ).annotate(
+            loss_count=Count('stock_movements', filter=Q(
+                stock_movements__movement_type='loss',
+                stock_movements__created_at__gte=ninety_days_ago
+            ))
+        ).filter(loss_count__gte=3).order_by('-loss_count')[:15]
+
+        risk_products_list = []
+        for product in risk_products:
+            risk_products_list.append({
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'loss_count': product.loss_count,
+                'current_stock': product.stock_quantity,
+                'stock_in_sell_units': round(product.get_stock_in_sell_units(), 2),
+                'sell_unit': product.get_sell_unit_display()
+            })
+
+        # 3. Top produits vendus (basé sur les mouvements de type 'sale')
+        top_movers = products.annotate(
+            total_sold=Sum(
+                Abs('stock_movements__quantity'),
+                filter=Q(
+                    stock_movements__created_at__gte=self.start_date,
+                    stock_movements__movement_type='sale'
+                )
+            )
+        ).filter(total_sold__gt=0).order_by('-total_sold')[:10]
+
+        top_movers_list = []
+        for product in top_movers:
+            top_movers_list.append({
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'total_sold': product.total_sold or 0,
+                'total_sold_sell_units': round(product.convert_to_sell_unit(product.total_sold or 0), 2),
+                'sell_unit': product.get_sell_unit_display(),
+                'current_stock': product.stock_quantity,
+                'revenue': float(product.total_sold or 0) * float(product.price)
+            })
+
+        # 4. Produits dormants (pas de mouvement depuis 90 jours)
+        dormant = products.exclude(
+            stock_movements__created_at__gte=ninety_days_ago
+        ).filter(stock_quantity__gt=0)
+
+        dormant_value = dormant.aggregate(
+            total_value=Sum(F('stock_quantity') * F('cost_price'))
+        )['total_value'] or 0
+
+        dormant_list = []
+        for product in dormant[:15]:
+            dormant_list.append({
+                'id': str(product.id),
+                'name': product.name,
+                'reference': product.reference,
+                'stock_quantity': product.stock_quantity,
+                'stock_in_sell_units': round(product.get_stock_in_sell_units(), 2),
+                'sell_unit': product.get_sell_unit_display(),
+                'immobilized_value': float(product.stock_quantity * product.cost_price),
+                'last_movement': None  # Could be calculated with an additional query
+            })
+
+        return {
+            'to_order': to_order_list,
+            'to_order_count': to_order.count(),
+            'risk_products': risk_products_list,
+            'risk_products_count': risk_products.count(),
+            'top_movers': top_movers_list,
+            'dormant': dormant_list,
+            'dormant_count': dormant.count(),
+            'dormant_value': float(dormant_value)
+        }

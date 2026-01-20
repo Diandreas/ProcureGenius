@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from decimal import Decimal
 import uuid
 import qrcode
 from io import BytesIO
@@ -141,7 +142,47 @@ class Product(models.Model):
     # Stock (pour produits physiques)
     stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
     low_stock_threshold = models.IntegerField(default=5, verbose_name="Seuil de stock bas")
-    
+
+    # Système d'unités multiples
+    UNIT_TYPES = [
+        ('piece', _('Pièce')),
+        ('tablet', _('Comprimé')),
+        ('capsule', _('Gélule')),
+        ('blister', _('Plaquette')),
+        ('box', _('Boîte')),
+        ('bottle', _('Flacon')),
+        ('vial', _('Ampoule')),
+        ('sachet', _('Sachet')),
+        ('tube', _('Tube')),
+        ('ml', _('Millilitre')),
+        ('l', _('Litre')),
+        ('g', _('Gramme')),
+        ('kg', _('Kilogramme')),
+    ]
+
+    base_unit = models.CharField(
+        max_length=20,
+        choices=UNIT_TYPES,
+        default='piece',
+        verbose_name=_("Unité de base"),
+        help_text=_("Unité stockée en base de données (la plus petite unité)")
+    )
+    sell_unit = models.CharField(
+        max_length=20,
+        choices=UNIT_TYPES,
+        default='piece',
+        verbose_name=_("Unité de vente"),
+        help_text=_("Unité affichée au client lors de la vente")
+    )
+    conversion_factor = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=1,
+        validators=[MinValueValidator(Decimal('0.0001'))],
+        verbose_name=_("Facteur de conversion"),
+        help_text=_("1 unité de vente = X unités de base. Ex: 1 boîte = 10 plaquettes")
+    )
+
     # Métadonnées
     is_active = models.BooleanField(default=True, verbose_name="Actif")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -193,7 +234,46 @@ class Product(models.Model):
             else:
                 self.reference = f"{prefix}0001"
         super().save(*args, **kwargs)
-    
+
+    def get_stock_in_sell_units(self):
+        """Retourne le stock dans l'unité de vente"""
+        if self.conversion_factor and self.conversion_factor > 0:
+            return float(self.stock_quantity) / float(self.conversion_factor)
+        return float(self.stock_quantity)
+
+    def set_stock_from_sell_units(self, quantity_in_sell_units):
+        """Définit le stock depuis l'unité de vente"""
+        self.stock_quantity = int(float(quantity_in_sell_units) * float(self.conversion_factor))
+
+    def convert_to_base_unit(self, quantity, from_unit='sell'):
+        """
+        Convertit une quantité vers l'unité de base
+
+        Args:
+            quantity: La quantité à convertir
+            from_unit: 'sell' pour unité de vente, 'base' pour unité de base
+
+        Returns:
+            Quantité en unité de base (entier)
+        """
+        if from_unit == 'sell':
+            return int(float(quantity) * float(self.conversion_factor))
+        return int(quantity)
+
+    def convert_to_sell_unit(self, quantity_in_base):
+        """
+        Convertit une quantité de l'unité de base vers l'unité de vente
+
+        Args:
+            quantity_in_base: Quantité en unité de base
+
+        Returns:
+            Quantité en unité de vente (float)
+        """
+        if self.conversion_factor and self.conversion_factor > 0:
+            return float(quantity_in_base) / float(self.conversion_factor)
+        return float(quantity_in_base)
+
     @property
     def is_low_stock(self):
         """Vérifie si le stock est bas"""
@@ -234,35 +314,48 @@ class Product(models.Model):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
 
-    def adjust_stock(self, quantity, movement_type, reference_type=None, reference_id=None, notes="", user=None):
+    def adjust_stock(self, quantity, movement_type, unit='base', reference_type=None, reference_id=None, notes="", user=None):
         """
         Ajuste le stock et crée un mouvement
 
         Args:
             quantity: Quantité (positive pour entrée, négative pour sortie)
             movement_type: Type de mouvement (reception, sale, adjustment, return)
+            unit: 'base' pour unité de base, 'sell' pour unité de vente (défaut: 'base')
             reference_type: Type de référence (purchase_order, invoice, etc.)
             reference_id: ID de la référence
             notes: Notes du mouvement
             user: Utilisateur qui effectue le mouvement
+
+        Returns:
+            StockMovement object ou None
         """
         if self.product_type != 'physical':
             return None
 
+        # Convertir la quantité en unité de base si nécessaire
+        quantity_base = self.convert_to_base_unit(quantity, from_unit=unit)
+
+        # Enrichir les notes avec les informations d'unité
+        unit_info = ""
+        if unit == 'sell' and self.sell_unit != self.base_unit:
+            unit_info = f" (Unité vente: {quantity} {self.get_sell_unit_display()}, converti en {quantity_base} {self.get_base_unit_display()})"
+        enhanced_notes = f"{notes}{unit_info}".strip()
+
         old_quantity = self.stock_quantity
-        self.stock_quantity += quantity
+        self.stock_quantity += quantity_base
         self.save(update_fields=['stock_quantity'])
 
-        # Créer le mouvement
+        # Créer le mouvement (toujours en unité de base)
         movement = StockMovement.objects.create(
             product=self,
             movement_type=movement_type,
-            quantity=quantity,
+            quantity=quantity_base,
             quantity_before=old_quantity,
             quantity_after=self.stock_quantity,
             reference_type=reference_type,
             reference_id=reference_id,
-            notes=notes,
+            notes=enhanced_notes,
             created_by=user
         )
 
