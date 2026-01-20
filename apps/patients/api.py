@@ -475,3 +475,103 @@ class PatientCompleteHistoryView(APIView):
         history['care_services'] = PatientCareServiceSerializer(care_services, many=True).data
 
         return Response(history, status=status.HTTP_200_OK)
+
+
+class PatientQuickInvoiceView(APIView):
+    """
+    Create a quick invoice for billable services when creating/updating a patient
+    Allows invoicing care services directly from patient form
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, patient_id):
+        # Verify patient belongs to organization
+        try:
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization,
+                client_type__in=['patient', 'both']
+            )
+        except Client.DoesNotExist:
+            return Response(
+                {'error': 'Patient not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        service_ids = request.data.get('service_ids', [])
+        payment_method = request.data.get('payment_method', 'cash')
+
+        if not service_ids:
+            return Response(
+                {'error': 'No services provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Import Invoice and Product models
+        from apps.invoicing.models import Invoice, InvoiceItem, Product
+        from decimal import Decimal
+
+        # Get services/products
+        try:
+            services = Product.objects.filter(
+                id__in=service_ids,
+                organization=request.user.organization
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error fetching services: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not services.exists():
+            return Response(
+                {'error': 'No valid services found'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create invoice
+        try:
+            invoice = Invoice.objects.create(
+                organization=request.user.organization,
+                client=patient,
+                invoice_type='healthcare_consultation',
+                title=f"Services - {patient.name}",
+                payment_method=payment_method,
+                created_by=request.user,
+                status='draft'
+            )
+
+            # Create invoice items
+            subtotal = Decimal('0')
+            for service in services:
+                price = service.sale_price or Decimal('0')
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=service,
+                    description=service.description or '',
+                    quantity=1,
+                    unit_price=price,
+                    total_price=price,
+                    tax_rate=Decimal('0')
+                )
+                subtotal += price
+
+            # Update invoice totals
+            invoice.subtotal = subtotal
+            invoice.total_amount = subtotal
+            invoice.status = 'sent'
+            invoice.save()
+
+            return Response({
+                'invoice_id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'total_amount': float(invoice.total_amount),
+                'services_count': services.count(),
+                'message': 'Facture créée avec succès'
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Error creating invoice: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

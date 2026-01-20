@@ -9,13 +9,34 @@ import {
     Typography,
     MenuItem,
     Divider,
-    Stack
+    Stack,
+    Autocomplete,
+    Chip,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    IconButton,
+    Tooltip,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import {
+    Save as SaveIcon,
+    ArrowBack as ArrowBackIcon,
+    Delete as DeleteIcon,
+    Add as AddIcon,
+    Receipt as ReceiptIcon
+} from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../services/patientAPI';
+import api from '../../../services/api';
 
 const PatientForm = () => {
     const { t } = useTranslation();
@@ -40,11 +61,39 @@ const PatientForm = () => {
         emergency_contact_phone: '',
     });
 
+    // Services facturables state
+    const [availableServices, setAvailableServices] = useState([]);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [loadingServices, setLoadingServices] = useState(false);
+
     useEffect(() => {
         if (isEdit) {
             fetchPatient();
         }
+        // Fetch available services/products for billing
+        fetchServices();
     }, [id]);
+
+    const fetchServices = async () => {
+        try {
+            setLoadingServices(true);
+            // Fetch services/products from products API
+            const response = await api.get('/products/', {
+                params: {
+                    product_type: 'service',
+                    is_active: true,
+                    page_size: 100
+                }
+            });
+            const services = response.data.results || response.data || [];
+            setAvailableServices(services);
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        } finally {
+            setLoadingServices(false);
+        }
+    };
 
     const fetchPatient = async () => {
         try {
@@ -95,11 +144,43 @@ const PatientForm = () => {
         try {
             if (isEdit) {
                 await patientAPI.updatePatient(id, formData);
-                enqueueSnackbar(t('patients.update_success', 'Patient mis à jour avec succès'), { variant: 'success' });
+
+                // Create invoice for selected services if any
+                if (selectedServices.length > 0) {
+                    try {
+                        const invoiceResponse = await patientAPI.createQuickInvoice(id, {
+                            service_ids: selectedServices.map(s => s.id),
+                            payment_method: paymentMethod
+                        });
+                        enqueueSnackbar(`Patient mis à jour et facture créée: ${invoiceResponse.invoice_number}`, { variant: 'success' });
+                    } catch (invoiceError) {
+                        console.error('Error creating invoice:', invoiceError);
+                        enqueueSnackbar('Patient mis à jour mais erreur lors de la création de la facture', { variant: 'warning' });
+                    }
+                } else {
+                    enqueueSnackbar(t('patients.update_success', 'Patient mis à jour avec succès'), { variant: 'success' });
+                }
+
                 navigate('/healthcare/patients');
             } else {
                 const response = await patientAPI.createPatient(formData);
-                enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
+
+                // Create invoice for selected services if any
+                if (selectedServices.length > 0) {
+                    try {
+                        const invoiceResponse = await patientAPI.createQuickInvoice(response.id, {
+                            service_ids: selectedServices.map(s => s.id),
+                            payment_method: paymentMethod
+                        });
+                        enqueueSnackbar(`Patient créé avec succès et facture ${invoiceResponse.invoice_number} générée (${invoiceResponse.total_amount} FCFA)`, { variant: 'success' });
+                    } catch (invoiceError) {
+                        console.error('Error creating invoice:', invoiceError);
+                        enqueueSnackbar('Patient créé mais erreur lors de la création de la facture', { variant: 'warning' });
+                    }
+                } else {
+                    enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
+                }
+
                 // Redirect to patient detail page after creation
                 navigate(`/healthcare/patients/${response.id}`);
             }
@@ -256,6 +337,158 @@ const PatientForm = () => {
                                 placeholder="Ex: Diabète, Hypertension..."
                             />
                         </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
+
+            {/* Services Facturables Section */}
+            <Card sx={{ borderRadius: 3, mb: 3 }}>
+                <CardContent sx={{ p: 4 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                        <ReceiptIcon color="primary" />
+                        <Typography variant="h6" color="primary">
+                            Services à Facturer (Optionnel)
+                        </Typography>
+                        <Chip
+                            label={`${selectedServices.length} sélectionné(s)`}
+                            size="small"
+                            color={selectedServices.length > 0 ? "success" : "default"}
+                            variant="outlined"
+                        />
+                    </Stack>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Sélectionnez les services/soins à facturer directement lors de la création du patient.
+                        Une facture sera automatiquement générée avec les services sélectionnés.
+                    </Typography>
+
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={8}>
+                            <Autocomplete
+                                multiple
+                                options={availableServices}
+                                getOptionLabel={(option) => option.name}
+                                value={selectedServices}
+                                onChange={(event, newValue) => setSelectedServices(newValue)}
+                                loading={loadingServices}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Sélectionner des services"
+                                        placeholder="Choisir un service..."
+                                        helperText="Recherchez et sélectionnez les services à facturer"
+                                    />
+                                )}
+                                renderOption={(props, option) => (
+                                    <li {...props}>
+                                        <Box>
+                                            <Typography variant="body1">{option.name}</Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.description} • {option.sale_price ? `${option.sale_price} FCFA` : 'Prix non défini'}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip
+                                            label={option.name}
+                                            {...getTagProps({ index })}
+                                            color="primary"
+                                            variant="outlined"
+                                        />
+                                    ))
+                                }
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth>
+                                <InputLabel>Mode de Paiement</InputLabel>
+                                <Select
+                                    value={paymentMethod}
+                                    label="Mode de Paiement"
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                >
+                                    <MenuItem value="cash">Comptant</MenuItem>
+                                    <MenuItem value="mobile_money">Mobile Money</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {selectedServices.length > 0 && (
+                            <Grid item xs={12}>
+                                <Paper variant="outlined" sx={{ p: 2 }}>
+                                    <Typography variant="subtitle2" gutterBottom color="primary">
+                                        Résumé de la Facturation
+                                    </Typography>
+                                    <TableContainer>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>Service</TableCell>
+                                                    <TableCell align="right">Prix</TableCell>
+                                                    <TableCell align="center">Action</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {selectedServices.map((service, index) => (
+                                                    <TableRow key={service.id}>
+                                                        <TableCell>
+                                                            <Typography variant="body2" fontWeight="medium">
+                                                                {service.name}
+                                                            </Typography>
+                                                            {service.description && (
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {service.description}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell align="right">
+                                                            <Typography variant="body2" fontWeight="bold">
+                                                                {service.sale_price ? `${service.sale_price} FCFA` : '-'}
+                                                            </Typography>
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            <Tooltip title="Retirer">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    onClick={() => {
+                                                                        setSelectedServices(prev =>
+                                                                            prev.filter((_, i) => i !== index)
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                <TableRow>
+                                                    <TableCell colSpan={1}>
+                                                        <Typography variant="subtitle1" fontWeight="bold">
+                                                            Total
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography variant="h6" color="primary" fontWeight="bold">
+                                                            {selectedServices.reduce((sum, s) => sum + (parseFloat(s.sale_price) || 0), 0).toFixed(0)} FCFA
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell />
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                                        Mode de paiement: <strong>{paymentMethod === 'cash' ? 'Comptant' : 'Mobile Money'}</strong>
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        )}
                     </Grid>
                 </CardContent>
             </Card>

@@ -81,6 +81,12 @@ const patientAPI = {
     getPatientCareHistory: async (patientId) => {
         const response = await api.get(`/healthcare/patients/${patientId}/care-history/`);
         return response.data;
+    },
+
+    // Create quick invoice for billable services
+    createQuickInvoice: async (patientId, data) => {
+        const response = await api.post(`/healthcare/patients/${patientId}/quick-invoice/`, data);
+        return response.data;
     }
 };
 
