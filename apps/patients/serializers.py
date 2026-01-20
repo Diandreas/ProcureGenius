@@ -233,3 +233,87 @@ class PatientCareServiceSerializer(serializers.ModelSerializer):
         if obj.provided_by:
             return obj.provided_by.get_full_name() or obj.provided_by.username
         return None
+
+
+class LabOrderHistorySerializer(serializers.Serializer):
+    """Serializer for lab order history in patient detail"""
+    id = serializers.UUIDField()
+    order_number = serializers.CharField()
+    order_date = serializers.DateTimeField()
+    status = serializers.CharField()
+    status_display = serializers.SerializerMethodField()
+    priority = serializers.CharField()
+    tests_count = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+
+    def get_status_display(self, obj):
+        return obj.get_status_display() if hasattr(obj, 'get_status_display') else obj.status
+
+    def get_tests_count(self, obj):
+        return obj.items.count() if hasattr(obj, 'items') else 0
+
+    def get_items(self, obj):
+        """Return simplified test items"""
+        if not hasattr(obj, 'items'):
+            return []
+        return [
+            {
+                'id': str(item.id),
+                'test_name': item.lab_test.name if item.lab_test else '',
+                'result_value': item.result_value or '',
+                'is_abnormal': item.is_abnormal,
+            }
+            for item in obj.items.all()
+        ]
+
+
+class PharmacyDispensingHistorySerializer(serializers.Serializer):
+    """Serializer for pharmacy dispensing history in patient detail"""
+    id = serializers.UUIDField()
+    dispensing_number = serializers.CharField()
+    dispensed_at = serializers.DateTimeField()
+    status = serializers.CharField()
+    status_display = serializers.SerializerMethodField()
+    dispensed_by_name = serializers.SerializerMethodField()
+    medications_count = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+
+    def get_status_display(self, obj):
+        return obj.get_status_display() if hasattr(obj, 'get_status_display') else obj.status
+
+    def get_dispensed_by_name(self, obj):
+        if obj.dispensed_by:
+            return obj.dispensed_by.get_full_name() or obj.dispensed_by.username
+        return None
+
+    def get_medications_count(self, obj):
+        return obj.items.count() if hasattr(obj, 'items') else 0
+
+    def get_items(self, obj):
+        """Return simplified medication items"""
+        if not hasattr(obj, 'items'):
+            return []
+        return [
+            {
+                'id': str(item.id),
+                'medication_name': item.medication.name if item.medication else '',
+                'quantity_dispensed': item.quantity_dispensed,
+                'dosage_instructions': item.dosage_instructions or '',
+            }
+            for item in obj.items.all()
+        ]
+
+
+class ConsultationHistorySerializer(serializers.Serializer):
+    """Serializer for consultation history in patient detail"""
+    id = serializers.UUIDField()
+    consultation_number = serializers.CharField()
+    consultation_date = serializers.DateTimeField()
+    doctor_name = serializers.SerializerMethodField()
+    chief_complaint = serializers.CharField()
+    diagnosis = serializers.CharField()
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return obj.doctor.get_full_name() or obj.doctor.username
+        return None

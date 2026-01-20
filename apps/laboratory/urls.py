@@ -26,6 +26,7 @@ urlpatterns = [
     path('orders/<uuid:pk>/pdf/', LabResultPDFView.as_view(), name='order-pdf'),
     path('orders/<uuid:pk>/receipt/', views_pdf.LabOrderReceiptView.as_view(), name='order-receipt'),
     path('orders/<uuid:pk>/barcodes/', views_pdf.LabBarcodeView.as_view(), name='order-barcodes'),
+    path('orders/<uuid:pk>/tube-labels/', views_pdf.LabTubeLabelsView.as_view(), name='order-tube-labels'),
     path('orders/<uuid:pk>/bench-sheet/', views_pdf.LabBenchSheetView.as_view(), name='order-bench-sheet'),
     path('orders/bulk-bench-sheets/', views_pdf.LabBulkBenchSheetView.as_view(), name='bulk-bench-sheets'),
     path('orders/<uuid:pk>/generate-invoice/', api.GenerateLabOrderInvoiceView.as_view(), name='generate-invoice'),
@@ -35,4 +36,7 @@ urlpatterns = [
 
     # Patient lab history
     path('patient/<uuid:patient_id>/history/', api.PatientLabHistoryView.as_view(), name='patient-lab-history'),
+
+    # Lab order item history (previous results)
+    path('items/<uuid:item_id>/history/', api.LabOrderItemHistoryView.as_view(), name='item-history'),
 ]

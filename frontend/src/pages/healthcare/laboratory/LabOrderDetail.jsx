@@ -24,7 +24,12 @@ import {
     MenuItem,
     IconButton,
     Checkbox,
-    Stack
+    Stack,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    CircularProgress
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -36,7 +41,8 @@ import {
     Print as PrintIcon,
     QrCode as QrCodeIcon,
     Receipt as ReceiptIcon,
-    AttachMoney as InvoiceIcon
+    AttachMoney as InvoiceIcon,
+    History as HistoryIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +61,7 @@ const LabOrderDetail = () => {
     const [loading, setLoading] = useState(true);
     const [order, setOrder] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
+    const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
     const isNewOrder = id === 'new';
 
     // New order form state
@@ -70,6 +77,12 @@ const LabOrderDetail = () => {
     const [printModalOpen, setPrintModalOpen] = useState(false);
     const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'barcodes'
     const [generatingPdf, setGeneratingPdf] = useState(false);
+
+    // History Modal State
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [historyData, setHistoryData] = useState(null);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
 
     useEffect(() => {
         if (!isNewOrder) {
@@ -114,6 +127,9 @@ const LabOrderDetail = () => {
             }
             setResults(initialResults);
 
+            // Initialize biologist diagnosis
+            setBiologistDiagnosis(data.biologist_diagnosis || '');
+
         } catch (error) {
             console.error('Error fetching order:', error);
             enqueueSnackbar('Erreur de chargement', { variant: 'error' });
@@ -139,7 +155,10 @@ const LabOrderDetail = () => {
                 ...results[itemId]
             }));
 
-            await laboratoryAPI.enterResults(id, { results: itemsToUpdate });
+            await laboratoryAPI.enterResults(id, {
+                results: itemsToUpdate,
+                biologist_diagnosis: biologistDiagnosis
+            });
             enqueueSnackbar('Résultats enregistrés', { variant: 'success' });
             fetchOrder(); // Refresh to update status/flags
         } catch (error) {
@@ -231,7 +250,7 @@ const LabOrderDetail = () => {
 
     const handleMarkInvoicePaid = async () => {
         if (!order.lab_invoice) return;
-        
+
         try {
             const paymentData = {
                 payment_date: new Date().toISOString().split('T')[0],
@@ -245,6 +264,28 @@ const LabOrderDetail = () => {
             console.error('Error marking invoice as paid:', error);
             enqueueSnackbar('Erreur lors du marquage de la facture', { variant: 'error' });
         }
+    };
+
+    const handleShowHistory = async (item) => {
+        setSelectedItem(item);
+        setHistoryModalOpen(true);
+        setLoadingHistory(true);
+
+        try {
+            const data = await laboratoryAPI.getItemHistory(item.id);
+            setHistoryData(data);
+        } catch (error) {
+            console.error('Error loading history:', error);
+            enqueueSnackbar('Erreur de chargement de l\'historique', { variant: 'error' });
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
+    const handleCloseHistory = () => {
+        setHistoryModalOpen(false);
+        setHistoryData(null);
+        setSelectedItem(null);
     };
 
 
@@ -604,7 +645,7 @@ const LabOrderDetail = () => {
                 </Grid>
             </Grid>
 
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, mb: 3 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -615,6 +656,7 @@ const LabOrderDetail = () => {
                             <TableCell>Valeurs de Référence</TableCell>
                             <TableCell>Commentaires / Notes</TableCell>
                             <TableCell>Flag</TableCell>
+                            <TableCell width="80px">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -645,22 +687,99 @@ const LabOrderDetail = () => {
                                         <TextField
                                             fullWidth
                                             size="small"
+                                            multiline
+                                            rows={2}
                                             value={results[item.id]?.technician_notes || ''}
                                             onChange={(e) => handleResultChange(item.id, 'technician_notes', e.target.value)}
                                             placeholder="Commentaires du technicien"
                                         />
                                     ) : (
-                                        item.technician_notes || '-'
+                                        <Box>
+                                            {item.technician_notes && (
+                                                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                                    <strong>Notes:</strong> {item.technician_notes}
+                                                </Typography>
+                                            )}
+                                            {item.interpretation && (
+                                                <Alert severity="info" sx={{ mt: 1, py: 0 }}>
+                                                    <Typography variant="caption">
+                                                        <strong>Interprétation:</strong> {item.interpretation}
+                                                    </Typography>
+                                                </Alert>
+                                            )}
+                                            {!item.technician_notes && !item.interpretation && '-'}
+                                        </Box>
                                     )}
                                 </TableCell>
                                 <TableCell>
                                     {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
+                                </TableCell>
+                                <TableCell>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleShowHistory(item)}
+                                        title="Afficher l'historique des valeurs"
+                                        color="primary"
+                                    >
+                                        <HistoryIcon fontSize="small" />
+                                    </IconButton>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Biologist Diagnosis Section */}
+            <Card sx={{ mb: 3, bgcolor: '#f8f9fa', border: '2px solid #2563eb' }}>
+                <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                            Diagnostic du Biologiste
+                        </Typography>
+                        {order.diagnosed_by_name && (
+                            <Chip
+                                label={`Par: ${order.diagnosed_by_name}`}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                                sx={{ ml: 2 }}
+                            />
+                        )}
+                        {order.diagnosed_at && (
+                            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                                {new Date(order.diagnosed_at).toLocaleDateString('fr-FR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </Typography>
+                        )}
+                    </Box>
+
+                    <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        variant="outlined"
+                        placeholder="Interprétation globale des résultats par le biologiste superviseur..."
+                        value={biologistDiagnosis}
+                        onChange={(e) => setBiologistDiagnosis(e.target.value)}
+                        disabled={!canEdit}
+                        helperText="Synthèse et diagnostic global basé sur l'ensemble des résultats d'analyse"
+                        sx={{
+                            bgcolor: 'white',
+                            '& .MuiOutlinedInput-root': {
+                                '&.Mui-disabled': {
+                                    bgcolor: '#f5f5f5'
+                                }
+                            }
+                        }}
+                    />
+                </CardContent>
+            </Card>
 
             {/* Print Modal */}
             <PrintModal
@@ -678,6 +797,123 @@ const LabOrderDetail = () => {
                 onDownload={() => handlePrintAction('download')}
                 helpText="Choisissez une action pour générer le document"
             />
+
+            {/* History Modal */}
+            <Dialog
+                open={historyModalOpen}
+                onClose={handleCloseHistory}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <HistoryIcon color="primary" />
+                        <Typography variant="h6">
+                            Historique des Valeurs
+                        </Typography>
+                    </Box>
+                    {historyData && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            {historyData.test_name} ({historyData.test_code}) - {historyData.patient_name}
+                        </Typography>
+                    )}
+                </DialogTitle>
+                <DialogContent>
+                    {loadingHistory ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : historyData?.previous_results?.length > 0 ? (
+                        <>
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                                {historyData.total_previous} résultat(s) antérieur(s) trouvé(s)
+                            </Alert>
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Date</TableCell>
+                                            <TableCell>Commande</TableCell>
+                                            <TableCell>Résultat</TableCell>
+                                            <TableCell>Unité</TableCell>
+                                            <TableCell>Référence</TableCell>
+                                            <TableCell>Statut</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {historyData.previous_results.map((result, index) => (
+                                            <TableRow
+                                                key={result.id}
+                                                sx={{
+                                                    bgcolor: index === 0 ? 'action.hover' : 'inherit'
+                                                }}
+                                            >
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {new Date(result.result_entered_at).toLocaleDateString('fr-FR', {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric'
+                                                        })}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {new Date(result.result_entered_at).toLocaleTimeString('fr-FR', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" fontWeight={index === 0 ? 'bold' : 'normal'}>
+                                                        {result.order_number}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography
+                                                        variant="body2"
+                                                        fontWeight="bold"
+                                                        color={result.is_abnormal ? 'error.main' : 'inherit'}
+                                                    >
+                                                        {result.result_value}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {result.result_unit || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {result.reference_range || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {result.is_abnormal ? (
+                                                        <Chip
+                                                            label={result.abnormality_type || 'Anormal'}
+                                                            size="small"
+                                                            color="error"
+                                                        />
+                                                    ) : (
+                                                        <Chip label="Normal" size="small" color="success" />
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </>
+                    ) : (
+                        <Alert severity="info">
+                            Aucun résultat antérieur trouvé pour ce test
+                        </Alert>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseHistory}>Fermer</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

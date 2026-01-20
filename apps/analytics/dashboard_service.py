@@ -978,3 +978,56 @@ class DashboardStatsService:
             'prescription_fill_rate': round(fill_rate, 2),
             'pending_prescriptions': prescriptions.filter(status='pending').count()
         }
+
+    def get_payment_method_stats(self) -> Dict:
+        """Statistiques par mode de paiement (Mobile Money vs Cash)"""
+        from apps.invoicing.models import Payment
+        from django.db.models import Sum, Count
+
+        if not self.organization:
+            return {
+                'mobile_money': {'count': 0, 'total': 0},
+                'cash': {'count': 0, 'total': 0},
+                'ratio': 0
+            }
+
+        # Paiements dans la période
+        payments = Payment.objects.filter(
+            invoice__organization=self.organization,
+            payment_date__gte=self.start_date,
+            payment_date__lte=self.end_date,
+            status='success'  # Seulement les paiements réussis
+        )
+
+        # Statistiques Mobile Money
+        mobile_money_agg = payments.filter(payment_method='mobile_money').aggregate(
+            total=Sum('amount'),
+            count=Count('id')
+        )
+        mobile_money_total = mobile_money_agg['total'] or 0
+        mobile_money_count = mobile_money_agg['count'] or 0
+
+        # Statistiques Cash
+        cash_agg = payments.filter(payment_method='cash').aggregate(
+            total=Sum('amount'),
+            count=Count('id')
+        )
+        cash_total = cash_agg['total'] or 0
+        cash_count = cash_agg['count'] or 0
+
+        # Calcul du ratio Mobile Money / Total
+        total_amount = mobile_money_total + cash_total
+        ratio = (mobile_money_total / total_amount * 100) if total_amount > 0 else 0
+
+        return {
+            'mobile_money': {
+                'count': mobile_money_count,
+                'total': float(mobile_money_total)
+            },
+            'cash': {
+                'count': cash_count,
+                'total': float(cash_total)
+            },
+            'ratio': round(ratio, 2),  # Pourcentage de paiements en Mobile Money
+            'total_amount': float(total_amount)
+        }

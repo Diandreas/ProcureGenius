@@ -31,6 +31,12 @@ const patientAPI = {
         return response.data;
     },
 
+    // Get patient complete history (consultations, lab, pharmacy, care)
+    getPatientCompleteHistory: async (id) => {
+        const response = await api.get(`/healthcare/patients/${id}/complete-history/`);
+        return response.data;
+    },
+
     // Generate Medical History PDF
     getPatientHistoryPDF: async (id) => {
         const response = await api.get(`/healthcare/consultations/patient/${id}/history-pdf/`, {

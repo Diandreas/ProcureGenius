@@ -18,7 +18,11 @@ import {
     Timeline as TimelineIcon,
     LocalHospital as HospitalIcon,
     Description as FileIcon,
-    PictureAsPdf as PdfIcon
+    PictureAsPdf as PdfIcon,
+    MedicalServices as ConsultationIcon,
+    Science as LabIcon,
+    LocalPharmacy as PharmacyIcon,
+    Receipt as PrescriptionIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +30,13 @@ import patientAPI from '../../../services/patientAPI';
 import VisitHistory from './VisitHistory';
 import PatientDocuments from './PatientDocuments';
 import PatientCareHistory from './PatientCareHistory';
+import LabOrderHistory from './components/LabOrderHistory';
+import PharmacyHistory from './components/PharmacyHistory';
 import PrintModal from '../../../components/PrintModal';
+import QuickConsultationModal from './components/QuickConsultationModal';
+import QuickLabOrderModal from './components/QuickLabOrderModal';
+import QuickPrescriptionModal from './components/QuickPrescriptionModal';
+import QuickDispensingModal from './components/QuickDispensingModal';
 
 const PatientDetail = () => {
     const { t } = useTranslation();
@@ -42,6 +52,12 @@ const PatientDetail = () => {
     const [printModalOpen, setPrintModalOpen] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
+    // Quick Action Modals State
+    const [consultationModalOpen, setConsultationModalOpen] = useState(false);
+    const [labOrderModalOpen, setLabOrderModalOpen] = useState(false);
+    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+    const [dispensingModalOpen, setDispensingModalOpen] = useState(false);
+
     useEffect(() => {
         fetchData();
     }, [id]);
@@ -51,7 +67,7 @@ const PatientDetail = () => {
             setLoading(true);
             const [patientData, historyData] = await Promise.all([
                 patientAPI.getPatient(id),
-                patientAPI.getPatientHistory(id)
+                patientAPI.getPatientCompleteHistory(id)  // NOUVEAU: Utilise l'historique complet
             ]);
             setPatient(patientData);
             setHistory(historyData);
@@ -127,6 +143,52 @@ const PatientDetail = () => {
                 </Box>
             </Box>
 
+            {/* Quick Action Buttons */}
+            <Card sx={{ mb: 3, bgcolor: 'primary.50', borderLeft: 4, borderColor: 'primary.main' }}>
+                <CardContent sx={{ py: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 1.5 }}>
+                        Actions Rapides
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<ConsultationIcon />}
+                            onClick={() => setConsultationModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Nouvelle Consultation
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<LabIcon />}
+                            onClick={() => setLabOrderModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Ordonnance Labo
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<PrescriptionIcon />}
+                            onClick={() => setPrescriptionModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Prescription
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="warning"
+                            startIcon={<PharmacyIcon />}
+                            onClick={() => setDispensingModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Dispensation
+                        </Button>
+                    </Box>
+                </CardContent>
+            </Card>
+
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} md={4}>
                     <Card sx={{ height: '100%' }}>
@@ -188,6 +250,8 @@ const PatientDetail = () => {
                         <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique Consultations" />
                         <Tab icon={<HospitalIcon />} iconPosition="start" label="Visites" />
                         <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique des Soins" />
+                        <Tab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
+                        <Tab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
                         <Tab icon={<FileIcon />} iconPosition="start" label="Documents" />
                     </Tabs>
                 </Box>
@@ -231,11 +295,54 @@ const PatientDetail = () => {
                     {tabValue === 2 && <PatientCareHistory patientId={id} />}
                 </Box>
 
-                {/* Tab Panel 3: Docs */}
+                {/* Tab Panel 3: Lab Orders */}
                 <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
-                    {tabValue === 3 && <PatientDocuments patientId={id} />}
+                    {tabValue === 3 && <LabOrderHistory labOrders={history?.lab_orders} />}
+                </Box>
+
+                {/* Tab Panel 4: Pharmacy Dispensings */}
+                <Box role="tabpanel" hidden={tabValue !== 4} sx={{ p: 3 }}>
+                    {tabValue === 4 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
+                </Box>
+
+                {/* Tab Panel 5: Documents */}
+                <Box role="tabpanel" hidden={tabValue !== 5} sx={{ p: 3 }}>
+                    {tabValue === 5 && <PatientDocuments patientId={id} />}
                 </Box>
             </Card>
+
+            {/* Quick Action Modals */}
+            <QuickConsultationModal
+                open={consultationModalOpen}
+                onClose={() => setConsultationModalOpen(false)}
+                patientId={id}
+                patientName={patient.name}
+                onSuccess={fetchData}
+            />
+
+            <QuickLabOrderModal
+                open={labOrderModalOpen}
+                onClose={() => setLabOrderModalOpen(false)}
+                patientId={id}
+                patientName={patient.name}
+                onSuccess={fetchData}
+            />
+
+            <QuickPrescriptionModal
+                open={prescriptionModalOpen}
+                onClose={() => setPrescriptionModalOpen(false)}
+                patientId={id}
+                patientName={patient.name}
+                onSuccess={fetchData}
+            />
+
+            <QuickDispensingModal
+                open={dispensingModalOpen}
+                onClose={() => setDispensingModalOpen(false)}
+                patientId={id}
+                patientName={patient.name}
+                onSuccess={fetchData}
+            />
 
             <PrintModal
                 open={printModalOpen}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Étiquettes Tubes - {{ lab_order.order_number }}</title>
+    <style>
+        @page {
+            size: 50mm 30mm;
+            margin: 1mm;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .label {
+            width: 50mm;
+            height: 30mm;
+            page-break-after: always;
+            border: 1px solid #ccc;
+            padding: 2mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .label:last-child {
+            page-break-after: auto;
+        }
+
+        .label-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1mm;
+        }
+
+        .container-type {
+            font-size: 7pt;
+            font-weight: bold;
+            color: #2563eb;
+            background-color: #e0f2fe;
+            padding: 1mm 2mm;
+            border-radius: 2mm;
+            text-transform: uppercase;
+        }
+
+        .test-code {
+            font-size: 6pt;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .test-name {
+            font-size: 7pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1mm;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .patient-info {
+            font-size: 6pt;
+            color: #555;
+            margin-bottom: 1mm;
+            line-height: 1.2;
+        }
+
+        .patient-name {
+            font-weight: bold;
+            font-size: 6.5pt;
+        }
+
+        .barcode-container {
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .barcode-image {
+            max-width: 100%;
+            height: 8mm;
+            object-fit: contain;
+        }
+
+        .barcode-text {
+            font-size: 5pt;
+            color: #666;
+            margin-top: 0.5mm;
+            font-family: 'Courier New', monospace;
+        }
+
+        .order-info {
+            font-size: 5pt;
+            color: #999;
+            text-align: right;
+        }
+
+        .sample-type {
+            font-size: 5.5pt;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    {% for label in labels %}
+    <div class="label">
+        <div class="label-header">
+            <span class="container-type">{{ label.container_type }}</span>
+            <span class="test-code">{{ label.test_code }}</span>
+        </div>
+
+        <div class="test-name" title="{{ label.test_name }}">
+            {{ label.test_name }}
+        </div>
+
+        {% if label.sample_type %}
+        <div class="sample-type">
+            {{ label.sample_type }}
+        </div>
+        {% endif %}
+
+        <div class="patient-info">
+            <div class="patient-name">{{ label.patient_name }}</div>
+            <div>
+                N°: {{ label.patient_number }}
+                {% if label.patient_dob %}
+                | {{ label.patient_dob|date:"d/m/Y" }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="barcode-container">
+            {% if label.barcode_base64 %}
+            <img src="data:image/png;base64,{{ label.barcode_base64 }}" class="barcode-image" alt="Barcode">
+            {% endif %}
+            <div class="barcode-text">{{ label.barcode_value }}</div>
+        </div>
+
+        <div class="order-info">
+            {{ label.order_number }} | {{ label.order_date|date:"d/m/y H:i" }}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+
+</html>

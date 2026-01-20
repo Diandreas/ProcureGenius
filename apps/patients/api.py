@@ -22,7 +22,26 @@ from .serializers import (
     PatientVisitListSerializer,
     CheckInSerializer,
     PatientCareServiceSerializer,
+    LabOrderHistorySerializer,
+    PharmacyDispensingHistorySerializer,
+    ConsultationHistorySerializer,
 )
+
+# Import related models for history
+try:
+    from apps.laboratory.models import LabOrder
+except ImportError:
+    LabOrder = None
+
+try:
+    from apps.pharmacy.models import PharmacyDispensing
+except ImportError:
+    PharmacyDispensing = None
+
+try:
+    from apps.consultations.models import Consultation
+except ImportError:
+    Consultation = None
 
 
 class PatientCareHistoryView(generics.ListAPIView):
@@ -389,8 +408,70 @@ class PatientDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = PatientDocumentSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return PatientDocument.objects.filter(
             organization=self.request.user.organization
         )
+
+
+class PatientCompleteHistoryView(APIView):
+    """
+    Get complete unified history for a patient:
+    - Consultations
+    - Laboratory orders
+    - Pharmacy dispensings
+    - Care services
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        # Verify patient belongs to organization
+        try:
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization,
+                client_type__in=['patient', 'both']
+            )
+        except Client.DoesNotExist:
+            return Response(
+                {'error': 'Patient not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        history = {}
+
+        # Consultations history
+        if Consultation:
+            consultations = Consultation.objects.filter(
+                patient=patient
+            ).select_related('doctor').order_by('-consultation_date')[:10]
+            history['consultations'] = ConsultationHistorySerializer(consultations, many=True).data
+        else:
+            history['consultations'] = []
+
+        # Laboratory orders history
+        if LabOrder:
+            lab_orders = LabOrder.objects.filter(
+                patient=patient
+            ).prefetch_related('items__lab_test').order_by('-order_date')[:10]
+            history['lab_orders'] = LabOrderHistorySerializer(lab_orders, many=True).data
+        else:
+            history['lab_orders'] = []
+
+        # Pharmacy dispensings history
+        if PharmacyDispensing:
+            dispensings = PharmacyDispensing.objects.filter(
+                patient=patient
+            ).prefetch_related('items__medication').order_by('-dispensed_at')[:10]
+            history['pharmacy_dispensings'] = PharmacyDispensingHistorySerializer(dispensings, many=True).data
+        else:
+            history['pharmacy_dispensings'] = []
+
+        # Care services history (already exists)
+        care_services = PatientCareService.objects.filter(
+            patient=patient
+        ).select_related('provided_by', 'service_product').order_by('-provided_at')[:10]
+        history['care_services'] = PatientCareServiceSerializer(care_services, many=True).data
+
+        return Response(history, status=status.HTTP_200_OK)

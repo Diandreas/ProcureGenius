@@ -85,16 +85,24 @@ const PatientForm = () => {
             return;
         }
 
+        // NOUVEAU: Validation téléphone obligatoire pour les patients
+        if (!formData.phone || !formData.phone.trim()) {
+            enqueueSnackbar('Le numéro de téléphone est obligatoire pour les patients', { variant: 'warning' });
+            return;
+        }
+
         setLoading(true);
         try {
             if (isEdit) {
                 await patientAPI.updatePatient(id, formData);
                 enqueueSnackbar(t('patients.update_success', 'Patient mis à jour avec succès'), { variant: 'success' });
+                navigate('/healthcare/patients');
             } else {
-                await patientAPI.createPatient(formData);
+                const response = await patientAPI.createPatient(formData);
                 enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
+                // Redirect to patient detail page after creation
+                navigate(`/healthcare/patients/${response.id}`);
             }
-            navigate('/healthcare/patients');
         } catch (error) {
             console.error('Error saving patient:', error);
             // Show more specific error message if available
@@ -177,10 +185,12 @@ const PatientForm = () => {
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
+                                required
                                 label={t('patients.phone', 'Téléphone')}
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
+                                helperText="Obligatoire pour les patients"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>

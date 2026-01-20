@@ -377,6 +377,12 @@ class Invoice(models.Model):
         ('healthcare_pharmacy', _('Pharmacie')),
     ]
 
+    PAYMENT_METHOD_CHOICES = [
+        ('mobile_money', _('Mobile Money')),
+        ('cash', _('Comptant')),
+        ('', _('Non spécifié')),  # Pour compatibilité avec données existantes
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     invoice_number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro de facture"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
@@ -412,7 +418,13 @@ class Invoice(models.Model):
     # Informations de facturation
     billing_address = models.TextField(blank=True, verbose_name=_("Adresse de facturation"))
     payment_terms = models.CharField(max_length=100, default="Net 30", verbose_name=_("Conditions de paiement"))
-    payment_method = models.CharField(max_length=50, blank=True, verbose_name=_("Mode de paiement"))
+    payment_method = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=PAYMENT_METHOD_CHOICES,
+        verbose_name=_("Mode de paiement"),
+        help_text=_("Mode de paiement: Mobile Money ou Comptant")
+    )
     currency = models.CharField(max_length=3, default="CAD", verbose_name=_("Devise"))
 
     class Meta:
@@ -424,9 +436,28 @@ class Invoice(models.Model):
         return f"{self.invoice_number} - {self.title}"
 
     def save(self, *args, **kwargs):
+        # Générer le numéro de facture si nécessaire
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
+
+        # Générer le titre automatiquement si vide
+        if not self.title or self.title.strip() == '':
+            self.title = self._generate_invoice_title()
+
         super().save(*args, **kwargs)
+
+    def _generate_invoice_title(self):
+        """Génère automatiquement un titre pour la facture basé sur son type"""
+        client_name = self.client.name if self.client else 'Patient'
+
+        title_templates = {
+            'healthcare_consultation': f"Consultation - {client_name}",
+            'healthcare_laboratory': f"Analyses Laboratoire - {client_name}",
+            'healthcare_pharmacy': f"Dispensation Pharmacie - {client_name}",
+            'standard': "Facture Standard"
+        }
+
+        return title_templates.get(self.invoice_type, f"Facture - {client_name}")
 
     def clean(self):
         """Validation de la facture"""

@@ -380,11 +380,18 @@ class EnterLabResultsView(APIView):
                 
             except LabOrderItem.DoesNotExist:
                 pass
-        
+
+        # Update biologist diagnosis if provided
+        if 'biologist_diagnosis' in serializer.validated_data:
+            order.biologist_diagnosis = serializer.validated_data['biologist_diagnosis']
+            order.diagnosed_by = request.user
+            order.diagnosed_at = timezone.now()
+            order.save(update_fields=['biologist_diagnosis', 'diagnosed_by', 'diagnosed_at'])
+
         # If all results entered, update order status
         if order.all_results_entered:
             order.complete_results(entered_by=request.user)
-        
+
         return Response({
             'message': f'Updated {len(updated_items)} result(s)',
             'order': LabOrderSerializer(order).data
@@ -447,6 +454,61 @@ class PatientLabHistoryView(APIView):
             'total_orders': orders.count(),
             'orders': LabOrderSerializer(orders, many=True).data,
         })
+
+
+class LabOrderItemHistoryView(APIView):
+    """Get previous results for a specific lab order item"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, item_id):
+        try:
+            item = LabOrderItem.objects.select_related(
+                'lab_order__patient',
+                'lab_order__organization',
+                'lab_test'
+            ).get(id=item_id)
+
+            # Verify organization access
+            if item.lab_order.organization != request.user.organization:
+                return Response(
+                    {'error': 'Permission denied'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Get previous results using the model method
+            previous_results = item.get_previous_results(limit=10)
+
+            # Serialize previous results
+            history_data = []
+            for prev_item in previous_results:
+                history_data.append({
+                    'id': str(prev_item.id),
+                    'order_number': prev_item.lab_order.order_number,
+                    'order_date': prev_item.lab_order.order_date,
+                    'result_value': prev_item.result_value,
+                    'result_numeric': prev_item.result_numeric,
+                    'result_unit': prev_item.result_unit,
+                    'is_abnormal': prev_item.is_abnormal,
+                    'abnormality_type': prev_item.abnormality_type,
+                    'result_entered_at': prev_item.result_entered_at,
+                    'reference_range': prev_item.reference_range,
+                })
+
+            return Response({
+                'item_id': str(item.id),
+                'test_name': item.lab_test.name,
+                'test_code': item.lab_test.test_code,
+                'patient_name': item.lab_order.patient.name,
+                'current_result': item.result_value,
+                'previous_results': history_data,
+                'total_previous': len(history_data)
+            })
+
+        except LabOrderItem.DoesNotExist:
+            return Response(
+                {'error': 'Lab order item not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class LabResultPDFView(APIView):

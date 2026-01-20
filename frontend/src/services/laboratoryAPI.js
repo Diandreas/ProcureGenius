@@ -88,6 +88,12 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Get previous results for a lab order item
+    getItemHistory: async (itemId) => {
+        const response = await api.get(`/healthcare/laboratory/items/${itemId}/history/`);
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

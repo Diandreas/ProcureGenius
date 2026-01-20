@@ -236,29 +236,33 @@ class LabTest(models.Model):
         # Auto-create linked product if missing (Consumable tracking)
         if not self.linked_product:
             from apps.invoicing.models import Product, ProductCategory
+            from apps.core.models import OrganizationSettings
             
-            # Try to find or create a default category for Lab Consumables
-            category, _ = ProductCategory.objects.get_or_create(
-                organization=self.organization,
-                name="Consommables Laboratoire",
-                defaults={'slug': 'lab-consumables'}
-            )
-            
-            # Create the product
-            product_name = f"Kit {self.test_code} - {self.name}"[:200]
-            new_product = Product.objects.create(
-                organization=self.organization,
-                name=product_name,
-                description=f"Consommable généré automatiquement pour le test {self.test_code}",
-                product_type='physical',
-                category=category,
-                price=0, # Cost/Price to be adjusted by admin
-                cost_price=0,
-                stock_quantity=0, # Start with 0 stock
-                low_stock_threshold=10, 
-                is_active=True
-            )
-            self.linked_product = new_product
+            # Check if auto-generation is enabled for this organization
+            settings = OrganizationSettings.objects.filter(organization=self.organization).first()
+            if settings and settings.auto_generate_lab_kits:
+                # Try to find or create a default category for Lab Consumables
+                category, _ = ProductCategory.objects.get_or_create(
+                    organization=self.organization,
+                    slug='lab-consumables',
+                    defaults={'name': "Consommables Laboratoire"}
+                )
+                
+                # Create the product
+                product_name = f"Kit {self.test_code} - {self.name}"[:200]
+                new_product = Product.objects.create(
+                    organization=self.organization,
+                    name=product_name,
+                    description=f"Consommable généré automatiquement pour le test {self.test_code}",
+                    product_type='physical',
+                    category=category,
+                    price=0, # Cost/Price to be adjusted by admin
+                    cost_price=0,
+                    stock_quantity=0, # Start with 0 stock
+                    low_stock_threshold=10, 
+                    is_active=True
+                )
+                self.linked_product = new_product
             
         super().save(*args, **kwargs)
 
@@ -408,7 +412,28 @@ class LabOrder(models.Model):
         related_name='lab_orders',
         verbose_name=_("Facture labo")
     )
-    
+
+    # Biologist diagnosis (NOUVEAU - Phase 3)
+    biologist_diagnosis = models.TextField(
+        blank=True,
+        verbose_name=_("Diagnostic du biologiste"),
+        help_text=_("Interprétation globale des résultats par le biologiste superviseur")
+    )
+    diagnosed_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lab_diagnoses',
+        verbose_name=_("Diagnostiqué par"),
+        limit_choices_to={'role': 'lab_tech'}
+    )
+    diagnosed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date du diagnostic")
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -694,3 +719,16 @@ class LabOrderItem(models.Model):
                     
         except (ValueError, AttributeError):
             pass  # Cannot parse, leave as is
+
+    def get_previous_results(self, limit=5):
+        """
+        Récupère les N derniers résultats du même test pour ce patient
+        (NOUVEAU - Phase 3)
+        """
+        return LabOrderItem.objects.filter(
+            lab_order__patient=self.lab_order.patient,
+            lab_test=self.lab_test,
+            result_entered_at__isnull=False
+        ).exclude(
+            id=self.id
+        ).select_related('lab_order').order_by('-result_entered_at')[:limit]

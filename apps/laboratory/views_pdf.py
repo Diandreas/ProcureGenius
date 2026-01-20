@@ -130,6 +130,65 @@ class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTempl
         return base64.b64encode(buffer.getvalue()).decode()
 
 
+class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
+    """
+    Génère des étiquettes pour chaque tube nécessaire (1 étiquette par test)
+    Format: 50mm x 30mm par étiquette avec code-barres
+    """
+    model = LabOrder
+    template_name = 'laboratory/pdf_templates/lab_tube_labels.html'
+    pdf_attachment = False
+
+    def get_pdf_filename(self):
+        return f'etiquettes-tubes-{self.get_object().order_number}.pdf'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lab_order = self.get_object()
+
+        # Organization data
+        org_data = self._get_organization_data(lab_order)
+        context['organization'] = org_data
+        context['logo_base64'] = self._get_logo_base64(org_data)
+
+        # Generate 1 label per test
+        labels = []
+        for item in lab_order.items.all():
+            # Barcode value: ORDER_NUMBER-TEST_CODE
+            barcode_value = f"{lab_order.order_number}-{item.lab_test.test_code or item.id}"
+
+            labels.append({
+                'test_code': item.lab_test.test_code or str(item.id)[:8],
+                'test_name': item.lab_test.name,
+                'container_type': item.lab_test.get_container_type_display() if item.lab_test.container_type else 'Tube',
+                'sample_type': item.lab_test.get_sample_type_display() if item.lab_test.sample_type else '',
+                'patient_name': lab_order.patient.name,
+                'patient_number': lab_order.patient.patient_number or lab_order.patient.id,
+                'patient_dob': lab_order.patient.date_of_birth,
+                'order_number': lab_order.order_number,
+                'order_date': lab_order.order_date,
+                'barcode_value': barcode_value,
+                'barcode_base64': self._generate_barcode(barcode_value)
+            })
+
+        context['labels'] = labels
+        context['lab_order'] = lab_order
+        context['patient'] = lab_order.patient
+
+        return context
+
+    def _generate_barcode(self, value):
+        """Generate Code128 barcode as base64 image"""
+        import io
+        import base64
+        from barcode import Code128
+        from barcode.writer import ImageWriter
+
+        buffer = io.BytesIO()
+        Code128(value, writer=ImageWriter()).write(buffer)
+        return base64.b64encode(buffer.getvalue()).decode()
+
+
 class LabBenchSheetView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère une fiche de paillasse (A4) pour l'usage interne

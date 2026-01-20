@@ -285,14 +285,23 @@ class Client(models.Model):
         """Validation du client"""
         from django.core.exceptions import ValidationError
 
+        errors = {}
+
         # Vérifier que le nom n'est pas vide
         if not self.name or not self.name.strip():
-            raise ValidationError({
-                'name': _("Le nom du client est obligatoire.")
-            })
+            errors['name'] = _("Le nom du client est obligatoire.")
 
         # Nettoyer le nom (enlever les espaces multiples)
-        self.name = ' '.join(self.name.split())
+        if self.name:
+            self.name = ' '.join(self.name.split())
+
+        # NOUVEAU: Vérifier que le téléphone est obligatoire pour les patients
+        if self.client_type in ['patient', 'both']:
+            if not self.phone or not self.phone.strip():
+                errors['phone'] = _("Le numéro de téléphone est obligatoire pour les patients.")
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         """Sauvegarder avec validation et génération du numéro patient"""

@@ -245,7 +245,12 @@ class EnterResultsSerializer(serializers.Serializer):
         child=serializers.DictField(),
         help_text="List of result objects with item_id, result_value, etc."
     )
-    
+    biologist_diagnosis = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Global diagnosis by the supervising biologist"
+    )
+
     def validate_results(self, value):
         for result in value:
             if 'item_id' not in result:
