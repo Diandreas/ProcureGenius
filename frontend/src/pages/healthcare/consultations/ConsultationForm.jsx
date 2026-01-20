@@ -18,7 +18,11 @@ import {
     TableRow,
     IconButton,
     InputAdornment,
-    MenuItem
+    MenuItem,
+    Checkbox,
+    FormControlLabel,
+    Chip,
+    Tooltip
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -26,7 +30,8 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     ArrowBack as ArrowBackIcon,
-    Print as PrintIcon
+    Print as PrintIcon,
+    WarningAmber as ExternalIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -123,7 +128,15 @@ const ConsultationForm = () => {
     const addMedication = () => {
         setFormData(prev => ({
             ...prev,
-            medications: [...prev.medications, { medication: null, dosage: '', frequency: '', duration: '', instructions: '' }]
+            medications: [...prev.medications, {
+                medication: null,
+                medication_name: '',
+                is_external: false,
+                dosage: '',
+                frequency: '',
+                duration: '',
+                instructions: ''
+            }]
         }));
     };
 
@@ -168,7 +181,15 @@ const ConsultationForm = () => {
                 const prescriptionPayload = {
                     consultation_id: consultId,
                     items: formData.medications.map(m => ({
-                        medication_id: m.medication.id,
+                        // External medication: send medication_name only
+                        // Internal medication: send medication_id
+                        ...(m.is_external ? {
+                            medication_name: m.medication_name,
+                            medication_id: null
+                        } : {
+                            medication_id: m.medication?.id,
+                            medication_name: m.medication?.name
+                        }),
                         dosage: m.dosage,
                         frequency: m.frequency,
                         duration: m.duration,
@@ -352,24 +373,62 @@ const ConsultationForm = () => {
                                 <Table size="small">
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell width="30%">Médicament</TableCell>
-                                            <TableCell width="20%">Dosage</TableCell>
-                                            <TableCell width="20%">Fréquence</TableCell>
-                                            <TableCell width="20%">Durée</TableCell>
-                                            <TableCell width="10%"></TableCell>
+                                            <TableCell width="35%">Médicament</TableCell>
+                                            <TableCell width="18%">Dosage</TableCell>
+                                            <TableCell width="18%">Fréquence</TableCell>
+                                            <TableCell width="18%">Durée</TableCell>
+                                            <TableCell width="11%"></TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {formData.medications.map((item, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>
-                                                    <Autocomplete
-                                                        options={medications}
-                                                        getOptionLabel={(option) => option.name}
-                                                        value={item.medication}
-                                                        onChange={(e, v) => handleMedicationChange(index, 'medication', v)}
-                                                        renderInput={(params) => <TextField {...params} variant="standard" />}
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                size="small"
+                                                                checked={item.is_external}
+                                                                onChange={(e) => handleMedicationChange(index, 'is_external', e.target.checked)}
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Tooltip title="Médicament non disponible dans l'inventaire">
+                                                                <Chip
+                                                                    label="Externe"
+                                                                    size="small"
+                                                                    icon={<ExternalIcon />}
+                                                                    color={item.is_external ? "warning" : "default"}
+                                                                    variant={item.is_external ? "filled" : "outlined"}
+                                                                />
+                                                            </Tooltip>
+                                                        }
+                                                        sx={{ mb: 1 }}
                                                     />
+                                                    {item.is_external ? (
+                                                        <TextField
+                                                            fullWidth
+                                                            variant="standard"
+                                                            placeholder="Nom du médicament externe"
+                                                            value={item.medication_name}
+                                                            onChange={(e) => handleMedicationChange(index, 'medication_name', e.target.value)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <ExternalIcon color="warning" fontSize="small" />
+                                                                    </InputAdornment>
+                                                                )
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <Autocomplete
+                                                            options={medications}
+                                                            getOptionLabel={(option) => option.name}
+                                                            value={item.medication}
+                                                            onChange={(e, v) => handleMedicationChange(index, 'medication', v)}
+                                                            renderInput={(params) => <TextField {...params} variant="standard" placeholder="Sélectionner..." />}
+                                                        />
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <TextField
