@@ -18,9 +18,8 @@ import '../styles/CustomizableDashboard.css';
 import FinancialSummaryWidget from '../components/widgets/FinancialSummaryWidget';
 import AlertsWidget from '../components/widgets/AlertsWidget';
 import CashFlowSummaryWidget from '../components/widgets/CashFlowSummaryWidget';
-// Clients (3)
+// Clients (2)
 import TopClientsWidget from '../components/widgets/TopClientsWidget';
-import ClientsAtRiskWidget from '../components/widgets/ClientsAtRiskWidget';
 import ParetoClientsWidget from '../components/widgets/ParetoClientsWidget';
 // Produits (3)
 import TopSellingProductsWidget from '../components/widgets/TopSellingProductsWidget';
@@ -50,9 +49,8 @@ const WIDGET_COMPONENTS = {
   financial_summary: FinancialSummaryWidget,
   alerts_notifications: AlertsWidget,
   cash_flow_summary: CashFlowSummaryWidget,
-  // Clients (3)
+  // Clients (2)
   top_clients: TopClientsWidget,
-  clients_at_risk: ClientsAtRiskWidget,
   pareto_clients: ParetoClientsWidget,
   // Produits (3)
   top_selling_products: TopSellingProductsWidget,

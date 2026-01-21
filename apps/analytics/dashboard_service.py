@@ -1152,3 +1152,153 @@ class DashboardStatsService:
             'dormant_count': dormant.count(),
             'dormant_value': float(dormant_value)
         }
+
+    def get_lab_enhanced_stats(self) -> Dict:
+        """
+        T25-T27: Statistiques laboratoire enrichies
+        - Status examens par patient
+        - Types examen par période
+        - Examens par profil démographique
+        """
+        try:
+            from apps.laboratory.models import LabOrder, LabOrderItem
+        except ImportError:
+            return {}
+
+        lab_orders = LabOrder.objects.filter(
+            organization=self.organization,
+            order_date__gte=self.start_date,
+            order_date__lte=self.end_date
+        )
+
+        # T25: Status examens par patient (Top 10)
+        patient_exam_status = lab_orders.values('patient__name').annotate(
+            pending=Count('id', filter=Q(status='pending')),
+            in_progress=Count('id', filter=Q(status__in=['sample_collected', 'in_progress'])),
+            completed=Count('id', filter=Q(status__in=['completed', 'results_ready', 'results_delivered']))
+        ).order_by('-completed')[:10]
+
+        # T26: Types examen par période (aggregé par mois)
+        from django.db.models.functions import TruncMonth
+        exams_by_month = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__order_date__lte=self.end_date
+        ).annotate(
+            month=TruncMonth('lab_order__order_date')
+        ).values('month', 'lab_test__category__name').annotate(
+            count=Count('id')
+        ).order_by('month')
+
+        # T27: Examens par profil démographique
+        from datetime import date
+        from dateutil.relativedelta import relativedelta
+
+        # Définir les bornes d'âge
+        today = date.today()
+        child_cutoff = today - relativedelta(years=18)
+
+        # Top 5 tests par genre
+        male_tests = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__patient__gender='M'
+        ).values('lab_test__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+
+        female_tests = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__patient__gender='F'
+        ).values('lab_test__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+
+        # Top 5 tests pour enfants (<18 ans)
+        child_tests = LabOrderItem.objects.filter(
+            lab_order__organization=self.organization,
+            lab_order__order_date__gte=self.start_date,
+            lab_order__patient__date_of_birth__gte=child_cutoff
+        ).values('lab_test__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+
+        return {
+            'patient_exam_status': list(patient_exam_status),
+            'exams_by_month': list(exams_by_month),
+            'exams_by_demographic': {
+                'male': list(male_tests),
+                'female': list(female_tests),
+                'child': list(child_tests)
+            }
+        }
+
+    def get_average_amounts_by_module(self) -> Dict:
+        """
+        T28: Montant moyen par module/service
+        """
+        from apps.invoicing.models import Invoice, InvoiceItem
+
+        # Par type de facture (module)
+        by_invoice_type = Invoice.objects.filter(
+            organization=self.organization,
+            created_at__gte=self.start_date,
+            status__in=['paid', 'sent']
+        ).values('invoice_type').annotate(
+            avg_amount=Avg('total_amount'),
+            count=Count('id'),
+            total=Sum('total_amount')
+        )
+
+        # Par catégorie de produit/service
+        by_category = InvoiceItem.objects.filter(
+            invoice__organization=self.organization,
+            invoice__created_at__gte=self.start_date,
+            invoice__status__in=['paid', 'sent']
+        ).values('product__category__name').annotate(
+            avg_price=Avg('total_price'),
+            count=Count('id'),
+            total=Sum('total_price')
+        ).order_by('-total')
+
+        # Par produit individuel (top 10)
+        by_product = InvoiceItem.objects.filter(
+            invoice__organization=self.organization,
+            invoice__created_at__gte=self.start_date,
+            invoice__status__in=['paid', 'sent']
+        ).values('product__name').annotate(
+            avg_price=Avg('total_price'),
+            times_sold=Count('id'),
+            total_revenue=Sum('total_price')
+        ).order_by('-total_revenue')[:10]
+
+        return {
+            'by_module': [
+                {
+                    'invoice_type': item['invoice_type'],
+                    'avg_amount': float(item['avg_amount'] or 0),
+                    'count': item['count'],
+                    'total': float(item['total'] or 0)
+                }
+                for item in by_invoice_type
+            ],
+            'by_category': [
+                {
+                    'category': item['product__category__name'],
+                    'avg_price': float(item['avg_price'] or 0),
+                    'count': item['count'],
+                    'total': float(item['total'] or 0)
+                }
+                for item in by_category
+            ],
+            'by_product': [
+                {
+                    'product': item['product__name'],
+                    'avg_price': float(item['avg_price'] or 0),
+                    'times_sold': item['times_sold'],
+                    'total_revenue': float(item['total_revenue'] or 0)
+                }
+                for item in by_product
+            ]
+        }

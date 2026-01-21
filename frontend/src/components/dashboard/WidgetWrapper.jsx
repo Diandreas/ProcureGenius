@@ -11,9 +11,8 @@ const getWidgetTitle = (t, widgetCode) => {
     'financial_summary': t('widgets.financial_summary'),
     'alerts_notifications': t('widgets.alerts_notifications'),
     'cash_flow_summary': t('widgets.cash_flow_summary_title'),
-    // Clients (3)
+    // Clients (2)
     'top_clients': t('widgets.top_clients'),
-    'clients_at_risk': t('widgets.clients_at_risk'),
     'pareto_clients': t('widgets.pareto_clients_title'),
     // Products (3)
     'top_selling_products': t('widgets.top_selling_products'),
