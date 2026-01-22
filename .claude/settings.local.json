@@ -59,7 +59,20 @@
       "Bash(git commit:*)",
       "Bash(pip install:*)",
       "Bash(venvScriptspip install python-barcode pillow)",
-      "Bash(\"venv\\\\Scripts\\\\pip.exe\" install python-barcode pillow)"
+      "Bash(\"venv\\\\Scripts\\\\pip.exe\" install python-barcode pillow)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__get_console_message",
+      "mcp__chrome-devtools__select_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__press_key",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

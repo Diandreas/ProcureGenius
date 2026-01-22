@@ -385,347 +385,12 @@ function PurchaseOrderForm() {
       </Box>
       <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-      <Grid container spacing={isMobile ? 1.5 : 3}>
-        {/* Main Form */}
-        <Grid item xs={12} md={8}>
-          {/* Basic Information */}
-          <Card sx={{
-            mb: isMobile ? 1.5 : 3,
-            borderRadius: isMobile ? 2.5 : 2,
-            boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-            backdropFilter: isMobile ? 'blur(10px)' : 'none',
-            border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-          }}>
-            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontSize: isMobile ? '1rem' : undefined,
-                  mb: isMobile ? 1.5 : 2
-                }}
-              >
-                {t('purchaseOrders:labels.generalInformation')}
-              </Typography>
-              <Grid container spacing={isMobile ? 1.5 : 2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.poNumber')}
-                    value={formData.po_number}
-                    onChange={(e) => handleInputChange('po_number', e.target.value)}
-                    disabled={isEdit}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>{t('purchaseOrders:labels.statusField')}</InputLabel>
-                    <Select
-                      value={formData.status}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                      label={t('purchaseOrders:labels.statusField')}
-                    >
-                      <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
-                      <MenuItem value="pending">{t('purchaseOrders:status.pending')}</MenuItem>
-                      <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
-                      <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
-                      <MenuItem value="received">{t('purchaseOrders:status.received')}</MenuItem>
-                      <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.titleField')}
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.descriptionField')}
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    multiline
-                    rows={3}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                    <Autocomplete
-                      options={suppliers}
-                      getOptionLabel={(option) => option.name || ''}
-                      value={formData.supplier}
-                      onChange={(event, newValue) => handleInputChange('supplier', newValue)}
-                      fullWidth
-                      renderInput={(params) => (
-                        <TextField {...params} label={t('purchaseOrders:labels.supplierField')} required />
-                      )}
-                      renderOption={(props, option) => (
-                        <Box component="li" {...props}>
-                          <Business sx={{ mr: 2 }} />
-                          <Box>
-                            <Typography variant="body2">{option.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {option.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-                    />
-                    <IconButton
-                      onClick={() => setSupplierDialogOpen(true)}
-                      sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                        mt: 0.5
-                      }}
-                    >
-                      <Add />
-                    </IconButton>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.requiredDateField')}
-                    type="date"
-                    value={formData.required_date}
-                    onChange={(e) => handleInputChange('required_date', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.expectedDeliveryDate')}
-                    type="date"
-                    value={formData.expected_delivery_date}
-                    onChange={(e) => handleInputChange('expected_delivery_date', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    options={warehouses}
-                    getOptionLabel={(option) => option.name || ''}
-                    value={formData.delivery_warehouse}
-                    onChange={(event, newValue) => handleInputChange('delivery_warehouse', newValue)}
-                    fullWidth
-                    renderInput={(params) => (
-                      <TextField {...params} label={t('purchaseOrders:labels.deliveryWarehouse')} />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label={t('purchaseOrders:labels.deliveryAddress')}
-                    value={formData.delivery_address}
-                    onChange={(e) => handleInputChange('delivery_address', e.target.value)}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Items */}
-          <Card sx={{
-            borderRadius: isMobile ? 2.5 : 2,
-            boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-            backdropFilter: isMobile ? 'blur(10px)' : 'none',
-            border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-          }}>
-            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-              <Box sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: isMobile ? 1.5 : 2
-              }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontSize: isMobile ? '1rem' : undefined
-                  }}
-                >
-                  {t('purchaseOrders:labels.orderedItemsForm')}
-                </Typography>
-                <Button
-                  startIcon={<Add />}
-                  onClick={() => setAddItemDialogOpen(true)}
-                  variant="contained"
-                  size={isMobile ? 'small' : 'small'}
-                  sx={{
-                    borderRadius: isMobile ? 2 : 1,
-                    fontSize: isMobile ? '0.813rem' : undefined,
-                    py: isMobile ? 0.75 : undefined,
-                    px: isMobile ? 1.5 : undefined,
-                    minWidth: isMobile ? 'auto' : undefined
-                  }}
-                >
-                  {t('purchaseOrders:buttons.addItem')}
-                </Button>
-              </Box>
-
-              {items.length === 0 ? (
-                <Alert
-                  severity="info"
-                  sx={{
-                    borderRadius: isMobile ? 2 : 1,
-                    fontSize: isMobile ? '0.813rem' : undefined,
-                    py: isMobile ? 1 : undefined
-                  }}
-                >
-                  {t('purchaseOrders:messages.noItemsAlert')}
-                </Alert>
-              ) : (
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    borderRadius: isMobile ? 2 : 1,
-                    boxShadow: isMobile ? 'none' : undefined,
-                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none'
-                  }}
-                >
-                  <Table size={isMobile ? 'small' : 'medium'}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
-                          {t('purchaseOrders:columns.reference')}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
-                          {t('purchaseOrders:columns.description')}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
-                        >
-                          {t('purchaseOrders:columns.quantity')}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
-                        >
-                          {t('purchaseOrders:columns.unitPrice')}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
-                        >
-                          {t('purchaseOrders:columns.total')}
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
-                        >
-                          {t('purchaseOrders:columns.actions')}
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {items.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
-                            {item.product_reference || '-'}
-                          </TableCell>
-                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
-                            {item.description}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                          >
-                            {item.quantity}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                          >
-                            {formatCurrency(item.unit_price)}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                          >
-                            {formatCurrency(item.quantity * item.unit_price)}
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size={isMobile ? 'small' : 'small'}
-                              onClick={() => handleEditItem(index)}
-                              sx={{
-                                width: isMobile ? 32 : undefined,
-                                height: isMobile ? 32 : undefined,
-                                '& .MuiSvgIcon-root': {
-                                  fontSize: isMobile ? '1rem' : undefined
-                                }
-                              }}
-                            >
-                              <Edit />
-                            </IconButton>
-                            <IconButton
-                              size={isMobile ? 'small' : 'small'}
-                              onClick={() => handleDeleteItem(index)}
-                              color="error"
-                              sx={{
-                                width: isMobile ? 32 : undefined,
-                                height: isMobile ? 32 : undefined,
-                                '& .MuiSvgIcon-root': {
-                                  fontSize: isMobile ? '1rem' : undefined
-                                }
-                              }}
-                            >
-                              <Delete />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Sidebar */}
-        <Grid item xs={12} md={4}>
-          {/* Financial Summary */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {t('purchaseOrders:labels.finSummary')}
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>{t('purchaseOrders:labels.subtotalLabel')}</Typography>
-                  <Typography>{formatCurrency(subtotal)}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>{t('purchaseOrders:labels.taxesLabel')}</Typography>
-                  <Typography>{formatCurrency(taxAmount)}</Typography>
-                </Box>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">{t('purchaseOrders:labels.totalLabel')}</Typography>
-                  <Typography variant="h6" color="primary">
-                    {formatCurrency(total)}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Selected Supplier Info */}
-          {formData.supplier && (
+        <Grid container spacing={isMobile ? 1.5 : 3}>
+          {/* Main Form */}
+          <Grid item xs={12} md={8}>
+            {/* Basic Information */}
             <Card sx={{
+              mb: isMobile ? 1.5 : 3,
               borderRadius: isMobile ? 2.5 : 2,
               boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
               backdropFilter: isMobile ? 'blur(10px)' : 'none',
@@ -740,60 +405,395 @@ function PurchaseOrderForm() {
                     mb: isMobile ? 1.5 : 2
                   }}
                 >
-                  {t('purchaseOrders:labels.selectedSupplier')}
+                  {t('purchaseOrders:labels.generalInformation')}
                 </Typography>
+                <Grid container spacing={isMobile ? 1.5 : 2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.poNumber')}
+                      value={formData.po_number}
+                      onChange={(e) => handleInputChange('po_number', e.target.value)}
+                      disabled={isEdit}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>{t('purchaseOrders:labels.statusField')}</InputLabel>
+                      <Select
+                        value={formData.status}
+                        onChange={(e) => handleInputChange('status', e.target.value)}
+                        label={t('purchaseOrders:labels.statusField')}
+                      >
+                        <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
+                        <MenuItem value="pending">{t('purchaseOrders:status.pending')}</MenuItem>
+                        <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
+                        <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
+                        <MenuItem value="received">{t('purchaseOrders:status.received')}</MenuItem>
+                        <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.titleField')}
+                      value={formData.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.descriptionField')}
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                      <Autocomplete
+                        options={suppliers}
+                        getOptionLabel={(option) => option.name || ''}
+                        value={formData.supplier}
+                        onChange={(event, newValue) => handleInputChange('supplier', newValue)}
+                        fullWidth
+                        renderInput={(params) => (
+                          <TextField {...params} label={t('purchaseOrders:labels.supplierField')} required />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Business sx={{ mr: 2 }} />
+                            <Box>
+                              <Typography variant="body2">{option.name}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {option.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                      />
+                      <IconButton
+                        onClick={() => setSupplierDialogOpen(true)}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'primary.dark' },
+                          mt: 0.5
+                        }}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.requiredDateField')}
+                      type="date"
+                      value={formData.required_date}
+                      onChange={(e) => handleInputChange('required_date', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.expectedDeliveryDate')}
+                      type="date"
+                      value={formData.expected_delivery_date}
+                      onChange={(e) => handleInputChange('expected_delivery_date', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                      options={warehouses}
+                      getOptionLabel={(option) => option.name || ''}
+                      value={formData.delivery_warehouse}
+                      onChange={(event, newValue) => handleInputChange('delivery_warehouse', newValue)}
+                      fullWidth
+                      renderInput={(params) => (
+                        <TextField {...params} label={t('purchaseOrders:labels.deliveryWarehouse')} />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label={t('purchaseOrders:labels.deliveryAddress')}
+                      value={formData.delivery_address}
+                      onChange={(e) => handleInputChange('delivery_address', e.target.value)}
+                      multiline
+                      rows={2}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Items */}
+            <Card sx={{
+              borderRadius: isMobile ? 2.5 : 2,
+              boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: isMobile ? 'blur(10px)' : 'none',
+              border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            }}>
+              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                 <Box sx={{
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: isMobile ? 1.5 : 2,
                   mb: isMobile ? 1.5 : 2
                 }}>
-                  <Business color="primary" sx={{ fontSize: isMobile ? 20 : 24 }} />
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        fontWeight: 'medium',
-                        fontSize: isMobile ? '0.938rem' : undefined
-                      }}
-                    >
-                      {formData.supplier.name}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: isMobile ? '1rem' : undefined
+                    }}
+                  >
+                    {t('purchaseOrders:labels.orderedItemsForm')}
+                  </Typography>
+                  <Button
+                    startIcon={<Add />}
+                    onClick={() => setAddItemDialogOpen(true)}
+                    variant="contained"
+                    size={isMobile ? 'small' : 'small'}
+                    sx={{
+                      borderRadius: isMobile ? 2 : 1,
+                      fontSize: isMobile ? '0.813rem' : undefined,
+                      py: isMobile ? 0.75 : undefined,
+                      px: isMobile ? 1.5 : undefined,
+                      minWidth: isMobile ? 'auto' : undefined
+                    }}
+                  >
+                    {t('purchaseOrders:buttons.addItem')}
+                  </Button>
+                </Box>
+
+                {items.length === 0 ? (
+                  <Alert
+                    severity="info"
+                    sx={{
+                      borderRadius: isMobile ? 2 : 1,
+                      fontSize: isMobile ? '0.813rem' : undefined,
+                      py: isMobile ? 1 : undefined
+                    }}
+                  >
+                    {t('purchaseOrders:messages.noItemsAlert')}
+                  </Alert>
+                ) : (
+                  <TableContainer
+                    component={Paper}
+                    sx={{
+                      borderRadius: isMobile ? 2 : 1,
+                      boxShadow: isMobile ? 'none' : undefined,
+                      border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    <Table size={isMobile ? 'small' : 'medium'}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
+                            {t('purchaseOrders:columns.reference')}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}>
+                            {t('purchaseOrders:columns.description')}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                          >
+                            {t('purchaseOrders:columns.quantity')}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                          >
+                            {t('purchaseOrders:columns.unitPrice')}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                          >
+                            {t('purchaseOrders:columns.total')}
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{ fontSize: isMobile ? '0.813rem' : undefined, fontWeight: 600 }}
+                          >
+                            {t('purchaseOrders:columns.actions')}
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {items.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
+                              {item.product_reference || '-'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: isMobile ? '0.813rem' : undefined }}>
+                              {item.description}
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                            >
+                              {item.quantity}
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                            >
+                              {formatCurrency(item.unit_price)}
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                            >
+                              {formatCurrency(item.quantity * item.unit_price)}
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size={isMobile ? 'small' : 'small'}
+                                onClick={() => handleEditItem(index)}
+                                sx={{
+                                  width: isMobile ? 32 : undefined,
+                                  height: isMobile ? 32 : undefined,
+                                  '& .MuiSvgIcon-root': {
+                                    fontSize: isMobile ? '1rem' : undefined
+                                  }
+                                }}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                size={isMobile ? 'small' : 'small'}
+                                onClick={() => handleDeleteItem(index)}
+                                color="error"
+                                sx={{
+                                  width: isMobile ? 32 : undefined,
+                                  height: isMobile ? 32 : undefined,
+                                  '& .MuiSvgIcon-root': {
+                                    fontSize: isMobile ? '1rem' : undefined
+                                  }
+                                }}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Sidebar */}
+          <Grid item xs={12} md={4}>
+            {/* Financial Summary */}
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {t('purchaseOrders:labels.finSummary')}
+                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography>{t('purchaseOrders:labels.subtotalLabel')}</Typography>
+                    <Typography>{formatCurrency(subtotal)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography>{t('purchaseOrders:labels.taxesLabel')}</Typography>
+                    <Typography>{formatCurrency(taxAmount)}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="h6">{t('purchaseOrders:labels.totalLabel')}</Typography>
+                    <Typography variant="h6" color="primary">
+                      {formatCurrency(total)}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                    >
-                      {formData.supplier.email}
-                    </Typography>
-                    {formData.supplier.phone && (
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Selected Supplier Info */}
+            {formData.supplier && (
+              <Card sx={{
+                borderRadius: isMobile ? 2.5 : 2,
+                boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              }}>
+                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      fontSize: isMobile ? '1rem' : undefined,
+                      mb: isMobile ? 1.5 : 2
+                    }}
+                  >
+                    {t('purchaseOrders:labels.selectedSupplier')}
+                  </Typography>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: isMobile ? 1.5 : 2,
+                    mb: isMobile ? 1.5 : 2
+                  }}>
+                    <Business color="primary" sx={{ fontSize: isMobile ? 20 : 24 }} />
+                    <Box>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 'medium',
+                          fontSize: isMobile ? '0.938rem' : undefined
+                        }}
+                      >
+                        {formData.supplier.name}
+                      </Typography>
                       <Typography
                         variant="body2"
                         color="text.secondary"
                         sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
                       >
-                        {formData.supplier.phone}
+                        {formData.supplier.email}
                       </Typography>
-                    )}
+                      {formData.supplier.phone && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                        >
+                          {formData.supplier.phone}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => navigate(`/suppliers/${formData.supplier.id}`)}
-                  sx={{
-                    borderRadius: isMobile ? 2 : 1,
-                    fontSize: isMobile ? '0.875rem' : undefined,
-                    py: isMobile ? 1 : undefined
-                  }}
-                >
-                  {t('purchaseOrders:buttons.viewSupplier')}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => navigate(`/suppliers/${formData.supplier.id}`)}
+                    sx={{
+                      borderRadius: isMobile ? 2 : 1,
+                      fontSize: isMobile ? '0.875rem' : undefined,
+                      py: isMobile ? 1 : undefined
+                    }}
+                  >
+                    {t('purchaseOrders:buttons.viewSupplier')}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </Grid>
         </Grid>
-      </Grid>
       </Box>
 
       {/* Add/Edit Item Dialog with Product Selection and Creation */}
@@ -806,6 +806,7 @@ function PurchaseOrderForm() {
         onAddItem={handleAddItem}
         onCreateProduct={() => setProductDialogOpen(true)}
         editingItemIndex={editingItemIndex}
+        allowOutOfStock={true}
       />
 
       {/* Quick Create Dialogs */}

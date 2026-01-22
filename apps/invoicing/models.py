@@ -473,7 +473,9 @@ class Invoice(models.Model):
     PAYMENT_METHOD_CHOICES = [
         ('mobile_money', _('Mobile Money')),
         ('cash', _('Comptant')),
-        ('', _('Non spécifié')),  # Pour compatibilité avec données existantes
+        ('check', _('Chèque')),
+        ('bank_transfer', _('Virement bancaire')),
+        ('', _('Non spécifié')),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -482,13 +484,13 @@ class Invoice(models.Model):
     invoice_type = models.CharField(max_length=30, choices=INVOICE_TYPES, default='standard', verbose_name=_("Type de facture"))
     
     # Informations générales
-    title = models.CharField(max_length=200, verbose_name=_("Titre"))
+    title = models.CharField(max_length=200, blank=True, default='/', verbose_name=_("Titre"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
     
     # Dates
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
-    due_date = models.DateField(verbose_name=_("Date d'échéance"))
+    due_date = models.DateField(null=True, blank=True, verbose_name=_("Date d'échéance"))
     
     # Montants (simplifiés)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
@@ -535,7 +537,7 @@ class Invoice(models.Model):
 
         # Générer le titre automatiquement si vide
         if not self.title or self.title.strip() == '':
-            self.title = self._generate_invoice_title()
+            self.title = '/'
 
         super().save(*args, **kwargs)
 
@@ -567,7 +569,7 @@ class Invoice(models.Model):
         if self.total_amount < 0:
             raise ValidationError("Le montant total ne peut pas être négatif.")
         
-        # Vérifier la date d'échéance
+        # Vérifier la date d'échéance (uniquement si elle est fournie)
         if self.due_date and hasattr(self, 'created_at') and self.created_at:
             if self.due_date < self.created_at.date():
                 raise ValidationError("La date d'échéance ne peut pas être antérieure à la date de création.")

@@ -92,7 +92,10 @@ class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTempl
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lab_order = self.get_object()
-        
+
+        # Get quantity parameter (number of copies per label)
+        quantity = int(self.request.GET.get('quantity', 1))
+
         # Generator for barcodes
         # For each sample type needed, we generate a barcode
         # Group items by sample type to avoid duplicate labels if multiple tests use same sample
@@ -102,20 +105,24 @@ class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTempl
             if sample_type not in samples:
                 samples[sample_type] = []
             samples[sample_type].append(item.lab_test.test_code)
-        
+
         barcode_list = []
         for s_type, tests in samples.items():
             # Code: ORDER-SAMPLETYPE (ex: LAB-20231010-001-BLOOD)
             code_value = f"{lab_order.order_number}-{s_type[:3].upper()}"
-            barcode_list.append({
+            barcode_data = {
                 'type': s_type,
                 'code': code_value,
                 'tests': ", ".join(tests[:3]) + ("..." if len(tests)>3 else ""),
                 'patient_name': lab_order.patient.name,
                 'patient_dob': lab_order.patient.date_of_birth,
                 'barcode_base64': self._generate_barcode(code_value) # Helper method needed or use template tag
-            })
-            
+            }
+
+            # Add the barcode 'quantity' times
+            for _ in range(quantity):
+                barcode_list.append(barcode_data.copy())
+
         context['barcodes'] = barcode_list
         return context
         
@@ -151,13 +158,16 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
         context['organization'] = org_data
         context['logo_base64'] = self._get_logo_base64(org_data)
 
+        # Get quantity parameter (number of copies per label)
+        quantity = int(self.request.GET.get('quantity', 1))
+
         # Generate 1 label per test
         labels = []
         for item in lab_order.items.all():
             # Barcode value: ORDER_NUMBER-TEST_CODE
             barcode_value = f"{lab_order.order_number}-{item.lab_test.test_code or item.id}"
 
-            labels.append({
+            label_data = {
                 'test_code': item.lab_test.test_code or str(item.id)[:8],
                 'test_name': item.lab_test.name,
                 'container_type': item.lab_test.get_container_type_display() if item.lab_test.container_type else 'Tube',
@@ -169,7 +179,11 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
                 'order_date': lab_order.order_date,
                 'barcode_value': barcode_value,
                 'barcode_base64': self._generate_barcode(barcode_value)
-            })
+            }
+
+            # Add the label 'quantity' times
+            for _ in range(quantity):
+                labels.append(label_data.copy())
 
         context['labels'] = labels
         context['lab_order'] = lab_order
@@ -259,6 +273,7 @@ class LabBulkBenchSheetView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWea
         else:
             org_data = {
                 'company_name': self.request.user.organization.name,
+                'name': self.request.user.organization.name,  # Mapped Key
                 'brand_color': '#2563eb'
             }
 

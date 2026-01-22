@@ -80,6 +80,30 @@ const TYPE_CONFIG = {
   },
 };
 
+const UNIT_LABELS = {
+  'piece': 'Pièce',
+  'box': 'Boîte',
+  'kg': 'Kilogramme',
+  'l': 'Litre',
+  'm': 'Mètre',
+  'tablet': 'Comprimé',
+  'capsule': 'Gélule',
+  'blister': 'Plaquette',
+  'vial': 'Flacon',
+  'ampoule': 'Ampoule',
+  'sachet': 'Sachet',
+  'tube': 'Tube',
+  'kit': 'Kit',
+  'pack': 'Paquet',
+  'roll': 'Rouleau',
+  'set': 'Ensemble',
+  'dozen': 'Douzaine',
+  'g': 'Gramme',
+  'mg': 'Milligramme',
+  'ml': 'Millilitre',
+  'cm': 'Centimètre'
+};
+
 function ProductDetail() {
   const { t } = useTranslation(['products', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -277,72 +301,72 @@ function ProductDetail() {
         px: 2,
         py: 1
       }}>
-          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.success.main, 0.1),
-                color: 'success.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'success.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <PictureAsPdf sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.editProduct')}>
-            <IconButton
-              onClick={() => navigate(`/products/${id}/edit`)}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                color: 'primary.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <Edit sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.deleteProduct')}>
-            <IconButton
-              onClick={handleDelete}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.error.main, 0.1),
-                color: 'error.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <Delete sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
+        <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+          <IconButton
+            onClick={() => setPdfDialogOpen(true)}
+            size="small"
+            sx={{
+              bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+              color: 'success.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'success.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
+            }}
+          >
+            <PictureAsPdf sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={t('products:tooltips.editProduct')}>
+          <IconButton
+            onClick={() => navigate(`/products/${id}/edit`)}
+            size="small"
+            sx={{
+              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
+            }}
+          >
+            <Edit sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={t('products:tooltips.deleteProduct')}>
+          <IconButton
+            onClick={handleDelete}
+            size="small"
+            sx={{
+              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
+              color: 'error.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'error.main',
+                color: 'white',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease',
+              boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
+            }}
+          >
+            <Delete sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Tabs - Style mobile app */}
@@ -412,16 +436,16 @@ function ProductDetail() {
                   mb: isMobile ? 2 : 3,
                   background: theme => `linear-gradient(135deg, ${alpha(typeConfig.color, 0.05)} 0%, ${alpha(typeConfig.color, 0.02)} 100%)`,
                   border: isMobile ? `1px solid ${alpha(typeConfig.color, 0.1)}` : `2px solid ${alpha(typeConfig.color, 0.08)}`,
-                  boxShadow: theme => isMobile 
-                  ? `0 8px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}`
-                  : `0 4px 20px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
+                  boxShadow: theme => isMobile
+                    ? `0 8px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}`
+                    : `0 4px 20px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
                   backdropFilter: 'blur(20px)',
                   position: 'relative',
                   overflow: 'hidden',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
                     transform: isMobile ? 'translateY(-2px)' : 'translateY(-4px)',
-                    boxShadow: theme => isMobile 
+                    boxShadow: theme => isMobile
                       ? `0 12px 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.5 : 0.15)}`
                       : `0 8px 30px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}`
                   },
@@ -438,381 +462,313 @@ function ProductDetail() {
                 }}
               >
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{
-                  display: 'flex',
-                  gap: isMobile ? 1.5 : 2,
-                  mb: isMobile ? 2 : 3,
-                  alignItems: 'flex-start'
-                }}>
-                  <Avatar
-                    src={product.image}
-                    variant="rounded"
-                    sx={{
-                      width: isMobile ? 64 : 100,
-                      height: isMobile ? 64 : 100,
-                      bgcolor: typeConfig.color,
-                      borderRadius: isMobile ? 2 : 1,
-                      boxShadow: theme => isMobile 
-                        ? `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.15)}`
-                        : 'none',
-                    }}
-                  >
-                    <TypeIcon sx={{ fontSize: isMobile ? 32 : 48, color: 'white' }} />
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'h6' : 'h5'}
-                      fontWeight="bold"
-                      gutterBottom
+                  <Box sx={{
+                    display: 'flex',
+                    gap: isMobile ? 1.5 : 2,
+                    mb: isMobile ? 2 : 3,
+                    alignItems: 'flex-start'
+                  }}>
+                    <Avatar
+                      src={product.image}
+                      variant="rounded"
                       sx={{
-                        fontSize: isMobile ? '1.125rem' : undefined,
-                        lineHeight: isMobile ? 1.3 : undefined
+                        width: isMobile ? 64 : 100,
+                        height: isMobile ? 64 : 100,
+                        bgcolor: typeConfig.color,
+                        borderRadius: isMobile ? 2 : 1,
+                        boxShadow: theme => isMobile
+                          ? `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.15)}`
+                          : 'none',
                       }}
                     >
-                      {product.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                      sx={{ fontSize: isMobile ? '0.75rem' : undefined }}
-                    >
-                      {t('products:labels.reference')}: {product.reference || product.sku}
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      spacing={0.75}
-                      sx={{
-                        mt: isMobile ? 1 : 1,
-                        flexWrap: 'wrap',
-                        gap: 0.5
-                      }}
-                    >
-                      {/* Badge TYPE avec couleur et icône */}
-                      <Chip
-                        icon={<TypeIcon sx={{ color: 'white !important', fontSize: isMobile ? 14 : 16 }} />}
-                        label={typeConfig.label}
-                        size="small"
+                      <TypeIcon sx={{ fontSize: isMobile ? 32 : 48, color: 'white' }} />
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant={isMobile ? 'h6' : 'h5'}
+                        fontWeight="bold"
+                        gutterBottom
                         sx={{
-                          backgroundColor: typeConfig.color,
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: isMobile ? '0.688rem' : undefined,
-                          height: isMobile ? 24 : undefined,
-                          '& .MuiChip-icon': {
-                            marginLeft: '6px',
-                            marginRight: '-4px'
-                          }
+                          fontSize: isMobile ? '1.125rem' : undefined,
+                          lineHeight: isMobile ? 1.3 : undefined
                         }}
-                      />
-                      <Chip
-                        label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
-                        color={product.is_active ? 'success' : 'default'}
-                        size="small"
+                      >
+                        {product.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                        sx={{ fontSize: isMobile ? '0.75rem' : undefined }}
+                      >
+                        {t('products:labels.reference')}: {product.reference || product.sku}
+                      </Typography>
+                      <Stack
+                        direction="row"
+                        spacing={0.75}
                         sx={{
-                          fontSize: isMobile ? '0.688rem' : undefined,
-                          height: isMobile ? 24 : undefined
+                          mt: isMobile ? 1 : 1,
+                          flexWrap: 'wrap',
+                          gap: 0.5
                         }}
-                      />
-                      {product.category && (
+                      >
+                        {/* Badge TYPE avec couleur et icône */}
                         <Chip
-                          icon={<Category sx={{ fontSize: isMobile ? 12 : 16 }} />}
-                          label={product.category.name}
-                          variant="outlined"
+                          icon={<TypeIcon sx={{ color: 'white !important', fontSize: isMobile ? 14 : 16 }} />}
+                          label={typeConfig.label}
+                          size="small"
+                          sx={{
+                            backgroundColor: typeConfig.color,
+                            color: 'white',
+                            fontWeight: 600,
+                            fontSize: isMobile ? '0.688rem' : undefined,
+                            height: isMobile ? 24 : undefined,
+                            '& .MuiChip-icon': {
+                              marginLeft: '6px',
+                              marginRight: '-4px'
+                            }
+                          }}
+                        />
+                        <Chip
+                          label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
+                          color={product.is_active ? 'success' : 'default'}
                           size="small"
                           sx={{
                             fontSize: isMobile ? '0.688rem' : undefined,
-                            height: isMobile ? 24 : undefined,
-                            borderRadius: isMobile ? 1.5 : undefined
+                            height: isMobile ? 24 : undefined
                           }}
                         />
-                      )}
-                    </Stack>
+                        {product.category && (
+                          <Chip
+                            icon={<Category sx={{ fontSize: isMobile ? 12 : 16 }} />}
+                            label={product.category.name}
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              fontSize: isMobile ? '0.688rem' : undefined,
+                              height: isMobile ? 24 : undefined,
+                              borderRadius: isMobile ? 1.5 : undefined
+                            }}
+                          />
+                        )}
+                      </Stack>
+                    </Box>
                   </Box>
-                </Box>
 
-                <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: 2 }} />
 
-                {/* Description */}
-                {product.description && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" fontWeight="600" gutterBottom>
-                      {t('products:labels.description')}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {product.description}
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* Informations détaillées - Style moderne */}
-                <Grid container spacing={isMobile ? 1.5 : 2.5}>
-                  {product.supplier_name && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                          }
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'primary.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <Business sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('products:labels.supplier')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
-                            sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'text.primary',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            {product.supplier_name}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
+                  {/* Description */}
+                  {product.description && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                        {t('products:labels.description')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {product.description}
+                      </Typography>
+                    </Box>
                   )}
 
-                  {product.warehouse_name && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.info.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.info.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
-                          }
-                        }}
-                      >
+                  {/* Informations détaillées - Style moderne */}
+                  <Grid container spacing={isMobile ? 1.5 : 2.5}>
+                    {product.supplier_name && (
+                      <Grid item xs={12} sm={6}>
                         <Box
                           sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'info.main',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
+                            gap: isMobile ? 1.5 : 2,
+                            p: isMobile ? 1.5 : 2,
+                            borderRadius: 2,
+                            bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
+                              transform: 'translateY(-2px)',
+                              boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                            }
                           }}
                         >
-                          <Warehouse sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('products:labels.warehouse')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
+                          <Box
                             sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'text.primary',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              p: 1,
+                              borderRadius: 1.5,
+                              bgcolor: 'primary.main',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
                             }}
                           >
-                            {product.warehouse_code} - {product.warehouse_name}
-                          </Typography>
+                            <Business sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              fontWeight="500"
+                              sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                            >
+                              {t('products:labels.supplier')}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight="600"
+                              sx={{
+                                mt: 0.5,
+                                fontSize: isMobile ? '0.875rem' : '0.938rem',
+                                color: 'text.primary',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {product.supplier_name}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </Grid>
-                  )}
+                      </Grid>
+                    )}
 
-                  {product.lead_time_days && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.warning.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.warning.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.warning.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.warning.main, 0.2)}`
-                          }
-                        }}
-                      >
+                    {product.warehouse_name && (
+                      <Grid item xs={12} sm={6}>
                         <Box
                           sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'warning.main',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
+                            gap: isMobile ? 1.5 : 2,
+                            p: isMobile ? 1.5 : 2,
+                            borderRadius: 2,
+                            bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              bgcolor: theme => alpha(theme.palette.info.main, 0.12),
+                              transform: 'translateY(-2px)',
+                              boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                            }
                           }}
                         >
-                          <LocalShipping sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('products:labels.leadTime')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
+                          <Box
                             sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'text.primary'
+                              p: 1,
+                              borderRadius: 1.5,
+                              bgcolor: 'info.main',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
                             }}
                           >
-                            {product.lead_time_days} {t('products:labels.days')}
-                          </Typography>
+                            <Warehouse sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              fontWeight="500"
+                              sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
+                            >
+                              {t('products:labels.warehouse')}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight="600"
+                              sx={{
+                                mt: 0.5,
+                                fontSize: isMobile ? '0.875rem' : '0.938rem',
+                                color: 'text.primary',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {product.warehouse_code} - {product.warehouse_name}
+                            </Typography>
+                          </Box>
                         </Box>
+                      </Grid>
+                    )}
+
+                    {/* Unités et Conversion */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1, opacity: 0.6 }} >
+                        <Chip label="Unités & Stock" size="small" />
+                      </Divider>
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                        <Typography variant="caption" color="text.secondary" display="block" gutterBottom>Unités</Typography>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Chip label={UNIT_LABELS[product.sell_unit] || product.sell_unit || 'Pièce'} size="small" color="primary" variant="outlined" />
+                          <Typography variant="body2" color="text.secondary">→</Typography>
+                          <Chip label={UNIT_LABELS[product.base_unit] || product.base_unit || 'Pièce'} size="small" color="secondary" variant="outlined" />
+                        </Stack>
+                        {product.conversion_factor > 1 && (
+                          <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+                            1 {UNIT_LABELS[product.sell_unit] || product.sell_unit} = {product.conversion_factor} {UNIT_LABELS[product.base_unit] || product.base_unit}s
+                          </Typography>
+                        )}
                       </Box>
                     </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-            </Card>
 
-            {/* Prix et statistiques - Style mobile app compact */}
-            <Grid container spacing={isMobile ? 1 : 2}>
-              <Grid item xs={6}>
-                <Card sx={{
-                  borderRadius: isMobile ? 3 : 2,
-                  background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
-                  border: '1px solid',
-                  borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                  boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&:hover': {
-                    transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                    boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
-                  },
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                }}>
-                  <CardContent sx={{
-                    textAlign: 'center',
-                    p: isMobile ? 2 : 3,
-                    '&:last-child': { pb: isMobile ? 2 : 3 }
-                  }}>
-                    <AttachMoney sx={{
-                      fontSize: isMobile ? 28 : 36,
-                      color: 'primary.main',
-                      mb: isMobile ? 1 : 1.5,
-                      opacity: 0.9
-                    }} />
-                    <Typography
-                      variant={isMobile ? 'h6' : 'h4'}
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: isMobile ? '1.125rem' : undefined,
-                        background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}
-                    >
-                      {formatCurrency(product.price)}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{
-                        fontSize: isMobile ? '0.75rem' : undefined,
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      {t('products:stats.sellingPrice')}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                    {product.lead_time_days && (
+                      <Grid item xs={12} sm={4}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: theme => alpha(theme.palette.warning.main, 0.05),
+                            border: '1px solid',
+                            borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                          }}
+                        >
+                          <LocalShipping sx={{ color: 'warning.main' }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Délai</Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              {product.lead_time_days} jours
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
 
-              {product.cost_price > 0 && (
+                    {product.warehouse_name && (
+                      <Grid item xs={12} sm={4}>
+                        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Warehouse color="action" fontSize="small" />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" display="block">Entrepôt</Typography>
+                            <Typography variant="body2" fontWeight="500">{product.warehouse_name}</Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* Prix et statistiques - Style mobile app compact */}
+              <Grid container spacing={isMobile ? 1 : 2}>
                 <Grid item xs={6}>
                   <Card sx={{
                     borderRadius: isMobile ? 3 : 2,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
                     border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.info.main, 0.2),
-                    boxShadow: theme => isMobile 
-                      ? `0 4px 16px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`
-                      : 'none',
+                    borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: theme => isMobile 
-                        ? `0 8px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.5 : 0.15)}`
-                        : `0 4px 16px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}`
+                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -823,7 +779,7 @@ function ProductDetail() {
                       left: 0,
                       right: 0,
                       height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
+                      background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
                       borderRadius: '2px 2px 0 0'
                     }
                   }}>
@@ -834,7 +790,7 @@ function ProductDetail() {
                     }}>
                       <AttachMoney sx={{
                         fontSize: isMobile ? 28 : 36,
-                        color: 'info.main',
+                        color: 'primary.main',
                         mb: isMobile ? 1 : 1.5,
                         opacity: 0.9
                       }} />
@@ -843,13 +799,13 @@ function ProductDetail() {
                         sx={{
                           fontWeight: 700,
                           fontSize: isMobile ? '1.125rem' : undefined,
-                          background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+                          background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                           backgroundClip: 'text',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent'
                         }}
                       >
-                        {formatCurrency(product.cost_price)}
+                        {formatCurrency(product.price)}
                       </Typography>
                       <Typography
                         variant="caption"
@@ -861,26 +817,28 @@ function ProductDetail() {
                           letterSpacing: '0.5px'
                         }}
                       >
-                        {t('products:stats.costPrice')}
+                        {t('products:stats.sellingPrice')}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
-              )}
 
-              {statistics?.sales_summary && (
-                <>
+                {product.cost_price > 0 && (
                   <Grid item xs={6}>
                     <Card sx={{
                       borderRadius: isMobile ? 3 : 2,
-                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
                       border: '1px solid',
-                      borderColor: theme => alpha(theme.palette.success.main, 0.2),
-                      boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                      borderColor: theme => alpha(theme.palette.info.main, 0.2),
+                      boxShadow: theme => isMobile
+                        ? `0 4px 16px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`
+                        : 'none',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        boxShadow: theme => isMobile
+                          ? `0 8px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.5 : 0.15)}`
+                          : `0 4px 16px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}`
                       },
                       position: 'relative',
                       overflow: 'hidden',
@@ -891,7 +849,7 @@ function ProductDetail() {
                         left: 0,
                         right: 0,
                         height: 3,
-                        background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                        background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
                         borderRadius: '2px 2px 0 0'
                       }
                     }}>
@@ -900,9 +858,9 @@ function ProductDetail() {
                         p: isMobile ? 2 : 3,
                         '&:last-child': { pb: isMobile ? 2 : 3 }
                       }}>
-                        <Receipt sx={{
+                        <AttachMoney sx={{
                           fontSize: isMobile ? 28 : 36,
-                          color: 'success.main',
+                          color: 'info.main',
                           mb: isMobile ? 1 : 1.5,
                           opacity: 0.9
                         }} />
@@ -911,13 +869,13 @@ function ProductDetail() {
                           sx={{
                             fontWeight: 700,
                             fontSize: isMobile ? '1.125rem' : undefined,
-                            background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                            background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
                             backgroundClip: 'text',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent'
                           }}
                         >
-                          {statistics.sales_summary.total_invoices || 0}
+                          {formatCurrency(product.cost_price)}
                         </Typography>
                         <Typography
                           variant="caption"
@@ -929,227 +887,295 @@ function ProductDetail() {
                             letterSpacing: '0.5px'
                           }}
                         >
-                          {t('products:tabs.invoices')}
+                          {t('products:stats.costPrice')}
                         </Typography>
                       </CardContent>
                     </Card>
                   </Grid>
+                )}
 
-                  <Grid item xs={6}>
-                    <Card sx={{
-                      borderRadius: isMobile ? 3 : 2,
-                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
-                      border: '1px solid',
-                      borderColor: theme => alpha(theme.palette.warning.main, 0.2),
-                      boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      '&:hover': {
-                        transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
-                      },
-                      position: 'relative',
-                      overflow: 'hidden',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 3,
-                        background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
-                        borderRadius: '2px 2px 0 0'
-                      }
-                    }}>
-                      <CardContent sx={{
-                        textAlign: 'center',
-                        p: isMobile ? 2 : 3,
-                        '&:last-child': { pb: isMobile ? 2 : 3 }
+                {statistics?.sales_summary && (
+                  <>
+                    <Grid item xs={6}>
+                      <Card sx={{
+                        borderRadius: isMobile ? 3 : 2,
+                        background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                        boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        },
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                          borderRadius: '2px 2px 0 0'
+                        }
                       }}>
-                        <TrendingUp sx={{
-                          fontSize: isMobile ? 28 : 36,
-                          color: 'warning.main',
-                          mb: isMobile ? 1 : 1.5,
-                          opacity: 0.9
-                        }} />
-                        <Typography
-                          variant={isMobile ? 'body2' : 'h4'}
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: isMobile ? '0.875rem' : undefined,
-                            wordBreak: 'break-word',
-                            background: theme => `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                            backgroundClip: 'text',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                          }}
-                        >
-                          {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{
-                            fontSize: isMobile ? '0.75rem' : undefined,
-                            fontWeight: 500,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}
-                        >
-                          {t('products:stats.totalSales')}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </>
-              )}
-            </Grid>
-          </Grid>
+                        <CardContent sx={{
+                          textAlign: 'center',
+                          p: isMobile ? 2 : 3,
+                          '&:last-child': { pb: isMobile ? 2 : 3 }
+                        }}>
+                          <Receipt sx={{
+                            fontSize: isMobile ? 28 : 36,
+                            color: 'success.main',
+                            mb: isMobile ? 1 : 1.5,
+                            opacity: 0.9
+                          }} />
+                          <Typography
+                            variant={isMobile ? 'h6' : 'h4'}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: isMobile ? '1.125rem' : undefined,
+                              background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent'
+                            }}
+                          >
+                            {statistics.sales_summary.total_invoices || 0}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: isMobile ? '0.75rem' : undefined,
+                              fontWeight: 500,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}
+                          >
+                            {t('products:tabs.invoices')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
 
-          {/* Sidebar */}
-          <Grid item xs={12} md={4}>
-            {/* Stock - Style mobile app */}
-            {product.stock_quantity !== null && product.stock_quantity !== undefined && (
-              <Card sx={{
-                borderRadius: isMobile ? 2.5 : 2,
-                mb: isMobile ? 1.5 : 3,
-                boxShadow: theme => isMobile 
-                  ? `0 2px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`
-                  : `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.1)}`,
-                backdropFilter: isMobile ? 'blur(10px)' : 'none',
-                border: theme => isMobile 
-                  ? `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.3 : 0.5)}`
-                  : 'none',
-              }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: isMobile ? 1.5 : 2
-                  }}>
-                    <Inventory sx={{
-                      color: 'primary.main',
-                      fontSize: isMobile ? 20 : 24
-                    }} />
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight="600"
-                      sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
-                    >
-                      {t('products:labels.stock')}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      textAlign: 'center',
-                      p: isMobile ? 1.5 : 2,
-                      borderRadius: isMobile ? 2 : 1,
-                      bgcolor: theme => {
-                        const color = theme.palette[stockStatus]?.main || theme.palette.primary.main;
-                        return alpha(color, theme.palette.mode === 'dark' ? 0.15 : 0.1);
-                      },
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: isMobile ? 'translateY(-1px)' : 'none',
-                        boxShadow: theme => isMobile 
-                          ? `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-                          : 'none'
-                      }
-                    }}
-                  >
-                    <Typography
-                      variant={isMobile ? "h4" : "h3"}
-                      color={`${stockStatus}.main`}
-                      fontWeight="bold"
-                      sx={{ fontSize: isMobile ? '1.5rem' : undefined }}
-                    >
-                      {product.stock_quantity}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
+                    <Grid item xs={6}>
+                      <Card sx={{
+                        borderRadius: isMobile ? 3 : 2,
+                        background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.warning.main, 0.2),
+                        boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
+                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        },
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                          borderRadius: '2px 2px 0 0'
+                        }
+                      }}>
+                        <CardContent sx={{
+                          textAlign: 'center',
+                          p: isMobile ? 2 : 3,
+                          '&:last-child': { pb: isMobile ? 2 : 3 }
+                        }}>
+                          <TrendingUp sx={{
+                            fontSize: isMobile ? 28 : 36,
+                            color: 'warning.main',
+                            mb: isMobile ? 1 : 1.5,
+                            opacity: 0.9
+                          }} />
+                          <Typography
+                            variant={isMobile ? 'body2' : 'h4'}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: isMobile ? '0.875rem' : undefined,
+                              wordBreak: 'break-word',
+                              background: theme => `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent'
+                            }}
+                          >
+                            {formatCurrency(statistics.sales_summary.total_sales_amount || 0)}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: isMobile ? '0.75rem' : undefined,
+                              fontWeight: 500,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}
+                          >
+                            {t('products:stats.totalSales')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+            </Grid>
+
+            {/* Sidebar */}
+            <Grid item xs={12} md={4}>
+              {/* Stock - Style mobile app */}
+              {product.stock_quantity !== null && product.stock_quantity !== undefined && (
+                <Card sx={{
+                  borderRadius: isMobile ? 2.5 : 2,
+                  mb: isMobile ? 1.5 : 3,
+                  boxShadow: theme => isMobile
+                    ? `0 2px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`
+                    : `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.1)}`,
+                  backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                  border: theme => isMobile
+                    ? `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.3 : 0.5)}`
+                    : 'none',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: isMobile ? 1.5 : 2
+                    }}>
+                      <Inventory sx={{
+                        color: 'primary.main',
+                        fontSize: isMobile ? 20 : 24
+                      }} />
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="600"
+                        sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
+                      >
+                        {t('products:labels.stock')}
+                      </Typography>
+                    </Box>
+                    <Box
                       sx={{
-                        mt: 0.5,
-                        fontSize: isMobile ? '0.75rem' : undefined
+                        textAlign: 'center',
+                        p: isMobile ? 1.5 : 2,
+                        borderRadius: isMobile ? 2 : 1,
+                        bgcolor: theme => {
+                          const color = theme.palette[stockStatus]?.main || theme.palette.primary.main;
+                          return alpha(color, theme.palette.mode === 'dark' ? 0.15 : 0.1);
+                        },
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: isMobile ? 'translateY(-1px)' : 'none',
+                          boxShadow: theme => isMobile
+                            ? `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
+                            : 'none'
+                        }
                       }}
                     >
-                      {product.stock_quantity === 0 ? t('products:stockStatus.outOfStock') :
-                        product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
-                    </Typography>
-                  </Box>
+                      <Typography
+                        variant={isMobile ? "h4" : "h3"}
+                        color={`${stockStatus}.main`}
+                        fontWeight="bold"
+                        sx={{ fontSize: isMobile ? '1.5rem' : undefined }}
+                      >
+                        {product.stock_quantity}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mt: 0.5,
+                          fontSize: isMobile ? '0.75rem' : undefined
+                        }}
+                      >
+                        {product.stock_quantity === 0 ? t('products:stockStatus.outOfStock') :
+                          product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Dates - Style mobile app */}
+              <Card sx={{
+                borderRadius: isMobile ? 2.5 : 2,
+                boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              }}>
+                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="600"
+                    gutterBottom
+                    sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
+                  >
+                    {t('products:labels.systemInfo')}
+                  </Typography>
+                  <Stack spacing={isMobile ? 1 : 1.5} sx={{ mt: isMobile ? 1.5 : 2 }}>
+                    <Box sx={{
+                      p: isMobile ? 1 : 0,
+                      borderRadius: isMobile ? 1.5 : 0,
+                      bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                      >
+                        {t('products:labels.createdOn')}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="500"
+                        sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                      >
+                        {formatDate(product.created_at)}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{
+                      borderColor: theme => isMobile
+                        ? alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.5 : 1)
+                        : undefined
+                    }} />
+                    <Box sx={{
+                      p: isMobile ? 1 : 0,
+                      borderRadius: isMobile ? 1.5 : 0,
+                      bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
+                      >
+                        {t('products:labels.updatedOn')}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="500"
+                        sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
+                      >
+                        {formatDate(product.updated_at)}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </CardContent>
               </Card>
-            )}
-
-            {/* Dates - Style mobile app */}
-            <Card sx={{
-              borderRadius: isMobile ? 2.5 : 2,
-              boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-              backdropFilter: isMobile ? 'blur(10px)' : 'none',
-              border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-            }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="600"
-                  gutterBottom
-                  sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
-                >
-                  {t('products:labels.systemInfo')}
-                </Typography>
-                <Stack spacing={isMobile ? 1 : 1.5} sx={{ mt: isMobile ? 1.5 : 2 }}>
-                  <Box sx={{
-                    p: isMobile ? 1 : 0,
-                    borderRadius: isMobile ? 1.5 : 0,
-                    bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
-                    transition: 'all 0.2s ease'
-                  }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
-                    >
-                      {t('products:labels.createdOn')}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="500"
-                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                    >
-                      {formatDate(product.created_at)}
-                    </Typography>
-                  </Box>
-                  <Divider sx={{
-                    borderColor: theme => isMobile 
-                      ? alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.5 : 1)
-                      : undefined
-                  }} />
-                  <Box sx={{
-                    p: isMobile ? 1 : 0,
-                    borderRadius: isMobile ? 1.5 : 0,
-                    bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
-                    transition: 'all 0.2s ease'
-                  }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: isMobile ? '0.688rem' : undefined }}
-                    >
-                      {t('products:labels.updatedOn')}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="500"
-                      sx={{ fontSize: isMobile ? '0.813rem' : undefined }}
-                    >
-                      {formatDate(product.updated_at)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+            </Grid>
           </Grid>
-        </Grid>
         </Box>
       )}
 

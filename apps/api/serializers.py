@@ -518,7 +518,6 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     # Hide fields for disabled modules
     module_dependent_fields = {
         'purchase-orders': ['purchase_order', 'purchase_order_number'],
-        'clients': ['client', 'client_name', 'client_detail'],
     }
 
     class Meta:

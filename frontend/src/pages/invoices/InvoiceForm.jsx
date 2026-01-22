@@ -54,6 +54,30 @@ import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 
+const UNIT_LABELS = {
+  'piece': 'Pièce',
+  'box': 'Boîte',
+  'kg': 'Kilogramme',
+  'l': 'Litre',
+  'm': 'Mètre',
+  'tablet': 'Comprimé',
+  'capsule': 'Gélule',
+  'blister': 'Plaquette',
+  'vial': 'Flacon',
+  'ampoule': 'Ampoule',
+  'sachet': 'Sachet',
+  'tube': 'Tube',
+  'kit': 'Kit',
+  'pack': 'Paquet',
+  'roll': 'Rouleau',
+  'set': 'Ensemble',
+  'dozen': 'Douzaine',
+  'g': 'Gramme',
+  'mg': 'Milligramme',
+  'ml': 'Millilitre',
+  'cm': 'Centimètre'
+};
+
 function InvoiceForm() {
   const { t } = useTranslation(['invoices', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -74,11 +98,17 @@ function InvoiceForm() {
     title: '',
     description: '',
     client: null,
-    issue_date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
-    status: 'paid'
+    status: 'paid', // Default to paid
+    payment_method: 'cash' // Default to cash
   });
+
+  const PAYMENT_METHODS = [
+    { value: 'cash', label: t('invoices:paymentMethods.cash', 'Espèces') },
+    { value: 'mobile_money', label: t('invoices:paymentMethods.mobileMoney', 'Mobile Money') },
+    { value: 'check', label: t('invoices:paymentMethods.check', 'Chèque') },
+    { value: 'bank_transfer', label: t('invoices:paymentMethods.bankTransfer', 'Virement bancaire') }
+  ];
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(-1);
@@ -87,7 +117,8 @@ function InvoiceForm() {
     quantity: 1,
     unit_price: 0,
     product_reference: '',
-    product: null
+    product: null,
+    unit_of_measure: 'piece'
   });
 
   // Quick Create states
@@ -146,7 +177,8 @@ function InvoiceForm() {
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate || 20,
-        status: invoice.status || 'draft'
+        status: invoice.status || 'paid',
+        payment_method: invoice.payment_method || 'cash'
       });
       setItems(invoice.items || []);
     } catch (error) {
@@ -221,7 +253,7 @@ function InvoiceForm() {
       setItems(prev => [...prev, item]);
     }
 
-    setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
+    setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, unit_of_measure: 'piece' });
     setItemDialogOpen(false);
   };
 
@@ -274,6 +306,7 @@ function InvoiceForm() {
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
+          unit_of_measure: item.unit_of_measure,
           product_reference: item.product_reference,
           total_price: item.total_price
         })),
@@ -348,7 +381,7 @@ function InvoiceForm() {
         </Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', lineHeight: 1.4 }}>
-            {item.quantity} × {formatCurrency(item.unit_price)}
+            {item.quantity} {UNIT_LABELS[item.unit_of_measure] || item.unit_of_measure} × {formatCurrency(item.unit_price)}
           </Typography>
           <Stack direction="row" spacing={0.5}>
             <IconButton
@@ -479,426 +512,46 @@ function InvoiceForm() {
         </Stack>
       </Box>
       <Box sx={{ px: isMobile ? 2 : 0 }}>
-      <form onSubmit={handleSubmit}>
-        {isMobile ? (
-          <Box>
-            {/* Basic Information Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('invoices:labels.generalInformation')}
-                </Typography>
-                <Stack spacing={2}>
-                  <TextField
-                    fullWidth
-                    label={t('invoices:labels.invoiceTitleField')}
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    size="small"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                  <TextField
-                    fullWidth
-                    label={t('invoices:labels.description')}
-                    multiline
-                    rows={2}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    size="small"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                  <Grid container spacing={1}>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:fields.issueDate')}
-                        type="date"
-                        value={formData.issue_date}
-                        onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        required
-                        size="small"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.dueDateLabel')}
-                        type="date"
-                        value={formData.due_date}
-                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        size="small"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              </CardContent>
-            </Card>
-
-            {/* Client Selection Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                    {t('invoices:labels.client')}
+        <form onSubmit={handleSubmit}>
+          {isMobile ? (
+            <Box>
+              {/* Basic Information Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                    {t('invoices:labels.generalInformation')}
                   </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => setClientDialogOpen(true)}
-                    sx={{
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': { bgcolor: 'primary.dark' },
-                      width: 28,
-                      height: 28
-                    }}
-                  >
-                    <Add fontSize="small" />
-                  </IconButton>
-                </Box>
-                <Autocomplete
-                  options={clients}
-                  getOptionLabel={(option) => option.name || ''}
-                  value={formData.client}
-                  onChange={(event, newValue) => {
-                    setFormData({ ...formData, client: newValue });
-                  }}
-                  renderInput={(params) => (
+                  <Stack spacing={2}>
                     <TextField
-                      {...params}
-                      label="Sélectionner un client"
+                      fullWidth
+                      label={t('invoices:labels.invoiceTitleField')}
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      required
                       size="small"
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
-                  )}
-                />
-                {formData.client && (
-                  <Box sx={{ mt: 1.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {formData.client.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {formData.client.email}
-                    </Typography>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Items Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                    {t('invoices:labels.billedItems')}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => {
-                      setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
-                      setEditingItemIndex(-1);
-                      setItemDialogOpen(true);
-                    }}
-                    size="small"
-                    sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-                  >
-                    {t('invoices:buttons.add')}
-                  </Button>
-                </Box>
-                {items.map((item, index) => (
-                  <MobileItemCard key={index} item={item} index={index} />
-                ))}
-                {items.length === 0 && (
-                  <Typography color="text.secondary" sx={{ fontSize: '0.875rem', textAlign: 'center', py: 2 }}>
-                    {t('invoices:messages.noItemsAddedMessage')}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Financial Summary Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('invoices:labels.financialSummary')}
-                </Typography>
-                <Grid container spacing={1}>
-                  <Grid item xs={4}>
-                    <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
-                      <Typography variant="h6" color="primary" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatCurrency(calculateSubtotal())}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {t('invoices:labels.subtotal')}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'warning.50', borderRadius: 1 }}>
-                      <Typography variant="h6" color="warning.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatCurrency(calculateTaxAmount())}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
-                      <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatCurrency(calculateTotal())}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {t('invoices:labels.totalTTC')}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-                <TextField
-                  fullWidth
-                  label={t('invoices:labels.vatRateField')}
-                  type="number"
-                  value={formData.tax_rate}
-                  onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                  inputProps={{ min: 0, max: 100, step: 0.1 }}
-                  size="small"
-                  sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Status Mobile */}
-            <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('common:labels.status')}
-                </Typography>
-                <FormControl fullWidth size="small">
-                  <InputLabel>{t('invoices:labels.invoiceStatusField')}</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label={t('invoices:labels.invoiceStatusField')}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
-                    <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
-                    <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
-                    <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
-                  </Select>
-                </FormControl>
-              </CardContent>
-            </Card>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {/* Left Column */}
-            <Grid item xs={12} md={8}>
-              {/* Basic Information */}
-              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    {t('invoices:labels.generalInformation')}
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.invoiceTitleField')}
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.description')}
-                        multiline
-                        rows={3}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:fields.issueDate')}
-                        type="date"
-                        value={formData.issue_date}
-                        onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.dueDateLabel')}
-                        type="date"
-                        value={formData.due_date}
-                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                  </Grid>
+                    <TextField
+                      fullWidth
+                      label={t('invoices:labels.description')}
+                      multiline
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      size="small"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                    {/* Dates hidden for cleaner UI, handled in background */}
+                  </Stack>
                 </CardContent>
               </Card>
 
-              {/* Items */}
-              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Articles
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => {
-                        setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
-                        setEditingItemIndex(-1);
-                        setItemDialogOpen(true);
-                      }}
-                      sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      {t('invoices:buttons.addItem')}
-                    </Button>
-                  </Box>
-
-                  <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 600 }}>{t('invoices:columns.actions')}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {items.map((item, index) => (
-                          <TableRow key={index} hover>
-                            <TableCell>{item.product_reference || '-'}</TableCell>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell align="right">{item.quantity}</TableCell>
-                            <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(item.total_price)}</TableCell>
-                            <TableCell align="center">
-                              <Stack direction="row" spacing={1} justifyContent="center">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEditItem(index)}
-                                  sx={{
-                                    bgcolor: 'secondary.light',
-                                    color: 'secondary.contrastText',
-                                    '&:hover': { bgcolor: 'secondary.main' }
-                                  }}
-                                >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleDeleteItem(index)}
-                                  sx={{
-                                    bgcolor: 'error.light',
-                                    color: 'error.contrastText',
-                                    '&:hover': { bgcolor: 'error.main' }
-                                  }}
-                                >
-                                  <Delete fontSize="small" />
-                                </IconButton>
-                              </Stack>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {items.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                              <Typography color="text.secondary">
-                                {t('invoices:messages.noItemsDesktopMessage')}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-
-              {/* Financial Summary */}
-              <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Résumé financier
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={3}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                        <Typography variant="h5" color="primary" sx={{ fontWeight: 600 }}>
-                          {formatCurrency(calculateSubtotal())}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Sous-total
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
-                        <Typography variant="h5" color="warning.main" sx={{ fontWeight: 600 }}>
-                          {formatCurrency(calculateTaxAmount())}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          TVA ({formData.tax_rate}%)
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
-                        <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>
-                          {formatCurrency(calculateTotal())}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Total TTC
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.vatRateField')}
-                        type="number"
-                        value={formData.tax_rate}
-                        onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                        inputProps={{ min: 0, max: 100, step: 0.1 }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Right Column */}
-            <Grid item xs={12} md={4}>
-              {/* Client Selection */}
-              <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Client
+              {/* Client Selection Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                      {t('invoices:labels.client')}
                     </Typography>
                     <IconButton
                       size="small"
@@ -906,10 +559,12 @@ function InvoiceForm() {
                       sx={{
                         bgcolor: 'primary.main',
                         color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' }
+                        '&:hover': { bgcolor: 'primary.dark' },
+                        width: 28,
+                        height: 28
                       }}
                     >
-                      <Add />
+                      <Add fontSize="small" />
                     </IconButton>
                   </Box>
                   <Autocomplete
@@ -922,106 +577,440 @@ function InvoiceForm() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={t('invoices:fields.selectClient')}
+                        label="Sélectionner un client"
+                        size="small"
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        InputProps={{
-                          ...params.InputProps,
-                          startAdornment: <Business sx={{ mr: 1, color: 'action.active' }} />,
-                        }}
                       />
                     )}
-                    renderOption={(props, option) => {
-                      const { key, ...otherProps } = props;
-                      return (
-                        <Box component="li" key={key} {...otherProps}>
-                          <Business sx={{ mr: 2, color: 'action.active' }} />
-                          <Box>
-                            <Typography variant="body1">{option.name}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {option.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      );
-                    }}
                   />
                   {formData.client && (
-                    <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Box sx={{ mt: 1.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
                         {formData.client.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                         {formData.client.email}
                       </Typography>
-                      {formData.client.phone && (
-                        <Typography variant="body2" color="text.secondary">
-                          {formData.client.phone}
-                        </Typography>
-                      )}
                     </Box>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Status */}
-              <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Statut
+              {/* Items Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                      {t('invoices:labels.billedItems')}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => {
+                        setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, unit_of_measure: 'piece' });
+                        setEditingItemIndex(-1);
+                        setItemDialogOpen(true);
+                      }}
+                      size="small"
+                      sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+                    >
+                      {t('invoices:buttons.add')}
+                    </Button>
+                  </Box>
+                  {items.map((item, index) => (
+                    <MobileItemCard key={index} item={item} index={index} />
+                  ))}
+                  {items.length === 0 && (
+                    <Typography color="text.secondary" sx={{ fontSize: '0.875rem', textAlign: 'center', py: 2 }}>
+                      {t('invoices:messages.noItemsAddedMessage')}
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Financial Summary Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                    {t('invoices:labels.financialSummary')}
                   </Typography>
-                  <FormControl fullWidth>
-                    <InputLabel>Statut de la facture</InputLabel>
+                  <Grid container spacing={1}>
+                    <Grid item xs={4}>
+                      <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
+                        <Typography variant="h6" color="primary" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                          {formatCurrency(calculateSubtotal())}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                          {t('invoices:labels.subtotal')}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'warning.50', borderRadius: 1 }}>
+                        <Typography variant="h6" color="warning.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                          {formatCurrency(calculateTaxAmount())}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                          {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
+                        <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                          {formatCurrency(calculateTotal())}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                          {t('invoices:labels.totalTTC')}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                  <TextField
+                    fullWidth
+                    label={t('invoices:labels.vatRateField')}
+                    type="number"
+                    value={formData.tax_rate}
+                    onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
+                    inputProps={{ min: 0, max: 100, step: 0.1 }}
+                    size="small"
+                    sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Payment Method Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                    {t('invoices:labels.paymentMethod', 'Mode de paiement')}
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
                     <Select
-                      value={formData.status}
-                      label="Statut de la facture"
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      value={formData.payment_method}
+                      label={t('invoices:labels.paymentMethod')}
+                      onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                       sx={{ borderRadius: 2 }}
                     >
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="sent">Envoyée</MenuItem>
-                      <MenuItem value="paid">Payée</MenuItem>
-                      <MenuItem value="cancelled">Annulée</MenuItem>
+                      {PAYMENT_METHODS.map(method => (
+                        <MenuItem key={method.value} value={method.value}>
+                          {method.label}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </CardContent>
               </Card>
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {/* Left Column */}
+              <Grid item xs={12} md={8}>
+                {/* Basic Information */}
+                <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      {t('invoices:labels.generalInformation')}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label={t('invoices:labels.invoiceTitleField')}
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label={t('invoices:labels.description')}
+                          multiline
+                          rows={3}
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      {/* Dates hidden for cleaner UI */}
+                    </Grid>
+                  </CardContent>
+                </Card>
+
+                {/* Items */}
+                <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Articles
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, unit_of_measure: 'piece' });
+                          setEditingItemIndex(-1);
+                          setItemDialogOpen(true);
+                        }}
+                        sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+                      >
+                        {t('invoices:buttons.addItem')}
+                      </Button>
+                    </Box>
+
+                    <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Unité</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>{t('invoices:columns.actions')}</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {items.map((item, index) => (
+                            <TableRow key={index} hover>
+                              <TableCell>{item.product_reference || '-'}</TableCell>
+                              <TableCell>{item.description}</TableCell>
+                              <TableCell>{UNIT_LABELS[item.unit_of_measure] || item.unit_of_measure}</TableCell>
+                              <TableCell align="right">{item.quantity}</TableCell>
+                              <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(item.total_price)}</TableCell>
+                              <TableCell align="center">
+                                <Stack direction="row" spacing={1} justifyContent="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleEditItem(index)}
+                                    sx={{
+                                      bgcolor: 'secondary.light',
+                                      color: 'secondary.contrastText',
+                                      '&:hover': { bgcolor: 'secondary.main' }
+                                    }}
+                                  >
+                                    <Edit fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDeleteItem(index)}
+                                    sx={{
+                                      bgcolor: 'error.light',
+                                      color: 'error.contrastText',
+                                      '&:hover': { bgcolor: 'error.main' }
+                                    }}
+                                  >
+                                    <Delete fontSize="small" />
+                                  </IconButton>
+                                </Stack>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {items.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                <Typography color="text.secondary">
+                                  {t('invoices:messages.noItemsDesktopMessage')}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Financial Summary */}
+                <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      Résumé financier
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={3}>
+                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                          <Typography variant="h5" color="primary" sx={{ fontWeight: 600 }}>
+                            {formatCurrency(calculateSubtotal())}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Sous-total
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
+                          <Typography variant="h5" color="warning.main" sx={{ fontWeight: 600 }}>
+                            {formatCurrency(calculateTaxAmount())}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            TVA ({formData.tax_rate}%)
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                          <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>
+                            {formatCurrency(calculateTotal())}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Total TTC
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          fullWidth
+                          label={t('invoices:labels.vatRateField')}
+                          type="number"
+                          value={formData.tax_rate}
+                          onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
+                          inputProps={{ min: 0, max: 100, step: 0.1 }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Right Column */}
+              <Grid item xs={12} md={4}>
+                {/* Client Selection */}
+                <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Client
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => setClientDialogOpen(true)}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'primary.dark' }
+                        }}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Box>
+                    <Autocomplete
+                      options={clients}
+                      getOptionLabel={(option) => option.name || ''}
+                      value={formData.client}
+                      onChange={(event, newValue) => {
+                        setFormData({ ...formData, client: newValue });
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={t('invoices:fields.selectClient')}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: <Business sx={{ mr: 1, color: 'action.active' }} />,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => {
+                        const { key, ...otherProps } = props;
+                        return (
+                          <Box component="li" key={key} {...otherProps}>
+                            <Business sx={{ mr: 2, color: 'action.active' }} />
+                            <Box>
+                              <Typography variant="body1">{option.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {option.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        );
+                      }}
+                    />
+                    {formData.client && (
+                      <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                          {formData.client.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {formData.client.email}
+                        </Typography>
+                        {formData.client.phone && (
+                          <Typography variant="body2" color="text.secondary">
+                            {formData.client.phone}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Payment Method Desktop */}
+                <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      {t('invoices:labels.paymentMethod', 'Mode de paiement')}
+                    </Typography>
+                    <FormControl fullWidth>
+                      <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
+                      <Select
+                        value={formData.payment_method}
+                        label={t('invoices:labels.paymentMethod')}
+                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {PAYMENT_METHODS.map(method => (
+                          <MenuItem key={method.value} value={method.value}>
+                            {method.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-          </Grid>
-        )}
-      </form>
+          )}
+        </form>
 
-      {/* Add/Edit Item Dialog with Product/Service Distinction */}
-      <ProductSelectionDialog
-        open={itemDialogOpen}
-        onClose={() => setItemDialogOpen(false)}
-        products={products}
-        newItem={newItem}
-        setNewItem={setNewItem}
-        onAddItem={handleAddItem}
-        onCreateProduct={() => setProductDialogOpen(true)}
-        editingItemIndex={editingItemIndex}
-      />
+        {/* Add/Edit Item Dialog with Product/Service Distinction */}
+        <ProductSelectionDialog
+          open={itemDialogOpen}
+          onClose={() => setItemDialogOpen(false)}
+          products={products}
+          newItem={newItem}
+          setNewItem={setNewItem}
+          onAddItem={handleAddItem}
+          onCreateProduct={() => setProductDialogOpen(true)}
+          editingItemIndex={editingItemIndex}
+        />
 
-      {/* Quick Create Dialogs */}
-      <QuickCreateDialog
-        open={clientDialogOpen}
-        onClose={() => setClientDialogOpen(false)}
-        onSuccess={handleClientCreated}
-        entityType="client"
-        fields={clientFields}
-        createFunction={clientsAPI.quickCreate}
-        title={t('invoices:dialogs.quickCreateClient')}
-      />
+        {/* Quick Create Dialogs */}
+        <QuickCreateDialog
+          open={clientDialogOpen}
+          onClose={() => setClientDialogOpen(false)}
+          onSuccess={handleClientCreated}
+          entityType="client"
+          fields={clientFields}
+          createFunction={clientsAPI.quickCreate}
+          title={t('invoices:dialogs.quickCreateClient')}
+        />
 
-      <QuickCreateDialog
-        open={productDialogOpen}
-        onClose={() => setProductDialogOpen(false)}
-        onSuccess={handleProductCreated}
-        entityType="product"
-        fields={getProductFields([], null)}
-        createFunction={productsAPI.quickCreate}
-        title={t('invoices:dialogs.quickCreateProduct')}
-      />
+        <QuickCreateDialog
+          open={productDialogOpen}
+          onClose={() => setProductDialogOpen(false)}
+          onSuccess={handleProductCreated}
+          entityType="product"
+          fields={getProductFields([], null)}
+          createFunction={productsAPI.quickCreate}
+          title={t('invoices:dialogs.quickCreateProduct')}
+        />
       </Box>
     </Box>
   );

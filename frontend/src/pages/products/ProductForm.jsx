@@ -147,7 +147,28 @@ function ProductForm() {
 
         // Métadonnées
         is_active: true,
+
+        // Unités
+        sell_unit: 'piece',
+        base_unit: 'piece',
+        conversion_factor: 1,
     });
+
+    const UNIT_TYPES = [
+        { value: 'piece', label: 'Pièce' },
+        { value: 'box', label: 'Boîte' },
+        { value: 'tablet', label: 'Comprimé' },
+        { value: 'capsule', label: 'Gélule' },
+        { value: 'blister', label: 'Plaquette' },
+        { value: 'bottle', label: 'Flacon' },
+        { value: 'vial', label: 'Ampoule' },
+        { value: 'sachet', label: 'Sachet' },
+        { value: 'tube', label: 'Tube' },
+        { value: 'ml', label: 'Millilitre' },
+        { value: 'l', label: 'Litre' },
+        { value: 'g', label: 'Gramme' },
+        { value: 'kg', label: 'Kilogramme' },
+    ];
 
     // Validation dynamique selon le type de produit
     const getValidationSchema = (productType, hasWarehouses = true) => {
@@ -159,6 +180,9 @@ function ProductForm() {
             cost_price: Yup.number().min(0, t('products:validation.costNegative')),
             category_id: Yup.string().nullable(),
             supplier_id: Yup.string().nullable(),
+            sell_unit: Yup.string().required(t('products:validation.required')),
+            base_unit: Yup.string().required(t('products:validation.required')),
+            conversion_factor: Yup.number().positive().required(t('products:validation.required')),
         };
 
         // Ajout des validations spécifiques selon le type
@@ -442,7 +466,10 @@ function ProductForm() {
                 cost_price: parseFloat(values.cost_price) || 0,
                 price_editable: values.price_editable,
                 category: values.category_id || null,
-                is_active: values.is_active,
+                is_active: true, // Toujours actif par défaut
+                sell_unit: values.sell_unit,
+                base_unit: values.base_unit,
+                conversion_factor: parseFloat(values.conversion_factor) || 1,
             };
 
             // Ajouter supplier et warehouse pour tous les types si définis
@@ -507,41 +534,23 @@ function ProductForm() {
     }
 
     const ProductTypeSelector = ({ value, onChange }) => (
-        <Paper elevation={0} sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
-                {t('products:productTypes.title')}
-            </Typography>
-            <ToggleButtonGroup
-                value={value}
-                exclusive
-                onChange={(e, newValue) => newValue && onChange({ target: { name: 'product_type', value: newValue } })}
-                fullWidth
-                size={isMobile ? "small" : "medium"}
-                orientation={isMobile ? "vertical" : "horizontal"}
-            >
-                <ToggleButton value="physical" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <Inventory sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.physical')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.physicalDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-                <ToggleButton value="digital" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <CloudDownload sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.digital')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.digitalDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-                <ToggleButton value="service" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <Build sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.service')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.serviceDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-            </ToggleButtonGroup>
-        </Paper>
+        <ToggleButtonGroup
+            value={value}
+            exclusive
+            onChange={(e, newValue) => newValue && onChange({ target: { name: 'product_type', value: newValue } })}
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+        >
+            <ToggleButton value="physical" sx={{ py: 1 }}>
+                <Inventory sx={{ mr: 1, fontSize: 20 }} />
+                <Typography variant="body2" fontWeight="bold">{t('products:productTypes.physical')}</Typography>
+            </ToggleButton>
+            <ToggleButton value="service" sx={{ py: 1 }}>
+                <Build sx={{ mr: 1, fontSize: 20 }} />
+                <Typography variant="body2" fontWeight="bold">{t('products:productTypes.service')}</Typography>
+            </ToggleButton>
+        </ToggleButtonGroup>
     );
 
     return (
@@ -574,647 +583,229 @@ function ProductForm() {
             </Box>
             <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-            {/* Message d'information si warehouses manquants */}
-            {warehouses.length === 0 && (
-                <Alert
-                    severity="info"
-                    sx={{
-                        mb: 3,
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        border: 'none',
-                        '& .MuiAlert-icon': {
-                            alignItems: 'center'
-                        }
-                    }}
+                {/* Message d'information si warehouses manquants */}
+                {warehouses.length === 0 && (
+                    <Alert
+                        severity="info"
+                        sx={{
+                            mb: 3,
+                            borderRadius: 1.5,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                            border: 'none',
+                            '& .MuiAlert-icon': {
+                                alignItems: 'center'
+                            }
+                        }}
+                    >
+                        {t('products:messages.missingWarehouses')}
+                    </Alert>
+                )}
+
+                <Formik
+                    initialValues={initialValues}
+                    validationSchema={getValidationSchema(initialValues.product_type, warehouses.length > 0)}
+                    onSubmit={handleSubmit}
+                    enableReinitialize
                 >
-                    {t('products:messages.missingWarehouses')}
-                </Alert>
-            )}
+                    {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
+                        // Update refs to access from modals
+                        formikRef.current.setFieldValue = setFieldValue;
+                        formikRef.current.values = values;
 
-            <Formik
-                initialValues={initialValues}
-                validationSchema={getValidationSchema(initialValues.product_type, warehouses.length > 0)}
-                onSubmit={handleSubmit}
-                enableReinitialize
-            >
-                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
-                    // Update refs to access from modals
-                    formikRef.current.setFieldValue = setFieldValue;
-                    formikRef.current.values = values;
-
-                    return (
-                        <Form>
-                            <Grid container spacing={isMobile ? 1.5 : 2}>
-                                {/* Section principale */}
-                                <Grid item xs={12} lg={8}>
-                                    {/* Sélecteur de type de produit */}
-                                    <Box sx={{ mb: 3 }}>
+                        return (
+                            <Form>
+                                <Grid container spacing={2}>
+                                    {/* Section principale */}
+                                    <Grid item xs={12} md={8}>
                                         <ProductTypeSelector value={values.product_type} onChange={handleChange} />
-                                    </Box>
 
-                                    {/* Informations générales - ESSENTIELLES UNIQUEMENT */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                    <Box sx={{
-                                                        p: 1,
-                                                        borderRadius: 1,
-                                                        bgcolor: 'primary.50',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Description sx={{ fontSize: 22, color: 'primary.main' }} />
-                                                    </Box>
-                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                        {t('products:labels.generalInfo')}
+                                        <Card variant="outlined" sx={{ mb: 2 }}>
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                                    <Info sx={{ mr: 1, fontSize: 20, color: 'primary.main' }} />
+                                                    Informations
+                                                </Typography>
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={12} sm={8}>
+                                                        <TextField
+                                                            fullWidth size="small"
+                                                            name="name" label={t('products:labels.name')}
+                                                            value={values.name} onChange={handleChange} onBlur={handleBlur}
+                                                            error={touched.name && Boolean(errors.name)}
+                                                            required
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField
+                                                            fullWidth size="small"
+                                                            name="reference" label={t('products:labels.reference')}
+                                                            value={values.reference} onChange={handleChange} onBlur={handleBlur}
+                                                            placeholder="Auto"
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <TextField
+                                                            fullWidth multiline rows={2} size="small"
+                                                            name="description" label={t('products:labels.description')}
+                                                            value={values.description} onChange={handleChange}
+                                                        />
+                                                    </Grid>
+                                                </Grid>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Unités et Prix */}
+                                        <Card variant="outlined" sx={{ mb: 2 }}>
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                                    <AttachMoney sx={{ mr: 1, fontSize: 20, color: 'success.main' }} />
+                                                    Unités & Prix
+                                                </Typography>
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField
+                                                            select fullWidth size="small"
+                                                            name="sell_unit" label={t('products:labels.sellUnit', 'Unité de Vente (ex: Boîte)')}
+                                                            value={values.sell_unit} onChange={handleChange}
+                                                        >
+                                                            {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField
+                                                            select fullWidth size="small"
+                                                            name="base_unit" label={t('products:labels.baseUnit', 'Unité de Stockage (ex: Pièce)')}
+                                                            value={values.base_unit} onChange={handleChange}
+                                                            helperText="(Stocké)"
+                                                        >
+                                                            {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField
+                                                            fullWidth size="small" type="number"
+                                                            name="conversion_factor" label="Facteur"
+                                                            value={values.conversion_factor} onChange={handleChange}
+                                                            helperText={`1 ${values.sell_unit} = ${values.conversion_factor} ${values.base_unit}`}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={6}>
+                                                        <TextField
+                                                            fullWidth size="small" type="number"
+                                                            name="price" label="Prix de Vente"
+                                                            value={values.price} onChange={handleChange}
+                                                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={6}>
+                                                        <TextField
+                                                            fullWidth size="small" type="number"
+                                                            name="cost_price" label="Coût d'achat"
+                                                            value={values.cost_price} onChange={handleChange}
+                                                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                                        />
+                                                    </Grid>
+                                                </Grid>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Stock (Physique seulement) */}
+                                        {values.product_type === 'physical' && (
+                                            <Card variant="outlined">
+                                                <CardContent sx={{ p: 2 }}>
+                                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                                        <Inventory sx={{ mr: 1, fontSize: 20, color: 'warning.main' }} />
+                                                        Stock
                                                     </Typography>
-                                                </Box>
-                                                {!isMobile && (
-                                                    <Chip
-                                                        size="small"
-                                                        label={t('products:labels.mandatory')}
-                                                        color="primary"
-                                                        variant="outlined"
-                                                        sx={{ borderRadius: 1 }}
-                                                    />
-                                                )}
-                                            </Box>
-
-                                            <Grid container spacing={1.5}>
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="name"
-                                                        label={t('products:labels.name')}
-                                                        value={values.name}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.name && Boolean(errors.name)}
-                                                        helperText={touched.name && errors.name}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="reference"
-                                                        label={t('products:labels.reference')}
-                                                        value={values.reference}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.reference && Boolean(errors.reference)}
-                                                        helperText={touched.reference && errors.reference || t('products:messages.leaveEmptyForAuto')}
-                                                        placeholder="PRD-0001"
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12}>
-                                                    <TextField
-                                                        fullWidth
-                                                        multiline
-                                                        rows={isMobile ? 3 : 4}
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="description"
-                                                        label={t('products:labels.detailedDescription')}
-                                                        value={values.description}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.description && Boolean(errors.description)}
-                                                        helperText={touched.description && errors.description}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                {/* Gestion de stock pour produits physiques */}
-                                                {values.product_type === 'physical' && (
-                                                    <>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="stock_quantity" label={`Quantité (${values.base_unit})`}
+                                                                value={values.stock_quantity} onChange={handleChange}
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="low_stock_threshold" label="Seuil alerte"
+                                                                value={values.low_stock_threshold} onChange={handleChange}
+                                                            />
+                                                        </Grid>
                                                         <Grid item xs={12}>
-                                                            <Divider sx={{ my: 1 }}>
-                                                                <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<Inventory />} size="small" />
-                                                            </Divider>
-                                                        </Grid>
-
-                                                        <Grid item xs={12} md={6}>
                                                             <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="stock_quantity"
-                                                                label={t('products:labels.stockQuantity')}
-                                                                type="number"
-                                                                value={values.stock_quantity}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                                helperText={touched.stock_quantity && errors.stock_quantity}
-                                                                required
-                                                                InputProps={{
-                                                                    startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
-                                                                }}
-                                                            />
+                                                                select fullWidth size="small"
+                                                                name="warehouse_id" label="Entrepôt"
+                                                                value={values.warehouse_id} onChange={handleChange}
+                                                            >
+                                                                {warehouses.map(w => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
+                                                            </TextField>
                                                         </Grid>
+                                                    </Grid>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+                                    </Grid>
 
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="low_stock_threshold"
-                                                                label={t('products:labels.lowStockThreshold')}
-                                                                type="number"
-                                                                value={values.low_stock_threshold}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                                helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
-                                                                required
-                                                            />
-                                                        </Grid>
-                                                    </>
-                                                )}
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Tarification */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
-                                                <Box sx={{
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    bgcolor: 'success.50',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <AttachMoney sx={{ fontSize: 22, color: 'success.main' }} />
-                                                </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    {t('products:labels.pricing')}
-                                                </Typography>
-                                            </Box>
-
-                                            <Grid container spacing={1.5}>
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="price"
-                                                        label={
-                                                            values.product_type === 'service' ? t('products:labels.sellingPrice') :
-                                                                values.product_type === 'digital' ? t('products:labels.pricePerLicense') :
-                                                                    t('products:labels.sellingPrice')
-                                                        }
-                                                        type="number"
-                                                        value={values.price}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.price && Boolean(errors.price)}
-                                                        helperText={touched.price && errors.price}
-                                                        InputProps={{
-                                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                        }}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="cost_price"
-                                                        label={t('products:labels.costPrice')}
-                                                        type="number"
-                                                        value={values.cost_price}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.cost_price && Boolean(errors.cost_price)}
-                                                        helperText={touched.cost_price && errors.cost_price}
-                                                        InputProps={{
-                                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                        }}
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                name="price_editable"
-                                                                checked={values.price_editable || false}
-                                                                onChange={handleChange}
-                                                            />
-                                                        }
-                                                        label={
-                                                            <Box>
-                                                                <Typography variant="body2">
-                                                                    {t('products:labels.priceEditable')}
-                                                                </Typography>
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    {t('products:labels.priceEditableHelp')}
-                                                                </Typography>
-                                                            </Box>
-                                                        }
-                                                    />
-                                                </Grid>
-
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Badge type visible pour non-physiques */}
-                                    {values.product_type !== 'physical' && (
-                                        <Alert severity="info" sx={{ mb: 2 }}>
-                                            {t('products:labels.type')}: {values.product_type === 'service' ? t('products:labels.service') : t('products:labels.digitalProduct')}
-                                            {' - '}{t('products:messages.noStockManagement')}
-                                        </Alert>
-                                    )}
-
-                                    {/* DÉTAILS AVANCÉS - Accordion pour ne pas surcharger */}
-                                    <Accordion
-                                        defaultExpanded={false}
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none',
-                                            '&:before': { display: 'none' }
-                                        }}
-                                    >
-                                        <AccordionSummary
-                                            expandIcon={<ExpandMore />}
-                                            sx={{
-                                                px: 3,
-                                                py: 2,
-                                                '& .MuiAccordionSummary-content': {
-                                                    my: 1
-                                                }
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    bgcolor: 'info.50',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Info sx={{ fontSize: 20, color: 'info.main' }} />
-                                                </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    {t('products:labels.advancedDetails', 'Détails avancés')}
-                                                </Typography>
-                                                <Chip
-                                                    label={t('products:labels.optional', 'Optionnel')}
-                                                    size="small"
-                                                    sx={{ ml: 2, borderRadius: 1.5 }}
+                                    {/* Sidebar (Catégorie, Fournisseur, Actions) */}
+                                    <Grid item xs={12} md={4}>
+                                        <Card variant="outlined" sx={{ mb: 2 }}>
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Button
+                                                    type="submit"
+                                                    variant="contained"
+                                                    fullWidth
+                                                    disabled={isSubmitting}
+                                                    startIcon={<Save />}
+                                                    sx={{ mb: 1 }}
+                                                >
+                                                    {isEdit ? t('common:save') : t('common:create')}
+                                                </Button>
+                                                <Button
+                                                    fullWidth
                                                     variant="outlined"
-                                                    color="default"
-                                                />
-                                            </Box>
-                                        </AccordionSummary>
-                                        <AccordionDetails sx={{ px: 3, pb: 3 }}>
-                                            <Grid container spacing={2}>
-                                                {/* Catégorie - Tous types */}
-                                                <Grid item xs={12} md={6}>
-                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                                        <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                            <InputLabel>{t('products:labels.category')}</InputLabel>
-                                                            <Select
-                                                                name="category_id"
-                                                                value={values.category_id}
-                                                                onChange={handleChange}
-                                                                label={t('products:labels.category')}
-                                                                startAdornment={<Category sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                            >
-                                                                <MenuItem value="">
-                                                                    <em>{t('products:labels.uncategorized')}</em>
-                                                                </MenuItem>
-                                                                {categories.map((category) => (
-                                                                    <MenuItem key={category.id} value={category.id}>
-                                                                        {category.name}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Select>
-                                                        </FormControl>
-                                                        <Tooltip title={t('products:modals.manageCategories', 'Gérer les catégories')}>
-                                                            <IconButton
-                                                                onClick={() => {
-                                                                    setCategoryModalOpen(true);
-                                                                }}
-                                                                sx={{
-                                                                    bgcolor: 'primary.main',
-                                                                    color: 'white',
-                                                                    '&:hover': { bgcolor: 'primary.dark' },
-                                                                    mt: isMobile ? 0.5 : 0.75
-                                                                }}
-                                                                size={isMobile ? "small" : "medium"}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                </Grid>
+                                                    onClick={() => navigate('/products')}
+                                                >
+                                                    {t('common:cancel')}
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
 
-                                                {/* Type de source - Seulement pour physiques */}
-                                                {values.product_type === 'physical' && (
-                                                    <Grid item xs={12} md={6}>
-                                                        <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                            <InputLabel>{t('products:labels.sourceType')}</InputLabel>
-                                                            <Select
-                                                                name="source_type"
-                                                                value={values.source_type}
-                                                                onChange={handleChange}
-                                                                label={t('products:labels.sourceType')}
-                                                            >
-                                                                <MenuItem value="purchased">
-                                                                    <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.purchased')}
-                                                                </MenuItem>
-                                                                <MenuItem value="manufactured">
-                                                                    <Construction sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.manufactured')}
-                                                                </MenuItem>
-                                                                <MenuItem value="resale">
-                                                                    <Storefront sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.resale')}
-                                                                </MenuItem>
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Grid>
-                                                )}
-
-                                                {/* Fournisseur - Seulement pour produits physiques et si module activé */}
-                                                {values.product_type === 'physical' && suppliers.length > 0 && (
-                                                    <Grid item xs={12} md={6}>
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                            <FormControl
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                error={touched.supplier_id && Boolean(errors.supplier_id)}
-                                                            >
-                                                                <InputLabel>
-                                                                    {t('products:labels.supplierOptional')}
-                                                                </InputLabel>
-                                                                <Select
-                                                                    name="supplier_id"
-                                                                    value={values.supplier_id}
-                                                                    onChange={handleChange}
-                                                                    label={t('products:labels.supplierOptional')}
-                                                                    startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                                >
-                                                                    <MenuItem value="">
-                                                                        <em>{t('products:labels.noSupplier')}</em>
-                                                                    </MenuItem>
-                                                                    {suppliers.map((supplier) => (
-                                                                        <MenuItem key={supplier.id} value={supplier.id}>
-                                                                            {supplier.name}
-                                                                        </MenuItem>
-                                                                    ))}
-                                                                </Select>
-                                                                {touched.supplier_id && errors.supplier_id && (
-                                                                    <FormHelperText>{errors.supplier_id}</FormHelperText>
-                                                                )}
-                                                            </FormControl>
-                                                            <IconButton
-                                                                onClick={() => setSupplierModalOpen(true)}
-                                                                sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
-                                                                size={isMobile ? "small" : "medium"}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Grid>
-                                                )}
-
-                                                {/* Entrepôt - Seulement pour produits physiques */}
-                                                {values.product_type === 'physical' && (
-                                                    <>
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 1 }}>
-                                                                <Chip label={t('products:labels.warehouse', 'Entrepôt')} icon={<Warehouse />} size="small" />
-                                                            </Divider>
-                                                        </Grid>
-
-                                                        <Grid item xs={12} md={6}>
-                                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                                                <FormControl
-                                                                    fullWidth
-                                                                    size={isMobile ? "small" : "medium"}
-                                                                    required={warehouses.length > 0}
-                                                                    error={touched.warehouse_id && Boolean(errors.warehouse_id)}
-                                                                >
-                                                                    <InputLabel>{t('products:labels.warehouseMain')} {warehouses.length > 0 ? '' : t('products:labels.optional')}</InputLabel>
-                                                                    <Select
-                                                                        name="warehouse_id"
-                                                                        value={values.warehouse_id}
-                                                                        onChange={handleChange}
-                                                                        label={`${t('products:labels.warehouseMain')} ${warehouses.length > 0 ? '' : t('products:labels.optional')}`}
-                                                                        startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                                    >
-                                                                        {warehouses.length === 0 ? (
-                                                                            <MenuItem value="">
-                                                                                <em>{t('products:labels.noWarehouseAvailable')}</em>
-                                                                            </MenuItem>
-                                                                        ) : (
-                                                                            <>
-                                                                                <MenuItem value="">
-                                                                                    <em>{t('products:labels.selectWarehouse')}</em>
-                                                                                </MenuItem>
-                                                                                {warehouses.map((warehouse) => (
-                                                                                    <MenuItem key={warehouse.id} value={warehouse.id}>
-                                                                                        {warehouse.name} ({warehouse.code}) - {warehouse.city}
-                                                                                    </MenuItem>
-                                                                                ))}
-                                                                            </>
-                                                                        )}
-                                                                    </Select>
-                                                                    {touched.warehouse_id && errors.warehouse_id && (
-                                                                        <FormHelperText error>{errors.warehouse_id}</FormHelperText>
-                                                                    )}
-                                                                    {warehouses.length === 0 && (
-                                                                        <FormHelperText>
-                                                                            {t('products:messages.noWarehouseAvailable')}
-                                                                        </FormHelperText>
-                                                                    )}
-                                                                </FormControl>
-                                                                <Tooltip title={t('products:modals.manageWarehouses', 'Gérer les entrepôts')}>
-                                                                    <IconButton
-                                                                        onClick={() => {
-                                                                            setWarehouseModalOpen(true);
-                                                                        }}
-                                                                        sx={{
-                                                                            bgcolor: 'primary.main',
-                                                                            color: 'white',
-                                                                            '&:hover': { bgcolor: 'primary.dark' },
-                                                                            mt: isMobile ? 0.5 : 0.75
-                                                                        }}
-                                                                        size={isMobile ? "small" : "medium"}
-                                                                    >
-                                                                        <Add />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            </Box>
-                                                        </Grid>
-                                                    </>
-                                                )}
-                                            </Grid>
-                                        </AccordionDetails>
-                                    </Accordion>
+                                        <Card variant="outlined">
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
+                                                    Organisation
+                                                </Typography>
+                                                <Stack spacing={2}>
+                                                    <TextField
+                                                        select fullWidth size="small"
+                                                        name="category_id" label="Catégorie"
+                                                        value={values.category_id} onChange={handleChange}
+                                                    >
+                                                        <MenuItem value=""><em>Aucune</em></MenuItem>
+                                                        {categories.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                                                    </TextField>
+                                                    <TextField
+                                                        select fullWidth size="small"
+                                                        name="supplier_id" label="Fournisseur"
+                                                        value={values.supplier_id} onChange={handleChange}
+                                                    >
+                                                        <MenuItem value=""><em>Aucun</em></MenuItem>
+                                                        {suppliers.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+                                                    </TextField>
+                                                </Stack>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
                                 </Grid>
-
-                                {/* Sidebar */}
-                                <Grid item xs={12} lg={4}>
-                                    {/* Statut et disponibilité */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                                                {t('products:labels.status')}
-                                            </Typography>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        name="is_active"
-                                                        checked={values.is_active}
-                                                        onChange={handleChange}
-                                                        color="success"
-                                                    />
-                                                }
-                                                label={
-                                                    <Box display="flex" alignItems="center">
-                                                        {values.is_active ? (
-                                                            <>
-                                                                <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                                                {t('products:labels.activeProduct')}
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Warning sx={{ mr: 1, color: 'warning.main' }} />
-                                                                {t('products:labels.inactiveProduct')}
-                                                            </>
-                                                        )}
-                                                    </Box>
-                                                }
-                                            />
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Résumé des informations */}
-                                    <Card
-                                        sx={{
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                                                {t('products:labels.summary')}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                <Box display="flex" justifyContent="space-between">
-                                                    <Typography variant="caption" color="text.secondary">{t('products:labels.type')}:</Typography>
-                                                    <Chip
-                                                        size="small"
-                                                        label={
-                                                            values.product_type === 'physical' ? t('products:productTypes.physical') :
-                                                                values.product_type === 'digital' ? t('products:productTypes.digital') : t('products:productTypes.service')
-                                                        }
-                                                        color={
-                                                            values.product_type === 'physical' ? 'primary' :
-                                                                values.product_type === 'digital' ? 'info' : 'secondary'
-                                                        }
-                                                    />
-                                                </Box>
-                                                {values.price && (
-                                                    <Box display="flex" justifyContent="space-between">
-                                                        <Typography variant="caption" color="text.secondary">{t('products:labels.price')}:</Typography>
-                                                        <Typography variant="body2" fontWeight="bold">${values.price}</Typography>
-                                                    </Box>
-                                                )}
-                                                {values.stock_quantity && values.product_type !== 'service' && (
-                                                    <Box display="flex" justifyContent="space-between">
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {values.product_type === 'digital' ? t('products:labels.licensesCount') : t('products:labels.stockQuantity')}:
-                                                        </Typography>
-                                                        <Typography variant="body2">{values.stock_quantity}</Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-
-                                {/* Boutons d'action */}
-                                <Grid item xs={12}>
-                                    <Box sx={{
-                                        display: 'flex',
-                                        gap: 2,
-                                        justifyContent: 'flex-end',
-                                        position: isMobile ? 'fixed' : 'relative',
-                                        bottom: isMobile ? 0 : 'auto',
-                                        left: isMobile ? 0 : 'auto',
-                                        right: isMobile ? 0 : 'auto',
-                                        backgroundColor: isMobile ? 'background.paper' : 'transparent',
-                                        p: isMobile ? 2 : 0,
-                                        zIndex: isMobile ? 1000 : 1,
-                                        boxShadow: isMobile ? 4 : 0,
-                                        width: isMobile ? '100%' : 'auto',
-                                        margin: isMobile ? '-16px' : 0,
-                                    }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<Cancel />}
-                                            onClick={() => navigate('/products')}
-                                            disabled={isSubmitting}
-                                        >
-                                            {t('products:actions.cancel')}
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            startIcon={<Save />}
-                                            disabled={isSubmitting}
-                                        >
-                                            {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
-                                        </Button>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                        </Form>
-                    );
-                }}
-            </Formik>
+                            </Form>
+                        );
+                    }}
+                </Formik>
             </Box>
 
             {/* Supplier Selection Modal - Modern Design */}
-            <Dialog
+            < Dialog
                 open={supplierModalOpen}
                 onClose={() => setSupplierModalOpen(false)}
                 maxWidth="sm"
@@ -1334,10 +925,10 @@ function ProductForm() {
                         {t('products:actions.cancel')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             {/* Warehouse Selection Modal - Modern Design */}
-            <Dialog
+            < Dialog
                 open={warehouseModalOpen}
                 onClose={() => setWarehouseModalOpen(false)}
                 maxWidth="md"
@@ -1486,10 +1077,10 @@ function ProductForm() {
                         {t('products:actions.cancel')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             {/* Warehouse Form Modal - Modern Design */}
-            <Dialog
+            < Dialog
                 open={warehouseFormOpen}
                 onClose={() => {
                     setWarehouseFormOpen(false);
@@ -1630,10 +1221,10 @@ function ProductForm() {
                         {editingWarehouse ? t('products:actions.save', 'Enregistrer') : t('products:actions.create')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             {/* Category Selection Modal - Modern Design */}
-            <Dialog
+            < Dialog
                 open={categoryModalOpen}
                 onClose={() => setCategoryModalOpen(false)}
                 maxWidth="md"
@@ -1814,10 +1405,10 @@ function ProductForm() {
                         {t('products:actions.cancel')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             {/* Category Form Modal - Modern Design */}
-            <Dialog
+            < Dialog
                 open={categoryFormOpen}
                 onClose={() => {
                     setCategoryFormOpen(false);
@@ -1901,8 +1492,8 @@ function ProductForm() {
                         {editingCategory ? t('products:actions.save', 'Enregistrer') : t('products:actions.create')}
                     </Button>
                 </DialogActions>
-            </Dialog>
-        </Box>
+            </Dialog >
+        </Box >
     );
 }
 

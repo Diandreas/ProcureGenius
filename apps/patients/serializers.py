@@ -254,17 +254,23 @@ class LabOrderHistorySerializer(serializers.Serializer):
 
     def get_items(self, obj):
         """Return simplified test items"""
-        if not hasattr(obj, 'items'):
+        try:
+            if not hasattr(obj, 'items'):
+                return []
+            items_list = []
+            for item in obj.items.all():
+                try:
+                    items_list.append({
+                        'id': str(item.id),
+                        'test_name': item.lab_test.name if item.lab_test else '',
+                        'result_value': item.result_value or '',
+                        'is_abnormal': item.is_abnormal,
+                    })
+                except Exception:
+                    continue
+            return items_list
+        except Exception:
             return []
-        return [
-            {
-                'id': str(item.id),
-                'test_name': item.lab_test.name if item.lab_test else '',
-                'result_value': item.result_value or '',
-                'is_abnormal': item.is_abnormal,
-            }
-            for item in obj.items.all()
-        ]
 
 
 class PharmacyDispensingHistorySerializer(serializers.Serializer):
@@ -291,17 +297,23 @@ class PharmacyDispensingHistorySerializer(serializers.Serializer):
 
     def get_items(self, obj):
         """Return simplified medication items"""
-        if not hasattr(obj, 'items'):
+        try:
+            if not hasattr(obj, 'items'):
+                return []
+            items_list = []
+            for item in obj.items.all():
+                try:
+                    items_list.append({
+                        'id': str(item.id),
+                        'medication_name': item.medication.name if item.medication else '',
+                        'quantity_dispensed': item.quantity_dispensed,
+                        'dosage_instructions': item.dosage_instructions or '',
+                    })
+                except Exception:
+                    continue
+            return items_list
+        except Exception:
             return []
-        return [
-            {
-                'id': str(item.id),
-                'medication_name': item.medication.name if item.medication else '',
-                'quantity_dispensed': item.quantity_dispensed,
-                'dosage_instructions': item.dosage_instructions or '',
-            }
-            for item in obj.items.all()
-        ]
 
 
 class ConsultationHistorySerializer(serializers.Serializer):

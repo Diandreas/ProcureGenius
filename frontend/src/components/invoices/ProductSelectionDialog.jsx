@@ -28,6 +28,30 @@ import {
 import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
 
+const UNIT_LABELS = {
+  'piece': 'Pièce',
+  'box': 'Boîte',
+  'kg': 'Kilogramme',
+  'l': 'Litre',
+  'm': 'Mètre',
+  'tablet': 'Comprimé',
+  'capsule': 'Gélule',
+  'blister': 'Plaquette',
+  'vial': 'Flacon',
+  'ampoule': 'Ampoule',
+  'sachet': 'Sachet',
+  'tube': 'Tube',
+  'kit': 'Kit',
+  'pack': 'Paquet',
+  'roll': 'Rouleau',
+  'set': 'Ensemble',
+  'dozen': 'Douzaine',
+  'g': 'Gramme',
+  'mg': 'Milligramme',
+  'ml': 'Millilitre',
+  'cm': 'Centimètre'
+};
+
 function TabPanel({ children, value, index, ...other }) {
   return (
     <div
@@ -51,6 +75,7 @@ function ProductSelectionDialog({
   onAddItem,
   onCreateProduct,
   editingItemIndex,
+  allowOutOfStock = false,
 }) {
   const { t } = useTranslation(['invoices', 'products', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -74,7 +99,11 @@ function ProductSelectionDialog({
   const handleProductSelect = (product) => {
     if (product) {
       // Vérifier la disponibilité
-      const { canAdd, reason } = canAddProductToInvoice(product, newItem.quantity || 1);
+      const { canAdd, reason } = canAddProductToInvoice(
+        product,
+        newItem.quantity || 1,
+        { allowOutOfStock }
+      );
       if (!canAdd) {
         setStockError(reason);
       } else {
@@ -87,10 +116,36 @@ function ProductSelectionDialog({
         description: product.name,
         unit_price: product.price || 0,
         product_reference: product.reference || '',
+        unit_of_measure: product.sell_unit || 'piece' // Default to sell unit
       }));
     } else {
       setStockError('');
     }
+  };
+
+  const handleUnitChange = (unit) => {
+    if (!newItem.product) {
+      setNewItem(prev => ({ ...prev, unit_of_measure: unit }));
+      return;
+    }
+
+    const product = newItem.product;
+    let newPrice = newItem.unit_price;
+
+    // Logic simple: si on passe à l'unité de base et qu'elle diffère de l'unité de vente
+    if (unit === product.base_unit && unit !== product.sell_unit) {
+      if (product.conversion_factor && product.conversion_factor > 0) {
+        newPrice = parseFloat(product.price) / parseFloat(product.conversion_factor);
+      }
+    } else if (unit === product.sell_unit) {
+      newPrice = parseFloat(product.price);
+    }
+
+    setNewItem(prev => ({
+      ...prev,
+      unit_of_measure: unit,
+      unit_price: newPrice
+    }));
   };
 
   const handleQuantityChange = (quantity) => {
@@ -98,7 +153,11 @@ function ProductSelectionDialog({
 
     // Re-vérifier le stock si un produit est sélectionné
     if (newItem.product) {
-      const { canAdd, reason } = canAddProductToInvoice(newItem.product, quantity);
+      const { canAdd, reason } = canAddProductToInvoice(
+        newItem.product,
+        quantity,
+        { allowOutOfStock }
+      );
       setStockError(canAdd ? '' : reason);
     }
   };
@@ -113,7 +172,11 @@ function ProductSelectionDialog({
 
   const renderProductOption = (props, option) => {
     const { key, ...otherProps } = props;
-    const { canAdd, reason } = canAddProductToInvoice(option, newItem.quantity || 1);
+    const { canAdd, reason } = canAddProductToInvoice(
+      option,
+      newItem.quantity || 1,
+      { allowOutOfStock }
+    );
     const isDisabled = !canAdd;
 
     return (
@@ -203,7 +266,11 @@ function ProductSelectionDialog({
                     onChange={(event, newValue) => handleProductSelect(newValue)}
                     fullWidth
                     getOptionDisabled={(option) =>
-                      !canAddProductToInvoice(option, newItem.quantity || 1).canAdd
+                      !canAddProductToInvoice(
+                        option,
+                        newItem.quantity || 1,
+                        { allowOutOfStock }
+                      ).canAdd
                     }
                     renderInput={(params) => (
                       <TextField
@@ -262,6 +329,22 @@ function ProductSelectionDialog({
                   }
                   inputProps={{ min: 1 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  options={newItem.product ? [newItem.product.sell_unit, newItem.product.base_unit].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i) : Object.keys(UNIT_LABELS)}
+                  getOptionLabel={(option) => UNIT_LABELS[option] || option}
+                  value={newItem.unit_of_measure || 'piece'}
+                  onChange={(e, newValue) => handleUnitChange(newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Unité"
+                      required
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  )}
                 />
               </Grid>
               <Grid item xs={12}>

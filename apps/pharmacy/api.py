@@ -264,20 +264,13 @@ class MedicationListView(generics.ListAPIView):
         queryset = Product.objects.filter(
             organization=self.request.user.organization,
             is_active=True,
-            product_type='physical',  # Medications are physical products
+            product_type='physical',
         )
         
-        # Filter by medication category if it exists
-        try:
-            med_category = ProductCategory.objects.get(
-                organization=self.request.user.organization,
-                slug='medications'
-            )
-            queryset = queryset.filter(category=med_category)
-        except ProductCategory.DoesNotExist:
-            # If no medications category, filter by name containing common medication keywords
-            # or just return all physical products
-            pass
+        # Filter by relevant categories: medications and lab consumables
+        # We also check for 'medicaments' slug for backward compatibility
+        relevant_slugs = ['medications', 'medicaments', 'lab-consumables']
+        queryset = queryset.filter(category__slug__in=relevant_slugs)
         
         # Filter by stock status
         stock_status = self.request.query_params.get('stock_status')

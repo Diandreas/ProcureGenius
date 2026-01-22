@@ -478,7 +478,14 @@ class LabOrder(models.Model):
     @property
     def total_price(self):
         """Calculate total price from all test items"""
-        return sum(item.lab_test.price for item in self.items.all())
+        total = Decimal('0.00')
+        for item in self.items.all():
+            try:
+                if item.lab_test:
+                    total += item.lab_test.price
+            except Exception:
+                continue
+        return total
     
     @property
     def tests_count(self):

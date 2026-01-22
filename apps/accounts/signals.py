@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def create_user_profile(sender, instance, created, **kwargs):
     """Actions à exécuter lors de la création d'un utilisateur"""
     if created:
-        logger.info(f"✓ Nouvel utilisateur créé: {instance.username} (email: {instance.email})")
+        logger.info(f"[OK] Nouvel utilisateur créé: {instance.username} (email: {instance.email})")
         logger.info(f"  - Organisation: {instance.organization.name if instance.organization else 'Aucune'}")
         logger.info(f"  - Rôle: {instance.role}")
         

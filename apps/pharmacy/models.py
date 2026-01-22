@@ -282,14 +282,17 @@ class DispensingItem(models.Model):
         ordering = ['medication__name']
     
     def save(self, *args, **kwargs):
-        # Calculate total price
-        self.total_price = Decimal(str(self.quantity_dispensed)) * self.unit_price
-        
         # Auto-set unit_cost and unit_price from medication if not set
         if not self.unit_cost and self.medication:
             self.unit_cost = self.medication.cost_price
         if not self.unit_price and self.medication:
             self.unit_price = self.medication.price
+            
+        # Calculate total price
+        if self.unit_price is not None:
+            self.total_price = Decimal(str(self.quantity_dispensed)) * self.unit_price
+        else:
+            self.total_price = Decimal('0.00')
         
         is_new = self._state.adding
         super().save(*args, **kwargs)

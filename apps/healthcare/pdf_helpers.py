@@ -219,6 +219,23 @@ class HealthcarePDFMixin:
                 'brand_color': '#2563eb',
             }
 
+        # --- POST-PROCESSING ---
+        
+        # 1. Sanitize brand_color
+        color = org_data.get('brand_color')
+        if not color or not isinstance(color, str) or not color.startswith('#'):
+            org_data['brand_color'] = '#2563eb'
+
+        # 2. Map standard keys for pdf_base.html compatibility
+        # pdf_base.html uses organization.name, organization.address, etc.
+        org_data['name'] = org_data.get('company_name')
+        org_data['address'] = org_data.get('company_address')
+        org_data['phone'] = org_data.get('company_phone')
+        org_data['email'] = org_data.get('company_email')
+        org_data['website'] = org_data.get('company_website')
+        org_data['niu'] = org_data.get('company_niu')
+        org_data['rc_number'] = org_data.get('company_rc_number')
+
         return org_data
 
     def _get_logo_base64(self, org_data):

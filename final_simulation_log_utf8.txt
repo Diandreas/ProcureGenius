@@ -1,0 +1,187 @@
+﻿venv\Scripts\python : 
+D:\project\BFMa\Procur
+eGenius\venv\Lib\site-
+packages\allauth\accou
+nt\app_settings.py:55:
+ UserWarning: settings
+.ACCOUNT_LOGIN_ATTEMPT
+S_LIMIT/TIMEOUT is 
+deprecated, use: setti
+ngs.ACCOUNT_RATE_LIMIT
+S['login_failed']
+Au caractère Ligne:1 
+: 1
++ venv\Scripts\python 
+manage.py simulate_csj
+_scenarios --reset > 
+final_ ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (D:\project   
+ \BFMa...'login_fa    
+iled']:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  warnings.warn(
+[OK] WeasyPrint (Healthcare) charge avec succes!
+[OK] WeasyPrint charge avec succes pour PurchaseOrder!
+[OK] WeasyPrint charge avec succes!
+
+================================================================================
+    SIMULATION DES PARCOURS PATIENTS JULIANNA (CSJ)
+================================================================================
+Mode reset activÚ - Suppression des donnÚes existantes...
+  Nettoyage des donnÚes de l'organisation Centre de SantÚ JULIANNA...
+  [OK] DonnÚes prÚcÚdentes nettoyÚes
+[BASE] Initialisation de l'organisation et du catalogue...
+[OK] Nouvel 
+utilisateur crÚÚ: 
+julianna_admin 
+(email: admin@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: admin
+[OK] Nouvel 
+utilisateur crÚÚ: 
+julianna_receptionist 
+(email: 
+receptionist@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: receptionist
+
+(process:4448): 
+GLib-GIO-WARNING **: 
+09:40:26.537: 
+Unexpectedly, UWP app 
+`MobiSystems.OfficeSui
+tePersonalFree_8.90.57
+372.0_x64__8m57vzdwnby
+bp' (AUMId `MobiSystem
+s.OfficeSuitePersonalF
+ree_8m57vzdwnbybp!Slid
+es') supports 1 
+extensions but has no 
+verbs
+
+(process:4448): 
+GLib-GIO-WARNING **: 
+09:40:26.537: 
+Unexpectedly, UWP app 
+`MobiSystems.OfficeSui
+tePersonalFree_8.90.57
+372.0_x64__8m57vzdwnby
+bp' (AUMId `MobiSystem
+s.OfficeSuitePersonalF
+ree_8m57vzdwnbybp!Shee
+ts') supports 2 
+extensions but has no 
+verbs
+[OK] Nouvel 
+utilisateur crÚÚ: 
+julianna_doctor 
+(email: doctor@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: doctor
+
+(process:4448): 
+GLib-GIO-WARNING **: 
+09:40:27.702: 
+Unexpectedly, UWP app 
+`Microsoft.OutlookForW
+indows_1.2025.1121.100
+_x64__8wekyb3d8bbwe' 
+(AUMId `Microsoft.Outl
+ookForWindows_8wekyb3d
+8bbwe!Microsoft.Outloo
+kforWindows') 
+supports 4 extensions 
+but has no verbs
+[OK] Nouvel 
+utilisateur crÚÚ: 
+julianna_lab_tech 
+(email: 
+lab_tech@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: lab_tech
+
+(process:4448): 
+GLib-GIO-WARNING **: 
+09:40:28.014: 
+Unexpectedly, UWP app 
+`Clipchamp.Clipchamp_4
+.4.10720.0_x64__yxz26n
+hyzhsrt' (AUMId `Clipc
+hamp.Clipchamp_yxz26nh
+yzhsrt!App') supports 
+41 extensions but has 
+no verbs
+
+(process:4448): 
+GLib-GIO-WARNING **: 
+09:40:28.940: 
+Unexpectedly, UWP app 
+`Microsoft.ScreenSketc
+h_11.2511.31.0_x64__8w
+ekyb3d8bbwe' (AUMId `M
+icrosoft.ScreenSketch_
+8wekyb3d8bbwe!App') 
+supports 29 
+extensions but has no 
+verbs
+[CAS 1a] Fabrice - Enregistrement + Caisse + Consultation
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+Created invoice 
+FAC2026010002 for 
+consultation 
+CONS-20260116-0001
+[CAS 1b] Fabrice - Caisse + Laboratoire
+  - Item: NFS (NumÚration Formule), Qty: 1, Price: 5400.00
+  - Item: PALUDISME + Quantification, Qty: 1, Price: 1600.00
+[CAS 1c] Fabrice - RÚcupÚration rÚsultats
+[CAS 1d] Fabrice - MÚdicaments
+  - Item: Coartem, Qty: 1, Price: 3000
+  - Item: ParacÚtamol 500mg, Qty: 2, Price: 100
+Created invoice 
+FAC2026010005 for 
+dispensing 
+DISP-20260116-0001
+[CAS 2] Angel - Patient externe (Labo uniquement)
+  - Item: GLYC╔MIE └ JEUN, Qty: 1, Price: 2000.00
+[CIRCUITS] Simulation des circuits 1 Ó 8
+  - Simulation Circuit 1 pour Patient Circuit 1
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+  - Item: Pansement simple, Qty: 1, Price: 2500
+  - Simulation Circuit 2 pour Patient Circuit 2
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+  - Item: ACIDE URIQUE, Qty: 1, Price: 4000.00
+  - Simulation Circuit 3 pour Patient Circuit 3
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+  - Simulation Circuit 4 pour Patient Circuit 4
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+  - Item: ParacÚtamol 500mg, Qty: 1, Price: 100
+  - Simulation Circuit 5 pour Patient Circuit 5
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+  - Simulation Circuit 6 pour Patient Circuit 6
+  - Item: Pansement simple, Qty: 1, Price: 2500
+  - Simulation Circuit 7 pour Patient Circuit 7
+  - Item: ACIDE URIQUE, Qty: 1, Price: 4000.00
+  - Simulation Circuit 8 pour Patient Circuit 8
+  - Item: ParacÚtamol 500mg, Qty: 1, Price: 100
+
+================================================================================
+    SIMULATION TERMIN╔E AVEC SUCC╚S
+================================================================================

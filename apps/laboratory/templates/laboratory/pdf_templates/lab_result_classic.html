@@ -7,285 +7,357 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 1cm;
 
-            @bottom-center {
+            @bottom-right {
                 content: "Page " counter(page) " / " counter(pages);
                 font-family: 'Helvetica', sans-serif;
-                font-size: 9pt;
-                color: #666;
+                font-size: 8pt;
+                color: #888;
             }
         }
 
         body {
             font-family: 'Helvetica', sans-serif;
-            font-size: 10pt;
-            line-height: 1.4;
-            color: #333;
-        }
-
-        .header {
-            width: 100%;
-            margin-bottom: 30px;
-            border-bottom: 2px solid {{ brand_color|default:"#2563eb" }};
-            padding-bottom: 10px;
-        }
-
-        .logo {
-            max-height: 60px;
-        }
-
-        .org-info {
-            text-align: right;
             font-size: 9pt;
-            color: #555;
+            line-height: 1.3;
+            color: #111;
+        }
+
+        /* Minimalist Modern Header */
+        .header-container {
+            display: table;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #000;
+            padding-bottom: 0.5rem;
+        }
+
+        .header-left {
+            display: table-cell;
+            width: 60%;
+            vertical-align: middle;
+        }
+
+        .header-right {
+            display: table-cell;
+            width: 40%;
+            text-align: right;
+            vertical-align: middle;
         }
 
         .org-name {
             font-size: 14pt;
-            font-weight: bold;
-            color: {{ brand_color|default:"#2563eb" }};
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .org-details {
+            font-size: 8pt;
+            color: #444;
+            line-height: 1.2;
+        }
+
+        .doc-type {
+            font-size: 14pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #000;
             margin-bottom: 5px;
         }
 
-        .title-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .doc-title {
-            font-size: 18pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: {{ brand_color|default:"#2563eb" }};
-            letter-spacing: 2px;
-        }
-
+        /* Patient Info Grid */
         .info-grid {
             display: table;
             width: 100%;
-            margin-bottom: 30px;
-            background-color: #f9fafb;
-            border-radius: 5px;
-            padding: 15px;
+            margin-bottom: 2rem;
         }
 
-        .info-col {
+        .info-column {
             display: table-cell;
-            width: 50%;
+            width: 33%;
             vertical-align: top;
+            padding-right: 15px;
         }
 
         .info-label {
-            font-weight: bold;
-            color: #666;
-            font-size: 8pt;
+            font-size: 7pt;
             text-transform: uppercase;
+            color: #666;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
         }
 
         .info-value {
+            font-size: 10pt;
+            font-weight: 600;
             margin-bottom: 10px;
-            font-weight: 500;
         }
 
+        /* Minimalist Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         th {
-            background-color: {{ brand_color|default:"#2563eb" }};
-            color: white;
             text-align: left;
-            padding: 8px;
-            font-size: 9pt;
+            font-size: 8pt;
             text-transform: uppercase;
+            color: #666;
+            border-bottom: 2px solid #000;
+            padding: 8px 5px;
+            font-weight: 700;
         }
 
         td {
-            padding: 8px;
+            padding: 8px 5px;
             border-bottom: 1px solid #eee;
+            vertical-align: top;
         }
 
-        .category-row {
-            background-color: #f0f0f0;
-            font-weight: bold;
+        .category-header {
+            background-color: #f8f8f8;
+            font-weight: 800;
+            font-size: 9pt;
+            text-transform: uppercase;
+            padding-top: 15px;
+            padding-bottom: 5px;
         }
 
-        .flag-high {
+        .result-value {
+            font-weight: 700;
+            font-size: 10pt;
+        }
+
+        .unit {
+            font-size: 8pt;
+            color: #555;
+        }
+
+        .range {
+            font-size: 8pt;
+            color: #555;
+        }
+
+        .abnormal {
             color: #dc2626;
-            font-weight: bold;
+            /* Red for abnormal */
         }
 
-        .flag-low {
-            color: #2563eb;
-            font-weight: bold;
+        .flag-marker {
+            font-weight: 900;
+            color: #dc2626;
+            font-size: 8pt;
+            border: 1px solid #dc2626;
+            padding: 1px 4px;
+            border-radius: 2px;
         }
 
-        .flag-normal {
-            color: #059669;
+        .footer-section {
+            margin-top: 3rem;
+            page-break-inside: avoid;
         }
 
-        .footer {
-            margin-top: 50px;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
+        .signature-grid {
             display: table;
             width: 100%;
         }
 
         .signature-box {
             display: table-cell;
-            width: 50%;
+            width: 33%;
             vertical-align: top;
         }
 
-        .qr-code {
-            position: absolute;
-            top: 2cm;
-            right: 0;
-            width: 60px;
+        .signature-line {
+            margin-top: 40px;
+            border-top: 1px solid #ccc;
+            width: 80%;
+            padding-top: 5px;
+            font-size: 8pt;
         }
 
-        .notes {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #fffbeb;
-            border: 1px solid #fcd34d;
-            border-radius: 4px;
-            font-size: 9pt;
+        /* Compact layout adjustments */
+        .sm-text {
+            font-size: 8pt;
+            color: #666;
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <table style="width: 100%; border: none; margin: 0;">
-            <tr>
-                <td style="width: 50%; border: none;">
-                    {% if logo_base64 %}
-                    <img src="{{ logo_base64 }}" class="logo" alt="Logo">
-                    {% else %}
-                    <div class="org-name">{{ organization.name }}</div>
-                    {% endif %}
-                </td>
-                <td style="width: 50%; border: none; text-align: right;">
-                    <div class="org-info">
-                        <strong>{{ organization.name }}</strong><br>
-                        {{ organization.address }}<br>
-                        {{ organization.phone }} | {{ organization.email }}
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="title-section">
-        <div class="doc-title">RÉSULTATS DE LABORATOIRE</div>
-    </div>
-
-    <div class="info-grid">
-        <div class="info-col">
-            <div class="info-label">Patient</div>
-            <div class="info-value">
-                {{ patient.name }}<br>
-                {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{%
-                endif %}<br>
-                ID: {{ patient.patient_number|default:"-" }}
-            </div>
-
-            <div class="info-label">Médecin Prescripteur</div>
-            <div class="info-value">
-                {% if order.ordered_by %}
-                Dr. {{ order.ordered_by.get_full_name }}
-                {% else %}
-                -
-                {% endif %}
+    <!-- Header -->
+    <div class="header-container">
+        <div class="header-left">
+            {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" style="max-height: 50px; margin-bottom: 10px;">
+            {% else %}
+            <div class="org-name">{{ organization.name }}</div>
+            {% endif %}
+            <div class="org-details">
+                {{ organization.address }}<br>
+                {{ organization.phone }} &bull; {{ organization.email }}
             </div>
         </div>
-        <div class="info-col">
-            <div class="info-label">Détails Commande</div>
-            <div class="info-value">
-                N°: {{ order.order_number }}<br>
-                Date: {{ order.order_date|date:"d/m/Y H:i" }}<br>
-                Priorité: {{ order.get_priority_display }}
+        <div class="header-right">
+            <div class="doc-type">Résultats d'Analyses</div>
+            <div class="org-details">
+                <strong>Ordre #{{ order.order_number }}</strong><br>
+                Date: {{ order.order_date|date:"d/m/Y H:i" }}
             </div>
-
             {% if qr_code_base64 %}
-            <div style="margin-top: 10px;">
-                <img src="{{ qr_code_base64 }}" width="80" alt="QR">
-            </div>
+            <img src="{{ qr_code_base64 }}" width="60" style="margin-top: 5px;">
             {% endif %}
         </div>
     </div>
 
+    <!-- Patient Info -->
+    <div class="info-grid">
+        <div class="info-column">
+            <div class="info-label">Patient</div>
+            <div class="info-value">
+                {{ patient.name }}
+            </div>
+            <div class="sm-text">
+                {{ patient.gender }}, {% if patient.date_of_birth %}{{ patient.get_age }} Ans{% else %}-{% endif %}<br>
+                ID: {{ patient.patient_number|default:"-" }}
+            </div>
+        </div>
+        <div class="info-column">
+            <div class="info-label">Prescripteur</div>
+            <div class="info-value">
+                {% if order.ordered_by %}Dr. {{ order.ordered_by.get_full_name }}{% else %}-{% endif %}
+            </div>
+            <div class="sm-text">
+                {{ order.clinical_notes|default:""|truncatechars:100 }}
+            </div>
+        </div>
+        <div class="info-column">
+            <div class="info-label">Statut</div>
+            <div class="info-value">
+                {% if order.status == 'completed' or order.status == 'results_delivered' %}Validé{% else %}Provisoire{%
+                endif %}
+            </div>
+            <div class="sm-text">
+                Imprimé le: {% now "d/m/Y H:i" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
     <table>
         <thead>
             <tr>
-                <th style="width: 40%">Examen / Test</th>
-                <th style="width: 20%">Résultat</th>
-                <th style="width: 10%">Unités</th>
-                <th style="width: 20%">Valeurs Réf.</th>
-                <th style="width: 10%">Flag</th>
+                <th width="35%">Examen</th>
+                <th width="15%">Résultat</th>
+                <th width="10%">Unité</th>
+                <th width="20%">Réf. Values</th>
+                <th width="15%">Antérieurs</th>
+                <th width="5%">Flag</th>
             </tr>
         </thead>
         <tbody>
-            {% regroup items by lab_test.category as category_list %}
+            {% regroup items by item.lab_test.category as category_list %}
 
             {% for category in category_list %}
-            <tr class="category-row">
-                <td colspan="5">{% if category.grouper %}{{ category.grouper.name }}{% else %}Autres Tests{% endif %}
+            <tr>
+                <td colspan="6" class="category-header">
+                    {% if category.grouper %}{{ category.grouper.name }}{% else %}Divers{% endif %}
                 </td>
             </tr>
-            {% for item in category.list %}
+
+            {% for entry in category.list %}
+            {% with item=entry.item previous=entry.previous_result prev_date=entry.previous_date %}
             <tr>
-                <td style="padding-left: 20px;">{{ item.lab_test.name }}</td>
-                <td>
-                    <strong>{{ item.result_value|default:"-" }}</strong>
+                <td style="padding-left: 10px;">
+                    <strong>{{ item.lab_test.name }}</strong>
+                    {% if item.lab_test.methodology %}
+                    <div style="font-size: 7pt; color: #888;">{{ item.lab_test.methodology }}</div>
+                    {% endif %}
                 </td>
-                <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
-                <td>
-                    {% if patient.gender == 'M' and item.lab_test.normal_range_male %}
-                    {{ item.lab_test.normal_range_male }}
-                    {% elif patient.gender == 'F' and item.lab_test.normal_range_female %}
-                    {{ item.lab_test.normal_range_female }}
+                <td class="result-value {% if item.is_abnormal %}abnormal{% endif %}">
+                    {{ item.result_value|default:"-" }}
+                </td>
+                <td class="unit">{{ item.result_unit|default:item.lab_test.unit_of_measurement|default:"" }}</td>
+                <td class="range">
+                    {{ item.reference_range|default:"-" }}
+                </td>
+                <td class="range">
+                    {% if previous %}
+                    <strong>{{ previous }}</strong> <span style="font-size: 6pt;">({{ prev_date }})</span>
                     {% else %}
-                    {{ item.lab_test.normal_range_general|default:"-" }}
+                    <span style="color: #ccc;">-</span>
                     {% endif %}
                 </td>
-                <td>
+                <td style="text-align: center;">
                     {% if item.is_abnormal %}
-                    <span class="flag-high">ANORMAL</span>
+                    <span class="flag-marker">!</span>
                     {% endif %}
                 </td>
             </tr>
-            {% endfor %}
-            {% empty %}
+            {% if item.technician_notes or item.interpretation %}
             <tr>
-                <td colspan="5" style="text-align: center; color: #666;">Aucun résultat disponible</td>
+                <td colspan="6" style="padding-left: 10px; padding-bottom: 10px;">
+                    <div style="background-color: #f9f9f9; padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
+                        {% if item.interpretation %}
+                        <strong>Interprétation:</strong> {{ item.interpretation }}<br>
+                        {% endif %}
+                        {% if item.technician_notes %}
+                        <em>Note: {{ item.technician_notes }}</em>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
+            {% endif %}
+            {% endwith %}
+            {% endfor %}
             {% endfor %}
         </tbody>
     </table>
 
-    {% if order.clinical_notes %}
-    <div class="notes">
-        <strong>Notes cliniques:</strong> {{ order.clinical_notes }}
+    <!-- Biologist Diagnosis -->
+    {% if order.biologist_diagnosis %}
+    <div
+        style="margin-top: 20px; background-color: #f0fdf4; border: 1px solid #22c55e; padding: 10px; border-radius: 4px; color: #166534;">
+        <div class="info-label" style="margin-bottom: 5px; color: #15803d; font-weight: bold;">Diagnostic du Biologiste
+        </div>
+        <div style="font-size: 10pt; font-weight: 500;">
+            {{ order.biologist_diagnosis|linebreaksbr }}
+        </div>
     </div>
     {% endif %}
 
-    <div class="footer">
-        <div class="signature-box">
-            <div class="info-label">Validé par:</div>
-            <div style="margin-top: 40px; border-top: 1px dotted #ccc; width: 200px;">
-                Signature Technicien / Biologiste
+    <!-- Footer signatures -->
+    <div class="footer-section">
+        <div class="signature-grid">
+            <div class="signature-box">
+                <div class="info-label">Technicien de Laboratoire</div>
+                <div class="signature-line">
+                    {% if order.results_entered_by %}{{ order.results_entered_by.get_full_name }}{% endif %}
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="info-label">Validé par</div>
+                <div class="signature-line">
+                    {% if order.results_verified_by %}<strong>{{ order.results_verified_by.get_full_name }}</strong>{%
+                    endif %}
+                </div>
+            </div>
+            <div class="signature-box">
+                <!-- Empty for layout balance or Stamp -->
+                <div class="info-label">Cachet</div>
+                <div class="signature-line" style="border: none; border: 1px dashed #ccc; height: 50px;"></div>
             </div>
         </div>
-        <div class="signature-box" style="text-align: right;">
-            <div class="info-label">Date d'édition:</div>
-            <div>{% now "d/m/Y H:i" %}</div>
-        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; font-size: 7pt; color: #999;">
+        Ce document est certifié et généré électroniquement par {{ organization.name }} - ProcureGenius System
     </div>
 </body>
 

@@ -59,12 +59,20 @@ export const getStockStatusLabel = (stockStatus, stockQuantity) => {
 };
 
 /**
- * Vérifie si un produit peut être ajouté à une facture
+ * Vérifie si un produit peut être ajouté à un document (facture, bon de commande, etc.)
  * @param {object} product - Objet produit
  * @param {number} requestedQuantity - Quantité demandée
+ * @param {object} options - Options supplémentaires (allowOutOfStock: boolean)
  * @returns {object} { canAdd: boolean, reason: string }
  */
-export const canAddProductToInvoice = (product, requestedQuantity) => {
+export const canAddProductToInvoice = (product, requestedQuantity, options = {}) => {
+  const { allowOutOfStock = false } = options;
+
+  // L'ajout est toujours possible si explicitement autorisé (ex: pour les bons de commande)
+  if (allowOutOfStock) {
+    return { canAdd: true, reason: '' };
+  }
+
   // Les services et produits digitaux sont toujours disponibles
   if (product.product_type === 'service' || product.product_type === 'digital') {
     return { canAdd: true, reason: '' };

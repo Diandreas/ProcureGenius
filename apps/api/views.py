@@ -12,7 +12,7 @@ from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
 from apps.accounts.models import Client
 from apps.core.permissions import HasModuleAccess
-from apps.core.modules import Modules
+from apps.core.modules import Modules, user_has_module_access
 from apps.core.organization_mixin import OrganizationFilterMixin, OrganizationClientFilterMixin
 
 from .serializers import (
@@ -788,15 +788,32 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         })
 
 
+class HasClientOrPatientModuleAccess(permissions.BasePermission):
+    """
+    Custom permission to allow access if user has either CLIENTS or PATIENTS module.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        has_clients = user_has_module_access(request.user, Modules.CLIENTS)
+        has_patients = user_has_module_access(request.user, Modules.PATIENTS)
+        
+        return has_clients or has_patients
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
+
+
 class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les clients"""
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
-    required_module = Modules.CLIENTS
+    permission_classes = [permissions.IsAuthenticated, HasClientOrPatientModuleAccess]
+    # required_module = Modules.CLIENTS  # Handled by custom permission
     organization_field = 'organization'  # Client has organization FK
-    filterset_fields = ['is_active']
-    search_fields = ['name', 'email', 'contact_person']
+    filterset_fields = ['is_active', 'client_type']
+    search_fields = ['name', 'email', 'contact_person', 'phone']
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
     

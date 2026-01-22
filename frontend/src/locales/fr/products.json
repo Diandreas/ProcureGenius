@@ -75,7 +75,11 @@
         "optional": "Optionnel",
         "advancedDetails": "Détails avancés",
         "stockManagement": "Gestion de stock",
-        "noSupplier": "Aucun fournisseur"
+        "noSupplier": "Aucun fournisseur",
+        "priceEditable": "Prix modifiable",
+        "priceEditableHelp": "Autoriser la modification du prix lors des transactions",
+        "digitalProduct": "Produit numérique",
+        "service": "Service"
     },
     "table": {
         "invoiceNumber": "N° Facture",
@@ -166,7 +170,15 @@
         "categoryUpdated": "Catégorie modifiée avec succès",
         "categoryDeleted": "Catégorie supprimée avec succès",
         "categoryDeleteError": "Erreur lors de la suppression de la catégorie",
-        "deleteCategoryConfirm": "Êtes-vous sûr de vouloir supprimer cette catégorie ?"
+        "deleteCategoryConfirm": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
+        "createProductDescription": "Créez votre premier produit pour commencer à gérer votre inventaire",
+        "clickAddToCreateFirstSupplier": "Cliquez sur 'Ajouter' pour créer votre premier fournisseur",
+        "clickAddToCreateFirstWarehouse": "Cliquez sur 'Ajouter' pour créer votre premier entrepôt",
+        "createWarehouseDescription": "Créez un entrepôt pour gérer votre stock physique",
+        "uniqueCode": "Code unique",
+        "uncategorizedProduct": "Produit sans catégorie",
+        "createCategoryDescription": "Créez une catégorie pour organiser vos produits",
+        "noStockManagement": "Aucune gestion de stock requise pour ce type de produit"
     },
     "actions": {
         "cancel": "Annuler",

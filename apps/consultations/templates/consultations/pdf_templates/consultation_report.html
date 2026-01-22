@@ -1,232 +1,179 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends 'pdf_base.html' %}
+{% load i18n %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Rapport Consultation - {{ patient.name }}</title>
-    <style>
-        @page {
-            size: A4 portrait;
-            margin: 2cm;
+{% block title %}Rapport Consultation - {{ patient.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-title {
+        text-align: center;
+        font-size: 20pt;
+        font-weight: bold;
+        margin: 20px 0 30px 0;
+        text-transform: uppercase;
+        color: #2c3e50;
+    }
+
+    .section {
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 12pt;
+        font-weight: bold;
+
+        color: {
+                {
+                organization.brand_color|default: "#2563eb"
+            }
         }
 
-        body {
-            font-family: 'Helvetica', sans-serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #333;
-        }
+        ;
 
-        .header {
-            width: 100%;
-            margin-bottom: 30px;
-            border-bottom: 2px solid {{ organization.brand_color|default:"#2563eb" }};
-            padding-bottom: 20px;
-            display: table;
-        }
+        ;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+        text-transform: uppercase;
+    }
 
-        .header-left {
-            display: table-cell;
-            width: 60%;
-            vertical-align: top;
-        }
+    .grid-row {
+        display: table;
+        width: 100%;
+        margin-bottom: 10px;
+    }
 
-        .header-right {
-            display: table-cell;
-            width: 40%;
-            text-align: right;
-            vertical-align: top;
-        }
+    .grid-col {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+    }
 
-        .org-name {
-            font-size: 18pt;
-            font-weight: bold;
-            color: {{ organization.brand_color|default:"#2563eb" }};
-            margin-bottom: 5px;
-        }
+    .label {
+        font-weight: bold;
+        color: #666;
+        width: 120px;
+        display: inline-block;
+    }
 
-        .report-title {
-            text-align: center;
-            font-size: 20pt;
-            font-weight: bold;
-            margin: 20px 0 30px 0;
-            text-transform: uppercase;
-            color: #2c3e50;
-        }
+    .vitals-grid {
+        display: table;
+        width: 100%;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+    }
 
-        .section {
-            margin-bottom: 25px;
-        }
+    .vital-item {
+        display: table-cell;
+        width: 25%;
+        text-align: center;
+        padding: 5px;
+    }
 
-        .section-title {
-            font-size: 12pt;
-            font-weight: bold;
-            color: {{ organization.brand_color|default:"#2563eb" }};
-            border-bottom: 1px solid #eee;
-            margin-bottom: 10px;
-            padding-bottom: 3px;
-            text-transform: uppercase;
-        }
+    .vital-label {
+        font-size: 9pt;
+        color: #666;
+        display: block;
+    }
 
-        .grid-row {
-            display: table;
-            width: 100%;
-            margin-bottom: 10px;
-        }
+    .vital-value {
+        font-size: 11pt;
+        font-weight: bold;
+        display: block;
+    }
+</style>
+{% endblock %}
 
-        .grid-col {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-        }
+{% block content %}
+<div style="text-align: right; font-size: 9pt; color: #666; margin-bottom: 10px;">
+    Consultation N°: {{ consultation.consultation_number }}<br>
+    Date: {{ consultation.consultation_date|date:"d/m/Y H:i" }}
+</div>
 
-        .label {
-            font-weight: bold;
-            color: #666;
-            width: 120px;
-            display: inline-block;
-        }
+<div class="report-title">Compte Rendu de Consultation</div>
 
-        .vitals-grid {
-            display: table;
-            width: 100%;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .vital-item {
-            display: table-cell;
-            width: 25%;
-            text-align: center;
-            padding: 5px;
-        }
-
-        .vital-label {
-            font-size: 9pt;
-            color: #666;
-            display: block;
-        }
-
-        .vital-value {
-            font-size: 11pt;
-            font-weight: bold;
-            display: block;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="header">
-        <div class="header-left">
-            <div class="org-name">{{ organization.name }}</div>
-            <div>{{ organization.address }}</div>
-            <div>{{ organization.phone }}</div>
-            <div>{{ organization.email }}</div>
+<div class="section">
+    <div class="section-title">Patient & Médecin</div>
+    <div class="grid-row">
+        <div class="grid-col">
+            <div><span class="label">Patient:</span> <b>{{ patient.name }}</b></div>
+            <div><span class="label">ID Patient:</span> {{ patient.patient_number }}</div>
+            <div><span class="label">Âge/Sexe:</span> {{ patient.get_age }} ans / {{ patient.gender }}</div>
         </div>
-        <div class="header-right">
-            {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" style="max-height: 80px; max-width: 150px; height: auto; width: auto;" alt="Logo">
-            {% endif %}
-            <div style="margin-top: 15px; font-weight: bold;">
-                Consultation N°: {{ consultation.consultation_number }}
-            </div>
-            <div>Date: {{ consultation.consultation_date|date:"d/m/Y H:i" }}</div>
+        <div class="grid-col">
+            <div><span class="label">Médecin:</span> <b>Dr. {{ consultation.doctor.get_full_name }}</b></div>
+            <div><span class="label">Spécialité:</span> Médecine Générale</div>
         </div>
     </div>
+</div>
 
-    <div class="report-title">Compte Rendu de Consultation</div>
-
-    <div class="section">
-        <div class="section-title">Patient & Médecin</div>
-        <div class="grid-row">
-            <div class="grid-col">
-                <div><span class="label">Patient:</span> <b>{{ patient.name }}</b></div>
-                <div><span class="label">ID Patient:</span> {{ patient.patient_number }}</div>
-                <div><span class="label">Âge/Sexe:</span> {{ patient.get_age }} ans / {{ patient.gender }}</div>
-            </div>
-            <div class="grid-col">
-                <div><span class="label">Médecin:</span> <b>Dr. {{ consultation.doctor.get_full_name }}</b></div>
-                <div><span class="label">Spécialité:</span> Médecine Générale</div>
-            </div>
+<div class="section">
+    <div class="section-title">Signes Vitaux</div>
+    <div class="vitals-grid">
+        <div class="vital-item">
+            <span class="vital-label">Tension</span>
+            <span class="vital-value">{{ consultation.blood_pressure|default:"-" }} mmHg</span>
+        </div>
+        <div class="vital-item">
+            <span class="vital-label">Pouls</span>
+            <span class="vital-value">{{ consultation.heart_rate|default:"-" }} bpm</span>
+        </div>
+        <div class="vital-item">
+            <span class="vital-label">Température</span>
+            <span class="vital-value">{{ consultation.temperature|default:"-" }} °C</span>
+        </div>
+        <div class="vital-item">
+            <span class="vital-label">Poids</span>
+            <span class="vital-value">{{ consultation.weight|default:"-" }} kg</span>
         </div>
     </div>
+</div>
 
-    <div class="section">
-        <div class="section-title">Signes Vitaux</div>
-        <div class="vitals-grid">
-            <div class="vital-item">
-                <span class="vital-label">Tension</span>
-                <span class="vital-value">{{ consultation.blood_pressure|default:"-" }} mmHg</span>
-            </div>
-            <div class="vital-item">
-                <span class="vital-label">Pouls</span>
-                <span class="vital-value">{{ consultation.heart_rate|default:"-" }} bpm</span>
-            </div>
-            <div class="vital-item">
-                <span class="vital-label">Température</span>
-                <span class="vital-value">{{ consultation.temperature|default:"-" }} °C</span>
-            </div>
-            <div class="vital-item">
-                <span class="vital-label">Poids</span>
-                <span class="vital-value">{{ consultation.weight|default:"-" }} kg</span>
-            </div>
+<div class="section">
+    <div class="section-title">Motif & Histoire</div>
+    <div style="margin-bottom: 10px;">
+        <span class="label">Motif:</span> {{ consultation.chief_complaint }}
+    </div>
+    <div>
+        <span class="label" style="vertical-align: top;">Histoire:</span>
+        <div style="display: inline-block; width: 80%; vertical-align: top;">
+            {{ consultation.history_of_present_illness|default:"Non spécifié" }}
         </div>
     </div>
+</div>
 
-    <div class="section">
-        <div class="section-title">Motif & Histoire</div>
-        <div style="margin-bottom: 10px;">
-            <span class="label">Motif:</span> {{ consultation.chief_complaint }}
-        </div>
-        <div>
-            <span class="label" style="vertical-align: top;">Histoire:</span>
-            <div style="display: inline-block; width: 80%; vertical-align: top;">
-                {{ consultation.history_of_present_illness|default:"Non spécifié" }}
-            </div>
-        </div>
-    </div>
+<div class="section">
+    <div class="section-title">Examen Clinique</div>
+    <p>{{ consultation.physical_examination|linebreaks|default:"RAS" }}</p>
+</div>
 
-    <div class="section">
-        <div class="section-title">Examen Clinique</div>
-        <p>{{ consultation.physical_examination|linebreaks|default:"RAS" }}</p>
-    </div>
+<div class="section">
+    <div class="section-title">Diagnostic</div>
+    <p style="font-weight: bold;">{{ consultation.diagnosis|default:"En cours d'investigation" }}</p>
+</div>
 
-    <div class="section">
-        <div class="section-title">Diagnostic</div>
-        <p style="font-weight: bold;">{{ consultation.diagnosis|default:"En cours d'investigation" }}</p>
-    </div>
+<div class="section">
+    <div class="section-title">Plan de Traitement</div>
+    <p>{{ consultation.treatment_plan|linebreaks|default:"-" }}</p>
+</div>
 
-    <div class="section">
-        <div class="section-title">Plan de Traitement</div>
-        <p>{{ consultation.treatment_plan|linebreaks|default:"-" }}</p>
-    </div>
+{% if prescriptions %}
+<div class="section">
+    <div class="section-title">Prescriptions Associées</div>
+    <ul>
+        {% for pres in prescriptions %}
+        <li>
+            Ordonnance <b>{{ pres.prescription_number }}</b> - {{ pres.items.count }} médicaments
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
-    {% if prescriptions %}
-    <div class="section">
-        <div class="section-title">Prescriptions Associées</div>
-        <ul>
-            {% for pres in prescriptions %}
-            <li>
-                Ordonnance <b>{{ pres.prescription_number }}</b> - {{ pres.items.count }} médicaments
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-
-    <div style="margin-top: 50px; text-align: right;">
-        <p>Signature:</p>
-        <div style="height: 60px;"></div>
-        <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
-    </div>
-
-    {% if qr_code_base64 %}
-    <div style="position: absolute; bottom: 2cm; right: 2cm;">
-        <img src="{{ qr_code_base64 }}" width="90" alt="QR">
-    </div>
-    {% endif %}
-
-</body>
-
-</html>
+<div style="margin-top: 50px; text-align: right;">
+    <p>Signature:</p>
+    <div style="height: 60px;"></div>
+    <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
+</div>
+{% endblock %}

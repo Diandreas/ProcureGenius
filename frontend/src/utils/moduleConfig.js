@@ -14,6 +14,12 @@ export const Modules = {
     CONTRACTS: 'contracts',
     ANALYTICS: 'analytics',
 
+    // Healthcare modules
+    PATIENTS: 'patients',
+    CONSULTATIONS: 'consultations',
+    LABORATORY: 'laboratory',
+    PHARMACY: 'pharmacy',
+
     // Always available to admins
     AI_ASSISTANT: 'ai-assistant',
     INTEGRATIONS: 'integrations',
@@ -51,6 +57,14 @@ export const ModuleIcons = {
     [Modules.E_SOURCING]: 'GavelIcon',
     [Modules.CONTRACTS]: 'DescriptionIcon',
     [Modules.ANALYTICS]: 'AnalyticsIcon',
+
+    // Healthcare modules
+    [Modules.PATIENTS]: 'PersonIcon',
+    [Modules.CONSULTATIONS]: 'MedicalServicesIcon',
+    [Modules.LABORATORY]: 'ScienceIcon',
+    [Modules.PHARMACY]: 'LocalPharmacyIcon',
+
+    // Admin modules
     [Modules.AI_ASSISTANT]: 'SmartToyIcon',
     [Modules.INTEGRATIONS]: 'IntegrationInstructionsIcon',
     [Modules.DATA_MIGRATION]: 'CloudUploadIcon',

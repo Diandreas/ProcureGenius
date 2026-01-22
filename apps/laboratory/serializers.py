@@ -141,6 +141,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     tests_count = serializers.IntegerField(read_only=True)
     all_results_entered = serializers.BooleanField(read_only=True)
     lab_invoice = serializers.SerializerMethodField()
+    diagnosed_by_name = serializers.SerializerMethodField()
     
     class Meta:
         model = LabOrder
@@ -172,14 +173,23 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'total_price',
             'tests_count',
             'all_results_entered',
+            'biologist_diagnosis',
+            'diagnosed_by_name',
+            'diagnosed_at',
             'created_at',
             'updated_at',
         ]
         read_only_fields = [
             'id', 'order_number', 'created_at', 'updated_at',
             'sample_collected_at', 'results_completed_at',
-            'notification_sent', 'notification_sent_at'
+            'notification_sent', 'notification_sent_at',
+            'diagnosed_at'
         ]
+    
+    def get_diagnosed_by_name(self, obj):
+        if obj.diagnosed_by:
+            return obj.diagnosed_by.get_full_name() or obj.diagnosed_by.username
+        return None
     
     def get_ordered_by_name(self, obj):
         if obj.ordered_by:

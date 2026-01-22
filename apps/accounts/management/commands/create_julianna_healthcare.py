@@ -136,6 +136,7 @@ class Command(BaseCommand):
                 'company_email': ORGANIZATION_INFO.get('email'),
                 'company_website': ORGANIZATION_INFO.get('website'),
                 'default_currency': 'XAF', # Set currency to XAF
+                'auto_generate_lab_kits': True, # Enable lab kit generation
             }
         )
         if created_settings:
@@ -304,7 +305,7 @@ class Command(BaseCommand):
         # Créer la catégorie Médicaments
         med_category, _ = ProductCategory.objects.get_or_create(
             organization=self.organization,
-            slug='medicaments',
+            slug='medications',
             defaults={
                 'name': 'Médicaments',
                 'description': 'Produits pharmaceutiques',

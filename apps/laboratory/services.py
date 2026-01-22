@@ -26,16 +26,26 @@ class LabResultPDFGenerator:
         from django.utils import translation
         translation.activate(language)
         
+        # Prepare items with history
+        items_with_history = []
+        for item in order.items.all().select_related('lab_test'):
+            prev = item.get_previous_results(limit=1).first()
+            items_with_history.append({
+                'item': item,
+                'previous_result': prev.result_value if prev else None,
+                'previous_date': prev.result_entered_at.strftime('%d/%m/%Y') if prev and prev.result_entered_at else None
+            })
+
         # Context
         context = {
             'order': order,
-            'items': order.items.all().select_related('lab_test'),
+            'items': items_with_history, # Use wrapper list
             'patient': order.patient,
             'organization': org_data,
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': self._generate_qr_code(order),
             'template_type': template_type,
-            'brand_color': org_data.get('brand_color', '#2563eb'),
+            'brand_color': org_data.get('brand_color', '#000000'), # Default black/dark for modern look
             'language': language,
         }
         

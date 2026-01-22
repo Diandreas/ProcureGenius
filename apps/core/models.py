@@ -145,6 +145,13 @@ class OrganizationSettings(models.Model):
         help_text=_("Couleur utilisée dans les factures et documents (format: #RRGGBB)")
     )
 
+    # Healthcare feature flags
+    auto_generate_lab_kits = models.BooleanField(
+        default=False,
+        verbose_name=_("Génération automatique des kits labo"),
+        help_text=_("Créer automatiquement un produit consommable pour chaque nouveau test de laboratoire")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,

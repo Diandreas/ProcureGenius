@@ -191,10 +191,9 @@ function Invoices() {
     })();
 
     const matchesDate = !selectedDate || (() => {
-      // Filtrer par date de facture (issue_date) ou date d'échéance (due_date)
-      const invoiceDate = invoice.issue_date ? invoice.issue_date.split('T')[0] : null;
-      const dueDate = invoice.due_date ? invoice.due_date.split('T')[0] : null;
-      return invoiceDate === selectedDate || dueDate === selectedDate;
+      // Filtrer par date de création
+      const createdAt = invoice.created_at ? invoice.created_at.split('T')[0] : null;
+      return createdAt === selectedDate;
     })();
 
     return matchesSearch && matchesStatus && matchesQuick && matchesDate;
@@ -286,109 +285,107 @@ function Invoices() {
             }
           }}
         >
-      <CardContent sx={{ p: 2 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
-              bgcolor: 'primary.main',
-              borderRadius: 2,
-              boxShadow: 2,
-            }}
-          >
-            <Receipt />
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                color: 'primary.main',
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
-              }}
-            >
-              {invoice.invoice_number}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                fontSize: '0.75rem',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-              }}
-            >
-              {invoice.title}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Prix */}
-        <Box
-          sx={{
-            bgcolor: (theme) => theme.palette.mode === 'dark'
-              ? 'rgba(52, 211, 153, 0.1)'
-              : 'rgba(16, 185, 129, 0.08)',
-            borderRadius: 1,
-            p: 1,
-            mb: 1.5,
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            color="success.main"
-            sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
-          >
-            {formatCurrency(invoice.total_amount)}
-          </Typography>
-        </Box>
-
-        {/* Infos */}
-        <Stack spacing={0.75}>
-          {invoice.client_name && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
+          <CardContent sx={{ p: 2 }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+              <Avatar
                 sx={{
-                  fontSize: '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  width: isMobile ? 48 : 56,
+                  height: isMobile ? 48 : 56,
+                  bgcolor: 'primary.main',
+                  borderRadius: 2,
+                  boxShadow: 2,
                 }}
               >
-                {invoice.client_name}
+                <Receipt />
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 0.5,
+                    color: 'primary.main',
+                    fontSize: isMobile ? '0.875rem' : '0.95rem',
+                  }}
+                >
+                  {invoice.invoice_number}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    fontSize: '0.75rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                  }}
+                >
+                  {invoice.title}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Prix */}
+            <Box
+              sx={{
+                bgcolor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(52, 211, 153, 0.1)'
+                  : 'rgba(16, 185, 129, 0.08)',
+                borderRadius: 1,
+                p: 1,
+                mb: 1.5,
+                textAlign: 'center',
+              }}
+            >
+              <Typography
+                variant="h6"
+                color="success.main"
+                sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+              >
+                {formatCurrency(invoice.total_amount)}
               </Typography>
             </Box>
-          )}
 
-          {invoice.due_date && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {t('invoices:labels.dueDate')} {formatDate(invoice.due_date)}
-              </Typography>
+            {/* Infos */}
+            <Stack spacing={0.75}>
+              {invoice.client_name && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {invoice.client_name}
+                  </Typography>
+                </Box>
+              )}
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  {formatDate(invoice.created_at)}
+                </Typography>
+              </Box>
+            </Stack>
+
+            {/* Footer */}
+            <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                label={getStatusLabel(invoice.status)}
+                size="small"
+                color={getStatusColor(invoice.status)}
+                sx={{ fontSize: '0.7rem', height: 20 }}
+              />
             </Box>
-          )}
-        </Stack>
-
-        {/* Footer */}
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            label={getStatusLabel(invoice.status)}
-            size="small"
-            color={getStatusColor(invoice.status)}
-            sx={{ fontSize: '0.7rem', height: 20 }}
-          />
-        </Box>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
       </motion.div>
     );
   };

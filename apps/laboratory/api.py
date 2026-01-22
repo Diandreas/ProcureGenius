@@ -112,7 +112,7 @@ class LabOrderListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = LabOrder.objects.filter(
             organization=self.request.user.organization
-        ).select_related('patient').prefetch_related('items')
+        ).select_related('patient').prefetch_related('items', 'items__lab_test')
         
         # Filter by date
         date = self.request.query_params.get('date')
@@ -319,6 +319,13 @@ class LabOrderStatusUpdateView(APIView):
             order.verify_results(verified_by=request.user)
         elif action == 'deliver':
             order.mark_delivered()
+        elif action == 'invalidate':
+            # Revert to results entered (completed), clearing verification
+            order.status = 'completed'
+            order.results_verified_by = None
+            order.results_verified_at = None
+            order.save(update_fields=['status', 'results_verified_by', 'results_verified_at'])
+            # We could also log this action
         elif action == 'cancel':
             order.cancel_order()
         else:

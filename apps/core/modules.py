@@ -24,7 +24,6 @@ class Modules:
     CONSULTATIONS = 'consultations'
     LABORATORY = 'laboratory'
     PHARMACY = 'pharmacy'
-    RECEPTION = 'reception'
     
     # Always available to admins (not controllable by profiles)
     AI_ASSISTANT = 'ai-assistant'
@@ -113,12 +112,6 @@ MODULE_METADATA = {
         'icon': 'local_pharmacy',
         'always_enabled': False,
     },
-    Modules.RECEPTION: {
-        'name': _('Réception'),
-        'description': _('Accueil et caisse'),
-        'icon': 'point_of_sale',
-        'always_enabled': False,
-    },
 }
 
 # Admin-only modules (always available)
@@ -191,10 +184,10 @@ PROFILE_MODULES = {
     ProfileTypes.HEALTHCARE: [
         Modules.DASHBOARD,
         Modules.PATIENTS,
+        Modules.CLIENTS,  # Nécessaire pour la facturation des patients
         Modules.CONSULTATIONS,
         Modules.LABORATORY,
         Modules.PHARMACY,
-        Modules.RECEPTION,
         Modules.PRODUCTS,
         Modules.INVOICES,
         Modules.ANALYTICS,
@@ -265,7 +258,7 @@ PROFILE_METADATA = {
             _('Laboratoire (LIMS)'),
             _('Pharmacie'),
             _('Consultations médicales'),
-            _('Réception et caisse'),
+            _('Facturation patients'),
         ],
     },
 }

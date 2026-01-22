@@ -1,256 +1,124 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends 'pdf_base.html' %}
+{% load i18n %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Ordonnance - {{ patient.name }}</title>
-    <style>
-        @page {
-            size: A4 portrait;
-            margin: 1.5cm;
-        }
+{% block title %}Ordonnance - {{ patient.name }}{% endblock %}
 
-        body {
-            font-family: 'Helvetica', sans-serif;
-            font-size: 10pt;
-            line-height: 1.4;
-            color: #333;
-        }
+{% block extra_css %}
+<style>
+    .med-item {
+        margin-bottom: 8px;
+        border-bottom: 1px dashed #e5e7eb;
+        padding-bottom: 6px;
+    }
 
-        .header {
-            width: 100%;
-            margin-bottom: 15px;
+    .med-item:last-child {
+        border-bottom: none;
+    }
 
-            border-bottom: 2px solid {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
+    .med-name {
+        font-weight: 700;
+        font-size: 10pt;
+        color: #111827;
+    }
+
+    .med-dosage {
+        font-style: italic;
+        font-size: 9pt;
+        color: #4b5563;
+    }
+
+    .med-instructions {
+        padding-left: 10px;
+        color: #4b5563;
+        font-size: 9pt;
+        margin-top: 2px;
+
+        border-left: 2px solid {
+                {
+                organization.brand_color|default: "#2563eb"
             }
-
-            ;
-            padding-bottom: 8px;
-            display: table;
         }
 
-        .header-left {
-            display: table-cell;
-            width: 60%;
-            vertical-align: top;
-        }
+        ;
+    }
 
-        .header-right {
-            display: table-cell;
-            width: 40%;
-            text-align: right;
-            vertical-align: top;
-            font-size: 9pt;
-            color: #555;
-        }
+    .signature-section {
+        display: table;
+        width: 100%;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
 
-        .org-name {
-            font-size: 14pt;
-            font-weight: bold;
+{% block content %}
+<div class="doc-title text-center">ORDONNANCE MÉDICALE</div>
 
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
-            margin-bottom: 3px;
-        }
-
-        .org-info {
-            font-size: 9pt;
-            color: #666;
-            line-height: 1.3;
-        }
-
-        .doc-title {
-            text-align: center;
-            font-size: 16pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin: 12px 0 15px 0;
-            letter-spacing: 2px;
-            padding-bottom: 8px;
-
-            border-bottom: 2px solid {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
-        }
-
-        .patient-info {
-            background-color: #f9fafb;
-            padding: 10px 12px;
-
-            border-left: 3px solid {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
-            margin-bottom: 15px;
-            font-size: 9.5pt;
-        }
-
-        .info-row {
-            margin-bottom: 4px;
-        }
-
-        .label {
-            font-weight: bold;
-            margin-right: 8px;
-            color: #555;
-        }
-
-        .prescription-body {
-            margin-top: 15px;
-            min-height: 200px;
-        }
-
-        .med-item {
-            margin-bottom: 12px;
-            border-bottom: 1px dashed #ddd;
-            padding-bottom: 8px;
-        }
-
-        .med-name {
-            font-weight: bold;
-            font-size: 11pt;
-            color: #000;
-        }
-
-        .med-dosage {
-            padding-left: 15px;
-            font-style: italic;
-            font-size: 9.5pt;
-            margin-top: 2px;
-        }
-
-        .med-instructions {
-            padding-left: 15px;
-            color: #666;
-            font-size: 9pt;
-            margin-top: 2px;
-        }
-
-        .footer {
-            margin-top: 30px;
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
-            text-align: right;
-            font-size: 9.5pt;
-        }
-
-        .signature {
-            margin-top: 50px;
-            border-top: 1px solid #000;
-            display: inline-block;
-            width: 180px;
-            text-align: center;
-            padding-top: 5px;
-        }
-
-        .qr-code {
-            position: absolute;
-            bottom: 1.5cm;
-            left: 1.5cm;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="header">
-        <div class="header-left">
-            <div class="org-name">{{ organization.name }}</div>
-            <div class="org-info">
-                {% if organization.address %}{{ organization.address }}<br>{% endif %}
-                {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
-                {% if organization.email %} | {{ organization.email }}{% endif %}
-            </div>
-        </div>
-        <div class="header-right">
-            {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" style="max-height: 60px; max-width: 120px; height: auto; width: auto;"
-                alt="Logo">
-            {% endif %}
-            <div style="margin-top: 8px; font-size: 9pt;">
-                <strong>Date:</strong> {{ prescription.prescribed_date|date:"d/m/Y" }}<br>
-                <strong>N°:</strong> {{ prescription.prescription_number }}
-            </div>
-        </div>
-    </div>
-
-    <div class="doc-title">Ordonnance Médicale</div>
-
-    <div class="patient-info">
-        <div class="info-row">
-            <span class="label">Patient:</span> {{ patient.name }}
-            {% if patient.birth_date %} ({{ patient.get_age }} ans){% endif %}
-            - {{ patient.gender }}
+<div class="info-grid">
+    <div class="info-col" style="width: 50%;">
+        <div class="info-label">Patient</div>
+        <div class="info-value">
+            <span class="text-bold" style="font-size: 10pt;">{{ patient.name }}</span><br>
+            {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{%
+            endif %}
         </div>
         {% if prescription.valid_until %}
-        <div class="info-row">
-            <span class="label">Valide jusqu'au:</span> {{ prescription.valid_until|date:"d/m/Y" }}
+        <div class="info-label" style="margin-top: 6px;">Valide jusqu'au</div>
+        <div class="info-value">{{ prescription.valid_until|date:"d/m/Y" }}</div>
+        {% endif %}
+    </div>
+    <div class="info-col" style="width: 50%;">
+        <div class="info-label">Détails Ordonnance</div>
+        <div class="info-value">
+            N°: {{ prescription.prescription_number }}<br>
+            Date: {{ prescription.prescribed_date|date:"d/m/Y" }}
+        </div>
+    </div>
+</div>
+
+<div class="prescription-body">
+    {% for item in items %}
+    <div class="med-item">
+        <div style="display: table; width: 100%;">
+            <div style="display: table-cell; vertical-align: top;">
+                <div class="med-name">
+                    {{ forloop.counter }}. {{ item.medication_name }}
+                </div>
+            </div>
+            <div style="display: table-cell; text-align: right; vertical-align: top;">
+                <span class="med-dosage">
+                    {{ item.dosage }}
+                    {% if item.frequency %} - {{ item.frequency }}{% endif %}
+                    {% if item.duration %} ({{ item.duration }}){% endif %}
+                </span>
+            </div>
+        </div>
+        {% if item.instructions %}
+        <div class="med-instructions">
+            {{ item.instructions }}
         </div>
         {% endif %}
     </div>
-
-    <div class="prescription-body">
-        {% for item in items %}
-        <div class="med-item">
-            <div class="med-name">
-                {{ forloop.counter }}. {{ item.medication_name }}
-            </div>
-            <div class="med-dosage">
-                {{ item.dosage }}
-                {% if item.frequency %} - {{ item.frequency }}{% endif %}
-                {% if item.duration %} ({{ item.duration }}){% endif %}
-            </div>
-            {% if item.instructions %}
-            <div class="med-instructions">
-                ▸ {{ item.instructions }}
-            </div>
-            {% endif %}
-        </div>
-        {% empty %}
-        <div style="text-align: center; color: #999; margin-top: 50px;">
-            Aucun médicament prescrit.
-        </div>
-        {% endfor %}
+    {% empty %}
+    <div style="text-align: center; color: #9ca3af; margin-top: 30px; font-style: italic;">
+        Aucun médicament prescrit.
     </div>
+    {% endfor %}
+</div>
 
-    <div class="footer">
-        <div>
-            Fait à {{ organization.address|default:"Yaoundé" }}, le {{ prescription.prescribed_date|date:"d/m/Y" }}
+<div class="signature-section">
+    <div style="display: table-cell; width: 50%;">
+        <div class="info-label">Fait à:</div>
+        <div class="info-value">
+            {{ organization.address|default:"Yaoundé" }}, le {{ prescription.prescribed_date|date:"d/m/Y" }}
         </div>
-        <div class="signature">
+    </div>
+    <div style="display: table-cell; width: 50%; text-align: right;">
+        <div class="info-label">Médecin Prescripteur:</div>
+        <div class="info-value"
+            style="margin-top: 30px; border-top: 1px dotted #9ca3af; display: inline-block; width: 180px; text-align: center;">
             Dr. {{ prescriber.get_full_name|default:prescriber.username }}<br>
-            <span style="font-size: 8pt;">Signature & Cachet</span>
+            <span style="font-size: 8pt; font-weight: normal;">Signature & Cachet</span>
         </div>
     </div>
-
-    {% if qr_code_base64 %}
-    <div class="qr-code">
-        <img src="{{ qr_code_base64 }}" style="width: 2cm; height: 2cm;" alt="QR">
-    </div>
-    {% endif %}
-
-</body>
-
-</html>
+</div>
+{% endblock %}

@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
+import QuickClientCreateModal from './components/QuickClientCreateModal';
 
 const LabOrderForm = () => {
     const { t } = useTranslation();
@@ -47,6 +48,15 @@ const LabOrderForm = () => {
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
+    const [openClientModal, setOpenClientModal] = useState(false);
+
+    // Import needs to be added at the top, but I can't do it in this chunk easily if I stick to single contiguous block rules strictly without seeing the imports.
+    // I will add the handleClientCreated function here though.
+
+    const handleClientCreated = (newPatient) => {
+        setPatients(prev => [newPatient, ...prev]);
+        setFormData(prev => ({ ...prev, patient: newPatient }));
+    };
 
     const [formData, setFormData] = useState({
         patient: null,
@@ -142,7 +152,7 @@ const LabOrderForm = () => {
         } catch (error) {
             console.error('Error creating lab order:', error);
             const errorMessage = error?.response?.data?.detail || error?.response?.data?.message ||
-                                error?.response?.data?.error || 'Erreur lors de la création de l\'ordre de laboratoire';
+                error?.response?.data?.error || 'Erreur lors de la création de l\'ordre de laboratoire';
             enqueueSnackbar(errorMessage, { variant: 'error' });
         } finally {
             setLoading(false);
@@ -176,14 +186,23 @@ const LabOrderForm = () => {
                 <Grid item xs={12} md={4}>
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Patient</Typography>
-                            <Autocomplete
-                                options={patients}
-                                getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
-                                value={formData.patient}
-                                onChange={(e, v) => setFormData(prev => ({ ...prev, patient: v }))}
-                                renderInput={(params) => <TextField {...params} label="Rechercher Patient" required />}
-                            />
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                <Autocomplete
+                                    fullWidth
+                                    options={patients}
+                                    getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
+                                    value={formData.patient}
+                                    onChange={(e, v) => setFormData(prev => ({ ...prev, patient: v }))}
+                                    renderInput={(params) => <TextField {...params} label="Rechercher Patient" required />}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    sx={{ minWidth: 40, width: 40, height: 56, p: 0 }}
+                                    onClick={() => setOpenClientModal(true)}
+                                >
+                                    <AddIcon />
+                                </Button>
+                            </Box>
 
                             {formData.patient && (
                                 <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
@@ -194,6 +213,12 @@ const LabOrderForm = () => {
                             )}
                         </CardContent>
                     </Card>
+
+                    <QuickClientCreateModal
+                        open={openClientModal}
+                        onClose={() => setOpenClientModal(false)}
+                        onSuccess={handleClientCreated}
+                    />
 
                     <Card>
                         <CardContent>

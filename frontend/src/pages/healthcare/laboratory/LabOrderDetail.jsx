@@ -42,7 +42,11 @@ import {
     QrCode as QrCodeIcon,
     Receipt as ReceiptIcon,
     AttachMoney as InvoiceIcon,
-    History as HistoryIcon
+    History as HistoryIcon,
+    Science as ScienceIcon,
+    Colorize as ColorizeIcon,
+    Send as SendIcon,
+    Check as CheckIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +55,16 @@ import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+
+// Helper for status transitions
+const getNextStatusLabel = (status) => {
+    switch (status) {
+        case 'pending': return 'Confirmer Prélèvement';
+        case 'sample_collected': return 'Démarrer Analyse';
+        case 'results_ready': return 'Marquer comme Remis';
+        default: return '';
+    }
+};
 
 const LabOrderDetail = () => {
     const { t } = useTranslation();
@@ -83,6 +97,14 @@ const LabOrderDetail = () => {
     const [historyData, setHistoryData] = useState(null);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+
+    // Payment Modal State
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('cash');
+
+    // Barcode Quantity Modal
+    const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+    const [barcodeQuantity, setBarcodeQuantity] = useState(1);
 
     useEffect(() => {
         if (!isNewOrder) {
@@ -172,16 +194,45 @@ const LabOrderDetail = () => {
             if (!window.confirm('Voulez-vous valider ces résultats ? Cette action est définitive.')) return;
 
             await saveResults(); // Save first
+            // Note: verification logic is handled by updateStatus('verify')
             await laboratoryAPI.updateStatus(id, { action: 'verify' });
             enqueueSnackbar('Résultats validés', { variant: 'success' });
-            navigate('/healthcare/laboratory');
+            fetchOrder(); // Refresh to update status
         } catch (error) {
             console.error('Error validating:', error);
             enqueueSnackbar('Erreur de validation', { variant: 'error' });
         }
     };
 
+    const invalidateOrder = async () => {
+        try {
+            if (!window.confirm('Êtes-vous sûr de vouloir invalider ces résultats ? Cela permettra de les modifier à nouveau.')) return;
+
+            await laboratoryAPI.updateStatus(id, { action: 'invalidate' });
+            enqueueSnackbar('Résultats invalidés', { variant: 'success' });
+            fetchOrder();
+        } catch (error) {
+            console.error('Error invalidating:', error);
+            enqueueSnackbar('Erreur lors de l\'invalidation', { variant: 'error' });
+        }
+    };
+
+    const handleStatusUpdate = async (action) => {
+        try {
+            await laboratoryAPI.updateStatus(id, { action });
+            enqueueSnackbar('Statut mis à jour', { variant: 'success' });
+            fetchOrder();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            enqueueSnackbar('Erreur de mise à jour', { variant: 'error' });
+        }
+    };
+
     const handleOpenPrintModal = (type) => {
+        if (type === 'barcodes') {
+            setBarcodeModalOpen(true);
+            return;
+        }
         setPrintModalType(type);
         setPrintModalOpen(true);
     };
@@ -200,8 +251,8 @@ const LabOrderDetail = () => {
             } else if (printModalType === 'receipt') {
                 blob = await laboratoryAPI.getReceiptPDF(id);
                 filename = `recu_labo_${order.order_number}.pdf`;
-            } else if (printModalType === 'barcodes') {
-                blob = await laboratoryAPI.getBarcodesPDF(id);
+            } else if (printModalType === 'barcodes' || (!printModalType && barcodeModalOpen)) {
+                blob = await laboratoryAPI.getBarcodesPDF(id, { quantity: barcodeQuantity });
                 filename = `barcodes_${order.order_number}.pdf`;
             }
 
@@ -254,11 +305,12 @@ const LabOrderDetail = () => {
         try {
             const paymentData = {
                 payment_date: new Date().toISOString().split('T')[0],
-                payment_method: 'cash',
+                payment_method: paymentMethod,
                 notes: `Paiement pour commande labo ${order.order_number}`
             };
             await invoicesAPI.markPaid(order.lab_invoice.id, paymentData);
             enqueueSnackbar('Facture marquée comme payée', { variant: 'success' });
+            setPaymentModalOpen(false);
             fetchOrder(); // Refresh to update invoice status
         } catch (error) {
             console.error('Error marking invoice as paid:', error);
@@ -568,7 +620,7 @@ const LabOrderDetail = () => {
                                             variant="contained"
                                             color="success"
                                             startIcon={<InvoiceIcon />}
-                                            onClick={handleMarkInvoicePaid}
+                                            onClick={() => setPaymentModalOpen(true)}
                                             sx={{ mr: 1 }}
                                         >
                                             Marquer Payée
@@ -589,15 +641,60 @@ const LabOrderDetail = () => {
                         </>
                     )}
 
-                    {canEdit && (
-                        <>
-                            <Button variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
-                                Enregistrer
-                            </Button>
-                            <Button variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder}>
-                                Valider
-                            </Button>
-                        </>
+                    {/* Workflow Actions */}
+                    {order.status === 'pending' && (
+                        <Button
+                            variant="contained"
+                            color="warning"
+                            startIcon={<ColorizeIcon />}
+                            onClick={() => handleStatusUpdate('collect_sample')}
+                            sx={{ mr: 1 }}
+                        >
+                            Prélèvement
+                        </Button>
+                    )}
+
+                    {order.status === 'sample_collected' && (
+                        <Button
+                            variant="contained"
+                            color="info"
+                            startIcon={<ScienceIcon />}
+                            onClick={() => handleStatusUpdate('start_processing')}
+                            sx={{ mr: 1 }}
+                        >
+                            Analyser
+                        </Button>
+                    )}
+
+                    {canEdit && !['verified', 'results_ready', 'results_delivered'].includes(order.status) && (
+                        <Button variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
+                            Enregistrer
+                        </Button>
+                    )}
+
+                    {(canEdit || order.status === 'completed') && !['verified', 'results_ready', 'results_delivered'].includes(order.status) && (
+                        <Button variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} sx={{ mr: 1 }}>
+                            Valider
+                        </Button>
+                    )}
+
+                    {order.status === 'results_ready' && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<SendIcon />}
+                            onClick={() => handleStatusUpdate('deliver')}
+                            sx={{ mr: 1 }}
+                        >
+                            Remettre Résultats
+                        </Button>
+                    )}
+
+                    {/* Invalidate Button - Show only if verified/completed/results_ready and NOT delivered/cancelled */}
+                    {['verified', 'results_ready', 'completed'].includes(order.status) && (
+                        <Button variant="outlined" color="warning" onClick={invalidateOrder} sx={{ ml: 1 }}>
+                            Invalider
+                        </Button>
                     )}
                 </Box>
             </Box>
@@ -677,10 +774,10 @@ const LabOrderDetail = () => {
                                         <Typography fontWeight="bold">{item.result_value}</Typography>
                                     )}
                                 </TableCell>
-                                <TableCell>{item.unit || '-'}</TableCell>
+                                <TableCell>{item.result_unit || item.unit || '-'}</TableCell>
                                 <TableCell>
                                     {/* Simplified range display, ideally conditional on gender */}
-                                    {item.normal_range || '-'}
+                                    {item.reference_range || item.normal_range || '-'}
                                 </TableCell>
                                 <TableCell>
                                     {canEdit ? (
@@ -787,9 +884,8 @@ const LabOrderDetail = () => {
                 onClose={() => setPrintModalOpen(false)}
                 title={
                     printModalType === 'report' ? 'Rapport Complet' :
-                    printModalType === 'receipt' ? 'Reçu Labo' :
-                    printModalType === 'barcodes' ? 'Étiquettes Code-Barres' :
-                    'Document'
+                        printModalType === 'receipt' ? 'Reçu Labo' :
+                            'Document'
                 }
                 loading={generatingPdf}
                 onPreview={() => handlePrintAction('preview')}
@@ -797,6 +893,69 @@ const LabOrderDetail = () => {
                 onDownload={() => handlePrintAction('download')}
                 helpText="Choisissez une action pour générer le document"
             />
+
+            {/* Barcode Quantity Modal */}
+            <Dialog open={barcodeModalOpen} onClose={() => setBarcodeModalOpen(false)}>
+                <DialogTitle>Impression Étiquettes</DialogTitle>
+                <DialogContent>
+                    <Typography gutterBottom sx={{ mb: 2 }}>
+                        Combien d'exemplaires de chaque étiquette souhaitez-vous imprimer ?
+                    </Typography>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Nombre de copies"
+                        type="number"
+                        fullWidth
+                        variant="outlined"
+                        value={barcodeQuantity}
+                        onChange={(e) => setBarcodeQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        InputProps={{ inputProps: { min: 1, max: 10 } }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setBarcodeModalOpen(false)}>Annuler</Button>
+                    <Button
+                        onClick={() => {
+                            setBarcodeModalOpen(false);
+                            setPrintModalType('barcodes');
+                            setPrintModalOpen(true);
+                        }}
+                        variant="contained"
+                    >
+                        Valider
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Payment Modal */}
+            <Dialog open={paymentModalOpen} onClose={() => setPaymentModalOpen(false)}>
+                <DialogTitle>Paiement de la Facture</DialogTitle>
+                <DialogContent>
+                    <Typography gutterBottom sx={{ mb: 2 }}>
+                        Veuillez sélectionner le mode de paiement pour marquer cette facture comme payée.
+                    </Typography>
+                    <FormControl fullWidth>
+                        <InputLabel>Mode de Paiement</InputLabel>
+                        <Select
+                            value={paymentMethod}
+                            label="Mode de Paiement"
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        >
+                            <MenuItem value="cash">Espèces (Cash)</MenuItem>
+                            <MenuItem value="mobile_money">Mobile Money</MenuItem>
+                            <MenuItem value="card">Carte Bancaire</MenuItem>
+                            <MenuItem value="insurance">Assurance</MenuItem>
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPaymentModalOpen(false)}>Annuler</Button>
+                    <Button onClick={handleMarkInvoicePaid} variant="contained" color="primary">
+                        Confirmer le Paiement
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* History Modal */}
             <Dialog

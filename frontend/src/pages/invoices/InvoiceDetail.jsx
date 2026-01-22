@@ -75,6 +75,30 @@ import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import PrintModal from '../../components/PrintModal';
 
+const UNIT_LABELS = {
+  'piece': 'Pièce',
+  'box': 'Boîte',
+  'kg': 'Kilogramme',
+  'l': 'Litre',
+  'm': 'Mètre',
+  'tablet': 'Comprimé',
+  'capsule': 'Gélule',
+  'blister': 'Plaquette',
+  'vial': 'Flacon',
+  'ampoule': 'Ampoule',
+  'sachet': 'Sachet',
+  'tube': 'Tube',
+  'kit': 'Kit',
+  'pack': 'Paquet',
+  'roll': 'Rouleau',
+  'set': 'Ensemble',
+  'dozen': 'Douzaine',
+  'g': 'Gramme',
+  'mg': 'Milligramme',
+  'ml': 'Millilitre',
+  'cm': 'Centimètre'
+};
+
 function InvoiceDetail() {
   const { t } = useTranslation(['invoices', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -322,10 +346,7 @@ function InvoiceDetail() {
   };
 
   const getDaysOverdue = () => {
-    if (!isOverdue()) return 0;
-    const today = new Date();
-    const dueDate = new Date(invoice.due_date);
-    return Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+    return 0;
   };
 
   const MobileInvoiceInfoCard = ({ invoice }) => (
@@ -829,7 +850,7 @@ Cordialement`
                     {item.description}
                   </Typography>
                   <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
-                    {item.quantity} × {formatCurrency(item.unit_price)}
+                    {item.quantity} {UNIT_LABELS[item.unit_of_measure] || item.unit_of_measure} × {formatCurrency(item.unit_price)}
                   </Typography>
                 </Box>
               ))}
@@ -866,28 +887,7 @@ Cordialement`
                     {formatDate(invoice.created_at)}
                   </Typography>
                 </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                    {t('invoices:labels.issueDate')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                    {formatDate(invoice.issue_date)}
-                  </Typography>
-                </Box>
-                {invoice.due_date && (
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      {t('invoices:labels.dueDateShort')}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isOverdue() ? 'error.main' : 'success.main'
-                    }}>
-                      {formatDate(invoice.due_date)}
-                    </Typography>
-                  </Box>
-                )}
+
                 {invoice.payment_date && (
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
@@ -965,6 +965,7 @@ Cordialement`
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Unité</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
@@ -1014,6 +1015,7 @@ Cordialement`
                               item.description
                             )}
                           </TableCell>
+                          <TableCell>{UNIT_LABELS[item.unit_of_measure] || item.unit_of_measure}</TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(item.total_price)}</TableCell>
@@ -1154,37 +1156,7 @@ Cordialement`
                       secondary={formatDate(invoice.created_at)}
                     />
                   </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <Send color="info" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t('invoices:labels.issueDateLabel')}
-                      secondary={formatDate(invoice.issue_date)}
-                    />
-                  </ListItem>
-                  {invoice.due_date && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <Schedule color={isOverdue() ? "error" : "warning"} />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={t('invoices:labels.dueDateLabel')}
-                        secondary={
-                          <React.Fragment>
-                            <Typography variant="body2" component="span" display="block" color={isOverdue() ? "error" : "inherit"}>
-                              {formatDate(invoice.due_date)}
-                            </Typography>
-                            {isOverdue() && (
-                              <Typography variant="caption" component="span" display="block" color="error">
-                                {t('invoices:messages.overdueMessage', { days: getDaysOverdue() })}
-                              </Typography>
-                            )}
-                          </React.Fragment>
-                        }
-                      />
-                    </ListItem>
-                  )}
+
                   {invoice.payment_date && (
                     <ListItem>
                       <ListItemIcon>

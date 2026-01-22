@@ -58,8 +58,9 @@ const laboratoryAPI = {
     },
 
     // Generate Barcodes PDF
-    getBarcodesPDF: async (id) => {
+    getBarcodesPDF: async (id, params = {}) => {
         const response = await api.get(`/healthcare/laboratory/orders/${id}/barcodes/`, {
+            params,
             responseType: 'blob'
         });
         return response.data;

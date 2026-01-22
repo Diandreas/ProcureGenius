@@ -1,0 +1,1158 @@
+﻿venv\Scripts\python : 
+D:\project\BFMa\Procur
+eGenius\venv\Lib\site-
+packages\allauth\accou
+nt\app_settings.py:55:
+ UserWarning: settings
+.ACCOUNT_LOGIN_ATTEMPT
+S_LIMIT/TIMEOUT is 
+deprecated, use: setti
+ngs.ACCOUNT_RATE_LIMIT
+S['login_failed']
+Au caractère Ligne:1 
+: 1
++ venv\Scripts\python 
+manage.py simulate_csj
+_scenarios --reset > 
+simula ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (D:\project   
+ \BFMa...'login_fa    
+iled']:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  warnings.warn(
+[OK] WeasyPrint (Healthcare) charge avec succes!
+[OK] WeasyPrint charge avec succes pour PurchaseOrder!
+[OK] WeasyPrint charge avec succes!
+
+================================================================================
+    SIMULATION DES PARCOURS PATIENTS JULIANNA (CSJ)
+================================================================================
+Mode reset activÚ - Suppression des donnÚes existantes...
+[BASE] Initialisation de l'organisation et du catalogue...
+--- Logging error ---
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 916, in 
+get_or_create
+    return 
+self.get(**kwargs), 
+False
+           
+~~~~~~~~^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 637, in get
+    raise self.model.D
+oesNotExist(
+        "%s matching 
+query does not 
+exist." % self.model._
+meta.object_name
+    )
+apps.accounts.models.C
+ustomUser.DoesNotExist
+: CustomUser matching 
+query does not exist.
+
+During handling of 
+the above exception, 
+another exception 
+occurred:
+
+Traceback (most 
+recent call last):
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\logging\__init__.py",
+ line 1154, in emit
+    stream.write(msg 
++ self.terminator)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\encodings\cp1252.py",
+ line 19, in encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2713' in position 
+0: character maps to 
+<undefined>
+Call stack:
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 22, in 
+<module>
+    main()
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 442, 
+in execute_from_comman
+d_line
+    utility.execute()
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 436, 
+in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 412, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 458, in 
+execute
+    output = 
+self.handle(*args, 
+**options)
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 68, 
+in handle
+    
+self._init_base_data()
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 152, 
+in _init_base_data
+    user, created = Us
+er.objects.get_or_crea
+te(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 923, in 
+get_or_create
+    return self.create
+(**params), True
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\contrib\auth\base_us
+er.py", line 76, in 
+save
+    
+super().save(*args, 
+**kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 814, in save
+    self.save_base(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 892, in save_base
+    post_save.send(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\dispatch\dispatcher.
+py", line 177, in send
+    (receiver, 
+receiver(signal=self, 
+sender=sender, 
+**named))
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\signals.py", 
+line 18, in 
+create_user_profile
+    
+logger.info(f"\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+{instance.username} 
+(email: 
+{instance.email})")
+Message: '\u2713 
+Nouvel utilisateur 
+crÚÚ: julianna_admin 
+(email: admin@csj.cm)'
+Arguments: ()
+\u2713 Nouvel 
+utilisateur crÚÚ: 
+julianna_admin 
+(email: admin@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: admin
+
+(process:6296): 
+GLib-GIO-WARNING **: 
+06:42:58.131: 
+Unexpectedly, UWP app 
+`MobiSystems.OfficeSui
+tePersonalFree_8.90.57
+372.0_x64__8m57vzdwnby
+bp' (AUMId `MobiSystem
+s.OfficeSuitePersonalF
+ree_8m57vzdwnbybp!Slid
+es') supports 1 
+extensions but has no 
+verbs
+
+(process:6296): 
+GLib-GIO-WARNING **: 
+06:42:58.131: 
+Unexpectedly, UWP app 
+`MobiSystems.OfficeSui
+tePersonalFree_8.90.57
+372.0_x64__8m57vzdwnby
+bp' (AUMId `MobiSystem
+s.OfficeSuitePersonalF
+ree_8m57vzdwnbybp!Shee
+ts') supports 2 
+extensions but has no 
+verbs
+--- Logging error ---
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 916, in 
+get_or_create
+    return 
+self.get(**kwargs), 
+False
+           
+~~~~~~~~^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 637, in get
+    raise self.model.D
+oesNotExist(
+        "%s matching 
+query does not 
+exist." % self.model._
+meta.object_name
+    )
+apps.accounts.models.C
+ustomUser.DoesNotExist
+: CustomUser matching 
+query does not exist.
+
+During handling of 
+the above exception, 
+another exception 
+occurred:
+
+Traceback (most 
+recent call last):
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\logging\__init__.py",
+ line 1154, in emit
+    stream.write(msg 
++ self.terminator)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\encodings\cp1252.py",
+ line 19, in encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2713' in position 
+0: character maps to 
+<undefined>
+Call stack:
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 22, in 
+<module>
+    main()
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 442, 
+in execute_from_comman
+d_line
+    utility.execute()
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 436, 
+in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 412, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 458, in 
+execute
+    output = 
+self.handle(*args, 
+**options)
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 68, 
+in handle
+    
+self._init_base_data()
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 152, 
+in _init_base_data
+    user, created = Us
+er.objects.get_or_crea
+te(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 923, in 
+get_or_create
+    return self.create
+(**params), True
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\contrib\auth\base_us
+er.py", line 76, in 
+save
+    
+super().save(*args, 
+**kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 814, in save
+    self.save_base(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 892, in save_base
+    post_save.send(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\dispatch\dispatcher.
+py", line 177, in send
+    (receiver, 
+receiver(signal=self, 
+sender=sender, 
+**named))
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\signals.py", 
+line 18, in 
+create_user_profile
+    
+logger.info(f"\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+{instance.username} 
+(email: 
+{instance.email})")
+Message: '\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+julianna_receptionist 
+(email: 
+receptionist@csj.cm)'
+Arguments: ()
+\u2713 Nouvel 
+utilisateur crÚÚ: 
+julianna_receptionist 
+(email: 
+receptionist@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: receptionist
+--- Logging error ---
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 916, in 
+get_or_create
+    return 
+self.get(**kwargs), 
+False
+           
+~~~~~~~~^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 637, in get
+    raise self.model.D
+oesNotExist(
+        "%s matching 
+query does not 
+exist." % self.model._
+meta.object_name
+    )
+apps.accounts.models.C
+ustomUser.DoesNotExist
+: CustomUser matching 
+query does not exist.
+
+During handling of 
+the above exception, 
+another exception 
+occurred:
+
+Traceback (most 
+recent call last):
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\logging\__init__.py",
+ line 1154, in emit
+    stream.write(msg 
++ self.terminator)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\encodings\cp1252.py",
+ line 19, in encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2713' in position 
+0: character maps to 
+<undefined>
+Call stack:
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 22, in 
+<module>
+    main()
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 442, 
+in execute_from_comman
+d_line
+    utility.execute()
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 436, 
+in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 412, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 458, in 
+execute
+    output = 
+self.handle(*args, 
+**options)
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 68, 
+in handle
+    
+self._init_base_data()
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 152, 
+in _init_base_data
+    user, created = Us
+er.objects.get_or_crea
+te(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 923, in 
+get_or_create
+    return self.create
+(**params), True
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\contrib\auth\base_us
+er.py", line 76, in 
+save
+    
+super().save(*args, 
+**kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 814, in save
+    self.save_base(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 892, in save_base
+    post_save.send(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\dispatch\dispatcher.
+py", line 177, in send
+    (receiver, 
+receiver(signal=self, 
+sender=sender, 
+**named))
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\signals.py", 
+line 18, in 
+create_user_profile
+    
+logger.info(f"\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+{instance.username} 
+(email: 
+{instance.email})")
+Message: '\u2713 
+Nouvel utilisateur 
+crÚÚ: julianna_doctor 
+(email: 
+doctor@csj.cm)'
+Arguments: ()
+\u2713 Nouvel 
+utilisateur crÚÚ: 
+julianna_doctor 
+(email: doctor@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: doctor
+
+(process:6296): 
+GLib-GIO-WARNING **: 
+06:42:59.161: 
+Unexpectedly, UWP app 
+`Microsoft.OutlookForW
+indows_1.2025.1121.100
+_x64__8wekyb3d8bbwe' 
+(AUMId `Microsoft.Outl
+ookForWindows_8wekyb3d
+8bbwe!Microsoft.Outloo
+kforWindows') 
+supports 4 extensions 
+but has no verbs
+--- Logging error ---
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 916, in 
+get_or_create
+    return 
+self.get(**kwargs), 
+False
+           
+~~~~~~~~^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 637, in get
+    raise self.model.D
+oesNotExist(
+        "%s matching 
+query does not 
+exist." % self.model._
+meta.object_name
+    )
+apps.accounts.models.C
+ustomUser.DoesNotExist
+: CustomUser matching 
+query does not exist.
+
+During handling of 
+the above exception, 
+another exception 
+occurred:
+
+Traceback (most 
+recent call last):
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\logging\__init__.py",
+ line 1154, in emit
+    stream.write(msg 
++ self.terminator)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\david
+\AppData\Local\Program
+s\Python\Python313\Lib
+\encodings\cp1252.py",
+ line 19, in encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2713' in position 
+0: character maps to 
+<undefined>
+Call stack:
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 22, in 
+<module>
+    main()
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 442, 
+in execute_from_comman
+d_line
+    utility.execute()
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 436, 
+in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 412, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 458, in 
+execute
+    output = 
+self.handle(*args, 
+**options)
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 68, 
+in handle
+    
+self._init_base_data()
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 152, 
+in _init_base_data
+    user, created = Us
+er.objects.get_or_crea
+te(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 923, in 
+get_or_create
+    return self.create
+(**params), True
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\contrib\auth\base_us
+er.py", line 76, in 
+save
+    
+super().save(*args, 
+**kwargs)
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 814, in save
+    self.save_base(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\base.py", 
+line 892, in save_base
+    post_save.send(
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\dispatch\dispatcher.
+py", line 177, in send
+    (receiver, 
+receiver(signal=self, 
+sender=sender, 
+**named))
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\signals.py", 
+line 18, in 
+create_user_profile
+    
+logger.info(f"\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+{instance.username} 
+(email: 
+{instance.email})")
+Message: '\u2713 
+Nouvel utilisateur 
+crÚÚ: 
+julianna_lab_tech 
+(email: 
+lab_tech@csj.cm)'
+Arguments: ()
+\u2713 Nouvel 
+utilisateur crÚÚ: 
+julianna_lab_tech 
+(email: 
+lab_tech@csj.cm)
+  - Organisation: 
+Centre de SantÚ 
+JULIANNA
+  - R¶le: lab_tech
+
+(process:6296): 
+GLib-GIO-WARNING **: 
+06:42:59.424: 
+Unexpectedly, UWP app 
+`Clipchamp.Clipchamp_4
+.4.10720.0_x64__yxz26n
+hyzhsrt' (AUMId `Clipc
+hamp.Clipchamp_yxz26nh
+yzhsrt!App') supports 
+41 extensions but has 
+no verbs
+[CAS 1a] Fabrice - Enregistrement + Caisse + Consultation
+  - Item: Consultation MÚdecin GÚnÚraliste, Qty: 1, Price: 10000
+Created invoice 
+FAC2026010002 for 
+consultation 
+CONS-20260116-0001
+[CAS 1b] Fabrice - Caisse + Laboratoire
+  - Item: NFS (NumÚration Formule), Qty: 1, Price: 5400.00
+  - Item: PALUDISME + Quantification, Qty: 1, Price: 1600.00
+[CAS 1c] Fabrice - RÚcupÚration rÚsultats
+[CAS 1d] Fabrice - MÚdicaments
+  - Item: Coartem, Qty: 1, Price: 3000
+  - Item: ParacÚtamol 500mg, Qty: 2, Price: 100
+Created invoice 
+FAC2026010005 for 
+dispensing 
+DISP-20260116-0001
+
+[ERROR] ERREUR: unsupported operand type(s) for *: 'decimal.Decimal' and 'NoneType'
+
+(process:6296): 
+GLib-GIO-WARNING **: 
+06:43:00.268: 
+Unexpectedly, UWP app 
+`Microsoft.ScreenSketc
+h_11.2511.31.0_x64__8w
+ekyb3d8bbwe' (AUMId `M
+icrosoft.ScreenSketch_
+8wekyb3d8bbwe!App') 
+supports 29 
+extensions but has no 
+verbs
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 74, 
+in handle
+    self._case_1d_fabr
+ice_pharmacy()
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~^^
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 352, 
+in _case_1d_fabrice_ph
+armacy
+    DispensingItem.obj
+ects.create(dispensing
+=disp, 
+medication=coartem, 
+quantity_dispensed=1)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+           ~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~^^^^^^^^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+    ~~~~~~~~^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^
+  File "D:\project\BFM
+a\ProcureGenius\apps\p
+harmacy\models.py", 
+line 286, in save
+    self.total_price 
+= Decimal(str(self.qua
+ntity_dispensed)) * 
+self.unit_price
+                      
+ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~^~~~~
+~~~~~~~~~~~~
+TypeError: 
+unsupported operand 
+type(s) for *: 
+'decimal.Decimal' and 
+'NoneType'
+Traceback (most 
+recent call last):
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 22, in 
+<module>
+    main()
+    ~~~~^^
+  File "D:\project\BFM
+a\ProcureGenius\manage
+.py", line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 442, 
+in execute_from_comman
+d_line
+    utility.execute()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\__in
+it__.py", line 436, 
+in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~^^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 412, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\core\management\base
+.py", line 458, in 
+execute
+    output = 
+self.handle(*args, 
+**options)
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 74, 
+in handle
+    self._case_1d_fabr
+ice_pharmacy()
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~^^
+  File "D:\project\BFM
+a\ProcureGenius\apps\a
+ccounts\management\com
+mands\simulate_csj_sce
+narios.py", line 352, 
+in _case_1d_fabrice_ph
+armacy
+    DispensingItem.obj
+ects.create(dispensing
+=disp, 
+medication=coartem, 
+quantity_dispensed=1)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\manager.py
+", line 87, in 
+manager_method
+    return getattr(sel
+f.get_queryset(), 
+name)(*args, **kwargs)
+           ~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~^^^^^^^^^^^^^^^^^
+  File "D:\project\BFM
+a\ProcureGenius\venv\L
+ib\site-packages\djang
+o\db\models\query.py",
+ line 658, in create
+    obj.save(force_ins
+ert=True, 
+using=self.db)
+    ~~~~~~~~^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^
+  File "D:\project\BFM
+a\ProcureGenius\apps\p
+harmacy\models.py", 
+line 286, in save
+    self.total_price 
+= Decimal(str(self.qua
+ntity_dispensed)) * 
+self.unit_price
+                      
+ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~^~~~~
+~~~~~~~~~~~~
+TypeError: 
+unsupported operand 
+type(s) for *: 
+'decimal.Decimal' and 
+'NoneType'
