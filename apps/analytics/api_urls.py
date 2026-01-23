@@ -1,42 +1,37 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from . import views
-from .api_views import (
-    EnhancedDashboardStatsView,
-    DashboardExportView,
-    DashboardConfigView,
-    SavedDashboardViewsView
+"""
+Analytics API URLs - New simplified dashboard system
+Healthcare and Inventory Analytics endpoints
+"""
+from django.urls import path
+from .healthcare_analytics import (
+    ExamStatusByPatientView,
+    ExamTypesByPeriodView,
+    DemographicAnalysisView,
+    RevenueAnalyticsView,
+    HealthcareDashboardStatsView
 )
-from .widget_views import (
-    WidgetListView,
-    DashboardLayoutViewSet,
-    WidgetDataView
+from .inventory_analytics import (
+    ReorderQuantitiesView,
+    StockoutRiskAnalysisView,
+    AtRiskProductsView,
+    MovementAnalysisView,
+    InventoryDashboardStatsView
 )
 
 app_name = 'analytics_api'
 
-# Router for ViewSets
-router = DefaultRouter()
-router.register(r'layouts', DashboardLayoutViewSet, basename='layout')
-
 urlpatterns = [
-    # Dashboard stats avec personnalisation
-    path('stats/', EnhancedDashboardStatsView.as_view(), name='enhanced_dashboard_stats'),
+    # Healthcare Analytics
+    path('healthcare/exam-status/', ExamStatusByPatientView.as_view(), name='healthcare_exam_status'),
+    path('healthcare/exam-types/', ExamTypesByPeriodView.as_view(), name='healthcare_exam_types'),
+    path('healthcare/demographics/', DemographicAnalysisView.as_view(), name='healthcare_demographics'),
+    path('healthcare/revenue/', RevenueAnalyticsView.as_view(), name='healthcare_revenue'),
+    path('healthcare/dashboard-stats/', HealthcareDashboardStatsView.as_view(), name='healthcare_dashboard_stats'),
 
-    # Export dashboard (PDF/Excel)
-    path('export/', DashboardExportView.as_view(), name='dashboard_export'),
-
-    # Configuration utilisateur
-    path('config/', DashboardConfigView.as_view(), name='dashboard_config'),
-
-    # Vues sauvegardées
-    path('saved-views/', SavedDashboardViewsView.as_view(), name='saved_dashboard_views'),
-    path('saved-views/<uuid:view_id>/', SavedDashboardViewsView.as_view(), name='saved_dashboard_view_detail'),
-
-    # Widgets
-    path('widgets/', WidgetListView.as_view(), name='widgets_list'),
-    path('widget-data/<str:widget_code>/', WidgetDataView.as_view(), name='widget_data'),
-
-    # Include router URLs (layouts)
-    path('', include(router.urls)),
+    # Inventory Analytics
+    path('inventory/reorder/', ReorderQuantitiesView.as_view(), name='inventory_reorder'),
+    path('inventory/stockout-risk/', StockoutRiskAnalysisView.as_view(), name='inventory_stockout_risk'),
+    path('inventory/at-risk/', AtRiskProductsView.as_view(), name='inventory_at_risk'),
+    path('inventory/movements/', MovementAnalysisView.as_view(), name='inventory_movements'),
+    path('inventory/dashboard-stats/', InventoryDashboardStatsView.as_view(), name='inventory_dashboard_stats'),
 ]

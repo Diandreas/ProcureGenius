@@ -112,11 +112,16 @@ class DispensingCreateView(APIView):
                     is_active=True
                 )
                 if medication.product_type == 'physical':
-                    if medication.stock_quantity < item_data['quantity']:
+                    quantity_requested = item_data['quantity']
+                    # Convert to base unit if requested in sell unit for availability check
+                    if item_data.get('unit') == 'sell':
+                        quantity_requested = quantity_requested * medication.conversion_factor
+
+                    if medication.stock_quantity < quantity_requested:
                         stock_issues.append({
                             'medication': medication.name,
-                            'needed': item_data['quantity'],
-                            'available': medication.stock_quantity,
+                            'needed': float(quantity_requested),
+                            'available': float(medication.stock_quantity),
                         })
             except Product.DoesNotExist:
                 return Response(
@@ -153,8 +158,9 @@ class DispensingCreateView(APIView):
                 dispensing=dispensing,
                 medication=medication,
                 quantity_dispensed=item_data['quantity'],
+                dispensing_unit=item_data.get('unit', 'base'),
                 unit_cost=medication.cost_price,
-                unit_price=medication.price,
+                unit_price=item_data.get('price', medication.price),
                 dosage_instructions=item_data.get('dosage_instructions', ''),
                 frequency=item_data.get('frequency', ''),
                 duration=item_data.get('duration', ''),
@@ -269,7 +275,7 @@ class MedicationListView(generics.ListAPIView):
         
         # Filter by relevant categories: medications and lab consumables
         # We also check for 'medicaments' slug for backward compatibility
-        relevant_slugs = ['medications', 'medicaments', 'lab-consumables']
+        relevant_slugs = ['medications', 'medicaments']
         queryset = queryset.filter(category__slug__in=relevant_slugs)
         
         # Filter by stock status

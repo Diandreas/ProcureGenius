@@ -51,7 +51,7 @@ import AINotificationProvider from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
-import PeriodSelector from '../components/dashboard/PeriodSelector';
+// import PeriodSelector from '../components/dashboard/PeriodSelector'; // Removed - old dashboard system
 
 const drawerWidth = 240;
 
@@ -223,20 +223,7 @@ function MainLayout() {
       case '/dashboard':
         return {
           title: t('navigation:menu.dashboard'),
-          periodControls: true,
-          currentPeriod: dashboardPeriod,
-          onPeriodChange: (newPeriod) => {
-            setDashboardPeriod(newPeriod);
-            window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period: newPeriod } }));
-          },
-          onRefresh: () => window.dispatchEvent(new CustomEvent('dashboard-refresh')),
-          actions: [{
-            label: '',
-            icon: <Tune fontSize="small" />,
-            onClick: () => window.dispatchEvent(new CustomEvent('dashboard-edit-mode', { detail: { activate: true } })),
-            isIconOnly: true,
-            tooltip: t('navigation:topBar.customizeDashboard', 'Personnaliser')
-          }]
+          // Actions will be set by Dashboard component itself via setContextualActions
         };
       case '/suppliers':
         return {
@@ -590,10 +577,7 @@ function MainLayout() {
                         }
                       }
                     }}>
-                      <PeriodSelector
-                        period={contextualActions.currentPeriod}
-                        onChange={contextualActions.onPeriodChange}
-                      />
+                      {/* <PeriodSelector period={contextualActions.currentPeriod} onChange={contextualActions.onPeriodChange} /> */}
                       <Tooltip title="Actualiser">
                         <IconButton
                           onClick={contextualActions.onRefresh}
@@ -783,10 +767,7 @@ function MainLayout() {
                   }
                 }
               }}>
-                <PeriodSelector
-                  period={contextualActions.currentPeriod}
-                  onChange={contextualActions.onPeriodChange}
-                />
+                {/* <PeriodSelector period={contextualActions.currentPeriod} onChange={contextualActions.onPeriodChange} /> */}
                 <Tooltip title="Actualiser">
                   <IconButton
                     onClick={contextualActions.onRefresh}
@@ -809,7 +790,12 @@ function MainLayout() {
 
             {/* Contextual Actions - Boutons Rectangles Adoucis */}
             {contextualActions?.actions?.map((action, index) => (
-              action.isIconOnly ? (
+              action.component ? (
+                // Render custom React component directly
+                <Box key={index} sx={{ mr: 1.5 }}>
+                  {action.component}
+                </Box>
+              ) : action.isIconOnly ? (
                 <Tooltip key={index} title={action.tooltip || action.label}>
                   <IconButton
                     onClick={action.onClick}

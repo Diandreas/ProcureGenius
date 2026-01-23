@@ -23,6 +23,7 @@ class DispensingItemSerializer(serializers.ModelSerializer):
             'medication_reference',
             'stock_quantity',
             'quantity_dispensed',
+            'dispensing_unit',
             'unit_cost',
             'unit_price',
             'total_price',
@@ -120,7 +121,8 @@ class PharmacyDispensingListSerializer(serializers.ModelSerializer):
 class DispensingItemCreateSerializer(serializers.Serializer):
     """Serializer for creating a dispensing item"""
     medication_id = serializers.UUIDField()
-    quantity = serializers.IntegerField(min_value=1)
+    quantity = serializers.DecimalField(max_digits=12, decimal_places=4)
+    unit = serializers.ChoiceField(choices=['base', 'sell'], default='base')
     price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     dosage_instructions = serializers.CharField(required=False, allow_blank=True)
     frequency = serializers.CharField(required=False, allow_blank=True)
@@ -158,6 +160,9 @@ class MedicationSerializer(serializers.ModelSerializer):
             'price',
             'unit_price',
             'cost_price',
+            'base_unit',
+            'sell_unit',
+            'conversion_factor',
             'stock_quantity',
             'current_stock',
             'low_stock_threshold',

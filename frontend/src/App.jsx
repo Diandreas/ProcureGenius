@@ -17,8 +17,19 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Pages
 import Login from './pages/auth/Login';
-import CustomizableDashboard from './pages/CustomizableDashboard';
-import OldDashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard';
+
+// Healthcare Analytics
+import ExamStatusAnalytics from './pages/healthcare/analytics/ExamStatusAnalytics';
+import ExamTypesAnalytics from './pages/healthcare/analytics/ExamTypesAnalytics';
+import DemographicAnalytics from './pages/healthcare/analytics/DemographicAnalytics';
+import RevenueAnalytics from './pages/healthcare/analytics/RevenueAnalytics';
+
+// Inventory Analytics
+import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
+import StockoutRiskAnalytics from './pages/inventory/analytics/StockoutRiskAnalytics';
+import RiskProductsAnalytics from './pages/inventory/analytics/RiskProductsAnalytics';
+import MovementAnalytics from './pages/inventory/analytics/MovementAnalytics';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
 import SupplierForm from './pages/suppliers/SupplierForm';
@@ -718,8 +729,21 @@ function App() {
                           <Route element={<PrivateRoute />}>
                             <Route element={<MainLayout />}>
                               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                              <Route path="/dashboard" element={<CustomizableDashboard />} />
-                              <Route path="/dashboard-old" element={<OldDashboard />} />
+                              <Route path="/dashboard" element={<Dashboard />} />
+
+                              {/* Healthcare Analytics */}
+                              <Route path="/healthcare/analytics" element={<ExamStatusAnalytics />} />
+                              <Route path="/healthcare/analytics/exam-status" element={<ExamStatusAnalytics />} />
+                              <Route path="/healthcare/analytics/exam-types" element={<ExamTypesAnalytics />} />
+                              <Route path="/healthcare/analytics/demographics" element={<DemographicAnalytics />} />
+                              <Route path="/healthcare/analytics/revenue" element={<RevenueAnalytics />} />
+
+                              {/* Inventory Analytics */}
+                              <Route path="/inventory/analytics" element={<ReorderAnalytics />} />
+                              <Route path="/inventory/analytics/reorder" element={<ReorderAnalytics />} />
+                              <Route path="/inventory/analytics/stockout-risk" element={<StockoutRiskAnalytics />} />
+                              <Route path="/inventory/analytics/at-risk" element={<RiskProductsAnalytics />} />
+                              <Route path="/inventory/analytics/movements" element={<MovementAnalytics />} />
 
                               {/* Suppliers */}
                               <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />

@@ -209,8 +209,19 @@ class DispensingItem(models.Model):
     )
     
     # Quantity and pricing
-    quantity_dispensed = models.IntegerField(
+    quantity_dispensed = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
         verbose_name=_("Quantité dispensée")
+    )
+    dispensing_unit = models.CharField(
+        max_length=20,
+        choices=[
+            ('base', _('Unité de base')),
+            ('sell', _('Unité de vente')),
+        ],
+        default='base',
+        verbose_name=_("Unité de dispensation")
     )
     unit_cost = models.DecimalField(
         max_digits=10,
@@ -309,6 +320,7 @@ class DispensingItem(models.Model):
             movement = self.medication.adjust_stock(
                 quantity=-self.quantity_dispensed,
                 movement_type='sale',
+                unit=self.dispensing_unit,
                 reference_type='dispensing',
                 reference_id=self.dispensing.id,
                 notes=f"Dispensation {self.dispensing.dispensing_number}",
@@ -325,6 +337,7 @@ class DispensingItem(models.Model):
             self.medication.adjust_stock(
                 quantity=self.quantity_dispensed,
                 movement_type='return',
+                unit=self.dispensing_unit,
                 reference_type='dispensing_cancel',
                 reference_id=self.dispensing.id,
                 notes=f"Annulation dispensation {self.dispensing.dispensing_number}",

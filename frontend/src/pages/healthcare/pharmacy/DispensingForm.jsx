@@ -66,7 +66,7 @@ const DispensingForm = () => {
     const addItem = () => {
         setFormData(prev => ({
             ...prev,
-            items: [...prev.items, { medication: null, quantity: 1, price: 0 }]
+            items: [...prev.items, { medication: null, quantity: 1, unit: 'base', price: 0 }]
         }));
     };
 
@@ -81,15 +81,28 @@ const DispensingForm = () => {
         const newItems = [...formData.items];
 
         if (field === 'quantity') {
-            // Ensure quantity is a number
-            newItems[index][field] = parseInt(value) || 1;
+            newItems[index][field] = parseFloat(value) || 0;
+        } else if (field === 'unit') {
+            newItems[index][field] = value;
+            // Update price based on unit
+            if (newItems[index].medication) {
+                const med = newItems[index].medication;
+                if (value === 'sell') {
+                    newItems[index].price = parseFloat(med.price) || 0;
+                } else {
+                    const priceBase = parseFloat(med.price) / (parseFloat(med.conversion_factor) || 1);
+                    newItems[index].price = priceBase;
+                }
+            }
         } else {
             newItems[index][field] = value;
         }
 
-        // Update price if medication changes
+        // Initialize price and unit if medication changes
         if (field === 'medication' && value) {
-            newItems[index].price = parseFloat(value.unit_price) || 0;
+            newItems[index].unit = 'sell'; // Default to sell unit for convenience
+            newItems[index].price = parseFloat(value.price) || 0;
+            newItems[index].quantity = 1;
         }
 
         setFormData(prev => ({ ...prev, items: newItems }));
@@ -115,8 +128,9 @@ const DispensingForm = () => {
                 patient_id: formData.patient?.id || null,
                 items: formData.items.map(item => ({
                     medication_id: item.medication.id,
-                    quantity: parseInt(item.quantity),
-                    price: parseFloat(item.price)
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    price: item.price
                 })),
                 notes: formData.notes
             };
@@ -214,10 +228,11 @@ const DispensingForm = () => {
                                 <Table>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell width="40%">Médicament</TableCell>
+                                            <TableCell width="30%">Médicament</TableCell>
                                             <TableCell width="15%">Stock</TableCell>
+                                            <TableCell width="15%">Unité</TableCell>
                                             <TableCell width="15%">Qté</TableCell>
-                                            <TableCell width="20%">Prix Unitaire</TableCell>
+                                            <TableCell width="15%">Prix Unitaire</TableCell>
                                             <TableCell width="10%">Total</TableCell>
                                             <TableCell></TableCell>
                                         </TableRow>
@@ -237,10 +252,38 @@ const DispensingForm = () => {
                                                 </TableCell>
                                                 <TableCell>
                                                     {item.medication ? (
-                                                        <Typography color={item.medication.current_stock < item.quantity ? 'error' : 'text.primary'}>
-                                                            {item.medication.current_stock}
-                                                        </Typography>
+                                                        <Box>
+                                                            <Typography 
+                                                                variant="body2" 
+                                                                color={(item.unit === 'sell' ? (item.medication.current_stock / item.medication.conversion_factor) : item.medication.current_stock) < item.quantity ? 'error' : 'text.primary'}
+                                                                fontWeight="bold"
+                                                            >
+                                                                {item.unit === 'sell' 
+                                                                    ? `${(item.medication.current_stock / item.medication.conversion_factor).toFixed(1)} ${item.medication.sell_unit || 'Box'}`
+                                                                    : `${item.medication.current_stock} ${item.medication.base_unit || 'Unit'}`
+                                                                }
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {item.unit === 'sell' 
+                                                                    ? `Total: ${item.medication.current_stock} ${item.medication.base_unit}`
+                                                                    : `Soit: ${(item.medication.current_stock / item.medication.conversion_factor).toFixed(1)} ${item.medication.sell_unit}`
+                                                                }
+                                                            </Typography>
+                                                        </Box>
                                                     ) : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <TextField
+                                                        select
+                                                        size="small"
+                                                        fullWidth
+                                                        value={item.unit}
+                                                        onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                                                        disabled={!item.medication}
+                                                    >
+                                                        <MenuItem value="sell">{item.medication?.sell_unit || 'Vente'}</MenuItem>
+                                                        <MenuItem value="base">{item.medication?.base_unit || 'Base'}</MenuItem>
+                                                    </TextField>
                                                 </TableCell>
                                                 <TableCell>
                                                     <TextField
@@ -248,14 +291,19 @@ const DispensingForm = () => {
                                                         size="small"
                                                         value={item.quantity}
                                                         onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                                                        InputProps={{ inputProps: { min: 1 } }}
+                                                        InputProps={{ inputProps: { min: 0.0001, step: "any" } }}
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    {(item.price || 0)} XAF
+                                                    <Typography variant="body2">
+                                                        {new Intl.NumberFormat('fr-FR').format(item.price)}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        XAF / {item.unit === 'sell' ? item.medication?.sell_unit : item.medication?.base_unit}
+                                                    </Typography>
                                                 </TableCell>
-                                                <TableCell fontWeight="bold">
-                                                    {(item.quantity || 0) * (item.price || 0)}
+                                                <TableCell sx={{ fontWeight: 'bold' }}>
+                                                    {new Intl.NumberFormat('fr-FR').format(item.quantity * item.price)}
                                                 </TableCell>
                                                 <TableCell>
                                                     <IconButton color="error" onClick={() => removeItem(index)}>

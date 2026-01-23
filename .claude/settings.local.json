@@ -72,7 +72,9 @@
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__fill",
       "mcp__chrome-devtools__press_key",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

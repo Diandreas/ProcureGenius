@@ -136,8 +136,9 @@
 </table>
 
 {% if order.clinical_notes %}
-<div class="notes">
-    <strong>Notes cliniques:</strong> {{ order.clinical_notes }}
+<div class="notes" style="background-color: #eff6ff; border-color: #3b82f6; color: #1e40af;">
+    <strong>Diagnostic du Médecin / Renseignements Cliniques :</strong><br>
+    {{ order.clinical_notes|linebreaksbr }}
 </div>
 {% endif %}
 

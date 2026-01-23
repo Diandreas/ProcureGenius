@@ -539,7 +539,7 @@ class LabResultPDFView(APIView):
         try:
             pdf_buffer = service.generate_lab_result_pdf(
                 order, 
-                template_type=request.query_params.get('template', 'classic'),
+                template_type=request.query_params.get('template', 'report'),
                 language=request.query_params.get('lang', 'fr')
             )
             

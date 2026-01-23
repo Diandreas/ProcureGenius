@@ -229,13 +229,15 @@
             </div>
         </div>
         <div class="info-column">
-            <div class="info-label">Prescripteur</div>
-            <div class="info-value">
+            <div class="info-label">Médecin / Renseignements</div>
+            <div class="info-value" style="font-size: 8pt; line-height: 1.2;">
                 {% if order.ordered_by %}Dr. {{ order.ordered_by.get_full_name }}{% else %}-{% endif %}
             </div>
-            <div class="sm-text">
-                {{ order.clinical_notes|default:""|truncatechars:100 }}
+            {% if order.clinical_notes %}
+            <div class="sm-text" style="color: #1e40af; background: #eff6ff; padding: 4px; border-radius: 2px; margin-top: 4px;">
+                <strong>Renseignements :</strong> {{ order.clinical_notes|truncatechars:150 }}
             </div>
+            {% endif %}
         </div>
         <div class="info-column">
             <div class="info-label">Statut</div>
