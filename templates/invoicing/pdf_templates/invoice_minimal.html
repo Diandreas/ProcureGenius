@@ -1,4 +1,4 @@
-{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+﻿{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
@@ -16,445 +16,89 @@
             margin: {{ print_margins|default:12 }}mm;
             {% endif %}
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.4;
-            color: #000000;
-            margin: 0;
-            padding: 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        /* Ultra Clean Header */
-        .header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #000000;
-        }
-
-        .logo {
-            max-width: 80px;
-            max-height: 40px;
-            margin-bottom: 12px;
-        }
-
-        .company-name {
-            font-size: 11pt;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .company-tagline {
-            font-size: 7pt;
-            color: #666666;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-
-        /* Minimalist Invoice Title */
-        .invoice-header {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .invoice-title {
-            font-size: 32pt;
-            font-weight: 200;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            color: #000000;
-        }
-
-        .invoice-number {
-            font-size: 9.5pt;
-            font-weight: 400;
-            letter-spacing: 1.5px;
-            color: #666666;
-        }
-
-        .accent-line {
-            width: 60px;
-            height: 2px;
-            background: {{ brand_color|default:'#2563eb' }};
-            margin: 12px auto;
-        }
-
-        /* Clean Info Section */
-        .info-section {
-            margin: 24px 0;
-            border-top: 1px solid #e5e5e5;
-            border-bottom: 1px solid #e5e5e5;
-            padding: 15px 0;
-        }
-
-        .info-row {
-            display: table;
-            width: 100%;
-        }
-
-        .info-col {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-            padding: 0 10px;
-        }
-
-        .info-col:first-child {
-            padding-left: 0;
-            border-right: 1px solid #e5e5e5;
-        }
-
-        .info-col:last-child {
-            padding-right: 0;
-        }
-
-        .info-label {
-            font-size: 7pt;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: #666666;
-            margin-bottom: 7px;
-        }
-
-        .info-content {
-            font-size: 8pt;
-            line-height: 1.5;
-            color: #000000;
-        }
-
-        .info-content p {
-            margin: 2px 0;
-        }
-
-        .info-content strong {
-            font-weight: 600;
-        }
-
-        /* Elegant Items Table */
-        .items-table {
-            width: 100%;
-            margin: 20px 0;
-        }
-
-        .items-table thead th {
-            text-align: left;
-            font-size: 7pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 7px 6px;
-            border-bottom: 2px solid #000000;
-            color: #000000;
-        }
-
-        .items-table tbody td {
-            padding: 8px 6px;
-            font-size: 8pt;
-            border-bottom: 1px solid #f0f0f0;
-            color: #333333;
-        }
-
-        .items-table tbody tr:last-child td {
-            border-bottom: 1px solid #000000;
-        }
-
-        .items-table tbody tr:hover {
-            background: #fafafa;
-        }
-
-        .items-table .text-center {
-            text-align: center;
-        }
-
-        .items-table .text-right {
-            text-align: right;
-            font-weight: 500;
-        }
-
-        /* Refined Totals */
-        .totals-section {
-            margin-top: 20px;
-            display: table;
-            width: 100%;
-        }
-
-        .totals-wrapper {
-            display: table-cell;
-            width: 100%;
-            text-align: right;
-        }
-
-        .totals-table {
-            width: 260px;
-            margin-left: auto;
-        }
-
-        .totals-table tr {
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .totals-table td {
-            padding: 7px 0;
-            font-size: 8pt;
-        }
-
-        .totals-table td:first-child {
-            text-align: left;
-            color: #666666;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-        }
-
-        .totals-table td:last-child {
-            text-align: right;
-            font-weight: 500;
-            color: #000000;
-            padding-left: 30px;
-        }
-
-        .totals-table .grand-total {
-            border-top: 2px solid #000000;
-            border-bottom: none;
-        }
-
-        .totals-table .grand-total td {
-            padding: 12px 0;
-            font-size: 12pt;
-            font-weight: 700;
-            color: {{ brand_color|default:'#2563eb' }};
-        }
-
-        .totals-table .grand-total td:first-child {
-            color: #000000;
-            letter-spacing: 1px;
-        }
-
-        /* Minimalist Footer */
-        .footer {
-            margin-top: 35px;
-            padding-top: 18px;
-            border-top: 1px solid #000000;
-        }
-
-        .footer-layout {
-            display: table;
-            width: 100%;
-        }
-
-        .footer-qr {
-            display: table-cell;
-            width: 75px;
-            vertical-align: middle;
-            text-align: center;
-        }
-
-        .footer-qr img {
-            width: 65px;
-            height: 65px;
-            border: 1px solid #000000;
-            padding: 3px;
-            background: white;
-        }
-
-        .qr-caption {
-            font-size: 5.5pt;
-            color: #999999;
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .footer-details {
-            display: table-cell;
-            vertical-align: middle;
-            padding-left: 18px;
-        }
-
-        .footer-company {
-            font-size: 8pt;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .footer-info {
-            font-size: 7pt;
-            color: #666666;
-            line-height: 1.4;
-        }
-
-        .footer-meta {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e5e5e5;
-            font-size: 6.5pt;
-            color: #999999;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; line-height: 1.4; color: #000000; margin: 0; padding: 0; }
+        table { width: 100%; border-collapse: collapse; }
+        .header { text-align: center; margin-bottom: 24px; padding-bottom: 15px; border-bottom: 1px solid #000000; }
+        .logo { max-width: 80px; max-height: 40px; margin-bottom: 12px; }
+        .company-name { font-size: 11pt; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+        .company-tagline { font-size: 7pt; color: #666666; letter-spacing: 1.2px; text-transform: uppercase; }
+        .invoice-header { text-align: center; margin: 20px 0; }
+        .invoice-title { font-size: 32pt; font-weight: 200; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; color: #000000; }
+        .invoice-number { font-size: 9.5pt; font-weight: 400; letter-spacing: 1.5px; color: #666666; }
+        .accent-line { width: 60px; height: 2px; background: {{ brand_color|default:'#2563eb' }}; margin: 12px auto; }
+        .info-section { margin: 24px 0; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; padding: 15px 0; }
+        .info-row { display: table; width: 100%; }
+        .info-col { display: table-cell; width: 50%; vertical-align: top; padding: 0 10px; }
+        .info-col:first-child { padding-left: 0; border-right: 1px solid #e5e5e5; }
+        .info-col:last-child { padding-right: 0; }
+        .info-label { font-size: 7pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #666666; margin-bottom: 7px; }
+        .info-content { font-size: 8pt; line-height: 1.5; color: #000000; }
+        .info-content p { margin: 2px 0; }
+        .info-content strong { font-weight: 600; }
+        .items-table { width: 100%; margin: 20px 0; }
+        .items-table thead th { text-align: left; font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 7px 6px; border-bottom: 2px solid #000000; color: #000000; }
+        .items-table tbody td { padding: 8px 6px; font-size: 8pt; border-bottom: 1px solid #f0f0f0; color: #333333; }
+        .items-table tbody tr:last-child td { border-bottom: 1px solid #000000; }
+        .items-table .text-center { text-align: center; }
+        .items-table .text-right { text-align: right; font-weight: 500; }
+        .totals-section { margin-top: 20px; display: table; width: 100%; }
+        .totals-wrapper { display: table-cell; width: 100%; text-align: right; }
+        .totals-table { width: 260px; margin-left: auto; }
+        .totals-table tr { border-bottom: 1px solid #f0f0f0; }
+        .totals-table td { padding: 7px 0; font-size: 8pt; }
+        .totals-table td:first-child { text-align: left; color: #666666; font-weight: 400; letter-spacing: 0.5px; }
+        .totals-table td:last-child { text-align: right; font-weight: 500; color: #000000; padding-left: 30px; }
+        .totals-table .grand-total { border-top: 2px solid #000000; border-bottom: none; }
+        .totals-table .grand-total td { padding: 12px 0; font-size: 12pt; font-weight: 700; color: {{ brand_color|default:'#2563eb' }}; }
+        .totals-table .grand-total td:first-child { color: #000000; letter-spacing: 1px; }
+        .footer { margin-top: 35px; padding-top: 18px; border-top: 1px solid #000000; }
+        .footer-layout { display: table; width: 100%; }
+        .footer-qr { display: table-cell; width: 75px; vertical-align: middle; text-align: center; }
+        .footer-qr img { width: 65px; height: 65px; border: 1px solid #000000; padding: 3px; background: white; }
+        .qr-caption { font-size: 5.5pt; color: #999999; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
+        .footer-details { display: table-cell; vertical-align: middle; padding-left: 18px; }
+        .footer-company { font-size: 8pt; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 5px; }
+        .footer-info { font-size: 7pt; color: #666666; line-height: 1.4; }
+        .footer-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-size: 6.5pt; color: #999999; text-transform: uppercase; letter-spacing: 0.8px; }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
-        {% if logo_base64 %}
-        <img src="{{ logo_base64 }}" alt="Logo" class="logo">
-        {% endif %}
-        {% if organization.name %}
-        <div class="company-name">{{ organization.name }}</div>
+        {% if logo_base64 %}<img src="{{ logo_base64 }}" alt="Logo" class="logo">{% endif %}
+        {% if organization.name %}<div class="company-name">{{ organization.name }}</div>
         <div class="company-tagline">
             {% if organization.phone %}{{ organization.phone }}{% endif %}
-            {% if organization.email %} • {{ organization.email }}{% endif %}
-            <br>
-            {# Affichage conditionnel selon la région fiscale #}
+            {% if organization.email %}  {{ organization.email }}{% endif %}<br>
             {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
-                {% if organization.niu %}NIU: {{ organization.niu }} • {% endif %}
+                {% if organization.niu %}NIU: {{ organization.niu }}  {% endif %}
                 {% if organization.rc_number %}RC: {{ organization.rc_number }}{% elif organization.rccm_number %}RCCM: {{ organization.rccm_number }}{% endif %}
             {% elif organization.tax_region == 'eu' %}
                 {% if organization.vat_number %}{% trans "VAT" %}: {{ organization.vat_number }}{% endif %}
             {% elif organization.tax_region == 'canada' %}
-                {% if organization.neq %}NEQ: {{ organization.neq }} • {% endif %}
+                {% if organization.neq %}NEQ: {{ organization.neq }}  {% endif %}
                 {% if organization.gst_number %}GST/HST: {{ organization.gst_number }}{% endif %}
-                {% if organization.qst_number %} • QST: {{ organization.qst_number }}{% endif %}
+                {% if organization.qst_number %}  QST: {{ organization.qst_number }}{% endif %}
             {% elif organization.tax_region == 'usa' %}
                 {% if organization.tax_number %}TIN: {{ organization.tax_number }}{% endif %}
             {% endif %}
-        </div>
-        {% endif %}
+        </div>{% endif %}
     </div>
-
-    <!-- Invoice Title -->
-    <div class="invoice-header">
-        <div class="invoice-title">{% trans "Invoice" %}</div>
-        <div class="invoice-number">{{ invoice.invoice_number }}</div>
-        <div class="accent-line"></div>
-    </div>
-
-    <!-- Info Section -->
-    <div class="info-section">
-        <table class="info-row">
-            <tr>
-                <td class="info-col">
-                    <div class="info-label">{% trans "Details" %}</div>
-                    <div class="info-content">
-                        <p><strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong></p>
-                        {% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}
-                        {% if issue_date %}<p>{% trans "Issue Date" %}: {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
-                        {% if due_date %}<p>{% trans "Due Date" %}: {{ due_date|date:"d/m/Y" }}</p>{% endif %}
-                        {% if invoice.status == 'paid' %}
-                        <p style="color: #10b981; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "PAID" %}</p>
-                        {% elif invoice.status == 'sent' %}
-                        <p style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "SENT" %}</p>
-                        {% elif invoice.status == 'draft' %}
-                        <p style="color: #666666; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "DRAFT" %}</p>
-                        {% elif invoice.status == 'overdue' %}
-                        <p style="color: #ef4444; font-weight: 600; margin-top: 8px;">{% trans "Status" %}: {% trans "OVERDUE" %}</p>
-                        {% endif %}
-                    </div>
-                </td>
-                {% if client %}
-                <td class="info-col">
-                    <div class="info-label">{% trans "Billed To" %}</div>
-                    <div class="info-content">
-                        <p><strong>{{ client.name }}</strong></p>
-                        {% if client.email %}<p>{{ client.email }}</p>{% endif %}
-                        {% if client.address %}<p>{{ client.address }}</p>{% endif %}
-                    </div>
-                </td>
-                {% endif %}
-            </tr>
-        </table>
-    </div>
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th style="width: 15%;">{% trans "Reference" %}</th>
-                <th style="width: 42%;">{% trans "Description" %}</th>
-                <th style="width: 12%;" class="text-center">{% trans "Qty" %}</th>
-                <th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th>
-                <th style="width: 16%;" class="text-right">{% trans "Total" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-            <tr>
-                <td>{{ item.product_reference|default:"—" }}</td>
-                <td>{{ item.description|default:"—" }}</td>
-                <td class="text-center">{{ item.quantity|default:0 }}</td>
-                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 25px; color: #cccccc;">{% trans "No items" %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- Totals -->
-    <div class="totals-section">
-        <div class="totals-wrapper">
-            <table class="totals-table">
-                <tr>
-                    <td>{% trans "Subtotal" %}</td>
-                    <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                </tr>
-                {% if tax_amount > 0 %}
-                <tr>
-                    <td>{% trans "Taxes" %}</td>
-                    <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                </tr>
-                {% endif %}
-                <tr class="grand-total">
-                    <td>{% trans "Total" %}</td>
-                    <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <table class="footer-layout">
-            <tr>
-                {% if qr_code_base64 %}
-                <td class="footer-qr">
-                    <img src="{{ qr_code_base64 }}" alt="QR Code">
-                    <div class="qr-caption">{% trans "Verification" %}</div>
-                </td>
-                {% endif %}
-                <td class="footer-details">
-                    {% if organization.name %}<div class="footer-company">{{ organization.name }}</div>{% endif %}
-                    <div class="footer-info">
-                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                        {% if organization.phone %}{% trans "Phone" %}: {{ organization.phone }}{% endif %}
-                        {% if organization.email %} • Email: {{ organization.email }}{% endif %}
-                        {# Coordonnées bancaires (optionnel) #}
-                        {% if organization.bank_account %}
-                            <br><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %} • {% endif %}{% trans "Account" %}: {{ organization.bank_account }}
-                        {% endif %}
-                    </div>
-                    <div class="footer-meta">
-                        {% trans "Document generated on" %} {% now "d/m/Y" %}
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
+    <div class="invoice-header"><div class="invoice-title">{% trans "Invoice" %}</div><div class="invoice-number">{{ invoice.invoice_number }}</div><div class="accent-line"></div></div>
+    <div class="info-section"><table class="info-row"><tr><td class="info-col"><div class="info-label">{% trans "Details" %}</div><div class="info-content"><p><strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong></p>{% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}{% if issue_date %}<p>{% trans "Issue Date" %}: {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
+    {% if invoice.status == 'paid' %}<p style="color: #10b981; font-weight: 600; margin-top: 10px;">{% trans "Status" %}: {% trans "PAID" %}</p>
+    {% elif invoice.status == 'sent' %}<p style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600; margin-top: 10px;">{% trans "Status" %}: {% trans "SENT" %}</p>
+    {% elif invoice.status == 'draft' %}<p style="color: #666666; font-weight: 600; margin-top: 10px;">{% trans "Status" %}: {% trans "DRAFT" %}</p>
+    {% elif invoice.status == 'overdue' %}<p style="color: #ef4444; font-weight: 600; margin-top: 10px;">{% trans "Status" %}: {% trans "OVERDUE" %}</p>{% endif %}</div></td>
+    {% if client %}<td class="info-col"><div class="info-label">{% trans "Billed To" %}</div><div class="info-content"><p><strong>{{ client.name }}</strong></p>{% if client.email %}<p>{{ client.email }}</p>{% endif %}{% if client.address %}<p>{{ client.address }}</p>{% endif %}</div></td>{% endif %}</tr></table></div>
+    <table class="items-table"><thead><tr><th style="width: 15%;">{% trans "Reference" %}</th><th style="width: 42%;">{% trans "Description" %}</th><th style="width: 12%;" class="text-center">{% trans "Qty" %}</th><th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th><th style="width: 16%;" class="text-right">{% trans "Total" %}</th></tr></thead>
+    <tbody>{% for item in items %}<tr><td>{{ item.product_reference|default:"" }}</td><td>{{ item.description|default:"" }}</td><td class="text-center">{{ item.quantity|default:0 }}</td><td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td><td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% empty %}<tr><td colspan="5" style="text-align: center; padding: 25px; color: #cccccc;">{% trans "No items" %}</td></tr>{% endfor %}</tbody></table>
+    <div class="totals-section"><div class="totals-wrapper"><table class="totals-table"><tr><td>{% trans "Subtotal" %}</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
+    {% if tax_amount > 0 %}<tr><td>{% trans "Taxes" %}</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
+    <tr class="grand-total"><td>{% trans "Total" %}</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div></div>
+    <div class="footer"><table class="footer-layout"><tr>{% if qr_code_base64 %}<td class="footer-qr"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="qr-caption">{% trans "Verification" %}</div></td>{% endif %}
+    <td class="footer-details">{% if organization.name %}<div class="footer-company">{{ organization.name }}</div>{% endif %}
+    <div class="footer-info">{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}{% if organization.phone %}{% trans "Phone" %}: {{ organization.phone }}{% endif %}{% if organization.email %}  Email: {{ organization.email }}{% endif %}
+    {% if organization.bank_account %}<br><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}{% trans "Account" %}: {{ organization.bank_account }}{% endif %}</div>
+    <div class="footer-meta">{% trans "Document generated on" %} {% now "d/m/Y" %}</div></td></tr></table></div>
 </body>
 </html>

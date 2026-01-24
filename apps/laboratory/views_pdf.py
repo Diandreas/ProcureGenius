@@ -73,8 +73,22 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
         
         context['lab_order'] = lab_order
         context['patient'] = lab_order.patient
-        # Use items instead of results (items contains the result info)
-        context['items'] = lab_order.items.all().select_related('lab_test')
+        
+        # Enrich items with previous results
+        items = list(lab_order.items.all().select_related('lab_test', 'lab_test__category'))
+        enriched_items = []
+        for item in items:
+            prev_results = item.get_previous_results(limit=1)
+            prev_value = prev_results[0].result_value if prev_results else None
+            prev_date = prev_results[0].lab_order.order_date.strftime('%d/%m/%Y') if prev_results else None
+            
+            enriched_items.append({
+                'item': item,
+                'previous_result': prev_value,
+                'previous_date': prev_date
+            })
+            
+        context['items'] = enriched_items
         return context
 
 

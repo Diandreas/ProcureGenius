@@ -1,7 +1,7 @@
 {% extends 'pdf_base.html' %}
 {% load i18n %}
 
-{% block title %}Lab Result - {{ order.order_number }}{% endblock %}
+{% block title %}Lab Result - {{ lab_order.order_number }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -58,8 +58,8 @@
 
         <div class="info-label" style="margin-top: 8px;">Médecin Prescripteur</div>
         <div class="info-value">
-            {% if order.ordered_by %}
-            Dr. {{ order.ordered_by.get_full_name }}
+            {% if lab_order.ordered_by %}
+            Dr. {{ lab_order.ordered_by.get_full_name }}
             {% else %}
             -
             {% endif %}
@@ -68,9 +68,9 @@
     <div class="info-col" style="width: 50%;">
         <div class="info-label">Détails Commande</div>
         <div class="info-value">
-            N°: {{ order.order_number }}<br>
-            Date: {{ order.order_date|date:"d/m/Y H:i" }}<br>
-            Priorité: {{ order.get_priority_display }}
+            N°: {{ lab_order.order_number }}<br>
+            Date: {{ lab_order.order_date|date:"d/m/Y H:i" }}<br>
+            Priorité: {{ lab_order.get_priority_display }}
         </div>
     </div>
 </div>
@@ -87,7 +87,7 @@
         </tr>
     </thead>
     <tbody>
-        {% regroup items by lab_test.category as category_list %}
+        {% regroup items by item.lab_test.category as category_list %}
 
         {% for category in category_list %}
         <tr class="category-row">
@@ -99,7 +99,8 @@
                 {% endif %}
             </td>
         </tr>
-        {% for item in category.list %}
+        {% for item_data in category.list %}
+        {% with item=item_data.item previous=item_data.previous_result prev_date=item_data.previous_date %}
         <tr>
             <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
             <td>
@@ -116,9 +117,11 @@
                 {% endif %}
             </td>
             <td>
-                {% with prev=item.get_previous_results.first %}
-                {{ prev.result_value|default:"/" }}
-                {% endwith %}
+                {% if previous %}
+                {{ previous }} <br><span style="font-size: 6pt; color: #6b7280;">({{ prev_date }})</span>
+                {% else %}
+                /
+                {% endif %}
             </td>
             <td style="text-align: right;">
                 {% if item.is_abnormal %}
@@ -126,37 +129,44 @@
                 {% endif %}
             </td>
         </tr>
+        {% endwith %}
         {% endfor %}
         {% empty %}
         <tr>
-            <td colspan="5" class="text-center" style="padding: 15px; color: #6b7280;">Aucun résultat disponible</td>
+            <td colspan="6" class="text-center" style="padding: 15px; color: #6b7280;">Aucun résultat disponible</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-{% if order.clinical_notes %}
+{% if lab_order.clinical_notes %}
 <div class="notes" style="background-color: #eff6ff; border-color: #3b82f6; color: #1e40af;">
     <strong>Diagnostic du Médecin / Renseignements Cliniques :</strong><br>
-    {{ order.clinical_notes|linebreaksbr }}
+    {{ lab_order.clinical_notes|linebreaksbr }}
 </div>
 {% endif %}
 
-{% if order.biologist_diagnosis %}
-<div class="notes" style="background-color: #f0fdf4; border-color: #22c55e; color: #166534; margin-top: 10px;">
-    <strong>Diagnostic du Biologiste :</strong><br>
-    {{ order.biologist_diagnosis|linebreaksbr }}
+{% if lab_order.biologist_diagnosis %}
+<div class="notes"
+    style="background-color: #f0fdf4; border: 2px solid #22c55e; color: #166534; margin-top: 15px; padding: 12px;">
+    <div
+        style="font-size: 10pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #22c55e; padding-bottom: 3px;">
+        Conclusion / Diagnostic du Biologiste :
+    </div>
+    <div style="font-size: 11pt; line-height: 1.5; font-weight: 500;">
+        {{ lab_order.biologist_diagnosis|linebreaksbr }}
+    </div>
 </div>
 {% endif %}
 
 <div style="margin-top: 40px; display: table; width: 100%;">
     <div style="display: table-cell; width: 50%;">
         <div class="info-label">Validé par :</div>
-        {% if order.results_verified_by %}
-        <div style="font-weight: bold; margin-bottom: 5px;">{{ order.results_verified_by.get_full_name }}</div>
+        {% if lab_order.results_verified_by %}
+        <div style="font-weight: bold; margin-bottom: 5px;">{{ lab_order.results_verified_by.get_full_name }}</div>
         {% endif %}
         <div
-            style="margin-top: {% if order.results_verified_by %}5px{% else %}30px{% endif %}; border-top: 1px dotted #9ca3af; width: 180px; padding-top: 4px; font-size: 8pt; color: #6b7280;">
+            style="margin-top: {% if lab_order.results_verified_by %}5px{% else %}30px{% endif %}; border-top: 1px dotted #9ca3af; width: 180px; padding-top: 4px; font-size: 8pt; color: #6b7280;">
             Signature Valideur
         </div>
     </div>

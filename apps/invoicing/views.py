@@ -400,6 +400,8 @@ def api_invoice_stats(request):
         'overdue': Invoice.objects.filter(status='overdue').count(),
         'cancelled': Invoice.objects.filter(status='cancelled').count(),
         'total_amount': Invoice.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+        'cash_total': Invoice.objects.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+        'mobile_money_total': Invoice.objects.filter(payment_method='mobile_money').aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
         'this_month': Invoice.objects.filter(
             created_at__month=timezone.now().month,
             created_at__year=timezone.now().year

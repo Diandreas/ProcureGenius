@@ -472,9 +472,7 @@ class Invoice(models.Model):
 
     PAYMENT_METHOD_CHOICES = [
         ('mobile_money', _('Mobile Money')),
-        ('cash', _('Comptant')),
-        ('check', _('Chèque')),
-        ('bank_transfer', _('Virement bancaire')),
+        ('cash', _('Espèces')),
         ('', _('Non spécifié')),
     ]
 

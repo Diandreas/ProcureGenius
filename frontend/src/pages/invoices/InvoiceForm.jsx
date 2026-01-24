@@ -104,10 +104,8 @@ function InvoiceForm() {
   });
 
   const PAYMENT_METHODS = [
-    { value: 'cash', label: t('invoices:paymentMethods.cash', 'Espèces') },
-    { value: 'mobile_money', label: t('invoices:paymentMethods.mobileMoney', 'Mobile Money') },
-    { value: 'check', label: t('invoices:paymentMethods.check', 'Chèque') },
-    { value: 'bank_transfer', label: t('invoices:paymentMethods.bankTransfer', 'Virement bancaire') }
+    { value: 'cash', label: 'Espèces' },
+    { value: 'mobile_money', label: 'Mobile Money' }
   ];
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -175,7 +173,7 @@ function InvoiceForm() {
         description: invoice.description || '',
         client: invoice.client,
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
-        due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
+        // due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate || 20,
         status: invoice.status || 'paid',
         payment_method: invoice.payment_method || 'cash'

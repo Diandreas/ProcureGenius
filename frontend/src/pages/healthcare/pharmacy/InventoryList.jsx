@@ -153,7 +153,10 @@ const InventoryList = () => {
                                     {med.name}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" noWrap>
-                                    {med.description || 'No description'}
+                                    {med.stock_quantity % (med.conversion_factor || 1) === 0
+                                        ? `${med.stock_quantity / (med.conversion_factor || 1)} ${med.sell_unit_display || med.sell_unit || ''}`
+                                        : `${Math.floor(med.stock_quantity / (med.conversion_factor || 1))} ${med.sell_unit_display || med.sell_unit || ''} + ${med.stock_quantity % (med.conversion_factor || 1)} ${med.base_unit_display || med.base_unit || ''}`
+                                    }
                                 </Typography>
                             </Box>
                         </Stack>
@@ -162,7 +165,7 @@ const InventoryList = () => {
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Prix Unitaire</Typography>
                                 <Typography variant="body2" fontWeight="600">
-                                    {formatCurrency(med.price)}
+                                    {formatCurrency(med.price)} / {med.sell_unit_display || med.sell_unit}
                                 </Typography>
                             </Box>
                             {isOut ? (

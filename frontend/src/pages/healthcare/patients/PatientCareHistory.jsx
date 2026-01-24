@@ -76,13 +76,21 @@ const PatientCareHistory = ({ patientId }) => {
                                     <TableCell>{care.service_name}</TableCell>
                                     <TableCell>
                                         <Chip
-                                            label={care.service_type_display}
+                                            label={
+                                                care.service_type === 'consultation' ? 'Consultation' :
+                                                    care.service_type === 'laboratory' ? 'Laboratoire' :
+                                                        care.service_type === 'pharmacy' ? 'Pharmacie' :
+                                                            care.service_type === 'nursing_care' ? 'Soin' :
+                                                                care.service_type === 'imaging' ? 'Imagerie' :
+                                                                    care.service_type === 'procedure' ? 'Procédure' :
+                                                                        'Autre'
+                                            }
                                             size="small"
                                             color={
                                                 care.service_type === 'consultation' ? 'primary' :
                                                     care.service_type === 'laboratory' ? 'secondary' :
                                                         care.service_type === 'pharmacy' ? 'success' :
-                                                            'default'
+                                                            'info'
                                             }
                                             variant="outlined"
                                         />

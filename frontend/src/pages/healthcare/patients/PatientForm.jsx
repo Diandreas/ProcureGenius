@@ -23,14 +23,18 @@ import {
     Tooltip,
     FormControl,
     InputLabel,
-    Select
+    Select,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails
 } from '@mui/material';
 import {
     Save as SaveIcon,
     ArrowBack as ArrowBackIcon,
     Delete as DeleteIcon,
     Add as AddIcon,
-    Receipt as ReceiptIcon
+    Receipt as ReceiptIcon,
+    ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -297,47 +301,63 @@ const PatientForm = () => {
                         </Grid>
                     </Grid>
 
-                    <Typography variant="h6" gutterBottom color="primary" sx={{ mt: 4 }}>Information Médicale (Optionnel)</Typography>
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
-                            <TextField
-                                select
-                                fullWidth
-                                label={t('patients.blood_type', 'Groupe Sanguin')}
-                                name="blood_type"
-                                value={formData.blood_type}
-                                onChange={handleChange}
-                            >
-                                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
-                                    <MenuItem key={type} value={type}>{type}</MenuItem>
-                                ))}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12} sm={8}>
-                            <TextField
-                                fullWidth
-                                label={t('patients.allergies', 'Allergies Connues')}
-                                name="allergies"
-                                value={formData.allergies}
-                                onChange={handleChange}
-                                placeholder="Ex: Pénicilline, Arachides..."
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label={t('patients.chronic', 'Conditions Chroniques / Antécédents')}
-                                name="chronic_conditions"
-                                value={formData.chronic_conditions}
-                                onChange={handleChange}
-                                multiline
-                                rows={2}
-                                placeholder="Ex: Diabète, Hypertension..."
-                            />
-                        </Grid>
-                    </Grid>
+                    <Accordion
+                        elevation={0}
+                        sx={{
+                            '&:before': { display: 'none' },
+                            backgroundColor: 'transparent',
+                            mt: 2
+                        }}
+                    >
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon color="primary" />}
+                            sx={{ px: 0 }}
+                        >
+                            <Typography variant="h6" color="primary">
+                                {t('patients.medical_info_optional', 'Information Médicale (Optionnel)')}
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ px: 0, pb: 2 }}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        label={t('patients.blood_type', 'Groupe Sanguin')}
+                                        name="blood_type"
+                                        value={formData.blood_type}
+                                        onChange={handleChange}
+                                    >
+                                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
+                                            <MenuItem key={type} value={type}>{type}</MenuItem>
+                                        ))}
+                                    </TextField>
+                                </Grid>
+                                <Grid item xs={12} sm={8}>
+                                    <TextField
+                                        fullWidth
+                                        label={t('patients.allergies', 'Allergies Connues')}
+                                        name="allergies"
+                                        value={formData.allergies}
+                                        onChange={handleChange}
+                                        placeholder="Ex: Pénicilline, Arachides..."
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label={t('patients.chronic', 'Conditions Chroniques / Antécédents')}
+                                        name="chronic_conditions"
+                                        value={formData.chronic_conditions}
+                                        onChange={handleChange}
+                                        multiline
+                                        rows={2}
+                                        placeholder="Ex: Diabète, Hypertension..."
+                                    />
+                                </Grid>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
                 </CardContent>
             </Card>
 

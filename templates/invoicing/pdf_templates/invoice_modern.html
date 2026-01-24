@@ -350,8 +350,7 @@
                 <div class="card-content">
                     <strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong><br>
                     {% if invoice.description %}{{ invoice.description }}<br>{% endif %}
-                    {% if issue_date %}<strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}<br>{% endif %}
-                    {% if due_date %}<strong>{% trans "Due Date" %}:</strong> {{ due_date|date:"d/m/Y" }}{% endif %}
+                    {% if issue_date %}<strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}{% endif %}
                 </div>
             </td>
             <td style="width: 4%;"></td>

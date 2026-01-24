@@ -1,4 +1,4 @@
-{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+﻿{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
@@ -17,386 +17,93 @@
             {% endif %}
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.4;
-            color: #1a1a1a;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid {{ brand_color|default:'#2563eb' }};
-        }
-
-        .logo {
-            max-width: 180px;
-        }
-
-        .logo img {
-            max-width: 100%;
-            height: auto;
-            max-height: 80px;
-        }
-
-        .company-info {
-            text-align: right;
-            font-size: 8pt;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .company-info strong {
-            display: block;
-            font-size: 9.5pt;
-            color: {{ brand_color|default:'#2563eb' }};
-            margin-bottom: 4px;
-        }
-
-        .invoice-title {
-            margin-bottom: 15px;
-        }
-
-        .invoice-title h1 {
-            font-size: 22pt;
-            font-weight: 700;
-            color: {{ brand_color|default:'#2563eb' }};
-            margin-bottom: 4px;
-        }
-
-        .invoice-title .invoice-number {
-            font-size: 9pt;
-            color: #666;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .info-box {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 3px;
-            border-left: 2px solid {{ brand_color|default:'#2563eb' }};
-        }
-
-        .info-box h3 {
-            font-size: 7.5pt;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: {{ brand_color|default:'#2563eb' }};
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .info-box .content {
-            font-size: 8.5pt;
-            line-height: 1.5;
-        }
-
-        .info-box .content strong {
-            display: block;
-            color: #1a1a1a;
-            margin-bottom: 2px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-
-        thead {
-            background: {{ brand_color|default:'#2563eb' }};
-            color: white;
-        }
-
-        thead th {
-            padding: 8px 6px;
-            text-align: left;
-            font-size: 7.5pt;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        thead th.text-center {
-            text-align: center;
-        }
-
-        thead th.text-right {
-            text-align: right;
-        }
-
-        tbody td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 8.5pt;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        tbody td.text-center {
-            text-align: center;
-        }
-
-        tbody td.text-right {
-            text-align: right;
-            font-weight: 500;
-        }
-
-        .totals {
-            margin-top: 15px;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .totals-table {
-            width: 250px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 3px;
-        }
-
-        .totals-table tr {
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .totals-table tr:last-child {
-            border-bottom: none;
-            background: {{ brand_color|default:'#2563eb' }};
-            color: white;
-        }
-
-        .totals-table td {
-            padding: 6px 10px;
-            font-size: 8.5pt;
-        }
-
-        .totals-table td:first-child {
-            color: #666;
-        }
-
-        .totals-table tr:last-child td {
-            color: white;
-            font-weight: 700;
-            font-size: 11pt;
-            padding: 10px;
-        }
-
-        .totals-table td:last-child {
-            text-align: right;
-            font-weight: 600;
-        }
-
-        .footer {
-            margin-top: 25px;
-            padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .qr-code {
-            text-align: center;
-        }
-
-        .qr-code img {
-            width: 65px;
-            height: 65px;
-            border: 1.5px solid {{ brand_color|default:'#2563eb' }};
-            border-radius: 3px;
-            padding: 3px;
-        }
-
-        .qr-code .label {
-            font-size: 6pt;
-            color: #999;
-            margin-top: 3px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .footer-info {
-            flex: 1;
-            margin-left: 20px;
-            font-size: 7pt;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .footer-info strong {
-            color: #1a1a1a;
-        }
-
-        .footer-meta {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 6pt;
-            color: #999;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; line-height: 1.4; color: #1a1a1a; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid {{ brand_color|default:'#2563eb' }}; }
+        .logo { max-width: 180px; }
+        .logo img { max-width: 100%; height: auto; max-height: 80px; }
+        .company-info { text-align: right; font-size: 8pt; color: #666; line-height: 1.4; }
+        .company-info strong { display: block; font-size: 9.5pt; color: {{ brand_color|default:'#2563eb' }}; margin-bottom: 4px; }
+        .invoice-title { margin-bottom: 15px; }
+        .invoice-title h1 { font-size: 22pt; font-weight: 700; color: {{ brand_color|default:'#2563eb' }}; margin-bottom: 4px; }
+        .invoice-title .invoice-number { font-size: 9pt; color: #666; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .info-box { background: #f8f9fa; padding: 12px; border-radius: 3px; border-left: 2px solid {{ brand_color|default:'#2563eb' }}; }
+        .info-box h3 { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: {{ brand_color|default:'#2563eb' }}; margin-bottom: 6px; font-weight: 600; }
+        .info-box .content { font-size: 8.5pt; line-height: 1.5; }
+        .info-box .content strong { display: block; color: #1a1a1a; margin-bottom: 2px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        thead { background: {{ brand_color|default:'#2563eb' }}; color: white; }
+        thead th { padding: 8px 6px; text-align: left; font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        thead th.text-center { text-align: center; }
+        thead th.text-right { text-align: right; }
+        tbody td { padding: 7px 6px; border-bottom: 1px solid #e5e7eb; font-size: 8.5pt; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        tbody td.text-center { text-align: center; }
+        tbody td.text-right { text-align: right; font-weight: 500; }
+        .totals { margin-top: 15px; display: flex; justify-content: flex-end; }
+        .totals-table { width: 250px; background: white; border: 1px solid #e5e7eb; border-radius: 3px; }
+        .totals-table tr { border-bottom: 1px solid #e5e7eb; }
+        .totals-table tr:last-child { border-bottom: none; background: {{ brand_color|default:'#2563eb' }}; color: white; }
+        .totals-table td { padding: 6px 10px; font-size: 8.5pt; }
+        .totals-table td:first-child { color: #666; }
+        .totals-table tr:last-child td { color: white; font-weight: 700; font-size: 11pt; padding: 10px; }
+        .totals-table td:last-child { text-align: right; font-weight: 600; }
+        .footer { margin-top: 25px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .qr-code { text-align: center; }
+        .qr-code img { width: 65px; height: 65px; border: 1.5px solid {{ brand_color|default:'#2563eb' }}; border-radius: 3px; padding: 3px; }
+        .qr-code .label { font-size: 6pt; color: #999; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .footer-info { flex: 1; margin-left: 20px; font-size: 7pt; color: #666; line-height: 1.5; }
+        .footer-info strong { color: #1a1a1a; }
+        .footer-meta { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e5e7eb; font-size: 6pt; color: #999; }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
-        <div class="logo">
-            {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" alt="Logo">
-            {% endif %}
-        </div>
+        <div class="logo">{% if logo_base64 %}<img src="{{ logo_base64 }}" alt="Logo">{% endif %}</div>
         {% if organization %}
         <div class="company-info">
             {% if organization.name %}<strong>{{ organization.name }}</strong>{% endif %}
             {% if organization.address %}{{ organization.address|striptags|truncatewords:10 }}<br>{% endif %}
             {% if organization.phone %}{{ organization.phone }}{% endif %}
-            {% if organization.phone and organization.email %} • {% endif %}
-            {% if organization.email %}{{ organization.email }}{% endif %}
-            <br>
-            {# Affichage conditionnel selon la région fiscale #}
+            {% if organization.phone and organization.email %}  {% endif %}
+            {% if organization.email %}{{ organization.email }}{% endif %}<br>
             {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
-                {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }} • {% endif %}
+                {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }}  {% endif %}
                 {% if organization.rc_number %}<strong>RC:</strong> {{ organization.rc_number }}{% elif organization.rccm_number %}<strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
             {% elif organization.tax_region == 'eu' %}
                 {% if organization.vat_number %}<strong>{% trans "VAT" %}:</strong> {{ organization.vat_number }}{% endif %}
             {% elif organization.tax_region == 'canada' %}
                 {% if organization.neq %}<strong>NEQ:</strong> {{ organization.neq }}<br>{% endif %}
                 {% if organization.gst_number %}<strong>GST/HST:</strong> {{ organization.gst_number }}{% endif %}
-                {% if organization.qst_number %} • <strong>QST:</strong> {{ organization.qst_number }}{% endif %}
+                {% if organization.qst_number %}  <strong>QST:</strong> {{ organization.qst_number }}{% endif %}
             {% elif organization.tax_region == 'usa' %}
                 {% if organization.tax_number %}<strong>TIN:</strong> {{ organization.tax_number }}{% endif %}
             {% endif %}
         </div>
         {% endif %}
     </div>
-
-    <!-- Invoice Title -->
-    <div class="invoice-title">
-        <h1>{% trans "INVOICE" %}</h1>
-        <div class="invoice-number">{{ invoice.invoice_number }}</div>
-    </div>
-
-    <!-- Info Grid -->
+    <div class="invoice-title"><h1>{% trans "INVOICE" %}</h1><div class="invoice-number">{{ invoice.invoice_number }}</div></div>
     <div class="info-grid">
-        <div class="info-box">
-            <h3>{% trans "Invoice Details" %}</h3>
-            <div class="content">
-                <strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong>
-                {% if invoice.description %}{{ invoice.description }}<br>{% endif %}
-                {% if issue_date %}{% trans "Issue Date" %}: {{ issue_date|date:"d/m/Y" }}<br>{% endif %}
-                {% if due_date %}{% trans "Due Date" %}: {{ due_date|date:"d/m/Y" }}{% endif %}
-            </div>
-        </div>
-
-        {% if client %}
-        <div class="info-box">
-            <h3>{% trans "Client" %}</h3>
-            <div class="content">
-                <strong>{{ client.name }}</strong>
-                {% if client.email %}{{ client.email }}<br>{% endif %}
-                {% if client.address %}{{ client.address }}{% endif %}
-            </div>
-        </div>
-        {% endif %}
+        <div class="info-box"><h3>{% trans "Invoice Details" %}</h3><div class="content"><strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong>{% if invoice.description %}{{ invoice.description }}<br>{% endif %}{% if issue_date %}{% trans "Issue Date" %}: {{ issue_date|date:"d/m/Y" }}{% endif %}</div></div>
+        {% if client %}<div class="info-box"><h3>{% trans "Client" %}</h3><div class="content"><strong>{{ client.name }}</strong>{% if client.email %}{{ client.email }}<br>{% endif %}{% if client.address %}{{ client.address }}{% endif %}</div></div>{% endif %}
     </div>
-
-    <!-- Items Table -->
     <table>
-        <thead>
-            <tr>
-                <th style="width: 15%;">{% trans "Reference" %}</th>
-                <th style="width: 40%;">{% trans "Description" %}</th>
-                <th class="text-center" style="width: 10%;">{% trans "Qty" %}</th>
-                <th class="text-right" style="width: 15%;">{% trans "Unit Price" %}</th>
-                <th class="text-right" style="width: 20%;">{% trans "Total" %}</th>
-            </tr>
-        </thead>
+        <thead><tr><th>{% trans "Reference" %}</th><th>{% trans "Description" %}</th><th class="text-center">{% trans "Qty" %}</th><th class="text-right">{% trans "Unit Price" %}</th><th class="text-right">{% trans "Total" %}</th></tr></thead>
         <tbody>
-            {% for item in items %}
-            <tr>
-                <td>{{ item.product_reference|default:"-" }}</td>
-                <td>{{ item.description|default:"-" }}</td>
-                <td class="text-center">{{ item.quantity|default:0 }}</td>
-                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center; color: #999; padding: 20px;">{% trans "No items" %}</td>
-            </tr>
-            {% endfor %}
+            {% for item in items %}<tr><td>{{ item.product_reference|default:"-" }}</td><td>{{ item.description|default:"-" }}</td><td class="text-center">{{ item.quantity|default:0 }}</td><td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td><td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
+            {% empty %}<tr><td colspan="5" style="text-align: center; color: #999; padding: 20px;">{% trans "No items" %}</td></tr>{% endfor %}
         </tbody>
     </table>
-
-    <!-- Totals -->
-    <div class="totals">
-        <table class="totals-table">
-            <tr>
-                <td>{% trans "Subtotal" %}</td>
-                <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-            </tr>
-            {% if tax_amount > 0 %}
-            <tr>
-                <td>{% trans "Taxes" %}</td>
-                <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-            </tr>
-            {% endif %}
-            <tr>
-                <td>{% trans "TOTAL" %}</td>
-                <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Footer -->
+    <div class="totals"><table class="totals-table"><tr><td>{% trans "Subtotal" %}</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
+    {% if tax_amount > 0 %}<tr><td>{% trans "Taxes" %}</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
+    <tr><td>{% trans "TOTAL" %}</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div>
     <div class="footer">
-        {% if qr_code_base64 %}
-        <div class="qr-code">
-            <img src="{{ qr_code_base64 }}" alt="QR Code">
-            <div class="label">{% trans "Verification" %}</div>
-        </div>
-        {% endif %}
-
-        <div class="footer-info">
-            {% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}
-            {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}
-            {% if organization.phone or organization.email %}
-            <div style="margin-top: 5px;">
-                {% if organization.phone %}{{ organization.phone }}{% endif %}
-                {% if organization.phone and organization.email %} • {% endif %}
-                {% if organization.email %}{{ organization.email }}{% endif %}
-            </div>
-            {% endif %}
-            {# Coordonnées bancaires (optionnel) #}
-            {% if organization.bank_account %}
-            <div style="margin-top: 5px;">
-                <strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %} • {% endif %}{% trans "Account" %}: {{ organization.bank_account }}
-            </div>
-            {% endif %}
-            <div class="footer-meta">
-                {% trans "Generated on" %} {% now "d/m/Y à H:i" %}
-            </div>
+        {% if qr_code_base64 %}<div class="qr-code"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="label">{% trans "Verification" %}</div></div>{% endif %}
+        <div class="footer-info">{% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}{% if organization.phone or organization.email %}<div style="margin-top: 5px;">{% if organization.phone %}{{ organization.phone }}{% endif %}{% if organization.phone and organization.email %}  {% endif %}{% if organization.email %}{{ organization.email }}{% endif %}</div>{% endif %}
+            {% if organization.bank_account %}<div style="margin-top: 5px;"><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}{% trans "Account" %}: {{ organization.bank_account }}</div>{% endif %}
+            <div class="footer-meta">{% trans "Generated on" %} {% now "d/m/Y à H:i" %}</div>
         </div>
     </div>
 </body>

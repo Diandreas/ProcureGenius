@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 # Categories that are considered care services
 CARE_CATEGORIES = [
     'Soins Infirmiers',
+    'Soins',
+    'Laboratoire',
     'Consultations',
     'Maternité',
     'Imagerie',
@@ -40,6 +42,8 @@ def get_service_type_from_category(category_name):
     category_to_type = {
         'Consultations': 'consultation',
         'Soins Infirmiers': 'nursing_care',
+        'Soins': 'nursing_care',
+        'Laboratoire': 'laboratory',
         'Imagerie': 'imaging',
         'Explorations': 'imaging',
         'Chirurgie': 'procedure',
