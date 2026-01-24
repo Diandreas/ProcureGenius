@@ -1,0 +1,267 @@
+ACIDE URIQUE | JUL-LAB-000 | service
+ALBUMINE | JUL-LAB-001 | service
+ALBUMINE/SUCRE | JUL-LAB-002 | service
+ASLO | JUL-LAB-044 | service
+Ablation buchons | JUL-SVC-0015 | service
+Ablation d'un frein de langue | JUL-SVC-0034 | service
+Ablation petite lipome | JUL-SVC-0028 | service
+Acide borique - 12mg/18mg par ml - 20 unidoses | JUL-MED-OPH-0052 | physical
+Acide borique - 12mg/18mg par ml - 20 unidoses | JUL-MED-OPH-0062 | physical
+Acide folique - 0,4 mg - 30 comprimés | JUL-MED-SP-0090 | physical
+Acide folique CCD - 30 comprimés | JUL-MED-SF-0123 | physical
+Alcool Modifié 70% - Alcool modifié 70% vol - Bidon 5l | JUL-MED-AE-0098 | physical
+Alcool isopropylique 70% - Alcool | JUL-MED-AE-0138 | physical
+Alginate de sodium (générique Gaviscon) - 24 sachets de 10 ml | JUL-MED-AE-0003 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0055 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0066 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0072 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0076 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0079 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0080 | physical
+Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0081 | physical
+Alginate de sodium - 24 sachets de 10 ml | JUL-MED-MG-0140 | physical
+Alginate de sodium - 24 sachets de 10 ml | JUL-MED-MG-0141 | physical
+Alginate de sodium - 24 sachets de 10 ml | JUL-MED-MG-0142 | physical
+Amoxiciline - 1g - 6 comprimés | JUL-MED-ANT-0065 | physical
+Amoxiciline - 500mg/5 ml | JUL-MED-ANT-0069 | physical
+Amoxiciline - Clamoxyl - 500Mg - 12 gélules | JUL-MED-ANT-0057 | physical
+Attelle plâtrée/Plâtre | JUL-SVC-0035 | service
+BILAN LIPIDIQUE | JUL-LAB-003 | service
+BILIRUBINE DIRECTE | JUL-LAB-004 | service
+BILIRUBINE TOTALE | JUL-LAB-005 | service
+Betadine Alcoolique 5% - Povidone Iodée | JUL-MED-AE-0097 | physical
+Betadine Dermique 10% - Povidone Iodée | JUL-MED-AE-0096 | physical
+Betadine Scrub 4% - Povidone Iodée | JUL-MED-AE-0095 | physical
+Bilan HTA/Diabète | JUL-LAB-077 | service
+Bilan Prénatal | JUL-LAB-078 | service
+Biopsie du sein | JUL-SVC-0032 | service
+Biopsie endométrial | JUL-SVC-0031 | service
+Biopsie prostate | JUL-SVC-0030 | service
+CALCIUM Ca++ (sérum) | JUL-LAB-006 | service
+CALCIUM Ca++ (urines) | JUL-LAB-007 | service
+CHIMIE URINAIRE | JUL-LAB-008 | service
+CHLAMYDIA TRACHOMATIS | JUL-LAB-054 | service
+CHOLESTÉROL HDL | JUL-LAB-010 | service
+CHOLESTÉROL LDL | JUL-LAB-011 | service
+CHOLESTÉROL TOTAL | JUL-LAB-009 | service
+COPROCULTURE | JUL-LAB-063 | service
+CRP (C Reactive Protein) | JUL-LAB-014 | service
+CRÉATININE (sérum) | JUL-LAB-012 | service
+CRÉATININE (urines) | JUL-LAB-013 | service
+Carbosylane - 45 mg - 140mg / 48 doses | JUL-MED-ANT-0011 | physical
+Charlottes | JUL-MED-MG-0026 | physical
+Chlorhexidine - Chlorhexidine en bidon de 2l | JUL-MED-AE-0113 | physical
+Chlorhexidine incolore 2% - Chlorhexidine incolore 2% 500ml | JUL-MED-AE-0111 | physical
+Circonsition 0 à 2 ans | JUL-SVC-0027 | service
+Circonsition 3 ans et + | JUL-SVC-0037 | service
+Compresses - 10 sachets de 2 compresses | JUL-MED-AE-0120 | physical
+Compresses de Gaze stériles - 10 cm x 10 cm _ 50 sachets | JUL-MED-MG-0083 | physical
+Compresses de Gaze stériles - 10 cm x 10 cm _ 50 sachets | JUL-MED-MG-0088 | physical
+Compresses de Gaze stériles - 17 fils, 8 plis - 10 cm x 10 cm _ 10 sachets | JUL-MED-MG-0087 | physical
+Compresses de Gaze stériles - 17 fils, 8 plis - 10 cm x 10 cm _ 46 sachets | JUL-MED-MG-0086 | physical
+Compresses de Gaze stériles - 17 fils, 8 plis - 10 cm x 10 cm _ 50 sachets | JUL-MED-MG-0085 | physical
+Coveram - 90 comprimés 5mg / 10 mg | JUL-MED-ANT-0139 | physical
+Dafalgan - 1g - 8 comprimés | JUL-MED-AE-0002 | physical
+Dafalgan codéine - 500 mg/30 mg- 16 comprimés pélliculés | JUL-MED-AE-0043 | physical
+Dakin - Antiseptique | JUL-MED-MG-0094 | physical
+Diclofénac - Gel en flacon pressurisé | JUL-MED-MG-0050 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0004 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0005 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0007 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0009 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0021 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0064 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0074 | physical
+Doliprane - 1000 mg - 8 comprimés | JUL-MED-AE-0075 | physical
+Doliprane - 200 mg - 12 sachets-dose poudre | JUL-MED-AE-0034 | physical
+Doliprane - 300 mg - 12 sachets-dose poudre | JUL-MED-AE-0031 | physical
+Doliprane - 300 mg - 12 sachets-dose poudre | JUL-MED-AE-0039 | physical
+Doliprane - 300 mg - 12 sachets-dose poudre | JUL-MED-AE-0040 | physical
+Doliprane - 8 comprimés | JUL-MED-AE-0126 | physical
+Doliprane - 8 comprimés | JUL-MED-AE-0127 | physical
+Doliprane - 8 comprimés | JUL-MED-AE-0128 | physical
+Doliprane - 8 comprimés | JUL-MED-AE-0129 | physical
+Doliprane - 8 comprimés | JUL-MED-AE-0130 | physical
+Doliprane - Flacon de 100 ml | JUL-MED-AE-0001 | physical
+Doliprane - Flacon de 100 ml | JUL-MED-AE-0030 | physical
+Doliprane - Flacon de 100 ml | JUL-MED-AE-0032 | physical
+Doliprane - Flacon de 100 ml | JUL-MED-AE-0116 | physical
+Drap d'examen blanc 50cmx50m plastifiée - Drap d'examen | JUL-MED-AE-0110 | physical
+Drap pour lit | JUL-SVC-0005 | service
+ECBU (Examen Cytobact. Urines) | JUL-LAB-061 | service
+ECBU (Examen Cytobact. général) | JUL-LAB-055 | service
+EXAMEN CYTOBACT. Cervico-vaginal | JUL-LAB-058 | service
+EXAMEN CYTOBACT. Frottis gorge | JUL-LAB-056 | service
+EXAMEN CYTOBACT. Liquide ponction | JUL-LAB-057 | service
+EXAMEN CYTOBACT. Nez | JUL-LAB-060 | service
+EXAMEN CYTOBACT. Pus | JUL-LAB-059 | service
+EXAMEN CYTOBACT. Urétral | JUL-LAB-062 | service
+Eau oxygénée - Stabilisée 10 volumes | JUL-MED-MG-0093 | physical
+Econazole 1% - Flacon de 30g | JUL-MED-ANT-0125 | physical
+Esoméprazole - 20 mg - 28 gélules gastrorésistantes | JUL-MED-ID-0042 | physical
+Extraction corsp étranger | JUL-SVC-0024 | service
+FACTEUR RHUMATOÏDE | JUL-LAB-049 | service
+FER SÉRIQUE | JUL-LAB-027 | service
+FSH | JUL-LAB-075 | service
+Forfait VIP deux lits | JUL-SVC-0007 | service
+Forfait concentrateur / Heure | JUL-SVC-0009 | service
+Forfait simple deux lits | JUL-SVC-0006 | service
+Frais churigicaux | JUL-SVC-0025 | service
+G6PDH (G6PD) | JUL-LAB-028 | service
+GAMMA GT (GGTS) | JUL-LAB-029 | service
+GLYCÉMIE POST PRANDIALE | JUL-LAB-032 | service
+GLYCÉMIE À JEUN | JUL-LAB-031 | service
+GROUPE SANGUIN (ABO-RH) | JUL-LAB-039 | service
+Gaviscon - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0037 | physical
+Gaviscon - 500mg/267 mg 24 - sachets de 10 ml | JUL-MED-AE-0054 | physical
+Grande cheloïdectomie | JUL-SVC-0019 | service
+Gynositol Plus - Myo-inositol Vitamine B9 - Boîte de 30 sachets | JUL-MED-GYN-0092 | physical
+H Pylori | JUL-LAB-080 | service
+HCG GROSSESSE | JUL-LAB-033 | service
+HERPES (IgG, IgM) | JUL-LAB-048 | service
+HbA1C (Hémoglobine glyquée) | JUL-LAB-066 | service
+Helicidine - 250 ml | JUL-MED-ANT-0121 | physical
+HÉPATITE A (IgM) | JUL-LAB-045 | service
+HÉPATITE B (Ag HBS) | JUL-LAB-046 | service
+HÉPATITE C (Ac Anti-HCV) | JUL-LAB-047 | service
+IONOGRAMME COMPLET (sérum) | JUL-LAB-015 | service
+IONOGRAMME COMPLET (urines) | JUL-LAB-016 | service
+IONOGRAMME SIMPLE | JUL-LAB-017 | service
+Incision + drainage Abcès | JUL-SVC-0026 | service
+Incision d'Abcès complexe | JUL-SVC-0036 | service
+Incision d'Abcès simple | JUL-SVC-0039 | service
+Incision et drainage panaris | JUL-SVC-0014 | service
+Infiltration corticoïdes | JUL-SVC-0016 | service
+Infirmier | JUL-SVC-0001 | service
+Injection simple | JUL-SVC-0029 | service
+Kit de prélèvement | JUL-SVC-0043 | service
+Kit prélèvement nasal | JUL-MED-MG-0025 | physical
+Kystectomie/Lipomectomie S-C | JUL-SVC-0017 | service
+LH | JUL-LAB-076 | service
+Lactulose 10g/15ml - 20 sachets | JUL-MED-MG-0006 | physical
+Lactulose 10g/15ml - 20 sachets | JUL-MED-MG-0008 | physical
+Lactulose 10g/15ml - 20 sachets | JUL-MED-MG-0012 | physical
+Laroxyl 40 mg/ml - Solution buvable | JUL-MED-MG-0017 | physical
+Lavage des oreilles | JUL-SVC-0033 | service
+Lavage nasal | JUL-SVC-0041 | service
+Lavage plaies | JUL-SVC-0040 | service
+Lavage yeux | JUL-SVC-0042 | service
+Levothyrox - 90 comprimés sécables | JUL-MED-MG-0049 | physical
+Locoïd 0,1% - Crème | JUL-MED-COR-0044 | physical
+Locoïd 0,1% - Crème | JUL-MED-COR-0082 | physical
+Lopéramide - 2mg - 20 comprimés | JUL-MED-ANT-0061 | physical
+MAGNÉSIUM Mg++ (sérum) | JUL-LAB-018 | service
+MAGNÉSIUM Mg++ (urines) | JUL-LAB-019 | service
+Macrogol 4000 - 20 sachets | JUL-MED-LAX-0118 | physical
+Macrogol 4000 - 24 sachets de 4g | JUL-MED-LAX-0035 | physical
+Masque Blanc KN95 FFP2 - Lot de 5 | JUL-MED-MG-0023 | physical
+Masque Bleu - Masque | JUL-MED-MG-0022 | physical
+Meteospasmyl - 20 capsules | JUL-MED-ANT-0010 | physical
+Mini-ciseaux | JUL-MED-MG-0024 | physical
+Mono sept - 30 unidoses de 0,4 ml | JUL-MED-OPH-0063 | physical
+Mycoplasme | JUL-LAB-081 | service
+Médecin général | JUL-SVC-0002 | service
+NFS (Numération Formule) | JUL-LAB-040 | service
+Nebulisation | JUL-SVC-0012 | service
+Nicopatch - 28 dispositifs de 21mg/24 | JUL-MED-MG-0014 | physical
+Nicopatch - 28 dispositifs de 21mg/24 | JUL-MED-MG-0016 | physical
+Observation (MEO) - Soins | JUL-SVC-0008 | service
+Ongle incarné | JUL-SVC-0013 | service
+PAL (Phosphatase Alcaline) | JUL-LAB-030 | service
+PALUDISME + Quantification | JUL-LAB-041 | service
+PHOSPHORE Ph (sérum) | JUL-LAB-020 | service
+PHOSPHORE Ph (urines) | JUL-LAB-021 | service
+POTASSIUM K+ (sérum) | JUL-LAB-022 | service
+POTASSIUM K+ (urines) | JUL-LAB-023 | service
+PROGESTÉRONE | JUL-LAB-073 | service
+PROTÉINES | JUL-LAB-034 | service
+PSA | JUL-LAB-068 | service
+PUS + ATB | JUL-LAB-079 | service
+Pansement complexe | JUL-SVC-0038 | service
+Pansement simple | JUL-SVC-0020 | service
+Paracetamol codéiné - 500 mg/30mg - 16 comprimés | JUL-MED-AE-0013 | physical
+Paracetamol codéiné - 500 mg/30mg - 16 comprimés | JUL-MED-AE-0015 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0048 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0053 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0056 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0058 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0059 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0060 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0067 | physical
+Paracétamol - 1 g - 8 comprimés | JUL-MED-AE-0073 | physical
+Paracétamol - 1000 mg - 8 comprimés | JUL-MED-AE-0038 | physical
+Paracétamol - 500 mg - 16 comprimés | JUL-MED-AE-0033 | physical
+Paracétamol - 500 mg - 16 comprimés | JUL-MED-AE-0036 | physical
+Paracétamol - 500 mg - 16 comprimés | JUL-MED-AE-0045 | physical
+Paracétamol - 500 mg - 16 comprimés | JUL-MED-AE-0046 | physical
+Paracétamol/codéine - 500 mg/30 mg - 16 comprimés | JUL-MED-AE-0084 | physical
+Perfuseur | JUL-MED-MG-0029 | physical
+Perfuseur 1 voie Luer Lock Gravity - Perfuseur | JUL-MED-AE-0137 | physical
+Petite cheloïdectomie | JUL-SVC-0018 | service
+Pilules contraceptives - 84 comprimés | JUL-MED-MG-0124 | physical
+Poche à urine 1,5L stérile + Tube 90cm - Poche à urine Adulte | JUL-MED-AE-0109 | physical
+Poche à urine pédiatrique - Poche à urine Enfants | JUL-MED-AE-0112 | physical
+Ponction d'ascite | JUL-SVC-0011 | service
+Ponction pleural | JUL-SVC-0010 | service
+Pose de cathéter | JUL-SVC-0003 | service
+Pose de sonde urinaire | JUL-SVC-0004 | service
+Pot de prélèvement selles - Pot de prélèvement selles | JUL-MED-AE-0115 | physical
+Pot de prélèvement urinaire - Pot de prélèvement urinaire | JUL-MED-AE-0114 | physical
+Ruban périmètrique - Ruban périmètrique | JUL-MED-AE-0134 | physical
+Ruban périmètrique IMC - Ruban périmètrique IMC | JUL-MED-AE-0135 | physical
+RÉTICULOCYTES | JUL-LAB-042 | service
+SELLES : KAOP | JUL-LAB-067 | service
+SODIUM Na+ | JUL-LAB-024 | service
+SPERMOCULTURE | JUL-LAB-064 | service
+SPERMOGRAMME | JUL-LAB-065 | service
+SYPHILIS (TPHA - VDRL) | JUL-LAB-050 | service
+Sonde de Foley Latex a Ballonnet longueur 27 mm-CH10 - Sonde | JUL-MED-AE-0099 | physical
+Sonde de Foley Latex a Ballonnet longueur 270 cm-CH06 3ML - Sonde | JUL-MED-AE-0107 | physical
+Sonde de Foley Latex a Ballonnet longueur 270 cm-CH08 3-5ML - Sonde | JUL-MED-AE-0108 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH12 - Sonde | JUL-MED-AE-0100 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH14 - Sonde | JUL-MED-AE-0101 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH16 - Sonde | JUL-MED-AE-0102 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH18 - Sonde | JUL-MED-AE-0103 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH20 - Sonde | JUL-MED-AE-0104 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH22 - Sonde | JUL-MED-AE-0105 | physical
+Sonde de Foley Latex a Ballonnet longueur 40 cm-CH24 - Sonde | JUL-MED-AE-0106 | physical
+Spafon - 80mg - 10 comprimés | JUL-MED-AE-0020 | physical
+Spafon - 80mg - 10 comprimés | JUL-MED-AE-0041 | physical
+Spafon - 80mg - 30 comprimés | JUL-MED-AE-0019 | physical
+Spafon - 80mg - 30 comprimés | JUL-MED-AE-0089 | physical
+Sparadrap chirurgical 2,5 cm x 9,14 m - 1 rouleau avec dévidoir | JUL-MED-AE-0132 | physical
+Sparadrap chirurgical 2,5 cm x 9,14 m - 12 rouleuax sans dévidoir | JUL-MED-AE-0133 | physical
+Spasfon - 30 comprimés | JUL-MED-MG-0131 | physical
+Suture +5 points/trois plans | JUL-SVC-0021 | service
+Suture 1 à 3 points/un plan | JUL-SVC-0022 | service
+Suture 3 à 5 points/deux plans | JUL-SVC-0023 | service
+Syladrape - 38 x 45 cm | JUL-MED-MG-0027 | physical
+Séringue | JUL-MED-MG-0028 | physical
+Sérum Physiologique - Soins divers | JUL-MED-MG-0091 | physical
+Sérum physiologique - Bouteille de 1 litre | JUL-MED-AE-0136 | physical
+T3 | JUL-LAB-070 | service
+T4 | JUL-LAB-071 | service
+TAUX PROTHROMBINE (TP) | JUL-LAB-043 | service
+TEST DE GROSSESSE | JUL-LAB-051 | service
+TESTOSTÉRONE | JUL-LAB-074 | service
+TOXOPLASMOSE | JUL-LAB-053 | service
+TRANSAMINASES (SGOT/SGPT) | JUL-LAB-035 | service
+TRIGLYCÉRIDES | JUL-LAB-036 | service
+TSH | JUL-LAB-069 | service
+Tardyferon - 50 mg - 30 comprimés pelliculés | JUL-MED-SF-0070 | physical
+Tardyferon - 50 mg - 30 comprimés pelliculés | JUL-MED-SF-0071 | physical
+Tardyferon - 50 mg - 30 comprimés pelliculés | JUL-MED-SF-0078 | physical
+Tardyferon - 80 mg - 30 comprimés pelliculés | JUL-MED-SF-0077 | physical
+Tardyferon 80mg - 90 comprimés | JUL-MED-SF-0122 | physical
+Tixocortol - Suspension nasal 1% | JUL-MED-DN-0018 | physical
+Tixocortol - Suspension nasal 1% | JUL-MED-DN-0047 | physical
+Tixocortol - Suspension nasal 1% | JUL-MED-DN-0051 | physical
+Tixocortol - Suspension nasal 1% | JUL-MED-DN-0068 | physical
+URÉE | JUL-LAB-037 | service
+Urgo Compresses stériles - 50 sachets de 2 compresses | JUL-MED-AE-0119 | physical
+VIH 1 & VIH 2 | JUL-LAB-052 | service
+VITESSE DE SÉDIMENTATION | JUL-LAB-038 | service
+ÉLECTROPHORÈSE HÉMOGLOBINE | JUL-LAB-025 | service
+ÉLECTROPHORÈSE PROTÉINES | JUL-LAB-026 | service
+Ésoméprazole - 20 mg - 28 gélules gastrorésitantes | JUL-MED-MG-0117 | physical
+ŒSTROGÈNE | JUL-LAB-072 | service

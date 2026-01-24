@@ -185,6 +185,15 @@ const PatientDetail = () => {
                         >
                             Dispensation
                         </Button>
+                        <Button
+                            variant="contained"
+                            color="info"
+                            startIcon={<PrescriptionIcon />}
+                            onClick={() => navigate(`/invoices/new?clientId=${id}`)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Nouvelle Facture
+                        </Button>
                     </Box>
                 </CardContent>
             </Card>

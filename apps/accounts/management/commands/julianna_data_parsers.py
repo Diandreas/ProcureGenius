@@ -58,9 +58,22 @@ class SoinsParser:
                     continue  # Skip services without price
 
                 # Create service entry
+                full_code = code
+                if not full_code or full_code == 'CSJ-':
+                    full_code = f'JUL-SVC-{len(services)+1:04d}'
+                elif not full_code.startswith('JUL-'):
+                    full_code = f'JUL-{full_code}'
+
+                # Prepend typology to name for better searchability (e.g. Consultation - )
+                full_name = denomination
+                if typologie in ['Consultation', 'Hospitalisation', 'Petite chirurgie', 'ORL']:
+                    # Only prepend if not already there
+                    if typologie.lower() not in full_name.lower():
+                        full_name = f"{typologie} - {denomination}"
+
                 service = {
-                    'code': code or f'CSJ-{len(services)+1:03d}',
-                    'name': denomination,
+                    'code': full_code,
+                    'name': full_name,
                     'category': cls.SERVICE_CATEGORIES.get(typologie, 'Autres Services'),
                     'price': price,
                     'personnel_required': personnel,
@@ -75,21 +88,22 @@ class SoinsParser:
     def _parse_price(price_str):
         """Extract numeric price from string like '5 000' or '10 000'"""
         if not price_str:
-            return None
+            return Decimal('0')
 
-        # Remove all non-digit characters except comma/period
-        cleaned = re.sub(r'[^\d,.]', '', price_str)
+        # Remove all whitespace (including non-breaking spaces)
+        cleaned = re.sub(r'\s+', '', price_str)
+        # Remove any other non-digit characters except comma/period
+        cleaned = re.sub(r'[^\d,.]', '', cleaned)
 
         if not cleaned:
-            return None
+            return Decimal('0')
 
         try:
             # Replace comma with nothing (French thousands separator)
             cleaned = cleaned.replace(',', '').replace('.', '')
-            price = Decimal(cleaned)
-            return price if price > 0 else None
+            return Decimal(cleaned)
         except:
-            return None
+            return Decimal('0')
 
 
 class MedicamentParser:
@@ -192,13 +206,24 @@ class MedicamentParser:
                 }
 
                 medications.append(medication)
+        
+        # Disable consolidation to match user's expected count (144)
+        for med in medications:
+            med['batches'] = [{
+                'quantity': med['quantity'],
+                'expiry_date': med['expiry_date'],
+                'manufacturer': med['manufacturer'],
+            }]
+            med['total_stock'] = med['quantity']
 
-        return cls._consolidate_medications(medications)
+        print(f"  ✓ {len(medications)} medications extracted (No consolidation)")
+        return medications
 
     @classmethod
     def _is_non_medication(cls, name):
-        """Check if item is medical equipment, not medication"""
-        return any(non_med.lower() in name.lower() for non_med in cls.NON_MEDICATION_ITEMS)
+        """Check if item is medical equipment (not used by default now to keep all 145)"""
+        # User wants all 145 items, so we'll treat equipment as 'supplies' category
+        return False
 
     @staticmethod
     def _parse_quantity(qty_str):
@@ -214,7 +239,7 @@ class MedicamentParser:
     @classmethod
     def _parse_expiration_date(cls, date_str):
         """Parse expiration date from format like 'janv-27', 'déc-26'"""
-        if not date_str or date_str == 'N/A':
+        if not date_str or date_str == 'N/A' or '-' not in date_str:
             return None
 
         # Match pattern: "janv-27" or "déc-26"
@@ -227,7 +252,13 @@ class MedicamentParser:
 
         month = cls.MONTH_MAP.get(month_str)
         if not month:
-            return None
+            # Try to match by first 3 letters if not found
+            for m_key, m_val in cls.MONTH_MAP.items():
+                if month_str.startswith(m_key[:3]):
+                    month = m_val
+                    break
+            if not month:
+                return None
 
         # Convert 2-digit year to 4-digit (26 → 2026)
         year = 2000 + int(year_str)
@@ -240,7 +271,7 @@ class MedicamentParser:
 
         last_day = next_month - timedelta(days=1)
 
-        return last_day.date()
+        return last_day.date().isoformat()
 
     @classmethod
     def _consolidate_medications(cls, medications):
@@ -250,31 +281,28 @@ class MedicamentParser:
         med_dict = defaultdict(list)
 
         for med in medications:
-            key = (med['base_name'], med['unit'])
+            # Use (base_name, unit, expiry_date) to group batches properly but keep all records
+            key = (med['base_name'], med['unit'], med['expiry_date'])
             med_dict[key].append(med)
 
         consolidated = []
 
-        for (base_name, unit), meds in med_dict.items():
+        for (base_name, unit, expiry_date), meds in med_dict.items():
             # Use first entry as template
             template = meds[0]
 
-            # Collect all batches with expiration dates
+            # Collect all batches
             batches = []
             total_quantity = 0
 
             for med in meds:
-                if med['expiry_date']:
-                    batch = {
-                        'quantity': med['quantity'],
-                        'expiry_date': med['expiry_date'],
-                        'manufacturer': med['manufacturer'],
-                    }
-                    batches.append(batch)
-                    total_quantity += med['quantity']
-
-            # Sort batches by expiration date (earliest first)
-            batches.sort(key=lambda x: x['expiry_date'])
+                batch = {
+                    'quantity': med['quantity'],
+                    'expiry_date': med['expiry_date'],
+                    'manufacturer': med['manufacturer'],
+                }
+                batches.append(batch)
+                total_quantity += med['quantity']
 
             consolidated_med = {
                 'name': template['name'],
@@ -357,25 +385,34 @@ class LabTestsParser(HTMLParser):
         if len(self.current_table) < 2:
             return
 
-        # First row is header
+        # First row is header (check for common keywords)
         headers = self.current_table[0]
-
-        # Check if this is an analysis table
-        if 'Analyses' not in headers and 'analyses' not in ' '.join(headers).lower():
+        headers_text = ' '.join(headers).lower()
+        if not any(kw in headers_text for kw in ['analyses', 'bilans', 'prélèvement']):
             return
 
         # Process data rows
         for row in self.current_table[1:]:
-            if len(row) < 5:
+            # Rows must have at least Analysis and Price (usually 5-6 columns)
+            if len(row) < 2:
                 continue
 
             # Extract test information
-            test_name = row[0] if len(row) > 0 else ''
+            test_name = row[0]
+            # Try to find price in various columns depending on table structure
+            prix_str = None
+            for cell in reversed(row):
+                if re.search(r'\d', cell) and 'FCFA' not in cell:
+                    prix_str = cell
+                    break
+            if not prix_str and 'devis' not in row[-1].lower():
+                continue
+
+            # Additional fields if available
             prelevement = row[1] if len(row) > 1 else ''
             exigences = row[2] if len(row) > 2 else ''
             conservation = row[3] if len(row) > 3 else ''
             tube = row[4] if len(row) > 4 else ''
-            prix_str = row[5] if len(row) > 5 else ''
 
             # Skip header rows and empty rows
             if not test_name or 'Analyses' in test_name:
@@ -388,10 +425,13 @@ class LabTestsParser(HTMLParser):
             else:
                 name = test_name
 
-            # Clean price
-            price = self._parse_price(prix_str)
+            # Clean price (handle 'Sur devis' -> 0)
+            if 'devis' in str(prix_str).lower():
+                price = Decimal('0')
+            else:
+                price = self._parse_price(prix_str)
 
-            if not price:
+            if price is None:
                 continue
 
             # Determine category

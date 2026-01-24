@@ -200,24 +200,25 @@ def enrich_medication_data(parsed_medications):
     """
     enriched = []
 
-    for med in parsed_medications:
-        base_name = med['base_name']
+    for i, med in enumerate(parsed_medications, 1):
+        base_name = med.get('base_name')
+        unit = med.get('unit')
+        category = med.get('category', 'Médicaments Généraux')
 
         # Calculate costs and prices
         cost_price = get_medication_cost(base_name)
-        selling_price = get_selling_price(cost_price, med['category'])
+        selling_price = get_selling_price(cost_price, category)
 
         # Determine stock levels
         stock_info = get_stock_levels(base_name)
 
         # Generate product reference code
-        # Format: MED-{CATEGORY_ABBREV}-{HASH}
-        category_abbrev = ''.join([word[0].upper() for word in med['category'].split()[:2]])
+        # Format: JUL-MED-{CATEGORY_ABBREV}-{SEQ}
+        category_abbrev = ''.join([word[0].upper() for word in category.split()[:2]])
         if len(category_abbrev) < 2:
-            category_abbrev = med['category'][:3].upper()
+            category_abbrev = category[:3].upper()
 
-        reference_suffix = str(hash(base_name) % 10000).zfill(4)
-        reference = f"MED-{category_abbrev}-{reference_suffix}"
+        reference = f"JUL-MED-{category_abbrev}-{i:04d}"
 
         # Enrich batches with quantities
         if med['batches']:
@@ -261,78 +262,7 @@ def enrich_medication_data(parsed_medications):
 
 
 # Medical supplies that should be tracked as products (not medications)
-MEDICAL_SUPPLIES = [
-    {
-        'reference': 'SUP-COMP-001',
-        'name': 'Compresses de Gaze stériles 10x10cm',
-        'category': 'Matériel Médical',
-        'cost_price': 50,
-        'selling_price': 75,
-        'initial_stock': 500,
-        'min_stock_threshold': 100,
-        'unit': 'Sachet de 2 compresses',
-    },
-    {
-        'reference': 'SUP-SPAR-001',
-        'name': 'Sparadrap chirurgical 2.5cm x 9.14m',
-        'category': 'Matériel Médical',
-        'cost_price': 300,
-        'selling_price': 450,
-        'initial_stock': 50,
-        'min_stock_threshold': 10,
-        'unit': 'Rouleau',
-    },
-    {
-        'reference': 'SUP-SERA-001',
-        'name': 'Sérum Physiologique 1L',
-        'category': 'Solutions',
-        'cost_price': 500,
-        'selling_price': 700,
-        'initial_stock': 100,
-        'min_stock_threshold': 20,
-        'unit': 'Bouteille 1L',
-    },
-    {
-        'reference': 'SUP-PERF-001',
-        'name': 'Perfuseur 1 voie Luer Lock',
-        'category': 'Matériel Médical',
-        'cost_price': 200,
-        'selling_price': 300,
-        'initial_stock': 100,
-        'min_stock_threshold': 20,
-        'unit': 'Unité',
-    },
-    {
-        'reference': 'SUP-SONDE-001',
-        'name': 'Sonde de Foley Latex CH14',
-        'category': 'Matériel Médical',
-        'cost_price': 1500,
-        'selling_price': 2200,
-        'initial_stock': 30,
-        'min_stock_threshold': 5,
-        'unit': 'Unité',
-    },
-    {
-        'reference': 'SUP-POCHE-001',
-        'name': 'Poche à urine 1.5L stérile avec tube',
-        'category': 'Matériel Médical',
-        'cost_price': 500,
-        'selling_price': 750,
-        'initial_stock': 50,
-        'min_stock_threshold': 10,
-        'unit': 'Unité',
-    },
-    {
-        'reference': 'SUP-DRAP-001',
-        'name': 'Drap d\'examen blanc 50cm x 50m',
-        'category': 'Consommables',
-        'cost_price': 3000,
-        'selling_price': 4000,
-        'initial_stock': 10,
-        'min_stock_threshold': 2,
-        'unit': 'Rouleau',
-    },
-]
+MEDICAL_SUPPLIES = []
 
 
 def load_all_medications(parsed_data):

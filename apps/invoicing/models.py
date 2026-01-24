@@ -184,6 +184,7 @@ class Product(models.Model):
     )
 
     # Métadonnées
+    metadata = models.JSONField(default=dict, blank=True, null=True, verbose_name="Métadonnées")
     is_active = models.BooleanField(default=True, verbose_name="Actif")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

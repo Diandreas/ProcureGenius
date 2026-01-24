@@ -56,10 +56,15 @@ class Command(BaseCommand):
             action='store_true',
             help='Delete all existing JULIANNA data before creating new data',
         )
+        parser.add_argument(
+            '--with-simulations',
+            action='store_true',
+            help='Include simulated clinical scenarios (default is production only)',
+        )
 
     def handle(self, *args, **options):
         self.stdout.write('=' * 80)
-        self.stdout.write(self.style.SUCCESS('  CREATION DES DONNÉES DE PRODUCTION - CENTRE DE SANTÉ JULIANNA'))
+        self.stdout.write(self.style.SUCCESS('  INITIALISATION DU COMPTE PRODUCTION - CENTRE DE SANTÉ JULIANNA'))
         self.stdout.write('=' * 80)
         self.stdout.write('')
 
@@ -83,21 +88,26 @@ class Command(BaseCommand):
                 self._create_medical_services()
                 self._create_medications()
 
-                # Phase 3: Create patients and scenarios
-                self._create_patients()
-                self._simulate_clinical_scenarios()
+                # Phase 3: Create patients and scenarios (OPTIONAL)
+                if options['with_simulations']:
+                    self._create_patients()
+                    self._simulate_clinical_scenarios()
+                else:
+                    self.stdout.write('[PRODUCTION] Mode production pure - Skipping simulations.')
 
                 # Phase 4: Validate
                 self._validate_data_integrity()
 
                 self.stdout.write('')
                 self.stdout.write('=' * 80)
-                self.stdout.write(self.style.SUCCESS('  CRÉATION TERMINÉE AVEC SUCCÈS'))
+                self.stdout.write(self.style.SUCCESS('  MISE EN PRODUCTION TERMINÉE avec succès'))
                 self.stdout.write('=' * 80)
                 self._print_statistics()
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'\nERREUR: {str(e)}'))
+            import traceback
+            traceback.print_exc()
             raise CommandError(f'Failed to create production data: {str(e)}')
 
     # ========================================================================
@@ -212,7 +222,7 @@ class Command(BaseCommand):
         OrganizationSettings.objects.create(
             organization=self.organization,
             default_currency='XAF',
-            auto_generate_lab_kits=True,
+            auto_generate_lab_kits=False,
             default_tax_rate=Decimal('15.000'),
             company_name='Centre de Santé JULIANNA',
             company_address='Makepe, Douala, Cameroun',
@@ -258,7 +268,6 @@ class Command(BaseCommand):
                 'first_name': 'Paul',
                 'last_name': 'EBODE',
                 'role': 'doctor',
-                'title': 'Dr.',
             },
             {
                 'username': 'julianna_lab',
@@ -303,9 +312,14 @@ class Command(BaseCommand):
 
         categories_to_create = [
             ('medications', 'Médicaments', 'Médicaments et produits pharmaceutiques'),
-            ('services', 'Services Médicaux', 'Consultations et services médicaux'),
+            ('consultations', 'Consultations', 'Consultations médicales'),
+            ('nursing', 'Soins Infirmiers', 'Actes et soins infirmiers'),
+            ('laboratory', 'Laboratoire', 'Analyses et examens de laboratoire'),
+            ('imaging', 'Imagerie', 'Services d\'imagerie médicale'),
+            ('procedures', 'Actes Médicaux', 'Petite chirurgie et actes divers'),
             ('supplies', 'Matériel Médical', 'Matériel et fournitures médicales'),
             ('lab_consumables', 'Consommables Laboratoire', 'Kits et consommables de laboratoire'),
+            ('services', 'Autres Services', 'Services divers'),
         ]
 
         for slug, name, description in categories_to_create:
@@ -375,58 +389,47 @@ class Command(BaseCommand):
             'Électrophorèses': 'electrophoresis',
         }
 
-        # Create tests from LAB_TEST_REFERENCES
-        for test_key, ref_data in LAB_TEST_REFERENCES.items():
-            category_name = ref_data.get('category', 'Biochimie Générale')
+        # Create tests from source data (82 items)
+        for source_test in self.source_data['lab_tests']:
+            test_name = source_test['name']
+            
+            # Find matching reference data if available
+            ref_data = {}
+            for key, ref in LAB_TEST_REFERENCES.items():
+                if key.replace('_', ' ').lower() in test_name.lower() or \
+                   test_name.lower() in key.replace('_', ' ').lower():
+                    ref_data = ref
+                    break
+            
+            # Determine category
+            category_name = source_test.get('category', 'Biochimie Générale')
+            if not category_name or category_name == 'Analyses':
+                category_name = ref_data.get('category', 'Biochimie Générale')
+            
             category_slug = category_map.get(category_name, 'biochemistry')
-            category = self.lab_categories.get(category_slug)
-
-            if not category:
-                continue
+            category = self.lab_categories.get(category_slug, self.lab_categories['biochemistry'])
 
             # Generate test code
-            test_code = ref_data.get('test_code', f'TEST-{test_count:03d}')
+            test_code = source_test.get('code')
+            if not test_code or not test_code.startswith('JUL-'):
+                if 'code' in ref_data:
+                     test_code = ref_data['code']
+                else:
+                     test_code = f'JUL-LAB-{test_count:03d}'
+            
+            if not test_code.startswith('JUL-'):
+                test_code = f'JUL-{test_code}'
 
-            # Map sample type
-            sample_type_map = {
-                'blood': 'blood',
-                'urine': 'urine',
-                'stool': 'stool',
-                'swab': 'swab',
-                'semen': 'semen',
-            }
-            sample_type = sample_type_map.get(ref_data.get('sample_type', 'blood'), 'blood')
-
-            # Map container type
-            container_map = {
-                'serum': 'serum',
-                'edta': 'edta',
-                'heparin': 'heparin',
-                'citrate': 'citrate',
-                'fluoride': 'fluoride',
-                'urine_cup': 'urine_cup',
-                'stool_cup': 'stool_cup',
-                'swab_kit': 'swab_kit',
-            }
-            container_type = container_map.get(ref_data.get('container_type', 'serum'), 'serum')
-
-            # Get price from source data or default
-            price = Decimal('5000')  # Default price
-            for source_test in self.source_data['lab_tests']:
-                if test_key.replace('_', ' ').lower() in source_test['name'].lower():
-                    price = source_test['price']
-                    break
-
-            # Create LabTest
+            # Create LabTest (Service)
             lab_test = LabTest.objects.create(
                 organization=self.organization,
                 test_code=test_code,
-                name=ref_data['name'],
-                short_name=test_key[:20],
+                name=test_name,
+                short_name=test_name[:20],
                 category=category,
-                price=price,
-                sample_type=sample_type,
-                container_type=container_type,
+                price=source_test['price'],
+                sample_type=ref_data.get('sample_type', 'blood'),
+                container_type=ref_data.get('container_type', 'serum'),
                 fasting_required=ref_data.get('fasting_required', False),
                 fasting_hours=ref_data.get('fasting_hours', 0),
                 normal_range_male=ref_data.get('normal_range_male', ''),
@@ -439,10 +442,24 @@ class Command(BaseCommand):
                 estimated_turnaround_hours=24,
             )
 
-            self.lab_tests[test_key] = lab_test
+            # Create corresponding Service Product
+            Product.objects.create(
+                organization=self.organization,
+                name=test_name,
+                reference=test_code,
+                product_type='service',
+                category=self.categories['laboratory'], # Assign to Laboratory category
+                price=source_test['price'],
+                cost_price=0,
+                stock_quantity=0,
+                low_stock_threshold=0,
+                is_active=True,
+            )
+
+            self.lab_tests[test_name] = lab_test
             test_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {test_count} tests créés avec valeurs de référence complètes\n'))
+        self.stdout.write(self.style.SUCCESS(f'  ✓ {test_count} tests de laboratoire créés (Services)\n'))
 
     # ========================================================================
     # CREATE MEDICAL SERVICES
@@ -454,12 +471,29 @@ class Command(BaseCommand):
 
         service_count = 0
         for service in self.source_data['services']:
+            # Determine category based on name keywords
+            name_lower = service['name'].lower()
+            category_key = 'services' # Default
+
+            if 'consultation' in name_lower:
+                category_key = 'consultations'
+            elif any(x in name_lower for x in ['pansement', 'injection', 'perfusion', 'sondage', 'lavement', 'ablation']):
+                category_key = 'nursing'
+            elif any(x in name_lower for x in ['échographie', 'radio']):
+                category_key = 'imaging'
+            elif any(x in name_lower for x in ['suture', 'incision', 'circoncision', 'accouchement', 'extraction']):
+                category_key = 'procedures'
+            
+            # Fallback for known specific items
+            if 'accouchement' in name_lower:
+                category_key = 'procedures'
+
             Product.objects.create(
                 organization=self.organization,
                 name=service['name'],
-                reference=service['code'] or f'SVC-{service_count:03d}',
+                reference=service['code'],
                 product_type='service',
-                category=self.categories['services'],
+                category=self.categories.get(category_key, self.categories['services']),
                 price=service['price'],
                 cost_price=0,
                 stock_quantity=0,
@@ -500,17 +534,19 @@ class Command(BaseCommand):
             # Create initial stock movement
             StockMovement.objects.create(
                 product=medication,
-                movement_type='purchase',
+                movement_type='initial',
                 quantity=med['initial_stock'],
-                reference_type='initial_stock',
-                notes='Stock initial',
+                quantity_before=0,
+                quantity_after=med['initial_stock'],
+                reference_type='manual',
+                notes='Stock initial (Mise en production)',
             )
 
             med_count += 1
 
         # Create medical supplies
         for supply in self.medications_data['supplies']:
-            Product.objects.create(
+            supply_prod = Product.objects.create(
                 organization=self.organization,
                 name=supply['name'],
                 reference=supply['reference'],
@@ -523,6 +559,17 @@ class Command(BaseCommand):
                 low_stock_threshold=supply['min_stock_threshold'],
                 is_active=True,
             )
+
+            if supply['initial_stock'] > 0:
+                StockMovement.objects.create(
+                    product=supply_prod,
+                    movement_type='initial',
+                    quantity=supply['initial_stock'],
+                    quantity_before=0,
+                    quantity_after=supply['initial_stock'],
+                    reference_type='manual',
+                    notes='Stock initial fournitures (Mise en production)',
+                )
             med_count += 1
 
         self.stdout.write(self.style.SUCCESS(f'  ✓ {med_count} produits pharmaceutiques créés\n'))

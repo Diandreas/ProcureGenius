@@ -156,7 +156,7 @@ function InvoiceForm() {
 
   const fetchProducts = async () => {
     try {
-      const response = await productsAPI.list();
+      const response = await productsAPI.list({ page_size: 1000 });
       setProducts(response.data.results || []);
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.loadProductsError'), { variant: 'error' });
