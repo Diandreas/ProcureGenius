@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import consultationAPI from '../../../services/consultationAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 
 const ConsultationDetail = () => {
     const { t } = useTranslation();
@@ -47,6 +48,26 @@ const ConsultationDetail = () => {
             console.error('Error fetching consultation:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleTimerStart = async (timestamp) => {
+        try {
+            await consultationAPI.updateConsultation(id, { started_at: timestamp });
+            // Refresh data to show updated timer
+            fetchData();
+        } catch (error) {
+            console.error('Error updating start time:', error);
+        }
+    };
+
+    const handleTimerEnd = async (timestamp) => {
+        try {
+            await consultationAPI.updateConsultation(id, { ended_at: timestamp });
+            // Refresh data to show updated timer
+            fetchData();
+        } catch (error) {
+            console.error('Error updating end time:', error);
         }
     };
 
@@ -110,36 +131,6 @@ const ConsultationDetail = () => {
         }
     };
 
-    const handleGenerateInvoice = async () => {
-        try {
-            const response = await consultationAPI.generateInvoice(id);
-            alert(`Facture ${response.invoice_number} créée avec succès!`);
-            // Recharger les données pour afficher la facture
-            fetchData();
-        } catch (error) {
-            console.error('Error generating invoice:', error);
-            const errorMsg = error.response?.data?.error || 'Erreur lors de la génération de la facture';
-            alert(errorMsg);
-        }
-    };
-
-    const handleMarkInvoicePaid = async () => {
-        if (!consultation.consultation_invoice) return;
-        
-        try {
-            const paymentData = {
-                payment_date: new Date().toISOString().split('T')[0],
-                payment_method: 'cash',
-                notes: `Paiement pour consultation ${consultation.consultation_number}`
-            };
-            await invoicesAPI.markPaid(consultation.consultation_invoice.id, paymentData);
-            alert('Facture marquée comme payée');
-            fetchData(); // Refresh to update invoice status
-        } catch (error) {
-            console.error('Error marking invoice as paid:', error);
-            alert('Erreur lors du marquage de la facture');
-        }
-    };
 
     if (loading || !consultation) return <Typography>Chargement...</Typography>;
 
@@ -185,41 +176,6 @@ const ConsultationDetail = () => {
                         </Button>
                     )}
 
-                    {consultation.consultation_invoice ? (
-                        <>
-                            <Button
-                                variant="outlined"
-                                color="success"
-                                startIcon={<InvoiceIcon />}
-                                onClick={() => navigate(`/invoices/${consultation.consultation_invoice.id}`)}
-                                sx={{ mr: 1 }}
-                            >
-                                Voir Facture
-                            </Button>
-                            {consultation.consultation_invoice.status !== 'paid' && (
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    startIcon={<InvoiceIcon />}
-                                    onClick={handleMarkInvoicePaid}
-                                    sx={{ mr: 1 }}
-                                >
-                                    Marquer Payée
-                                </Button>
-                            )}
-                        </>
-                    ) : (
-                        <Button
-                            variant="contained"
-                            color="success"
-                            startIcon={<InvoiceIcon />}
-                            onClick={handleGenerateInvoice}
-                            sx={{ mr: 1 }}
-                        >
-                            Générer Facture
-                        </Button>
-                    )}
-
                     <Button
                         variant="contained"
                         startIcon={<EditIcon />}
@@ -228,6 +184,16 @@ const ConsultationDetail = () => {
                         Modifier / Compléter
                     </Button>
                 </Box>
+            </Box>
+
+            {/* Timer Component */}
+            <Box sx={{ mb: 3 }}>
+                <ConsultationTimer
+                    onStart={handleTimerStart}
+                    onEnd={handleTimerEnd}
+                    initialStartTime={consultation.started_at}
+                    initialEndTime={consultation.ended_at}
+                />
             </Box>
 
             <Grid container spacing={3}>

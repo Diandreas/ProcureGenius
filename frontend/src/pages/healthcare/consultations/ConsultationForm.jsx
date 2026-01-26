@@ -39,6 +39,7 @@ import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
 import patientAPI from '../../../services/patientAPI';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 
 const ConsultationForm = () => {
     const { t } = useTranslation();
@@ -69,6 +70,9 @@ const ConsultationForm = () => {
         weight: '',
         height: '',
         bmi: '',
+        // Timing
+        started_at: null,
+        ended_at: null,
         // Prescription
         medications: [] // { medication, dosage, frequency, duration, instructions }
     });
@@ -85,7 +89,27 @@ const ConsultationForm = () => {
                 pharmacyAPI.getMedications({ page_size: 100 })
             ]);
             setPatients(patData.results || []);
-            setMedications(medData.results || []);
+
+            // Process medications to ensure unique names for Autocomplete options
+            // First, count occurrences of each name
+            const nameCounts = {};
+            medData.results?.forEach(med => {
+                nameCounts[med.name] = (nameCounts[med.name] || 0) + 1;
+            });
+
+            // Then create unique names for duplicates
+            const uniqueMeds = medData.results?.map(med => {
+                if (nameCounts[med.name] > 1) {
+                    // If there are duplicates, append the ID to make it unique
+                    med.uniqueName = `${med.name} (${med.id})`;
+                } else {
+                    // If unique, keep the original name
+                    med.uniqueName = med.name;
+                }
+                return med;
+            }) || [];
+
+            setMedications(uniqueMeds);
         } catch (error) {
             console.error('Error fetching options:', error);
         }
@@ -109,7 +133,9 @@ const ConsultationForm = () => {
                 respiratory_rate: data.respiratory_rate || '',
                 weight: data.weight || '',
                 height: data.height || '',
-                bmi: data.bmi || ''
+                bmi: data.bmi || '',
+                started_at: data.started_at || null,
+                ended_at: data.ended_at || null
             }));
             // Fetch existing prescription if any? (Not implemented in initial scope, handled separately usually)
         } catch (error) {
@@ -122,6 +148,17 @@ const ConsultationForm = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePatientSelect = (event, newPatient) => {
+        setFormData(prev => ({ ...prev, patient: newPatient }));
+
+        // Auto-start timer when patient is selected (only for new consultations)
+        if (newPatient && isNew && !formData.started_at) {
+            const now = new Date().toISOString();
+            setFormData(prev => ({ ...prev, started_at: now }));
+            enqueueSnackbar('⏱️ Timer démarré automatiquement', { variant: 'info' });
+        }
     };
 
     // Prescription helpers
@@ -153,6 +190,14 @@ const ConsultationForm = () => {
         setFormData(prev => ({ ...prev, medications: newMeds }));
     };
 
+    const handleTimerStart = (timestamp) => {
+        setFormData(prev => ({ ...prev, started_at: timestamp }));
+    };
+
+    const handleTimerEnd = (timestamp) => {
+        setFormData(prev => ({ ...prev, ended_at: timestamp }));
+    };
+
     const handleSubmit = async (status = 'in_consultation') => {
         if (!formData.patient && isNew) {
             enqueueSnackbar('Sélectionner un patient', { variant: 'warning' });
@@ -161,12 +206,37 @@ const ConsultationForm = () => {
 
         setLoading(true);
         try {
+            // Clean payload - only send valid model fields
             const payload = {
-                patient_id: formData.patient?.id,
-                status: status, // in_consultation or completed
-                ...formData,
-                medications: undefined // Handled via separate Prescription API
+                patient: formData.patient?.id,
+                chief_complaint: formData.chief_complaint || '',
+                history_of_present_illness: formData.history_of_present_illness || '',
+                physical_examination: formData.physical_examination || '',
+                diagnosis: formData.diagnosis || '',
+                treatment_plan: formData.treatment_plan || '',
+                temperature: formData.temperature || null,
+                heart_rate: formData.heart_rate || null,
+                respiratory_rate: formData.respiratory_rate || null,
+                weight: formData.weight || null,
+                height: formData.height || null,
+                started_at: formData.started_at,
+                ended_at: formData.ended_at
             };
+
+            // Remove null/empty values (but keep started_at and ended_at even if undefined)
+            Object.keys(payload).forEach(key => {
+                // Skip timing fields - let backend handle them
+                if (key === 'started_at' || key === 'ended_at') {
+                    // Keep these fields if they have a value, delete if undefined
+                    if (payload[key] === undefined) {
+                        delete payload[key];
+                    }
+                } else if (payload[key] === null || payload[key] === '') {
+                    delete payload[key];
+                }
+            });
+
+            console.log('Final payload before sending:', payload);
 
             let consultId = id;
             if (isNew) {
@@ -179,6 +249,7 @@ const ConsultationForm = () => {
             // Create Prescription if items exist
             if (formData.medications.length > 0) {
                 const prescriptionPayload = {
+                    patient_id: formData.patient?.id,
                     consultation_id: consultId,
                     items: formData.medications.map(m => ({
                         // External medication: send medication_name only
@@ -190,10 +261,11 @@ const ConsultationForm = () => {
                             medication_id: m.medication?.id,
                             medication_name: m.medication?.name
                         }),
-                        dosage: m.dosage,
-                        frequency: m.frequency,
-                        duration: m.duration,
-                        instructions: m.instructions
+                        dosage: m.dosage || '',
+                        frequency: m.frequency || '',
+                        duration: m.duration || '',
+                        instructions: m.instructions || '',
+                        quantity_prescribed: parseInt(m.quantity) || 1
                     }))
                 };
                 await consultationAPI.createPrescription(prescriptionPayload);
@@ -207,7 +279,13 @@ const ConsultationForm = () => {
             }
         } catch (error) {
             console.error('Error saving:', error);
-            enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            const errorMsg = error.response?.data?.detail ||
+                           error.response?.data?.message ||
+                           JSON.stringify(error.response?.data) ||
+                           'Erreur lors de l\'enregistrement';
+            enqueueSnackbar(errorMsg, { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -257,7 +335,7 @@ const ConsultationForm = () => {
                                     options={patients}
                                     getOptionLabel={(option) => option.name || ''}
                                     value={formData.patient}
-                                    onChange={(e, v) => setFormData(prev => ({ ...prev, patient: v }))}
+                                    onChange={handlePatientSelect}
                                     renderInput={(params) => <TextField {...params} label="Rechercher Patient" />}
                                 />
                             ) : (
@@ -265,6 +343,16 @@ const ConsultationForm = () => {
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Timer Component */}
+                    <Box sx={{ mb: 3 }}>
+                        <ConsultationTimer
+                            onStart={handleTimerStart}
+                            onEnd={handleTimerEnd}
+                            initialStartTime={formData.started_at}
+                            initialEndTime={formData.ended_at}
+                        />
+                    </Box>
 
                     <Card>
                         <CardContent>
@@ -423,7 +511,7 @@ const ConsultationForm = () => {
                                                     ) : (
                                                         <Autocomplete
                                                             options={medications}
-                                                            getOptionLabel={(option) => option.name}
+                                                            getOptionLabel={(option) => option.uniqueName || option.name}
                                                             value={item.medication}
                                                             onChange={(e, v) => handleMedicationChange(index, 'medication', v)}
                                                             renderInput={(params) => <TextField {...params} variant="standard" placeholder="Sélectionner..." />}

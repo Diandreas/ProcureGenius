@@ -27,7 +27,7 @@ const consultationAPI = {
 
     // Create Prescription
     createPrescription: async (data) => {
-        const response = await api.post('/healthcare/consultations/prescriptions/', data);
+        const response = await api.post('/healthcare/consultations/prescriptions/create/', data);
         return response.data;
     },
 

@@ -344,6 +344,14 @@ class LabOrder(models.Model):
         help_text=_("Informations cliniques pertinentes pour le laborantin")
     )
     
+    # Financials (New fields to support analytics)
+    total_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Prix total")
+    )
+    
     # Staff tracking
     ordered_by = models.ForeignKey(
         'accounts.CustomUser',
@@ -475,17 +483,7 @@ class LabOrder(models.Model):
     def __str__(self):
         return f"{self.order_number} - {self.patient.name}"
     
-    @property
-    def total_price(self):
-        """Calculate total price from all test items"""
-        total = Decimal('0.00')
-        for item in self.items.all():
-            try:
-                if item.lab_test:
-                    total += item.lab_test.price
-            except Exception:
-                continue
-        return total
+    # total_price is now a field, property removed
     
     @property
     def tests_count(self):
@@ -609,6 +607,14 @@ class LabOrderItem(models.Model):
         help_text=_("Plage normale pour ce patient")
     )
     
+    # Financials (New field to support analytics)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Prix")
+    )
+    
     # Abnormality flagging
     abnormality_type = models.CharField(
         max_length=20,
@@ -692,10 +698,7 @@ class LabOrderItem(models.Model):
     def __str__(self):
         return f"{self.lab_order.order_number} - {self.lab_test.name}"
     
-    @property
-    def price(self):
-        """Get price from the lab test"""
-        return self.lab_test.price
+    # price is now a field, property removed
     
     def check_abnormal(self):
         """

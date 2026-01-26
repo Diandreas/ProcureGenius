@@ -39,14 +39,7 @@
             text-align: center;
             margin-top: 50px;
             font-size: 20pt;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
         }
 
         .index-meta {
@@ -112,14 +105,7 @@
             display: table-cell;
             font-size: 14pt;
             font-weight: 800;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
         }
 
         .title-right {
@@ -181,14 +167,7 @@
         .cat-row {
             background: #f1f5f9;
             font-weight: 800;
-
-            color: {
-                    {
-                    organization.brand_color|default: "#2563eb"
-                }
-            }
-
-            ;
+            color: {{ organization.brand_color|default:"#2563eb" }};
             font-size: 8.5pt;
         }
 

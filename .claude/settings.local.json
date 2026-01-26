@@ -74,7 +74,14 @@
       "mcp__chrome-devtools__press_key",
       "Bash(grep:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__get_network_request",
+      "mcp__chrome-devtools__fill_form",
+      "mcp__chrome-devtools__evaluate_script",
+      "Bash(curl -s -H \"Authorization: Token 74090cbc21224bfdc40675fd395a73db7e196305\" \"http://localhost:8000/api/v1/analytics/inventory/movements/\")",
+      "Bash(python -m json.tool:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []

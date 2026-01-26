@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import StatCard from '../components/analytics/StatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
+import ActivityIndicatorsCard from '../components/analytics/ActivityIndicatorsCard';
 import healthcareAnalyticsAPI from '../services/healthcareAnalyticsAPI';
 import inventoryAnalyticsAPI from '../services/inventoryAnalyticsAPI';
 import dayjs from 'dayjs';
@@ -197,6 +198,11 @@ const Dashboard = () => {
             </Grid>
           </Grid>
         </Paper>
+
+        {/* Activity Indicators - Detailed tracking */}
+        <Box mb={4}>
+          <ActivityIndicatorsCard dateRange={dateRange} />
+        </Box>
 
         {/* Inventory Module */}
         <Paper

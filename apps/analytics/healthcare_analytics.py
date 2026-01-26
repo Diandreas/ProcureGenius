@@ -5,9 +5,9 @@ Provides detailed analytics for laboratory exams, consultations, and healthcare 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Sum, Avg, Q, Max, Case, When, Value, CharField, IntegerField
+from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from apps.laboratory.models import LabOrder, LabOrderItem
 from apps.consultations.models import Consultation
 from apps.accounts.models import Client
@@ -50,8 +50,7 @@ class ExamStatusByPatientView(APIView):
         # By patient aggregation
         by_patient = queryset.values(
             'patient__id',
-            'patient__first_name',
-            'patient__last_name'
+            'patient__name'
         ).annotate(
             total_exams=Count('id'),
             pending=Count('id', filter=Q(status__in=['pending', 'sample_collected', 'received'])),
@@ -65,7 +64,7 @@ class ExamStatusByPatientView(APIView):
         for p in by_patient:
             patient_data.append({
                 'patient_id': str(p['patient__id']),
-                'patient_name': f"{p['patient__first_name']} {p['patient__last_name']}",
+                'patient_name': p['patient__name'],
                 'total_exams': p['total_exams'],
                 'pending': p['pending'],
                 'analyzing': p['analyzing'],
@@ -409,4 +408,273 @@ class HealthcareDashboardStatsView(APIView):
             'avg_exam_amount': float(avg_amount) if avg_amount else 0,
             'period_start': start_date.isoformat(),
             'period_end': end_date.isoformat()
+        })
+
+
+class ActivityIndicatorsView(APIView):
+    """
+    Get activity indicators for healthcare dashboard
+    Supports period parameter: day, week, month
+    Query params: start_date, end_date, period
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        today = date.today()
+
+        # Get period parameter
+        period = request.GET.get('period', 'month')
+
+        # Calculate date range based on period
+        if period == 'day':
+            start_date = today
+            end_date = today
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+            end_date = today
+        else:  # month
+            start_date = today - timedelta(days=30)
+            end_date = today
+
+        # Allow custom date range override
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # Import PatientVisit for new patient counting
+        from apps.patients.models import PatientVisit
+        from apps.accounts.models import Client
+
+        # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
+
+        # N°1: Nombre de consultations par période
+        consultations_queryset = Consultation.objects.filter(
+            organization=organization,
+            consultation_date__date__gte=start_date,
+            consultation_date__date__lte=end_date
+        )
+        num_consultations = consultations_queryset.count()
+
+        # Timeline of consultations
+        if period == 'day':
+            trunc_func = TruncDate
+        elif period == 'week':
+            trunc_func = TruncDate  # Daily within week
+        else:
+            trunc_func = TruncDate  # Daily within month
+
+        consultations_timeline = consultations_queryset.annotate(
+            period_date=trunc_func('consultation_date')
+        ).values('period_date').annotate(
+            count=Count('id')
+        ).order_by('period_date')
+
+        # N°2: Nombre de nouveaux patients (première visite dans la période)
+        # Get patients who had their first visit in this period
+        new_patients_ids = PatientVisit.objects.filter(
+            organization=organization,
+            arrived_at__date__gte=start_date,
+            arrived_at__date__lte=end_date
+        ).values('patient').annotate(
+            first_visit=Min('arrived_at')
+        ).filter(
+            first_visit__date__gte=start_date,
+            first_visit__date__lte=end_date
+        ).values_list('patient', flat=True)
+
+        new_patients_count = len(new_patients_ids)
+
+        # Timeline of new patients by their first visit date
+        new_patients_timeline = PatientVisit.objects.filter(
+            organization=organization,
+            patient__in=new_patients_ids,
+            arrived_at__date__gte=start_date,
+            arrived_at__date__lte=end_date
+        ).annotate(
+            period_date=TruncDate('arrived_at')
+        ).values('period_date').annotate(
+            count=Count('patient', distinct=True)
+        ).order_by('period_date')
+
+        # N°3: Nombre d'actes médicaux et paramédicaux
+        # Count lab orders (not individual items to avoid inflating numbers)
+        lab_orders_count = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date
+        ).count()
+
+        # Count nursing care/procedures from invoice items with care category
+        from apps.invoicing.models import InvoiceItem, ProductCategory
+
+        # Get categories that represent nursing care
+        care_categories = ProductCategory.objects.filter(
+            organization=organization,
+            name__iregex=r'(soin|pansement|vaccination|injection|perfusion)'
+        ).values_list('id', flat=True)
+
+        # Count care services from invoices
+        nursing_care_count = InvoiceItem.objects.filter(
+            invoice__organization=organization,
+            invoice__created_at__date__gte=start_date,
+            invoice__created_at__date__lte=end_date,
+            invoice__invoice_type='healthcare_consultation',
+            product__category__in=care_categories
+        ).count()
+
+        # Total medical acts: consultations + lab orders + nursing care
+        total_medical_acts = num_consultations + lab_orders_count + nursing_care_count
+
+        # ===== INDICATEURS DE PERFORMANCE ET D'EFFICIENCE =====
+
+        # N°4: Temps d'attente moyen avant consultation (facture → début consultation)
+        # Use Consultation model with started_at and invoice creation time
+        consultations_with_wait = consultations_queryset.filter(
+            started_at__isnull=False,
+            consultation_invoice__isnull=False
+        )
+
+        wait_times = []
+        for consult in consultations_with_wait:
+            if consult.wait_time_minutes is not None:
+                wait_times.append(consult.wait_time_minutes)
+
+        avg_wait_time = sum(wait_times) / len(wait_times) if wait_times else 0
+
+        # N°5: Durée moyenne d'une consultation (started_at → ended_at)
+        consultations_with_duration = consultations_queryset.filter(
+            started_at__isnull=False,
+            ended_at__isnull=False
+        )
+
+        consultation_durations = []
+        for consult in consultations_with_duration:
+            if consult.duration_minutes is not None:
+                consultation_durations.append(consult.duration_minutes)
+
+        avg_consultation_duration = sum(consultation_durations) / len(consultation_durations) if consultation_durations else 0
+
+        # ===== INDICATEURS FINANCIERS =====
+
+        # N°6: Chiffre d'affaires mensuel
+        # Revenue from consultations
+        consultation_revenue = consultations_queryset.aggregate(
+            total=Sum('fee')
+        )['total'] or 0
+
+        # Revenue from lab tests
+        lab_revenue = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date
+        ).aggregate(
+            total=Sum('total_price')
+        )['total'] or 0
+
+        total_revenue = float(consultation_revenue) + float(lab_revenue)
+
+        # Revenue timeline
+        consultation_revenue_timeline = consultations_queryset.annotate(
+            period_date=TruncDate('consultation_date')
+        ).values('period_date').annotate(
+            revenue=Sum('fee')
+        ).order_by('period_date')
+
+        lab_revenue_timeline = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date
+        ).annotate(
+            period_date=TruncDate('order_date')
+        ).values('period_date').annotate(
+            revenue=Sum('total_price')
+        ).order_by('period_date')
+
+        # Combine revenue timelines
+        revenue_by_date = {}
+        for item in consultation_revenue_timeline:
+            date_key = item['period_date']
+            revenue_by_date[date_key] = revenue_by_date.get(date_key, 0) + float(item['revenue'] or 0)
+
+        for item in lab_revenue_timeline:
+            date_key = item['period_date']
+            revenue_by_date[date_key] = revenue_by_date.get(date_key, 0) + float(item['revenue'] or 0)
+
+        revenue_timeline = [
+            {'date': date_key.strftime('%Y-%m-%d'), 'revenue': revenue}
+            for date_key, revenue in sorted(revenue_by_date.items())
+        ]
+
+        # N°7: Coût moyen par consultation/acte
+        avg_consultation_cost = consultations_queryset.aggregate(
+            avg=Avg('fee')
+        )['avg'] or 0
+
+        avg_lab_cost = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date
+        ).aggregate(
+            avg=Avg('total_price')
+        )['avg'] or 0
+
+        # Overall average cost per act
+        total_acts_count = num_consultations + lab_orders_count
+        avg_cost_per_act = total_revenue / total_acts_count if total_acts_count > 0 else 0
+
+        return Response({
+            'period': period,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+
+            # Indicateurs d'Activité et de Volume
+            'activity_volume': {
+                'consultations': {
+                    'total': num_consultations,
+                    'timeline': [
+                        {
+                            'date': item['period_date'].strftime('%Y-%m-%d'),
+                            'count': item['count']
+                        } for item in consultations_timeline
+                    ]
+                },
+                'new_patients': {
+                    'total': new_patients_count,
+                    'timeline': [
+                        {
+                            'date': item['period_date'].strftime('%Y-%m-%d'),
+                            'count': item['count']
+                        } for item in new_patients_timeline
+                    ]
+                },
+                'medical_acts': {
+                    'total': total_medical_acts,
+                    'consultations': num_consultations,
+                    'lab_orders': lab_orders_count,
+                    'nursing_care': nursing_care_count
+                }
+            },
+
+            # Indicateurs de Performance et d'Efficience
+            'performance': {
+                'avg_wait_time_minutes': round(avg_wait_time, 1),
+                'avg_consultation_duration_minutes': round(avg_consultation_duration, 1),
+                'total_visits_tracked': len(wait_times)
+            },
+
+            # Indicateurs Financiers
+            'financial': {
+                'total_revenue': round(total_revenue, 2),
+                'consultation_revenue': round(float(consultation_revenue), 2),
+                'lab_revenue': round(float(lab_revenue), 2),
+                'avg_consultation_cost': round(float(avg_consultation_cost), 2),
+                'avg_lab_cost': round(float(avg_lab_cost), 2),
+                'avg_cost_per_act': round(avg_cost_per_act, 2),
+                'revenue_timeline': revenue_timeline
+            }
         })

@@ -38,6 +38,16 @@ class ConsultationListCreateView(generics.ListCreateAPIView):
     search_fields = ['consultation_number', 'patient__name', 'diagnosis', 'chief_complaint']
     ordering_fields = ['consultation_date', 'created_at']
     ordering = ['-consultation_date']
+
+    def create(self, request, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Creating consultation with data: {request.data}")
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error creating consultation: {str(e)}", exc_info=True)
+            raise
     
     def get_queryset(self):
         queryset = Consultation.objects.filter(

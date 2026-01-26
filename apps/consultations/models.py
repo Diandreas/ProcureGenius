@@ -63,6 +63,28 @@ class Consultation(models.Model):
         default=timezone.now,
         verbose_name=_("Date de consultation")
     )
+
+    # Consultation timing tracking
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Heure de début"),
+        help_text=_("Heure à laquelle la consultation a commencé")
+    )
+    ended_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Heure de fin"),
+        help_text=_("Heure à laquelle la consultation s'est terminée")
+    )
+
+    # Billing
+    fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Frais de consultation")
+    )
     
     # === Vital Signs ===
     temperature = models.DecimalField(
@@ -251,6 +273,28 @@ class Consultation(models.Model):
             return 'overweight'
         else:
             return 'obese'
+
+    @property
+    def duration_minutes(self):
+        """Calculate consultation duration in minutes"""
+        if self.started_at and self.ended_at:
+            delta = self.ended_at - self.started_at
+            return int(delta.total_seconds() / 60)
+        return None
+
+    @property
+    def wait_time_minutes(self):
+        """Calculate wait time from invoice payment to consultation start"""
+        if self.started_at and self.consultation_invoice:
+            # Try to get payment time from invoice
+            if hasattr(self.consultation_invoice, 'paid_at') and self.consultation_invoice.paid_at:
+                delta = self.started_at - self.consultation_invoice.paid_at
+                return int(delta.total_seconds() / 60)
+            # Fallback to invoice creation time
+            elif self.consultation_invoice.created_at:
+                delta = self.started_at - self.consultation_invoice.created_at
+                return int(delta.total_seconds() / 60)
+        return None
 
 
 class Prescription(models.Model):

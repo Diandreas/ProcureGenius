@@ -1,0 +1,24 @@
+--- Dashboard Verification ---
+Total Lab Orders: 0 (Expected > 0 for dashboard to show data)
+Total Active Products: 269
+Total Inventory Value: 3226000 (If 0, cost_price is missing)
+
+Sample Products Cost Price:
+  - ACIDE URIQUE: Stock=0, Price=4000.00, Cost=0.00
+  - ALBUMINE: Stock=0, Price=800.00, Cost=0.00
+  - ALBUMINE/SUCRE: Stock=0, Price=800.00, Cost=0.00
+  - ASLO: Stock=0, Price=5400.00, Cost=0.00
+  - Acide borique - 12mg/18mg par ml - 20 unidoses: Stock=10, Price=1160.00, Cost=800.00
+  - Acide borique - 12mg/18mg par ml - 20 unidoses: Stock=10, Price=1160.00, Cost=800.00
+  - Acide borique - 12mg/18mg par ml - 20 unidoses: Stock=10, Price=1160.00, Cost=800.00
+  - Acide folique - 0,4 mg - 30 comprimés: Stock=10, Price=1160.00, Cost=800.00
+  - Acide folique CCD - 30 comprimés: Stock=10, Price=1120.00, Cost=800.00
+  - Alcool Modifié 70% - Alcool modifié 70% vol - Bidon 5l: Stock=10, Price=1040.00, Cost=800.00
+
+API Simulation (Healthcare):
+  exams_today: 0
+
+API Simulation (Inventory - Post-Fix):
+  low_stock_count (Physical only): 94
+  out_of_stock (Physical only): 0
+  (Vs Pre-Fix low_stock_count: 219 - services inflated this)

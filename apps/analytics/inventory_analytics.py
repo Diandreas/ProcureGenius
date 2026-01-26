@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Avg, F, Max, Q
 from django.db.models.functions import TruncDate
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from apps.invoicing.models import Product, StockMovement
 
 
@@ -21,9 +21,10 @@ class ReorderQuantitiesView(APIView):
     def get(self, request):
         organization = request.user.organization
 
-        # Get products below threshold
+        # Get products below threshold (PHYSICAL ONLY)
         low_stock_products = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             stock_quantity__lte=F('low_stock_threshold'),
             is_active=True
         )
@@ -34,11 +35,14 @@ class ReorderQuantitiesView(APIView):
         for product in low_stock_products:
             # Calculate average daily usage (last 30 days)
             thirty_days_ago = date.today() - timedelta(days=30)
+            # Use 'sale' movement_type (sales reduce stock)
             usage = StockMovement.objects.filter(
                 product=product,
-                movement_type='out',
-                movement_date__gte=thirty_days_ago
+                movement_type='sale',
+                created_at__gte=thirty_days_ago
             ).aggregate(total=Sum('quantity'))['total'] or 0
+            # Quantity is negative for sales, so use absolute value
+            usage = abs(usage) if usage else 0
 
             avg_daily_usage = usage / 30 if usage > 0 else 0
             days_until_stockout = (product.stock_quantity / avg_daily_usage) if avg_daily_usage > 0 else 999
@@ -101,6 +105,7 @@ class StockoutRiskAnalysisView(APIView):
 
         products = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             is_active=True,
             stock_quantity__gt=0
         )
@@ -112,11 +117,14 @@ class StockoutRiskAnalysisView(APIView):
         for product in products:
             # Calculate average daily usage (last 30 days)
             thirty_days_ago = date.today() - timedelta(days=30)
+            # Use 'sale' movement_type (sales reduce stock)
             usage = StockMovement.objects.filter(
                 product=product,
-                movement_type='out',
-                movement_date__gte=thirty_days_ago
+                movement_type='sale',
+                created_at__gte=thirty_days_ago
             ).aggregate(total=Sum('quantity'))['total'] or 0
+            # Quantity is negative for sales, so use absolute value
+            usage = abs(usage) if usage else 0
 
             avg_daily_usage = usage / 30 if usage > 0 else 0
             days_until_stockout = (product.stock_quantity / avg_daily_usage) if avg_daily_usage > 0 else 999
@@ -213,6 +221,7 @@ class AtRiskProductsView(APIView):
         sixty_days_ago = date.today() - timedelta(days=60)
         all_products = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             stock_quantity__gt=0,
             is_active=True
         )
@@ -221,7 +230,7 @@ class AtRiskProductsView(APIView):
         for product in all_products:
             last_movement = StockMovement.objects.filter(
                 product=product
-            ).aggregate(last_date=Max('movement_date'))['last_date']
+            ).aggregate(last_date=Max('created_at'))['last_date']
 
             if not last_movement or last_movement < sixty_days_ago:
                 days_since = (date.today() - last_movement).days if last_movement else None
@@ -229,7 +238,7 @@ class AtRiskProductsView(APIView):
                     'product_id': str(product.id),
                     'product_name': product.name,
                     'product_code': product.code or 'N/A',
-                    'last_movement_date': last_movement.strftime('%Y-%m-%d') if last_movement else 'Jamais',
+                    'last_created_at': last_movement.strftime('%Y-%m-%d') if last_movement else 'Jamais',
                     'days_since_movement': days_since,
                     'stock_quantity': float(product.stock_quantity),
                     'unit': product.unit or 'unité'
@@ -269,62 +278,70 @@ class MovementAnalysisView(APIView):
         product_id = request.GET.get('product_id')
 
         if start_date:
-            queryset = queryset.filter(movement_date__gte=start_date)
+            queryset = queryset.filter(created_at__gte=start_date)
         if end_date:
-            queryset = queryset.filter(movement_date__lte=end_date)
+            queryset = queryset.filter(created_at__lte=end_date)
         if movement_type:
             queryset = queryset.filter(movement_type=movement_type)
         if product_id:
             queryset = queryset.filter(product_id=product_id)
 
         # Summary by movement type
+        # Use correct movement_type values: reception (in), sale (out), loss (wastage), adjustment
+        total_reception = queryset.filter(movement_type__in=['reception', 'initial']).aggregate(total=Sum('quantity'))['total'] or 0
+        total_sale = queryset.filter(movement_type='sale').aggregate(total=Sum('quantity'))['total'] or 0
+        total_loss = queryset.filter(movement_type='loss').aggregate(total=Sum('quantity'))['total'] or 0
+        total_adjustments = queryset.filter(movement_type='adjustment').aggregate(total=Sum('quantity'))['total'] or 0
+
         summary = {
-            'total_in': queryset.filter(movement_type='in').aggregate(total=Sum('quantity'))['total'] or 0,
-            'total_out': queryset.filter(movement_type='out').aggregate(total=Sum('quantity'))['total'] or 0,
-            'total_adjustments': queryset.filter(movement_type='adjustment').aggregate(total=Sum('quantity'))['total'] or 0,
-            'total_wastage': queryset.filter(movement_type='wastage').aggregate(total=Sum('quantity'))['total'] or 0,
+            'total_in': abs(total_reception),  # reception quantities are positive
+            'total_out': abs(total_sale),  # sale quantities are negative, use abs
+            'total_adjustments': total_adjustments,  # can be positive or negative
+            'total_wastage': abs(total_loss),  # loss quantities are negative, use abs
         }
-        summary['net_movement'] = summary['total_in'] - summary['total_out'] - summary['total_wastage']
+        summary['net_movement'] = total_reception + total_sale + total_adjustments + total_loss
 
         # By product
+        # Use correct movement_type values from the model
         by_product = queryset.values('product__name').annotate(
-            in_qty=Sum('quantity', filter=Q(movement_type='in')),
-            out_qty=Sum('quantity', filter=Q(movement_type='out')),
+            reception_qty=Sum('quantity', filter=Q(movement_type__in=['reception', 'initial'])),
+            sale_qty=Sum('quantity', filter=Q(movement_type='sale')),
             adjustment_qty=Sum('quantity', filter=Q(movement_type='adjustment')),
-            wastage_qty=Sum('quantity', filter=Q(movement_type='wastage'))
-        ).order_by('-out_qty')[:20]
+            loss_qty=Sum('quantity', filter=Q(movement_type='loss'))
+        ).order_by('-sale_qty')[:20]
 
         product_data = []
         for p in by_product:
-            in_qty = p['in_qty'] or 0
-            out_qty = p['out_qty'] or 0
+            reception = p['reception_qty'] or 0
+            sale = p['sale_qty'] or 0
             adjustment = p['adjustment_qty'] or 0
-            wastage = p['wastage_qty'] or 0
-            net = in_qty - out_qty + adjustment - wastage
+            loss = p['loss_qty'] or 0
+            # Calculate net: reception is positive, sale and loss are negative
+            net = reception + sale + adjustment + loss
 
             product_data.append({
                 'product_name': p['product__name'],
-                'in': float(in_qty),
-                'out': float(out_qty),
+                'in': float(abs(reception)),
+                'out': float(abs(sale)),
                 'adjustment': float(adjustment),
-                'wastage': float(wastage),
+                'wastage': float(abs(loss)),
                 'net': float(net)
             })
 
         # Timeline (by date)
         timeline = queryset.annotate(
-            date=TruncDate('movement_date')
+            date=TruncDate('created_at')
         ).values('date').annotate(
-            in_qty=Sum('quantity', filter=Q(movement_type='in')),
-            out_qty=Sum('quantity', filter=Q(movement_type='out'))
+            reception_qty=Sum('quantity', filter=Q(movement_type__in=['reception', 'initial'])),
+            sale_qty=Sum('quantity', filter=Q(movement_type='sale'))
         ).order_by('date')
 
         timeline_data = []
         for t in timeline:
             timeline_data.append({
                 'date': t['date'].strftime('%Y-%m-%d'),
-                'in': float(t['in_qty'] or 0),
-                'out': float(t['out_qty'] or 0)
+                'in': float(abs(t['reception_qty']) if t['reception_qty'] else 0),
+                'out': float(abs(t['sale_qty']) if t['sale_qty'] else 0)
             })
 
         return Response({
@@ -365,6 +382,7 @@ class InventoryDashboardStatsView(APIView):
         # Low stock products count (current state - not affected by date)
         low_stock_count = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             stock_quantity__lte=F('low_stock_threshold'),
             is_active=True
         ).count()
@@ -372,6 +390,7 @@ class InventoryDashboardStatsView(APIView):
         # Products needing reorder (very low stock)
         reorder_count = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             stock_quantity__lte=F('low_stock_threshold') * 0.5,  # Half of threshold
             is_active=True
         ).count()
@@ -379,19 +398,20 @@ class InventoryDashboardStatsView(APIView):
         # Stock movements in period
         movements_period = StockMovement.objects.filter(
             product__organization=organization,
-            movement_date__date__gte=start_date,
-            movement_date__date__lte=end_date
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
         ).count()
 
         # Today's stock movements
         movements_today = StockMovement.objects.filter(
             product__organization=organization,
-            movement_date__date=today
+            created_at__date=today
         ).count()
 
         # Total inventory value (current state)
         inventory_value = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             is_active=True
         ).aggregate(
             value=Sum(F('stock_quantity') * F('cost_price'))
@@ -400,6 +420,7 @@ class InventoryDashboardStatsView(APIView):
         # Out of stock products (current state)
         out_of_stock = Product.objects.filter(
             organization=organization,
+            product_type='physical',
             stock_quantity=0,
             is_active=True
         ).count()

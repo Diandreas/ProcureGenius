@@ -8,7 +8,8 @@ from .healthcare_analytics import (
     ExamTypesByPeriodView,
     DemographicAnalysisView,
     RevenueAnalyticsView,
-    HealthcareDashboardStatsView
+    HealthcareDashboardStatsView,
+    ActivityIndicatorsView
 )
 from .inventory_analytics import (
     ReorderQuantitiesView,
@@ -27,6 +28,7 @@ urlpatterns = [
     path('healthcare/demographics/', DemographicAnalysisView.as_view(), name='healthcare_demographics'),
     path('healthcare/revenue/', RevenueAnalyticsView.as_view(), name='healthcare_revenue'),
     path('healthcare/dashboard-stats/', HealthcareDashboardStatsView.as_view(), name='healthcare_dashboard_stats'),
+    path('healthcare/activity-indicators/', ActivityIndicatorsView.as_view(), name='healthcare_activity_indicators'),
 
     # Inventory Analytics
     path('inventory/reorder/', ReorderQuantitiesView.as_view(), name='inventory_reorder'),

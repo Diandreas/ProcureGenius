@@ -218,7 +218,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
               },
             }}
           >
-            {leftItems.map((item) => {
+            {/* Show all items via the left/right logic, but maybe we should just render them all here if we remove the center button? 
+                Actually, the original logic splits items into left and right. 
+                If I remove the center button, I should probably merge them or just hide the center button and keep the gap?
+                Let's just hide the center button for now. 
+            */}
+            {navigationItems.map((item) => {
               const isSelected = currentPath === item.value;
               return (
                 <BottomNavigationAction
@@ -233,8 +238,8 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
           </BottomNavigation>
         </Box>
 
-        {/* IA au centre avec design neumorphique élégant */}
-        <Box
+        {/* IA au centre avec design neumorphique élégant - HIDDEN */}
+        {/* <Box
           sx={{
             mx: 1,
             display: 'flex',
