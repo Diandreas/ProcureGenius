@@ -21,16 +21,34 @@ const VisitForm = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
     const [searchParams] = useSearchParams();
-    const patientId = searchParams.get('patient');
+    const patientId = searchParams.get('patientId') || searchParams.get('patient');
 
     const [loading, setLoading] = useState(false);
     const [patient, setPatient] = useState(null);
     const [formData, setFormData] = useState({
         patient: patientId || '',
+        visit_type: 'consultation',
         reason: '',
         priority: 'routine',
         notes: ''
     });
+
+    const visitTypes = [
+        { value: 'consultation', label: 'Consultation Médicale' },
+        { value: 'lab_results', label: 'Retrait Résultats Labo' },
+        { value: 'follow_up_exam', label: 'Suivi après Examens' },
+        { value: 'prescription_renewal', label: 'Renouvellement Ordonnance' },
+        { value: 'laboratory', label: 'Examens Laboratoire' },
+        { value: 'pharmacy', label: 'Dispensation Pharmacie' },
+        { value: 'emergency', label: 'Urgence' },
+        { value: 'follow_up', label: 'Consultation de Suivi' },
+        { value: 'vaccination', label: 'Vaccination' },
+        { value: 'imaging', label: 'Imagerie Médicale' },
+        { value: 'administrative', label: 'Démarche Administrative' },
+        { value: 'wound_care', label: 'Soins Infirmiers' },
+        { value: 'physiotherapy', label: 'Kinésithérapie' },
+        { value: 'other', label: 'Autre' }
+    ];
 
     // Patient Search State
     const [patientOptions, setPatientOptions] = useState([]);
@@ -84,12 +102,19 @@ const VisitForm = () => {
         try {
             await patientAPI.registerVisit({
                 patient_id: formData.patient,
+                visit_type: formData.visit_type,
                 chief_complaint: formData.reason,
                 priority: formData.priority,
                 notes: formData.notes
             });
             enqueueSnackbar('Visite enregistrée avec succès', { variant: 'success' });
-            navigate('/healthcare/reception');
+
+            // Redirect to patient detail page if patient was preselected, otherwise to reception
+            if (patientId) {
+                navigate(`/healthcare/patients/${patientId}`);
+            } else {
+                navigate('/healthcare/reception');
+            }
         } catch (error) {
             console.error('Error registering visit:', error);
             if (error.response?.data) {
@@ -118,17 +143,62 @@ const VisitForm = () => {
                 <CardContent>
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12}>
+                            {!patientId && (
+                                <Grid item xs={12}>
+                                    <Autocomplete
+                                        options={patientOptions}
+                                        getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
+                                        loading={searching}
+                                        onInputChange={(e, value) => {
+                                            setPatientSearch(value);
+                                            searchPatients(value);
+                                        }}
+                                        onChange={(e, value) => {
+                                            if (value) {
+                                                setPatient(value);
+                                                setFormData(prev => ({ ...prev, patient: value.id }));
+                                            } else {
+                                                setPatient(null);
+                                                setFormData(prev => ({ ...prev, patient: '' }));
+                                            }
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Rechercher un Patient"
+                                                placeholder="Nom ou Numéro"
+                                                required
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    endAdornment: (
+                                                        <React.Fragment>
+                                                            {searching ? <CircularProgress color="inherit" size={20} /> : null}
+                                                            {params.InputProps.endAdornment}
+                                                        </React.Fragment>
+                                                    ),
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                            )}
+
+                            <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
+                                    select
                                     required
-                                    label="Motif de la visite"
-                                    name="reason"
-                                    value={formData.reason}
+                                    label="Type de Visite"
+                                    name="visit_type"
+                                    value={formData.visit_type}
                                     onChange={handleChange}
-                                    multiline
-                                    rows={3}
-                                />
+                                >
+                                    {visitTypes.map(type => (
+                                        <MenuItem key={type.value} value={type.value}>
+                                            {type.label}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
                             </Grid>
 
                             <Grid item xs={12} md={6}>
@@ -145,6 +215,20 @@ const VisitForm = () => {
                                     <MenuItem value="urgent">Urgente</MenuItem>
                                     <MenuItem value="emergency">Urgence</MenuItem>
                                 </TextField>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    label="Motif de la visite"
+                                    name="reason"
+                                    value={formData.reason}
+                                    onChange={handleChange}
+                                    multiline
+                                    rows={3}
+                                    placeholder="Ex: Retrait résultats d'examens sanguins, Consultation de suivi post-opératoire, etc."
+                                />
                             </Grid>
 
                             <Grid item xs={12}>
@@ -176,62 +260,6 @@ const VisitForm = () => {
                                         {loading ? <CircularProgress size={24} /> : 'Enregistrer'}
                                     </Button>
                                 </Box>
-
-                                {!patientId && (
-                                    <Card sx={{ mb: 3 }}>
-                                        <CardContent>
-                                            <Autocomplete
-                                                options={patientOptions}
-                                                getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
-                                                loading={searching}
-                                                onInputChange={(e, value) => {
-                                                    setPatientSearch(value);
-                                                    searchPatients(value);
-                                                }}
-                                                onChange={(e, value) => {
-                                                    if (value) {
-                                                        setPatient(value);
-                                                        setFormData(prev => ({ ...prev, patient: value.id }));
-                                                    } else {
-                                                        setPatient(null);
-                                                        setFormData(prev => ({ ...prev, patient: '' }));
-                                                    }
-                                                }}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        label="Rechercher un Patient"
-                                                        placeholder="Nom ou Numéro"
-                                                        required
-                                                        InputProps={{
-                                                            ...params.InputProps,
-                                                            endAdornment: (
-                                                                <React.Fragment>
-                                                                    {searching ? <CircularProgress color="inherit" size={20} /> : null}
-                                                                    {params.InputProps.endAdornment}
-                                                                </React.Fragment>
-                                                            ),
-                                                        }}
-                                                    />
-                                                )}
-                                            />
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {patient && (
-                                    <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-                                        <Typography variant="h6" color="primary">
-                                            Patient sélectionné:
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight="bold">
-                                            {patient.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            ID: {patient.patient_number} | Tél: {patient.phone}
-                                        </Typography>
-                                    </Box>
-                                )}
                             </Grid>
                         </Grid>
                     </form>

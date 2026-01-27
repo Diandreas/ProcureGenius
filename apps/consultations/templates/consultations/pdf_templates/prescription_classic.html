@@ -121,7 +121,7 @@
     </div>
     <br><br>
     <div class="signature">
-        Dr. {{ consultation.doctor.get_full_name }}<br>
+        Dr. {% if consultation.doctor %}{{ consultation.doctor.get_full_name }}{% else %}Médecin{% endif %}<br>
         <span style="font-size: 8pt;">Signature & Cachet</span>
     </div>
 </div>

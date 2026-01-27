@@ -106,7 +106,7 @@ class PrescriptionListSerializer(serializers.ModelSerializer):
 
 class ConsultationSerializer(serializers.ModelSerializer):
     """Full serializer for Consultation"""
-    prescriptions = PrescriptionListSerializer(many=True, read_only=True)
+    prescriptions = PrescriptionSerializer(many=True, read_only=True)
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     doctor_name = serializers.SerializerMethodField()

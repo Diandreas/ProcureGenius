@@ -22,7 +22,10 @@ import {
     History as HistoryIcon,
     CalendarMonth as CalendarIcon,
     Person as PersonIcon,
-    LocalHospital as HospitalIcon
+    LocalHospital as HospitalIcon,
+    ArrowBack as ArrowBackIcon,
+    ArrowForward as ArrowForwardIcon,
+    Today as TodayIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +42,8 @@ const ConsultationList = () => {
     const [consultations, setConsultations] = useState([]);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Compute stats
     const stats = {
@@ -50,12 +55,17 @@ const ConsultationList = () => {
 
     useEffect(() => {
         fetchConsultations();
-    }, [search]);
+    }, [search, startDate, endDate]);
 
     const fetchConsultations = async () => {
         setLoading(true);
         try {
             const params = { search };
+
+            // Date filters
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
+
             const data = await consultationAPI.getConsultations(params);
             setConsultations(Array.isArray(data) ? data : data.results || []);
         } catch (error) {
@@ -63,6 +73,36 @@ const ConsultationList = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Date navigation helpers
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    const goToPreviousDay = () => {
+        const currentDate = startDate ? new Date(startDate) : new Date();
+        currentDate.setDate(currentDate.getDate() - 1);
+        const newDate = formatDate(currentDate);
+        setStartDate(newDate);
+        setEndDate(newDate);
+        setStatusFilter('all');
+    };
+
+    const goToToday = () => {
+        const today = formatDate(new Date());
+        setStartDate(today);
+        setEndDate(today);
+        setStatusFilter('all');
+    };
+
+    const goToNextDay = () => {
+        const currentDate = startDate ? new Date(startDate) : new Date();
+        currentDate.setDate(currentDate.getDate() + 1);
+        const newDate = formatDate(currentDate);
+        setStartDate(newDate);
+        setEndDate(newDate);
+        setStatusFilter('all');
     };
 
     const getStatusChip = (status) => {
@@ -90,10 +130,29 @@ const ConsultationList = () => {
     };
 
     const filteredConsultations = consultations.filter(c => {
-        if (statusFilter === 'all') return true;
-        if (statusFilter === 'scheduled') return ['scheduled', 'checked_in', 'waiting_doctor'].includes(c.status);
-        if (statusFilter === 'in_progress') return c.status === 'in_consultation';
-        if (statusFilter === 'completed') return c.status === 'completed';
+        // Date filter (client-side for additional filtering)
+        if (startDate || endDate) {
+            const consultDate = new Date(c.consultation_date);
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                if (consultDate < start) return false;
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                if (consultDate > end) return false;
+            }
+        }
+
+        // Status filter (only if no custom date range)
+        if (!startDate && !endDate) {
+            if (statusFilter === 'all') return true;
+            if (statusFilter === 'scheduled') return ['scheduled', 'checked_in', 'waiting_doctor'].includes(c.status);
+            if (statusFilter === 'in_progress') return c.status === 'in_consultation';
+            if (statusFilter === 'completed') return c.status === 'completed';
+        }
+
         return true;
     });
 
@@ -241,35 +300,116 @@ const ConsultationList = () => {
                 })}
             </Grid>
 
-            {/* Search Bar */}
+            {/* Search Bar and Date Filters */}
             <Card sx={{ mb: 3, borderRadius: 3 }}>
                 <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
-                    <TextField
-                        fullWidth
-                        placeholder="Rechercher par patient, motif, médecin..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        size={isMobile ? 'small' : 'medium'}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon color="action" />
-                                </InputAdornment>
-                            )
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: 2,
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`
-                                },
-                                '&.Mui-focused': {
-                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                                }
-                            }
-                        }}
-                    />
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                placeholder="Rechercher par patient, motif, médecin..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon color="action" />
+                                        </InputAdornment>
+                                    )
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`
+                                        },
+                                        '&.Mui-focused': {
+                                            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                                        }
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                label="Date de début"
+                                value={startDate}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    setStatusFilter('all'); // Reset status filter when using custom dates
+                                }}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                label="Date de fin"
+                                value={endDate}
+                                onChange={(e) => {
+                                    setEndDate(e.target.value);
+                                    setStatusFilter('all'); // Reset status filter when using custom dates
+                                }}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    }
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Stack direction="row" spacing={1}>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<ArrowBackIcon />}
+                                onClick={goToPreviousDay}
+                            >
+                                Jour Précédent
+                            </Button>
+                            <Button
+                                size="small"
+                                variant={startDate === formatDate(new Date()) && endDate === formatDate(new Date()) ? 'contained' : 'outlined'}
+                                startIcon={<TodayIcon />}
+                                onClick={goToToday}
+                            >
+                                Aujourd'hui
+                            </Button>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                endIcon={<ArrowForwardIcon />}
+                                onClick={goToNextDay}
+                            >
+                                Jour Suivant
+                            </Button>
+                        </Stack>
+                        {(startDate || endDate) && (
+                            <Chip
+                                label={`Période: ${startDate || '...'} → ${endDate || '...'}`}
+                                onDelete={() => {
+                                    setStartDate('');
+                                    setEndDate('');
+                                }}
+                                color="primary"
+                                size="small"
+                            />
+                        )}
+                    </Box>
                 </CardContent>
             </Card>
 

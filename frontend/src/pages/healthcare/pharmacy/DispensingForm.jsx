@@ -25,7 +25,7 @@ import {
     Add as AddIcon,
     ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import pharmacyAPI from '../../../services/pharmacyAPI';
@@ -34,6 +34,7 @@ import patientAPI from '../../../services/patientAPI';
 const DispensingForm = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
 
     const [loading, setLoading] = useState(false);
@@ -47,7 +48,25 @@ const DispensingForm = () => {
     });
 
     useEffect(() => {
-        fetchOptions();
+        const initializeForm = async () => {
+            await fetchOptions();
+
+            // If creating new dispensing with preselected patient from URL
+            const preselectedPatientId = searchParams.get('patientId');
+            if (preselectedPatientId) {
+                try {
+                    const patientData = await patientAPI.getPatient(preselectedPatientId);
+                    setFormData(prev => ({
+                        ...prev,
+                        patient: { id: patientData.id, name: patientData.name }
+                    }));
+                } catch (error) {
+                    console.error('Error loading preselected patient:', error);
+                }
+            }
+        };
+
+        initializeForm();
     }, []);
 
     const fetchOptions = async () => {

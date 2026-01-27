@@ -99,7 +99,7 @@ class PrescriptionPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasy
             'type': 'prescription',
             'id': str(prescription.id),
             'number': prescription.prescription_number,
-            'patient': prescription.patient.get_full_name(),
+            'patient': prescription.patient.get_full_name() if prescription.patient else '',
             'doctor': prescription.prescriber.get_full_name() if prescription.prescriber else '',
             'date': str(prescription.prescribed_date.date()),
         }

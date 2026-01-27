@@ -583,6 +583,23 @@ def _get_default_modules_for_role(role, organization=None):
             Modules.DASHBOARD, Modules.INVOICES, Modules.CLIENTS, Modules.PRODUCTS
         ],
         'viewer': [Modules.DASHBOARD],
+        # Healthcare roles
+        'doctor': [
+            Modules.DASHBOARD, Modules.PATIENTS, Modules.CONSULTATIONS,
+            Modules.LABORATORY, Modules.PHARMACY
+        ],
+        'nurse': [
+            Modules.DASHBOARD, Modules.PATIENTS, Modules.CONSULTATIONS
+        ],
+        'lab_tech': [
+            Modules.DASHBOARD, Modules.PATIENTS, Modules.LABORATORY
+        ],
+        'pharmacist': [
+            Modules.DASHBOARD, Modules.PATIENTS, Modules.PHARMACY
+        ],
+        'receptionist': [
+            Modules.DASHBOARD, Modules.PATIENTS
+        ],
     }
     
     modules = role_modules.get(role, [Modules.DASHBOARD])

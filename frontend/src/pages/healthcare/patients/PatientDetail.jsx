@@ -33,10 +33,6 @@ import PatientCareHistory from './PatientCareHistory';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
 import PrintModal from '../../../components/PrintModal';
-import QuickConsultationModal from './components/QuickConsultationModal';
-import QuickLabOrderModal from './components/QuickLabOrderModal';
-import QuickPrescriptionModal from './components/QuickPrescriptionModal';
-import QuickDispensingModal from './components/QuickDispensingModal';
 
 const PatientDetail = () => {
     const { t } = useTranslation();
@@ -52,12 +48,6 @@ const PatientDetail = () => {
     const [printModalOpen, setPrintModalOpen] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
-    // Quick Action Modals State
-    const [consultationModalOpen, setConsultationModalOpen] = useState(false);
-    const [labOrderModalOpen, setLabOrderModalOpen] = useState(false);
-    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
-    const [dispensingModalOpen, setDispensingModalOpen] = useState(false);
-
     useEffect(() => {
         fetchData();
     }, [id]);
@@ -71,6 +61,7 @@ const PatientDetail = () => {
             ]);
             setPatient(patientData);
             setHistory(historyData);
+            console.log('History Data:', historyData); // Debug
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -153,7 +144,7 @@ const PatientDetail = () => {
                         <Button
                             variant="contained"
                             startIcon={<ConsultationIcon />}
-                            onClick={() => setConsultationModalOpen(true)}
+                            onClick={() => navigate(`/healthcare/consultations/new?patientId=${id}`)}
                             sx={{ borderRadius: 2 }}
                         >
                             Nouvelle Consultation
@@ -162,28 +153,28 @@ const PatientDetail = () => {
                             variant="contained"
                             color="secondary"
                             startIcon={<LabIcon />}
-                            onClick={() => setLabOrderModalOpen(true)}
+                            onClick={() => navigate(`/healthcare/laboratory/new?patientId=${id}`)}
                             sx={{ borderRadius: 2 }}
                         >
                             Ordonnance Labo
                         </Button>
                         <Button
                             variant="contained"
-                            color="success"
-                            startIcon={<PrescriptionIcon />}
-                            onClick={() => setPrescriptionModalOpen(true)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Prescription
-                        </Button>
-                        <Button
-                            variant="contained"
                             color="warning"
                             startIcon={<PharmacyIcon />}
-                            onClick={() => setDispensingModalOpen(true)}
+                            onClick={() => navigate(`/healthcare/pharmacy/dispense/new?patientId=${id}`)}
                             sx={{ borderRadius: 2 }}
                         >
                             Dispensation
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<HospitalIcon />}
+                            onClick={() => navigate(`/healthcare/visits/new?patientId=${id}`)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Nouvelle Visite
                         </Button>
                         <Button
                             variant="contained"
@@ -268,29 +259,54 @@ const PatientDetail = () => {
                 {/* Tab Panel 0: Consultations */}
                 <Box role="tabpanel" hidden={tabValue !== 0} sx={{ p: 3 }}>
                     {tabValue === 0 && (
-                        <List>
-                            {history?.recent_consultations?.map((consult) => (
-                                <Card key={consult.id} sx={{ mb: 2, bgcolor: 'background.default' }} variant="outlined">
-                                    <CardContent>
-                                        <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                                            Consultation du {new Date(consult.consultation_date).toLocaleDateString()}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            Dr. {consult.doctor_name || 'Non assigné'}
-                                        </Typography>
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            <strong>Plaintes:</strong> {consult.chief_complaint}
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            <strong>Diagnostic:</strong> {consult.diagnosis || '-'}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                            {!history?.recent_consultations?.length && (
-                                <Typography color="text.secondary">Aucune consultation enregistrée.</Typography>
+                        <Box>
+                            {history?.consultations && history.consultations.length > 0 ? (
+                                <List>
+                                    {history.consultations.map((consult) => (
+                                        <Card key={consult.id} sx={{ mb: 2, bgcolor: 'background.default', cursor: 'pointer' }}
+                                              variant="outlined"
+                                              onClick={() => navigate(`/healthcare/consultations/${consult.id}`)}>
+                                            <CardContent>
+                                                <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                                    Consultation du {new Date(consult.consultation_date).toLocaleDateString('fr-FR')}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    Dr. {consult.doctor_name || 'Non assigné'}
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ mt: 1 }}>
+                                                    <strong>Plaintes:</strong> {consult.chief_complaint}
+                                                </Typography>
+                                                <Typography variant="body1">
+                                                    <strong>Diagnostic:</strong> {consult.diagnosis || '-'}
+                                                </Typography>
+                                                {consult.status && (
+                                                    <Chip
+                                                        label={consult.status}
+                                                        size="small"
+                                                        color={consult.status === 'completed' ? 'success' : 'warning'}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </List>
+                            ) : (
+                                <Box sx={{ textAlign: 'center', py: 4 }}>
+                                    <Typography color="text.secondary" gutterBottom>
+                                        Aucune consultation enregistrée pour ce patient.
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<ConsultationIcon />}
+                                        onClick={() => navigate(`/healthcare/consultations/new?patientId=${id}`)}
+                                        sx={{ mt: 2 }}
+                                    >
+                                        Créer une Consultation
+                                    </Button>
+                                </Box>
                             )}
-                        </List>
+                        </Box>
                     )}
                 </Box>
 
@@ -319,39 +335,6 @@ const PatientDetail = () => {
                     {tabValue === 5 && <PatientDocuments patientId={id} />}
                 </Box>
             </Card>
-
-            {/* Quick Action Modals */}
-            <QuickConsultationModal
-                open={consultationModalOpen}
-                onClose={() => setConsultationModalOpen(false)}
-                patientId={id}
-                patientName={patient.name}
-                onSuccess={fetchData}
-            />
-
-            <QuickLabOrderModal
-                open={labOrderModalOpen}
-                onClose={() => setLabOrderModalOpen(false)}
-                patientId={id}
-                patientName={patient.name}
-                onSuccess={fetchData}
-            />
-
-            <QuickPrescriptionModal
-                open={prescriptionModalOpen}
-                onClose={() => setPrescriptionModalOpen(false)}
-                patientId={id}
-                patientName={patient.name}
-                onSuccess={fetchData}
-            />
-
-            <QuickDispensingModal
-                open={dispensingModalOpen}
-                onClose={() => setDispensingModalOpen(false)}
-                patientId={id}
-                patientName={patient.name}
-                onSuccess={fetchData}
-            />
 
             <PrintModal
                 open={printModalOpen}

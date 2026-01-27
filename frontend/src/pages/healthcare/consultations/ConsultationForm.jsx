@@ -33,7 +33,7 @@ import {
     Print as PrintIcon,
     WarningAmber as ExternalIcon
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
@@ -45,9 +45,10 @@ const ConsultationForm = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { id } = useParams(); // Consultation ID (if editing/continuing)
+    const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
 
-    const isNew = !id; // Actually, we might start "new" from waiting list, so ID might exist as a visit ID... 
+    const isNew = !id; // Actually, we might start "new" from waiting list, so ID might exist as a visit ID...
     // Simplified: If ID exists, we are editing/viewing a consultation object.
 
     const [loading, setLoading] = useState(false);
@@ -78,8 +79,31 @@ const ConsultationForm = () => {
     });
 
     useEffect(() => {
-        fetchOptions();
-        if (id) fetchConsultation();
+        const initializeForm = async () => {
+            await fetchOptions();
+
+            // If editing existing consultation
+            if (id) {
+                await fetchConsultation();
+            }
+            // If creating new consultation with preselected patient from URL
+            else {
+                const preselectedPatientId = searchParams.get('patientId');
+                if (preselectedPatientId) {
+                    try {
+                        const patientData = await patientAPI.getPatient(preselectedPatientId);
+                        setFormData(prev => ({
+                            ...prev,
+                            patient: { id: patientData.id, name: patientData.name }
+                        }));
+                    } catch (error) {
+                        console.error('Error loading preselected patient:', error);
+                    }
+                }
+            }
+        };
+
+        initializeForm();
     }, [id]);
 
     const fetchOptions = async () => {
@@ -119,6 +143,23 @@ const ConsultationForm = () => {
         try {
             setLoading(true);
             const data = await consultationAPI.getConsultation(id);
+
+            // Load prescription items if any
+            let medicationsList = [];
+            if (data.prescriptions && data.prescriptions.length > 0) {
+                const prescription = data.prescriptions[0]; // Get first prescription
+                medicationsList = prescription.items.map(item => ({
+                    medication: item.medication ? { id: item.medication, name: item.medication_name } : null,
+                    medication_name: item.medication_name || '',
+                    dosage: item.dosage || '',
+                    frequency: item.frequency || '',
+                    duration: item.duration || '',
+                    instructions: item.instructions || '',
+                    quantity: item.quantity_prescribed || 1,
+                    is_external: !item.medication // If no medication ID, it's external
+                }));
+            }
+
             setFormData(prev => ({
                 ...prev,
                 patient: { id: data.patient, name: data.patient_name }, // simplified
@@ -135,9 +176,9 @@ const ConsultationForm = () => {
                 height: data.height || '',
                 bmi: data.bmi || '',
                 started_at: data.started_at || null,
-                ended_at: data.ended_at || null
+                ended_at: data.ended_at || null,
+                medications: medicationsList
             }));
-            // Fetch existing prescription if any? (Not implemented in initial scope, handled separately usually)
         } catch (error) {
             console.error('Error fetching consultation:', error);
         } finally {

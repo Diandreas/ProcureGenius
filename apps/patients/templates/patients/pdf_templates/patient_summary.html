@@ -267,7 +267,7 @@
                 <tr>
                     <td>{{ rx.prescribed_date|date:"d/m/Y" }}</td>
                     <td>#{{ rx.prescription_number }}</td>
-                    <td>{{ rx.prescriber.get_full_name }}</td>
+                    <td>{% if rx.prescriber %}{{ rx.prescriber.get_full_name }}{% else %}Médecin{% endif %}</td>
                     <td><span class="status-badge">{{ rx.get_status_display }}</span></td>
                 </tr>
                 {% endfor %}

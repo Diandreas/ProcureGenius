@@ -13,13 +13,19 @@ class PatientVisit(models.Model):
     Chaque visite représente une interaction du patient avec l'établissement de santé.
     """
     VISIT_TYPES = [
-        ('consultation', _('Consultation')),
-        ('laboratory', _('Laboratoire')),
-        ('pharmacy', _('Pharmacie')),
+        ('consultation', _('Consultation Médicale')),
+        ('lab_results', _('Retrait Résultats Labo')),
+        ('follow_up_exam', _('Suivi après Examens')),
+        ('prescription_renewal', _('Renouvellement Ordonnance')),
+        ('laboratory', _('Examens Laboratoire')),
+        ('pharmacy', _('Dispensation Pharmacie')),
         ('emergency', _('Urgence')),
-        ('follow_up', _('Suivi')),
+        ('follow_up', _('Consultation de Suivi')),
         ('vaccination', _('Vaccination')),
-        ('imaging', _('Imagerie')),
+        ('imaging', _('Imagerie Médicale')),
+        ('administrative', _('Démarche Administrative')),
+        ('wound_care', _('Soins Infirmiers')),
+        ('physiotherapy', _('Kinésithérapie')),
         ('other', _('Autre')),
     ]
     

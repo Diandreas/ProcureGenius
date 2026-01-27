@@ -26,7 +26,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         force = options.get('force', False)
         
-        self.stdout.write(self.style.MIGRATE_HEADING('🔍 Recherche des utilisateurs sans préférences...'))
+        self.stdout.write(self.style.MIGRATE_HEADING('Recherche des utilisateurs sans préférences...'))
         
         users = User.objects.all()
         users_created = 0
@@ -58,27 +58,27 @@ class Command(BaseCommand):
                     
                     if prefs_created:
                         self.stdout.write(
-                            self.style.SUCCESS(f'  ✓ UserPreferences créées pour {user.email}')
+                            self.style.SUCCESS(f'  + UserPreferences créées pour {user.email}')
                         )
                     elif force:
                         # Si force, mettre à jour onboarding_completed
                         prefs.onboarding_completed = False
                         prefs.save()
                         self.stdout.write(
-                            self.style.WARNING(f'  ⟳ onboarding_completed réinitialisé pour {user.email}')
+                            self.style.WARNING(f'  -> onboarding_completed réinitialisé pour {user.email}')
                         )
                         users_updated += 1
                     else:
                         self.stdout.write(
-                            self.style.WARNING(f'  ⊘ UserPreferences existe déjà pour {user.email}')
+                            self.style.WARNING(f'  - UserPreferences existe déjà pour {user.email}')
                         )
                         users_skipped += 1
                         continue
-                    
+
                 # Vérifier/créer UserPermissions
                 if force or not hasattr(user, 'permissions') or user.permissions is None:
                     from apps.accounts.models import _get_default_permissions_for_role
-                    
+
                     default_permissions = _get_default_permissions_for_role(user.role)
                     perms, perms_created = UserPermissions.objects.get_or_create(
                         user=user,
@@ -87,10 +87,10 @@ class Command(BaseCommand):
                             **default_permissions
                         }
                     )
-                    
+
                     if perms_created:
                         self.stdout.write(
-                            self.style.SUCCESS(f'  ✓ UserPermissions créées pour {user.email}')
+                            self.style.SUCCESS(f'  + UserPermissions créées pour {user.email}')
                         )
                 
                 if prefs_created or perms_created:
@@ -98,18 +98,18 @@ class Command(BaseCommand):
                     
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f'  ✗ Erreur pour {user.email}: {e}')
+                    self.style.ERROR(f'  X Erreur pour {user.email}: {e}')
                 )
         
-        self.stdout.write('\n' + self.style.MIGRATE_HEADING('📊 Résumé:'))
+        self.stdout.write('\n' + self.style.MIGRATE_HEADING('Resume:'))
         self.stdout.write(f'  Total utilisateurs: {users.count()}')
-        self.stdout.write(self.style.SUCCESS(f'  ✓ Créés: {users_created}'))
+        self.stdout.write(self.style.SUCCESS(f'  + Créés: {users_created}'))
         if users_updated > 0:
-            self.stdout.write(self.style.WARNING(f'  ⟳ Mis à jour: {users_updated}'))
+            self.stdout.write(self.style.WARNING(f'  -> Mis à jour: {users_updated}'))
         if users_skipped > 0:
-            self.stdout.write(f'  ⊘ Ignorés: {users_skipped}')
-        
+            self.stdout.write(f'  - Ignorés: {users_skipped}')
+
         self.stdout.write(
-            self.style.SUCCESS('\n✅ Commande terminée avec succès!')
+            self.style.SUCCESS('\nCommande terminée avec succès!')
         )
 

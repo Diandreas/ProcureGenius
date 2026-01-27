@@ -811,31 +811,31 @@ function App() {
                               <Route path="/support" element={<Support />} />
 
                               {/* Healthcare Modules */}
-                              <Route path="/healthcare/patients" element={<PatientList />} />
-                              <Route path="/healthcare/patients/new" element={<PatientForm />} />
-                              <Route path="/healthcare/patients/:id" element={<PatientDetail />} />
-                              <Route path="/healthcare/patients/:id/edit" element={<PatientForm />} />
-                              <Route path="/healthcare/visits/new" element={<VisitForm />} />
-                              <Route path="/healthcare/reception" element={<ReceptionDashboard />} />
+                              <Route path="/healthcare/patients" element={<ModuleRoute module="patients"><PatientList /></ModuleRoute>} />
+                              <Route path="/healthcare/patients/new" element={<ModuleRoute module="patients"><PatientForm /></ModuleRoute>} />
+                              <Route path="/healthcare/patients/:id" element={<ModuleRoute module="patients"><PatientDetail /></ModuleRoute>} />
+                              <Route path="/healthcare/patients/:id/edit" element={<ModuleRoute module="patients"><PatientForm /></ModuleRoute>} />
+                              <Route path="/healthcare/visits/new" element={<ModuleRoute module="patients"><VisitForm /></ModuleRoute>} />
+                              <Route path="/healthcare/reception" element={<ModuleRoute module="patients"><ReceptionDashboard /></ModuleRoute>} />
 
                               {/* Laboratory */}
-                              <Route path="/healthcare/laboratory" element={<LabOrderList />} />
-                              <Route path="/healthcare/laboratory/new" element={<LabOrderForm />} />
-                              <Route path="/healthcare/laboratory/catalog" element={<LabTestCatalog />} />
-                              <Route path="/healthcare/laboratory/:id" element={<LabOrderDetail />} />
+                              <Route path="/healthcare/laboratory" element={<ModuleRoute module="laboratory"><LabOrderList /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/new" element={<ModuleRoute module="laboratory"><LabOrderForm /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}
-                              <Route path="/healthcare/pharmacy/inventory" element={<InventoryList />} />
-                              <Route path="/healthcare/pharmacy/medications/:id" element={<MedicationDetail />} />
-                              <Route path="/healthcare/pharmacy/dispensing" element={<DispensingList />} />
-                              <Route path="/healthcare/pharmacy/dispense/new" element={<DispensingForm />} />
-                              <Route path="/healthcare/pharmacy/dispensing/:id" element={<DispensingDetail />} />
+                              <Route path="/healthcare/pharmacy/inventory" element={<ModuleRoute module="pharmacy"><InventoryList /></ModuleRoute>} />
+                              <Route path="/healthcare/pharmacy/medications/:id" element={<ModuleRoute module="pharmacy"><MedicationDetail /></ModuleRoute>} />
+                              <Route path="/healthcare/pharmacy/dispensing" element={<ModuleRoute module="pharmacy"><DispensingList /></ModuleRoute>} />
+                              <Route path="/healthcare/pharmacy/dispense/new" element={<ModuleRoute module="pharmacy"><DispensingForm /></ModuleRoute>} />
+                              <Route path="/healthcare/pharmacy/dispensing/:id" element={<ModuleRoute module="pharmacy"><DispensingDetail /></ModuleRoute>} />
 
                               {/* Consultations */}
-                              <Route path="/healthcare/consultations" element={<ConsultationList />} />
-                              <Route path="/healthcare/consultations/new" element={<ConsultationForm />} />
-                              <Route path="/healthcare/consultations/:id" element={<ConsultationDetail />} />
-                              <Route path="/healthcare/consultations/:id/edit" element={<ConsultationForm />} />
+                              <Route path="/healthcare/consultations" element={<ModuleRoute module="consultations"><ConsultationList /></ModuleRoute>} />
+                              <Route path="/healthcare/consultations/new" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
+                              <Route path="/healthcare/consultations/:id" element={<ModuleRoute module="consultations"><ConsultationDetail /></ModuleRoute>} />
+                              <Route path="/healthcare/consultations/:id/edit" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
                             </Route>
                           </Route>
 

@@ -30,7 +30,10 @@ import {
     Person as PersonIcon,
     ArrowForward,
     Print as PrintIcon,
-    Description as DescriptionIcon
+    Description as DescriptionIcon,
+    ArrowBack as ArrowBackIcon,
+    ArrowForward as ArrowForwardIcon,
+    Today as TodayIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -51,21 +54,29 @@ const LabOrderList = () => {
     const [orders, setOrders] = useState([]);
     const [search, setSearch] = useState('');
     const [quickFilter, setQuickFilter] = useState('pending'); // Default to pending actions
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     useEffect(() => {
         fetchOrders();
-    }, [quickFilter, search]);
+    }, [quickFilter, search, startDate, endDate]);
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
             let params = { search, page_size: 50 };
 
-            // Map quickFilter to API params
-            if (quickFilter === 'pending') params.status_in = 'pending,sample_collected,received';
-            else if (quickFilter === 'processing') params.status = 'analyzing';
-            else if (quickFilter === 'completed') params.status_in = 'results_entered,verified,results_delivered';
-            else if (quickFilter === 'urgent') params.priority = 'urgent';
+            // Date filters
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
+
+            // Map quickFilter to API params (only if no custom date range)
+            if (!startDate && !endDate) {
+                if (quickFilter === 'pending') params.status_in = 'pending,sample_collected,received';
+                else if (quickFilter === 'processing') params.status = 'analyzing';
+                else if (quickFilter === 'completed') params.status_in = 'results_entered,verified,results_delivered';
+                else if (quickFilter === 'urgent') params.priority = 'urgent';
+            }
 
             const data = await laboratoryAPI.getOrders(params);
             setOrders(Array.isArray(data) ? data : data.results || []);
@@ -74,6 +85,36 @@ const LabOrderList = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Date navigation helpers
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    const goToPreviousDay = () => {
+        const currentDate = startDate ? new Date(startDate) : new Date();
+        currentDate.setDate(currentDate.getDate() - 1);
+        const newDate = formatDate(currentDate);
+        setStartDate(newDate);
+        setEndDate(newDate);
+        setQuickFilter('');
+    };
+
+    const goToToday = () => {
+        const today = formatDate(new Date());
+        setStartDate(today);
+        setEndDate(today);
+        setQuickFilter('');
+    };
+
+    const goToNextDay = () => {
+        const currentDate = startDate ? new Date(startDate) : new Date();
+        currentDate.setDate(currentDate.getDate() + 1);
+        const newDate = formatDate(currentDate);
+        setStartDate(newDate);
+        setEndDate(newDate);
+        setQuickFilter('');
     };
 
     const handleQuickFilterClick = (filter) => {
@@ -367,32 +408,111 @@ const LabOrderList = () => {
                 </Grid>
             </Grid>
 
-            {/* Search */}
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 1,
-                    mb: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper'
-                }}
-            >
-                <InputAdornment position="start" sx={{ pl: 1 }}>
-                    <SearchIcon color="action" />
-                </InputAdornment>
-                <TextField
-                    fullWidth
-                    variant="standard"
-                    placeholder={t('common.search', 'Rechercher une commande, un patient...')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    InputProps={{ disableUnderline: true }}
-                />
-            </Paper>
+            {/* Search and Date Filters */}
+            <Card sx={{ mb: 3, borderRadius: 3 }}>
+                <CardContent>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                placeholder={t('common.search', 'Rechercher une commande, un patient...')}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon color="action" />
+                                        </InputAdornment>
+                                    )
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                label="Date de début"
+                                value={startDate}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    setQuickFilter(''); // Reset quick filter when using custom dates
+                                }}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                label="Date de fin"
+                                value={endDate}
+                                onChange={(e) => {
+                                    setEndDate(e.target.value);
+                                    setQuickFilter(''); // Reset quick filter when using custom dates
+                                }}
+                                size={isMobile ? 'small' : 'medium'}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    }
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Stack direction="row" spacing={1}>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<ArrowBackIcon />}
+                                onClick={goToPreviousDay}
+                            >
+                                Jour Précédent
+                            </Button>
+                            <Button
+                                size="small"
+                                variant={startDate === formatDate(new Date()) && endDate === formatDate(new Date()) ? 'contained' : 'outlined'}
+                                startIcon={<TodayIcon />}
+                                onClick={goToToday}
+                            >
+                                Aujourd'hui
+                            </Button>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                endIcon={<ArrowForwardIcon />}
+                                onClick={goToNextDay}
+                            >
+                                Jour Suivant
+                            </Button>
+                        </Stack>
+                        {(startDate || endDate) && (
+                            <Chip
+                                label={`Période: ${startDate || '...'} → ${endDate || '...'}`}
+                                onDelete={() => {
+                                    setStartDate('');
+                                    setEndDate('');
+                                }}
+                                color="primary"
+                                size="small"
+                            />
+                        )}
+                    </Box>
+                </CardContent>
+            </Card>
 
             {/* List */}
             <Grid container spacing={2.5}>

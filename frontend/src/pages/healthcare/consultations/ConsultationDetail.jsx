@@ -201,7 +201,18 @@ const ConsultationDetail = () => {
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Patient</Typography>
-                            <Typography variant="h5" color="primary">{consultation.patient_name}</Typography>
+                            <Typography
+                                variant="h5"
+                                color="primary"
+                                sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { textDecoration: 'underline' },
+                                    mb: 0.5
+                                }}
+                                onClick={() => navigate(`/healthcare/patients/${consultation.patient}`)}
+                            >
+                                {consultation.patient_name}
+                            </Typography>
                             <Typography variant="body2">{consultation.patient_number}</Typography>
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="caption">Signes Vitaux</Typography>
@@ -237,9 +248,42 @@ const ConsultationDetail = () => {
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Prescription (Ordonnance)</Typography>
-                            <Typography color="text.secondary" fontStyle="italic">
-                                Voir la section modification pour les détails des médicaments.
-                            </Typography>
+                            {consultation.prescriptions && consultation.prescriptions.length > 0 ? (
+                                consultation.prescriptions.map((prescription, idx) => (
+                                    <Box key={idx} sx={{ mb: 2 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            N°: {prescription.prescription_number} - {new Date(prescription.prescribed_date).toLocaleDateString('fr-FR')}
+                                        </Typography>
+                                        {prescription.items && prescription.items.length > 0 ? (
+                                            <Box sx={{ mt: 1 }}>
+                                                {prescription.items.map((item, itemIdx) => (
+                                                    <Box key={itemIdx} sx={{ mb: 1.5, pl: 2, borderLeft: '3px solid #2563eb' }}>
+                                                        <Typography variant="body2" fontWeight="600">
+                                                            {itemIdx + 1}. {item.medication_name}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {item.dosage} - {item.frequency} {item.duration && `(${item.duration})`}
+                                                        </Typography>
+                                                        {item.instructions && (
+                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                                {item.instructions}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        ) : (
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                Aucun médicament prescrit
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                ))
+                            ) : (
+                                <Typography color="text.secondary" fontStyle="italic">
+                                    Aucune ordonnance pour cette consultation
+                                </Typography>
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>

@@ -108,7 +108,7 @@
         <div class="info-label">Médecin Prescripteur:</div>
         <div class="info-value"
             style="margin-top: 30px; border-top: 1px dotted #9ca3af; display: inline-block; width: 180px; text-align: center;">
-            Dr. {{ prescriber.get_full_name|default:prescriber.username }}<br>
+            Dr. {% if prescriber %}{{ prescriber.get_full_name|default:prescriber.username }}{% else %}{% if prescription.doctor %}{{ prescription.doctor.get_full_name }}{% else %}Médecin{% endif %}{% endif %}<br>
             <span style="font-size: 8pt; font-weight: normal;">Signature & Cachet</span>
         </div>
     </div>
