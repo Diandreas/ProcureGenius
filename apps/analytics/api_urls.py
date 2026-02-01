@@ -9,14 +9,17 @@ from .healthcare_analytics import (
     DemographicAnalysisView,
     RevenueAnalyticsView,
     HealthcareDashboardStatsView,
-    ActivityIndicatorsView
+    ActivityIndicatorsView,
+    EnhancedRevenueAnalyticsView,
+    ServiceRevenueAnalyticsView
 )
 from .inventory_analytics import (
     ReorderQuantitiesView,
     StockoutRiskAnalysisView,
     AtRiskProductsView,
     MovementAnalysisView,
-    InventoryDashboardStatsView
+    InventoryDashboardStatsView,
+    StockValueAnalyticsView
 )
 
 app_name = 'analytics_api'
@@ -27,8 +30,10 @@ urlpatterns = [
     path('healthcare/exam-types/', ExamTypesByPeriodView.as_view(), name='healthcare_exam_types'),
     path('healthcare/demographics/', DemographicAnalysisView.as_view(), name='healthcare_demographics'),
     path('healthcare/revenue/', RevenueAnalyticsView.as_view(), name='healthcare_revenue'),
+    path('healthcare/revenue-enhanced/', EnhancedRevenueAnalyticsView.as_view(), name='healthcare_revenue_enhanced'),
     path('healthcare/dashboard-stats/', HealthcareDashboardStatsView.as_view(), name='healthcare_dashboard_stats'),
     path('healthcare/activity-indicators/', ActivityIndicatorsView.as_view(), name='healthcare_activity_indicators'),
+    path('healthcare/service-revenue/', ServiceRevenueAnalyticsView.as_view(), name='healthcare_service_revenue'),
 
     # Inventory Analytics
     path('inventory/reorder/', ReorderQuantitiesView.as_view(), name='inventory_reorder'),
@@ -36,4 +41,5 @@ urlpatterns = [
     path('inventory/at-risk/', AtRiskProductsView.as_view(), name='inventory_at_risk'),
     path('inventory/movements/', MovementAnalysisView.as_view(), name='inventory_movements'),
     path('inventory/dashboard-stats/', InventoryDashboardStatsView.as_view(), name='inventory_dashboard_stats'),
+    path('inventory/stock-value/', StockValueAnalyticsView.as_view(), name='inventory_stock_value'),
 ]

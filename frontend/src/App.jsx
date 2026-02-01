@@ -24,12 +24,16 @@ import ExamStatusAnalytics from './pages/healthcare/analytics/ExamStatusAnalytic
 import ExamTypesAnalytics from './pages/healthcare/analytics/ExamTypesAnalytics';
 import DemographicAnalytics from './pages/healthcare/analytics/DemographicAnalytics';
 import RevenueAnalytics from './pages/healthcare/analytics/RevenueAnalytics';
+import HealthcareAnalyticsDashboard from './pages/healthcare/analytics/HealthcareAnalyticsDashboard';
+import ServiceRevenueAnalytics from './pages/healthcare/analytics/ServiceRevenueAnalytics';
+import ActivityIndicatorsPage from './pages/healthcare/analytics/ActivityIndicatorsPage';
 
 // Inventory Analytics
 import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
 import StockoutRiskAnalytics from './pages/inventory/analytics/StockoutRiskAnalytics';
 import RiskProductsAnalytics from './pages/inventory/analytics/RiskProductsAnalytics';
 import MovementAnalytics from './pages/inventory/analytics/MovementAnalytics';
+import StockAnalytics from './pages/analytics/StockAnalytics';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
 import SupplierForm from './pages/suppliers/SupplierForm';
@@ -732,14 +736,16 @@ function App() {
                               <Route path="/dashboard" element={<Dashboard />} />
 
                               {/* Healthcare Analytics */}
-                              <Route path="/healthcare/analytics" element={<ExamStatusAnalytics />} />
+                              <Route path="/healthcare/analytics" element={<HealthcareAnalyticsDashboard />} />
                               <Route path="/healthcare/analytics/exam-status" element={<ExamStatusAnalytics />} />
                               <Route path="/healthcare/analytics/exam-types" element={<ExamTypesAnalytics />} />
                               <Route path="/healthcare/analytics/demographics" element={<DemographicAnalytics />} />
                               <Route path="/healthcare/analytics/revenue" element={<RevenueAnalytics />} />
+                              <Route path="/healthcare/analytics/services" element={<ServiceRevenueAnalytics />} />
+              <Route path="/healthcare/analytics/activity-indicators" element={<ActivityIndicatorsPage />} />
 
                               {/* Inventory Analytics */}
-                              <Route path="/inventory/analytics" element={<ReorderAnalytics />} />
+                              <Route path="/inventory/analytics" element={<StockAnalytics />} />
                               <Route path="/inventory/analytics/reorder" element={<ReorderAnalytics />} />
                               <Route path="/inventory/analytics/stockout-risk" element={<StockoutRiskAnalytics />} />
                               <Route path="/inventory/analytics/at-risk" element={<RiskProductsAnalytics />} />

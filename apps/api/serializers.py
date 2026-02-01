@@ -137,6 +137,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     unique_clients_count = serializers.SerializerMethodField()
     last_sale_date = serializers.SerializerMethodField()
     active_contracts_count = serializers.SerializerMethodField()
+
+    # Supply lead time
+    supply_lead_time_days = serializers.IntegerField(read_only=True)
     
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
@@ -152,6 +155,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_active',
+            'expiration_date', 'supply_lead_time_days',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at'
@@ -160,6 +164,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
             'stock_status', 'is_low_stock', 'is_out_of_stock',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
+            'supply_lead_time_days',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count', 'price_editable'
         ]

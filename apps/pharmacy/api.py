@@ -263,21 +263,16 @@ class MedicationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'reference', 'barcode', 'description']
-    ordering_fields = ['name', 'reference', 'stock_quantity', 'price']
+    ordering_fields = ['name', 'reference', 'stock_quantity', 'price', 'expiration_date', 'created_at']
     ordering = ['name']
-    
+
     def get_queryset(self):
-        queryset = Product.objects.filter(
+        queryset = Product.objects.select_related('category', 'supplier', 'warehouse').filter(
             organization=self.request.user.organization,
             is_active=True,
             product_type='physical',
         )
-        
-        # Filter by relevant categories: medications and lab consumables
-        # We also check for 'medicaments' slug for backward compatibility
-        relevant_slugs = ['medications', 'medicaments']
-        queryset = queryset.filter(category__slug__in=relevant_slugs)
-        
+
         # Filter by stock status
         stock_status = self.request.query_params.get('stock_status')
         if stock_status == 'low':
@@ -286,7 +281,41 @@ class MedicationListView(generics.ListAPIView):
             queryset = queryset.filter(stock_quantity=0)
         elif stock_status == 'available':
             queryset = queryset.filter(stock_quantity__gt=0)
-        
+
+        # Filter by expiration status
+        expiration_status = self.request.query_params.get('expiration_status')
+        today = timezone.now().date()
+        if expiration_status == 'expired':
+            queryset = queryset.filter(expiration_date__lt=today)
+        elif expiration_status == 'expiring_soon':
+            from datetime import timedelta
+            days = int(self.request.query_params.get('expiring_days', 30))
+            queryset = queryset.filter(
+                expiration_date__gte=today,
+                expiration_date__lte=today + timedelta(days=days)
+            )
+        elif expiration_status == 'valid':
+            queryset = queryset.filter(expiration_date__gte=today)
+        elif expiration_status == 'no_date':
+            queryset = queryset.filter(expiration_date__isnull=True)
+
+        # Filter by date ranges
+        registered_after = self.request.query_params.get('registered_after')
+        if registered_after:
+            queryset = queryset.filter(created_at__date__gte=registered_after)
+
+        registered_before = self.request.query_params.get('registered_before')
+        if registered_before:
+            queryset = queryset.filter(created_at__date__lte=registered_before)
+
+        expiration_after = self.request.query_params.get('expiration_after')
+        if expiration_after:
+            queryset = queryset.filter(expiration_date__gte=expiration_after)
+
+        expiration_before = self.request.query_params.get('expiration_before')
+        if expiration_before:
+            queryset = queryset.filter(expiration_date__lte=expiration_before)
+
         return queryset
 
 
@@ -294,12 +323,12 @@ class MedicationDetailView(generics.RetrieveAPIView):
     """Retrieve a single medication (Product) detail"""
     serializer_class = MedicationSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
-        queryset = Product.objects.filter(
+        queryset = Product.objects.select_related('category', 'supplier', 'warehouse').filter(
             organization=self.request.user.organization,
             is_active=True,
-            product_type='physical',  # Medications are physical products
+            product_type='physical',
         )
         
         # Filter by medication category if it exists

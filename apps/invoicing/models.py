@@ -141,7 +141,7 @@ class Product(models.Model):
     
     # Stock (pour produits physiques)
     stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
-    low_stock_threshold = models.IntegerField(default=5, verbose_name="Seuil de stock bas")
+    low_stock_threshold = models.IntegerField(default=10, verbose_name="Seuil de stock bas")
 
     # Système d'unités multiples
     UNIT_TYPES = [
@@ -181,6 +181,14 @@ class Product(models.Model):
         validators=[MinValueValidator(Decimal('0.0001'))],
         verbose_name=_("Facteur de conversion"),
         help_text=_("1 unité de vente = X unités de base. Ex: 1 boîte = 10 plaquettes")
+    )
+
+    # Péremption (utile pour pharmacie)
+    expiration_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date de péremption"),
+        help_text=_("Date d'expiration du produit")
     )
 
     # Métadonnées
@@ -310,6 +318,46 @@ class Product(models.Model):
         if self.cost_price > 0:
             return ((self.price - self.cost_price) / self.cost_price) * 100
         return 0
+
+    @property
+    def days_since_creation(self):
+        """Nombre de jours depuis l'enregistrement"""
+        from django.utils import timezone
+        if self.created_at:
+            delta = timezone.now() - self.created_at
+            return delta.days
+        return 0
+
+    @property
+    def is_expired(self):
+        """Vérifie si le produit est périmé"""
+        from django.utils import timezone
+        if self.expiration_date:
+            return self.expiration_date < timezone.now().date()
+        return False
+
+    @property
+    def days_until_expiration(self):
+        """Nombre de jours avant péremption (négatif si périmé)"""
+        from django.utils import timezone
+        if self.expiration_date:
+            delta = self.expiration_date - timezone.now().date()
+            return delta.days
+        return None
+
+    @property
+    def supply_lead_time_days(self):
+        """Get supply lead time from metadata (default: 90 days = 3 months)"""
+        if self.metadata and isinstance(self.metadata, dict):
+            return self.metadata.get('supply_lead_time_days', 90)
+        return 90
+
+    def set_supply_lead_time(self, days):
+        """Set supply lead time in metadata"""
+        if not self.metadata:
+            self.metadata = {}
+        self.metadata['supply_lead_time_days'] = days
+        self.save(update_fields=['metadata'])
 
     def format_price(self):
         """Formate le prix"""
@@ -469,6 +517,7 @@ class Invoice(models.Model):
         ('healthcare_consultation', _('Consultation médicale')),
         ('healthcare_laboratory', _('Laboratoire')),
         ('healthcare_pharmacy', _('Pharmacie')),
+        ('credit_note', _('Avoir - Note de crédit')),
     ]
 
     PAYMENT_METHOD_CHOICES = [
@@ -520,6 +569,35 @@ class Invoice(models.Model):
         help_text=_("Mode de paiement: Mobile Money ou Comptant")
     )
     currency = models.CharField(max_length=3, default="CAD", verbose_name=_("Devise"))
+
+    # Credit Note fields
+    original_invoice = models.ForeignKey(
+        'self',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='credit_notes',
+        verbose_name=_("Facture originale"),
+        help_text=_("Facture annulée par cette note de crédit")
+    )
+    cancellation_reason = models.TextField(
+        blank=True,
+        verbose_name=_("Raison d'annulation"),
+        help_text=_("Raison de l'annulation de la facture")
+    )
+    cancelled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date d'annulation")
+    )
+    cancelled_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cancelled_invoices',
+        verbose_name=_("Annulé par")
+    )
 
     class Meta:
         verbose_name = _("Facture")
@@ -600,10 +678,16 @@ class Invoice(models.Model):
         year = datetime.now().year
         month = datetime.now().month
 
-        # Trouve le prochain numéro disponible
-        last_invoice = Invoice.objects.filter(
-            invoice_number__startswith=f"FAC{year}{month:02d}"
-        ).order_by('-invoice_number').first()
+        # Trouve le prochain numéro disponible pour cette organisation
+        filters = {
+            'invoice_number__startswith': f"FAC{year}{month:02d}"
+        }
+
+        # Ajouter le filtre d'organisation si disponible
+        if self.organization:
+            filters['organization'] = self.organization
+
+        last_invoice = Invoice.objects.filter(**filters).order_by('-invoice_number').first()
 
         if last_invoice:
             try:
@@ -654,21 +738,27 @@ class Invoice(models.Model):
         from django.utils import timezone
         if self.status in ['paid', 'cancelled', 'draft']:
             return False
+        if not self.due_date:
+            return False
         return self.due_date < timezone.now().date()
 
     def update_overdue_status(self):
         """
         Met à jour automatiquement le statut en 'overdue' si la date d'échéance est dépassée.
-        
+
         Returns:
             bool: True si le statut a été modifié, False sinon
         """
         from django.utils import timezone
-        
+
         # Ne pas modifier si déjà payée, annulée ou en brouillon
         if self.status in ['paid', 'cancelled', 'draft']:
             return False
-        
+
+        # Si pas de date d'échéance, ne rien faire
+        if not self.due_date:
+            return False
+
         # Vérifier si la date d'échéance est dépassée
         if self.due_date < timezone.now().date():
             if self.status != 'overdue':
@@ -682,7 +772,7 @@ class Invoice(models.Model):
             self.status = 'sent'
             self.save(update_fields=['status', 'updated_at'])
             return True
-        
+
         return False
 
     @property

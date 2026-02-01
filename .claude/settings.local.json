@@ -81,7 +81,16 @@
       "mcp__chrome-devtools__evaluate_script",
       "Bash(curl -s -H \"Authorization: Token 74090cbc21224bfdc40675fd395a73db7e196305\" \"http://localhost:8000/api/v1/analytics/inventory/movements/\")",
       "Bash(python -m json.tool:*)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(Select-Object -Last 20)",
+      "Bash(tasklist:*)",
+      "Bash(node run-all-tests.js:*)",
+      "Bash(npx puppeteer:*)",
+      "Bash(where:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(du:*)"
     ],
     "deny": [],
     "ask": []

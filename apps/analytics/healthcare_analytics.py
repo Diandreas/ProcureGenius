@@ -5,12 +5,13 @@ Provides detailed analytics for laboratory exams, consultations, and healthcare 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField
+from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField, DecimalField, F
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
 from datetime import date, timedelta, datetime
 from apps.laboratory.models import LabOrder, LabOrderItem
 from apps.consultations.models import Consultation
 from apps.accounts.models import Client
+from apps.invoicing.models import Invoice, InvoiceItem
 
 
 class ExamStatusByPatientView(APIView):
@@ -676,5 +677,225 @@ class ActivityIndicatorsView(APIView):
                 'avg_lab_cost': round(float(avg_lab_cost), 2),
                 'avg_cost_per_act': round(avg_cost_per_act, 2),
                 'revenue_timeline': revenue_timeline
+            }
+        })
+
+
+class EnhancedRevenueAnalyticsView(APIView):
+    """
+    Enhanced revenue analytics with daily/weekly/monthly aggregation
+    Filters: period (day/week/month), start_date, end_date, invoice_type
+    IMPORTANT: Only counts PAID invoices (status='paid')
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        period = request.GET.get('period', 'day')  # day, week, month
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        invoice_type = request.GET.get('invoice_type')  # optional filter
+
+        # Base queryset: ONLY paid invoices
+        invoices = Invoice.objects.filter(
+            created_by__organization=organization,
+            status='paid'
+        )
+
+        if start_date:
+            invoices = invoices.filter(created_at__gte=start_date)
+        if end_date:
+            invoices = invoices.filter(created_at__lte=end_date)
+        if invoice_type:
+            invoices = invoices.filter(invoice_type=invoice_type)
+
+        # Total revenue across ALL activities
+        total_stats = invoices.aggregate(
+            total_revenue=Sum('total_amount'),
+            total_invoices=Count('id'),
+            avg_invoice_amount=Avg('total_amount')
+        )
+
+        # Revenue PER activity (by invoice_type)
+        by_activity = invoices.values('invoice_type').annotate(
+            revenue=Sum('total_amount'),
+            count=Count('id'),
+            avg_amount=Avg('total_amount')
+        ).order_by('-revenue')
+
+        # Time-based aggregation
+        trunc_func = {
+            'day': TruncDate,
+            'week': TruncWeek,
+            'month': TruncMonth
+        }.get(period, TruncDate)
+
+        timeline = invoices.annotate(
+            period_date=trunc_func('created_at')
+        ).values('period_date').annotate(
+            revenue=Sum('total_amount'),
+            count=Count('id')
+        ).order_by('period_date')
+
+        # Get invoice type choices mapping
+        invoice_type_dict = dict(Invoice.INVOICE_TYPES) if hasattr(Invoice, 'INVOICE_TYPES') else {}
+
+        # Format response
+        return Response({
+            'period': period,
+            'date_range': {
+                'start': start_date,
+                'end': end_date
+            },
+            'total_stats': {
+                'total_revenue': float(total_stats['total_revenue'] or 0),
+                'total_invoices': total_stats['total_invoices'],
+                'avg_invoice_amount': float(total_stats['avg_invoice_amount'] or 0)
+            },
+            'by_activity': [{
+                'activity_type': item['invoice_type'],
+                'activity_label': invoice_type_dict.get(item['invoice_type'], item['invoice_type']) if invoice_type_dict else item['invoice_type'],
+                'revenue': float(item['revenue'] or 0),
+                'count': item['count'],
+                'avg_amount': float(item['avg_amount'] or 0)
+            } for item in by_activity],
+            'timeline': [{
+                'date': item['period_date'].strftime('%Y-%m-%d') if hasattr(item['period_date'], 'strftime') else str(item['period_date']),
+                'revenue': float(item['revenue'] or 0),
+                'count': item['count']
+            } for item in timeline]
+        })
+
+
+class ServiceRevenueAnalyticsView(APIView):
+    """
+    Analyze revenue by service/product category with time-based evolution
+    Query params: start_date, end_date, period (day/week/month), service_id, category_id
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        period = request.GET.get('period', 'month')
+        service_id = request.GET.get('service_id')
+        category_id = request.GET.get('category_id')
+
+        # Base queryset: invoice items from paid invoices
+        queryset = InvoiceItem.objects.filter(
+            invoice__created_by__organization=organization,
+            invoice__status='paid'
+        )
+
+        if start_date:
+            queryset = queryset.filter(invoice__created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(invoice__created_at__date__lte=end_date)
+        if service_id:
+            queryset = queryset.filter(product_id=service_id)
+        if category_id:
+            queryset = queryset.filter(product__category_id=category_id)
+
+        # === Revenue by service/product ===
+        by_service = queryset.values(
+            'product__id', 'product__name', 'product__product_type',
+            'product__category__name'
+        ).annotate(
+            revenue=Sum('total_price'),
+            count=Sum('quantity'),
+            transactions=Count('id'),
+            avg_price=Avg('unit_price')
+        ).order_by('-revenue')
+
+        services_data = []
+        total_revenue = 0
+        for s in by_service:
+            rev = float(s['revenue'] or 0)
+            total_revenue += rev
+            services_data.append({
+                'service_id': str(s['product__id']),
+                'service_name': s['product__name'] or 'N/A',
+                'product_type': s['product__product_type'] or 'N/A',
+                'category': s['product__category__name'] or 'Non categorise',
+                'revenue': rev,
+                'count': s['count'] or 0,
+                'transactions': s['transactions'],
+                'avg_price': float(s['avg_price'] or 0),
+            })
+
+        # Add percentage
+        for s in services_data:
+            s['revenue_percent'] = round(s['revenue'] / total_revenue * 100, 1) if total_revenue > 0 else 0
+
+        # === Revenue by category ===
+        by_category = queryset.values(
+            'product__category__id', 'product__category__name'
+        ).annotate(
+            revenue=Sum('total_price'),
+            count=Sum('quantity'),
+            transactions=Count('id'),
+            unique_services=Count('product', distinct=True)
+        ).order_by('-revenue')
+
+        categories_data = []
+        for c in by_category:
+            rev = float(c['revenue'] or 0)
+            categories_data.append({
+                'category_id': str(c['product__category__id']) if c['product__category__id'] else None,
+                'category_name': c['product__category__name'] or 'Non categorise',
+                'revenue': rev,
+                'count': c['count'] or 0,
+                'transactions': c['transactions'],
+                'unique_services': c['unique_services'],
+                'revenue_percent': round(rev / total_revenue * 100, 1) if total_revenue > 0 else 0
+            })
+
+        # === Timeline for selected service/category ===
+        trunc_func = {
+            'day': TruncDate,
+            'week': TruncWeek,
+            'month': TruncMonth
+        }.get(period, TruncMonth)
+
+        timeline_qs = queryset
+        if service_id:
+            timeline_qs = timeline_qs.filter(product_id=service_id)
+        if category_id:
+            timeline_qs = timeline_qs.filter(product__category_id=category_id)
+
+        timeline = timeline_qs.annotate(
+            period_date=trunc_func('invoice__created_at')
+        ).values('period_date').annotate(
+            revenue=Sum('total_price'),
+            count=Sum('quantity')
+        ).order_by('period_date')
+
+        timeline_data = []
+        for t in timeline:
+            timeline_data.append({
+                'date': t['period_date'].strftime('%Y-%m-%d') if hasattr(t['period_date'], 'strftime') else str(t['period_date']),
+                'revenue': float(t['revenue'] or 0),
+                'count': t['count'] or 0
+            })
+
+        # === Available categories for filter ===
+        from apps.invoicing.models import ProductCategory
+        available_categories = ProductCategory.objects.filter(
+            organization=organization,
+            is_active=True
+        ).values('id', 'name').order_by('name')
+
+        return Response({
+            'total_revenue': total_revenue,
+            'total_transactions': queryset.count(),
+            'by_service': services_data[:50],
+            'by_category': categories_data,
+            'timeline': timeline_data,
+            'period': period,
+            'filters': {
+                'categories': [{'id': str(c['id']), 'name': c['name']} for c in available_categories],
+                'selected_service_id': service_id,
+                'selected_category_id': category_id,
             }
         })

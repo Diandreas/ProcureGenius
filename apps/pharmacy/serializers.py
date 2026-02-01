@@ -149,6 +149,14 @@ class MedicationSerializer(serializers.ModelSerializer):
     unit_price = serializers.DecimalField(source='price', max_digits=10, decimal_places=2, read_only=True)
     current_stock = serializers.IntegerField(source='stock_quantity', read_only=True)
 
+    # New computed fields
+    days_since_creation = serializers.IntegerField(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    days_until_expiration = serializers.IntegerField(read_only=True, allow_null=True)
+    category_name = serializers.SerializerMethodField()
+    supplier_name = serializers.SerializerMethodField()
+    warehouse_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
@@ -170,7 +178,25 @@ class MedicationSerializer(serializers.ModelSerializer):
             'is_low_stock',
             'is_out_of_stock',
             'is_active',
+            'expiration_date',
+            'is_expired',
+            'days_until_expiration',
+            'days_since_creation',
+            'category_name',
+            'supplier_name',
+            'warehouse_name',
+            'created_at',
+            'updated_at',
         ]
+
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category else None
+
+    def get_supplier_name(self, obj):
+        return obj.supplier.name if obj.supplier else None
+
+    def get_warehouse_name(self, obj):
+        return obj.warehouse.name if obj.warehouse else None
 
 
 class StockCheckSerializer(serializers.Serializer):

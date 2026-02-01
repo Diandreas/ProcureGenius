@@ -275,8 +275,8 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
-    required_module = Modules.PRODUCTS
+    permission_classes = [permissions.IsAuthenticated]
+    # required_module removed - products/services should be accessible regardless of module activation
     organization_field = 'organization'  # Product has organization FK
     filterset_fields = ['is_active', 'product_type']
     search_fields = ['name', 'reference', 'description']
@@ -1891,6 +1891,126 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'])
+    def cancel_with_credit_note(self, request, pk=None):
+        """
+        Cancel invoice and generate credit note
+        Permissions: Managers + Administrators only
+        """
+        from django.utils import timezone
+
+        invoice = self.get_object()
+
+        # Check permissions - only managers and admins can cancel
+        user_role = getattr(request.user, 'role', None)
+        if user_role not in ['manager', 'admin']:
+            return Response(
+                {'error': 'Only managers and administrators can cancel invoices'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate cancellation
+        if invoice.status == 'cancelled':
+            return Response(
+                {'error': 'Invoice is already cancelled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        force_cancel = request.data.get('force_cancel', False)
+        if invoice.status == 'paid' and not force_cancel:
+            return Response(
+                {'error': 'Paid invoices cannot be cancelled without force_cancel flag'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cancellation_reason = request.data.get('reason', '')
+        if not cancellation_reason or not cancellation_reason.strip():
+            return Response(
+                {'error': 'Cancellation reason is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Create credit note (negative invoice)
+            credit_note = Invoice.objects.create(
+                organization=invoice.organization,
+                invoice_type='credit_note',
+                status='sent',
+                client=invoice.client,
+                created_by=request.user,
+                subtotal=-invoice.subtotal,
+                tax_amount=-invoice.tax_amount,
+                total_amount=-invoice.total_amount,
+                original_invoice=invoice,
+                title=f"Avoir - {invoice.invoice_number}",
+                description=f"Annulation de {invoice.invoice_number}: {cancellation_reason}",
+                currency=invoice.currency,
+                billing_address=invoice.billing_address,
+                payment_terms=invoice.payment_terms
+            )
+
+            # Copy items with negative unit prices
+            for item in invoice.items.all():
+                InvoiceItem.objects.create(
+                    invoice=credit_note,
+                    product=item.product,
+                    service_code=item.service_code,
+                    product_reference=item.product_reference,
+                    description=item.description,
+                    detailed_description=item.detailed_description,
+                    quantity=item.quantity,
+                    unit_price=-item.unit_price,
+                    total_price=-item.total_price,
+                    unit_of_measure=item.unit_of_measure,
+                    discount_percent=item.discount_percent,
+                    tax_rate=item.tax_rate,
+                    notes=item.notes
+                )
+
+            # Update original invoice
+            invoice.status = 'cancelled'
+            invoice.cancellation_reason = cancellation_reason
+            invoice.cancelled_at = timezone.now()
+            invoice.cancelled_by = request.user
+            invoice.save()
+
+            # Create audit trail log (if activity logger exists)
+            try:
+                from apps.analytics.activity_logger import log_activity
+                log_activity(
+                    user=request.user,
+                    action='invoice_cancelled',
+                    model_name='Invoice',
+                    object_id=str(invoice.id),
+                    details={
+                        'invoice_number': invoice.invoice_number,
+                        'credit_note_number': credit_note.invoice_number,
+                        'reason': cancellation_reason,
+                        'original_amount': float(invoice.total_amount)
+                    }
+                )
+            except ImportError:
+                # Activity logger not available
+                pass
+
+            # Serialize both invoices
+            serializer = self.get_serializer(invoice)
+            credit_note_serializer = self.get_serializer(credit_note)
+
+            return Response({
+                'message': 'Invoice cancelled successfully',
+                'invoice': serializer.data,
+                'credit_note': credit_note_serializer.data
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Error cancelling invoice: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class DashboardStatsView(APIView):
     """Vue pour les statistiques du tableau de bord"""
@@ -2152,8 +2272,8 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
     """ViewSet pour les catégories de produits"""
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
-    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
-    required_module = Modules.PRODUCTS
+    permission_classes = [permissions.IsAuthenticated]
+    # required_module removed - categories should be accessible regardless of module activation
     filterset_fields = ['is_active', 'parent']
     search_fields = ['name', 'slug', 'description']
     ordering_fields = ['name', 'created_at']
@@ -2173,8 +2293,8 @@ class WarehouseViewSet(viewsets.ModelViewSet):
     """ViewSet pour les entrepôts"""
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
-    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
-    required_module = Modules.PRODUCTS
+    permission_classes = [permissions.IsAuthenticated]
+    # required_module removed - warehouses should be accessible regardless of module activation
     filterset_fields = ['is_active', 'city', 'province']
     search_fields = ['name', 'code', 'address', 'city']
     ordering_fields = ['name', 'code', 'created_at']

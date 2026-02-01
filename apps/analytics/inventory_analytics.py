@@ -5,10 +5,10 @@ Provides detailed analytics for stock management, reorder quantities, and risk a
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Avg, F, Max, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When
+from django.db.models.functions import TruncDate, Coalesce
 from datetime import date, timedelta, datetime
-from apps.invoicing.models import Product, StockMovement
+from apps.invoicing.models import Product, StockMovement, ProductCategory
 
 
 class ReorderQuantitiesView(APIView):
@@ -434,4 +434,166 @@ class InventoryDashboardStatsView(APIView):
             'out_of_stock': out_of_stock,
             'period_start': start_date.isoformat(),
             'period_end': end_date.isoformat()
+        })
+
+
+class StockValueAnalyticsView(APIView):
+    """
+    Comprehensive stock value analytics with filtering
+    Query params: category_id, product_type, sort_by, search, warehouse_id
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+
+        # Filters
+        category_id = request.GET.get('category_id')
+        product_type = request.GET.get('product_type', 'physical')
+        search = request.GET.get('search', '')
+        sort_by = request.GET.get('sort_by', 'stock_value')
+        warehouse_id = request.GET.get('warehouse_id')
+
+        # Base queryset - physical products with stock
+        queryset = Product.objects.filter(
+            organization=organization,
+            is_active=True
+        )
+
+        if product_type:
+            queryset = queryset.filter(product_type=product_type)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        if warehouse_id:
+            queryset = queryset.filter(warehouse_id=warehouse_id)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) | Q(reference__icontains=search)
+            )
+
+        # Annotate with computed values
+        queryset = queryset.annotate(
+            stock_value_cost=F('stock_quantity') * F('cost_price'),
+            stock_value_sell=F('stock_quantity') * F('price'),
+            potential_margin=F('stock_quantity') * (F('price') - F('cost_price'))
+        )
+
+        # Summary stats
+        summary = queryset.aggregate(
+            total_products=Count('id'),
+            total_quantity=Sum('stock_quantity'),
+            total_cost_value=Sum(F('stock_quantity') * F('cost_price')),
+            total_sell_value=Sum(F('stock_quantity') * F('price')),
+            total_potential_margin=Sum(F('stock_quantity') * (F('price') - F('cost_price'))),
+            avg_margin_percent=Avg(
+                Case(
+                    When(cost_price__gt=0, then=(F('price') - F('cost_price')) * 100.0 / F('cost_price')),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
+        )
+
+        # By category breakdown
+        by_category = queryset.values(
+            'category__name', 'category__id'
+        ).annotate(
+            product_count=Count('id'),
+            total_quantity=Sum('stock_quantity'),
+            cost_value=Sum(F('stock_quantity') * F('cost_price')),
+            sell_value=Sum(F('stock_quantity') * F('price')),
+            margin=Sum(F('stock_quantity') * (F('price') - F('cost_price')))
+        ).order_by('-cost_value')
+
+        category_data = []
+        for c in by_category:
+            cost_val = float(c['cost_value'] or 0)
+            sell_val = float(c['sell_value'] or 0)
+            category_data.append({
+                'category_id': str(c['category__id']) if c['category__id'] else None,
+                'category_name': c['category__name'] or 'Non categorise',
+                'product_count': c['product_count'],
+                'total_quantity': c['total_quantity'] or 0,
+                'cost_value': cost_val,
+                'sell_value': sell_val,
+                'margin': float(c['margin'] or 0),
+                'margin_percent': round((sell_val - cost_val) / cost_val * 100, 1) if cost_val > 0 else 0
+            })
+
+        # Detailed product list (sorted)
+        sort_map = {
+            'stock_value': '-stock_value_cost',
+            'quantity': '-stock_quantity',
+            'margin': '-potential_margin',
+            'name': 'name',
+            'price': '-price',
+        }
+        order = sort_map.get(sort_by, '-stock_value_cost')
+        products = queryset.select_related('category', 'warehouse').order_by(order)[:100]
+
+        product_data = []
+        for p in products:
+            cost_val = float(p.stock_quantity * (p.cost_price or 0))
+            sell_val = float(p.stock_quantity * (p.price or 0))
+            margin = sell_val - cost_val
+            product_data.append({
+                'id': str(p.id),
+                'name': p.name,
+                'reference': p.reference or '',
+                'category': p.category.name if p.category else 'N/A',
+                'warehouse': p.warehouse.name if p.warehouse else 'N/A',
+                'stock_quantity': p.stock_quantity,
+                'cost_price': float(p.cost_price or 0),
+                'sell_price': float(p.price or 0),
+                'stock_value_cost': cost_val,
+                'stock_value_sell': sell_val,
+                'margin': margin,
+                'margin_percent': round(margin / cost_val * 100, 1) if cost_val > 0 else 0,
+                'low_stock_threshold': p.low_stock_threshold,
+                'is_low_stock': p.stock_quantity <= p.low_stock_threshold,
+                'is_out_of_stock': p.stock_quantity == 0,
+            })
+
+        # Products with 0 stock but active
+        zero_stock_value = queryset.filter(stock_quantity=0).aggregate(
+            count=Count('id')
+        )
+
+        # Top 10 most valuable products (by stock cost value)
+        top_valuable = sorted(product_data, key=lambda x: x['stock_value_cost'], reverse=True)[:10]
+
+        # Top 10 highest margin products
+        top_margin = sorted(product_data, key=lambda x: x['margin'], reverse=True)[:10]
+
+        # Get available categories for filters
+        categories = ProductCategory.objects.filter(
+            organization=organization,
+            is_active=True
+        ).values('id', 'name').order_by('name')
+
+        # Get available warehouses for filters
+        from apps.invoicing.models import Warehouse
+        warehouses = Warehouse.objects.filter(
+            organization=organization,
+            is_active=True
+        ).values('id', 'name').order_by('name')
+
+        return Response({
+            'summary': {
+                'total_products': summary['total_products'] or 0,
+                'total_quantity': summary['total_quantity'] or 0,
+                'total_cost_value': float(summary['total_cost_value'] or 0),
+                'total_sell_value': float(summary['total_sell_value'] or 0),
+                'total_potential_margin': float(summary['total_potential_margin'] or 0),
+                'avg_margin_percent': round(float(summary['avg_margin_percent'] or 0), 1),
+                'zero_stock_count': zero_stock_value['count'] or 0,
+            },
+            'by_category': category_data,
+            'products': product_data,
+            'top_valuable': top_valuable,
+            'top_margin': top_margin,
+            'filters': {
+                'categories': [{'id': str(c['id']), 'name': c['name']} for c in categories],
+                'warehouses': [{'id': str(w['id']), 'name': w['name']} for w in warehouses],
+            }
         })

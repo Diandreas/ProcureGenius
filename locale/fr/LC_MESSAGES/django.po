@@ -314,6 +314,54 @@ msgstr "Payé"
 msgid "Partially Paid"
 msgstr "Partiellement payé"
 
+msgid "INVOICE"
+msgstr "FACTURE"
+
+msgid "Invoice Details"
+msgstr "Détails de la facture"
+
+msgid "Issue Date"
+msgstr "Date d'émission"
+
+msgid "PAID"
+msgstr "PAYÉE"
+
+msgid "SENT"
+msgstr "ENVOYÉE"
+
+msgid "DRAFT"
+msgstr "BROUILLON"
+
+msgid "OVERDUE"
+msgstr "EN RETARD"
+
+msgid "Untitled"
+msgstr "Sans titre"
+
+msgid "Reference"
+msgstr "Référence"
+
+msgid "Qty"
+msgstr "Qté"
+
+msgid "Unit Price"
+msgstr "Prix unitaire"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "No items"
+msgstr "Aucun article"
+
+msgid "Taxes"
+msgstr "Taxes"
+
+msgid "TOTAL"
+msgstr "TOTAL"
+
+msgid "Verification"
+msgstr "Vérification"
+
 # PayPal
 msgid "Pay with PayPal"
 msgstr "Payer avec PayPal"

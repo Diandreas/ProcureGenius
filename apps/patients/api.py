@@ -531,36 +531,46 @@ class PatientQuickInvoiceView(APIView):
 
         # Create invoice
         try:
-            invoice = Invoice.objects.create(
-                organization=request.user.organization,
-                client=patient,
-                invoice_type='healthcare_consultation',
-                title=f"Services - {patient.name}",
-                payment_method=payment_method,
-                created_by=request.user,
-                status='draft'
-            )
+            from django.db import transaction
+            import logging
+            logger = logging.getLogger(__name__)
 
-            # Create invoice items
-            subtotal = Decimal('0')
-            for service in services:
-                price = service.sale_price or Decimal('0')
-                InvoiceItem.objects.create(
-                    invoice=invoice,
-                    product=service,
-                    description=service.description or '',
-                    quantity=1,
-                    unit_price=price,
-                    total_price=price,
-                    tax_rate=Decimal('0')
+            # Use atomic transaction to ensure all operations succeed or fail together
+            with transaction.atomic():
+                # Calculate subtotal first
+                subtotal = Decimal('0')
+                for service in services:
+                    service_price = service.price if service.price else Decimal('0')
+                    subtotal += service_price
+
+                # Create invoice with calculated totals
+                invoice = Invoice.objects.create(
+                    organization=request.user.organization,
+                    client=patient,
+                    invoice_type='healthcare_consultation',
+                    title=f"Services - {patient.name}",
+                    payment_method=payment_method,
+                    created_by=request.user,
+                    status='sent',
+                    subtotal=subtotal,
+                    total_amount=subtotal,
+                    tax_amount=Decimal('0')
                 )
-                subtotal += price
 
-            # Update invoice totals
-            invoice.subtotal = subtotal
-            invoice.total_amount = subtotal
-            invoice.status = 'sent'
-            invoice.save()
+                # Create invoice items
+                for service in services:
+                    service_price = service.price if service.price else Decimal('0')
+                    InvoiceItem.objects.create(
+                        invoice=invoice,
+                        product=service,
+                        description=service.description or '',
+                        quantity=1,
+                        unit_price=service_price,
+                        total_price=service_price,
+                        tax_rate=Decimal('0')
+                    )
+
+            logger.info(f"Invoice {invoice.invoice_number} created successfully for patient {patient.name}")
 
             return Response({
                 'invoice_id': invoice.id,
@@ -571,6 +581,12 @@ class PatientQuickInvoiceView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
+            import logging
+            import traceback
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error creating invoice for patient {patient.id}: {str(e)}")
+            logger.error(traceback.format_exc())
+
             return Response(
                 {'error': f'Error creating invoice: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
