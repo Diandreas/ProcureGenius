@@ -22,8 +22,10 @@ const inventoryAnalyticsAPI = {
   // Get movement analysis
   getMovements: async (params = {}) => {
     const queryParams = new URLSearchParams();
-    if (params.start_date) queryParams.append('start_date', params.start_date);
-    if (params.end_date) queryParams.append('end_date', params.end_date);
+    const startDate = params.start_date ? (typeof params.start_date === 'string' ? params.start_date : params.start_date.format?.('YYYY-MM-DD')) : null;
+    const endDate = params.end_date ? (typeof params.end_date === 'string' ? params.end_date : params.end_date.format?.('YYYY-MM-DD')) : null;
+    if (startDate) queryParams.append('start_date', startDate);
+    if (endDate) queryParams.append('end_date', endDate);
     if (params.movement_type) queryParams.append('movement_type', params.movement_type);
     if (params.product_id) queryParams.append('product_id', params.product_id);
 
@@ -31,11 +33,26 @@ const inventoryAnalyticsAPI = {
     return response.data;
   },
 
+  // Get stock value analytics
+  getStockValue: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.category_id) queryParams.append('category_id', params.category_id);
+    if (params.product_type) queryParams.append('product_type', params.product_type);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.warehouse_id) queryParams.append('warehouse_id', params.warehouse_id);
+
+    const response = await api.get(`/analytics/inventory/stock-value/?${queryParams.toString()}`);
+    return response.data;
+  },
+
   // Get dashboard summary stats
   getDashboardStats: async (params = {}) => {
     const queryParams = new URLSearchParams();
-    if (params.start_date) queryParams.append('start_date', params.start_date);
-    if (params.end_date) queryParams.append('end_date', params.end_date);
+    const startDate = params.start_date ? (typeof params.start_date === 'string' ? params.start_date : params.start_date.format?.('YYYY-MM-DD')) : null;
+    const endDate = params.end_date ? (typeof params.end_date === 'string' ? params.end_date : params.end_date.format?.('YYYY-MM-DD')) : null;
+    if (startDate) queryParams.append('start_date', startDate);
+    if (endDate) queryParams.append('end_date', endDate);
 
     const response = await api.get(`/analytics/inventory/dashboard-stats/?${queryParams.toString()}`);
     return response.data;

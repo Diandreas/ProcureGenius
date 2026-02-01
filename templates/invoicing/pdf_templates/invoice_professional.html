@@ -2,7 +2,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
+    <title>Facture {{ invoice.invoice_number }}</title>
     <style>
         @page {
             {% if paper_size == 'thermal_80' %}
@@ -73,13 +73,13 @@
             <td class="sidebar">
                 <div class="sidebar-logo">{% if logo_base64 %}<img src="{{ logo_base64 }}" alt="Logo">{% endif %}</div>
                 <div class="sidebar-section">
-                    <div class="sidebar-title">{% trans "Issuer" %}</div>
-                    <div class="sidebar-content">{% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}{% if organization.address %}<p>{{ organization.address|striptags|truncatewords:12 }}</p>{% endif %}{% if organization.phone %}<p>{% trans "Tel" %}: {{ organization.phone }}</p>{% endif %}{% if organization.email %}<p>{{ organization.email }}</p>{% endif %}
+                    <div class="sidebar-title">Émetteur</div>
+                    <div class="sidebar-content">{% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}{% if organization.address %}<p>{{ organization.address|striptags|truncatewords:12 }}</p>{% endif %}{% if organization.phone %}<p>Tél: {{ organization.phone }}</p>{% endif %}{% if organization.email %}<p>{{ organization.email }}</p>{% endif %}
                         {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
                             {% if organization.niu %}<p><strong>NIU:</strong> {{ organization.niu }}</p>{% endif %}
                             {% if organization.rc_number %}<p><strong>RC:</strong> {{ organization.rc_number }}</p>{% elif organization.rccm_number %}<p><strong>RCCM:</strong> {{ organization.rccm_number }}</p>{% endif %}
                         {% elif organization.tax_region == 'eu' %}
-                            {% if organization.vat_number %}<p><strong>{% trans "VAT" %}:</strong> {{ organization.vat_number }}</p>{% endif %}
+                            {% if organization.vat_number %}<p><strong>TVA:</strong> {{ organization.vat_number }}</p>{% endif %}
                         {% elif organization.tax_region == 'canada' %}
                             {% if organization.neq %}<p><strong>NEQ:</strong> {{ organization.neq }}</p>{% endif %}
                             {% if organization.gst_number %}<p><strong>GST/HST:</strong> {{ organization.gst_number }}</p>{% endif %}
@@ -89,26 +89,26 @@
                         {% endif %}
                     </div>
                 </div>
-                {% if client %}<div class="sidebar-section"><div class="sidebar-title">{% trans "Client" %}</div><div class="sidebar-content"><p><strong>{{ client.name }}</strong></p>{% if client.email %}<p>{{ client.email }}</p>{% endif %}{% if client.address %}<p>{{ client.address }}</p>{% endif %}</div></div>{% endif %}
-                {% if qr_code_base64 %}<div class="sidebar-qr"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="qr-text">{% trans "Verification code" %}</div></div>{% endif %}
+                {% if client %}<div class="sidebar-section"><div class="sidebar-title">Client</div><div class="sidebar-content"><p><strong>{{ client.name }}</strong></p>{% if client.email %}<p>{{ client.email }}</p>{% endif %}{% if client.address %}<p>{{ client.address }}</p>{% endif %}</div></div>{% endif %}
+                {% if qr_code_base64 %}<div class="sidebar-qr"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="qr-text">Code de vérification</div></div>{% endif %}
             </td>
             <td class="main-content">
-                <div class="content-header"><div class="invoice-title">{% trans "Invoice" %}</div><div class="invoice-subtitle">{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</div><div class="invoice-number-badge">N {{ invoice.invoice_number }}</div>
-                    {% if invoice.status == 'paid' %}<span class="status-badge status-paid">{% trans "Paid" %}</span>
-                    {% elif invoice.status == 'sent' %}<span class="status-badge status-sent">{% trans "Sent" %}</span>
-                    {% elif invoice.status == 'draft' %}<span class="status-badge status-draft">{% trans "Draft" %}</span>
-                    {% elif invoice.status == 'overdue' %}<span class="status-badge status-overdue">{% trans "Overdue" %}</span>{% endif %}
+                <div class="content-header"><div class="invoice-title">Facture</div><div class="invoice-subtitle">{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</div><div class="invoice-number-badge">N {{ invoice.invoice_number }}</div>
+                    {% if invoice.status == 'paid' %}<span class="status-badge status-paid">Payée</span>
+                    {% elif invoice.status == 'sent' %}<span class="status-badge status-sent">Envoyée</span>
+                    {% elif invoice.status == 'draft' %}<span class="status-badge status-draft">Brouillon</span>
+                    {% elif invoice.status == 'overdue' %}<span class="status-badge status-overdue">En retard</span>{% endif %}
                 </div>
-                <table class="info-cards"><tr><td class="info-card"><div class="card-label">{% trans "Information" %}</div><div class="card-text">{% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}{% if issue_date %}<p><strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}</p>{% endif %}</div></td><td style="width: 3%;"></td><td class="info-card"><div class="card-label">{% trans "Terms" %}</div><div class="card-text"><p>{% trans "Payment upon receipt" %}</p><p>{% trans "No discount" %}</p></div></td></tr></table>
-                <div class="items-section"><div class="section-header">{% trans "Service Details" %}</div><table class="items-table"><thead><tr><th style="width: 15%;">{% trans "Reference" %}</th><th style="width: 40%;">{% trans "Description" %}</th><th style="width: 12%;" class="text-center">{% trans "Qty" %}</th><th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th><th style="width: 18%;" class="text-right">{% trans "Total" %}</th></tr></thead>
+                <table class="info-cards"><tr><td class="info-card"><div class="card-label">Information</div><div class="card-text">{% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}{% if issue_date %}<p><strong>Date d'émission:</strong> {{ issue_date|date:"d/m/Y" }}</p>{% endif %}</div></td><td style="width: 3%;"></td><td class="info-card"><div class="card-label">Conditions</div><div class="card-text"><p>Paiement à réception</p><p>Aucune remise</p></div></td></tr></table>
+                <div class="items-section"><div class="section-header">Détails des services</div><table class="items-table"><thead><tr><th style="width: 15%;">Référence</th><th style="width: 40%;">Description</th><th style="width: 12%;" class="text-center">Qté</th><th style="width: 15%;" class="text-right">Prix unitaire</th><th style="width: 18%;" class="text-right">Total</th></tr></thead>
                 <tbody>{% for item in items %}<tr><td>{{ item.product_reference|default:"-" }}</td><td>{{ item.description|default:"-" }}</td><td class="text-center">{{ item.quantity|default:0 }}</td><td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td><td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
-                {% empty %}<tr><td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">{% trans "No items" %}</td></tr>{% endfor %}</tbody></table></div>
-                <div class="totals-area"><table class="totals-table"><tr><td>{% trans "Subtotal" %}</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
-                {% if tax_amount > 0 %}<tr><td>{% trans "Taxes" %}</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
-                <tr class="total-row"><td>{% trans "Total Due" %}</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div>
-                <div class="footer">{% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}<p>{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}{% if organization.phone %}  {% trans "Tel" %}: {{ organization.phone }}{% endif %}</p>
-                    {% if organization.bank_account %}<p><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}{% trans "Account" %}: {{ organization.bank_account }}</p>{% endif %}
-                    <div class="footer-meta">{% trans "Document generated on" %} {% now "d/m/Y à H:i" %}</div>
+                {% empty %}<tr><td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">Aucun article</td></tr>{% endfor %}</tbody></table></div>
+                <div class="totals-area"><table class="totals-table"><tr><td>Sous-total</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
+                {% if tax_amount > 0 %}<tr><td>Taxes</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
+                <tr class="total-row"><td>Total dû</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div>
+                <div class="footer">{% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}<p>{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}{% if organization.phone %}  Tél: {{ organization.phone }}{% endif %}</p>
+                    {% if organization.bank_account %}<p><strong>Banque:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}Compte: {{ organization.bank_account }}</p>{% endif %}
+                    <div class="footer-meta">Document généré le {% now "d/m/Y à H:i" %}</div>
                 </div>
             </td>
         </tr>

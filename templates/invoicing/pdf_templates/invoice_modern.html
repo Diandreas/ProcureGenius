@@ -2,7 +2,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
+    <title>Facture {{ invoice.invoice_number }}</title>
     <style>
         @page {
             {% if paper_size == 'thermal_80' %}
@@ -305,7 +305,7 @@
                 <div class="company-name">{{ organization.name }}</div>
                 <div class="company-info">
                     {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                    {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
+                    {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
                     {% if organization.email %} • {{ organization.email }}{% endif %}
                     <br>
                     {# Affichage conditionnel selon la région fiscale #}
@@ -313,7 +313,7 @@
                         {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }} • {% endif %}
                         {% if organization.rc_number %}<strong>RC:</strong> {{ organization.rc_number }}{% elif organization.rccm_number %}<strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
                     {% elif organization.tax_region == 'eu' %}
-                        {% if organization.vat_number %}<strong>{% trans "TVA" %}:</strong> {{ organization.vat_number }}{% endif %}
+                        {% if organization.vat_number %}<strong>TVA:</strong> {{ organization.vat_number }}{% endif %}
                     {% elif organization.tax_region == 'canada' %}
                         {% if organization.neq %}<strong>NEQ:</strong> {{ organization.neq }}<br>{% endif %}
                         {% if organization.gst_number %}<strong>TPS/TVH:</strong> {{ organization.gst_number }}{% endif %}
@@ -325,17 +325,17 @@
                 {% endif %}
             </td>
             <td class="header-right">
-                <div class="invoice-badge">{% trans "INVOICE" %}</div>
+                <div class="invoice-badge">FACTURE</div>
                 <div class="invoice-meta">
                     <div class="invoice-number">N° {{ invoice.invoice_number }}</div>
                     {% if invoice.status == 'paid' %}
-                    <div style="color: #10b981; font-weight: 600;">{% trans "PAID" %}</div>
+                    <div style="color: #10b981; font-weight: 600;">PAYÉE</div>
                     {% elif invoice.status == 'sent' %}
-                    <div style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600;">{% trans "SENT" %}</div>
+                    <div style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600;">ENVOYÉE</div>
                     {% elif invoice.status == 'draft' %}
-                    <div style="color: #6b7280; font-weight: 600;">{% trans "DRAFT" %}</div>
+                    <div style="color: #6b7280; font-weight: 600;">BROUILLON</div>
                     {% elif invoice.status == 'overdue' %}
-                    <div style="color: #ef4444; font-weight: 600;">{% trans "OVERDUE" %}</div>
+                    <div style="color: #ef4444; font-weight: 600;">EN RETARD</div>
                     {% endif %}
                 </div>
             </td>
@@ -346,17 +346,17 @@
     <table class="info-cards">
         <tr>
             <td class="card">
-                <div class="card-title">{% trans "Invoice Details" %}</div>
+                <div class="card-title">Détails de la facture</div>
                 <div class="card-content">
-                    <strong>{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</strong><br>
+                    <strong>{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</strong><br>
                     {% if invoice.description %}{{ invoice.description }}<br>{% endif %}
-                    {% if issue_date %}<strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}{% endif %}
+                    {% if issue_date %}<strong>Date d'émission:</strong> {{ issue_date|date:"d/m/Y" }}{% endif %}
                 </div>
             </td>
             <td style="width: 4%;"></td>
             {% if client %}
             <td class="card">
-                <div class="card-title">{% trans "Client Information" %}</div>
+                <div class="card-title">Informations client</div>
                 <div class="card-content">
                     <strong>{{ client.name }}</strong><br>
                     {% if client.email %}{{ client.email }}<br>{% endif %}
@@ -369,15 +369,15 @@
 
     <!-- Items Section -->
     <div class="items-section">
-        <div class="section-title">{% trans "Items and Services" %}</div>
+        <div class="section-title">Articles et services</div>
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">{% trans "Reference" %}</th>
-                    <th style="width: 40%;">{% trans "Description" %}</th>
-                    <th style="width: 12%;" class="text-center">{% trans "Quantity" %}</th>
-                    <th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th>
-                    <th style="width: 18%;" class="text-right">{% trans "Total" %}</th>
+                    <th style="width: 15%;">Référence</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 12%;" class="text-center">Quantité</th>
+                    <th style="width: 15%;" class="text-right">Prix unitaire</th>
+                    <th style="width: 18%;" class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -391,7 +391,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">{% trans "No items" %}</td>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">Aucun article</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -402,17 +402,17 @@
     <div class="totals-wrapper">
         <table class="totals-table">
             <tr>
-                <td>{% trans "Subtotal" %}</td>
+                <td>Sous-total</td>
                 <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% if tax_amount > 0 %}
             <tr>
-                <td>{% trans "Taxes" %}</td>
+                <td>Taxes</td>
                 <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% endif %}
             <tr class="grand-total">
-                <td>{% trans "TOTAL DUE" %}</td>
+                <td>TOTAL DÛ</td>
                 <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
         </table>
@@ -425,22 +425,22 @@
                 {% if qr_code_base64 %}
                 <td class="footer-qr">
                     <img src="{{ qr_code_base64 }}" alt="QR Code">
-                    <div class="qr-label">{% trans "Verification" %}</div>
+                    <div class="qr-label">Vérification</div>
                 </td>
                 {% endif %}
                 <td class="footer-info">
                     <div class="footer-text">
                         {% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}
                         {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
-                        {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}
+                        {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                         {# Coordonnées bancaires (optionnel) #}
                         {% if organization.bank_account %}
-                            <br><strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }} • {% trans "Account" %}: {{ organization.bank_account }}
+                            <br><strong>Banque:</strong> {{ organization.bank_name|default:"" }} • Compte: {{ organization.bank_account }}
                         {% endif %}
                     </div>
                     <div class="footer-meta">
-                        {% trans "Document generated on" %} {% now "d/m/Y à H:i" %}
+                        Document généré le {% now "d/m/Y à H:i" %}
                     </div>
                 </td>
             </tr>

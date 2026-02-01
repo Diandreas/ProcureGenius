@@ -2,7 +2,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
+    <title>Facture {{ invoice.invoice_number }}</title>
     <style>
         @page {
             {% if paper_size == 'thermal_58' %}
@@ -173,7 +173,7 @@
                 {% if organization.niu %}NIU: {{ organization.niu }}<br>{% endif %}
                 {% if organization.rc_number %}RC: {{ organization.rc_number }}<br>{% elif organization.rccm_number %}RCCM: {{ organization.rccm_number }}<br>{% endif %}
             {% elif organization.tax_region == 'eu' %}
-                {% if organization.vat_number %}{% trans "VAT" %}: {{ organization.vat_number }}<br>{% endif %}
+                {% if organization.vat_number %}TVA: {{ organization.vat_number }}<br>{% endif %}
             {% elif organization.tax_region == 'canada' %}
                 {% if organization.neq %}NEQ: {{ organization.neq }}<br>{% endif %}
                 {% if organization.gst_number %}TPS/TVH: {{ organization.gst_number }}<br>{% endif %}
@@ -250,7 +250,7 @@
         {% endif %}
 
         <div class="thank-you">
-            {% trans "Thank you for your visit!" %}
+            Merci de votre visite !
         </div>
 
         {% if organization.website %}
