@@ -184,9 +184,9 @@ function Invoices() {
 
     const matchesQuick = !quickFilter || (() => {
       if (quickFilter === 'paid') return invoice.status === 'paid';
-      if (quickFilter === 'unpaid') return invoice.status === 'sent';
-      if (quickFilter === 'overdue') return invoice.status === 'overdue';
+      if (quickFilter === 'cancelled') return invoice.status === 'cancelled';
       if (quickFilter === 'draft') return invoice.status === 'draft';
+      if (quickFilter === 'sent') return invoice.status === 'sent';
       return true;
     })();
 
@@ -224,10 +224,21 @@ function Invoices() {
   // Statistiques
   const totalInvoices = invoices.length;
   const paidInvoices = invoices.filter(i => i.status === 'paid').length;
-  const unpaidInvoices = invoices.filter(i => i.status === 'sent').length;
-  const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
+  const cancelledInvoices = invoices.filter(i => i.status === 'cancelled').length;
+  const sentInvoices = invoices.filter(i => i.status === 'sent').length;
   const draftInvoices = invoices.filter(i => i.status === 'draft').length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+
+  // Payment method stats (based on filtered invoices)
+  const cashAmount = filteredInvoices
+    .filter(i => i.status === 'paid' && (i.payment_method === 'cash' || !i.payment_method))
+    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+  const mobileAmount = filteredInvoices
+    .filter(i => i.status === 'paid' && i.payment_method === 'mobile_money')
+    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+  const filteredPaidTotal = filteredInvoices
+    .filter(i => i.status === 'paid')
+    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
   const InvoiceCard = ({ invoice, index }) => {
     const statusColor = invoice.status === 'paid' ? '#10b981' : invoice.status === 'sent' ? '#2563eb' : '#f59e0b';
@@ -488,29 +499,29 @@ function Invoices() {
             </Card>
           </Grid>
 
-          {/* Impayées */}
+          {/* En attente */}
           <Grid item xs={3} sm={2.4}>
             <Card
-              onClick={() => handleQuickFilterClick('unpaid')}
+              onClick={() => handleQuickFilterClick('sent')}
               sx={{
                 borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
                 border: '1.5px solid',
-                borderColor: quickFilter === 'unpaid' ? 'warning.main' : theme => alpha(theme.palette.warning.main, 0.2),
+                borderColor: quickFilter === 'sent' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
                 cursor: 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
                 overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.warning.main, 0.3)}`,
-                  borderColor: 'warning.main'
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
+                  borderColor: 'info.main'
                 },
                 '&:active': {
                   transform: 'translateY(0) scale(0.98)'
                 },
-                ...(quickFilter === 'unpaid' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.warning.main, 0.4)}`,
+                ...(quickFilter === 'sent' && {
+                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -518,7 +529,7 @@ function Invoices() {
                     left: 0,
                     right: 0,
                     height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
                     borderRadius: '2px 2px 0 0'
                   }
                 })
@@ -532,19 +543,19 @@ function Invoices() {
                 <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
                   <Warning sx={{
                     fontSize: isMobile ? 20 : 24,
-                    color: 'warning.main',
+                    color: 'info.main',
                     mb: isMobile ? 0.25 : 0.5
                   }} />
                   <Typography
                     variant={isMobile ? 'h6' : 'h5'}
                     fontWeight="700"
                     sx={{
-                      color: 'warning.main',
+                      color: 'info.main',
                       fontSize: isMobile ? '1rem' : undefined,
                       lineHeight: 1.2
                     }}
                   >
-                    {unpaidInvoices}
+                    {sentInvoices}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -557,22 +568,22 @@ function Invoices() {
                       lineHeight: 1.2
                     }}
                   >
-                    {t('invoices:filters.unpaid')}
+                    En attente
                   </Typography>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* En retard */}
+          {/* Annulees */}
           <Grid item xs={3} sm={2.4}>
             <Card
-              onClick={() => handleQuickFilterClick('overdue')}
+              onClick={() => handleQuickFilterClick('cancelled')}
               sx={{
                 borderRadius: isMobile ? 2 : 2.5,
                 background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
                 border: '1.5px solid',
-                borderColor: quickFilter === 'overdue' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
+                borderColor: quickFilter === 'cancelled' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
                 cursor: 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
@@ -585,7 +596,7 @@ function Invoices() {
                 '&:active': {
                   transform: 'translateY(0) scale(0.98)'
                 },
-                ...(quickFilter === 'overdue' && {
+                ...(quickFilter === 'cancelled' && {
                   boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
                   '&::before': {
                     content: '""',
@@ -620,7 +631,7 @@ function Invoices() {
                       lineHeight: 1.2
                     }}
                   >
-                    {overdueInvoices}
+                    {cancelledInvoices}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -633,7 +644,7 @@ function Invoices() {
                       lineHeight: 1.2
                     }}
                   >
-                    {t('invoices:filters.overdue')}
+                    Annulees
                   </Typography>
                 </Stack>
               </CardContent>
@@ -724,19 +735,60 @@ function Invoices() {
             <Chip
               label={
                 quickFilter === 'paid' ? t('invoices:filters.paid') :
-                  quickFilter === 'unpaid' ? t('invoices:filters.unpaid') :
-                    quickFilter === 'overdue' ? t('invoices:filters.overdue') :
+                  quickFilter === 'cancelled' ? 'Annulees' :
+                    quickFilter === 'sent' ? 'En attente' :
                       quickFilter === 'draft' ? t('invoices:filters.drafts') : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'paid' ? 'success' :
-                  quickFilter === 'unpaid' ? 'warning' :
-                    quickFilter === 'overdue' ? 'error' :
+                  quickFilter === 'cancelled' ? 'error' :
+                    quickFilter === 'sent' ? 'info' :
                       quickFilter === 'draft' ? 'default' : 'primary'
               }
               size="small"
             />
+          </Box>
+        )}
+
+        {/* Payment method stats */}
+        {filteredInvoices.length > 0 && (
+          <Box sx={{
+            mt: 2,
+            p: 1.5,
+            borderRadius: 2,
+            bgcolor: theme => alpha(theme.palette.success.main, 0.05),
+            border: '1px solid',
+            borderColor: theme => alpha(theme.palette.success.main, 0.15),
+            display: 'flex',
+            gap: 3,
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <AttachMoney sx={{ fontSize: 18, color: 'success.main' }} />
+              <Typography variant="body2" fontWeight="600">
+                Encaisse:
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography variant="body2" color="text.secondary">Cash:</Typography>
+              <Typography variant="body2" fontWeight="700" color="success.main">
+                {formatCurrency(cashAmount)}
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography variant="body2" color="text.secondary">Mobile Money:</Typography>
+              <Typography variant="body2" fontWeight="700" color="info.main">
+                {formatCurrency(mobileAmount)}
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ borderLeft: 1, borderColor: 'divider', pl: 2 }}>
+              <Typography variant="body2" color="text.secondary">Total paye:</Typography>
+              <Typography variant="body2" fontWeight="700">
+                {formatCurrency(filteredPaidTotal)}
+              </Typography>
+            </Stack>
           </Box>
         )}
       </Box>

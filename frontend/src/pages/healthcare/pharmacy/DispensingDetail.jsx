@@ -194,42 +194,15 @@ const DispensingDetail = () => {
                 </Stack>
 
                 <Stack direction="row" spacing={2}>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<ReceiptIcon />}
-                        onClick={() => handleOpenPrintModal('receipt')}
-                    >
-                        Imprimer Reçu
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<PrintIcon />}
-                        onClick={() => handleOpenPrintModal('report')}
-                    >
-                        Rapport Complet
-                    </Button>
                     {dispensing.pharmacy_invoice ? (
-                        <>
-                            <Button
-                                variant="outlined"
-                                color="success"
-                                startIcon={<InvoiceIcon />}
-                                onClick={() => navigate(`/invoices/${dispensing.pharmacy_invoice.id}`)}
-                            >
-                                Voir Facture
-                            </Button>
-                            {dispensing.pharmacy_invoice.status !== 'paid' && (
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    startIcon={<InvoiceIcon />}
-                                    onClick={handleMarkInvoicePaid}
-                                >
-                                    Marquer Payée
-                                </Button>
-                            )}
-                        </>
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            startIcon={<InvoiceIcon />}
+                            onClick={() => navigate(`/invoices/${dispensing.pharmacy_invoice.id}`)}
+                        >
+                            Voir Facture
+                        </Button>
                     ) : (
                         <Button
                             variant="contained"

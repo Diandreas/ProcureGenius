@@ -123,6 +123,7 @@ const Settings = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [aspectRatio, setAspectRatio] = useState(null); // null = libre, 1 = carré, 16/9 = paysage, etc.
 
   // Charger les paramètres au montage
   useEffect(() => {
@@ -239,6 +240,7 @@ const Settings = () => {
         setCropModalOpen(true);
         setCrop({ x: 0, y: 0 });
         setZoom(1);
+        setAspectRatio(null); // Défaut : recadrage libre
       };
       reader.readAsDataURL(file);
     }
@@ -399,6 +401,7 @@ const Settings = () => {
     setImageToCrop(null);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
+    setAspectRatio(null);
   };
 
   /**
@@ -601,6 +604,7 @@ const Settings = () => {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
+                aspect={aspectRatio || undefined}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
@@ -608,6 +612,46 @@ const Settings = () => {
             )}
           </Box>
           <Box sx={{ mt: 3 }}>
+            <Typography gutterBottom sx={{ fontWeight: 600 }}>Format du recadrage</Typography>
+            <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Button
+                variant={aspectRatio === null ? "contained" : "outlined"}
+                size="small"
+                onClick={() => setAspectRatio(null)}
+              >
+                Libre
+              </Button>
+              <Button
+                variant={aspectRatio === 1 ? "contained" : "outlined"}
+                size="small"
+                onClick={() => setAspectRatio(1)}
+              >
+                Carré (1:1)
+              </Button>
+              <Button
+                variant={aspectRatio === 16/9 ? "contained" : "outlined"}
+                size="small"
+                onClick={() => setAspectRatio(16/9)}
+              >
+                Paysage (16:9)
+              </Button>
+              <Button
+                variant={aspectRatio === 4/3 ? "contained" : "outlined"}
+                size="small"
+                onClick={() => setAspectRatio(4/3)}
+              >
+                Standard (4:3)
+              </Button>
+              <Button
+                variant={aspectRatio === 3/2 ? "contained" : "outlined"}
+                size="small"
+                onClick={() => setAspectRatio(3/2)}
+              >
+                Photo (3:2)
+              </Button>
+            </Stack>
+          </Box>
+          <Box sx={{ mt: 2 }}>
             <Typography gutterBottom>{t('settings:logo.zoom')}</Typography>
             <Slider
               value={zoom}

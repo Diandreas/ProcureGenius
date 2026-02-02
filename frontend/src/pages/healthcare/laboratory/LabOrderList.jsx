@@ -23,6 +23,7 @@ import {
     Search as SearchIcon,
     Science as ScienceIcon,
     AccessTime as PendingIcon,
+    AccessTime,
     Autorenew as ProcessingIcon,
     CheckCircle as CompletedIcon,
     Error as UrgentIcon,
@@ -72,9 +73,9 @@ const LabOrderList = () => {
 
             // Map quickFilter to API params (only if no custom date range)
             if (!startDate && !endDate) {
-                if (quickFilter === 'pending') params.status_in = 'pending,sample_collected,received';
-                else if (quickFilter === 'processing') params.status = 'analyzing';
-                else if (quickFilter === 'completed') params.status_in = 'results_entered,verified,results_delivered';
+                if (quickFilter === 'pending') params.status_in = 'pending,sample_collected';
+                else if (quickFilter === 'processing') params.status = 'in_progress';
+                else if (quickFilter === 'completed') params.status_in = 'completed,results_ready,results_delivered';
                 else if (quickFilter === 'urgent') params.priority = 'urgent';
             }
 
@@ -135,9 +136,9 @@ const LabOrderList = () => {
             // Build params based on current filter
             let params = {};
             if (quickFilter === 'pending') {
-                params.status = 'pending,sample_collected,received';
+                params.status = 'pending,sample_collected';
             } else if (quickFilter === 'processing') {
-                params.status = 'analyzing';
+                params.status = 'in_progress';
             } else if (quickFilter === 'urgent') {
                 params.priority = 'urgent';
             }
@@ -203,116 +204,270 @@ const LabOrderList = () => {
         const colors = {
             pending: 'default',
             sample_collected: 'info',
-            received: 'info',
-            analyzing: 'warning',
-            results_entered: 'primary',
-            verified: 'success',
+            in_progress: 'warning',
+            completed: 'primary',
+            results_ready: 'success',
             results_delivered: 'success',
             cancelled: 'error'
         };
         return colors[status] || 'default';
     };
 
-    const LabOrderCard = ({ order, index }) => (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
-        >
-            <Card
-                sx={{
-                    borderRadius: 3,
-                    height: '100%',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    background: theme => `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: `0 12px 24px -10px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        borderColor: 'primary.main',
-                        '& .action-icon': { transform: 'translateX(4px)' }
-                    }
-                }}
-                onClick={() => navigate(`/healthcare/laboratory/${order.id}`)}
+    const getStatusLabel = (status) => {
+        const labels = {
+            pending: 'En attente',
+            sample_collected: 'Échantillon prélevé',
+            in_progress: 'En cours',
+            completed: 'Terminé',
+            results_ready: 'Résultats prêts',
+            results_delivered: 'Résultats livrés',
+            cancelled: 'Annulé'
+        };
+        return labels[status] || status;
+    };
+
+    const getSampleTypeColor = (sampleType) => {
+        const colors = {
+            blood: '#dc2626', // Rouge sang
+            urine: '#f59e0b', // Jaune/Orange
+            stool: '#92400e', // Marron
+            serum: '#dc2626', // Rouge
+            plasma: '#c026d3', // Violet
+            other: '#6b7280' // Gris
+        };
+        return colors[sampleType] || colors.other;
+    };
+
+    const LabOrderCard = ({ order, index }) => {
+        const testsToShow = order.items?.slice(0, 3) || [];
+        const remainingTests = (order.items?.length || 0) - testsToShow.length;
+
+        return (
+            <motion.div
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-                {/* Priority Stripe */}
-                {order.priority === 'urgent' && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            width: 4,
-                            background: theme.palette.error.main
-                        }}
-                    />
-                )}
-
-                <CardContent sx={{ p: 2, pl: order.priority === 'urgent' ? 3 : 2 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary" fontWeight="600" sx={{ letterSpacing: 0.5 }}>
-                                {order.order_number}
-                            </Typography>
-                            <Typography variant="h6" fontWeight="700" sx={{ fontSize: '1.1rem', mt: 0.5 }}>
-                                {order.patient_name}
-                            </Typography>
-                        </Box>
-                        <Chip
-                            label={order.status} // You might want to translate this
-                            size="small"
-                            color={getStatusColor(order.status)}
-                            variant={['pending', 'sample_collected'].includes(order.status) ? 'outlined' : 'filled'}
-                            sx={{ height: 24, fontSize: '0.75rem', fontWeight: 600 }}
+                <Card
+                    sx={{
+                        borderRadius: 3,
+                        height: '100%',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        background: theme => `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+                        border: '2px solid',
+                        borderColor: order.priority === 'urgent' ? 'error.main' : 'divider',
+                        boxShadow: order.priority === 'urgent' ? `0 0 0 1px ${alpha(theme.palette.error.main, 0.1)}` : 'none',
+                        '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: order.priority === 'urgent'
+                                ? `0 12px 24px -10px ${alpha(theme.palette.error.main, 0.4)}`
+                                : `0 12px 24px -10px ${alpha(theme.palette.primary.main, 0.2)}`,
+                            borderColor: order.priority === 'urgent' ? 'error.dark' : 'primary.main',
+                            '& .action-icon': { transform: 'translateX(4px)' }
+                        }
+                    }}
+                    onClick={() => navigate(`/healthcare/laboratory/${order.id}`)}
+                >
+                    {/* Priority Banner */}
+                    {order.priority === 'urgent' && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: 6,
+                                background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
+                                boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.3)}`
+                            }}
                         />
-                    </Stack>
+                    )}
 
-                    <Stack spacing={1.5}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <ScienceIcon color="action" sx={{ fontSize: 18 }} />
-                            <Typography variant="body2" color="text.primary">
-                                {order.items_count || (order.items && order.items.length) || 0} Test(s)
-                            </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CalendarToday color="action" sx={{ fontSize: 18 }} />
-                            <Typography variant="body2" color="text.secondary">
-                                {new Date(order.order_date).toLocaleDateString()}
-                            </Typography>
-                        </Box>
-
-                    </Stack>
-
-                    <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Tooltip title="Imprimer Fiche Paillasse">
-                            <IconButton
+                    <CardContent sx={{ p: 2.5, pt: order.priority === 'urgent' ? 3 : 2.5 }}>
+                        {/* Header */}
+                        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                            <Box sx={{ flex: 1 }}>
+                                <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                            color: 'primary.main',
+                                            px: 1,
+                                            py: 0.25,
+                                            borderRadius: 1,
+                                            fontWeight: 700,
+                                            letterSpacing: 0.5,
+                                            fontFamily: 'monospace'
+                                        }}
+                                    >
+                                        {order.order_number}
+                                    </Typography>
+                                    {order.priority === 'urgent' && (
+                                        <Chip
+                                            icon={<UrgentIcon />}
+                                            label="URGENT"
+                                            size="small"
+                                            color="error"
+                                            sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                        />
+                                    )}
+                                </Stack>
+                                <Typography variant="h6" fontWeight="700" sx={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <PersonIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                                    {order.patient_name}
+                                </Typography>
+                            </Box>
+                            <Chip
+                                label={getStatusLabel(order.status)}
                                 size="small"
-                                onClick={(e) => handlePrintBenchSheet(e, order.id)}
+                                color={getStatusColor(order.status)}
+                                variant={['pending', 'sample_collected'].includes(order.status) ? 'outlined' : 'filled'}
                                 sx={{
-                                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15) }
+                                    height: 26,
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    minWidth: 110,
+                                    textAlign: 'center'
                                 }}
-                            >
-                                <PrintIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
-                        </Tooltip>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography variant="caption" color="text.secondary">
-                                {order.priority === 'urgent' ? 'Urgent' : 'Normal'}
-                            </Typography>
-                            <ArrowForward className="action-icon" sx={{ fontSize: 18, color: 'primary.main', transition: 'transform 0.2s' }} />
+                            />
+                        </Stack>
+
+                        {/* Tests List */}
+                        <Box sx={{
+                            bgcolor: alpha(theme.palette.primary.main, 0.03),
+                            borderRadius: 2,
+                            p: 1.5,
+                            mb: 2,
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.primary.main, 0.1)
+                        }}>
+                            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                                <ScienceIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                                <Typography variant="subtitle2" fontWeight="700" color="primary">
+                                    {order.items?.length || 0} Examen{(order.items?.length || 0) > 1 ? 's' : ''}
+                                </Typography>
+                            </Stack>
+
+                            {testsToShow.length > 0 && (
+                                <Stack spacing={0.5}>
+                                    {testsToShow.map((item, idx) => (
+                                        <Box
+                                            key={idx}
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                py: 0.5
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    width: 6,
+                                                    height: 6,
+                                                    borderRadius: '50%',
+                                                    bgcolor: getSampleTypeColor(item.sample_type || 'other'),
+                                                    boxShadow: `0 0 4px ${getSampleTypeColor(item.sample_type || 'other')}`
+                                                }}
+                                            />
+                                            <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                                                {item.lab_test_name || item.name}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    {remainingTests > 0 && (
+                                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', pl: 2 }}>
+                                            + {remainingTests} autre{remainingTests > 1 ? 's' : ''}
+                                        </Typography>
+                                    )}
+                                </Stack>
+                            )}
                         </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-        </motion.div>
-    );
+
+                        {/* Footer Info */}
+                        <Stack direction="row" spacing={2} mb={2}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary" fontWeight="600">
+                                    {new Date(order.order_date).toLocaleDateString('fr-FR', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })}
+                                </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <AccessTime sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary" fontWeight="600">
+                                    {new Date(order.order_date).toLocaleTimeString('fr-FR', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </Typography>
+                            </Box>
+                        </Stack>
+
+                        {/* Actions */}
+                        <Box sx={{
+                            pt: 2,
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <Tooltip title="Imprimer Fiche Paillasse">
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => handlePrintBenchSheet(e, order.id)}
+                                        sx={{
+                                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                            color: 'primary.main',
+                                            '&:hover': {
+                                                bgcolor: alpha(theme.palette.primary.main, 0.15),
+                                                transform: 'scale(1.05)'
+                                            }
+                                        }}
+                                    >
+                                        <PrintIcon sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Voir Résultats">
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: alpha(theme.palette.success.main, 0.08),
+                                            color: 'success.main',
+                                            '&:hover': {
+                                                bgcolor: alpha(theme.palette.success.main, 0.15),
+                                                transform: 'scale(1.05)'
+                                            }
+                                        }}
+                                    >
+                                        <DescriptionIcon sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                </Tooltip>
+                            </Stack>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Typography variant="caption" color="primary.main" fontWeight="700">
+                                    Voir détails
+                                </Typography>
+                                <ArrowForward
+                                    className="action-icon"
+                                    sx={{ fontSize: 18, color: 'primary.main', transition: 'transform 0.2s' }}
+                                />
+                            </Box>
+                        </Box>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        );
+    };
 
     const StatCard = ({ title, icon: Icon, color, filterKey, isActive }) => (
         <Card

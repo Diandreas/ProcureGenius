@@ -154,9 +154,16 @@ const DispensingForm = () => {
                 notes: formData.notes
             };
 
-            await pharmacyAPI.createDispensing(payload);
+            const response = await pharmacyAPI.createDispensing(payload);
             enqueueSnackbar('Dispensation enregistrée avec succès', { variant: 'success' });
-            navigate('/healthcare/pharmacy/dispensing');
+
+            // Redirect to the automatically generated invoice if it exists
+            if (response.pharmacy_invoice && response.pharmacy_invoice.id) {
+                enqueueSnackbar('Redirection vers la facture...', { variant: 'info' });
+                navigate(`/invoices/${response.pharmacy_invoice.id}`);
+            } else {
+                navigate('/healthcare/pharmacy/dispensing');
+            }
 
         } catch (error) {
             console.error('Error dispensing:', error);

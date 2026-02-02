@@ -104,31 +104,48 @@ class LabOrderListView(generics.ListAPIView):
     """List all lab orders with filtering"""
     serializer_class = LabOrderListSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_fields = ['status', 'priority', 'patient']
+    search_fields = ['order_number', 'patient__name', 'patient__patient_number']
     ordering_fields = ['order_date', 'created_at']
     ordering = ['-order_date']
-    
+
     def get_queryset(self):
+        from django.db.models import Q
+
         queryset = LabOrder.objects.filter(
             organization=self.request.user.organization
         ).select_related('patient').prefetch_related('items', 'items__lab_test')
-        
-        # Filter by date
+
+        # Filter by multiple statuses (status_in parameter)
+        status_in = self.request.query_params.get('status_in')
+        if status_in:
+            statuses = [s.strip() for s in status_in.split(',')]
+            queryset = queryset.filter(status__in=statuses)
+
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date:
+            queryset = queryset.filter(order_date__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(order_date__date__lte=end_date)
+
+        # Filter by exact date (legacy support)
         date = self.request.query_params.get('date')
         if date:
             queryset = queryset.filter(order_date__date=date)
-        
-        # Today only
+
+        # Today only (legacy support)
         today_only = self.request.query_params.get('today', 'false')
         if today_only.lower() == 'true':
             queryset = queryset.filter(order_date__date=timezone.now().date())
-        
-        # Pending only (not completed or cancelled)
+
+        # Pending only (legacy support)
         pending_only = self.request.query_params.get('pending', 'false')
         if pending_only.lower() == 'true':
             queryset = queryset.exclude(status__in=['results_delivered', 'cancelled'])
-        
+
         return queryset
 
 
@@ -246,11 +263,14 @@ class LabOrderCreateView(APIView):
             # Link invoice to lab order
             order.lab_invoice = invoice
             order.save(update_fields=['lab_invoice'])
-            
+
         except Exception as e:
             # Don't fail the order if invoice creation fails
             print(f"Error creating lab invoice: {e}")
-        
+
+        # Refresh order from database to ensure all relationships are loaded
+        order.refresh_from_db()
+
         return Response(
             LabOrderSerializer(order).data,
             status=status.HTTP_201_CREATED

@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Box, Grid, Typography, Container, Paper, alpha } from '@mui/material';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
 import {
   Science as ScienceIcon,
   Inventory as InventoryIcon,
   AttachMoney as MoneyIcon,
-  People as PeopleIcon,
   TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon
+  Schedule as ScheduleIcon,
+  Assessment as AssessmentIcon,
+  ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
 import StatCard from '../components/analytics/StatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
-import ActivityIndicatorsCard from '../components/analytics/ActivityIndicatorsCard';
 import healthcareAnalyticsAPI from '../services/healthcareAnalyticsAPI';
 import inventoryAnalyticsAPI from '../services/inventoryAnalyticsAPI';
 import dayjs from 'dayjs';
@@ -199,10 +198,44 @@ const Dashboard = () => {
           </Grid>
         </Paper>
 
-        {/* Activity Indicators - Detailed tracking */}
-        <Box mb={4}>
-          <ActivityIndicatorsCard dateRange={dateRange} />
-        </Box>
+        {/* Activity Indicators - Link to detailed page */}
+        <Paper
+          elevation={0}
+          onClick={() => navigate('/healthcare/analytics/activity-indicators')}
+          sx={{
+            p: 2.5,
+            mb: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.08)} 0%, ${alpha(theme.palette.success.light, 0.03)} 100%)`,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: 'success.main',
+              boxShadow: theme => `0 4px 12px ${alpha(theme.palette.success.main, 0.15)}`,
+              transform: 'translateY(-1px)'
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: theme => alpha(theme.palette.success.main, 0.1) }}>
+              <AssessmentIcon sx={{ fontSize: 28, color: 'success.main' }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight="700" color="success.main">
+                Indicateurs de Suivi d'Activite
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Consultations, patients, actes medicaux, performance, finances - avec filtres avances
+              </Typography>
+            </Box>
+          </Box>
+          <ArrowForwardIcon sx={{ fontSize: 24, color: 'success.main' }} />
+        </Paper>
 
         {/* Inventory Module */}
         <Paper

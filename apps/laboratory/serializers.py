@@ -207,14 +207,29 @@ class LabOrderSerializer(serializers.ModelSerializer):
         return None
 
 
+class LabOrderListItemSerializer(serializers.ModelSerializer):
+    """Minimal item info for list view"""
+    lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    sample_type = serializers.CharField(source='lab_test.sample_type', read_only=True)
+
+    class Meta:
+        model = LabOrderItem
+        fields = ['id', 'lab_test_name', 'sample_type']
+
+
 class LabOrderListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for order lists"""
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
-    tests_count = serializers.IntegerField(read_only=True)
+    tests_count = serializers.SerializerMethodField()
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    
+    items = LabOrderListItemSerializer(many=True, read_only=True)
+
+    def get_tests_count(self, obj):
+        """Get count of items"""
+        return obj.items.count() if hasattr(obj, 'items') else 0
+
     class Meta:
         model = LabOrder
         fields = [
@@ -230,6 +245,7 @@ class LabOrderListSerializer(serializers.ModelSerializer):
             'tests_count',
             'total_price',
             'notification_sent',
+            'items',
         ]
 
 

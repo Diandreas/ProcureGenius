@@ -157,6 +157,9 @@ const PatientForm = () => {
                             payment_method: paymentMethod
                         });
                         enqueueSnackbar(`Patient mis à jour et facture créée: ${invoiceResponse.invoice_number}`, { variant: 'success' });
+                        // Redirect to invoice page
+                        navigate(`/invoices/${invoiceResponse.invoice_id}`);
+                        return;
                     } catch (invoiceError) {
                         console.error('Error creating invoice:', invoiceError);
                         enqueueSnackbar('Patient mis à jour mais erreur lors de la création de la facture', { variant: 'warning' });
@@ -177,6 +180,9 @@ const PatientForm = () => {
                             payment_method: paymentMethod
                         });
                         enqueueSnackbar(`Patient créé avec succès et facture ${invoiceResponse.invoice_number} générée (${invoiceResponse.total_amount} FCFA)`, { variant: 'success' });
+                        // Redirect to invoice page
+                        navigate(`/invoices/${invoiceResponse.invoice_id}`);
+                        return;
                     } catch (invoiceError) {
                         console.error('Error creating invoice:', invoiceError);
                         enqueueSnackbar('Patient créé mais erreur lors de la création de la facture', { variant: 'warning' });
@@ -185,7 +191,7 @@ const PatientForm = () => {
                     enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
                 }
 
-                // Redirect to patient detail page after creation
+                // Redirect to patient detail page after creation (only if no invoice was created)
                 navigate(`/healthcare/patients/${response.id}`);
             }
         } catch (error) {
@@ -405,7 +411,7 @@ const PatientForm = () => {
                                         <Box>
                                             <Typography variant="body1">{option.name}</Typography>
                                             <Typography variant="caption" color="text.secondary">
-                                                {option.description} • {option.sale_price ? `${option.sale_price} FCFA` : 'Prix non défini'}
+                                                {option.description} • {parseFloat(option.price) > 0 ? `${option.price} FCFA` : 'Prix non défini'}
                                             </Typography>
                                         </Box>
                                     </li>
@@ -467,7 +473,7 @@ const PatientForm = () => {
                                                         </TableCell>
                                                         <TableCell align="right">
                                                             <Typography variant="body2" fontWeight="bold">
-                                                                {service.sale_price ? `${service.sale_price} FCFA` : '-'}
+                                                                {parseFloat(service.price) > 0 ? `${service.price} FCFA` : '-'}
                                                             </Typography>
                                                         </TableCell>
                                                         <TableCell align="center">
@@ -495,7 +501,7 @@ const PatientForm = () => {
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         <Typography variant="h6" color="primary" fontWeight="bold">
-                                                            {selectedServices.reduce((sum, s) => sum + (parseFloat(s.sale_price) || 0), 0).toFixed(0)} FCFA
+                                                            {selectedServices.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0).toFixed(0)} FCFA
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell />

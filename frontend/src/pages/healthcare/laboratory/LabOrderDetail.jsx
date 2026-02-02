@@ -362,7 +362,14 @@ const LabOrderDetail = () => {
 
             const newOrder = await laboratoryAPI.createOrder(orderData);
             enqueueSnackbar('Commande créée avec succès', { variant: 'success' });
-            navigate(`/healthcare/laboratory/${newOrder.id}`);
+
+            // Redirect to the automatically generated invoice if it exists
+            if (newOrder.lab_invoice && newOrder.lab_invoice.id) {
+                enqueueSnackbar('Redirection vers la facture...', { variant: 'info' });
+                navigate(`/invoices/${newOrder.lab_invoice.id}`);
+            } else {
+                navigate(`/healthcare/laboratory/${newOrder.id}`);
+            }
         } catch (error) {
             console.error('Error creating order:', error);
             enqueueSnackbar('Erreur lors de la création de la commande', { variant: 'error' });
@@ -605,28 +612,15 @@ const LabOrderDetail = () => {
                             </Button>
 
                             {order.lab_invoice ? (
-                                <>
-                                    <Button
-                                        variant="outlined"
-                                        color="success"
-                                        startIcon={<InvoiceIcon />}
-                                        onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
-                                        sx={{ mr: 1 }}
-                                    >
-                                        Voir Facture
-                                    </Button>
-                                    {order.lab_invoice.status !== 'paid' && (
-                                        <Button
-                                            variant="contained"
-                                            color="success"
-                                            startIcon={<InvoiceIcon />}
-                                            onClick={() => setPaymentModalOpen(true)}
-                                            sx={{ mr: 1 }}
-                                        >
-                                            Marquer Payée
-                                        </Button>
-                                    )}
-                                </>
+                                <Button
+                                    variant="outlined"
+                                    color="success"
+                                    startIcon={<InvoiceIcon />}
+                                    onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Voir Facture
+                                </Button>
                             ) : (
                                 <Button
                                     variant="contained"

@@ -247,6 +247,15 @@ const ConsultationForm = () => {
 
         setLoading(true);
         try {
+            // Auto-stop timer if not already stopped when completing consultation
+            let finalEndedAt = formData.ended_at;
+            if (status === 'completed' && formData.started_at && !formData.ended_at) {
+                finalEndedAt = new Date().toISOString();
+                // Update local state for UI feedback
+                setFormData(prev => ({ ...prev, ended_at: finalEndedAt }));
+                enqueueSnackbar('⏱️ Timer arrêté automatiquement', { variant: 'info' });
+            }
+
             // Clean payload - only send valid model fields
             const payload = {
                 patient: formData.patient?.id,
@@ -261,7 +270,7 @@ const ConsultationForm = () => {
                 weight: formData.weight || null,
                 height: formData.height || null,
                 started_at: formData.started_at,
-                ended_at: formData.ended_at
+                ended_at: finalEndedAt
             };
 
             // Remove null/empty values (but keep started_at and ended_at even if undefined)
@@ -314,7 +323,8 @@ const ConsultationForm = () => {
 
             enqueueSnackbar('Consultation enregistrée', { variant: 'success' });
             if (status === 'completed') {
-                navigate('/healthcare/consultations');
+                // Redirect to detail page instead of list
+                navigate(`/healthcare/consultations/${consultId}`);
             } else if (isNew) {
                 navigate(`/healthcare/consultations/${consultId}/edit`); // Stay on page
             }
