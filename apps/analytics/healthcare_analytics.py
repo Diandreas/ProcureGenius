@@ -184,8 +184,12 @@ class DemographicAnalysisView(APIView):
         if end_date:
             queryset = queryset.filter(order_date__lte=end_date)
 
-        # By gender
-        by_gender = queryset.values('patient__gender').annotate(
+        # By gender (exclude unspecified)
+        by_gender = queryset.filter(
+            patient__gender__isnull=False
+        ).exclude(
+            patient__gender=''
+        ).values('patient__gender').annotate(
             count=Count('id'),
             revenue=Sum('total_price')
         ).order_by('-count')
@@ -193,20 +197,22 @@ class DemographicAnalysisView(APIView):
         gender_data = []
         for g in by_gender:
             gender_data.append({
-                'gender': g['patient__gender'] or 'Non Spécifié',
+                'gender': g['patient__gender'],
                 'count': g['count'],
                 'revenue': float(g['revenue']) if g['revenue'] else 0
             })
 
-        # Calculate age groups
+        # Calculate age groups with refined ranges
         current_year = date.today().year
         queryset_with_age = queryset.annotate(
             age=current_year - ExtractYear('patient__date_of_birth'),
             age_group=Case(
-                When(age__lt=13, then=Value('0-12 (Enfants)')),
-                When(age__lt=18, then=Value('13-17 (Adolescents)')),
-                When(age__lt=65, then=Value('18-64 (Adultes)')),
-                default=Value('65+ (Seniors)'),
+                When(age__lt=12, then=Value('0-11 ans (Enfants)')),
+                When(age__lt=18, then=Value('12-17 ans (Adolescents)')),
+                When(age__lt=25, then=Value('18-24 ans (Jeunes adultes)')),
+                When(age__lt=50, then=Value('25-49 ans (Adultes)')),
+                When(age__lt=65, then=Value('50-64 ans (Adultes matures)')),
+                default=Value('65+ ans (Seniors)'),
                 output_field=CharField()
             )
         )
@@ -224,8 +230,12 @@ class DemographicAnalysisView(APIView):
                 'revenue': float(a['revenue']) if a['revenue'] else 0
             })
 
-        # Combined: gender and age group
-        by_gender_and_age = queryset_with_age.values('patient__gender', 'age_group').annotate(
+        # Combined: gender and age group (exclude unspecified gender)
+        by_gender_and_age = queryset_with_age.filter(
+            patient__gender__isnull=False
+        ).exclude(
+            patient__gender=''
+        ).values('patient__gender', 'age_group').annotate(
             count=Count('id'),
             revenue=Sum('total_price')
         ).order_by('patient__gender', 'age_group')
@@ -233,7 +243,7 @@ class DemographicAnalysisView(APIView):
         gender_age_data = []
         for ga in by_gender_and_age:
             gender_age_data.append({
-                'gender': ga['patient__gender'] or 'Non Spécifié',
+                'gender': ga['patient__gender'],
                 'age_group': ga['age_group'],
                 'count': ga['count'],
                 'revenue': float(ga['revenue']) if ga['revenue'] else 0

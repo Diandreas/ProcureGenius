@@ -187,6 +187,18 @@ class OrganizationSettings(models.Model):
         default='BC-',
         verbose_name=_("Préfixe des bons de commande")
     )
+    default_invoice_template = models.CharField(
+        max_length=50,
+        default='standard',
+        choices=[
+            ('standard', _('Standard')),
+            ('modern', _('Moderne')),
+            ('classic', _('Classique')),
+            ('thermal', _('Thermique (Ticket)')),
+        ],
+        verbose_name=_("Modèle de facture par défaut"),
+        help_text=_("Template utilisé par défaut pour l'impression des factures")
+    )
     invoice_terms = models.CharField(
         max_length=100,
         default='Net 30',

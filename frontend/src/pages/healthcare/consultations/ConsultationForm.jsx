@@ -66,7 +66,7 @@ const ConsultationForm = () => {
         // Vitals
         temperature: '',
         blood_pressure: '',
-        heart_rate: '',
+        blood_glucose: '',
         respiratory_rate: '',
         weight: '',
         height: '',
@@ -170,7 +170,7 @@ const ConsultationForm = () => {
                 treatment_plan: data.treatment_plan || '',
                 temperature: data.temperature || '',
                 blood_pressure: data.blood_pressure || '',
-                heart_rate: data.heart_rate || '',
+                blood_glucose: data.blood_glucose || '',
                 respiratory_rate: data.respiratory_rate || '',
                 weight: data.weight || '',
                 height: data.height || '',
@@ -265,7 +265,7 @@ const ConsultationForm = () => {
                 diagnosis: formData.diagnosis || '',
                 treatment_plan: formData.treatment_plan || '',
                 temperature: formData.temperature || null,
-                heart_rate: formData.heart_rate || null,
+                blood_glucose: formData.blood_glucose || null,
                 respiratory_rate: formData.respiratory_rate || null,
                 weight: formData.weight || null,
                 height: formData.height || null,
@@ -432,11 +432,13 @@ const ConsultationForm = () => {
                                 </Grid>
                                 <Grid item xs={6}>
                                     <TextField
-                                        label="Pouls (bpm)"
-                                        name="heart_rate"
-                                        value={formData.heart_rate}
+                                        label="Glycémie (g/L)"
+                                        name="blood_glucose"
+                                        value={formData.blood_glucose}
                                         onChange={handleInputChange}
                                         size="small"
+                                        type="number"
+                                        inputProps={{ step: "0.01" }}
                                         fullWidth
                                     />
                                 </Grid>

@@ -137,10 +137,12 @@ class PatientVisit(models.Model):
         blank=True, 
         verbose_name=_("Diastolique (mmHg)")
     )
-    vitals_heart_rate = models.IntegerField(
-        null=True, 
-        blank=True, 
-        verbose_name=_("Fréquence Cardiaque (bpm)")
+    vitals_blood_glucose = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Glycémie (g/L)")
     )
     vitals_spo2 = models.IntegerField(
         null=True, 

@@ -220,7 +220,7 @@ const ConsultationDetail = () => {
                                 <Grid item xs={6}><Typography variant="body2"><strong>TA:</strong> {consultation.blood_pressure || '-'}</Typography></Grid>
                                 <Grid item xs={6}><Typography variant="body2"><strong>T°:</strong> {consultation.temperature || '-'} °C</Typography></Grid>
                                 <Grid item xs={6}><Typography variant="body2"><strong>Poids:</strong> {consultation.weight || '-'} kg</Typography></Grid>
-                                <Grid item xs={6}><Typography variant="body2"><strong>Pls:</strong> {consultation.heart_rate || '-'} bpm</Typography></Grid>
+                                <Grid item xs={6}><Typography variant="body2"><strong>Glyc:</strong> {consultation.blood_glucose || '-'} g/L</Typography></Grid>
                             </Grid>
                         </CardContent>
                     </Card>

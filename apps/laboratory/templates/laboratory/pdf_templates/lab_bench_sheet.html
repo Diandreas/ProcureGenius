@@ -115,15 +115,13 @@
         <div style="display: table-cell; width: 50%;">
             <div class="patient-info">
                 <div><span class="label">Patient :</span> <span class="value">{{ patient.full_name }}</span></div>
-                <div><span class="label">ID :</span> <span class="value">{{ patient.patient_id }}</span></div>
-                <div><span class="label">Sexe / Âge :</span> <span class="value">{{ patient.get_gender_display }} / {{
-                        patient.age }} ans</span></div>
+                <div><span class="label">ID :</span> <span class="value">{{ patient.patient_id|default:"Non attribué" }}</span></div>
+                <div><span class="label">Sexe / Âge :</span> <span class="value">{{ patient.get_gender_display|default:"Non spécifié" }} / {% if patient.age %}{{ patient.age }} ans{% else %}Âge non renseigné{% endif %}</span></div>
             </div>
         </div>
         <div style="display: table-cell; width: 50%; text-align: right;">
             <div class="patient-info">
-                <div><span class="label">Date de Prélèvement :</span> <span class="value">{{
-                        lab_order.created_at|date:"d/m/Y H:i" }}</span></div>
+                <div><span class="label">Date de Prélèvement :</span> <span class="value">{% if lab_order.sample_collected_at %}{{ lab_order.sample_collected_at|date:"d/m/Y H:i" }}{% else %}{{ lab_order.created_at|date:"d/m/Y H:i" }}{% endif %}</span></div>
                 <div><span class="label">Priorité :</span> <span class="value">{% if lab_order.is_urgent %}URGENT{% else
                         %}Normal{% endif %}</span></div>
                 {% if lab_order.prescribing_doctor %}
@@ -153,13 +151,10 @@
         {% for item in category.list %}
         <tr>
             <td>
-                <div style="font-weight: 700;">{{ item.lab_test.name }}</div>
-                {% if item.lab_test.test_code %}<div style="font-size: 8pt; color: #777;">{{ item.lab_test.test_code }}
-                </div>{% endif %}
+                <div style="font-weight: 700;">{{ item.lab_test.name }}{% if item.lab_test.test_code %} <span style="font-size: 8pt; color: #777; font-weight: 400;">[{{ item.lab_test.test_code }}]</span>{% endif %}</div>
             </td>
             <td>
-                {{ item.lab_test.get_sample_type_display }}
-                {% if item.lab_test.unit_of_measurement %}<br><small>({{ item.lab_test.unit_of_measurement }})</small>{% endif %}
+                {{ item.lab_test.get_sample_type_display }}{% if item.lab_test.unit_of_measurement %} <span style="font-size: 9pt; color: #666;">({{ item.lab_test.unit_of_measurement }})</span>{% endif %}
             </td>
             <td>
                 <div class="work-box"></div>

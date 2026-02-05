@@ -348,10 +348,25 @@ class Client(models.Model):
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
     
     @property
+    def full_name(self):
+        """Alias property for template compatibility"""
+        return self.name
+
+    @property
+    def age(self):
+        """Age property for template compatibility"""
+        return self.get_age()
+
+    @property
+    def patient_id(self):
+        """Alias for patient_number for template compatibility"""
+        return self.patient_number or ""
+
+    @property
     def is_patient(self):
         """Check if this client is a patient"""
         return self.client_type in ['patient', 'both']
-    
+
     @property
     def is_b2b(self):
         """Check if this client is B2B"""

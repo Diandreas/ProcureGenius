@@ -27,7 +27,7 @@ const TriageModal = ({ open, onClose, visit, onVitalsSaved }) => {
         vitals_temperature: visit?.vitals_temperature || '',
         vitals_systolic: visit?.vitals_systolic || '',
         vitals_diastolic: visit?.vitals_diastolic || '',
-        vitals_heart_rate: visit?.vitals_heart_rate || '',
+        vitals_blood_glucose: visit?.vitals_blood_glucose || '',
         vitals_spo2: visit?.vitals_spo2 || '',
         notes: visit?.notes || '' // Allow updating notes during triage
     });
@@ -158,13 +158,14 @@ const TriageModal = ({ open, onClose, visit, onVitalsSaved }) => {
                     <Grid item xs={12} md={4}>
                         <TextField
                             fullWidth
-                            label="Fréquence Cardiaque"
-                            name="vitals_heart_rate"
+                            label="Glycémie"
+                            name="vitals_blood_glucose"
                             type="number"
-                            value={formData.vitals_heart_rate}
+                            inputProps={{ step: "0.01" }}
+                            value={formData.vitals_blood_glucose}
                             onChange={handleChange}
                             InputProps={{
-                                endAdornment: <InputAdornment position="end">bpm</InputAdornment>,
+                                endAdornment: <InputAdornment position="end">g/L</InputAdornment>,
                             }}
                         />
                     </Grid>

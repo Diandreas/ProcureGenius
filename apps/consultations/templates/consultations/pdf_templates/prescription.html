@@ -53,10 +53,7 @@
             <span class="text-bold" style="font-size: 10pt;">{{ patient.name }}</span><br>
             {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{% endif %}
         </div>
-        {% if prescription.valid_until %}
-        <div class="info-label" style="margin-top: 6px;">Valide jusqu'au</div>
-        <div class="info-value">{{ prescription.valid_until|date:"d/m/Y" }}</div>
-        {% endif %}
+        {# Validité ordonnance retirée #}
     </div>
     <div class="info-col" style="width: 50%;">
         <div class="info-label">Détails Ordonnance</div>
@@ -105,10 +102,10 @@
         </div>
     </div>
     <div style="display: table-cell; width: 50%; text-align: right;">
-        <div class="info-label">Médecin Prescripteur:</div>
+        <div class="info-label">Prescripteur ({{ prescription.prescriber_type }}):</div>
         <div class="info-value"
             style="margin-top: 30px; border-top: 1px dotted #9ca3af; display: inline-block; width: 180px; text-align: center;">
-            Dr. {% if prescriber %}{{ prescriber.get_full_name|default:prescriber.username }}{% else %}{% if prescription.doctor %}{{ prescription.doctor.get_full_name }}{% else %}Médecin{% endif %}{% endif %}<br>
+            {% if prescription.prescriber %}{{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }}{% else %}Non spécifié{% endif %}<br>
             <span style="font-size: 8pt; font-weight: normal;">Signature & Cachet</span>
         </div>
     </div>

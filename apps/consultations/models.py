@@ -348,7 +348,7 @@ class Prescription(models.Model):
         blank=True,
         related_name='written_prescriptions',
         verbose_name=_("Prescripteur"),
-        limit_choices_to={'role': 'doctor'}
+        limit_choices_to={'role__in': ['doctor', 'nurse']}
     )
     
     # Prescription details
@@ -403,12 +403,9 @@ class Prescription(models.Model):
     def save(self, *args, **kwargs):
         if not self.prescription_number:
             self.prescription_number = self._generate_prescription_number()
-        
-        # Set default expiration (30 days)
-        if not self.valid_until:
-            from datetime import timedelta
-            self.valid_until = (timezone.now() + timedelta(days=30)).date()
-        
+
+        # Note: valid_until is now optional and not auto-generated
+
         super().save(*args, **kwargs)
     
     def _generate_prescription_number(self):
@@ -434,12 +431,27 @@ class Prescription(models.Model):
         return f"{self.prescription_number} - {self.patient.name}"
     
     @property
+    def prescriber_type(self):
+        """Get prescriber type (Médecin Général/Spécialisé/Infirmière)"""
+        if not self.prescriber:
+            return _("Non spécifié")
+
+        if self.prescriber.role == 'nurse':
+            return _("Infirmière")
+        elif self.prescriber.role == 'doctor':
+            # Check if specialized based on specialization field
+            if hasattr(self.prescriber, 'specialization') and self.prescriber.specialization:
+                return f"{_('Médecin Spécialisé')} ({self.prescriber.specialization})"
+            return _("Médecin Général")
+        return _("Prescripteur")
+
+    @property
     def is_expired(self):
         """Check if prescription is expired"""
         if self.valid_until:
             return timezone.now().date() > self.valid_until
         return False
-    
+
     @property
     def items_count(self):
         """Number of items in this prescription"""

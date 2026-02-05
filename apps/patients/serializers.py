@@ -140,7 +140,7 @@ class PatientVisitSerializer(serializers.ModelSerializer):
             'vitals_temperature',
             'vitals_systolic',
             'vitals_diastolic',
-            'vitals_heart_rate',
+            'vitals_blood_glucose',
             'vitals_spo2',
             'created_at',
             'updated_at',
