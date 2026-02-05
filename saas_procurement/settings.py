@@ -229,6 +229,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
     "https://procura.mirhosty.com",
+    # Centre de Sante JULIANNA
+    "https://app.centrejulianna.com",
+    "https://appback.centrejulianna.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
