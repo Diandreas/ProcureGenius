@@ -64,7 +64,7 @@ class ConsultationAdmin(admin.ModelAdmin):
         }),
         ('Vital Signs', {
             'fields': (
-                ('temperature', 'heart_rate', 'respiratory_rate'),
+                ('temperature', 'blood_glucose', 'respiratory_rate'),
                 ('blood_pressure_systolic', 'blood_pressure_diastolic', 'blood_pressure'),
                 ('oxygen_saturation',),
                 ('weight', 'height', 'bmi', 'bmi_category'),
@@ -106,7 +106,6 @@ class PrescriptionAdmin(admin.ModelAdmin):
         'patient',
         'prescriber',
         'prescribed_date',
-        'valid_until',
         'status',
         'items_count',
     ]
@@ -140,7 +139,7 @@ class PrescriptionAdmin(admin.ModelAdmin):
             'fields': ('consultation', 'patient', 'prescriber')
         }),
         ('Details', {
-            'fields': ('prescribed_date', 'valid_until', 'is_expired', 'status')
+            'fields': ('prescribed_date', 'status')
         }),
         ('Status', {
             'fields': ('items_count', 'all_dispensed', 'pharmacy_dispensing')

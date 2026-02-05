@@ -20,8 +20,6 @@
         }
 
         ;
-
-        ;
     }
 
     .doc-title {
@@ -54,8 +52,6 @@
                 organization.brand_color|default: "#2563eb"
             }
         }
-
-        ;
 
         ;
         padding: 8px 15px;
@@ -169,7 +165,7 @@
                 </div>
                 <div class="info-group">
                     <span class="info-label">Date de Naissance</span>
-                    <div class="info-value">{{ patient.birth_date|date:"d/m/Y" }} ({{ patient.get_age }} ans)</div>
+                    <div class="info-value">{{ patient.date_of_birth|date:"d F Y" }} ({{ patient.get_age }} ans)</div>
                 </div>
                 <div class="info-group">
                     <span class="info-label">Sexe / Groupe Sanguin</span>
@@ -331,6 +327,35 @@
             {% endif %}
         </div>
         {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Nursing Care History (Soins Infirmiers) -->
+{% if nursing_care %}
+<div class="section">
+    <div class="section-header">Historique des Soins (Actes Infirmiers)</div>
+    <div class="section-content" style="padding: 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Date</th>
+                    <th style="width: 40%;">Description du Soin</th>
+                    <th style="width: 15%;">Qté</th>
+                    <th style="width: 30%;">N° Facture</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for care in nursing_care %}
+                <tr>
+                    <td>{{ care.invoice.created_at|date:"d/m/Y" }}</td>
+                    <td><b>{{ care.product.name }}</b></td>
+                    <td>{{ care.quantity }}</td>
+                    <td>#{{ care.invoice.invoice_number }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endif %}

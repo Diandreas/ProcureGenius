@@ -154,10 +154,11 @@ class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTempl
 class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
     Génère des étiquettes pour chaque tube nécessaire (1 étiquette par test)
-    Format: 50mm x 30mm par étiquette avec code-barres
+    Format: 100.5mm x 63.5mm paysage (imprimante thermique TSC)
+    SIZE 100.5 MM, 63.5 MM - GAP 2 MM
     """
     model = LabOrder
-    template_name = 'laboratory/pdf_templates/lab_tube_labels.html'
+    template_name = 'laboratory/pdf_templates/lab_tube_labels.html'  # Template complexe
     pdf_attachment = False
 
     def get_pdf_filename(self):

@@ -89,7 +89,7 @@ const LabOrderDetail = () => {
 
     // Print Modal State
     const [printModalOpen, setPrintModalOpen] = useState(false);
-    const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'barcodes'
+    const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'barcodes', 'tube_labels'
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     // History Modal State
@@ -105,6 +105,10 @@ const LabOrderDetail = () => {
     // Barcode Quantity Modal
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
     const [barcodeQuantity, setBarcodeQuantity] = useState(1);
+
+    // Tube Labels Quantity Modal
+    const [tubeLabelsModalOpen, setTubeLabelsModalOpen] = useState(false);
+    const [tubeLabelsQuantity, setTubeLabelsQuantity] = useState(1);
 
     useEffect(() => {
         if (!isNewOrder) {
@@ -233,6 +237,10 @@ const LabOrderDetail = () => {
             setBarcodeModalOpen(true);
             return;
         }
+        if (type === 'tube_labels') {
+            setTubeLabelsModalOpen(true);
+            return;
+        }
         setPrintModalType(type);
         setPrintModalOpen(true);
     };
@@ -254,6 +262,9 @@ const LabOrderDetail = () => {
             } else if (printModalType === 'barcodes' || (!printModalType && barcodeModalOpen)) {
                 blob = await laboratoryAPI.getBarcodesPDF(id, { quantity: barcodeQuantity });
                 filename = `barcodes_${order.order_number}.pdf`;
+            } else if (printModalType === 'tube_labels' || (!printModalType && tubeLabelsModalOpen)) {
+                blob = await laboratoryAPI.getTubeLabelsPDF(id, { quantity: tubeLabelsQuantity });
+                filename = `etiquettes_tubes_${order.order_number}.pdf`;
             }
 
             if (action === 'download') {
@@ -608,7 +619,11 @@ const LabOrderDetail = () => {
                             </Button>
 
                             <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={() => handleOpenPrintModal('barcodes')} sx={{ mr: 1 }}>
-                                Étiquettes
+                                Étiquettes A4
+                            </Button>
+
+                            <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} sx={{ mr: 1 }}>
+                                Étiquettes Thermiques
                             </Button>
 
                             {order.lab_invoice ? (
@@ -890,7 +905,7 @@ const LabOrderDetail = () => {
 
             {/* Barcode Quantity Modal */}
             <Dialog open={barcodeModalOpen} onClose={() => setBarcodeModalOpen(false)}>
-                <DialogTitle>Impression Étiquettes</DialogTitle>
+                <DialogTitle>Impression Étiquettes A4</DialogTitle>
                 <DialogContent>
                     <Typography gutterBottom sx={{ mb: 2 }}>
                         Combien d'exemplaires de chaque étiquette souhaitez-vous imprimer ?
@@ -913,6 +928,44 @@ const LabOrderDetail = () => {
                         onClick={() => {
                             setBarcodeModalOpen(false);
                             setPrintModalType('barcodes');
+                            setPrintModalOpen(true);
+                        }}
+                        variant="contained"
+                    >
+                        Valider
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Tube Labels Quantity Modal */}
+            <Dialog open={tubeLabelsModalOpen} onClose={() => setTubeLabelsModalOpen(false)}>
+                <DialogTitle>Impression Étiquettes Thermiques</DialogTitle>
+                <DialogContent>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        Format : 100.5mm × 63.5mm (Paysage) - GAP 2mm
+                    </Alert>
+                    <Typography gutterBottom sx={{ mb: 2 }}>
+                        Combien d'exemplaires de chaque étiquette souhaitez-vous imprimer ?
+                    </Typography>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Nombre de copies"
+                        type="number"
+                        fullWidth
+                        variant="outlined"
+                        value={tubeLabelsQuantity}
+                        onChange={(e) => setTubeLabelsQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        InputProps={{ inputProps: { min: 1, max: 10 } }}
+                        helperText="Une étiquette sera générée pour chaque test de la commande"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setTubeLabelsModalOpen(false)}>Annuler</Button>
+                    <Button
+                        onClick={() => {
+                            setTubeLabelsModalOpen(false);
+                            setPrintModalType('tube_labels');
                             setPrintModalOpen(true);
                         }}
                         variant="contained"

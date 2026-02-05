@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Étiquettes</title>
+    <style>
+        @page {
+            size: 100.5mm 63.5mm;
+            margin: 5mm;
+        }
+        body {
+            font-family: Arial;
+            font-size: 12pt;
+        }
+        .label {
+            border: 2px solid black;
+            padding: 5mm;
+            margin-bottom: 5mm;
+            page-break-after: always;
+        }
+        h1 {
+            font-size: 16pt;
+            margin: 0 0 5mm 0;
+        }
+        p {
+            margin: 2mm 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>TEST - Nombre d'étiquettes: {{ labels|length }}</h1>
+
+    {% for label in labels %}
+    <div class="label">
+        <h1>{{ label.test_name }}</h1>
+        <p><strong>Patient:</strong> {{ label.patient_name }}</p>
+        <p><strong>Code:</strong> {{ label.test_code }}</p>
+        <p><strong>Type:</strong> {{ label.container_type }}</p>
+        <p><strong>Commande:</strong> {{ label.order_number }}</p>
+        <p><strong>Date:</strong> {{ label.order_date }}</p>
+        <p style="text-align: center; font-size: 14pt; margin-top: 5mm;">
+            {{ label.barcode_value }}
+        </p>
+    </div>
+    {% endfor %}
+</body>
+</html>

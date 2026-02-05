@@ -32,7 +32,14 @@
         color: #4b5563;
         font-size: 9pt;
         margin-top: 2px;
-        border-left: 2px solid {{ organization.brand_color|default:"#2563eb" }};
+
+        border-left: 2px solid {
+                {
+                organization.brand_color|default: "#2563eb"
+            }
+        }
+
+        ;
     }
 
     .signature-section {
@@ -51,9 +58,9 @@
         <div class="info-label">Patient</div>
         <div class="info-value">
             <span class="text-bold" style="font-size: 10pt;">{{ patient.name }}</span><br>
-            {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{% endif %}
+            {{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% else %}N/A{%
+            endif %}
         </div>
-        {# Validité ordonnance retirée #}
     </div>
     <div class="info-col" style="width: 50%;">
         <div class="info-label">Détails Ordonnance</div>
@@ -105,7 +112,9 @@
         <div class="info-label">Prescripteur ({{ prescription.prescriber_type }}):</div>
         <div class="info-value"
             style="margin-top: 30px; border-top: 1px dotted #9ca3af; display: inline-block; width: 180px; text-align: center;">
-            {% if prescription.prescriber %}{{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }}{% else %}Non spécifié{% endif %}<br>
+            {% if prescription.prescriber %}{{
+            prescription.prescriber.get_full_name|default:prescription.prescriber.username }}{% else %}Non spécifié{%
+            endif %}<br>
             <span style="font-size: 8pt; font-weight: normal;">Signature & Cachet</span>
         </div>
     </div>

@@ -143,7 +143,6 @@ class Client(models.Model):
     GENDER_CHOICES = [
         ('M', _('Masculin')),
         ('F', _('Féminin')),
-        ('O', _('Autre')),
     ]
     
     # Blood type choices

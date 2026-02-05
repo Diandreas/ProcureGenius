@@ -6,146 +6,178 @@
     <title>Étiquettes Tubes - {{ lab_order.order_number }}</title>
     <style>
         @page {
-            size: 50mm 30mm;
-            margin: 1mm;
+            size: 100mm 150mm;
+            margin: 0;
         }
 
         body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-family: 'Arial', 'Helvetica', sans-serif;
             margin: 0;
             padding: 0;
         }
 
-        .label {
-            width: 50mm;
-            height: 30mm;
-            page-break-after: always;
-            border: 1px solid #ccc;
-            padding: 2mm;
-            box-sizing: border-box;
+        .label-wrapper {
+            width: 100mm;
+            height: 150mm;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: flex-start;
+            page-break-after: always;
+            padding-left: -5mm;
+            margin-left: -8mm;
         }
 
-        .label:last-child {
+        .label-wrapper:last-child {
             page-break-after: auto;
+        }
+
+        .label {
+            width: 60mm;
+            height: 40mm;
+            padding: 2mm 3mm;
+            box-sizing: border-box;
+            display: block;
+            position: relative;
+            background: white;
         }
 
         .label-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1mm;
+            margin-bottom: 0.5mm;
+            padding-bottom: 0.5mm;
+            border-bottom: 1px solid #000;
         }
 
         .container-type {
             font-size: 7pt;
             font-weight: bold;
-            color: #2563eb;
-            background-color: #e0f2fe;
-            padding: 1mm 2mm;
-            border-radius: 2mm;
+            color: #000;
             text-transform: uppercase;
         }
 
         .test-code {
-            font-size: 6pt;
-            color: #666;
+            font-size: 7pt;
+            color: #000;
             font-weight: bold;
+            font-family: 'Courier New', monospace;
         }
 
         .test-name {
-            font-size: 7pt;
+            font-size: 8pt;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 1mm;
+            color: #000;
+            margin-bottom: 0.5mm;
+            line-height: 1.1;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .patient-info {
-            font-size: 6pt;
-            color: #555;
+            font-size: 7pt;
+            color: #000;
             margin-bottom: 1mm;
-            line-height: 1.2;
+            line-height: 1.1;
         }
 
         .patient-name {
             font-weight: bold;
-            font-size: 6.5pt;
+            font-size: 7.5pt;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .barcode-container {
             text-align: center;
-            margin-top: auto;
+            margin: 0.5mm 0;
         }
 
         .barcode-image {
-            max-width: 100%;
-            height: 8mm;
+            max-width: 54mm;
+            height: 12mm;
             object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         .barcode-text {
-            font-size: 5pt;
-            color: #666;
+            font-size: 7pt;
+            color: #000;
             margin-top: 0.5mm;
             font-family: 'Courier New', monospace;
+            font-weight: bold;
         }
 
         .order-info {
-            font-size: 5pt;
-            color: #999;
-            text-align: right;
+            font-size: 5.5pt;
+            color: #000;
+            text-align: center;
+            margin-top: 0.5mm;
+            padding-top: 0.5mm;
+            border-top: 1px solid #ccc;
         }
 
         .sample-type {
-            font-size: 5.5pt;
-            color: #666;
-            font-style: italic;
+            font-size: 6.5pt;
+            color: #000;
+            font-weight: 500;
+            margin-bottom: 0.5mm;
         }
     </style>
 </head>
 
 <body>
-    {% for label in labels %}
-    <div class="label">
-        <div class="label-header">
-            <span class="container-type">{{ label.container_type }}</span>
-            <span class="test-code">{{ label.test_code }}</span>
-        </div>
-
-        <div class="test-name" title="{{ label.test_name }}">
-            {{ label.test_name }}
-        </div>
-
-        {% if label.sample_type %}
-        <div class="sample-type">
-            {{ label.sample_type }}
-        </div>
-        {% endif %}
-
-        <div class="patient-info">
-            <div class="patient-name">{{ label.patient_name }}</div>
-            <div>
-                N°: {{ label.patient_number }}
-                {% if label.patient_dob %}
-                | {{ label.patient_dob|date:"d/m/Y" }}
-                {% endif %}
+    {% if not labels %}
+    <div class="label-wrapper">
+        <div class="label">
+            <div style="padding: 5mm; text-align: center; font-size: 10pt;">
+                ERREUR : Aucune étiquette à imprimer
             </div>
         </div>
+    </div>
+    {% endif %}
 
-        <div class="barcode-container">
-            {% if label.barcode_base64 %}
-            <img src="data:image/png;base64,{{ label.barcode_base64 }}" class="barcode-image" alt="Barcode">
+    {% for label in labels %}
+    <div class="label-wrapper">
+        <div class="label">
+            <div class="label-header">
+                <span class="container-type">{{ label.container_type }}</span>
+                <span class="test-code">{{ label.test_code }}</span>
+            </div>
+
+            <div class="test-name" title="{{ label.test_name }}">
+                {{ label.test_name }}
+            </div>
+
+            {% if label.sample_type %}
+            <div class="sample-type">
+                {{ label.sample_type }}
+            </div>
             {% endif %}
-            <div class="barcode-text">{{ label.barcode_value }}</div>
-        </div>
 
-        <div class="order-info">
-            {{ label.order_number }} | {{ label.order_date|date:"d/m/y H:i" }}
+            <div class="patient-info">
+                <div class="patient-name">{{ label.patient_name }}</div>
+                <div>
+                    N°: {{ label.patient_number }}
+                    {% if label.patient_dob %}
+                    | {{ label.patient_dob|date:"d/m/Y" }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="barcode-container">
+                {% if label.barcode_base64 %}
+                <img src="data:image/png;base64,{{ label.barcode_base64 }}" class="barcode-image" alt="Barcode">
+                {% endif %}
+                <div class="barcode-text">{{ label.barcode_value }}</div>
+            </div>
+
+            <div class="order-info">
+                {{ label.order_number }} | {{ label.order_date|date:"d/m/y H:i" }}
+            </div>
         </div>
     </div>
     {% endfor %}

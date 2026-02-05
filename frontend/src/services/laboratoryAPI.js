@@ -66,6 +66,15 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Generate Tube Labels PDF (60x40mm thermal labels)
+    getTubeLabelsPDF: async (id, params = {}) => {
+        const response = await api.get(`/healthcare/laboratory/orders/${id}/tube-labels/`, {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
+    },
+
     // Generate Bench Sheet PDF
     getBenchSheetPDF: async (id) => {
         const response = await api.get(`/healthcare/laboratory/orders/${id}/bench-sheet/`, {

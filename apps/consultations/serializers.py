@@ -63,7 +63,6 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             'prescriber',
             'prescriber_name',
             'prescribed_date',
-            'valid_until',
             'status',
             'status_display',
             'is_expired',
@@ -97,7 +96,6 @@ class PrescriptionListSerializer(serializers.ModelSerializer):
             'patient',
             'patient_name',
             'prescribed_date',
-            'valid_until',
             'status',
             'status_display',
             'items_count',
@@ -141,7 +139,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'blood_pressure_systolic',
             'blood_pressure_diastolic',
             'blood_pressure',
-            'heart_rate',
+            'blood_glucose',
             'respiratory_rate',
             'oxygen_saturation',
             'weight',
@@ -219,7 +217,7 @@ class VitalSignsSerializer(serializers.Serializer):
     temperature = serializers.DecimalField(max_digits=4, decimal_places=1, required=False, allow_null=True)
     blood_pressure_systolic = serializers.IntegerField(required=False, allow_null=True)
     blood_pressure_diastolic = serializers.IntegerField(required=False, allow_null=True)
-    heart_rate = serializers.IntegerField(required=False, allow_null=True)
+    blood_glucose = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
     respiratory_rate = serializers.IntegerField(required=False, allow_null=True)
     oxygen_saturation = serializers.IntegerField(required=False, allow_null=True)
     weight = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
@@ -251,5 +249,4 @@ class PrescriptionCreateSerializer(serializers.Serializer):
     consultation_id = serializers.UUIDField(required=False, allow_null=True)
     patient_id = serializers.UUIDField()
     items = PrescriptionItemCreateSerializer(many=True, min_length=1)
-    valid_days = serializers.IntegerField(default=30, min_value=1)
     notes = serializers.CharField(required=False, allow_blank=True)

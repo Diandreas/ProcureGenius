@@ -196,6 +196,10 @@ class DemographicAnalysisView(APIView):
 
         gender_data = []
         for g in by_gender:
+            # Skip "Non spécifié" explicitly if it exists in data
+            if g['patient__gender'] == 'Non spécifié':
+                continue
+                
             gender_data.append({
                 'gender': g['patient__gender'],
                 'count': g['count'],
@@ -242,6 +246,10 @@ class DemographicAnalysisView(APIView):
 
         gender_age_data = []
         for ga in by_gender_and_age:
+            # Skip "Non spécifié"
+            if ga['patient__gender'] == 'Non spécifié':
+                continue
+                
             gender_age_data.append({
                 'gender': ga['patient__gender'],
                 'age_group': ga['age_group'],

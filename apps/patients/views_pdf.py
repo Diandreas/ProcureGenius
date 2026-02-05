@@ -56,6 +56,22 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
         context['all_lab_orders'] = all_lab_orders
         print(f"[DEBUG] Lab orders count: {all_lab_orders.count()}")
         
+        # Fetch nursing care/procedures from invoice items
+        from apps.invoicing.models import InvoiceItem, ProductCategory
+        
+        # Get categories that represent nursing care
+        care_categories = ProductCategory.objects.filter(
+            organization=patient.organization,
+            name__iregex=r'(soin|pansement|vaccination|injection|perfusion)'
+        ).values_list('id', flat=True)
+        
+        context['nursing_care'] = InvoiceItem.objects.filter(
+            invoice__organization=patient.organization,
+            invoice__client=patient,
+            invoice__status='paid',
+            product__category__in=care_categories
+        ).select_related('product', 'invoice').order_by('-invoice__created_at')
+        
         context['all_documents'] = patient.documents.all().order_by('-uploaded_at')
         
         print(f"[DEBUG] Context keys: {list(context.keys())}")

@@ -21,7 +21,14 @@
     .section-title {
         font-size: 12pt;
         font-weight: bold;
-        color: {{ organization.brand_color|default:"#2563eb" }};
+
+        color: {
+                {
+                organization.brand_color|default: "#2563eb"
+            }
+        }
+
+        ;
         border-bottom: 1px solid #eee;
         margin-bottom: 10px;
         padding-bottom: 3px;
@@ -107,8 +114,8 @@
             <span class="vital-value">{{ consultation.blood_pressure|default:"-" }} mmHg</span>
         </div>
         <div class="vital-item">
-            <span class="vital-label">Pouls</span>
-            <span class="vital-value">{{ consultation.heart_rate|default:"-" }} bpm</span>
+            <span class="vital-label">Glycémie</span>
+            <span class="vital-value">{{ consultation.blood_glucose|default:"-" }} mg/dL</span>
         </div>
         <div class="vital-item">
             <span class="vital-label">Température</span>

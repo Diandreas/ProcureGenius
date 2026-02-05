@@ -104,6 +104,13 @@ class Consultation(models.Model):
         blank=True,
         verbose_name=_("Tension artérielle (diastolique)")
     )
+    blood_glucose = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Glycémie (mg/dL)")
+    )
     heart_rate = models.IntegerField(
         null=True,
         blank=True,
@@ -355,12 +362,6 @@ class Prescription(models.Model):
     prescribed_date = models.DateTimeField(
         default=timezone.now,
         verbose_name=_("Date de prescription")
-    )
-    valid_until = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name=_("Valide jusqu'au"),
-        help_text=_("Date d'expiration de l'ordonnance")
     )
     status = models.CharField(
         max_length=20,
