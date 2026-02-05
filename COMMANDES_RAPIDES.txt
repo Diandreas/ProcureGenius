@@ -1,0 +1,273 @@
+================================================================================
+        COMMANDES RAPIDES - CENTRE DE SANTÉ JULIANNA
+================================================================================
+
+📂 FICHIERS CRÉÉS:
+  ✅ DEPLOYMENT_JULIANNA.md    - Documentation complète (18 Ko)
+  ✅ DEPLOYMENT_COMMANDS.sh    - Commandes Linux/Mac (10 Ko)
+  ✅ DEPLOYMENT_WINDOWS.bat    - Commandes Windows (11 Ko)
+  ✅ README_DEPLOYMENT.md      - Guide de démarrage rapide (9 Ko)
+  ✅ start_dev.sh              - Script démarrage Linux/Mac (2 Ko)
+  ✅ start_dev.bat             - Script démarrage Windows (2 Ko)
+
+================================================================================
+🚀 DÉMARRAGE RAPIDE POUR DÉVELOPPEMENT
+================================================================================
+
+WINDOWS:
+--------
+  Double-cliquer sur: start_dev.bat
+  Ou dans cmd: start_dev.bat
+
+LINUX/MAC:
+----------
+  chmod +x start_dev.sh
+  ./start_dev.sh
+
+➡️ Le serveur démarre sur: http://localhost:8000
+
+================================================================================
+⚙️ INSTALLATION INITIALE (Première fois uniquement)
+================================================================================
+
+1. CRÉER L'ENVIRONNEMENT VIRTUEL
+   Windows:  python -m venv venv
+   Linux:    python3 -m venv venv
+
+2. ACTIVER L'ENVIRONNEMENT
+   Windows:  venv\Scripts\activate
+   Linux:    source venv/bin/activate
+
+3. INSTALLER LES DÉPENDANCES
+   pip install -r requirements.txt
+
+4. CONFIGURER L'ENVIRONNEMENT
+   Windows:  copy .env.example .env && notepad .env
+   Linux:    cp .env.example .env && nano .env
+
+5. CRÉER LA BASE DE DONNÉES (PostgreSQL recommandé)
+   sudo -u postgres psql
+   CREATE DATABASE julianna_db;
+   CREATE USER julianna_user WITH PASSWORD 'votre_mot_de_passe';
+   GRANT ALL PRIVILEGES ON DATABASE julianna_db TO julianna_user;
+   \q
+
+6. EXÉCUTER LES MIGRATIONS
+   python manage.py migrate
+
+7. CHARGER LES DONNÉES DE PRODUCTION
+   python manage.py create_julianna_production_data
+
+================================================================================
+🏥 CHARGER LES DONNÉES DU CENTRE DE SANTÉ JULIANNA
+================================================================================
+
+OPTION 1: DONNÉES COMPLÈTES (RECOMMANDÉ)
+-----------------------------------------
+  python manage.py create_julianna_production_data
+
+  Crée:
+  ✓ Organisation Centre de Santé JULIANNA
+  ✓ 5 utilisateurs (admin, réception, docteur, labo, pharmacie)
+  ✓ 82 tests de laboratoire avec valeurs de référence
+  ✓ 145 médicaments avec stocks et lots
+  ✓ 44 services médicaux
+
+  Avec reset (supprimer les données existantes):
+  python manage.py create_julianna_production_data --reset
+
+  Avec simulations de patients:
+  python manage.py create_julianna_production_data --reset --with-simulations
+
+OPTION 2: DONNÉES HEALTHCARE AVEC INTERACTIONS
+----------------------------------------------
+  python manage.py create_julianna_healthcare
+
+  Crée:
+  ✓ Organisation + utilisateurs
+  ✓ Catalogues (tests, médicaments, services)
+  ✓ 2 patients (Fabrice et Angel)
+  ✓ Scénarios cliniques complets (consultations, ordonnances, résultats)
+
+  Avec reset:
+  python manage.py create_julianna_healthcare --reset
+
+================================================================================
+👥 COMPTES UTILISATEURS CRÉÉS
+================================================================================
+
+  Username                Email                 Password        Rôle
+  ─────────────────────  ───────────────────  ──────────────  ─────────────────
+  julianna_admin         admin@csj.cm         julianna2025    Administrateur
+  julianna_reception     reception@csj.cm     julianna2025    Réceptionniste
+  julianna_doctor        docteur@csj.cm       julianna2025    Médecin
+  julianna_lab           labo@csj.cm          julianna2025    Technicien labo
+  julianna_pharmacist    pharma@csj.cm        julianna2025    Pharmacien
+
+  ⚠️ IMPORTANT: Changez tous les mots de passe après le déploiement!
+
+  Pour changer un mot de passe:
+    python manage.py changepassword julianna_admin
+
+================================================================================
+🔧 CONFIGURATION .env MINIMALE
+================================================================================
+
+  SECRET_KEY=votre_cle_secrete_tres_longue
+  DEBUG=False
+  ALLOWED_HOSTS=localhost,127.0.0.1,votre-domaine.com
+
+  DATABASE_URL=postgres://julianna_user:mot_de_passe@localhost:5432/julianna_db
+  REDIS_URL=redis://localhost:6379/0
+
+  EMAIL_HOST=smtp.gmail.com
+  EMAIL_PORT=587
+  EMAIL_HOST_USER=noreply@csj.cm
+  EMAIL_HOST_PASSWORD=votre_mot_de_passe_app
+
+  MISTRAL_API_KEY=votre_cle_mistral
+
+  Générer une clé secrète:
+    python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+================================================================================
+🌐 DÉPLOIEMENT EN PRODUCTION (Linux)
+================================================================================
+
+1. INSTALLER LES DÉPENDANCES SYSTÈME
+   sudo apt update && sudo apt upgrade -y
+   sudo apt install -y python3 python3-pip python3-venv postgresql redis-server nginx
+
+2. CONFIGURER LA BASE DE DONNÉES
+   (Voir section "CRÉER LA BASE DE DONNÉES" ci-dessus)
+
+3. INSTALLER L'APPLICATION
+   cd /var/www
+   git clone <URL_REPO> procuregenius
+   cd procuregenius
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+
+4. CONFIGURER L'ENVIRONNEMENT
+   cp .env.example .env
+   nano .env  # Modifier avec les bonnes valeurs
+
+5. MIGRATIONS ET DONNÉES
+   python manage.py migrate
+   python manage.py collectstatic --noinput
+   python manage.py create_julianna_production_data --reset
+
+6. DÉMARRER AVEC GUNICORN
+   gunicorn saas_procurement.wsgi:application --config gunicorn_config.py
+
+7. CONFIGURER NGINX (OPTIONNEL)
+   Voir: DEPLOYMENT_JULIANNA.md
+
+================================================================================
+🔄 MAINTENANCE COURANTE
+================================================================================
+
+SAUVEGARDER LA BASE DE DONNÉES:
+  pg_dump -U julianna_user julianna_db > backup_$(date +%Y%m%d).sql
+
+RESTAURER UNE SAUVEGARDE:
+  psql -U julianna_user -d julianna_db < backup_YYYYMMDD.sql
+
+METTRE À JOUR L'APPLICATION:
+  git pull origin main
+  pip install -r requirements.txt --upgrade
+  python manage.py migrate
+  python manage.py collectstatic --noinput
+  # Redémarrer le serveur
+
+VOIR LES LOGS:
+  tail -f logs/django.log
+  tail -f logs/gunicorn_access.log
+  tail -f logs/gunicorn_error.log
+
+================================================================================
+🔍 VÉRIFICATIONS
+================================================================================
+
+VÉRIFIER L'INSTALLATION:
+  python manage.py check
+  python manage.py showmigrations
+
+VÉRIFIER LES SERVICES (Linux):
+  sudo systemctl status postgresql
+  sudo systemctl status redis-server
+
+TESTER LA CONNEXION:
+  curl http://localhost:8000
+
+ACCÉDER À L'APPLICATION:
+  Application:  http://localhost:8000
+  Admin:        http://localhost:8000/admin
+  API:          http://localhost:8000/api/v1
+
+================================================================================
+📊 STATISTIQUES (Shell Django)
+================================================================================
+
+  python manage.py shell
+
+  Dans le shell:
+  >>> from apps.accounts.models import Organization, CustomUser
+  >>> from apps.laboratory.models import LabTest
+  >>> from apps.invoicing.models import Product
+
+  >>> org = Organization.objects.first()
+  >>> print(f"Organisation: {org.name}")
+  >>> print(f"Utilisateurs: {CustomUser.objects.filter(organization=org).count()}")
+  >>> print(f"Tests labo: {LabTest.objects.filter(organization=org).count()}")
+  >>> print(f"Produits: {Product.objects.filter(organization=org).count()}")
+  >>> exit()
+
+================================================================================
+📞 SUPPORT
+================================================================================
+
+  Centre de Santé JULIANNA
+  Localisation: Makepe, Douala, Cameroun
+  Email:        contact@centrejulianna.com
+  Téléphone:    +237 233 XX XX XX
+
+================================================================================
+📚 DOCUMENTATION COMPLÈTE
+================================================================================
+
+  Pour plus de détails, consultez:
+
+  📖 DEPLOYMENT_JULIANNA.md    - Documentation complète avec tous les détails
+  🐧 DEPLOYMENT_COMMANDS.sh    - Référence commandes Linux/Mac
+  🪟 DEPLOYMENT_WINDOWS.bat    - Référence commandes Windows
+  📝 README_DEPLOYMENT.md      - Guide de démarrage rapide
+
+================================================================================
+✅ CHECKLIST DE DÉPLOIEMENT
+================================================================================
+
+  [ ] Python 3.9+ installé
+  [ ] PostgreSQL configuré
+  [ ] Redis installé
+  [ ] Environnement virtuel créé
+  [ ] Dépendances installées
+  [ ] Fichier .env configuré
+  [ ] Migrations exécutées
+  [ ] Données de production chargées
+  [ ] Fichiers statiques collectés
+  [ ] Serveur démarré
+  [ ] Comptes testés
+  [ ] Mots de passe changés
+  [ ] Sauvegardes configurées
+
+================================================================================
+
+  Date de création: 2025-02-05
+  Version: 1.0
+  Application: ProcureGenius Healthcare
+
+  🎉 Bon déploiement!
+
+================================================================================

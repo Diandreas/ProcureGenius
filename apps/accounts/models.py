@@ -580,14 +580,13 @@ def _get_default_modules_for_role(role, organization=None):
     
     role_modules = {
         'admin': [
-            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 
-            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS, 
-            Modules.E_SOURCING, Modules.CONTRACTS, Modules.ANALYTICS
+            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS,
+            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS,
+            Modules.ANALYTICS
         ],
         'manager': [
-            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 
-            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS, 
-            Modules.E_SOURCING, Modules.CONTRACTS
+            Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS,
+            Modules.INVOICES, Modules.PRODUCTS, Modules.CLIENTS
         ],
         'buyer': [
             Modules.DASHBOARD, Modules.SUPPLIERS, Modules.PURCHASE_ORDERS, 

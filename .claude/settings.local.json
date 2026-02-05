@@ -91,7 +91,9 @@
       "Bash(node:*)",
       "Bash(curl:*)",
       "Bash(du:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(chmod:*)",
+      "Bash(set PYTHONIOENCODING=utf-8:*)"
     ],
     "deny": [],
     "ask": []

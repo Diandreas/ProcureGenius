@@ -216,7 +216,7 @@ class MedicamentParser:
             }]
             med['total_stock'] = med['quantity']
 
-        print(f"  ✓ {len(medications)} medications extracted (No consolidation)")
+        print(f"  [OK] {len(medications)} medications extracted (No consolidation)")
         return medications
 
     @classmethod

@@ -1,0 +1,201 @@
+================================================================================
+       GUIDE RAPIDE - CORRECTION ERREUR DE MIGRATION
+       Centre de Santé JULIANNA
+================================================================================
+
+ERREUR RENCONTRÉE:
+------------------
+django.db.migrations.exceptions.InconsistentMigrationHistory:
+Migration patients.0001_initial is applied before its dependency
+invoicing.0020_warehouse_is_default_and_more on database 'default'.
+
+
+================================================================================
+🚀 SOLUTION RAPIDE (Copier-coller sur le serveur)
+================================================================================
+
+# Option 1: Script Python automatique (RECOMMANDÉ)
+cd /home/centrejulianna-appback/htdocs/appback.centrejulianna.com
+source venv/bin/activate
+python fix_migration_order.py
+
+# Option 2: Une seule commande
+python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings'); django.setup(); from django.db.migrations.recorder import MigrationRecorder; MigrationRecorder.Migration.objects.get_or_create(app='invoicing', name='0020_warehouse_is_default_and_more'); print('✅ Migration corrigée!')" && python manage.py migrate
+
+# Option 3: Script bash
+chmod +x fix_migration_quick.sh
+./fix_migration_quick.sh
+
+
+================================================================================
+📝 EXPLICATION DU PROBLÈME
+================================================================================
+
+Sur le serveur de production:
+  ✓ Migration patients.0001_initial - APPLIQUÉE
+  ✗ Migration invoicing.0020_warehouse_is_default_and_more - NON APPLIQUÉE
+
+Mais patients.0001_initial DÉPEND de invoicing.0020 !
+
+La migration 0020 ajoute simplement:
+- Un champ "is_default" au modèle Warehouse
+- Modifie le champ "header_address" de PrintTemplate
+
+
+================================================================================
+🔧 CORRECTION MANUELLE (Si les scripts ne marchent pas)
+================================================================================
+
+Étape 1: Accéder à PostgreSQL
+------------------------------
+python manage.py dbshell
+
+Étape 2: Dans le shell SQL, exécuter:
+--------------------------------------
+INSERT INTO django_migrations (app, name, applied)
+VALUES ('invoicing', '0020_warehouse_is_default_and_more', NOW())
+ON CONFLICT DO NOTHING;
+
+-- Vérifier que c'est ajouté
+SELECT app, name FROM django_migrations
+WHERE app = 'invoicing' AND name LIKE '%0020%';
+
+-- Quitter
+\q
+
+Étape 3: Appliquer les migrations
+----------------------------------
+python manage.py migrate
+
+
+================================================================================
+✅ VÉRIFICATION APRÈS CORRECTION
+================================================================================
+
+# Vérifier l'état des migrations
+python manage.py showmigrations invoicing | grep 0020
+python manage.py showmigrations patients | head -5
+
+# Vous devriez voir:
+invoicing
+ ...
+ [X] 0020_warehouse_is_default_and_more
+ ...
+
+patients
+ [X] 0001_initial
+ ...
+
+
+================================================================================
+🎯 ÉTAPES COMPLÈTES DE DÉPLOIEMENT APRÈS CORRECTION
+================================================================================
+
+1. CORRIGER LES MIGRATIONS (ci-dessus)
+   python fix_migration_order.py
+
+2. APPLIQUER TOUTES LES MIGRATIONS
+   python manage.py migrate
+
+3. COLLECTER LES FICHIERS STATIQUES
+   python manage.py collectstatic --noinput
+
+4. CHARGER LES DONNÉES DE PRODUCTION
+   python manage.py create_julianna_production_data --reset
+
+5. DÉMARRER LE SERVEUR
+   gunicorn saas_procurement.wsgi:application --config gunicorn_config.py
+
+
+================================================================================
+📊 COMPTES UTILISATEURS CRÉÉS
+================================================================================
+
+Après avoir chargé les données:
+
+Username             Email               Password        Rôle
+─────────────────   ──────────────────  ─────────────   ─────────────────
+julianna_admin      admin@csj.cm        julianna2025    Administrateur
+julianna_reception  reception@csj.cm    julianna2025    Réceptionniste
+julianna_doctor     docteur@csj.cm      julianna2025    Médecin
+julianna_lab        labo@csj.cm         julianna2025    Technicien labo
+julianna_pharmacist pharma@csj.cm       julianna2025    Pharmacien
+
+⚠️ Changez tous les mots de passe après le déploiement!
+
+
+================================================================================
+🆘 SI LE PROBLÈME PERSISTE
+================================================================================
+
+Vérifier les services:
+----------------------
+sudo systemctl status postgresql
+sudo systemctl status redis-server
+
+Voir les logs:
+--------------
+tail -f logs/django.log
+tail -f logs/gunicorn_error.log
+
+Tester la connexion DB:
+------------------------
+python manage.py dbshell
+SELECT current_database();
+\q
+
+Diagnostiquer les migrations:
+------------------------------
+python manage.py showmigrations
+python manage.py check
+
+
+================================================================================
+⚠️ SOLUTION DE DERNIER RECOURS (Réinitialisation complète)
+================================================================================
+
+⚠️ ATTENTION: Ceci supprime TOUTES LES DONNÉES!
+
+# 1. SAUVEGARDER D'ABORD!
+pg_dump -U julianna_user julianna_db > backup_avant_reset_$(date +%Y%m%d_%H%M%S).sql
+
+# 2. Supprimer toutes les migrations
+python manage.py dbshell
+DELETE FROM django_migrations;
+\q
+
+# 3. Réappliquer toutes les migrations
+python manage.py migrate --fake-initial
+
+# 4. Recharger les données
+python manage.py create_julianna_production_data --reset
+
+
+================================================================================
+📞 SUPPORT
+================================================================================
+
+Centre de Santé JULIANNA
+Email: contact@centrejulianna.com
+Téléphone: +237 233 XX XX XX
+
+Documentation complète:
+- DEPLOYMENT_JULIANNA.md
+- FIX_MIGRATION_README.md
+
+
+================================================================================
+📁 FICHIERS CRÉÉS POUR VOUS AIDER
+================================================================================
+
+✅ fix_migration_order.py      - Script Python intelligent (RECOMMANDÉ)
+✅ fix_migration_quick.sh       - Script bash rapide
+✅ FIX_MIGRATION_README.md      - Documentation détaillée
+✅ MIGRATION_FIX_GUIDE.txt      - Ce fichier (guide rapide)
+
+
+================================================================================
+Date: 2025-02-05
+Application: ProcureGenius Healthcare
+Organisation: Centre de Santé JULIANNA
+================================================================================

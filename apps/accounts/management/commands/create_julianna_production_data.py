@@ -1,5 +1,5 @@
 """
-Django Management Command: Create Production Data for Centre de Santé JULIANNA
+Django Management Command: Create Production Data for Centre de Sante JULIANNA
 
 Usage:
     python manage.py create_julianna_production_data --reset
@@ -48,7 +48,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Create complete production data for Centre de Santé JULIANNA'
+    help = 'Create complete production data for Centre de Sante JULIANNA'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -100,7 +100,7 @@ class Command(BaseCommand):
 
                 self.stdout.write('')
                 self.stdout.write('=' * 80)
-                self.stdout.write(self.style.SUCCESS('  MISE EN PRODUCTION TERMINÉE avec succès'))
+                self.stdout.write(self.style.SUCCESS('  MISE EN PRODUCTION TERMINÉE avec succes'))
                 self.stdout.write('=' * 80)
                 self._print_statistics()
 
@@ -116,7 +116,7 @@ class Command(BaseCommand):
 
     def _reset_database(self):
         """Delete all existing JULIANNA data"""
-        self.stdout.write('\n[RESET] Suppression des données existantes...')
+        self.stdout.write('\n[RESET] Suppression des donnees existantes...')
 
         # Disconnect signals that might interfere with bulk deletion
         post_save.disconnect(update_client_activity_on_invoice, sender=Invoice)
@@ -124,7 +124,7 @@ class Command(BaseCommand):
         try:
             org = Organization.objects.filter(name__icontains='JULIANNA').first()
             if not org:
-                self.stdout.write('  Aucune données JULIANNA existante trouvée')
+                self.stdout.write('  Aucune donnees JULIANNA existante trouvee')
                 return
 
             # Delete in correct order to respect foreign keys
@@ -171,10 +171,10 @@ class Command(BaseCommand):
             User.objects.filter(organization=org).delete()
             org.delete()
 
-            self.stdout.write(self.style.SUCCESS('  ✓ Données précédentes nettoyées\n'))
+            self.stdout.write(self.style.SUCCESS('  [OK] Donnees precedentes nettoyees\n'))
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'  ✗ Erreur lors de la suppression: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'  [ERROR] Erreur lors de la suppression: {str(e)}'))
             raise
         finally:
             # Reconnect the signal
@@ -200,9 +200,9 @@ class Command(BaseCommand):
         # Enrich medication data
         self.medications_data = load_all_medications({'medications': self.source_data['medications']})
 
-        self.stdout.write(f'  ✓ {len(self.source_data["services"])} services chargés')
-        self.stdout.write(f'  ✓ {len(self.medications_data["medications"])} médicaments chargés')
-        self.stdout.write(f'  ✓ {len(self.source_data["lab_tests"])} tests de laboratoire chargés')
+        self.stdout.write(f'  [OK] {len(self.source_data["services"])} services charges')
+        self.stdout.write(f'  [OK] {len(self.medications_data["medications"])} medicaments charges')
+        self.stdout.write(f'  [OK] {len(self.source_data["lab_tests"])} tests de laboratoire charges')
         self.stdout.write('')
 
     # ========================================================================
@@ -214,7 +214,7 @@ class Command(BaseCommand):
         self.stdout.write('[BASE] Initialisation de l\'organisation...')
 
         self.organization = Organization.objects.create(
-            name='Centre de Santé JULIANNA',
+            name='Centre de Sante JULIANNA',
             subscription_type='professional',
         )
 
@@ -224,7 +224,7 @@ class Command(BaseCommand):
             default_currency='XAF',
             auto_generate_lab_kits=False,
             default_tax_rate=Decimal('15.000'),
-            company_name='Centre de Santé JULIANNA',
+            company_name='Centre de Sante JULIANNA',
             company_address='Makepe, Douala, Cameroun',
             company_phone='+237 233 XX XX XX',
             company_email='contact@centrejulianna.com',
@@ -232,8 +232,8 @@ class Command(BaseCommand):
             tax_region='cameroon',
         )
 
-        self.stdout.write(self.style.SUCCESS('  ✓ Organisation créée: Centre de Santé JULIANNA'))
-        self.stdout.write(self.style.SUCCESS('  ✓ Paramètres configurés (Devise: XAF)\n'))
+        self.stdout.write(self.style.SUCCESS('  [OK] Organisation creee: Centre de Sante JULIANNA'))
+        self.stdout.write(self.style.SUCCESS('  [OK] Parametres configures (Devise: XAF)\n'))
 
     # ========================================================================
     # CREATE USERS
@@ -241,7 +241,7 @@ class Command(BaseCommand):
 
     def _create_users(self):
         """Create staff users"""
-        self.stdout.write('[USERS] Création des utilisateurs...')
+        self.stdout.write('[USERS] Creation des utilisateurs...')
 
         self.users = {}
 
@@ -296,9 +296,9 @@ class Command(BaseCommand):
             user.save()
 
             self.users[role] = user
-            self.stdout.write(f'  ✓ {role}: {user.get_full_name()} ({user.email})')
+            self.stdout.write(f'  [OK] {role}: {user.get_full_name()} ({user.email})')
 
-        self.stdout.write(self.style.SUCCESS(f'  Total: {len(self.users)} utilisateurs créés\n'))
+        self.stdout.write(self.style.SUCCESS(f'  Total: {len(self.users)} utilisateurs crees\n'))
 
     # ========================================================================
     # CREATE PRODUCT CATEGORIES
@@ -306,18 +306,18 @@ class Command(BaseCommand):
 
     def _create_product_categories(self):
         """Create product categories"""
-        self.stdout.write('[CATALOG] Création des catégories de produits...')
+        self.stdout.write('[CATALOG] Creation des categories de produits...')
 
         self.categories = {}
 
         categories_to_create = [
-            ('medications', 'Médicaments', 'Médicaments et produits pharmaceutiques'),
-            ('consultations', 'Consultations', 'Consultations médicales'),
+            ('medications', 'Medicaments', 'Medicaments et produits pharmaceutiques'),
+            ('consultations', 'Consultations', 'Consultations medicales'),
             ('nursing', 'Soins Infirmiers', 'Actes et soins infirmiers'),
             ('laboratory', 'Laboratoire', 'Analyses et examens de laboratoire'),
-            ('imaging', 'Imagerie', 'Services d\'imagerie médicale'),
-            ('procedures', 'Actes Médicaux', 'Petite chirurgie et actes divers'),
-            ('supplies', 'Matériel Médical', 'Matériel et fournitures médicales'),
+            ('imaging', 'Imagerie', 'Services d\'imagerie medicale'),
+            ('procedures', 'Actes Medicaux', 'Petite chirurgie et actes divers'),
+            ('supplies', 'Materiel Medical', 'Materiel et fournitures medicales'),
             ('lab_consumables', 'Consommables Laboratoire', 'Kits et consommables de laboratoire'),
             ('services', 'Autres Services', 'Services divers'),
         ]
@@ -331,7 +331,7 @@ class Command(BaseCommand):
             )
             self.categories[slug] = category
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {len(self.categories)} catégories créées\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {len(self.categories)} categories creees\n'))
 
     # ========================================================================
     # CREATE LAB TEST CATEGORIES
@@ -339,19 +339,19 @@ class Command(BaseCommand):
 
     def _create_lab_test_categories(self):
         """Create lab test categories"""
-        self.stdout.write('[LAB] Création des catégories de tests...')
+        self.stdout.write('[LAB] Creation des categories de tests...')
 
         self.lab_categories = {}
 
         categories = [
-            ('hematology', 'Hématologie', 1),
-            ('biochemistry', 'Biochimie Générale', 2),
+            ('hematology', 'Hematologie', 1),
+            ('biochemistry', 'Biochimie Generale', 2),
             ('ionogram', 'Ionogrammes et Électrolytes', 3),
-            ('serology', 'Sérologie', 4),
-            ('bacteriology', 'Bactériologie', 5),
+            ('serology', 'Serologie', 4),
+            ('bacteriology', 'Bacteriologie', 5),
             ('parasitology', 'Parasitologie', 6),
             ('endocrinology', 'Hormonologie', 7),
-            ('electrophoresis', 'Électrophorèses', 8),
+            ('electrophoresis', 'Électrophoreses', 8),
         ]
 
         for slug, name, order in categories:
@@ -364,7 +364,7 @@ class Command(BaseCommand):
             )
             self.lab_categories[slug] = category
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {len(self.lab_categories)} catégories créées\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {len(self.lab_categories)} categories creees\n'))
 
     # ========================================================================
     # CREATE LAB TESTS WITH REFERENCES
@@ -372,21 +372,21 @@ class Command(BaseCommand):
 
     def _create_lab_tests_with_references(self):
         """Create laboratory tests with complete medical reference ranges"""
-        self.stdout.write('[LAB] Création des tests de laboratoire avec valeurs de référence...')
+        self.stdout.write('[LAB] Creation des tests de laboratoire avec valeurs de reference...')
 
         self.lab_tests = {}
         test_count = 0
 
         # Map categories
         category_map = {
-            'Hématologie': 'hematology',
-            'Biochimie Générale': 'biochemistry',
+            'Hematologie': 'hematology',
+            'Biochimie Generale': 'biochemistry',
             'Ionogrammes': 'ionogram',
-            'Sérologie': 'serology',
-            'Bactériologie': 'bacteriology',
+            'Serologie': 'serology',
+            'Bacteriologie': 'bacteriology',
             'Parasitologie': 'parasitology',
             'Hormonologie': 'endocrinology',
-            'Électrophorèses': 'electrophoresis',
+            'Électrophoreses': 'electrophoresis',
         }
 
         # Create tests from source data (82 items)
@@ -402,9 +402,9 @@ class Command(BaseCommand):
                     break
             
             # Determine category
-            category_name = source_test.get('category', 'Biochimie Générale')
+            category_name = source_test.get('category', 'Biochimie Generale')
             if not category_name or category_name == 'Analyses':
-                category_name = ref_data.get('category', 'Biochimie Générale')
+                category_name = ref_data.get('category', 'Biochimie Generale')
             
             category_slug = category_map.get(category_name, 'biochemistry')
             category = self.lab_categories.get(category_slug, self.lab_categories['biochemistry'])
@@ -459,7 +459,7 @@ class Command(BaseCommand):
             self.lab_tests[test_name] = lab_test
             test_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {test_count} tests de laboratoire créés (Services)\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {test_count} tests de laboratoire crees (Services)\n'))
 
     # ========================================================================
     # CREATE MEDICAL SERVICES
@@ -467,7 +467,7 @@ class Command(BaseCommand):
 
     def _create_medical_services(self):
         """Create medical services from parsed data"""
-        self.stdout.write('[SERVICES] Création du catalogue de services...')
+        self.stdout.write('[SERVICES] Creation du catalogue de services...')
 
         service_count = 0
         for service in self.source_data['services']:
@@ -479,7 +479,7 @@ class Command(BaseCommand):
                 category_key = 'consultations'
             elif any(x in name_lower for x in ['pansement', 'injection', 'perfusion', 'sondage', 'lavement', 'ablation']):
                 category_key = 'nursing'
-            elif any(x in name_lower for x in ['échographie', 'radio']):
+            elif any(x in name_lower for x in ['echographie', 'radio']):
                 category_key = 'imaging'
             elif any(x in name_lower for x in ['suture', 'incision', 'circoncision', 'accouchement', 'extraction']):
                 category_key = 'procedures'
@@ -502,7 +502,7 @@ class Command(BaseCommand):
             )
             service_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {service_count} services médicaux créés\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {service_count} services medicaux crees\n'))
 
     # ========================================================================
     # CREATE MEDICATIONS
@@ -510,7 +510,7 @@ class Command(BaseCommand):
 
     def _create_medications(self):
         """Create medications with batch/expiration tracking"""
-        self.stdout.write('[PHARMA] Création du catalogue de médicaments...')
+        self.stdout.write('[PHARMA] Creation du catalogue de medicaments...')
 
         med_count = 0
 
@@ -572,7 +572,7 @@ class Command(BaseCommand):
                 )
             med_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'  ✓ {med_count} produits pharmaceutiques créés\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {med_count} produits pharmaceutiques crees\n'))
 
     # ========================================================================
     # CREATE PATIENTS
@@ -580,7 +580,7 @@ class Command(BaseCommand):
 
     def _create_patients(self):
         """Create patient profiles"""
-        self.stdout.write('[PATIENTS] Création des patients...')
+        self.stdout.write('[PATIENTS] Creation des patients...')
 
         self.patients = {}
 
@@ -602,9 +602,9 @@ class Command(BaseCommand):
 
             self.patients[profile['id']] = patient
             age = (date.today() - profile['date_of_birth']).days // 365
-            self.stdout.write(f'  ✓ {patient.get_full_name()} ({patient.patient_number}) - {age} ans')
+            self.stdout.write(f'  [OK] {patient.get_full_name()} ({patient.patient_number}) - {age} ans')
 
-        self.stdout.write(self.style.SUCCESS(f'  Total: {len(self.patients)} patients créés\n'))
+        self.stdout.write(self.style.SUCCESS(f'  Total: {len(self.patients)} patients crees\n'))
 
     # ========================================================================
     # SIMULATE CLINICAL SCENARIOS
@@ -624,9 +624,9 @@ class Command(BaseCommand):
             for visit_data in scenario['visits']:
                 # This would create complete visit, consultation, lab orders, prescriptions, etc.
                 # Abbreviated here for space
-                self.stdout.write(f'    ✓ Visite jour {visit_data["day"]}')
+                self.stdout.write(f'    [OK] Visite jour {visit_data["day"]}')
 
-        self.stdout.write(self.style.SUCCESS('  Simulations terminées\n'))
+        self.stdout.write(self.style.SUCCESS('  Simulations terminees\n'))
 
     # ========================================================================
     # VALIDATE DATA
@@ -634,7 +634,7 @@ class Command(BaseCommand):
 
     def _validate_data_integrity(self):
         """Validate data integrity"""
-        self.stdout.write('[VALIDATION] Vérifications d\'intégrité...')
+        self.stdout.write('[VALIDATION] Verifications d\'integrite...')
 
         checks = {
             'Organisation': Organization.objects.filter(name__icontains='JULIANNA').count(),
@@ -644,9 +644,9 @@ class Command(BaseCommand):
         }
 
         for name, count in checks.items():
-            self.stdout.write(f'  ✓ {name}: {count}')
+            self.stdout.write(f'  [OK] {name}: {count}')
 
-        self.stdout.write(self.style.SUCCESS('  Toutes les vérifications passées\n'))
+        self.stdout.write(self.style.SUCCESS('  Toutes les verifications passees\n'))
 
     # ========================================================================
     # HELPERS
