@@ -393,10 +393,10 @@
                                     <span class="text-gray-500">Sous-total:</span>
                                     <span id="summarySubtotal" class="font-medium">0,00 CAD</span>
                                 </div>
-                                <div class="flex justify-between">
+                                    <!--
                                     <span class="text-gray-500">TVA (18%):</span>
                                     <span id="summaryTaxAmount" class="font-medium">0,00 CAD</span>
-                                </div>
+                                    -->
                             </div>
 
                             <div class="border-t border-gray-200 pt-4">
@@ -1062,14 +1062,15 @@
     function updateSummary() {
         const subtotal = invoiceProducts.reduce((sum, product) => sum + (product.quantity * product.unitPrice), 0);
         const taxRate = 0.18; // 18% TVA
-        const taxAmount = subtotal * taxRate;
-        const total = subtotal + taxAmount;
+        // const taxRate = 0.18; // 18% TVA
+        const taxAmount = 0; // subtotal * taxRate;
+        const total = subtotal;
 
         document.getElementById('summaryClientName').textContent = selectedClient ?
             (`${selectedClient.first_name || ''} ${selectedClient.last_name || ''}`.trim() || selectedClient.username) : '-';
         document.getElementById('summaryItems').textContent = invoiceProducts.reduce((sum, product) => sum + product.quantity, 0);
         document.getElementById('summarySubtotal').textContent = formatCurrency(subtotal);
-        document.getElementById('summaryTaxAmount').textContent = formatCurrency(taxAmount);
+        // document.getElementById('summaryTaxAmount').textContent = formatCurrency(taxAmount);
         document.getElementById('summaryTotal').textContent = formatCurrency(total);
 
         // Activer/désactiver le bouton de soumission

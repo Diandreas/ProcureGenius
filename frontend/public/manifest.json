@@ -1,7 +1,7 @@
 {
-  "short_name": "ProcureGenius",
-  "name": "ProcureGenius - Gestion d'entreprise avec IA",
-  "description": "Application de gestion d'entreprise avec assistant IA intégré",
+  "short_name": "CSJ",
+  "name": "CSJ - Centre de Santé Julianna",
+  "description": "Système de gestion hospitalière intégré pour le Centre de Santé Julianna",
   "icons": [
     {
       "src": "/icon-192.png",

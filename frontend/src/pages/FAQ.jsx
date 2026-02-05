@@ -38,9 +38,9 @@ const FAQ = () => {
       questions: [
         {
           id: 'faq-1',
-          question: 'Qu\'est-ce que ProcureGenius ?',
+          question: 'Qu\'est-ce que le Centre de Santé Julianna (CSJ) ?',
           answer:
-            'ProcureGenius est une solution complète de gestion des achats et de la relation fournisseur. Elle vous permet de gérer vos fournisseurs, bons de commande, factures, produits et clients dans une interface unique et intuitive.',
+            'Le Centre de Santé Julianna (CSJ) est un système complet de gestion hospitalière intégré. Il vous permet de gérer les patients, consultations, laboratoire, pharmacie, factures et analyses dans une interface unique et intuitive.',
         },
         {
           id: 'faq-2',
@@ -50,15 +50,15 @@ const FAQ = () => {
         },
         {
           id: 'faq-3',
-          question: 'Combien coûte ProcureGenius ?',
+          question: 'Combien coûte le système CSJ ?',
           answer:
-            'ProcureGenius propose plusieurs formules adaptées à vos besoins. Consultez notre page Tarifs pour voir les différentes options. Nous offrons également une période d\'essai gratuite pour tester la plateforme.',
+            'Le système CSJ propose plusieurs formules adaptées à vos besoins. Consultez notre page Tarifs pour voir les différentes options. Nous offrons également une période d\'essai gratuite pour tester la plateforme.',
         },
         {
           id: 'faq-4',
           question: 'Puis-je importer mes données existantes ?',
           answer:
-            'Oui, ProcureGenius propose plusieurs options d\'import : import Excel pour les données en masse, import de factures PDF via l\'IA, et une API pour des intégrations personnalisées. Notre équipe peut vous accompagner dans la migration de vos données.',
+            'Oui, le système CSJ propose plusieurs options d\'import : import Excel pour les données en masse, import de documents PDF via l\'IA, et une API pour des intégrations personnalisées. Notre équipe peut vous accompagner dans la migration de vos données.',
         },
       ],
     },
@@ -226,13 +226,13 @@ const FAQ = () => {
           id: 'faq-26',
           question: 'Y a-t-il une application mobile ?',
           answer:
-            'ProcureGenius est une application web responsive qui fonctionne parfaitement sur mobile et tablette. Vous pouvez l\'installer comme application (PWA) sur votre téléphone pour un accès rapide.',
+            'Le système CSJ est une application web responsive qui fonctionne parfaitement sur mobile et tablette. Vous pouvez l\'installer comme application (PWA) sur votre téléphone pour un accès rapide.',
         },
         {
           id: 'faq-27',
-          question: 'Puis-je intégrer ProcureGenius avec d\'autres outils ?',
+          question: 'Puis-je intégrer le système CSJ avec d\'autres outils ?',
           answer:
-            'Oui, ProcureGenius propose une API REST pour des intégrations personnalisées. Nous proposons également des connecteurs pour les logiciels comptables populaires. Contactez le support pour plus d\'informations.',
+            'Oui, le système CSJ propose une API REST pour des intégrations personnalisées. Nous proposons également des connecteurs pour les logiciels comptables populaires. Contactez le support pour plus d\'informations.',
         },
       ],
     },

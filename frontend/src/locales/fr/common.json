@@ -162,7 +162,7 @@
   },
   "pwa": {
     "install": {
-      "title": "Installer ProcureGenius",
+      "title": "Installer CSJ",
       "description": "Installez l'application pour un accès rapide et une meilleure expérience, même hors ligne.",
       "descriptionIOS": "Pour installer l'application sur votre iPhone, appuyez sur le bouton Partager puis \"Sur l'écran d'accueil\"",
       "button": "Installer",

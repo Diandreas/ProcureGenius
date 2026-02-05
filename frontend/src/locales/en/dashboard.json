@@ -206,9 +206,9 @@
         "changePeriod": "Change period"
     },
     "gettingStarted": {
-        "title": "Getting Started with ProcureGenius",
+        "title": "Getting Started with CSJ",
         "congratulations": "Congratulations! You've completed the setup",
-        "ready": "You're now ready to use ProcureGenius to its full potential!",
+        "ready": "You're now ready to use the CSJ system to its full potential!",
         "reviewTutorial": "Review tutorial",
         "dismiss": "Dismiss this message",
         "actionsCompleted": "{{completed}} / {{total}} actions completed",

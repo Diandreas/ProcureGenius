@@ -154,7 +154,7 @@
   },
   "pwa": {
     "install": {
-      "title": "Install ProcureGenius",
+      "title": "Install CSJ",
       "description": "Install the app for quick access and a better experience, even offline.",
       "descriptionIOS": "To install the app on your iPhone, tap the Share button then \"Add to Home Screen\"",
       "button": "Install",

@@ -34,7 +34,7 @@ import Mascot from '../Mascot';
 const TUTORIAL_STEPS = [
     {
         id: 'welcome',
-        title: 'Bienvenue sur ProcureGenius ! 🎉',
+        title: 'Bienvenue au Centre de Santé Julianna ! 🎉',
         description: 'Je suis Procury, votre assistant. Laissez-moi vous faire découvrir les principales fonctionnalités de la plateforme.',
         target: null,
         route: '/dashboard',
@@ -106,7 +106,7 @@ const TUTORIAL_STEPS = [
     {
         id: 'complete',
         title: 'Vous êtes prêt ! 🚀',
-        description: 'Vous connaissez maintenant les bases de ProcureGenius. Utilisez le widget "Premiers pas" sur votre dashboard pour compléter les actions recommandées. Bonne utilisation !',
+        description: 'Vous connaissez maintenant les bases du système CSJ. Utilisez le widget "Premiers pas" sur votre dashboard pour compléter les actions recommandées. Bonne utilisation !',
         target: null,
         route: '/dashboard',
         showMascot: true,

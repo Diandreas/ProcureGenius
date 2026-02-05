@@ -1,6 +1,6 @@
 {
   "title": "Help Center",
-  "subtitle": "Find answers and learn how to use ProcureGenius",
+  "subtitle": "Find answers and learn how to use the CSJ system",
   "search": {
     "placeholder": "Search for help...",
     "noResults": "No results found",
@@ -62,7 +62,7 @@
     },
     "youtube": {
       "title": "Video Tutorials",
-      "description": "Learn how to use ProcureGenius with our video tutorials",
+      "description": "Learn how to use the CSJ system with our video tutorials",
       "placeholder": "Paste your YouTube tutorial URL here...",
       "button": "Open",
       "note": "Note: This feature allows you to open the YouTube video of your choice directly"

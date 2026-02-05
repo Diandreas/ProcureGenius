@@ -54,15 +54,6 @@ import ImportReviews from './pages/ai-chat/ImportReviews';
 import DocumentImport from './pages/ai-chat/DocumentImport';
 import Settings from './pages/settings/Settings';
 import UserManagement from './pages/settings/UserManagement';
-import SourcingEvents from './pages/e-sourcing/SourcingEvents';
-import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
-import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
-import BidComparison from './pages/e-sourcing/BidComparison';
-import BidDetail from './pages/e-sourcing/BidDetail';
-import PublicBidSubmission from './pages/e-sourcing/PublicBidSubmission';
-import Contracts from './pages/contracts/Contracts';
-import ContractDetail from './pages/contracts/ContractDetail';
-import ContractForm from './pages/contracts/ContractForm';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
 import DataImportPage from './pages/settings/DataImportPage';
@@ -97,6 +88,7 @@ import ConsultationDetail from './pages/healthcare/consultations/ConsultationDet
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
+import HomeRedirect from './components/HomeRedirect';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -715,7 +707,6 @@ function App() {
                       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                         <Routes>
                           {/* Public Routes */}
-                          <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
                           <Route path="/pricing" element={<Pricing />} />
 
                           {/* Auth Routes */}
@@ -732,8 +723,8 @@ function App() {
                           {/* Protected Routes */}
                           <Route element={<PrivateRoute />}>
                             <Route element={<MainLayout />}>
-                              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                              <Route path="/dashboard" element={<Dashboard />} />
+                              <Route path="/" element={<HomeRedirect />} />
+                              <Route path="/dashboard" element={<ModuleRoute module="dashboard"><Dashboard /></ModuleRoute>} />
 
                               {/* Healthcare Analytics */}
                               <Route path="/healthcare/analytics" element={<HealthcareAnalyticsDashboard />} />
@@ -742,7 +733,7 @@ function App() {
                               <Route path="/healthcare/analytics/demographics" element={<DemographicAnalytics />} />
                               <Route path="/healthcare/analytics/revenue" element={<RevenueAnalytics />} />
                               <Route path="/healthcare/analytics/services" element={<ServiceRevenueAnalytics />} />
-              <Route path="/healthcare/analytics/activity-indicators" element={<ActivityIndicatorsPage />} />
+                              <Route path="/healthcare/analytics/activity-indicators" element={<ActivityIndicatorsPage />} />
 
                               {/* Inventory Analytics */}
                               <Route path="/inventory/analytics" element={<StockAnalytics />} />
@@ -780,20 +771,6 @@ function App() {
                               <Route path="/clients/new" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
                               <Route path="/clients/:id" element={<ModuleRoute module="clients"><ClientDetail /></ModuleRoute>} />
                               <Route path="/clients/:id/edit" element={<ModuleRoute module="clients"><ClientForm /></ModuleRoute>} />
-
-                              {/* E-Sourcing */}
-                              <Route path="/e-sourcing/events" element={<ModuleRoute module="e-sourcing"><SourcingEvents /></ModuleRoute>} />
-                              <Route path="/e-sourcing/events/new" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                              <Route path="/e-sourcing/events/:id" element={<ModuleRoute module="e-sourcing"><SourcingEventDetail /></ModuleRoute>} />
-                              <Route path="/e-sourcing/events/:id/edit" element={<ModuleRoute module="e-sourcing"><SourcingEventForm /></ModuleRoute>} />
-                              <Route path="/e-sourcing/events/:eventId/compare" element={<ModuleRoute module="e-sourcing"><BidComparison /></ModuleRoute>} />
-                              <Route path="/e-sourcing/bids/:id" element={<ModuleRoute module="e-sourcing"><BidDetail /></ModuleRoute>} />
-
-                              {/* Contracts */}
-                              <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
-                              <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
-                              <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
-                              <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
 
                               {/* Data Migration */}
                               <Route path="/migration/jobs" element={<MigrationJobs />} />

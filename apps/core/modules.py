@@ -15,8 +15,8 @@ class Modules:
     INVOICES = 'invoices'
     PRODUCTS = 'products'
     CLIENTS = 'clients'
-    E_SOURCING = 'e-sourcing'
-    CONTRACTS = 'contracts'
+    # E_SOURCING = 'e-sourcing'  # Removed
+    # CONTRACTS = 'contracts'    # Removed
     ANALYTICS = 'analytics'
     
     # Healthcare modules
@@ -37,7 +37,7 @@ MODULE_METADATA = {
         'name': _('Tableau de bord'),
         'description': _('Vue d\'ensemble et statistiques'),
         'icon': 'dashboard',
-        'always_enabled': True,
+        'always_enabled': False,
     },
     Modules.SUPPLIERS: {
         'name': _('Fournisseurs'),
@@ -69,18 +69,18 @@ MODULE_METADATA = {
         'icon': 'people',
         'always_enabled': False,
     },
-    Modules.E_SOURCING: {
-        'name': _('E-Sourcing'),
-        'description': _('Appels d\'offres et enchères'),
-        'icon': 'gavel',
-        'always_enabled': False,
-    },
-    Modules.CONTRACTS: {
-        'name': _('Contrats'),
-        'description': _('Gestion des contrats'),
-        'icon': 'description',
-        'always_enabled': False,
-    },
+    # Modules.E_SOURCING: {
+    #     'name': _('E-Sourcing'),
+    #     'description': _('Appels d\'offres et enchères'),
+    #     'icon': 'gavel',
+    #     'always_enabled': False,
+    # },
+    # Modules.CONTRACTS: {
+    #     'name': _('Contrats'),
+    #     'description': _('Gestion des contrats'),
+    #     'icon': 'description',
+    #     'always_enabled': False,
+    # },
     Modules.ANALYTICS: {
         'name': _('Analytics'),
         'description': _('Rapports et analyses'),
@@ -166,8 +166,8 @@ PROFILE_MODULES = {
         Modules.SUPPLIERS,
         Modules.PURCHASE_ORDERS,
         Modules.PRODUCTS,
-        Modules.E_SOURCING,
-        Modules.CONTRACTS,
+        # Modules.E_SOURCING,
+        # Modules.CONTRACTS,
         Modules.ANALYTICS,
     ],
     ProfileTypes.ENTERPRISE: [
@@ -177,8 +177,8 @@ PROFILE_MODULES = {
         Modules.INVOICES,
         Modules.PRODUCTS,
         Modules.CLIENTS,
-        Modules.E_SOURCING,
-        Modules.CONTRACTS,
+        # Modules.E_SOURCING,
+        # Modules.CONTRACTS,
         Modules.ANALYTICS,
     ],
     ProfileTypes.HEALTHCARE: [
@@ -236,8 +236,8 @@ PROFILE_METADATA = {
         'name': _('Stratégique'),
         'description': _('Sourcing stratégique'),
         'features': [
-            _('E-Sourcing avancé'),
-            _('Gestion des contrats'),
+            # _('E-Sourcing avancé'),
+            # _('Gestion des contrats'),
             _('Analytics et rapports'),
         ],
     },
@@ -267,8 +267,8 @@ PROFILE_METADATA = {
 # Module Dependencies (if module A requires module B to be enabled)
 MODULE_DEPENDENCIES = {
     Modules.PURCHASE_ORDERS: [Modules.SUPPLIERS],
-    Modules.E_SOURCING: [Modules.SUPPLIERS],
-    Modules.CONTRACTS: [Modules.SUPPLIERS],
+    # Modules.E_SOURCING: [Modules.SUPPLIERS],
+    # Modules.CONTRACTS: [Modules.SUPPLIERS],
 }
 
 
@@ -347,8 +347,8 @@ def get_user_accessible_modules(user):
         accessible.extend(ADMIN_MODULES)
     
     # Always include dashboard
-    if Modules.DASHBOARD not in accessible:
-        accessible.append(Modules.DASHBOARD)
+    # if Modules.DASHBOARD not in accessible:
+    #     accessible.append(Modules.DASHBOARD)
     
     return list(set(accessible))
 

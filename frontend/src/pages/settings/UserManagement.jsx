@@ -56,15 +56,13 @@ function UserManagement() {
         { id: 'invoices', name: t('settings:userManagement.modules.invoices') },
         { id: 'products', name: t('settings:userManagement.modules.products') },
         { id: 'clients', name: t('settings:userManagement.modules.clients') },
-        { id: 'e-sourcing', name: t('settings:userManagement.modules.e-sourcing') },
-        { id: 'contracts', name: t('settings:userManagement.modules.contracts') },
     ];
 
     // Rôles avec modules suggérés
     const ROLES_CONFIG = {
         admin: {
             label: t('settings:userManagement.roles.admin'),
-            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
+            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients'],
             permissions: {
                 can_manage_users: true,
                 can_manage_settings: true,
@@ -74,7 +72,7 @@ function UserManagement() {
         },
         manager: {
             label: t('settings:userManagement.roles.manager'),
-            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
+            modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients'],
             permissions: {
                 can_manage_users: false,
                 can_manage_settings: true,

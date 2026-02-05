@@ -298,7 +298,7 @@ function Support() {
                       Tutoriels vidéo
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Apprenez à utiliser ProcureGenius avec nos tutoriels vidéo
+                      Apprenez à utiliser le système CSJ avec nos tutoriels vidéo
                     </Typography>
                   </Box>
                 </Stack>

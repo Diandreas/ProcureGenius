@@ -55,7 +55,7 @@ import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 
 const drawerWidth = 240;
 
-const CORE_MODULES = ['dashboard'];
+const CORE_MODULES = [];
 
 function MainLayout() {
   const { t } = useTranslation(['navigation', 'common']);
@@ -115,14 +115,12 @@ function MainLayout() {
   };
 
   const menuItems = [
-    { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: true },
+    { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: false },
     { text: t('navigation:menu.suppliers'), iconSrc: '/icon/supplier.png', path: '/suppliers', moduleId: 'suppliers', isCore: false },
     { text: t('navigation:menu.purchaseOrders'), iconSrc: '/icon/purchase-order.png', path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
     { text: t('navigation:menu.invoices'), iconSrc: '/icon/bill.png', path: '/invoices', moduleId: 'invoices', isCore: false },
     { text: t('navigation:menu.products'), iconSrc: '/icon/product.png', path: '/products', moduleId: 'products', isCore: false },
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
-    { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
-    { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
 
     // Healthcare
     { text: 'Patients', iconSrc: '/icon/user.png', path: '/healthcare/patients', moduleId: 'patients', isCore: false },

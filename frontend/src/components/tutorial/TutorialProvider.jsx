@@ -45,7 +45,7 @@ export const useTutorial = () => {
 const DEFAULT_TUTORIAL_STEPS = [
   {
     id: 'welcome',
-    title: 'Bienvenue sur ProcureGenius ! 🎉',
+    title: 'Bienvenue au Centre de Santé Julianna ! 🎉',
     description: 'Je suis Procury, votre assistant. Je vais vous faire découvrir les principales fonctionnalités de la plateforme.',
     target: null, // Pas de cible spécifique
     route: '/dashboard',
@@ -131,7 +131,7 @@ const DEFAULT_TUTORIAL_STEPS = [
   {
     id: 'complete',
     title: 'Vous êtes prêt ! 🚀',
-    description: 'Vous connaissez maintenant les bases de ProcureGenius. N\'hésitez pas à explorer et à relancer ce tutoriel depuis le menu d\'aide si besoin.',
+    description: 'Vous connaissez maintenant les bases du système CSJ. N\'hésitez pas à explorer et à relancer ce tutoriel depuis le menu d\'aide si besoin.',
     target: null,
     route: '/dashboard',
     position: 'center',

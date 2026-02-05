@@ -25,7 +25,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
   const [recipientEmail, setRecipientEmail] = useState(invoice?.client?.email || '');
-  const [subject, setSubject] = useState(`Facture ${invoice?.invoice_number || ''} - ProcureGenius`);
+  const [subject, setSubject] = useState(`Facture ${invoice?.invoice_number || ''} - Centre de Santé Julianna`);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 

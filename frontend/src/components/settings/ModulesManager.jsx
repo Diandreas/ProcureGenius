@@ -35,14 +35,12 @@ import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
 const AVAILABLE_MODULES = [
-  { code: 'dashboard', name: 'Tableau de bord', description: 'Vue d\'ensemble', always_enabled: true, IconComponent: AppsIcon },
+  { code: 'dashboard', name: 'Tableau de bord', description: 'Vue d\'ensemble', always_enabled: false, IconComponent: AppsIcon },
   { code: 'invoices', name: 'Facturation', description: 'Gestion des factures', IconComponent: Receipt },
   { code: 'purchase-orders', name: 'Bons de commande', description: 'Achats et commandes', IconComponent: ShoppingCart },
   { code: 'suppliers', name: 'Fournisseurs', description: 'Gestion fournisseurs', IconComponent: Business },
   { code: 'clients', name: 'Clients', description: 'Gestion clients', IconComponent: People },
   { code: 'products', name: 'Produits', description: 'Catalogue produits', IconComponent: Inventory },
-  { code: 'contracts', name: 'Contrats', description: 'Gestion des contrats', IconComponent: Description },
-  { code: 'e-sourcing', name: 'E-Sourcing', description: 'Appels d\'offres', IconComponent: Gavel },
   { code: 'analytics', name: 'Analytics', description: 'Rapports et analyses', IconComponent: BarChart },
 
   // Healthcare Modules

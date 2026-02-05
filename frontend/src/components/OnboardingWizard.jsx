@@ -201,7 +201,7 @@ function OnboardingWizard({ open, onComplete }) {
                             <Mascot pose="excited" animation="bounce" size={120} />
                         </Box>
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                            Bienvenue sur ProcureGenius! 🎉
+                            Bienvenue au Centre de Santé Julianna! 🎉
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 600, mx: 'auto' }}>
                             Je suis ravi de vous accompagner dans la configuration de votre espace.
@@ -482,7 +482,7 @@ function OnboardingWizard({ open, onComplete }) {
                             onClick={handleComplete}
                             startIcon={<CheckCircle />}
                         >
-                            Commencer à utiliser ProcureGenius
+                            Commencer à utiliser CSJ
                         </Button>
                     </Box>
                 );

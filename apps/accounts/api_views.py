@@ -666,7 +666,7 @@ def email_config_test(request):
         test_email = request.data.get('test_email', request.user.email)
         
         email = EmailMessage(
-            subject='Test de configuration email - ProcureGenius',
+            subject='Test de configuration email - Centre de Santé Julianna',
             body=f"""
 Bonjour,
 
@@ -681,7 +681,7 @@ Configuration testée:
 Si vous recevez cet email, votre configuration est correcte !
 
 Cordialement,
-ProcureGenius
+Centre de Santé Julianna
             """,
             from_email=f"{config.default_from_name} <{config.default_from_email}>",
             to=[test_email],

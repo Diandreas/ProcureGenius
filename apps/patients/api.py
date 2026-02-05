@@ -529,48 +529,72 @@ class PatientQuickInvoiceView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Create invoice
+        # Create invoice with retry logic for race conditions
         try:
-            from django.db import transaction
+            from django.db import transaction, IntegrityError
             import logging
+            import time
             logger = logging.getLogger(__name__)
 
-            # Use atomic transaction to ensure all operations succeed or fail together
-            with transaction.atomic():
-                # Calculate subtotal first
-                subtotal = Decimal('0')
-                for service in services:
-                    service_price = service.price if service.price else Decimal('0')
-                    subtotal += service_price
+            # Calculate subtotal first
+            subtotal = Decimal('0')
+            for service in services:
+                service_price = service.price if service.price else Decimal('0')
+                subtotal += service_price
 
-                # Create invoice with calculated totals
-                invoice = Invoice.objects.create(
-                    organization=request.user.organization,
-                    client=patient,
-                    invoice_type='healthcare_consultation',
-                    title=f"Services - {patient.name}",
-                    payment_method=payment_method,
-                    created_by=request.user,
-                    status='sent',
-                    subtotal=subtotal,
-                    total_amount=subtotal,
-                    tax_amount=Decimal('0')
-                )
+            # Retry logic to handle race conditions on invoice_number
+            max_retries = 5
+            invoice = None
+            last_error = None
 
-                # Create invoice items
-                for service in services:
-                    service_price = service.price if service.price else Decimal('0')
-                    InvoiceItem.objects.create(
-                        invoice=invoice,
-                        product=service,
-                        description=service.description or '',
-                        quantity=1,
-                        unit_price=service_price,
-                        total_price=service_price,
-                        tax_rate=Decimal('0')
-                    )
+            for attempt in range(max_retries):
+                try:
+                    # Use atomic transaction to ensure all operations succeed or fail together
+                    with transaction.atomic():
+                        # Create invoice with calculated totals
+                        invoice = Invoice.objects.create(
+                            organization=request.user.organization,
+                            client=patient,
+                            invoice_type='healthcare_consultation',
+                            title=f"Services - {patient.name}",
+                            payment_method=payment_method,
+                            created_by=request.user,
+                            status='sent',
+                            subtotal=subtotal,
+                            total_amount=subtotal,
+                            tax_amount=Decimal('0')
+                        )
 
-            logger.info(f"Invoice {invoice.invoice_number} created successfully for patient {patient.name}")
+                        # Create invoice items
+                        for service in services:
+                            service_price = service.price if service.price else Decimal('0')
+                            InvoiceItem.objects.create(
+                                invoice=invoice,
+                                product=service,
+                                description=service.description or '',
+                                quantity=1,
+                                unit_price=service_price,
+                                total_price=service_price,
+                                tax_rate=Decimal('0')
+                            )
+
+                    logger.info(f"Invoice {invoice.invoice_number} created successfully for patient {patient.name}")
+                    break  # Success, exit retry loop
+
+                except IntegrityError as e:
+                    last_error = e
+                    if 'invoice_number' in str(e) and attempt < max_retries - 1:
+                        # Race condition on invoice number, retry after a short delay
+                        wait_time = 0.1 * (attempt + 1)  # Exponential backoff
+                        logger.warning(f"Invoice number collision (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        # Max retries reached or different error
+                        raise
+
+            if invoice is None:
+                # Should not happen, but just in case
+                raise last_error if last_error else Exception("Failed to create invoice")
 
             return Response({
                 'invoice_id': invoice.id,

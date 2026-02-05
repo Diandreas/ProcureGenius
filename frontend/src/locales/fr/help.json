@@ -1,5 +1,5 @@
 {
-  "title": "Centre d'aide ProcureGenius",
+  "title": "Centre d'aide CSJ",
   "subtitle": "Trouvez rapidement les réponses à vos questions",
   "quickActions": {
     "tutorial": "Tutoriel interactif",
@@ -56,7 +56,7 @@
   "categories": {
     "gettingStarted": {
       "title": "Démarrage",
-      "description": "Premiers pas avec ProcureGenius"
+      "description": "Premiers pas avec le Centre de Santé Julianna"
     },
     "suppliers": {
       "title": "Fournisseurs",

@@ -207,9 +207,9 @@
         "changePeriod": "Changer la période"
     },
     "gettingStarted": {
-        "title": "Premiers pas avec ProcureGenius",
+        "title": "Premiers pas avec CSJ",
         "congratulations": "Bravo ! Vous avez terminé la configuration",
-        "ready": "Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !",
+        "ready": "Vous êtes maintenant prêt à utiliser le système CSJ à son plein potentiel !",
         "reviewTutorial": "Revoir le tutoriel",
         "dismiss": "Masquer ce message",
         "actionsCompleted": "{{completed}} / {{total}} actions complétées",

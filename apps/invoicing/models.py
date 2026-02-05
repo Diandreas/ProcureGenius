@@ -608,32 +608,24 @@ class Invoice(models.Model):
         return f"{self.invoice_number} - {self.title}"
 
     def save(self, *args, **kwargs):
-        from django.db import transaction, IntegrityError
-        import time
-
-        # Générer le numéro de facture si nécessaire
-        if not self.invoice_number:
-            self.invoice_number = self.generate_invoice_number()
+        from django.db import transaction, connection
 
         # Générer le titre automatiquement si vide
         if not self.title or self.title.strip() == '':
             self.title = '/'
 
-        # Retry logic to handle race conditions on invoice_number
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
+        # Générer le numéro de facture si nécessaire
+        if not self.invoice_number:
+            # Check if we're already in a transaction (from API)
+            if connection.in_atomic_block:
+                # Already in a transaction, just generate the number
+                self.invoice_number = self.generate_invoice_number()
+            else:
+                # Not in a transaction, create one for generation
                 with transaction.atomic():
-                    super().save(*args, **kwargs)
-                break  # Success, exit the retry loop
-            except IntegrityError as e:
-                if 'invoice_number' in str(e) and attempt < max_retries - 1:
-                    # Race condition detected, regenerate invoice number and retry
                     self.invoice_number = self.generate_invoice_number()
-                    time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-                else:
-                    # Not an invoice_number issue or max retries reached
-                    raise
+
+        super().save(*args, **kwargs)
 
     def _generate_invoice_title(self):
         """Génère automatiquement un titre pour la facture basé sur son type"""
@@ -692,33 +684,43 @@ class Invoice(models.Model):
     def generate_invoice_number(self):
         """Génère un numéro de facture unique"""
         from datetime import datetime
-        from django.db import transaction
 
         year = datetime.now().year
         month = datetime.now().month
         prefix = f"FAC{year}{month:02d}"
+
+        # Ajouter l'ID de l'organisation au préfixe pour garantir l'unicité globale
+        if self.organization:
+            # Utiliser les 8 premiers caractères de l'UUID de l'organisation
+            org_suffix = str(self.organization.id).split('-')[0].upper()
+            prefix = f"{prefix}-{org_suffix}-"
+        else:
+            # Fallback pour les factures sans organisation (admin, etc.)
+            prefix = f"{prefix}-G-"
 
         # Trouve le prochain numéro disponible pour cette organisation
         filters = {
             'invoice_number__startswith': prefix
         }
 
-        # Ajouter le filtre d'organisation si disponible
+        # Ajouter le filtre d'organisation si disponible (redondant avec le préfixe mais bonne pratique)
         if self.organization:
             filters['organization'] = self.organization
 
         # Use select_for_update() to lock the row and prevent race conditions
-        with transaction.atomic():
-            last_invoice = Invoice.objects.filter(**filters).select_for_update().order_by('-invoice_number').first()
+        # Note: This should be called within an atomic transaction from save()
+        last_invoice = Invoice.objects.filter(**filters).select_for_update().order_by('-invoice_number').first()
 
-            if last_invoice:
-                try:
-                    last_number = int(last_invoice.invoice_number[-4:])
-                    next_number = last_number + 1
-                except ValueError:
-                    next_number = 1
-            else:
+        if last_invoice:
+            try:
+                # Le format est PREFIX{SEQ}
+                # On extrait la partie après le préfixe
+                last_number = int(last_invoice.invoice_number[len(prefix):])
+                next_number = last_number + 1
+            except ValueError:
                 next_number = 1
+        else:
+            next_number = 1
 
         return f"{prefix}{next_number:04d}"
     

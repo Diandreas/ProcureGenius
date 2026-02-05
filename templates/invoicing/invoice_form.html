@@ -203,12 +203,14 @@
                             <span id="subtotal">0,00 CAD</span>
                         </dd>
                     </div>
+                    <!--
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Taxes (18%)</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                             <span id="taxes">0,00 CAD</span>
                         </dd>
                     </div>
+                    -->
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-green-600">Total</dt>
                         <dd class="mt-1 text-lg font-semibold text-green-600 sm:mt-0 sm:col-span-2">
@@ -328,7 +330,7 @@
             subtotal += itemTotal;
         });
 
-        const taxes = subtotal * 0.18; // 18% de TVA
+        const taxes = 0; // subtotal * 0.18; // 18% de TVA
         const total = subtotal + taxes;
 
         // Mettre à jour l'affichage
@@ -338,11 +340,13 @@
             currency: 'CAD',
             minimumFractionDigits: 2
         });
+        /*
         document.getElementById('taxes').textContent = taxes.toLocaleString('fr-CA', {
             style: 'currency',
             currency: 'CAD',
             minimumFractionDigits: 2
         });
+        */
         document.getElementById('total').textContent = total.toLocaleString('fr-CA', {
             style: 'currency',
             currency: 'CAD',

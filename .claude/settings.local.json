@@ -90,7 +90,8 @@
       "Bash(npx playwright install:*)",
       "Bash(node:*)",
       "Bash(curl:*)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

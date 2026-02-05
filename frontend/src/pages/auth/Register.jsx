@@ -238,7 +238,7 @@ function Register() {
             Créer un compte
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Commencez gratuitement avec ProcureGenius
+            Commencez avec le Centre de Santé Julianna
           </Typography>
 
           {/* Error Alert */}

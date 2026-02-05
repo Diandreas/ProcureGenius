@@ -149,7 +149,7 @@ const InstallPWAPrompt = () => {
             <Box
               component="img"
               src="/icon-192.png"
-              alt="ProcureGenius"
+              alt="CSJ"
               sx={{
                 width: 48,
                 height: 48,

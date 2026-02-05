@@ -79,9 +79,9 @@ class InvoiceEmailService:
 
             # Préparer l'email avec traductions
             if language == 'en':
-                subject = f"Invoice {invoice.invoice_number} - ProcureGenius"
+                subject = f"Invoice {invoice.invoice_number} - Centre de Santé Julianna"
             else:
-                subject = f"Facture {invoice.invoice_number} - ProcureGenius"
+                subject = f"Facture {invoice.invoice_number} - Centre de Santé Julianna"
             
             # Utiliser le message personnalisé si fourni, sinon utiliser le template par défaut
             # Note: Le message personnalisé est utilisé tel quel (l'utilisateur peut le traduire)
@@ -124,7 +124,7 @@ class InvoiceEmailService:
                             <div style="white-space: pre-wrap;">{custom_message}</div>
                             <p>{_('The PDF of your invoice is attached to this email.')}</p>
                             <div class="footer">
-                                <p><strong>ProcureGenius</strong></p>
+                                <p><strong>Centre de Santé Julianna</strong></p>
                                 <p>{_('Procurement and invoice management system')}</p>
                             </div>
                         </div>
@@ -142,7 +142,7 @@ class InvoiceEmailService:
 {pdf_attached}
 
 {regards},
-ProcureGenius
+Centre de Santé Julianna
                 """
             else:
                 # Corps de l'email HTML par défaut
@@ -222,7 +222,7 @@ ProcureGenius
                 <div class="container">
                     <div class="header">
                         <h1 style="margin: 0; font-size: 28px;">Nouvelle Facture</h1>
-                        <p style="margin: 10px 0 0 0; opacity: 0.9;">ProcureGenius</p>
+                        <p style="margin: 10px 0 0 0; opacity: 0.9;">Centre de Santé Julianna</p>
                     </div>
 
                     <div class="content">
@@ -256,7 +256,7 @@ ProcureGenius
                         <p>{_('If you have any questions, please do not hesitate to contact us.')}</p>
 
                         <div class="footer">
-                            <p><strong>ProcureGenius</strong></p>
+                            <p><strong>Centre de Santé Julianna</strong></p>
                             <p>{_('Procurement and invoice management system')}</p>
                             <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
                                 {_('This is an automatic email, please do not reply directly.')}
@@ -296,7 +296,7 @@ ProcureGenius
 {contact_us}
 
 {regards},
-ProcureGenius
+Centre de Santé Julianna
             """
 
             # Déterminer l'email expéditeur
@@ -470,9 +470,9 @@ class PurchaseOrderEmailService:
 
                 # Préparer l'email avec traductions
                 if language == 'en':
-                    subject = f"Purchase Order {po.po_number} - ProcureGenius"
+                    subject = f"Purchase Order {po.po_number} - Centre de Santé Julianna"
                 else:
-                    subject = f"Bon de Commande {po.po_number} - ProcureGenius"
+                    subject = f"Bon de Commande {po.po_number} - Centre de Santé Julianna"
             
             # Utiliser le message personnalisé si fourni
             if custom_message:
@@ -513,7 +513,7 @@ class PurchaseOrderEmailService:
                             <div style="white-space: pre-wrap;">{custom_message}</div>
                             <p>{_('The PDF of your purchase order is attached to this email.')}</p>
                             <div class="footer">
-                                <p><strong>ProcureGenius</strong></p>
+                                <p><strong>Centre de Santé Julianna</strong></p>
                                 <p>{_('Procurement and invoice management system')}</p>
                             </div>
                         </div>
@@ -531,7 +531,7 @@ class PurchaseOrderEmailService:
 {pdf_attached}
 
 {regards},
-ProcureGenius
+Centre de Santé Julianna
                 """
             else:
                 # Message par défaut
@@ -602,7 +602,7 @@ ProcureGenius
                     <div class="container">
                         <div class="header">
                             <h1 style="margin: 0; font-size: 28px;">{_('New Purchase Order')}</h1>
-                            <p style="margin: 10px 0 0 0; opacity: 0.9;">ProcureGenius</p>
+                            <p style="margin: 10px 0 0 0; opacity: 0.9;">Centre de Santé Julianna</p>
                         </div>
 
                         <div class="content">
@@ -636,7 +636,7 @@ ProcureGenius
                             <p>{_('If you have any questions, please do not hesitate to contact us.')}</p>
 
                             <div class="footer">
-                                <p><strong>ProcureGenius</strong></p>
+                                <p><strong>Centre de Santé Julianna</strong></p>
                                 <p>{_('Procurement and invoice management system')}</p>
                                 <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
                                     {_('This is an automatic email, please do not reply directly.')}
@@ -675,7 +675,7 @@ ProcureGenius
 {contact_us}
 
 {regards},
-ProcureGenius
+Centre de Santé Julianna
                 """
 
             # Déterminer l'email expéditeur
