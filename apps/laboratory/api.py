@@ -242,7 +242,7 @@ class LabOrderCreateView(APIView):
                 due_date=timezone.now().date() + timedelta(days=30),
                 subtotal=0,
                 total_amount=0,
-                status='draft',
+                status='paid',
                 currency='XAF',
             )
             

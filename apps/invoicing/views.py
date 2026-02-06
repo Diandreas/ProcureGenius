@@ -105,7 +105,11 @@ def invoice_create(request):
         formset = InvoiceItemFormSet()
     
     # Récupérer les produits et clients pour l'interface
-    products = Product.objects.filter(is_active=True).order_by('name')
+    # Exclude laboratory items and consumables
+    products = Product.objects.filter(is_active=True).exclude(
+        Q(category__slug__in=['lab_consumables', 'lab-consumables', 'laboratory', 'lab-tests', 'lab_tests']) |
+        Q(linked_lab_tests__isnull=False)
+    ).order_by('name')
     clients = User.objects.filter(is_staff=False, is_active=True).order_by('first_name', 'last_name')
     
     # Sérialiser les données pour JavaScript

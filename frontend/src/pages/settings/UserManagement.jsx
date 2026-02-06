@@ -39,6 +39,7 @@ import {
     PersonAdd,
     CheckCircle,
     Cancel,
+    VpnKey,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +57,11 @@ function UserManagement() {
         { id: 'invoices', name: t('settings:userManagement.modules.invoices') },
         { id: 'products', name: t('settings:userManagement.modules.products') },
         { id: 'clients', name: t('settings:userManagement.modules.clients') },
+        { id: 'patients', name: t('settings:userManagement.modules.patients') },
+        { id: 'reception', name: t('settings:userManagement.modules.reception') },
+        { id: 'laboratory', name: t('settings:userManagement.modules.laboratory') },
+        { id: 'pharmacy', name: t('settings:userManagement.modules.pharmacy') },
+        { id: 'consultations', name: t('settings:userManagement.modules.consultations') },
     ];
 
     // Rôles avec modules suggérés
@@ -110,6 +116,56 @@ function UserManagement() {
                 can_approve_purchases: false,
             },
         },
+        doctor: {
+            label: t('settings:userManagement.roles.doctor'),
+            modules: ['dashboard', 'patients', 'consultations', 'laboratory', 'pharmacy'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        nurse: {
+            label: t('settings:userManagement.roles.nurse'),
+            modules: ['dashboard', 'patients', 'consultations'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        lab_tech: {
+            label: t('settings:userManagement.roles.lab_tech'),
+            modules: ['dashboard', 'patients', 'laboratory'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        pharmacist: {
+            label: t('settings:userManagement.roles.pharmacist'),
+            modules: ['dashboard', 'patients', 'pharmacy'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: true,
+                can_approve_purchases: false,
+            },
+        },
+        receptionist: {
+            label: t('settings:userManagement.roles.receptionist'),
+            modules: ['dashboard', 'patients'],
+            permissions: {
+                can_manage_users: false,
+                can_manage_settings: false,
+                can_view_analytics: false,
+                can_approve_purchases: false,
+            },
+        },
     };
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -118,6 +174,11 @@ function UserManagement() {
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({
+        password: '',
+        confirmPassword: '',
+    });
 
     const [inviteForm, setInviteForm] = useState({
         email: '',
@@ -258,6 +319,42 @@ function UserManagement() {
             enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteError'), { variant: 'error' });
         }
         handleMenuClose();
+    };
+
+    const handlePasswordChange = async () => {
+        if (!passwordForm.password || passwordForm.password !== passwordForm.confirmPassword) {
+            enqueueSnackbar(t('settings:userManagement.passwordDialog.errorMatch'), { variant: 'error' });
+            return;
+        }
+
+        if (passwordForm.password.length < 8) {
+            enqueueSnackbar(t('settings:userManagement.passwordDialog.errorLength'), { variant: 'error' });
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/accounts/organization/users/${selectedUser.id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
+                },
+                body: JSON.stringify({
+                    password: passwordForm.password
+                }),
+            });
+
+            if (response.ok) {
+                enqueueSnackbar(t('settings:userManagement.passwordDialog.success'), { variant: 'success' });
+                setPasswordDialogOpen(false);
+                setPasswordForm({ password: '', confirmPassword: '' });
+            } else {
+                const data = await response.json();
+                enqueueSnackbar(data.error || t('settings:userManagement.passwordDialog.error'), { variant: 'error' });
+            }
+        } catch (error) {
+            enqueueSnackbar(t('common:error'), { variant: 'error' });
+        }
     };
 
     const getRoleChipColor = (role) => {
@@ -437,6 +534,13 @@ function UserManagement() {
                     <Edit fontSize="small" sx={{ mr: 1 }} />
                     {t('settings:userManagement.menu.editPermissions')}
                 </MenuItem>
+                <MenuItem onClick={() => {
+                    setPasswordDialogOpen(true);
+                    handleMenuClose();
+                }}>
+                    <VpnKey fontSize="small" sx={{ mr: 1 }} />
+                    {t('settings:userManagement.menu.changePassword')}
+                </MenuItem>
                 <MenuItem
                     onClick={() => {
                         setDeleteDialogOpen(true);
@@ -602,6 +706,39 @@ function UserManagement() {
                     <Button onClick={() => setDeleteDialogOpen(false)}>{t('common:cancel')}</Button>
                     <Button onClick={handleDeleteUser} color="error" variant="contained">
                         {t('settings:userManagement.deleteDialog.deactivate')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog de changement de mot de passe */}
+            <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>{t('settings:userManagement.passwordDialog.title')}</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                        {t('settings:userManagement.passwordDialog.subtitle', { name: `${selectedUser?.first_name} ${selectedUser?.last_name}` })}
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                        <TextField
+                            fullWidth
+                            label={t('settings:userManagement.passwordDialog.newPassword')}
+                            type="password"
+                            value={passwordForm.password}
+                            onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label={t('settings:userManagement.passwordDialog.confirmPassword')}
+                            type="password"
+                            value={passwordForm.confirmPassword}
+                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPasswordDialogOpen(false)}>{t('common:cancel')}</Button>
+                    <Button onClick={handlePasswordChange} variant="contained" color="primary">
+                        {t('common:save')}
                     </Button>
                 </DialogActions>
             </Dialog>

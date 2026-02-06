@@ -39,7 +39,7 @@ def create_invoice_for_lab_order(sender, instance, **kwargs):
             due_date=due_date,
             subtotal=0,
             total_amount=0,
-            status='draft'
+            status='paid'
         )
         
         # Add all tests as items

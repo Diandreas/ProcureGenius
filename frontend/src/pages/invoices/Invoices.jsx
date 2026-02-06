@@ -58,7 +58,6 @@ import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
-import DateNavigator from '../../components/common/DateNavigator';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Invoices() {
@@ -185,8 +184,6 @@ function Invoices() {
     const matchesQuick = !quickFilter || (() => {
       if (quickFilter === 'paid') return invoice.status === 'paid';
       if (quickFilter === 'cancelled') return invoice.status === 'cancelled';
-      if (quickFilter === 'draft') return invoice.status === 'draft';
-      if (quickFilter === 'sent') return invoice.status === 'sent';
       return true;
     })();
 
@@ -223,10 +220,6 @@ function Invoices() {
 
   // Statistiques
   const totalInvoices = invoices.length;
-  const paidInvoices = invoices.filter(i => i.status === 'paid').length;
-  const cancelledInvoices = invoices.filter(i => i.status === 'cancelled').length;
-  const sentInvoices = invoices.filter(i => i.status === 'sent').length;
-  const draftInvoices = invoices.filter(i => i.status === 'draft').length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
   // Payment method stats (based on filtered invoices)
@@ -421,374 +414,192 @@ function Invoices() {
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Clickable Filters - Design Compact et Moderne */}
-        <Grid container spacing={isMobile ? 0.75 : 1.5}>
-          {/* Payées */}
-          <Grid item xs={3} sm={2.4}>
+        <Grid container spacing={isMobile ? 1.5 : 2}>
+          {/* Encaisse Card */}
+          <Grid item xs={12} md={8}>
             <Card
-              onClick={() => handleQuickFilterClick('paid')}
               sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                borderRadius: 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.08)} 0%, ${alpha(theme.palette.success.main, 0.03)} 100%)`,
                 border: '1.5px solid',
-                borderColor: quickFilter === 'paid' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
+                borderColor: theme => alpha(theme.palette.success.main, 0.2),
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
-                  borderColor: 'success.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'paid' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
+                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.15)}`,
+                }
               }}
             >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <CheckCircle sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'success.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'success.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {paidInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.paid')}
-                  </Typography>
+              <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AttachMoney sx={{ fontSize: 24, color: 'success.main' }} />
+                    <Typography variant="h6" fontWeight="600" color="text.primary">
+                      Encaisse
+                    </Typography>
+                  </Box>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        bgcolor: theme => alpha(theme.palette.success.main, 0.08),
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.success.main, 0.15)
+                      }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', fontWeight: 500 }}>
+                          Cash
+                        </Typography>
+                        <Typography variant="h6" fontWeight="700" color="success.main" sx={{ mt: 0.5 }}>
+                          {formatCurrency(cashAmount)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        bgcolor: theme => alpha(theme.palette.info.main, 0.08),
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.info.main, 0.15)
+                      }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', fontWeight: 500 }}>
+                          Mobile Money
+                        </Typography>
+                        <Typography variant="h6" fontWeight="700" color="info.main" sx={{ mt: 0.5 }}>
+                          {formatCurrency(mobileAmount)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.primary.main, 0.15)
+                      }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', fontWeight: 500 }}>
+                          Total Payé
+                        </Typography>
+                        <Typography variant="h6" fontWeight="700" color="primary.main" sx={{ mt: 0.5 }}>
+                          {formatCurrency(filteredPaidTotal)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* En attente */}
-          <Grid item xs={3} sm={2.4}>
+          {/* Invoice Count & Date Navigation */}
+          <Grid item xs={12} md={4}>
             <Card
-              onClick={() => handleQuickFilterClick('sent')}
               sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
+                borderRadius: 2.5,
+                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.03)} 100%)`,
                 border: '1.5px solid',
-                borderColor: quickFilter === 'sent' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
-                  borderColor: 'info.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'sent' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
+                borderColor: theme => alpha(theme.palette.primary.main, 0.2),
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Warning sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'info.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'info.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {sentInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    En attente
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+              <CardContent sx={{ p: isMobile ? 2 : 2.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Stack spacing={2} sx={{ flex: 1 }}>
+                  {/* Invoice Count */}
+                  <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <Receipt sx={{ fontSize: 32, color: 'primary.main', mb: 1, mx: 'auto' }} />
+                    <Typography variant="h3" fontWeight="700" color="primary.main">
+                      {filteredInvoices.length}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 500, mt: 0.5 }}>
+                      {selectedDate ? 'Factures du jour' : 'Factures totales'}
+                    </Typography>
+                  </Box>
 
-          {/* Annulees */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('cancelled')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'cancelled' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
-                  borderColor: 'error.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'cancelled' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Error sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'error.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'error.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {cancelledInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    Annulees
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Brouillons */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('draft')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.grey[500], 0.1)} 0%, ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'draft' ? 'grey.600' : theme => alpha(theme.palette.grey[500], 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.grey[500], 0.3)}`,
-                  borderColor: 'grey.600'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'draft' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.grey[500], 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.grey[600]}, ${alpha(theme.palette.grey[400], 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Description sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'grey.600',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'grey.700',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {draftInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.drafts')}
-                  </Typography>
+                  {/* Date Navigation */}
+                  <Box>
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                          const currentDate = selectedDate ? new Date(selectedDate) : new Date();
+                          currentDate.setDate(currentDate.getDate() - 1);
+                          setSelectedDate(currentDate.toISOString().split('T')[0]);
+                        }}
+                        sx={{
+                          minWidth: 'auto',
+                          px: 1,
+                          fontSize: '0.7rem',
+                          textTransform: 'none'
+                        }}
+                      >
+                        Jour précédent
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={selectedDate === new Date().toISOString().split('T')[0] || !selectedDate ? 'contained' : 'outlined'}
+                        onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                        sx={{
+                          minWidth: 'auto',
+                          px: 1.5,
+                          fontSize: '0.7rem',
+                          textTransform: 'none'
+                        }}
+                      >
+                        Aujourd'hui
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                          const currentDate = selectedDate ? new Date(selectedDate) : new Date();
+                          currentDate.setDate(currentDate.getDate() + 1);
+                          setSelectedDate(currentDate.toISOString().split('T')[0]);
+                        }}
+                        sx={{
+                          minWidth: 'auto',
+                          px: 1,
+                          fontSize: '0.7rem',
+                          textTransform: 'none'
+                        }}
+                      >
+                        Jour suivant
+                      </Button>
+                    </Stack>
+                    {selectedDate && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1, fontSize: '0.7rem' }}>
+                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </Typography>
+                    )}
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
         </Grid>
 
-        {/* Filter Indicator */}
-        {quickFilter && (
+        {/* Filter Indicator for Paid */}
+        {quickFilter === 'paid' && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" color="text.secondary">{t('invoices:filters.activeFilter')}</Typography>
             <Chip
               label={
                 quickFilter === 'paid' ? t('invoices:filters.paid') :
-                  quickFilter === 'cancelled' ? 'Annulees' :
-                    quickFilter === 'sent' ? 'En attente' :
-                      quickFilter === 'draft' ? t('invoices:filters.drafts') : ''
+                  quickFilter === 'cancelled' ? 'Annulées' : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'paid' ? 'success' :
-                  quickFilter === 'cancelled' ? 'error' :
-                    quickFilter === 'sent' ? 'info' :
-                      quickFilter === 'draft' ? 'default' : 'primary'
+                  quickFilter === 'cancelled' ? 'error' : 'primary'
               }
               size="small"
             />
-          </Box>
-        )}
-
-        {/* Payment method stats */}
-        {filteredInvoices.length > 0 && (
-          <Box sx={{
-            mt: 2,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: theme => alpha(theme.palette.success.main, 0.05),
-            border: '1px solid',
-            borderColor: theme => alpha(theme.palette.success.main, 0.15),
-            display: 'flex',
-            gap: 3,
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <AttachMoney sx={{ fontSize: 18, color: 'success.main' }} />
-              <Typography variant="body2" fontWeight="600">
-                Encaisse:
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant="body2" color="text.secondary">Cash:</Typography>
-              <Typography variant="body2" fontWeight="700" color="success.main">
-                {formatCurrency(cashAmount)}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant="body2" color="text.secondary">Mobile Money:</Typography>
-              <Typography variant="body2" fontWeight="700" color="info.main">
-                {formatCurrency(mobileAmount)}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ borderLeft: 1, borderColor: 'divider', pl: 2 }}>
-              <Typography variant="body2" color="text.secondary">Total paye:</Typography>
-              <Typography variant="body2" fontWeight="700">
-                {formatCurrency(filteredPaidTotal)}
-              </Typography>
-            </Stack>
           </Box>
         )}
       </Box>
@@ -838,10 +649,6 @@ function Invoices() {
                     }
                   }
                 }}
-              />
-              <DateNavigator
-                value={selectedDate}
-                onChange={setSelectedDate}
               />
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}

@@ -285,7 +285,12 @@
       "manager": "Gestionnaire",
       "buyer": "Acheteur",
       "accountant": "Comptable",
-      "viewer": "Consultation"
+      "viewer": "Consultation",
+      "doctor": "Médecin",
+      "nurse": "Infirmier/Infirmière",
+      "lab_tech": "Technicien de laboratoire",
+      "pharmacist": "Pharmacien",
+      "receptionist": "Réceptionniste"
     },
     "modules": {
       "dashboard": "Tableau de bord",
@@ -294,6 +299,11 @@
       "invoices": "Factures",
       "products": "Produits",
       "clients": "Clients",
+      "patients": "Patients",
+      "reception": "Réception",
+      "laboratory": "Laboratoire",
+      "pharmacy": "Pharmacie",
+      "consultations": "Consultations",
       "e-sourcing": "E-Sourcing",
       "contracts": "Contrats"
     },
@@ -315,6 +325,7 @@
       "editPermissions": "Modifier les permissions",
       "deactivate": "Désactiver",
       "activate": "Activer",
+      "changePassword": "Changer le mot de passe",
       "delete": "Supprimer"
     },
     "permissions": {
@@ -341,6 +352,16 @@
       "moduleAccess": "Accès aux modules",
       "saveSuccess": "Permissions mises à jour avec succès",
       "saveError": "Erreur lors de la mise à jour des permissions"
+    },
+    "passwordDialog": {
+      "title": "Réinitialisation du mot de passe",
+      "subtitle": "Définir un nouveau mot de passe pour {{name}}",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "errorMatch": "Les mots de passe ne correspondent pas",
+      "errorLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "success": "Mot de passe mis à jour avec succès",
+      "error": "Erreur lors de la mise à jour du mot de passe"
     },
     "deleteDialog": {
       "title": "Confirmer la désactivation",

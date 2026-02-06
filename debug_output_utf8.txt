@@ -1,0 +1,62 @@
+--- DataBase Categories ---
+Name: Actes Medicaux, Slug: procedures
+Name: Autres Services, Slug: services
+Name: Consommables Laboratoire, Slug: lab_consumables
+Name: Consultations, Slug: consultations
+Name: Imagerie, Slug: imaging
+Name: Laboratoire, Slug: laboratory
+Name: Materiel Medical, Slug: supplies
+Name: Medicaments, Slug: medications
+Name: Soins Infirmiers, Slug: nursing
+
+--- Sample Products (First 50) ---
+Name: ACIDE URIQUE, Type: service, Category: laboratory
+Name: ALBUMINE, Type: service, Category: laboratory
+Name: ALBUMINE/SUCRE, Type: service, Category: laboratory
+Name: ASLO, Type: service, Category: laboratory
+Name: Acide borique - 12mg/18mg par ml - 20 unidoses, Type: physical, Category: medications
+Name: Acide borique - 12mg/18mg par ml - 20 unidoses, Type: physical, Category: medications
+Name: Acide borique - 12mg/18mg par ml - 20 unidoses, Type: physical, Category: medications
+Name: Acide folique - 0,4 mg - 30 comprimés, Type: physical, Category: medications
+Name: Acide folique CCD - 30 comprimés, Type: physical, Category: medications
+Name: Alcool Modifié 70% - Alcool modifié 70% vol - Bidon 5l, Type: physical, Category: medications
+Name: Alcool isopropylique 70% - Alcool, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 24 sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium (générique Gaviscon) - 500mg/267 mg 24 - sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium - 24 sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium - 24 sachets de 10 ml, Type: physical, Category: medications
+Name: Alginate de sodium - 24 sachets de 10 ml, Type: physical, Category: medications
+Name: Amoxiciline - 1g - 6 comprimés, Type: physical, Category: medications
+Name: Amoxiciline - 500mg/5 ml, Type: physical, Category: medications
+Name: Amoxiciline - Clamoxyl - 500Mg - 12 gélules, Type: physical, Category: medications
+Name: BILAN LIPIDIQUE, Type: service, Category: laboratory
+Name: BILIRUBINE DIRECTE, Type: service, Category: laboratory
+Name: BILIRUBINE TOTALE, Type: service, Category: laboratory
+Name: Betadine Alcoolique 5% - Povidone Iodée, Type: physical, Category: medications
+Name: Betadine Dermique 10% - Povidone Iodée, Type: physical, Category: medications
+Name: Betadine Scrub 4% - Povidone Iodée, Type: physical, Category: medications
+Name: Bilan HTA/Diabète, Type: service, Category: laboratory
+Name: Bilan Prénatal, Type: service, Category: laboratory
+Name: CALCIUM Ca++ (sérum), Type: service, Category: laboratory
+Name: CALCIUM Ca++ (urines), Type: service, Category: laboratory
+Name: CHIMIE URINAIRE, Type: service, Category: laboratory
+Name: CHLAMYDIA TRACHOMATIS, Type: service, Category: laboratory
+Name: CHOLESTÉROL HDL, Type: service, Category: laboratory
+Name: CHOLESTÉROL LDL, Type: service, Category: laboratory
+Name: CHOLESTÉROL TOTAL, Type: service, Category: laboratory
+Name: COPROCULTURE, Type: service, Category: laboratory
+Name: CRP (C Reactive Protein), Type: service, Category: laboratory
+Name: CRÉATININE (sérum), Type: service, Category: laboratory
+Name: CRÉATININE (urines), Type: service, Category: laboratory
+Name: Carbosylane - 45 mg - 140mg / 48 doses, Type: physical, Category: medications
+Name: Charlottes, Type: physical, Category: medications
+Name: Chlorhexidine - Chlorhexidine en bidon de 2l, Type: physical, Category: medications
+Name: Chlorhexidine incolore 2% - Chlorhexidine incolore 2% 500ml, Type: physical, Category: medications
+Name: Compresses - 10 sachets de 2 compresses, Type: physical, Category: medications

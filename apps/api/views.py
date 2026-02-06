@@ -319,6 +319,12 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 product_type='physical',
                 stock_quantity__gt=F('low_stock_threshold')
             )
+        
+        # Exclure les produits liés à un test de laboratoire (consommables)
+        queryset = queryset.exclude(
+            Q(category__slug__in=['lab_consumables', 'lab-consumables', 'laboratory', 'lab-tests', 'lab_tests']) |
+            Q(linked_lab_tests__isnull=False)
+        )
 
         return queryset
 

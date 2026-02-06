@@ -192,7 +192,7 @@ class DispensingCreateView(APIView):
                 due_date=timezone.now().date() + timedelta(days=30),
                 subtotal=0,
                 total_amount=0,
-                status='paid' if not patient else 'draft',  # Walk-in = paid immediately
+                status='paid' if not patient else 'sent',  # Walk-in = paid immediately
                 currency='XAF',
             )
             

@@ -234,7 +234,7 @@ class EndConsultationView(APIView):
                     due_date=timezone.now().date() + timedelta(days=30),
                     subtotal=consultation_fee,
                     total_amount=consultation_fee,
-                    status='draft',
+                    status='sent',
                     currency='XAF',
                 )
                 

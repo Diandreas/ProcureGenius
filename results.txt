@@ -1,0 +1,6 @@
+--- Testing Exclusion Logic ---
+Total count after exclusion: 187
+SUCCESS: NFS is excluded from the queryset.
+
+--- Check Products with 'laboratory' slug ---
+Total 'laboratory' slug products: 82

@@ -133,6 +133,7 @@ function MainLayout() {
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
 
+  const [user, setUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState(null);
   const [moduleActivationDialogOpen, setModuleActivationDialogOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -173,6 +174,7 @@ function MainLayout() {
       });
       if (response.ok) {
         const data = await response.json();
+        setUser(data);
         setUserPermissions(data.permissions);
       }
     } catch (error) {
@@ -362,7 +364,27 @@ function MainLayout() {
       {/* Navigation */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
         <List disablePadding>
-          {menuItems.filter(item => item.isCore || hasModule(item.moduleId)).map((item) => {
+          {menuItems.filter(item => {
+            if (item.isCore) return true;
+            if (!hasModule(item.moduleId)) return false;
+
+            // Si accessible_modules est disponible (depuis l'objet profil), l'utiliser
+            // Sinon fallback sur permissions.module_access s'il n'est pas vide
+            // Exception pour l'admin principal (admin@csj.cm) qui a toujours tout accès
+            if (user?.email === 'admin@csj.cm') {
+              return true;
+            }
+
+            if (user?.accessible_modules) {
+              return user.accessible_modules.includes(item.moduleId);
+            }
+
+            if (userPermissions?.module_access && userPermissions.module_access.length > 0) {
+              return userPermissions.module_access.includes(item.moduleId);
+            }
+
+            return true;
+          }).map((item) => {
             const isSelected = location.pathname === item.path ||
               (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
@@ -456,29 +478,31 @@ function MainLayout() {
             </ListItemButton>
           </ListItem>
         )}
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => navigate('/settings')}
-            data-tutorial="menu-settings"
-            sx={{
-              minHeight: 48, px: 2, borderRadius: 3,
-              '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <IconImage
-                src="/icon/setting.png"
-                alt="Settings"
-                size={22}
-                withBackground={mode === 'dark'}
+        {userPermissions?.can_manage_settings && (
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => navigate('/settings')}
+              data-tutorial="menu-settings"
+              sx={{
+                minHeight: 48, px: 2, borderRadius: 3,
+                '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <IconImage
+                  src="/icon/setting.png"
+                  alt="Settings"
+                  size={22}
+                  withBackground={mode === 'dark'}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary={t('navigation:menu.settings')}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
               />
-            </ListItemIcon>
-            <ListItemText
-              primary={t('navigation:menu.settings')}
-              primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
-            />
-          </ListItemButton>
-        </ListItem>
+            </ListItemButton>
+          </ListItem>
+        )}
       </Box>
     </Box>
   );

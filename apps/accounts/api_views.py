@@ -216,6 +216,8 @@ def api_organization_user_detail(request, user_id):
                 user.role = data['role']
             if 'is_active' in data:
                 user.is_active = data['is_active']
+            if 'password' in data and data['password']:
+                user.set_password(data['password'])
             
             user.save()
             

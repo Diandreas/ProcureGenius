@@ -107,7 +107,7 @@ class LabOrderInvoiceService:
             title=f"Analyses laboratoire {lab_order.order_number}",
             description=f"Commande laboratoire #{lab_order.order_number}",
             due_date=timezone.now().date(),
-            status='sent',
+            status='paid',
             subtotal=0,
             tax_amount=0,
             total_amount=0
