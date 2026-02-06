@@ -45,8 +45,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5mm;
-            padding-bottom: 0.5mm;
+            margin-bottom: 0.2mm;
+            padding-bottom: 0.2mm;
             border-bottom: 1px solid #000;
         }
 
@@ -96,27 +96,27 @@
         }
 
         .barcode-image {
-            max-width: 54mm;
-            height: 12mm;
+            max-width: 59mm;
+            height: 24mm;
             object-fit: contain;
             display: block;
             margin: 0 auto;
         }
 
         .barcode-text {
-            font-size: 7pt;
+            font-size: 8pt;
             color: #000;
-            margin-top: 0.5mm;
+            margin-top: 0.1mm;
             font-family: 'Courier New', monospace;
             font-weight: bold;
         }
 
         .order-info {
-            font-size: 5.5pt;
+            font-size: 6pt;
             color: #000;
             text-align: center;
-            margin-top: 0.5mm;
-            padding-top: 0.5mm;
+            margin-top: 0.1mm;
+            padding-top: 0.2mm;
             border-top: 1px solid #ccc;
         }
 
@@ -148,15 +148,16 @@
                 <span class="test-code">{{ label.test_code }}</span>
             </div>
 
-            <div class="test-name" title="{{ label.test_name }}">
-                {{ label.test_name }}
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5mm;">
+                <div class="test-name" title="{{ label.test_name }}" style="margin-bottom: 0; flex: 1; min-width: 0;">
+                    {{ label.test_name }}
+                </div>
+                {% if label.sample_type %}
+                <div class="sample-type" style="margin-bottom: 0; margin-left: 2mm; white-space: nowrap;">
+                    {{ label.sample_type }}
+                </div>
+                {% endif %}
             </div>
-
-            {% if label.sample_type %}
-            <div class="sample-type">
-                {{ label.sample_type }}
-            </div>
-            {% endif %}
 
             <div class="patient-info">
                 <div class="patient-name">{{ label.patient_name }}</div>
@@ -176,7 +177,7 @@
             </div>
 
             <div class="order-info">
-                {{ label.order_number }} | {{ label.order_date|date:"d/m/y H:i" }}
+                Date: {{ label.order_date|date:"d/m/y H:i" }}
             </div>
         </div>
     </div>
