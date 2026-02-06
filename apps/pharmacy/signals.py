@@ -44,15 +44,15 @@ def create_invoice_for_dispensing(sender, instance, **kwargs):
         
         # Add all medications as items
         for item in instance.items.all():
-            dosage_text = f"Posologie: {item.dosage}" if item.dosage else ""
-            instructions = f"Instructions: {item.instructions}" if item.instructions else ""
-            detailed_desc = f"{dosage_text}\\n{instructions}".strip()
+            dosage_text = f"Posologie: {item.dosage_instructions}" if item.dosage_instructions else ""
+            instructions = f"Observation: {item.notes}" if item.notes else ""
+            detailed_desc = f"{dosage_text}\n{instructions}".strip()
             
             invoice.add_item(
                 service_code=item.medication.reference,
                 description=item.medication.name,
                 detailed_description=detailed_desc,
-                quantity=item.quantity,
+                quantity=item.quantity_dispensed,
                 unit_price=item.unit_price,
                 product=item.medication
             )
