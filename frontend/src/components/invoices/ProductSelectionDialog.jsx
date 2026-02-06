@@ -130,15 +130,15 @@ function ProductSelectionDialog({
     }
 
     const product = newItem.product;
-    let newPrice = newItem.unit_price;
+    let newPrice = parseFloat(newItem.unit_price) || 0;
 
     // Logic simple: si on passe à l'unité de base et qu'elle diffère de l'unité de vente
     if (unit === product.base_unit && unit !== product.sell_unit) {
       if (product.conversion_factor && product.conversion_factor > 0) {
-        newPrice = parseFloat(product.price) / parseFloat(product.conversion_factor);
+        newPrice = (parseFloat(product.price) || 0) / parseFloat(product.conversion_factor);
       }
     } else if (unit === product.sell_unit) {
-      newPrice = parseFloat(product.price);
+      newPrice = parseFloat(product.price) || 0;
     }
 
     setNewItem(prev => ({

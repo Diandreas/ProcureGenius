@@ -124,7 +124,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     stock_status = serializers.CharField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
-    price_editable = serializers.SerializerMethodField(read_only=True)
+    price_editable = serializers.BooleanField(required=False, default=False)
     
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
@@ -166,26 +166,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'warehouse_name', 'warehouse_code', 'warehouse_location',
             'supply_lead_time_days',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
-            'last_sale_date', 'active_contracts_count', 'price_editable'
+            'last_sale_date', 'active_contracts_count'
         ]
     
-    def to_representation(self, instance):
-        """Surcharger pour gérer price_editable de manière sécurisée"""
-        representation = super().to_representation(instance)
-        # S'assurer que price_editable est toujours présent même si le champ n'existe pas
-        if 'price_editable' not in representation:
-            representation['price_editable'] = False
-        return representation
-    
-    def get_price_editable(self, obj):
-        """Retourne price_editable si le champ existe, sinon False par défaut"""
-        try:
-            # Vérifier si le champ existe dans le modèle en utilisant getattr avec une valeur par défaut
-            # Cela évite toute erreur si le champ n'existe pas encore en DB
-            return getattr(obj, 'price_editable', False)
-        except Exception:
-            # En cas d'erreur quelconque, retourner False
-            return False
     
     def validate(self, attrs):
         """Validation stricte des produits selon leur type"""

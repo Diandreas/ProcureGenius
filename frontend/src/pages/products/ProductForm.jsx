@@ -662,33 +662,42 @@ function ProductForm() {
                                                     Unités & Prix
                                                 </Typography>
                                                 <Grid container spacing={2}>
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid item xs={12} sm={values.product_type === 'physical' ? 4 : 12}>
                                                         <TextField
                                                             select fullWidth size="small"
-                                                            name="sell_unit" label={t('products:labels.sellUnit', 'Unité de Vente (ex: Boîte)')}
-                                                            value={values.sell_unit} onChange={handleChange}
+                                                            name="sell_unit" label={values.product_type === 'physical' ? t('products:labels.sellUnit', 'Unité de Vente') : t('products:labels.unit', 'Unité')}
+                                                            value={values.sell_unit} onChange={(e) => {
+                                                                handleChange(e);
+                                                                if (values.product_type === 'service') {
+                                                                    setFieldValue('base_unit', e.target.value);
+                                                                }
+                                                            }}
                                                         >
                                                             {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
                                                         </TextField>
                                                     </Grid>
-                                                    <Grid item xs={12} sm={4}>
-                                                        <TextField
-                                                            select fullWidth size="small"
-                                                            name="base_unit" label={t('products:labels.baseUnit', 'Unité de Stockage (ex: Pièce)')}
-                                                            value={values.base_unit} onChange={handleChange}
-                                                            helperText="(Stocké)"
-                                                        >
-                                                            {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
-                                                        </TextField>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={4}>
-                                                        <TextField
-                                                            fullWidth size="small" type="number"
-                                                            name="conversion_factor" label="Facteur"
-                                                            value={values.conversion_factor} onChange={handleChange}
-                                                            helperText={`1 ${values.sell_unit} = ${values.conversion_factor} ${values.base_unit}`}
-                                                        />
-                                                    </Grid>
+                                                    {values.product_type === 'physical' && (
+                                                        <>
+                                                            <Grid item xs={12} sm={4}>
+                                                                <TextField
+                                                                    select fullWidth size="small"
+                                                                    name="base_unit" label={t('products:labels.baseUnit', 'Unité de Stockage')}
+                                                                    value={values.base_unit} onChange={handleChange}
+                                                                    helperText="(Stocké)"
+                                                                >
+                                                                    {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
+                                                                </TextField>
+                                                            </Grid>
+                                                            <Grid item xs={12} sm={4}>
+                                                                <TextField
+                                                                    fullWidth size="small" type="number"
+                                                                    name="conversion_factor" label="Facteur"
+                                                                    value={values.conversion_factor} onChange={handleChange}
+                                                                    helperText={`1 ${values.sell_unit} = ${values.conversion_factor} ${values.base_unit}`}
+                                                                />
+                                                            </Grid>
+                                                        </>
+                                                    )}
                                                     <Grid item xs={12} sm={6}>
                                                         <TextField
                                                             fullWidth size="small" type="number"
@@ -703,6 +712,28 @@ function ProductForm() {
                                                             name="cost_price" label="Coût d'achat"
                                                             value={values.cost_price} onChange={handleChange}
                                                             InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <FormControlLabel
+                                                            control={
+                                                                <Checkbox
+                                                                    name="price_editable"
+                                                                    checked={values.price_editable}
+                                                                    onChange={handleChange}
+                                                                    color="primary"
+                                                                />
+                                                            }
+                                                            label={
+                                                                <Box>
+                                                                    <Typography variant="body2" fontWeight={500}>
+                                                                        {t('products:labels.priceEditable', 'Prix modifiable lors de la facturation')}
+                                                                    </Typography>
+                                                                    <Typography variant="caption" color="text.secondary">
+                                                                        Permet d'ajuster le prix manuellement sur chaque facture
+                                                                    </Typography>
+                                                                </Box>
+                                                            }
                                                         />
                                                     </Grid>
                                                 </Grid>

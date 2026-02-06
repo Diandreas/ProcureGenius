@@ -287,17 +287,6 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         # First apply organization filter
         queryset = super().get_queryset()
         
-        # Utiliser only() pour éviter de charger price_editable si le champ n'existe pas encore
-        # Cela évite les erreurs SQL si la migration n'a pas été appliquée
-        try:
-            # Essayer de vérifier si le champ existe en testant sur un objet
-            test_obj = queryset.first()
-            if test_obj and hasattr(test_obj, 'price_editable'):
-                # Le champ existe, on peut l'utiliser normalement
-                pass
-        except Exception:
-            # Si erreur, le champ n'existe probablement pas encore
-            pass
 
         # Filtre par fournisseur (via la relation SupplierProduct)
         supplier_id = self.request.query_params.get('supplier')

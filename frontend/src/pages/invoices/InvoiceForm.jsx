@@ -232,7 +232,7 @@ function InvoiceForm() {
   };
 
   const handleAddItem = () => {
-    if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
+    if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price < 0) {
       enqueueSnackbar(t('invoices:messages.fillAllRequiredFields'), { variant: 'error' });
       return;
     }
