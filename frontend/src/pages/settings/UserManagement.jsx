@@ -40,6 +40,18 @@ import {
     CheckCircle,
     Cancel,
     VpnKey,
+    Dashboard as DashboardIcon,
+    Business,
+    ShoppingCart,
+    Receipt,
+    Inventory,
+    Group,
+    MedicalServices,
+    AssignmentInd,
+    Science,
+    LocalPharmacy,
+    HealthAndSafety,
+    Category as CategoryIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -49,19 +61,30 @@ function UserManagement() {
     const { enqueueSnackbar } = useSnackbar();
     const { t } = useTranslation(['settings', 'common']);
 
-    // Modules disponibles
+    // Modules disponibles enrichis
     const AVAILABLE_MODULES = [
-        { id: 'dashboard', name: t('settings:userManagement.modules.dashboard') },
-        { id: 'suppliers', name: t('settings:userManagement.modules.suppliers') },
-        { id: 'purchase-orders', name: t('settings:userManagement.modules.purchase-orders') },
-        { id: 'invoices', name: t('settings:userManagement.modules.invoices') },
-        { id: 'products', name: t('settings:userManagement.modules.products') },
-        { id: 'clients', name: t('settings:userManagement.modules.clients') },
-        { id: 'patients', name: t('settings:userManagement.modules.patients') },
-        { id: 'reception', name: t('settings:userManagement.modules.reception') },
-        { id: 'laboratory', name: t('settings:userManagement.modules.laboratory') },
-        { id: 'pharmacy', name: t('settings:userManagement.modules.pharmacy') },
-        { id: 'consultations', name: t('settings:userManagement.modules.consultations') },
+        // CORE
+        { id: 'dashboard', name: t('settings:userManagement.modules.dashboard'), icon: <DashboardIcon />, category: 'core', description: 'Vue d\'ensemble et statistiques clés' },
+
+        // SUPPLY CHAIN
+        { id: 'suppliers', name: t('settings:userManagement.modules.suppliers'), icon: <Business />, category: 'supply', description: 'Gestion des fournisseurs et catalogues' },
+        { id: 'purchase-orders', name: t('settings:userManagement.modules.purchase-orders'), icon: <ShoppingCart />, category: 'supply', description: 'Commandes d\'achat et réapprovisionnement' },
+        { id: 'invoices', name: t('settings:userManagement.modules.invoices'), icon: <Receipt />, category: 'supply', description: 'Facturation clients et encaissements' },
+        { id: 'products', name: t('settings:userManagement.modules.products'), icon: <Inventory />, category: 'supply', description: 'Inventaire, produits et services' },
+        { id: 'clients', name: t('settings:userManagement.modules.clients'), icon: <Group />, category: 'supply', description: 'Base de données clients et historique' },
+
+        // HEALTHCARE
+        { id: 'patients', name: t('settings:userManagement.modules.patients'), icon: <AssignmentInd />, category: 'healthcare', description: 'Dossiers médicaux et historique patients' },
+        { id: 'reception', name: t('settings:userManagement.modules.reception'), icon: <MedicalServices />, category: 'healthcare', description: 'Accueil, rendez-vous et files d\'attente' },
+        { id: 'consultations', name: t('settings:userManagement.modules.consultations'), icon: <HealthAndSafety />, category: 'healthcare', description: 'Consultations médicales et prescriptions' },
+        { id: 'laboratory', name: t('settings:userManagement.modules.laboratory'), icon: <Science />, category: 'healthcare', description: 'Examens, résultats et plateaux techniques' },
+        { id: 'pharmacy', name: t('settings:userManagement.modules.pharmacy'), icon: <LocalPharmacy />, category: 'healthcare', description: 'Dispensation et stocks de médicaments' },
+    ];
+
+    const MODULE_CATEGORIES = [
+        { id: 'core', name: 'Système', icon: <DashboardIcon fontSize="small" /> },
+        { id: 'supply', name: 'Gestion Commerciale', icon: <ShoppingCart fontSize="small" /> },
+        { id: 'healthcare', name: 'Santé & Médical', icon: <MedicalServices fontSize="small" /> },
     ];
 
     // Rôles avec modules suggérés
@@ -613,82 +636,149 @@ function UserManagement() {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog de permissions */}
-            <Dialog open={permissionsDialogOpen} onClose={() => setPermissionsDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{t('settings:userManagement.permissionsDialog.title')}</DialogTitle>
-                <DialogContent>
+            {/* Dialog de permissions - Redessiné */}
+            <Dialog
+                open={permissionsDialogOpen}
+                onClose={() => setPermissionsDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: 2 }
+                }}
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            <Edit />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h6">{t('settings:userManagement.permissionsDialog.title')}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                {selectedUser?.first_name} {selectedUser?.last_name} (@{selectedUser?.username})
+                            </Typography>
+                        </Box>
+                    </Box>
+                </DialogTitle>
+                <DialogContent dividers>
                     {selectedUser && (
-                        <Box sx={{ mt: 2 }}>
-                            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                        <Box sx={{ py: 1 }}>
+                            {/* Section Permissions Spéciales */}
+                            <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 700, mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                                 {t('settings:userManagement.permissionsDialog.specialPermissions')}
                             </Typography>
-                            <FormGroup>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={permissionsForm.can_manage_users}
-                                            onChange={(e) => setPermissionsForm({ ...permissionsForm, can_manage_users: e.target.checked })}
-                                        />
-                                    }
-                                    label={t('settings:userManagement.permissions.manageUsers')}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={permissionsForm.can_manage_settings}
-                                            onChange={(e) => setPermissionsForm({ ...permissionsForm, can_manage_settings: e.target.checked })}
-                                        />
-                                    }
-                                    label={t('settings:userManagement.permissions.manageSettings')}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={permissionsForm.can_view_analytics}
-                                            onChange={(e) => setPermissionsForm({ ...permissionsForm, can_view_analytics: e.target.checked })}
-                                        />
-                                    }
-                                    label={t('settings:userManagement.permissions.viewAnalytics')}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={permissionsForm.can_approve_purchases}
-                                            onChange={(e) => setPermissionsForm({ ...permissionsForm, can_approve_purchases: e.target.checked })}
-                                        />
-                                    }
-                                    label={t('settings:userManagement.permissions.approvePurchases')}
-                                />
-                            </FormGroup>
+                            <Grid container spacing={1} sx={{ mb: 4 }}>
+                                {[
+                                    { id: 'can_manage_users', label: t('settings:userManagement.permissions.manageUsers') },
+                                    { id: 'can_manage_settings', label: t('settings:userManagement.permissions.manageSettings') },
+                                    { id: 'can_view_analytics', label: t('settings:userManagement.permissions.viewAnalytics') },
+                                    { id: 'can_approve_purchases', label: t('settings:userManagement.permissions.approvePurchases') },
+                                ].map((perm) => (
+                                    <Grid item xs={12} sm={6} key={perm.id}>
+                                        <Card variant="outlined" sx={{
+                                            transition: '0.2s',
+                                            '&:hover': { bgcolor: 'action.hover' },
+                                            borderColor: permissionsForm[perm.id] ? 'primary.light' : 'divider',
+                                            bgcolor: permissionsForm[perm.id] ? 'primary.50' : 'background.paper'
+                                        }}>
+                                            <CardContent sx={{ py: '8px !important', px: 2 }}>
+                                                <FormControlLabel
+                                                    sx={{ width: '100%', m: 0 }}
+                                                    control={
+                                                        <Checkbox
+                                                            size="small"
+                                                            checked={permissionsForm[perm.id]}
+                                                            onChange={(e) => setPermissionsForm({ ...permissionsForm, [perm.id]: e.target.checked })}
+                                                        />
+                                                    }
+                                                    label={<Typography variant="body2" fontWeight={500}>{perm.label}</Typography>}
+                                                />
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+                                ))}
+                            </Grid>
 
-                            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+                            {/* Section Accès Modules */}
+                            <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 700, mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                                 {t('settings:userManagement.permissionsDialog.moduleAccess')}
                             </Typography>
-                            <FormGroup>
-                                {AVAILABLE_MODULES.map((module) => (
-                                    <FormControlLabel
-                                        key={module.id}
-                                        control={
-                                            <Checkbox
-                                                checked={permissionsForm.module_access.includes(module.id)}
-                                                onChange={(e) => {
-                                                    const newModules = e.target.checked
-                                                        ? [...permissionsForm.module_access, module.id]
-                                                        : permissionsForm.module_access.filter(m => m !== module.id);
-                                                    setPermissionsForm({ ...permissionsForm, module_access: newModules });
-                                                }}
-                                            />
-                                        }
-                                        label={module.name}
-                                    />
-                                ))}
-                            </FormGroup>
+
+                            {MODULE_CATEGORIES.map((category) => (
+                                <Box key={category.id} sx={{ mb: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, pl: 0.5 }}>
+                                        {category.icon}
+                                        <Typography variant="subtitle2" fontWeight={600}>{category.name}</Typography>
+                                    </Box>
+                                    <Grid container spacing={2}>
+                                        {AVAILABLE_MODULES.filter(m => m.category === category.id).map((module) => (
+                                            <Grid item xs={12} sm={6} md={4} key={module.id}>
+                                                <Card
+                                                    variant="outlined"
+                                                    sx={{
+                                                        height: '100%',
+                                                        cursor: 'pointer',
+                                                        transition: '0.2s',
+                                                        borderColor: permissionsForm.module_access.includes(module.id) ? 'primary.main' : 'divider',
+                                                        bgcolor: permissionsForm.module_access.includes(module.id) ? 'primary.50' : 'background.paper',
+                                                        '&:hover': {
+                                                            borderColor: 'primary.main',
+                                                            transform: 'translateY(-2px)',
+                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                                                        }
+                                                    }}
+                                                    onClick={() => {
+                                                        const isSelected = permissionsForm.module_access.includes(module.id);
+                                                        const newModules = isSelected
+                                                            ? permissionsForm.module_access.filter(m => m !== module.id)
+                                                            : [...permissionsForm.module_access, module.id];
+                                                        setPermissionsForm({ ...permissionsForm, module_access: newModules });
+                                                    }}
+                                                >
+                                                    <CardContent sx={{ p: 2 }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                                                            <Box sx={{
+                                                                p: 1,
+                                                                borderRadius: 1,
+                                                                bgcolor: permissionsForm.module_access.includes(module.id) ? 'primary.main' : 'grey.100',
+                                                                color: permissionsForm.module_access.includes(module.id) ? 'white' : 'text.secondary',
+                                                                display: 'flex'
+                                                            }}>
+                                                                {React.cloneElement(module.icon, { fontSize: 'small' })}
+                                                            </Box>
+                                                            <Box sx={{ flexGrow: 1 }}>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: permissionsForm.module_access.includes(module.id) ? 'primary.main' : 'text.primary' }}>
+                                                                    {module.name}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, lineHeight: 1.2 }}>
+                                                                    {module.description}
+                                                                </Typography>
+                                                            </Box>
+                                                            <Checkbox
+                                                                size="small"
+                                                                checked={permissionsForm.module_access.includes(module.id)}
+                                                                sx={{ p: 0, mt: 0.5 }}
+                                                            />
+                                                        </Box>
+                                                    </CardContent>
+                                                </Card>
+                                            </Grid>
+                                        ))}
+                                    </Grid>
+                                </Box>
+                            ))}
                         </Box>
                     )}
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setPermissionsDialogOpen(false)}>{t('common:cancel')}</Button>
-                    <Button onClick={handleSavePermissions} variant="contained">
+                <DialogActions sx={{ p: 2, bgcolor: 'grey.50' }}>
+                    <Button onClick={() => setPermissionsDialogOpen(false)} color="inherit">
+                        {t('common:cancel')}
+                    </Button>
+                    <Button
+                        onClick={handleSavePermissions}
+                        variant="contained"
+                        size="large"
+                        sx={{ px: 4, borderRadius: 2 }}
+                    >
                         {t('common:save')}
                     </Button>
                 </DialogActions>
