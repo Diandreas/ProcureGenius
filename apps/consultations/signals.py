@@ -42,12 +42,20 @@ def create_invoice_for_consultation(sender, instance, created, **kwargs):
         
         # Create invoice
         due_date = timezone.now().date() + timedelta(days=7)
+        invoice_creator = instance.created_by or instance.doctor
+        
+        # Fallback if no creator is found (should not happen with API fix)
+        if not invoice_creator:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            invoice_creator = User.objects.filter(is_superuser=True).first()
+
         invoice = Invoice.objects.create(
             organization=instance.organization,
             client=instance.patient,
-            created_by=instance.doctor,
+            created_by=invoice_creator,
             title=f"Consultation - {instance.consultation_number}",
-            description=f"Consultation du {instance.consultation_date.strftime('%d/%m/%Y')}\\nMotif: {instance.chief_complaint or 'N/A'}",
+            description=f"Consultation du {instance.consultation_date.strftime('%d/%m/%Y')}\nMotif: {instance.chief_complaint or 'N/A'}",
             invoice_type='healthcare_consultation',
             due_date=due_date,
             subtotal=0,

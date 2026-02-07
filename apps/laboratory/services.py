@@ -13,7 +13,7 @@ import json
 class LabResultPDFGenerator:
     """Service to generate Lab Result PDFs using WeasyPrint"""
 
-    def generate_lab_result_pdf(self, order, template_type='classic', language='fr'):
+    def generate_lab_result_pdf(self, order, template_type=None, language='fr'):
         """
         Generate PDF for a lab order result
         """
@@ -21,6 +21,10 @@ class LabResultPDFGenerator:
         
         # Get organization data
         org_data = self._get_organization_data(order)
+        
+        # Use default template from settings if not explicitly provided
+        if not template_type or template_type == 'classic': # 'classic' is the default arg in many places
+            template_type = org_data.get('default_template', 'classic')
         
         # Activating language
         from django.utils import translation
@@ -87,6 +91,7 @@ class LabResultPDFGenerator:
                 if settings_obj.company_email: org_data['email'] = settings_obj.company_email
                 if settings_obj.company_logo: org_data['logo_path'] = settings_obj.company_logo.path
                 if settings_obj.brand_color: org_data['brand_color'] = settings_obj.brand_color
+                if settings_obj.default_invoice_template: org_data['default_template'] = settings_obj.default_invoice_template
         except Exception:
             pass
             

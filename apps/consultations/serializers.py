@@ -105,6 +105,7 @@ class PrescriptionListSerializer(serializers.ModelSerializer):
 class ConsultationSerializer(serializers.ModelSerializer):
     """Full serializer for Consultation"""
     prescriptions = PrescriptionSerializer(many=True, read_only=True)
+    lab_orders_data = serializers.SerializerMethodField()
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     doctor_name = serializers.SerializerMethodField()
@@ -114,7 +115,9 @@ class ConsultationSerializer(serializers.ModelSerializer):
     duration_minutes = serializers.IntegerField(read_only=True)
     wait_time_minutes = serializers.IntegerField(read_only=True)
     consultation_invoice = serializers.SerializerMethodField()
-    
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    vitals_taken_by_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Consultation
         fields = [
@@ -129,6 +132,13 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'doctor_name',
             'consultation_date',
             'fee',
+            # Workflow
+            'status',
+            'status_display',
+            'queue_position',
+            'vitals_taken_by',
+            'vitals_taken_by_name',
+            'vitals_taken_at',
             # Timing
             'started_at',
             'ended_at',
@@ -142,6 +152,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'blood_glucose',
             'respiratory_rate',
             'oxygen_saturation',
+            'heart_rate',
             'weight',
             'height',
             'bmi',
@@ -162,18 +173,53 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'patient_instructions',
             # Prescriptions
             'prescriptions',
+            'lab_orders_data',
             # Invoice
             'consultation_invoice',
             # Timestamps
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'organization', 'consultation_number', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'organization', 'consultation_number', 'created_at', 'updated_at', 'queue_position']
 
     def get_doctor_name(self, obj):
         if obj.doctor:
             return obj.doctor.get_full_name() or obj.doctor.username
         return None
+
+    def get_vitals_taken_by_name(self, obj):
+        if obj.vitals_taken_by:
+            return obj.vitals_taken_by.get_full_name() or obj.vitals_taken_by.username
+        return None
+
+    def get_lab_orders_data(self, obj):
+        """Get lab orders with items"""
+        lab_orders = obj.lab_orders.all().prefetch_related('items__lab_test')
+        if not lab_orders:
+            return []
+
+        result = []
+        for order in lab_orders:
+            result.append({
+                'id': str(order.id),
+                'order_number': order.order_number,
+                'status': order.status,
+                'status_display': order.get_status_display(),
+                'priority': order.priority,
+                'clinical_notes': order.clinical_notes,
+                'total_price': float(order.total_price),
+                'order_date': order.order_date,
+                'tests': [
+                    {
+                        'id': str(item.id),
+                        'test_name': item.lab_test.name,
+                        'test_code': item.lab_test.test_code,
+                        'price': float(item.price),
+                    }
+                    for item in order.items.all()
+                ]
+            })
+        return result
 
     def get_consultation_invoice(self, obj):
         if obj.consultation_invoice:
@@ -189,8 +235,10 @@ class ConsultationSerializer(serializers.ModelSerializer):
 class ConsultationListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for consultation lists"""
     patient_name = serializers.CharField(source='patient.name', read_only=True)
+    patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     doctor_name = serializers.SerializerMethodField()
-    
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
     class Meta:
         model = Consultation
         fields = [
@@ -198,14 +246,18 @@ class ConsultationListSerializer(serializers.ModelSerializer):
             'consultation_number',
             'patient',
             'patient_name',
+            'patient_number',
             'doctor',
             'doctor_name',
             'consultation_date',
+            'status',
+            'status_display',
+            'queue_position',
             'chief_complaint',
             'diagnosis',
             'follow_up_required',
         ]
-    
+
     def get_doctor_name(self, obj):
         if obj.doctor:
             return obj.doctor.get_full_name() or obj.doctor.username

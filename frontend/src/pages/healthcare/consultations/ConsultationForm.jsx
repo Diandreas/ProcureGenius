@@ -30,6 +30,7 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     ArrowBack as ArrowBackIcon,
+    ArrowForward as ArrowForwardIcon,
     Print as PrintIcon,
     WarningAmber as ExternalIcon
 } from '@mui/icons-material';
@@ -39,6 +40,7 @@ import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
 import patientAPI from '../../../services/patientAPI';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import laboratoryAPI from '../../../services/laboratoryAPI';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 
 const ConsultationForm = () => {
@@ -54,6 +56,7 @@ const ConsultationForm = () => {
     const [loading, setLoading] = useState(false);
     const [patients, setPatients] = useState([]);
     const [medications, setMedications] = useState([]);
+    const [labTests, setLabTests] = useState([]);
 
     const [formData, setFormData] = useState({
         patient: null,
@@ -62,7 +65,7 @@ const ConsultationForm = () => {
         history_of_present_illness: '',
         physical_examination: '',
         diagnosis: '',
-        treatment_plan: '',
+        treatment_plan: '',  // Already exists in model
         // Vitals
         temperature: '',
         blood_pressure: '',
@@ -75,7 +78,9 @@ const ConsultationForm = () => {
         started_at: null,
         ended_at: null,
         // Prescription
-        medications: [] // { medication, dosage, frequency, duration, instructions }
+        medications: [], // { medication, dosage, frequency, duration, instructions }
+        // Lab tests
+        lab_tests: [] // Array of test IDs
     });
 
     useEffect(() => {
@@ -108,9 +113,10 @@ const ConsultationForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, medData] = await Promise.all([
+            const [patData, medData, labData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 100 }),
-                pharmacyAPI.getMedications({ page_size: 100 })
+                pharmacyAPI.getMedications({ page_size: 100 }),
+                laboratoryAPI.getTests({ page_size: 200, is_active: true })
             ]);
             setPatients(patData.results || []);
 
@@ -134,6 +140,7 @@ const ConsultationForm = () => {
             }) || [];
 
             setMedications(uniqueMeds);
+            setLabTests(labData.results || labData || []);
         } catch (error) {
             console.error('Error fetching options:', error);
         }
@@ -321,13 +328,26 @@ const ConsultationForm = () => {
                 await consultationAPI.createPrescription(prescriptionPayload);
             }
 
-            enqueueSnackbar('Consultation enregistrée', { variant: 'success' });
-            if (status === 'completed') {
-                // Redirect to detail page instead of list
-                navigate(`/healthcare/consultations/${consultId}`);
-            } else if (isNew) {
-                navigate(`/healthcare/consultations/${consultId}/edit`); // Stay on page
+            // Create Lab Order if tests selected
+            if (formData.lab_tests.length > 0) {
+                const labOrderPayload = {
+                    patient_id: formData.patient?.id,
+                    consultation_id: consultId,
+                    tests: formData.lab_tests,
+                    priority: 'routine'
+                };
+                await consultationAPI.createLabOrder(labOrderPayload);
             }
+
+            // Complete consultation via workflow endpoint if status is completed
+            if (status === 'completed') {
+                await consultationAPI.completeConsultation(consultId);
+            }
+
+            enqueueSnackbar('Consultation enregistrée', { variant: 'success' });
+
+            // Handle navigation - Always redirect to detail page (show view)
+            navigate(`/healthcare/consultations/${consultId}`);
         } catch (error) {
             console.error('Error saving:', error);
             console.error('Error response:', error.response?.data);
@@ -353,24 +373,23 @@ const ConsultationForm = () => {
                         Dossier Médical
                     </Typography>
                 </Stack>
-                <Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                         variant="outlined"
                         startIcon={<SaveIcon />}
-                        onClick={() => handleSubmit('in_consultation')}
-                        sx={{ mr: 1 }}
+                        onClick={() => handleSubmit('in_consultation', false)}
                         disabled={loading}
                     >
-                        Enregistrer (Brouillon)
+                        Enregistrer
                     </Button>
                     <Button
                         variant="contained"
                         startIcon={<CompleteIcon />}
                         color="success"
-                        onClick={() => handleSubmit('completed')}
+                        onClick={() => handleSubmit('completed', false)}
                         disabled={loading}
                     >
-                        Terminer & Prescrire
+                        Terminer Consultation
                     </Button>
                 </Box>
             </Box>
@@ -497,7 +516,54 @@ const ConsultationForm = () => {
                                         fullWidth
                                     />
                                 </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        label="Plan de Traitement"
+                                        name="treatment_plan"
+                                        value={formData.treatment_plan}
+                                        onChange={handleInputChange}
+                                        multiline
+                                        rows={2}
+                                        fullWidth
+                                        placeholder="Recommandations, instructions, plan thérapeutique..."
+                                    />
+                                </Grid>
                             </Grid>
+                        </CardContent>
+                    </Card>
+
+                    {/* Lab Tests Section */}
+                    <Card sx={{ mb: 3 }}>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>Examens de Laboratoire</Typography>
+                            <Autocomplete
+                                multiple
+                                options={labTests}
+                                getOptionLabel={(option) => `${option.test_code} - ${option.name} (${option.price} XAF)`}
+                                value={labTests.filter(test => formData.lab_tests.includes(test.id))}
+                                onChange={(e, newValue) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        lab_tests: newValue.map(test => test.id)
+                                    }));
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        placeholder="Sélectionner les examens à prescrire"
+                                        helperText="Rechercher et sélectionner les tests de laboratoire"
+                                    />
+                                )}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip
+                                            label={`${option.test_code} - ${option.name}`}
+                                            {...getTagProps({ index })}
+                                            size="small"
+                                        />
+                                    ))
+                                }
+                            />
                         </CardContent>
                     </Card>
 

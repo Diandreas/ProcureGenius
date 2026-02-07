@@ -164,9 +164,9 @@ const LabOrderForm = () => {
 
             console.log('Sending lab order payload:', payload); // Debug log
 
-            await laboratoryAPI.createOrder(payload);
+            const newOrder = await laboratoryAPI.createOrder(payload);
             enqueueSnackbar('Ordre de laboratoire créé avec succès', { variant: 'success' });
-            navigate('/healthcare/laboratory');
+            navigate(`/healthcare/laboratory/${newOrder.id}/dispatch`);
 
         } catch (error) {
             console.error('Error creating lab order:', error);

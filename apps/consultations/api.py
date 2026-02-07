@@ -15,6 +15,7 @@ from .services import ConsultationPDFGenerator
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
 from apps.invoicing.models import Product
+from apps.laboratory.models import LabTest, LabOrder, LabOrderItem
 from .models import Consultation, Prescription, PrescriptionItem
 from .serializers import (
     ConsultationSerializer,
@@ -79,7 +80,8 @@ class ConsultationListCreateView(generics.ListCreateAPIView):
         
         serializer.save(
             organization=self.request.user.organization,
-            doctor=doctor
+            doctor=doctor,
+            created_by=self.request.user
         )
 
 
@@ -296,6 +298,176 @@ class GenerateConsultationInvoiceView(APIView):
 
 
 # =============================================================================
+# Workflow & Queue Management Views
+# =============================================================================
+
+class TakeVitalsView(APIView):
+    """
+    Infirmier prend les paramètres vitaux d'un patient
+    Transitions: waiting -> ready_for_doctor
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            consultation = Consultation.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except Consultation.DoesNotExist:
+            return Response(
+                {'error': 'Consultation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Validate user role
+        if request.user.role not in ['nurse', 'doctor']:
+            return Response(
+                {'error': 'Seuls les infirmiers et médecins peuvent prendre les paramètres vitaux'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate vitals data
+        serializer = VitalSignsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Take vitals
+        consultation.take_vitals(
+            nurse_user=request.user,
+            vitals_data=serializer.validated_data
+        )
+
+        return Response(
+            ConsultationSerializer(consultation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class StartConsultationWorkflowView(APIView):
+    """
+    Médecin démarre la consultation
+    Transitions: ready_for_doctor -> in_consultation
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            consultation = Consultation.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except Consultation.DoesNotExist:
+            return Response(
+                {'error': 'Consultation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Validate user role
+        if request.user.role != 'doctor':
+            return Response(
+                {'error': 'Seuls les médecins peuvent démarrer une consultation'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Start consultation
+        consultation.start_consultation(doctor_user=request.user)
+
+        return Response(
+            ConsultationSerializer(consultation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class CompleteConsultationWorkflowView(APIView):
+    """
+    Terminer la consultation
+    Transitions: in_consultation -> completed
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            consultation = Consultation.objects.get(
+                id=pk,
+                organization=request.user.organization
+            )
+        except Consultation.DoesNotExist:
+            return Response(
+                {'error': 'Consultation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Complete consultation
+        consultation.complete_consultation()
+
+        return Response(
+            ConsultationSerializer(consultation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class ConsultationQueueView(APIView):
+    """
+    Obtenir la file d'attente des consultations
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        date_param = request.query_params.get('date')
+        if date_param:
+            from datetime import datetime
+            date = datetime.strptime(date_param, '%Y-%m-%d').date()
+        else:
+            date = timezone.now().date()
+
+        queue = Consultation.get_queue(
+            organization=request.user.organization,
+            date=date
+        )
+
+        # Group by status
+        waiting = queue.filter(status='waiting')
+        vitals_pending = queue.filter(status='vitals_pending')
+        ready_for_doctor = queue.filter(status='ready_for_doctor')
+
+        return Response({
+            'date': date,
+            'total_in_queue': queue.count(),
+            'waiting': ConsultationListSerializer(waiting, many=True).data,
+            'vitals_pending': ConsultationListSerializer(vitals_pending, many=True).data,
+            'ready_for_doctor': ConsultationListSerializer(ready_for_doctor, many=True).data,
+        })
+
+
+class NextPatientView(APIView):
+    """
+    Obtenir le prochain patient à traiter selon le rôle
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        role = request.user.role
+        if role not in ['nurse', 'doctor']:
+            return Response(
+                {'error': 'Non autorisé'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        next_patient = Consultation.get_next_patient(
+            organization=request.user.organization,
+            for_role=role
+        )
+
+        if next_patient:
+            return Response(ConsultationSerializer(next_patient).data)
+        else:
+            return Response(
+                {'message': 'Aucun patient en attente'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+
+# =============================================================================
 # Prescription Views
 # =============================================================================
 
@@ -379,6 +551,7 @@ class PrescriptionCreateView(APIView):
             patient=patient,
             consultation=consultation,
             prescriber=request.user if request.user.role == 'doctor' else None,
+            created_user=request.user,
             valid_until=valid_until,
             notes=data.get('notes', ''),
         )
@@ -420,7 +593,7 @@ class PrescriptionCreateView(APIView):
 class PrescriptionCancelView(APIView):
     """Cancel a prescription"""
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, pk):
         try:
             prescription = Prescription.objects.get(
@@ -432,17 +605,119 @@ class PrescriptionCancelView(APIView):
                 {'error': 'Prescription not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         if prescription.status not in ['pending', 'partially_filled']:
             return Response(
                 {'error': 'Cannot cancel prescription in current status'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         prescription.status = 'cancelled'
         prescription.save()
-        
+
         return Response(PrescriptionSerializer(prescription).data)
+
+
+class CreateLabOrderView(APIView):
+    """Create a lab order for a consultation"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Create lab order with items
+        Expected payload:
+        {
+            "consultation_id": "uuid",
+            "patient_id": "uuid",
+            "tests": ["test_id1", "test_id2", ...],
+            "priority": "routine",
+            "clinical_notes": "..."
+        }
+        """
+        try:
+            patient_id = request.data.get('patient_id')
+            consultation_id = request.data.get('consultation_id')
+            tests = request.data.get('tests', [])
+            priority = request.data.get('priority', 'routine')
+            clinical_notes = request.data.get('clinical_notes', '')
+
+            if not patient_id or not tests:
+                return Response(
+                    {'error': 'patient_id and tests are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get patient
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization
+            )
+
+            # Get consultation if provided
+            consultation = None
+            if consultation_id:
+                consultation = Consultation.objects.get(
+                    id=consultation_id,
+                    organization=request.user.organization
+                )
+
+            # Create lab order
+            lab_order = LabOrder.objects.create(
+                organization=request.user.organization,
+                patient=patient,
+                visit=consultation.visit if consultation else None,
+                ordered_by=request.user,
+                priority=priority,
+                clinical_notes=clinical_notes
+            )
+
+            # Create lab order items and calculate total
+            total_price = 0
+            for test_id in tests:
+                try:
+                    lab_test = LabTest.objects.get(
+                        id=test_id,
+                        organization=request.user.organization
+                    )
+                    LabOrderItem.objects.create(
+                        lab_order=lab_order,
+                        lab_test=lab_test,
+                        price=lab_test.price
+                    )
+                    total_price += lab_test.price
+                except LabTest.DoesNotExist:
+                    pass
+
+            # Update total price
+            lab_order.total_price = total_price
+            lab_order.save()
+
+            # Link to consultation if provided
+            if consultation:
+                consultation.lab_orders.add(lab_order)
+
+            # Serialize response
+            from apps.laboratory.serializers import LabOrderSerializer
+            return Response(
+                LabOrderSerializer(lab_order).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except Client.DoesNotExist:
+            return Response(
+                {'error': 'Patient not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Consultation.DoesNotExist:
+            return Response(
+                {'error': 'Consultation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # =============================================================================

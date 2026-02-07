@@ -2,6 +2,7 @@
 Medical Consultation and Prescription Models
 """
 from django.db import models
+from django.db.models import Max
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from decimal import Decimal
@@ -13,6 +14,15 @@ class Consultation(models.Model):
     Medical consultation record
     Includes vital signs, diagnosis, treatment plan, and follow-up
     """
+    STATUS_CHOICES = [
+        ('waiting', _('En attente')),
+        ('vitals_pending', _('Paramètres à prendre')),
+        ('ready_for_doctor', _('Prêt pour médecin')),
+        ('in_consultation', _('En consultation')),
+        ('completed', _('Terminé')),
+        ('cancelled', _('Annulé')),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
         'accounts.Organization',
@@ -20,14 +30,14 @@ class Consultation(models.Model):
         related_name='consultations',
         verbose_name=_("Organisation")
     )
-    
+
     # Consultation identification
     consultation_number = models.CharField(
         max_length=50,
         unique=True,
         verbose_name=_("Numéro consultation")
     )
-    
+
     # Patient reference
     patient = models.ForeignKey(
         'accounts.Client',
@@ -36,7 +46,7 @@ class Consultation(models.Model):
         verbose_name=_("Patient"),
         limit_choices_to={'client_type__in': ['patient', 'both']}
     )
-    
+
     # Visit reference
     visit = models.ForeignKey(
         'patients.PatientVisit',
@@ -46,7 +56,7 @@ class Consultation(models.Model):
         related_name='consultations',
         verbose_name=_("Visite")
     )
-    
+
     # Doctor
     doctor = models.ForeignKey(
         'accounts.CustomUser',
@@ -57,7 +67,48 @@ class Consultation(models.Model):
         verbose_name=_("Médecin"),
         limit_choices_to={'role': 'doctor'}
     )
-    
+
+    # Creator
+    created_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_consultations',
+        verbose_name=_("Créé par")
+    )
+
+    # Workflow and Queue Management
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='waiting',
+        verbose_name=_("Statut")
+    )
+    queue_position = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Position dans la file"),
+        help_text=_("Position dans la file d'attente")
+    )
+
+    # Vitals tracking (who took the vitals and when)
+    vitals_taken_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vitals_taken_consultations',
+        verbose_name=_("Paramètres pris par"),
+        limit_choices_to={'role__in': ['nurse', 'doctor']}
+    )
+    vitals_taken_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Paramètres pris à"),
+        help_text=_("Heure à laquelle les paramètres vitaux ont été pris")
+    )
+
     # Consultation date/time
     consultation_date = models.DateTimeField(
         default=timezone.now,
@@ -200,6 +251,14 @@ class Consultation(models.Model):
         help_text=_("Instructions à remettre au patient")
     )
     
+    # Laboratory orders
+    lab_orders = models.ManyToManyField(
+        'laboratory.LabOrder',
+        blank=True,
+        related_name='consultations',
+        verbose_name=_("Prescriptions d'examens")
+    )
+
     # Billing
     consultation_invoice = models.ForeignKey(
         'invoicing.Invoice',
@@ -227,6 +286,19 @@ class Consultation(models.Model):
     def save(self, *args, **kwargs):
         if not self.consultation_number:
             self.consultation_number = self._generate_consultation_number()
+
+        # Auto-assign queue position if status is waiting or vitals_pending
+        if self.status in ['waiting', 'vitals_pending'] and not self.queue_position:
+            # Get the max queue position for today
+            today = timezone.now().date()
+            max_position = Consultation.objects.filter(
+                organization=self.organization,
+                consultation_date__date=today,
+                status__in=['waiting', 'vitals_pending', 'ready_for_doctor']
+            ).aggregate(Max('queue_position'))['queue_position__max']
+
+            self.queue_position = (max_position or 0) + 1
+
         super().save(*args, **kwargs)
     
     def _generate_consultation_number(self):
@@ -303,6 +375,79 @@ class Consultation(models.Model):
                 return int(delta.total_seconds() / 60)
         return None
 
+    # Workflow methods
+    def take_vitals(self, nurse_user, vitals_data):
+        """
+        Infirmier prend les paramètres vitaux
+        Transitions: waiting -> ready_for_doctor
+        """
+        # Update vitals
+        for field, value in vitals_data.items():
+            if hasattr(self, field):
+                setattr(self, field, value)
+
+        # Update workflow status
+        self.vitals_taken_by = nurse_user
+        self.vitals_taken_at = timezone.now()
+        self.status = 'ready_for_doctor'
+        self.save()
+
+    def start_consultation(self, doctor_user=None):
+        """
+        Médecin démarre la consultation
+        Transitions: ready_for_doctor -> in_consultation
+        """
+        if doctor_user:
+            self.doctor = doctor_user
+        self.status = 'in_consultation'
+        if not self.started_at:
+            self.started_at = timezone.now()
+        self.save()
+
+    def complete_consultation(self):
+        """
+        Terminer la consultation
+        Transitions: in_consultation -> completed
+        """
+        self.status = 'completed'
+        if not self.ended_at:
+            self.ended_at = timezone.now()
+        self.save()
+
+    @classmethod
+    def get_queue(cls, organization, date=None):
+        """
+        Obtenir la file d'attente ordonnée
+        """
+        if date is None:
+            date = timezone.now().date()
+
+        return cls.objects.filter(
+            organization=organization,
+            consultation_date__date=date,
+            status__in=['waiting', 'vitals_pending', 'ready_for_doctor']
+        ).order_by('queue_position', 'consultation_date')
+
+    @classmethod
+    def get_next_patient(cls, organization, for_role='doctor'):
+        """
+        Obtenir le prochain patient à traiter selon le rôle
+        - nurse: patients en attente (waiting, vitals_pending)
+        - doctor: patients prêts (ready_for_doctor)
+        """
+        today = timezone.now().date()
+        filters = {
+            'organization': organization,
+            'consultation_date__date': today
+        }
+
+        if for_role == 'nurse':
+            filters['status__in'] = ['waiting', 'vitals_pending']
+        elif for_role == 'doctor':
+            filters['status'] = 'ready_for_doctor'
+
+        return cls.objects.filter(**filters).order_by('queue_position', 'consultation_date').first()
+
 
 class Prescription(models.Model):
     """
@@ -358,10 +503,25 @@ class Prescription(models.Model):
         limit_choices_to={'role__in': ['doctor', 'nurse']}
     )
     
+    # Creator
+    created_user = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_prescriptions',
+        verbose_name=_("Créé par")
+    )
+    
     # Prescription details
     prescribed_date = models.DateTimeField(
         default=timezone.now,
         verbose_name=_("Date de prescription")
+    )
+    valid_until = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Valable jusqu'au")
     )
     status = models.CharField(
         max_length=20,

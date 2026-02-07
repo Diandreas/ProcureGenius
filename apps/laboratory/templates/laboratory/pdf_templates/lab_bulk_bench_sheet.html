@@ -243,7 +243,7 @@
                 {% if logo_base64 %}
                 <img src="{{ logo_base64 }}" style="max-height: 40px; width: auto;">
                 {% else %}
-                <strong style="font-size: 14pt; color: {{ organization.brand_color|default:" #2563eb" }};">{{
+                <strong style="font-size: 14pt; color: {{ organization.brand_color|default:"#2563eb" }};">{{
                     organization.name }}</strong>
                 {% endif %}
             </div>

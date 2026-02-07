@@ -229,7 +229,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
     "https://procura.mirhosty.com",
-    # Centre de Sante JULIANNA
     "https://app.centrejulianna.com",
     "https://appback.centrejulianna.com",
 ]
@@ -277,7 +276,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@procuregenius.com')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@centrejulianna.com')
 
 # Mistral AI configuration
 MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '')
@@ -379,7 +378,7 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-signup pour Google OAuth
 
 # Templates emails
-ACCOUNT_EMAIL_SUBJECT_PREFIX = '[ProcureGenius] '
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[CENTRE DE SANTE JULIANNA] '
 
 # Configuration Google OAuth
 SOCIALACCOUNT_PROVIDERS = {

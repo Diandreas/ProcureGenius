@@ -75,6 +75,7 @@ import ReceptionDashboard from './pages/healthcare/reception/ReceptionDashboard'
 import LabOrderList from './pages/healthcare/laboratory/LabOrderList';
 import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
 import LabOrderForm from './pages/healthcare/laboratory/LabOrderForm';
+import LabOrderDispatch from './pages/healthcare/laboratory/LabOrderDispatch';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
 import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
@@ -804,6 +805,7 @@ function App() {
                               {/* Laboratory */}
                               <Route path="/healthcare/laboratory" element={<ModuleRoute module="laboratory"><LabOrderList /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/new" element={<ModuleRoute module="laboratory"><LabOrderForm /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/:id/dispatch" element={<ModuleRoute module="laboratory"><LabOrderDispatch /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 

@@ -32,14 +32,7 @@
         color: #4b5563;
         font-size: 9pt;
         margin-top: 2px;
-
-        border-left: 2px solid {
-                {
-                organization.brand_color|default: "#2563eb"
-            }
-        }
-
-        ;
+        border-left: 2px solid {{ organization.brand_color|default:"#2563eb" }};
     }
 
     .signature-section {

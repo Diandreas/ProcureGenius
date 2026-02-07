@@ -15,7 +15,7 @@ import {
   CheckCircle as CheckIcon
 } from '@mui/icons-material';
 
-const ConsultationTimer = ({ onStart, onEnd, initialStartTime = null, initialEndTime = null }) => {
+const ConsultationTimer = ({ onStart, onEnd, initialStartTime = null, initialEndTime = null, compact = false }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
@@ -106,6 +106,54 @@ const ConsultationTimer = ({ onStart, onEnd, initialStartTime = null, initialEnd
     return 'Non démarrée';
   };
 
+  // Compact version for show view
+  if (compact) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 1,
+          background: theme => endTime
+            ? alpha(theme.palette.success.main, 0.05)
+            : isRunning
+              ? alpha(theme.palette.error.main, 0.05)
+              : alpha(theme.palette.grey[500], 0.05),
+          border: '1px solid',
+          borderColor: endTime
+            ? 'success.main'
+            : isRunning
+              ? 'error.main'
+              : 'divider',
+          borderRadius: 1
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <TimerIcon sx={{ fontSize: 16, color: isRunning ? 'error.main' : endTime ? 'success.main' : 'text.secondary' }} />
+            <Typography
+              variant="body2"
+              fontWeight="700"
+              sx={{
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                color: endTime ? 'success.main' : isRunning ? 'error.main' : 'text.primary'
+              }}
+            >
+              {formatTime(elapsedSeconds)}
+            </Typography>
+          </Stack>
+          <Chip
+            label={getStatusText()}
+            color={getStatusColor()}
+            size="small"
+            sx={{ height: 20, fontSize: '0.7rem' }}
+          />
+        </Stack>
+      </Paper>
+    );
+  }
+
+  // Full version for form view
   return (
     <Paper
       elevation={0}

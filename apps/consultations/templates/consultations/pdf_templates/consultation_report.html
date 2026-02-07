@@ -21,14 +21,7 @@
     .section-title {
         font-size: 12pt;
         font-weight: bold;
-
-        color: {
-                {
-                organization.brand_color|default: "#2563eb"
-            }
-        }
-
-        ;
+        color: {{ organization.brand_color|default:"#2563eb" }};
         border-bottom: 1px solid #eee;
         margin-bottom: 10px;
         padding-bottom: 3px;

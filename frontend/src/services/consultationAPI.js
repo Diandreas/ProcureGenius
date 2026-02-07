@@ -67,6 +67,46 @@ const consultationAPI = {
     generateInvoice: async (id) => {
         const response = await api.post(`/healthcare/consultations/${id}/generate-invoice/`);
         return response.data;
+    },
+
+    // ===== Workflow & Queue Management =====
+
+    // Get consultation queue
+    getQueue: async (params) => {
+        const response = await api.get('/healthcare/consultations/queue/', { params });
+        return response.data;
+    },
+
+    // Get next patient for current user role
+    getNextPatient: async () => {
+        const response = await api.get('/healthcare/consultations/next-patient/');
+        return response.data;
+    },
+
+    // Nurse takes vital signs (waiting -> ready_for_doctor)
+    takeVitals: async (id, vitalsData) => {
+        const response = await api.post(`/healthcare/consultations/${id}/take-vitals/`, vitalsData);
+        return response.data;
+    },
+
+    // Doctor starts consultation (ready_for_doctor -> in_consultation)
+    startConsultationWorkflow: async (id) => {
+        const response = await api.post(`/healthcare/consultations/${id}/start-consultation/`);
+        return response.data;
+    },
+
+    // Complete consultation (in_consultation -> completed)
+    completeConsultation: async (id) => {
+        const response = await api.post(`/healthcare/consultations/${id}/complete/`);
+        return response.data;
+    },
+
+    // ===== Lab Orders =====
+
+    // Create lab order for consultation
+    createLabOrder: async (data) => {
+        const response = await api.post('/healthcare/consultations/lab-orders/create/', data);
+        return response.data;
     }
 };
 
