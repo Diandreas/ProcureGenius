@@ -207,8 +207,8 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
                 container_display = tube_items[0].lab_test.get_container_type_display() if tube_items[0].lab_test.container_type else 'Tube'
                 sample_display = tube_items[0].lab_test.get_sample_type_display() if tube_items[0].lab_test.sample_type else ''
 
-                # QR code contains just the lab order ID
-                qr_data = str(lab_order.id)
+                # QR code contains the lab order number
+                qr_data = lab_order.order_number
 
                 label_data = {
                     'tube_number': tube_counter,
