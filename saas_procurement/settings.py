@@ -229,12 +229,18 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
+    "https://procura.mirhosty.com",
+    "https://app.centrejulianna.com",
+    "https://appback.centrejulianna.com",
+]
+
+# CSRF Trusted Origins (Requis pour Django 4.x en production)
+CSRF_TRUSTED_ORIGINS = [
     "https://procura.mirhosty.com",
     "https://app.centrejulianna.com",
     "https://appback.centrejulianna.com",
