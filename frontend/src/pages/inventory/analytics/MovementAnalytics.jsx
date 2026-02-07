@@ -9,6 +9,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import { formatDate } from '../../../utils/formatters';
 
 const MovementAnalytics = () => {
   const [data, setData] = useState(null);
@@ -179,10 +180,7 @@ const MovementAnalytics = () => {
                   />
                   <YAxis />
                   <Tooltip
-                    labelFormatter={(val) => {
-                      const d = new Date(val);
-                      return d.toLocaleDateString('fr-FR');
-                    }}
+                    labelFormatter={(val) => formatDate(val)}
                     formatter={(value, name) => [
                       formatNumber(value),
                       name === 'in' ? 'Entrees' : 'Sorties'

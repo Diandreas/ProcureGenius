@@ -44,13 +44,19 @@ export const formatCurrency = (amount, currency = 'CAD') => {
 export const formatDate = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'dd MMMM yyyy', { locale: getDateLocale() });
+  return format(dateObj, 'dd/MM/yyyy', { locale: getDateLocale() });
 };
 
 export const formatDateTime = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return format(dateObj, 'dd MMMM yyyy HH:mm', { locale: getDateLocale() });
+};
+
+export const formatTime = (date) => {
+  if (!date) return '';
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  return format(dateObj, 'HH:mm');
 };
 
 export const formatPhoneNumber = (phone) => {

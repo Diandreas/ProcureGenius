@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import documentsAPI from '../../../services/documentsAPI';
+import { formatDate } from '../../../utils/formatters';
 
 const PatientDocuments = ({ patientId }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -138,7 +139,7 @@ const PatientDocuments = ({ patientId }) => {
                             ) : (
                                 documents.map((doc) => (
                                     <TableRow key={doc.id}>
-                                        <TableCell>{new Date(doc.uploaded_at).toLocaleDateString()}</TableCell>
+                                        <TableCell>{formatDate(doc.uploaded_at)}</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>{doc.title}</TableCell>
                                         <TableCell>{doc.description}</TableCell>
                                         <TableCell>

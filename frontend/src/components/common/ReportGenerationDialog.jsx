@@ -93,7 +93,7 @@ function ReportGenerationDialog({
 
   const handlePdfAction = (action) => {
     if (!pdfBlob) return;
-    
+
     if (action === 'download') {
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -268,9 +268,9 @@ function ReportGenerationDialog({
             {selectedItems.length > 0
               ? `Un rapport sera généré avec ${selectedItems.length} ${itemLabel}(s) sélectionné(s)`
               : `Un rapport sera généré avec tous les ${itemsLabel} correspondant aux filtres`}
-            {dateStart && dateEnd && ` pour la période du ${dateStart.toLocaleDateString()} au ${dateEnd.toLocaleDateString()}`}
-            {dateStart && !dateEnd && ` à partir du ${dateStart.toLocaleDateString()}`}
-            {!dateStart && dateEnd && ` jusqu'au ${dateEnd.toLocaleDateString()}`}
+            {dateStart && dateEnd && ` pour la période du ${formatDate(dateStart)} au ${formatDate(dateEnd)}`}
+            {dateStart && !dateEnd && ` à partir du ${formatDate(dateStart)}`}
+            {!dateStart && dateEnd && ` jusqu'au ${formatDate(dateEnd)}`}
             .
           </Typography>
         </Alert>

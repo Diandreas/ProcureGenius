@@ -14,6 +14,7 @@ import {
   Timer as TimerIcon,
   CheckCircle as CheckIcon
 } from '@mui/icons-material';
+import { formatTime as formatDisplayTime } from '../../utils/formatters';
 
 const ConsultationTimer = ({ onStart, onEnd, initialStartTime = null, initialEndTime = null, compact = false }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -85,13 +86,7 @@ const ConsultationTimer = ({ onStart, onEnd, initialStartTime = null, initialEnd
   };
 
   const formatDateTime = (isoString) => {
-    if (!isoString) return '';
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    return formatDisplayTime(isoString);
   };
 
   const getStatusColor = () => {

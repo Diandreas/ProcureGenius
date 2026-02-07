@@ -11,6 +11,14 @@ import {
     Box,
     CircularProgress
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 import { MedicalServices as ConsultationIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -32,6 +40,13 @@ const QuickConsultationModal = ({ open, onClose, patientId, patientName, onSucce
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDateChange = (date) => {
+        setFormData(prev => ({
+            ...prev,
+            consultation_date: date ? date.format('YYYY-MM-DD') : ''
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -102,16 +117,21 @@ const QuickConsultationModal = ({ open, onClose, patientId, patientName, onSucce
                 <DialogContent dividers>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
-                            <TextField
-                                required
-                                fullWidth
-                                type="date"
-                                label="Date de Consultation"
-                                name="consultation_date"
-                                value={formData.consultation_date}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de Consultation"
+                                    value={formData.consultation_date ? dayjs(formData.consultation_date) : null}
+                                    onChange={handleDateChange}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            required: true,
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
 
                         <Grid item xs={12}>

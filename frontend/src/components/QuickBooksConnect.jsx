@@ -20,6 +20,7 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { quickbooksAPI } from '../services/api';
+import { formatDate } from '../utils/formatters';
 
 function QuickBooksConnect({ onConnectionChange }) {
   const [status, setStatus] = useState(null);
@@ -213,13 +214,13 @@ function QuickBooksConnect({ onConnectionChange }) {
               <Typography variant="body2">
                 <strong>Connecté le:</strong>{' '}
                 {status.connected_at
-                  ? new Date(status.connected_at).toLocaleDateString('fr-CA')
+                  ? formatDate(status.connected_at)
                   : '-'}
               </Typography>
               {status.last_sync_at && (
                 <Typography variant="body2">
                   <strong>Dernière sync:</strong>{' '}
-                  {new Date(status.last_sync_at).toLocaleDateString('fr-CA')}
+                  {formatDate(status.last_sync_at)}
                 </Typography>
               )}
             </Box>

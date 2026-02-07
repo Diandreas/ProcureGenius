@@ -27,6 +27,7 @@ import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../../services/consultationAPI';
 import pharmacyAPI from '../../../../services/pharmacyAPI';
 import patientAPI from '../../../../services/patientAPI';
+import { formatDate } from '../../../../utils/formatters';
 
 const QuickPrescriptionModal = ({ open, onClose, patientId, patientName, onSuccess }) => {
     const navigate = useNavigate();
@@ -188,7 +189,7 @@ const QuickPrescriptionModal = ({ open, onClose, patientId, patientName, onSucce
                                     <Autocomplete
                                         options={consultations}
                                         getOptionLabel={(option) =>
-                                            `${new Date(option.consultation_date).toLocaleDateString()} - ${option.chief_complaint}`
+                                            `${formatDate(option.consultation_date)} - ${option.chief_complaint}`
                                         }
                                         value={formData.consultation}
                                         onChange={(e, newValue) => setFormData(prev => ({ ...prev, consultation: newValue }))}

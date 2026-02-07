@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
 import TriageModal from './TriageModal';
 import { useSnackbar } from 'notistack';
+import { formatDate, formatTime } from '../../../utils/formatters';
 
 const StatCard = ({ title, value, icon, color }) => (
     <Card sx={{ height: '100%', borderRadius: 3 }}>
@@ -219,7 +220,7 @@ const ReceptionDashboard = () => {
                             visits.map((visit) => (
                                 <TableRow key={visit.id} hover>
                                     <TableCell>
-                                        {new Date(visit.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {formatTime(visit.created_at)}
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="subtitle2" fontWeight="600">{visit.patient_name}</Typography>

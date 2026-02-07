@@ -33,6 +33,7 @@ import PatientCareHistory from './PatientCareHistory';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
 import PrintModal from '../../../components/PrintModal';
+import { formatDate } from '../../../utils/formatters';
 
 const PatientDetail = () => {
     const { t } = useTranslation();
@@ -209,6 +210,10 @@ const PatientDetail = () => {
                                     <Typography variant="body2" fontWeight="500">{patient.age} ans / {patient.gender}</Typography>
                                 </Grid>
                                 <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Date de Naissance</Typography>
+                                    <Typography variant="body2" fontWeight="500">{patient.date_of_birth ? formatDate(patient.date_of_birth) : '-'}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
                                     <Typography variant="caption" color="text.secondary">Téléphone</Typography>
                                     <Typography variant="body2" fontWeight="500">{patient.phone || '-'}</Typography>
                                 </Grid>
@@ -264,11 +269,11 @@ const PatientDetail = () => {
                                 <List>
                                     {history.consultations.map((consult) => (
                                         <Card key={consult.id} sx={{ mb: 2, bgcolor: 'background.default', cursor: 'pointer' }}
-                                              variant="outlined"
-                                              onClick={() => navigate(`/healthcare/consultations/${consult.id}`)}>
+                                            variant="outlined"
+                                            onClick={() => navigate(`/healthcare/consultations/${consult.id}`)}>
                                             <CardContent>
                                                 <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                                                    Consultation du {new Date(consult.consultation_date).toLocaleDateString('fr-FR')}
+                                                    Consultation du {formatDate(consult.consultation_date)}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary" gutterBottom>
                                                     Dr. {consult.doctor_name || 'Non assigné'}

@@ -15,6 +15,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import patientAPI from '../../../services/patientAPI';
+import { formatDate, formatTime } from '../../../utils/formatters';
 
 const VisitHistory = ({ patientId }) => {
     const [history, setHistory] = useState(null);
@@ -91,9 +92,9 @@ const VisitHistory = ({ patientId }) => {
                         {history.visits.map((visit) => (
                             <TableRow key={visit.id} hover>
                                 <TableCell>
-                                    {new Date(visit.arrived_at).toLocaleDateString()}
+                                    {formatDate(visit.arrived_at)}
                                     <Typography variant="caption" display="block" color="text.secondary">
-                                        {new Date(visit.arrived_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {formatTime(visit.arrived_at)}
                                     </Typography>
                                 </TableCell>
                                 <TableCell>{visit.visit_type_display}</TableCell>

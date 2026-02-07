@@ -1,5 +1,6 @@
 // PDF Service for generating and handling PDF documents
 import api from './api';
+import { formatDate } from '../utils/formatters';
 
 export const TEMPLATE_TYPES = {
   INVOICE: 'invoice',
@@ -22,8 +23,8 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
     try {
       const settingsResponse = await api.get('/accounts/organization/settings/');
       organizationCurrency = settingsResponse.data.defaultCurrency ||
-                            settingsResponse.data.default_currency ||
-                            'CAD';
+        settingsResponse.data.default_currency ||
+        'CAD';
       console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
@@ -70,8 +71,8 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
         <div class="header">
           <div class="title">FACTURE</div>
           <div class="invoice-number">N° ${invoiceData.invoice_number}</div>
-          <div>Date: ${new Date(invoiceData.issue_date).toLocaleDateString('fr-FR')}</div>
-          ${invoiceData.due_date ? `<div>Échéance: ${new Date(invoiceData.due_date).toLocaleDateString('fr-FR')}</div>` : ''}
+          <div>Date: ${formatDate(invoiceData.issue_date)}</div>
+          ${invoiceData.due_date ? `<div>Échéance: ${formatDate(invoiceData.due_date)}</div>` : ''}
         </div>
 
         <div class="section">
@@ -121,7 +122,7 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
         </div>
 
         <div class="footer">
-          <div>Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+          <div>Généré le ${formatDate(new Date())}</div>
           <div>ProcureGenius - Gestion des factures</div>
         </div>
       </body>
@@ -148,9 +149,9 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
     try {
       const settingsResponse = await api.get('/accounts/organization/settings/');
       organizationCurrency = settingsResponse.data.defaultCurrency ||
-                            settingsResponse.data.default_currency ||
-                            purchaseOrderData.currency ||
-                            'CAD';
+        settingsResponse.data.default_currency ||
+        purchaseOrderData.currency ||
+        'CAD';
       console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
@@ -208,16 +209,15 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
         <div class="header">
           <div class="title">BON DE COMMANDE</div>
           <div class="po-number">N° ${purchaseOrderData.po_number}</div>
-          <div>Date: ${new Date(purchaseOrderData.order_date).toLocaleDateString('fr-FR')}</div>
-          ${purchaseOrderData.expected_delivery ? `<div>Livraison prévue: ${new Date(purchaseOrderData.expected_delivery).toLocaleDateString('fr-FR')}</div>` : ''}
+          <div>Date: ${formatDate(purchaseOrderData.order_date)}</div>
+          ${purchaseOrderData.expected_delivery ? `<div>Livraison prévue: ${formatDate(purchaseOrderData.expected_delivery)}</div>` : ''}
           <div style="margin-top: 10px;">
-            <span class="status-badge status-${purchaseOrderData.status || 'draft'}">${
-              purchaseOrderData.status === 'draft' ? 'Brouillon' :
-              purchaseOrderData.status === 'pending' ? 'En attente' :
-              purchaseOrderData.status === 'approved' ? 'Approuvé' :
-              purchaseOrderData.status === 'received' ? 'Reçu' :
+            <span class="status-badge status-${purchaseOrderData.status || 'draft'}">${purchaseOrderData.status === 'draft' ? 'Brouillon' :
+        purchaseOrderData.status === 'pending' ? 'En attente' :
+          purchaseOrderData.status === 'approved' ? 'Approuvé' :
+            purchaseOrderData.status === 'received' ? 'Reçu' :
               purchaseOrderData.status
-            }</span>
+      }</span>
           </div>
         </div>
 
@@ -272,7 +272,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
         ` : ''}
 
         <div class="footer">
-          <div>Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+          <div>Généré le ${formatDate(new Date())}</div>
           <div>ProcureGenius - Gestion des achats</div>
         </div>
       </body>

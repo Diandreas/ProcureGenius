@@ -49,6 +49,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import { formatDate as formatDisplayDate } from '../../../utils/formatters';
 
 const MedicationDetail = () => {
     const { t } = useTranslation();
@@ -95,7 +96,6 @@ const MedicationDetail = () => {
     };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
-    const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
     if (loading) {
         return (
@@ -117,8 +117,8 @@ const MedicationDetail = () => {
     const isOut = medication.stock_quantity <= 0;
     const stockColor = medication.is_expired ? theme.palette.error.dark
         : isOut ? theme.palette.error.main
-        : isLow ? theme.palette.warning.main
-        : theme.palette.success.main;
+            : isLow ? theme.palette.warning.main
+                : theme.palette.success.main;
 
     const stockStatusLabel = isOut ? 'Rupture de stock' : isLow ? 'Stock faible' : 'En stock';
     const stockStatusColor = isOut ? 'error' : isLow ? 'warning' : 'success';
@@ -262,7 +262,7 @@ const MedicationDetail = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <MetricBox
                                 label="Enregistré le"
-                                value={medication.created_at ? new Date(medication.created_at).toLocaleDateString('fr-FR') : '—'}
+                                value={formatDisplayDate(medication.created_at)}
                                 color={theme.palette.info.main}
                                 icon={CalendarIcon}
                             />
@@ -278,7 +278,7 @@ const MedicationDetail = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <MetricBox
                                 label="Date de péremption"
-                                value={medication.expiration_date ? new Date(medication.expiration_date).toLocaleDateString('fr-FR') : '—'}
+                                value={formatDisplayDate(medication.expiration_date)}
                                 color={getExpirationColor()}
                                 icon={ExpiredIcon}
                             />
@@ -306,11 +306,11 @@ const MedicationDetail = () => {
                                 </Alert>
                             ) : medication.days_until_expiration <= 30 ? (
                                 <Alert severity="warning" variant="filled" sx={{ borderRadius: 2 }}>
-                                    Attention : ce médicament expire dans {medication.days_until_expiration} jours ({formatDate(medication.expiration_date)}).
+                                    Attention : ce médicament expire dans {medication.days_until_expiration} jours ({formatDisplayDate(medication.expiration_date)}).
                                 </Alert>
                             ) : medication.days_until_expiration <= 90 ? (
                                 <Alert severity="info" sx={{ borderRadius: 2 }}>
-                                    Ce médicament expire dans {medication.days_until_expiration} jours ({formatDate(medication.expiration_date)}).
+                                    Ce médicament expire dans {medication.days_until_expiration} jours ({formatDisplayDate(medication.expiration_date)}).
                                 </Alert>
                             ) : null}
                         </Box>
@@ -565,7 +565,7 @@ const MedicationDetail = () => {
                         </Typography>
                         {medication.expiration_date && (
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                                {formatDate(medication.expiration_date)}
+                                {formatDisplayDate(medication.expiration_date)}
                             </Typography>
                         )}
                     </CardContent>
@@ -581,7 +581,7 @@ const MedicationDetail = () => {
                         <Stack spacing={1.5}>
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Date de création</Typography>
-                                <Typography variant="body2">{formatDate(medication.created_at)}</Typography>
+                                <Typography variant="body2">{formatDisplayDate(medication.created_at)}</Typography>
                             </Box>
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Durée de stockage</Typography>
@@ -591,7 +591,7 @@ const MedicationDetail = () => {
                             </Box>
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Dernière mise à jour</Typography>
-                                <Typography variant="body2">{formatDate(medication.updated_at)}</Typography>
+                                <Typography variant="body2">{formatDisplayDate(medication.updated_at)}</Typography>
                             </Box>
                         </Stack>
                     </CardContent>
@@ -640,7 +640,7 @@ const MedicationDetail = () => {
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            {new Date(dispensing.dispensed_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            {formatDisplayDate(dispensing.dispensed_at)}
                                         </TableCell>
                                         <TableCell>
                                             {dispensing.patient_name || 'Vente Comptoir'}

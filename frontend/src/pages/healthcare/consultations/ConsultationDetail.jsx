@@ -32,6 +32,7 @@ import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import { formatDate } from '../../../utils/formatters';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 
 const ConsultationDetail = () => {
@@ -175,7 +176,7 @@ const ConsultationDetail = () => {
                         Retour
                     </Button>
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                        Consultation du {new Date(consultation.consultation_date).toLocaleDateString()}
+                        Consultation du {formatDate(consultation.consultation_date)}
                     </Typography>
                 </Box>
                 <Box>

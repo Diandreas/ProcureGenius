@@ -18,6 +18,14 @@ import {
     Paper,
     alpha
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 import {
     Add as AddIcon,
     Search as SearchIcon,
@@ -42,6 +50,7 @@ import { useSnackbar } from 'notistack';
 import { motion } from 'framer-motion';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import LoadingState from '../../../components/LoadingState';
+import { formatDate as formatDisplayDate, formatTime } from '../../../utils/formatters';
 import PrintModal from '../../../components/PrintModal';
 
 const LabOrderList = () => {
@@ -393,20 +402,13 @@ const LabOrderList = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
                                 <Typography variant="caption" color="text.secondary" fontWeight="600">
-                                    {new Date(order.order_date).toLocaleDateString('fr-FR', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    })}
+                                    {formatDisplayDate(order.order_date)}
                                 </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <AccessTime sx={{ fontSize: 16, color: 'text.secondary' }} />
                                 <Typography variant="caption" color="text.secondary" fontWeight="600">
-                                    {new Date(order.order_date).toLocaleTimeString('fr-FR', {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
+                                    {formatTime(order.order_date)}
                                 </Typography>
                             </Box>
                         </Stack>
@@ -589,42 +591,44 @@ const LabOrderList = () => {
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                type="date"
-                                label="Date de début"
-                                value={startDate}
-                                onChange={(e) => {
-                                    setStartDate(e.target.value);
-                                    setQuickFilter(''); // Reset quick filter when using custom dates
-                                }}
-                                size={isMobile ? 'small' : 'medium'}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    }
-                                }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de début"
+                                    value={startDate ? dayjs(startDate) : null}
+                                    onChange={(date) => {
+                                        setStartDate(date ? date.format('YYYY-MM-DD') : '');
+                                        setQuickFilter('');
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? 'small' : 'medium',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                type="date"
-                                label="Date de fin"
-                                value={endDate}
-                                onChange={(e) => {
-                                    setEndDate(e.target.value);
-                                    setQuickFilter(''); // Reset quick filter when using custom dates
-                                }}
-                                size={isMobile ? 'small' : 'medium'}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    }
-                                }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de fin"
+                                    value={endDate ? dayjs(endDate) : null}
+                                    onChange={(date) => {
+                                        setEndDate(date ? date.format('YYYY-MM-DD') : '');
+                                        setQuickFilter('');
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? 'small' : 'medium',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                     </Grid>
                     <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>

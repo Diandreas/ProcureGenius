@@ -22,6 +22,7 @@ import {
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import { formatDate } from '../../../utils/formatters';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
@@ -232,7 +233,7 @@ const HealthcareAnalyticsDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" tickFormatter={(val) => { const d = new Date(val); return `${d.getDate()}/${d.getMonth() + 1}`; }} />
                       <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                      <Tooltip labelFormatter={(val) => new Date(val).toLocaleDateString('fr-FR')} formatter={(val) => formatCurrency(val)} />
+                      <Tooltip labelFormatter={(val) => formatDate(val)} formatter={(val) => formatCurrency(val)} />
                       <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>

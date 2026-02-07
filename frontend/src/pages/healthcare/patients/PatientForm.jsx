@@ -41,6 +41,15 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../services/patientAPI';
 import api from '../../../services/api';
+import { formatDate } from '../../../utils/formatters';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 
 const PatientForm = () => {
     const { t } = useTranslation();
@@ -129,6 +138,13 @@ const PatientForm = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleDateChange = (date) => {
+        setFormData(prev => ({
+            ...prev,
+            date_of_birth: date ? date.format('YYYY-MM-DD') : ''
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -214,6 +230,11 @@ const PatientForm = () => {
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                         {isEdit ? t('patients.edit', 'Modifier Patient') : t('patients.new', 'Nouveau Patient')}
                     </Typography>
+                    {!isEdit && (
+                        <Typography variant="body2" color="text.secondary">
+                            Date: {formatDate(new Date())}
+                        </Typography>
+                    )}
                 </Stack>
                 <Button
                     type="submit"
@@ -243,16 +264,21 @@ const PatientForm = () => {
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                type="date"
-                                label={t('patients.dob', 'Date de Naissance')}
-                                name="date_of_birth"
-                                value={formData.date_of_birth}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label={t('patients.dob', 'Date de Naissance')}
+                                    value={formData.date_of_birth ? dayjs(formData.date_of_birth) : null}
+                                    onChange={handleDateChange}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            required: true,
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField

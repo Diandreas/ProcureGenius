@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import { formatDate } from '../../../utils/formatters';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
@@ -231,7 +232,7 @@ const ServiceRevenueAnalytics = () => {
                   />
                   <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                   <Tooltip
-                    labelFormatter={(val) => new Date(val).toLocaleDateString('fr-FR')}
+                    labelFormatter={(val) => formatDate(val)}
                     formatter={(val, name) => [formatCurrency(val), name === 'revenue' ? 'Revenu' : 'Quantite']}
                   />
                   <Legend formatter={(v) => v === 'revenue' ? 'Revenu' : 'Quantite'} />

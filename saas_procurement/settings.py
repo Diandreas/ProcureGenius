@@ -177,7 +177,14 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 LANGUAGE_CODE = 'fr'
 TIME_ZONE = 'America/Toronto'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
+
+# Date interpretation and formatting
+DATE_FORMAT = 'd/m/Y'
+DATETIME_FORMAT = 'd/m/Y H:i'
+SHORT_DATE_FORMAT = 'd/m/Y'
+TIME_FORMAT = 'H:i'
 
 LANGUAGES = [
     ('fr', 'Français'),

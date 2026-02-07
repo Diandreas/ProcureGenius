@@ -55,6 +55,7 @@ import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import { formatDate, formatTime } from '../../../utils/formatters';
 
 // Helper for status transitions
 const getNextStatusLabel = (status) => {
@@ -89,7 +90,7 @@ const LabOrderDetail = () => {
 
     // Print Modal State
     const [printModalOpen, setPrintModalOpen] = useState(false);
-    const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'barcodes', 'tube_labels'
+    const [printModalType, setPrintModalType] = useState(null); // 'receipt', 'report', 'tube_labels'
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     // History Modal State
@@ -101,10 +102,6 @@ const LabOrderDetail = () => {
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('cash');
-
-    // Barcode Quantity Modal
-    const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
-    const [barcodeQuantity, setBarcodeQuantity] = useState(1);
 
     // Tube Labels Quantity Modal
     const [tubeLabelsModalOpen, setTubeLabelsModalOpen] = useState(false);
@@ -233,10 +230,6 @@ const LabOrderDetail = () => {
     };
 
     const handleOpenPrintModal = (type) => {
-        if (type === 'barcodes') {
-            setBarcodeModalOpen(true);
-            return;
-        }
         if (type === 'tube_labels') {
             setTubeLabelsModalOpen(true);
             return;
@@ -259,9 +252,6 @@ const LabOrderDetail = () => {
             } else if (printModalType === 'receipt') {
                 blob = await laboratoryAPI.getReceiptPDF(id);
                 filename = `recu_labo_${order.order_number}.pdf`;
-            } else if (printModalType === 'barcodes' || (!printModalType && barcodeModalOpen)) {
-                blob = await laboratoryAPI.getBarcodesPDF(id, { quantity: barcodeQuantity });
-                filename = `barcodes_${order.order_number}.pdf`;
             } else if (printModalType === 'tube_labels' || (!printModalType && tubeLabelsModalOpen)) {
                 blob = await laboratoryAPI.getTubeLabelsPDF(id, { quantity: tubeLabelsQuantity });
                 filename = `etiquettes_tubes_${order.order_number}.pdf`;
@@ -612,10 +602,6 @@ const LabOrderDetail = () => {
                                 Imprimer Reçu
                             </Button>
 
-                            <Button variant="outlined" startIcon={<QrCodeIcon />} onClick={() => handleOpenPrintModal('barcodes')} sx={{ mr: 1 }}>
-                                Étiquettes A4
-                            </Button>
-
                             <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} sx={{ mr: 1 }}>
                                 Étiquettes Thermiques
                             </Button>
@@ -852,13 +838,7 @@ const LabOrderDetail = () => {
                         )}
                         {order.diagnosed_at && (
                             <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                                {new Date(order.diagnosed_at).toLocaleDateString('fr-FR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                                {formatDate(order.diagnosed_at)}
                             </Typography>
                         )}
                     </Box>
@@ -901,46 +881,17 @@ const LabOrderDetail = () => {
                 helpText="Choisissez une action pour générer le document"
             />
 
-            {/* Barcode Quantity Modal */}
-            <Dialog open={barcodeModalOpen} onClose={() => setBarcodeModalOpen(false)}>
-                <DialogTitle>Impression Étiquettes A4</DialogTitle>
-                <DialogContent>
-                    <Typography gutterBottom sx={{ mb: 2 }}>
-                        Combien d'exemplaires de chaque étiquette souhaitez-vous imprimer ?
-                    </Typography>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Nombre de copies"
-                        type="number"
-                        fullWidth
-                        variant="outlined"
-                        value={barcodeQuantity}
-                        onChange={(e) => setBarcodeQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                        InputProps={{ inputProps: { min: 1, max: 10 } }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setBarcodeModalOpen(false)}>Annuler</Button>
-                    <Button
-                        onClick={() => {
-                            setBarcodeModalOpen(false);
-                            setPrintModalType('barcodes');
-                            setPrintModalOpen(true);
-                        }}
-                        variant="contained"
-                    >
-                        Valider
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
             {/* Tube Labels Quantity Modal */}
             <Dialog open={tubeLabelsModalOpen} onClose={() => setTubeLabelsModalOpen(false)}>
                 <DialogTitle>Impression Étiquettes Thermiques</DialogTitle>
                 <DialogContent>
                     <Alert severity="info" sx={{ mb: 2 }}>
-                        Format : 100.5mm × 63.5mm (Paysage) - GAP 2mm
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Format:</strong> 100.5mm × 63.5mm (Paysage) - GAP 2mm
+                        </Typography>
+                        <Typography variant="body2">
+                            <strong>💡 Regroupement intelligent:</strong> Les tests utilisant le même type de tube sont regroupés sur une seule étiquette (max 5 tests/tube)
+                        </Typography>
                     </Alert>
                     <Typography gutterBottom sx={{ mb: 2 }}>
                         Combien d'exemplaires de chaque étiquette souhaitez-vous imprimer ?
@@ -955,7 +906,7 @@ const LabOrderDetail = () => {
                         value={tubeLabelsQuantity}
                         onChange={(e) => setTubeLabelsQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                         InputProps={{ inputProps: { min: 1, max: 10 } }}
-                        helperText="Une étiquette sera générée pour chaque test de la commande"
+                        helperText="Une étiquette est générée par tube (plusieurs examens peuvent être sur le même tube)"
                     />
                 </DialogContent>
                 <DialogActions>
@@ -1054,17 +1005,10 @@ const LabOrderDetail = () => {
                                             >
                                                 <TableCell>
                                                     <Typography variant="body2">
-                                                        {new Date(result.result_entered_at).toLocaleDateString('fr-FR', {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric'
-                                                        })}
+                                                        {formatDate(result.result_entered_at)}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary">
-                                                        {new Date(result.result_entered_at).toLocaleTimeString('fr-FR', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
+                                                        {formatTime(result.result_entered_at)}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>

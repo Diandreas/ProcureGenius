@@ -13,6 +13,7 @@ import {
     Alert
 } from '@mui/material';
 import { Science as LabIcon, Visibility as ViewIcon } from '@mui/icons-material';
+import { formatDate } from '../../../../utils/formatters';
 
 const LabOrderHistory = ({ labOrders }) => {
     if (!labOrders || labOrders.length === 0) {
@@ -54,13 +55,7 @@ const LabOrderHistory = ({ labOrders }) => {
                         </Box>
 
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {new Date(order.order_date).toLocaleDateString('fr-FR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {formatDate(order.order_date)}
                         </Typography>
 
                         {order.priority && order.priority !== 'routine' && (

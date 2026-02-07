@@ -574,7 +574,7 @@ function Invoices() {
                     </Stack>
                     {selectedDate && (
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1, fontSize: '0.7rem' }}>
-                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {formatDate(selectedDate)}
                       </Typography>
                     )}
                   </Box>

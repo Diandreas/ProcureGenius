@@ -14,6 +14,7 @@ import {
     Alert
 } from '@mui/material';
 import patientAPI from '../../../services/patientAPI';
+import { formatDate } from '../../../utils/formatters';
 
 const PatientCareHistory = ({ patientId }) => {
     const [careHistory, setCareHistory] = useState([]);
@@ -72,7 +73,7 @@ const PatientCareHistory = ({ patientId }) => {
                         <TableBody>
                             {careHistory.map((care) => (
                                 <TableRow key={care.id} hover>
-                                    <TableCell>{new Date(care.provided_at).toLocaleDateString('fr-FR')}</TableCell>
+                                    <TableCell>{formatDate(care.provided_at)}</TableCell>
                                     <TableCell>{care.service_name}</TableCell>
                                     <TableCell>
                                         <Chip

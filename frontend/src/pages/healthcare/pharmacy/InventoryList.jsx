@@ -24,6 +24,14 @@ import {
     Tooltip,
     Divider,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 import { alpha } from '@mui/material/styles';
 import {
     Add as AddIcon,
@@ -49,6 +57,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import pharmacyAPI from '../../../services/pharmacyAPI';
 import LoadingState from '../../../components/LoadingState';
+import { formatDate } from '../../../utils/formatters';
 
 const InventoryList = () => {
     const { t } = useTranslation();
@@ -182,7 +191,7 @@ const InventoryList = () => {
         if (med.days_until_expiration !== null && med.days_until_expiration <= 90) {
             return { label: `Expire dans ${med.days_until_expiration}j`, color: 'info', variant: 'outlined' };
         }
-        return { label: new Date(med.expiration_date).toLocaleDateString('fr-FR'), color: 'default', variant: 'outlined' };
+        return { label: formatDate(med.expiration_date), color: 'default', variant: 'outlined' };
     };
 
     const MedicationCard = ({ med, index }) => {
@@ -587,39 +596,57 @@ const InventoryList = () => {
 
                         {/* Registration Date Range */}
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="Enregistré après"
-                                value={registeredAfter}
-                                onChange={(e) => setRegisteredAfter(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Enregistré après"
+                                    value={registeredAfter ? dayjs(registeredAfter) : null}
+                                    onChange={(date) => setRegisteredAfter(date ? date.format('YYYY-MM-DD') : '')}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: 'small',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="Enregistré avant"
-                                value={registeredBefore}
-                                onChange={(e) => setRegisteredBefore(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Enregistré avant"
+                                    value={registeredBefore ? dayjs(registeredBefore) : null}
+                                    onChange={(date) => setRegisteredBefore(date ? date.format('YYYY-MM-DD') : '')}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: 'small',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
 
                         {/* Expiration Date Range */}
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="Péremption après"
-                                value={expirationAfter}
-                                onChange={(e) => setExpirationAfter(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Péremption après"
+                                    value={expirationAfter ? dayjs(expirationAfter) : null}
+                                    onChange={(date) => setExpirationAfter(date ? date.format('YYYY-MM-DD') : '')}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: 'small',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                     </Grid>
                 </Paper>

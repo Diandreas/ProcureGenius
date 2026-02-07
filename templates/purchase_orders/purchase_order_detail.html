@@ -63,23 +63,27 @@
                     </div>
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Date de création</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.created_at|date:"d/m/Y H:i" }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.created_at|date:"d/m/Y H:i" }}</dd>
                     </div>
                     {% if purchase_order.required_date %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Date requise</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.required_date|date:"d/m/Y" }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.required_date|date:"d/m/Y" }}</dd>
                     </div>
                     {% endif %}
                     {% if purchase_order.expected_delivery_date %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Livraison prévue</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.expected_delivery_date|date:"d/m/Y" }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.expected_delivery_date|date:"d/m/Y" }}</dd>
                     </div>
                     {% endif %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Créé par</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.created_by.get_full_name|default:purchase_order.created_by.username }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.created_by.get_full_name|default:purchase_order.created_by.username }}</dd>
                     </div>
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Devise</dt>
@@ -179,7 +183,8 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for item in purchase_order.items.all %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.product_reference }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.product_reference
+                                    }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">
                                     <div class="font-medium">{{ item.description }}</div>
                                     {% if item.specifications %}
@@ -187,9 +192,12 @@
                                     </div>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.quantity }} {{ item.unit_of_measure|default:"unité" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.unit_price|floatformat:2 }} {{ purchase_order.currency }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.total_price|floatformat:2 }} {{ purchase_order.currency }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.quantity }} {{
+                                    item.unit_of_measure|default:"unité" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
+                                    item.unit_price|floatformat:2 }} {{ purchase_order.currency }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{
+                                    item.total_price|floatformat:2 }} {{ purchase_order.currency }}</td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -214,13 +222,15 @@
                     {% if purchase_order.terms_conditions %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Conditions générales</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.terms_conditions }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.terms_conditions
+                            }}</dd>
                     </div>
                     {% endif %}
                     {% if purchase_order.internal_notes %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Notes internes</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.internal_notes }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.internal_notes }}
+                        </dd>
                     </div>
                     {% endif %}
                 </dl>
@@ -240,23 +250,27 @@
                 <dl>
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Sous-total</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.subtotal|floatformat:2 }} {{ purchase_order.currency }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.subtotal|floatformat:2 }} {{ purchase_order.currency }}</dd>
                     </div>
                     {% if purchase_order.tax_gst_hst %}
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">TPS/HST</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.tax_gst_hst|floatformat:2 }} {{ purchase_order.currency }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.tax_gst_hst|floatformat:2 }} {{ purchase_order.currency }}</dd>
                     </div>
                     {% endif %}
                     {% if purchase_order.tax_qst %}
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">TVQ</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ purchase_order.tax_qst|floatformat:2 }} {{ purchase_order.currency }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.tax_qst|floatformat:2 }} {{ purchase_order.currency }}</dd>
                     </div>
                     {% endif %}
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-purple-600">Total</dt>
-                        <dd class="mt-1 text-lg font-semibold text-purple-600 sm:mt-0 sm:col-span-2">{{ purchase_order.total_amount|floatformat:2 }} {{ purchase_order.currency }}</dd>
+                        <dd class="mt-1 text-lg font-semibold text-purple-600 sm:mt-0 sm:col-span-2">{{
+                            purchase_order.total_amount|floatformat:2 }} {{ purchase_order.currency }}</dd>
                     </div>
                 </dl>
             </div>

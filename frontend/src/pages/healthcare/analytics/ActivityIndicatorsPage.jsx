@@ -26,6 +26,7 @@ import {
 } from 'recharts';
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
+import { formatDate } from '../../../utils/formatters';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -34,16 +35,7 @@ const formatCurrency = (val) => {
   return new Intl.NumberFormat('fr-FR').format(Math.round(val)) + ' FCFA';
 };
 
-const formatDate = (val) => {
-  if (!val) return '';
-  const d = new Date(val);
-  return `${d.getDate()}/${d.getMonth() + 1}`;
-};
-
-const formatFullDate = (val) => {
-  if (!val) return '';
-  return new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-};
+const formatFullDate = (val) => formatDate(val);
 
 // Indicator card with number, title, value, subtitle, color
 const IndicatorCard = ({ number, title, value, subtitle, icon: Icon, color = 'primary.main', extra }) => (
@@ -265,7 +257,7 @@ const ActivityIndicatorsPage = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={combinedActivityTimeline}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tickFormatter={formatDate} />
+                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} />
                         <YAxis allowDecimals={false} />
                         <Tooltip labelFormatter={formatFullDate} />
                         <Legend />
@@ -463,7 +455,7 @@ const ActivityIndicatorsPage = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={revenueTimeline}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tickFormatter={formatDate} />
+                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} />
                         <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                         <Tooltip labelFormatter={formatFullDate} formatter={(val) => [formatCurrency(val), 'Revenu']} />
                         <Area type="monotone" dataKey="revenue" name="Revenu" stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} />

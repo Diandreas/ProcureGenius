@@ -90,25 +90,24 @@
             text-overflow: ellipsis;
         }
 
-        .barcode-container {
+        .qrcode-container {
             text-align: center;
             margin: 0.5mm 0;
         }
 
-        .barcode-image {
-            max-width: 59mm;
-            height: 24mm;
+        .qrcode-image {
+            width: 15mm;
+            height: 15mm;
             object-fit: contain;
             display: block;
             margin: 0 auto;
         }
 
-        .barcode-text {
-            font-size: 8pt;
+        .qrcode-text {
+            font-size: 6pt;
             color: #000;
-            margin-top: 0.1mm;
+            margin-top: 0.2mm;
             font-family: 'Courier New', monospace;
-            font-weight: bold;
         }
 
         .order-info {
@@ -144,20 +143,20 @@
     <div class="label-wrapper">
         <div class="label">
             <div class="label-header">
-                <span class="container-type">{{ label.container_type }}</span>
-                <span class="test-code">{{ label.test_code }}</span>
+                <span class="container-type">TUBE #{{ label.tube_number }} - {{ label.container_type }}</span>
+                <span class="test-code">{{ label.tests_count }} test{{ label.tests_count|pluralize }}</span>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5mm;">
-                <div class="test-name" title="{{ label.test_name }}" style="margin-bottom: 0; flex: 1; min-width: 0;">
-                    {{ label.test_name }}
-                </div>
-                {% if label.sample_type %}
-                <div class="sample-type" style="margin-bottom: 0; margin-left: 2mm; white-space: nowrap;">
-                    {{ label.sample_type }}
-                </div>
-                {% endif %}
+            <!-- Liste des tests sur ce tube (noms séparés par virgules) -->
+            <div style="margin-bottom: 1mm; font-size: 7pt; line-height: 1.3; color: #000;">
+                {% for test in label.tests %}{{ test.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
             </div>
+
+            {% if label.sample_type %}
+            <div class="sample-type" style="margin-bottom: 0.5mm;">
+                Échantillon: {{ label.sample_type }}
+            </div>
+            {% endif %}
 
             <div class="patient-info">
                 <div class="patient-name">{{ label.patient_name }}</div>
@@ -169,11 +168,11 @@
                 </div>
             </div>
 
-            <div class="barcode-container">
-                {% if label.barcode_base64 %}
-                <img src="data:image/png;base64,{{ label.barcode_base64 }}" class="barcode-image" alt="Barcode">
+            <div class="qrcode-container">
+                {% if label.qrcode_base64 %}
+                <img src="data:image/png;base64,{{ label.qrcode_base64 }}" class="qrcode-image" alt="QR Code">
                 {% endif %}
-                <div class="barcode-text">{{ label.barcode_value }}</div>
+                <div class="qrcode-text">{{ label.order_number }}</div>
             </div>
 
             <div class="order-info">

@@ -5,10 +5,11 @@
 
 {% block report_title %}📋 Rapport des Factures{% endblock %}
 {% block report_subtitle %}
-    {% if date_start or date_end %}
-        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
-    {% endif %}
-    • {{ total_count }} facture(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% if date_start or date_end %}
+Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{
+date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+{% endif %}
+• {{ total_count }} facture(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
 {% endblock %}
 
 {% block content %}
@@ -22,19 +23,19 @@
             {% if evolution_percentage > 0 %}+{% endif %}{{ evolution_percentage|floatformat:1 }}% vs mois dernier
         </div>
     </div>
-    
+
     <div class="stat-card success">
         <div class="label">CA Total</div>
         <div class="value">{{ total_amount|floatformat:2 }}</div>
         <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
     </div>
-    
+
     <div class="stat-card warning">
         <div class="label">Panier Moyen</div>
         <div class="value">{{ avg_amount|floatformat:2 }}</div>
         <div class="subvalue">{{ organization.currency|default:"CAD" }}</div>
     </div>
-    
+
     <div class="stat-card {% if payment_rate >= 70 %}success{% else %}danger{% endif %}">
         <div class="label">Taux Paiement</div>
         <div class="value">{{ payment_rate|floatformat:1 }}%</div>
@@ -48,17 +49,20 @@
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
         <div style="background: #e8f5e9; padding: 8px; border-radius: 4px;">
             <div style="font-weight: bold; color: #2e7d32;">✓ Payé</div>
-            <div style="font-size: 14px; font-weight: bold;">{{ paid_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ paid_amount|floatformat:2 }} {{
+                organization.currency|default:"CAD" }}</div>
             <div style="color: #666;">{{ payment_rate|floatformat:1 }}% du total</div>
         </div>
         <div style="background: #fff3e0; padding: 8px; border-radius: 4px;">
             <div style="font-weight: bold; color: #ef6c00;">⏳ En attente</div>
-            <div style="font-size: 14px; font-weight: bold;">{{ pending_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ pending_amount|floatformat:2 }} {{
+                organization.currency|default:"CAD" }}</div>
             <div style="color: #666;">{{ by_status|length }} facture(s)</div>
         </div>
         <div style="background: #ffebee; padding: 8px; border-radius: 4px;">
             <div style="font-weight: bold; color: #c62828;">⚠️ En retard</div>
-            <div style="font-size: 14px; font-weight: bold;">{{ overdue_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</div>
+            <div style="font-size: 14px; font-weight: bold;">{{ overdue_amount|floatformat:2 }} {{
+                organization.currency|default:"CAD" }}</div>
             <div style="color: #666;">{{ overdue_rate|floatformat:1 }}% du total</div>
         </div>
     </div>
@@ -89,7 +93,7 @@
         </tbody>
     </table>
     <div style="background: #f5f5f5; padding: 6px; margin-top: 8px; font-size: 10px; border-radius: 3px;">
-        <strong>Analyse Pareto:</strong> Les {{ pareto_count }} meilleurs clients (20%) représentent 
+        <strong>Analyse Pareto:</strong> Les {{ pareto_count }} meilleurs clients (20%) représentent
         <strong>{{ pareto_percentage|floatformat:1 }}%</strong> du CA total
     </div>
 </div>
@@ -126,19 +130,22 @@
     <h2 class="section-title">⚠️ Alertes & Actions Requises</h2>
     <div style="font-size: 10px;">
         {% if overdue_count > 0 %}
-        <div style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
-            <strong style="color: #c62828;">⚠️ {{ overdue_count }} facture(s) en retard</strong> ({{ overdue_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }})
+        <div
+            style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
+            <strong style="color: #c62828;">⚠️ {{ overdue_count }} facture(s) en retard</strong> ({{
+            overdue_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }})
             <div style="color: #666; margin-top: 3px;">→ Action immédiate requise: relances clients</div>
         </div>
         {% endif %}
-        
+
         {% if due_soon_count > 0 %}
-        <div style="background: #fff3e0; padding: 8px; margin-bottom: 5px; border-left: 3px solid #ef6c00; border-radius: 3px;">
+        <div
+            style="background: #fff3e0; padding: 8px; margin-bottom: 5px; border-left: 3px solid #ef6c00; border-radius: 3px;">
             <strong style="color: #ef6c00;">📅 {{ due_soon_count }} facture(s) échéance < 7 jours</strong>
-            <div style="color: #666; margin-top: 3px;">→ Préparer les relances préventives</div>
+                    <div style="color: #666; margin-top: 3px;">→ Préparer les relances préventives</div>
         </div>
         {% endif %}
-        
+
         {% if due_30_days > 0 %}
         <div style="background: #ffebee; padding: 8px; border-left: 3px solid #c62828; border-radius: 3px;">
             <strong style="color: #c62828;">🔴 {{ due_30_days }} facture(s) > 30 jours sans paiement</strong>
@@ -174,7 +181,8 @@
                     {% else %}{{ stat.status }}{% endif %}
                 </td>
                 <td class="text-center">{{ stat.count }}</td>
-                <td class="text-right">{{ stat.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ stat.total|default:0|floatformat:2 }} {{ organization.currency|default:"CAD"
+                    }}</td>
                 <td class="text-right">{{ stat.percentage|floatformat:1 }}%</td>
             </tr>
             {% endfor %}
@@ -203,25 +211,25 @@
                 <td><strong>{{ invoice.invoice_number|default:"-" }}</strong></td>
                 <td>
                     {% if invoice.client %}
-                        {{ invoice.client.name|truncatewords:4|default:"-" }}
+                    {{ invoice.client.name|truncatewords:4|default:"-" }}
                     {% else %}
-                        -
+                    -
                     {% endif %}
                 </td>
                 <td>
                     {% if invoice.created_at %}
-                        {{ invoice.created_at|date:"d/m/Y" }}
+                    {{ invoice.created_at|date:"d/m/Y" }}
                     {% elif invoice.issue_date %}
-                        {{ invoice.issue_date|date:"d/m/Y" }}
+                    {{ invoice.issue_date|date:"d/m/Y" }}
                     {% else %}
-                        -
+                    -
                     {% endif %}
                 </td>
                 <td>
                     {% if invoice.due_date %}
-                        {{ invoice.due_date|date:"d/m/Y" }}
+                    {{ invoice.due_date|date:"d/m/Y" }}
                     {% else %}
-                        -
+                    -
                     {% endif %}
                 </td>
                 <td>
@@ -232,7 +240,8 @@
                     {% elif invoice.status == 'cancelled' %}<span class="badge danger">Annulée</span>
                     {% else %}{{ invoice.status|default:"-" }}{% endif %}
                 </td>
-                <td class="text-right">{{ invoice.total_amount|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="text-right">{{ invoice.total_amount|default:0|floatformat:2 }} {{
+                    organization.currency|default:"CAD" }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -247,18 +256,20 @@
 <div class="highlight-box" style="font-size: 10px; page-break-inside: avoid;">
     <strong style="font-size: 11px;">📝 Résumé Exécutif</strong>
     <div style="margin-top: 6px; line-height: 1.5;">
-        Ce rapport couvre <strong>{{ total_count }} facture(s)</strong> pour un CA total de 
+        Ce rapport couvre <strong>{{ total_count }} facture(s)</strong> pour un CA total de
         <strong>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>.
         <br>
-        <strong>Performance:</strong> Taux de paiement de {{ payment_rate|floatformat:1 }}% 
+        <strong>Performance:</strong> Taux de paiement de {{ payment_rate|floatformat:1 }}%
         ({{ paid_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }} payés).
         {% if overdue_amount > 0 %}
-        ⚠️ <strong>{{ overdue_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> en retard à recouvrer.
+        ⚠️ <strong>{{ overdue_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong> en retard à
+        recouvrer.
         {% endif %}
         <br>
-        <strong>Concentration:</strong> Les {{ pareto_count }} meilleurs clients (20%) représentent {{ pareto_percentage|floatformat:1 }}% du CA.
+        <strong>Concentration:</strong> Les {{ pareto_count }} meilleurs clients (20%) représentent {{
+        pareto_percentage|floatformat:1 }}% du CA.
         {% if date_start or date_end %}
-        <br>Période couverte: 
+        <br>Période couverte:
         {% if date_start %}du {{ date_start|date:"d/m/Y" }}{% endif %}
         {% if date_end %}au {{ date_end|date:"d/m/Y" }}{% endif %}.
         {% endif %}

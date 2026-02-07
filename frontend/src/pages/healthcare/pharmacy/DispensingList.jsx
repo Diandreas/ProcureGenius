@@ -15,6 +15,14 @@ import {
     useMediaQuery,
     alpha
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 import {
     Add as AddIcon,
     Search as SearchIcon,
@@ -31,6 +39,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import { formatDate as formatDisplayDate, formatTime } from '../../../utils/formatters';
 
 const DispensingList = () => {
     const { t } = useTranslation();
@@ -312,42 +321,44 @@ const DispensingList = () => {
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                type="date"
-                                label="Date de début"
-                                value={startDate}
-                                onChange={(e) => {
-                                    setStartDate(e.target.value);
-                                    setStatusFilter('all'); // Reset status filter when using custom dates
-                                }}
-                                size={isMobile ? 'small' : 'medium'}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    }
-                                }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de début"
+                                    value={startDate ? dayjs(startDate) : null}
+                                    onChange={(date) => {
+                                        setStartDate(date ? date.format('YYYY-MM-DD') : '');
+                                        setStatusFilter('all');
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? 'small' : 'medium',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                type="date"
-                                label="Date de fin"
-                                value={endDate}
-                                onChange={(e) => {
-                                    setEndDate(e.target.value);
-                                    setStatusFilter('all'); // Reset status filter when using custom dates
-                                }}
-                                size={isMobile ? 'small' : 'medium'}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    }
-                                }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de fin"
+                                    value={endDate ? dayjs(endDate) : null}
+                                    onChange={(date) => {
+                                        setEndDate(date ? date.format('YYYY-MM-DD') : '');
+                                        setStatusFilter('all');
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? 'small' : 'medium',
+                                            variant: 'outlined'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                     </Grid>
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -532,17 +543,10 @@ const DispensingList = () => {
                                                 <TimeIcon sx={{ fontSize: 20, color: 'info.main' }} />
                                                 <Box sx={{ flex: 1 }}>
                                                     <Typography variant="body2" fontWeight="600">
-                                                        {new Date(tx.dispensed_at).toLocaleDateString('fr-FR', {
-                                                            day: 'numeric',
-                                                            month: 'long',
-                                                            year: 'numeric'
-                                                        })}
+                                                        {formatDisplayDate(tx.dispensed_at)}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary">
-                                                        {new Date(tx.dispensed_at).toLocaleTimeString('fr-FR', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
+                                                        {formatTime(tx.dispensed_at)}
                                                     </Typography>
                                                 </Box>
                                             </Box>

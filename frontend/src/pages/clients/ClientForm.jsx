@@ -36,6 +36,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
+import { formatDate } from '../../utils/formatters';
 
 function ClientForm() {
     const { t } = useTranslation(['clients', 'common']);
@@ -197,387 +198,387 @@ function ClientForm() {
                                             </Typography>
 
                                             <Grid container spacing={isMobile ? 1.5 : 2}>
-                                            <Grid item xs={12}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="name"
-                                                    label={t('clients:labels.name')}
-                                                    value={values.name}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.name && Boolean(errors.name)}
-                                                    helperText={touched.name && errors.name}
-                                                    required
-                                                />
-                                            </Grid>
-
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="legal_name"
-                                                    label={t('clients:labels.legalName')}
-                                                    value={values.legal_name}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.legal_name && Boolean(errors.legal_name)}
-                                                    helperText={touched.legal_name && errors.legal_name}
-                                                />
-                                            </Grid>
-
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="business_number"
-                                                    label={t('clients:labels.businessNumber')}
-                                                    value={values.business_number}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.business_number && Boolean(errors.business_number)}
-                                                    helperText={touched.business_number && errors.business_number}
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Contact */}
-                                <Card sx={{
-                                    mb: isMobile ? 1.5 : 3,
-                                    borderRadius: isMobile ? 2.5 : 2,
-                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
-                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-                                }}>
-                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                        <Typography
-                                            variant="h6"
-                                            gutterBottom
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1,
-                                                fontSize: isMobile ? '1rem' : undefined,
-                                                mb: isMobile ? 1.5 : 2
-                                            }}
-                                        >
-                                            <Person sx={{ fontSize: isMobile ? 20 : 24 }} />
-                                            {t('clients:labels.contactInfo')}
-                                        </Typography>
-
-                                        <Grid container spacing={isMobile ? 1.5 : 2}>
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="contact_person"
-                                                    label={t('clients:labels.contactPerson')}
-                                                    value={values.contact_person}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.contact_person && Boolean(errors.contact_person)}
-                                                    helperText={touched.contact_person && errors.contact_person}
-                                                    required
-                                                    InputProps={{
-                                                        startAdornment: (
-                                                            <InputAdornment position="start">
-                                                                <Person fontSize="small" />
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                />
-                                            </Grid>
-
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="email"
-                                                    label={t('clients:labels.email')}
-                                                    type="email"
-                                                    value={values.email}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.email && Boolean(errors.email)}
-                                                    helperText={touched.email && errors.email}
-                                                    required
-                                                    InputProps={{
-                                                        startAdornment: (
-                                                            <InputAdornment position="start">
-                                                                <Email fontSize="small" />
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                />
-                                            </Grid>
-
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="phone"
-                                                    label={t('clients:labels.phone')}
-                                                    value={values.phone}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.phone && Boolean(errors.phone)}
-                                                    helperText={touched.phone && errors.phone}
-                                                    required
-                                                    InputProps={{
-                                                        startAdornment: (
-                                                            <InputAdornment position="start">
-                                                                <Phone fontSize="small" />
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                />
-                                            </Grid>
-
-                                            <Grid item xs={12}>
-                                                <TextField
-                                                    fullWidth
-                                                    multiline
-                                                    rows={3}
-                                                    name="billing_address"
-                                                    label={t('clients:labels.billingAddress')}
-                                                    value={values.billing_address}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.billing_address && Boolean(errors.billing_address)}
-                                                    helperText={touched.billing_address && errors.billing_address}
-                                                    required
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Conditions commerciales */}
-                                <Card sx={{
-                                    borderRadius: isMobile ? 2.5 : 2,
-                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
-                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-                                }}>
-                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                        <Typography
-                                            variant="h6"
-                                            gutterBottom
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1,
-                                                fontSize: isMobile ? '1rem' : undefined,
-                                                mb: isMobile ? 1.5 : 2
-                                            }}
-                                        >
-                                            <AttachMoney sx={{ fontSize: isMobile ? 20 : 24 }} />
-                                            {t('clients:labels.commercialConditions')}
-                                        </Typography>
-
-                                        <Grid container spacing={isMobile ? 1.5 : 2}>
-                                            <Grid item xs={12} md={6}>
-                                                <FormControl fullWidth required>
-                                                    <InputLabel>{t('clients:labels.paymentTerms')}</InputLabel>
-                                                    <Select
-                                                        name="payment_terms"
-                                                        value={values.payment_terms}
+                                                <Grid item xs={12}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="name"
+                                                        label={t('clients:labels.name')}
+                                                        value={values.name}
                                                         onChange={handleChange}
-                                                        label={t('clients:labels.paymentTerms')}
-                                                        error={touched.payment_terms && Boolean(errors.payment_terms)}
-                                                    >
-                                                        {getPaymentTerms().map((term) => (
-                                                            <MenuItem key={term.value} value={term.value}>
-                                                                {term.label}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
+                                                        onBlur={handleBlur}
+                                                        error={touched.name && Boolean(errors.name)}
+                                                        helperText={touched.name && errors.name}
+                                                        required
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="legal_name"
+                                                        label={t('clients:labels.legalName')}
+                                                        value={values.legal_name}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.legal_name && Boolean(errors.legal_name)}
+                                                        helperText={touched.legal_name && errors.legal_name}
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="business_number"
+                                                        label={t('clients:labels.businessNumber')}
+                                                        value={values.business_number}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.business_number && Boolean(errors.business_number)}
+                                                        helperText={touched.business_number && errors.business_number}
+                                                    />
+                                                </Grid>
                                             </Grid>
+                                        </CardContent>
+                                    </Card>
 
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    name="credit_limit"
-                                                    label={t('clients:labels.creditLimit')}
-                                                    type="number"
-                                                    value={values.credit_limit}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    error={touched.credit_limit && Boolean(errors.credit_limit)}
-                                                    helperText={touched.credit_limit && errors.credit_limit}
-                                                    InputProps={{
-                                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                    }}
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-
-                            {/* Sidebar - Statut et options */}
-                            <Grid item xs={12} md={4}>
-                                <Card sx={{
-                                    borderRadius: isMobile ? 2.5 : 2,
-                                    boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
-                                    backdropFilter: isMobile ? 'blur(10px)' : 'none',
-                                    border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
-                                }}>
-                                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                        <Typography
-                                            variant="h6"
-                                            gutterBottom
-                                            sx={{
-                                                fontSize: isMobile ? '1rem' : undefined,
-                                                mb: isMobile ? 1.5 : 2
-                                            }}
-                                        >
-                                            {t('clients:labels.statusAndOptions')}
-                                        </Typography>
-
-                                        <Alert
-                                            severity="info"
-                                            sx={{
-                                                mb: isMobile ? 1.5 : 2,
-                                                borderRadius: isMobile ? 2 : 1,
-                                                '& .MuiAlert-message': {
-                                                    fontSize: isMobile ? '0.813rem' : undefined
-                                                }
-                                            }}
-                                        >
+                                    {/* Contact */}
+                                    <Card sx={{
+                                        mb: isMobile ? 1.5 : 3,
+                                        borderRadius: isMobile ? 2.5 : 2,
+                                        boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                        backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                        border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                    }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                                             <Typography
-                                                variant="subtitle2"
+                                                variant="h6"
                                                 gutterBottom
-                                                sx={{ fontSize: isMobile ? '0.875rem' : undefined, fontWeight: 600 }}
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    fontSize: isMobile ? '1rem' : undefined,
+                                                    mb: isMobile ? 1.5 : 2
+                                                }}
                                             >
-                                                {t('clients:labels.autoStatusTitle')}
+                                                <Person sx={{ fontSize: isMobile ? 20 : 24 }} />
+                                                {t('clients:labels.contactInfo')}
                                             </Typography>
+
+                                            <Grid container spacing={isMobile ? 1.5 : 2}>
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="contact_person"
+                                                        label={t('clients:labels.contactPerson')}
+                                                        value={values.contact_person}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.contact_person && Boolean(errors.contact_person)}
+                                                        helperText={touched.contact_person && errors.contact_person}
+                                                        required
+                                                        InputProps={{
+                                                            startAdornment: (
+                                                                <InputAdornment position="start">
+                                                                    <Person fontSize="small" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="email"
+                                                        label={t('clients:labels.email')}
+                                                        type="email"
+                                                        value={values.email}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.email && Boolean(errors.email)}
+                                                        helperText={touched.email && errors.email}
+                                                        required
+                                                        InputProps={{
+                                                            startAdornment: (
+                                                                <InputAdornment position="start">
+                                                                    <Email fontSize="small" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="phone"
+                                                        label={t('clients:labels.phone')}
+                                                        value={values.phone}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.phone && Boolean(errors.phone)}
+                                                        helperText={touched.phone && errors.phone}
+                                                        required
+                                                        InputProps={{
+                                                            startAdornment: (
+                                                                <InputAdornment position="start">
+                                                                    <Phone fontSize="small" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12}>
+                                                    <TextField
+                                                        fullWidth
+                                                        multiline
+                                                        rows={3}
+                                                        name="billing_address"
+                                                        label={t('clients:labels.billingAddress')}
+                                                        value={values.billing_address}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.billing_address && Boolean(errors.billing_address)}
+                                                        helperText={touched.billing_address && errors.billing_address}
+                                                        required
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Conditions commerciales */}
+                                    <Card sx={{
+                                        borderRadius: isMobile ? 2.5 : 2,
+                                        boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                        backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                        border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                    }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                                             <Typography
-                                                variant="body2"
-                                                sx={{ fontSize: isMobile ? '0.75rem' : undefined, mb: 1 }}
+                                                variant="h6"
+                                                gutterBottom
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    fontSize: isMobile ? '1rem' : undefined,
+                                                    mb: isMobile ? 1.5 : 2
+                                                }}
                                             >
-                                                {t('clients:labels.autoStatusDescription')}
+                                                <AttachMoney sx={{ fontSize: isMobile ? 20 : 24 }} />
+                                                {t('clients:labels.commercialConditions')}
                                             </Typography>
-                                            {values.last_activity_date && (
+
+                                            <Grid container spacing={isMobile ? 1.5 : 2}>
+                                                <Grid item xs={12} md={6}>
+                                                    <FormControl fullWidth required>
+                                                        <InputLabel>{t('clients:labels.paymentTerms')}</InputLabel>
+                                                        <Select
+                                                            name="payment_terms"
+                                                            value={values.payment_terms}
+                                                            onChange={handleChange}
+                                                            label={t('clients:labels.paymentTerms')}
+                                                            error={touched.payment_terms && Boolean(errors.payment_terms)}
+                                                        >
+                                                            {getPaymentTerms().map((term) => (
+                                                                <MenuItem key={term.value} value={term.value}>
+                                                                    {term.label}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="credit_limit"
+                                                        label={t('clients:labels.creditLimit')}
+                                                        type="number"
+                                                        value={values.credit_limit}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.credit_limit && Boolean(errors.credit_limit)}
+                                                        helperText={touched.credit_limit && errors.credit_limit}
+                                                        InputProps={{
+                                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                        }}
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+
+                                {/* Sidebar - Statut et options */}
+                                <Grid item xs={12} md={4}>
+                                    <Card sx={{
+                                        borderRadius: isMobile ? 2.5 : 2,
+                                        boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                                        backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                                        border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                                    }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                            <Typography
+                                                variant="h6"
+                                                gutterBottom
+                                                sx={{
+                                                    fontSize: isMobile ? '1rem' : undefined,
+                                                    mb: isMobile ? 1.5 : 2
+                                                }}
+                                            >
+                                                {t('clients:labels.statusAndOptions')}
+                                            </Typography>
+
+                                            <Alert
+                                                severity="info"
+                                                sx={{
+                                                    mb: isMobile ? 1.5 : 2,
+                                                    borderRadius: isMobile ? 2 : 1,
+                                                    '& .MuiAlert-message': {
+                                                        fontSize: isMobile ? '0.813rem' : undefined
+                                                    }
+                                                }}
+                                            >
                                                 <Typography
-                                                    variant="caption"
-                                                    sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block', mt: 0.5 }}
+                                                    variant="subtitle2"
+                                                    gutterBottom
+                                                    sx={{ fontSize: isMobile ? '0.875rem' : undefined, fontWeight: 600 }}
                                                 >
-                                                    {t('clients:labels.lastActivity')}: {new Date(values.last_activity_date).toLocaleDateString()}
+                                                    {t('clients:labels.autoStatusTitle')}
                                                 </Typography>
-                                            )}
-                                        </Alert>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ fontSize: isMobile ? '0.75rem' : undefined, mb: 1 }}
+                                                >
+                                                    {t('clients:labels.autoStatusDescription')}
+                                                </Typography>
+                                                {values.last_activity_date && (
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{ fontSize: isMobile ? '0.688rem' : undefined, display: 'block', mt: 0.5 }}
+                                                    >
+                                                        {t('clients:labels.lastActivity')}: {formatDate(values.last_activity_date)}
+                                                    </Typography>
+                                                )}
+                                            </Alert>
 
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    name="is_manually_active"
-                                                    checked={values.is_manually_active || false}
-                                                    onChange={handleChange}
-                                                />
-                                            }
-                                            label={t('clients:labels.manualStatus')}
-                                            sx={{
-                                                mb: isMobile ? 1.5 : 2,
-                                                '& .MuiTypography-root': {
-                                                    fontSize: isMobile ? '0.875rem' : undefined
-                                                }
-                                            }}
-                                        />
-
-                                        {values.is_manually_active && (
                                             <FormControlLabel
                                                 control={
                                                     <Checkbox
-                                                        name="is_active"
-                                                        checked={values.is_active}
+                                                        name="is_manually_active"
+                                                        checked={values.is_manually_active || false}
                                                         onChange={handleChange}
                                                     />
                                                 }
-                                                label={t('clients:labels.activeClient')}
+                                                label={t('clients:labels.manualStatus')}
                                                 sx={{
                                                     mb: isMobile ? 1.5 : 2,
-                                                    ml: 2,
                                                     '& .MuiTypography-root': {
                                                         fontSize: isMobile ? '0.875rem' : undefined
                                                     }
                                                 }}
                                             />
-                                        )}
 
-                                        <Alert
-                                            severity="info"
+                                            {values.is_manually_active && (
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            name="is_active"
+                                                            checked={values.is_active}
+                                                            onChange={handleChange}
+                                                        />
+                                                    }
+                                                    label={t('clients:labels.activeClient')}
+                                                    sx={{
+                                                        mb: isMobile ? 1.5 : 2,
+                                                        ml: 2,
+                                                        '& .MuiTypography-root': {
+                                                            fontSize: isMobile ? '0.875rem' : undefined
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+
+                                            <Alert
+                                                severity="info"
+                                                sx={{
+                                                    mt: isMobile ? 1.5 : 2,
+                                                    borderRadius: isMobile ? 2 : 1,
+                                                    '& .MuiAlert-message': {
+                                                        fontSize: isMobile ? '0.813rem' : undefined
+                                                    }
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="subtitle2"
+                                                    gutterBottom
+                                                    sx={{ fontSize: isMobile ? '0.875rem' : undefined }}
+                                                >
+                                                    {t('clients:labels.aiInfo')}
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ fontSize: isMobile ? '0.75rem' : undefined }}
+                                                >
+                                                    {t('clients:labels.aiInfoDescription')}
+                                                </Typography>
+                                            </Alert>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+
+                                {/* Actions - Style mobile app */}
+                                <Grid item xs={12}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        gap: isMobile ? 1 : 2,
+                                        justifyContent: 'flex-end',
+                                        flexDirection: isMobile ? 'column-reverse' : 'row',
+                                        px: isMobile ? 2 : 0,
+                                        pb: isMobile ? 2 : 0
+                                    }}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Cancel />}
+                                            onClick={() => navigate('/clients')}
+                                            disabled={isSubmitting}
+                                            fullWidth={isMobile}
                                             sx={{
-                                                mt: isMobile ? 1.5 : 2,
-                                                borderRadius: isMobile ? 2 : 1,
-                                                '& .MuiAlert-message': {
-                                                    fontSize: isMobile ? '0.813rem' : undefined
-                                                }
+                                                borderRadius: isMobile ? 2 : undefined,
+                                                py: isMobile ? 1.25 : undefined,
+                                                fontSize: isMobile ? '0.875rem' : undefined
                                             }}
                                         >
-                                            <Typography
-                                                variant="subtitle2"
-                                                gutterBottom
-                                                sx={{ fontSize: isMobile ? '0.875rem' : undefined }}
-                                            >
-                                                {t('clients:labels.aiInfo')}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontSize: isMobile ? '0.75rem' : undefined }}
-                                            >
-                                                {t('clients:labels.aiInfoDescription')}
-                                            </Typography>
-                                        </Alert>
-                                    </CardContent>
-                                </Card>
+                                            {t('clients:actions.cancel')}
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            startIcon={isSubmitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <Save />}
+                                            disabled={isSubmitting}
+                                            fullWidth={isMobile}
+                                            sx={{
+                                                borderRadius: isMobile ? 2 : undefined,
+                                                py: isMobile ? 1.25 : undefined,
+                                                fontSize: isMobile ? '0.875rem' : undefined,
+                                                fontWeight: 600,
+                                                boxShadow: isMobile ? 2 : undefined,
+                                                '&:hover': {
+                                                    boxShadow: isMobile ? 4 : undefined,
+                                                    transform: isMobile ? 'translateY(-1px)' : 'none'
+                                                },
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            {isSubmitting ? t('common:labels.saving', 'Enregistrement...') : (isEdit ? t('clients:actions.modify') : t('clients:actions.create'))}
+                                        </Button>
+                                    </Box>
+                                </Grid>
                             </Grid>
-
-                            {/* Actions - Style mobile app */}
-                            <Grid item xs={12}>
-                                <Box sx={{
-                                    display: 'flex',
-                                    gap: isMobile ? 1 : 2,
-                                    justifyContent: 'flex-end',
-                                    flexDirection: isMobile ? 'column-reverse' : 'row',
-                                    px: isMobile ? 2 : 0,
-                                    pb: isMobile ? 2 : 0
-                                }}>
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<Cancel />}
-                                        onClick={() => navigate('/clients')}
-                                        disabled={isSubmitting}
-                                        fullWidth={isMobile}
-                                        sx={{
-                                            borderRadius: isMobile ? 2 : undefined,
-                                            py: isMobile ? 1.25 : undefined,
-                                            fontSize: isMobile ? '0.875rem' : undefined
-                                        }}
-                                    >
-                                        {t('clients:actions.cancel')}
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        startIcon={isSubmitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <Save />}
-                                        disabled={isSubmitting}
-                                        fullWidth={isMobile}
-                                        sx={{
-                                            borderRadius: isMobile ? 2 : undefined,
-                                            py: isMobile ? 1.25 : undefined,
-                                            fontSize: isMobile ? '0.875rem' : undefined,
-                                            fontWeight: 600,
-                                            boxShadow: isMobile ? 2 : undefined,
-                                            '&:hover': {
-                                                boxShadow: isMobile ? 4 : undefined,
-                                                transform: isMobile ? 'translateY(-1px)' : 'none'
-                                            },
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        {isSubmitting ? t('common:labels.saving', 'Enregistrement...') : (isEdit ? t('clients:actions.modify') : t('clients:actions.create'))}
-                                    </Button>
-                                </Box>
-                            </Grid>
-                        </Grid>
                         </Box>
                     </Form>
                 )}

@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import ChartRenderer from './ChartRenderer';
 import html2canvas from 'html2canvas';
+import { formatDate } from '../../utils/formatters';
 
 /**
  * Panel d'artifacts type Claude.ai pour afficher les visualisations
@@ -130,7 +131,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
     if (diffMins < 1) return "À l'instant";
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     if (diffMins < 1440) return `Il y a ${Math.floor(diffMins / 60)} h`;
-    return date.toLocaleDateString('fr-FR');
+    return formatDate(date);
   };
 
   return (
@@ -252,95 +253,95 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                       },
                     }}
                   >
-                  <CardContent sx={{ p: 2, pb: 1.5 }}>
-                    {/* Header */}
-                    <Box display="flex" alignItems="flex-start" gap={1} mb={1.5}>
-                      <Box sx={{ color: 'primary.main', mt: 0.25 }}>
-                        {React.cloneElement(getChartIcon(artifact.chart_type), { sx: { fontSize: 20 } })}
+                    <CardContent sx={{ p: 2, pb: 1.5 }}>
+                      {/* Header */}
+                      <Box display="flex" alignItems="flex-start" gap={1} mb={1.5}>
+                        <Box sx={{ color: 'primary.main', mt: 0.25 }}>
+                          {React.cloneElement(getChartIcon(artifact.chart_type), { sx: { fontSize: 20 } })}
+                        </Box>
+                        <Box flexGrow={1} minWidth={0}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              mb: 0.5,
+                              fontSize: '0.9rem',
+                              lineHeight: 1.4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {artifact.chart_title || 'Sans titre'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                            {getChartTypeLabel(artifact.chart_type)} • {formatTimestamp(artifact.timestamp)}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box flexGrow={1} minWidth={0}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontWeight: 600,
-                            mb: 0.5,
-                            fontSize: '0.9rem',
-                            lineHeight: 1.4,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                          }}
+
+                      {/* Chart Preview */}
+                      <Box
+                        data-chart-id={artifact.id}
+                        sx={{
+                          height: 180,
+                          mt: 1.5,
+                          borderRadius: 1.5,
+                          overflow: 'hidden',
+                          bgcolor: 'grey.50',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <ChartRenderer
+                          chartType={artifact.chart_type}
+                          chartTitle="" // Hide title in preview
+                          chartData={artifact.chart_data}
+                          chartConfig={artifact.chart_config}
+                        />
+                      </Box>
+                    </CardContent>
+
+                    <Divider />
+
+                    <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1, gap: 0.5 }}>
+                      <Tooltip title="Plein écran">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleFullscreen(artifact)}
                         >
-                          {artifact.chart_title || 'Sans titre'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                          {getChartTypeLabel(artifact.chart_type)} • {formatTimestamp(artifact.timestamp)}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Chart Preview */}
-                    <Box
-                      data-chart-id={artifact.id}
-                      sx={{
-                        height: 180,
-                        mt: 1.5,
-                        borderRadius: 1.5,
-                        overflow: 'hidden',
-                        bgcolor: 'grey.50',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <ChartRenderer
-                        chartType={artifact.chart_type}
-                        chartTitle="" // Hide title in preview
-                        chartData={artifact.chart_data}
-                        chartConfig={artifact.chart_config}
-                      />
-                    </Box>
-                  </CardContent>
-
-                  <Divider />
-
-                  <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1, gap: 0.5 }}>
-                    <Tooltip title="Plein écran">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleFullscreen(artifact)}
-                      >
-                        <Fullscreen sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Rafraîchir">
-                      <IconButton
-                        size="small"
-                        onClick={() => onRefreshArtifact && onRefreshArtifact(artifact.id)}
-                      >
-                        <Refresh sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Télécharger">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDownload(artifact)}
-                      >
-                        <Download sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => onRemoveArtifact && onRemoveArtifact(artifact.id)}
-                      >
-                        <Delete sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </Tooltip>
-                  </CardActions>
-                </Card>
+                          <Fullscreen sx={{ fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Rafraîchir">
+                        <IconButton
+                          size="small"
+                          onClick={() => onRefreshArtifact && onRefreshArtifact(artifact.id)}
+                        >
+                          <Refresh sx={{ fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Télécharger">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDownload(artifact)}
+                        >
+                          <Download sx={{ fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => onRemoveArtifact && onRemoveArtifact(artifact.id)}
+                        >
+                          <Delete sx={{ fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </CardActions>
+                  </Card>
                 </Grow>
               ))}
             </Stack>

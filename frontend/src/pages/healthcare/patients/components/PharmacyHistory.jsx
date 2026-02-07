@@ -19,6 +19,7 @@ import {
     TableRow
 } from '@mui/material';
 import { LocalPharmacy as PharmacyIcon, Visibility as ViewIcon } from '@mui/icons-material';
+import { formatDate } from '../../../../utils/formatters';
 
 const PharmacyHistory = ({ dispensings }) => {
     if (!dispensings || dispensings.length === 0) {
@@ -57,13 +58,7 @@ const PharmacyHistory = ({ dispensings }) => {
                         </Box>
 
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {new Date(dispensing.dispensed_at).toLocaleDateString('fr-FR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {formatDate(dispensing.dispensed_at)}
                         </Typography>
 
                         {dispensing.dispensed_by_name && (

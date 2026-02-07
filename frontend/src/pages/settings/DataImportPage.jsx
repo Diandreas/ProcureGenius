@@ -79,6 +79,7 @@ import {
     clearPreview,
 } from '../../store/slices/migrationSlice';
 import { suppliersAPI, productsAPI, clientsAPI } from '../../services/api';
+import { formatDate } from '../../utils/formatters';
 
 // Configuration des types d'entités importables
 const ENTITY_CONFIGS = {
@@ -470,7 +471,7 @@ const DataImportPage = () => {
 
                 if (!importName) {
                     const entityLabel = ENTITY_CONFIGS[selectedEntity]?.label || 'Données';
-                    const date = new Date().toLocaleDateString('fr-FR');
+                    const date = formatDate(new Date());
                     setImportName(`Import ${entityLabel} - ${date}`);
                 }
             } catch (err) {

@@ -213,9 +213,23 @@ class Command(BaseCommand):
         """Create organization and settings"""
         self.stdout.write('[BASE] Initialisation de l\'organisation...')
 
+        # Import modules list
+        from apps.core.modules import Modules
+
         self.organization = Organization.objects.create(
             name='Centre de Sante JULIANNA',
             subscription_type='professional',
+            enabled_modules=[
+                Modules.DASHBOARD,
+                Modules.PATIENTS,
+                Modules.CONSULTATIONS,
+                Modules.LABORATORY,
+                Modules.PHARMACY,
+                Modules.INVOICES,
+                Modules.PRODUCTS,
+                Modules.CLIENTS,
+                Modules.ANALYTICS,
+            ]
         )
 
         # Create organization settings
@@ -224,12 +238,13 @@ class Command(BaseCommand):
             default_currency='XAF',
             auto_generate_lab_kits=False,
             default_tax_rate=Decimal('15.000'),
-            company_name='Centre de Sante JULIANNA',
-            company_address='Makepe, Douala, Cameroun',
-            company_phone='+237 233 XX XX XX',
+            company_name='CSJ - Centre de Santé JULIANNA',
+            company_address='Entrée Marie Lumière à côté du Consulat Honoraire d\'Indonésie\nMakepe Saint-Tropez - Douala',
+            company_phone='655244149 / 679145198',
             company_email='contact@centrejulianna.com',
             company_website='https://www.centrejulianna.com',
             tax_region='cameroon',
+            brand_color='#2563eb',
         )
 
         self.stdout.write(self.style.SUCCESS('  [OK] Organisation creee: Centre de Sante JULIANNA'))
@@ -286,7 +301,7 @@ class Command(BaseCommand):
         ]
 
         for user_data in users_to_create:
-            role = user_data.pop('role')
+            role = user_data.get('role', 'buyer')  # Get but don't remove
             user = User.objects.create_user(
                 password='julianna2025',
                 organization=self.organization,

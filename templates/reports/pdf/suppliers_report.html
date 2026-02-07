@@ -4,10 +4,11 @@
 
 {% block report_title %}🏢 Rapport des Fournisseurs{% endblock %}
 {% block report_subtitle %}
-    {% if date_start or date_end %}
-        Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{ date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
-    {% endif %}
-    • {{ total_count }} fournisseur(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
+{% if date_start or date_end %}
+Période: {% if date_start %}{{ date_start|date:"d/m/Y" }}{% else %}Début{% endif %} - {% if date_end %}{{
+date_end|date:"d/m/Y" }}{% else %}Aujourd'hui{% endif %}
+{% endif %}
+• {{ total_count }} fournisseur(s) • Généré le {{ generated_at|date:"d/m/Y à H:i" }}
 {% endblock %}
 
 {% block content %}
@@ -49,117 +50,129 @@
             <div style="color: #666;">{{ good_percentage|floatformat:0 }}%</div>
         </div>
         <div style="background: #fff3e0; padding: 8px; border-radius: 4px;">
-            <div style="font-weight: bold; color: #ef6c00;">⚠️ À améliorer (<3.5)</div>
-            <div style="font-size: 14px; font-weight: bold;">{{ poor_count }} fournisseurs</div>
-            <div style="color: #666;">{{ poor_percentage|floatformat:0 }}%</div>
+            <div style="font-weight: bold; color: #ef6c00;">⚠️ À améliorer (<3.5)< /div>
+                    <div style="font-size: 14px; font-weight: bold;">{{ poor_count }} fournisseurs</div>
+                    <div style="color: #666;">{{ poor_percentage|floatformat:0 }}%</div>
+            </div>
         </div>
     </div>
-</div>
 
-{% if top_suppliers %}
-<div class="section" style="margin-bottom: 15px;">
-    <h2 class="section-title">🏢 Top 10 Fournisseurs (Volume)</h2>
-    <table style="font-size: 10px;">
-        <thead>
-            <tr><th style="width: 40%;">Fournisseur</th><th class="text-center" style="width: 10%;">Note</th><th class="text-center" style="width: 15%;">Commandes</th><th class="text-right" style="width: 20%;">Volume</th><th class="text-right" style="width: 15%;">%</th></tr>
-        </thead>
-        <tbody>
-            {% for supplier in top_suppliers|slice:":10" %}
-            <tr>
-                <td><strong>{{ supplier.name|truncatewords:5 }}</strong></td>
-                <td class="text-center">{{ supplier.rating|floatformat:1 }} ⭐</td>
-                <td class="text-center">{{ supplier.po_count }}</td>
-                <td class="text-right">{{ supplier.volume|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                <td class="text-right">{{ supplier.percentage|floatformat:1 }}%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div style="background: {% if concentration_risk %}#ffebee{% else %}#f5f5f5{% endif %}; padding: 6px; margin-top: 8px; font-size: 10px; border-radius: 3px;">
-        <strong>{% if concentration_risk %}⚠️ Concentration:{% else %}Concentration:{% endif %}</strong> Top 5 = {{ top5_percentage|floatformat:1 }}%
-        {% if concentration_risk %}(risque de dépendance){% endif %}
-    </div>
-</div>
-{% endif %}
-
-<div class="section" style="margin-bottom: 15px;">
-    <h2 class="section-title">🌍 Diversité & RSE</h2>
-    <div style="font-size: 10px;">
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-            <div>🏠 <strong>Locaux:</strong> {{ local_count }} ({{ local_percentage|floatformat:0 }}%)</div>
-            <div>👥 <strong>Minoritaires:</strong> {{ minority_count }} ({{ minority_percentage|floatformat:0 }}%)</div>
-            <div>👩 <strong>Féminins:</strong> {{ women_count }} ({{ women_percentage|floatformat:0 }}%)</div>
-            <div>🦅 <strong>Autochtones:</strong> {{ indigenous_count }} ({{ indigenous_percentage|floatformat:0 }}%)</div>
+    {% if top_suppliers %}
+    <div class="section" style="margin-bottom: 15px;">
+        <h2 class="section-title">🏢 Top 10 Fournisseurs (Volume)</h2>
+        <table style="font-size: 10px;">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Fournisseur</th>
+                    <th class="text-center" style="width: 10%;">Note</th>
+                    <th class="text-center" style="width: 15%;">Commandes</th>
+                    <th class="text-right" style="width: 20%;">Volume</th>
+                    <th class="text-right" style="width: 15%;">%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in top_suppliers|slice:":10" %}
+                <tr>
+                    <td><strong>{{ supplier.name|truncatewords:5 }}</strong></td>
+                    <td class="text-center">{{ supplier.rating|floatformat:1 }} ⭐</td>
+                    <td class="text-center">{{ supplier.po_count }}</td>
+                    <td class="text-right">{{ supplier.volume|floatformat:2 }} {{ organization.currency|default:"CAD" }}
+                    </td>
+                    <td class="text-right">{{ supplier.percentage|floatformat:1 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div
+            style="background: {% if concentration_risk %}#ffebee{% else %}#f5f5f5{% endif %}; padding: 6px; margin-top: 8px; font-size: 10px; border-radius: 3px;">
+            <strong>{% if concentration_risk %}⚠️ Concentration:{% else %}Concentration:{% endif %}</strong> Top 5 = {{
+            top5_percentage|floatformat:1 }}%
+            {% if concentration_risk %}(risque de dépendance){% endif %}
         </div>
     </div>
-</div>
+    {% endif %}
 
-{% if inactive_count > 0 or concentration_risk %}
-<div class="section" style="margin-bottom: 15px;">
-    <h2 class="section-title">⚠️ Risques & Alertes</h2>
-    <div style="font-size: 10px;">
-        {% if concentration_risk %}
-        <div style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
-            <strong style="color: #c62828;">⚠️ Concentration risquée</strong>
-            <div style="color: #666; margin-top: 3px;">→ Top 5 = {{ top5_percentage|floatformat:0 }}% du volume (diversifier)</div>
+    <div class="section" style="margin-bottom: 15px;">
+        <h2 class="section-title">🌍 Diversité & RSE</h2>
+        <div style="font-size: 10px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                <div>🏠 <strong>Locaux:</strong> {{ local_count }} ({{ local_percentage|floatformat:0 }}%)</div>
+                <div>👥 <strong>Minoritaires:</strong> {{ minority_count }} ({{ minority_percentage|floatformat:0 }}%)
+                </div>
+                <div>👩 <strong>Féminins:</strong> {{ women_count }} ({{ women_percentage|floatformat:0 }}%)</div>
+                <div>🦅 <strong>Autochtones:</strong> {{ indigenous_count }} ({{ indigenous_percentage|floatformat:0
+                    }}%)</div>
+            </div>
         </div>
-        {% endif %}
-        {% if inactive_count > 0 %}
-        <div style="background: #f5f5f5; padding: 8px; border-left: 3px solid #666; border-radius: 3px;">
-            <strong style="color: #666;">💤 {{ inactive_count }} fournisseur(s) inactifs (90j+)</strong>
-            <div style="color: #666; margin-top: 3px;">→ Nettoyer la base ou réactiver</div>
+    </div>
+
+    {% if inactive_count > 0 or concentration_risk %}
+    <div class="section" style="margin-bottom: 15px;">
+        <h2 class="section-title">⚠️ Risques & Alertes</h2>
+        <div style="font-size: 10px;">
+            {% if concentration_risk %}
+            <div
+                style="background: #ffebee; padding: 8px; margin-bottom: 5px; border-left: 3px solid #c62828; border-radius: 3px;">
+                <strong style="color: #c62828;">⚠️ Concentration risquée</strong>
+                <div style="color: #666; margin-top: 3px;">→ Top 5 = {{ top5_percentage|floatformat:0 }}% du volume
+                    (diversifier)</div>
+            </div>
+            {% endif %}
+            {% if inactive_count > 0 %}
+            <div style="background: #f5f5f5; padding: 8px; border-left: 3px solid #666; border-radius: 3px;">
+                <strong style="color: #666;">💤 {{ inactive_count }} fournisseur(s) inactifs (90j+)</strong>
+                <div style="color: #666; margin-top: 3px;">→ Nettoyer la base ou réactiver</div>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
-</div>
-{% endif %}
+    {% endif %}
 
-<!-- LISTE DES FOURNISSEURS (ESSENTIEL - GARDÉ) -->
-<div class="section" style="margin-bottom: 15px;">
-    <h2 class="section-title">📋 Liste des Fournisseurs</h2>
-    <table style="font-size: 10px;">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Téléphone</th>
-                <th class="text-center">Note</th>
-                <th class="text-center">Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for supplier in suppliers %}
-            <tr>
-                <td><strong>{{ supplier.name|truncatewords:4 }}</strong></td>
-                <td>{{ supplier.email|default:"-" }}</td>
-                <td>{{ supplier.phone|default:"-" }}</td>
-                <td class="text-center">{{ supplier.rating|floatformat:1 }} ⭐</td>
-                <td class="text-center">
-                    {% if supplier.status == 'active' %}<span class="badge success">Actif</span>
-                    {% elif supplier.status == 'pending' %}<span class="badge warning">En attente</span>
-                    {% elif supplier.status == 'blocked' %}<span class="badge danger">Bloqué</span>
-                    {% else %}<span class="badge info">{{ supplier.status }}</span>{% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center; color: #999;">Aucun fournisseur</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="highlight-box" style="font-size: 10px;">
-    <strong style="font-size: 11px;">📝 Résumé Exécutif</strong>
-    <div style="margin-top: 6px; line-height: 1.5;">
-        <strong>{{ total_count }} fournisseurs</strong> ({{ active_count }} actifs).
-        Volume: <strong>{{ total_volume|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>.
-        Note moyenne: <strong>{{ avg_rating|floatformat:1 }}/5.0 ⭐</strong>.
-        Diversité: {{ local_percentage|floatformat:0 }}% locaux.
-        {% if concentration_risk %}⚠️ Concentration à surveiller.{% endif %}
+    <!-- LISTE DES FOURNISSEURS (ESSENTIEL - GARDÉ) -->
+    <div class="section" style="margin-bottom: 15px;">
+        <h2 class="section-title">📋 Liste des Fournisseurs</h2>
+        <table style="font-size: 10px;">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th class="text-center">Note</th>
+                    <th class="text-center">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td><strong>{{ supplier.name|truncatewords:4 }}</strong></td>
+                    <td>{{ supplier.email|default:"-" }}</td>
+                    <td>{{ supplier.phone|default:"-" }}</td>
+                    <td class="text-center">{{ supplier.rating|floatformat:1 }} ⭐</td>
+                    <td class="text-center">
+                        {% if supplier.status == 'active' %}<span class="badge success">Actif</span>
+                        {% elif supplier.status == 'pending' %}<span class="badge warning">En attente</span>
+                        {% elif supplier.status == 'blocked' %}<span class="badge danger">Bloqué</span>
+                        {% else %}<span class="badge info">{{ supplier.status }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999;">Aucun fournisseur</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
 
-{% endblock %}
+    <div class="highlight-box" style="font-size: 10px;">
+        <strong style="font-size: 11px;">📝 Résumé Exécutif</strong>
+        <div style="margin-top: 6px; line-height: 1.5;">
+            <strong>{{ total_count }} fournisseurs</strong> ({{ active_count }} actifs).
+            Volume: <strong>{{ total_volume|floatformat:2 }} {{ organization.currency|default:"CAD" }}</strong>.
+            Note moyenne: <strong>{{ avg_rating|floatformat:1 }}/5.0 ⭐</strong>.
+            Diversité: {{ local_percentage|floatformat:0 }}% locaux.
+            {% if concentration_risk %}⚠️ Concentration à surveiller.{% endif %}
+        </div>
+    </div>
 
+    {% endblock %}

@@ -2,6 +2,14 @@ import React from 'react';
 import { Box, IconButton, TextField, Stack, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight, Today } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 
 /**
  * DateNavigator Component
@@ -118,26 +126,31 @@ function DateNavigator({ value, onChange, disabled = false }) {
       </Tooltip>
 
       {/* Sélecteur de date */}
-      <TextField
-        type="date"
-        value={value || ''}
-        onChange={handleDateChange}
-        disabled={disabled}
-        size="small"
-        InputProps={{
-          sx: {
-            minWidth: 140,
-            '& .MuiOutlinedInput-notchedOutline': {
-              border: 'none',
-            },
-          },
-        }}
-        sx={{
-          '& .MuiInputBase-root': {
-            fontSize: '0.875rem',
-          },
-        }}
-      />
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+        <DatePicker
+          value={value ? dayjs(value) : null}
+          onChange={(date) => {
+            if (disabled || !date) return;
+            onChange(date.format('YYYY-MM-DD'));
+          }}
+          disabled={disabled}
+          slotProps={{
+            textField: {
+              size: 'small',
+              sx: {
+                minWidth: 140,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '& .MuiInputBase-root': {
+                  fontSize: '0.875rem',
+                },
+              }
+            }
+          }}
+          format="DD/MM/YYYY"
+        />
+      </LocalizationProvider>
     </Stack>
   );
 }

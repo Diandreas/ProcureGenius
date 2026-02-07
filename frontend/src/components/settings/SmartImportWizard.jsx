@@ -50,6 +50,7 @@ import {
     FormControlLabel,
     Switch,
 } from '@mui/material';
+import { formatDate } from '../../utils/formatters';
 import {
     CloudUpload,
     InsertDriveFile,
@@ -537,7 +538,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                 // Générer un nom d'import par défaut
                 if (!importName) {
                     const entityLabel = ENTITY_CONFIGS[selectedEntity]?.label || 'Données';
-                    const date = new Date().toLocaleDateString('fr-FR');
+                    const date = formatDate(new Date());
                     setImportName(`Import ${entityLabel} - ${date}`);
                 }
             } catch (err) {

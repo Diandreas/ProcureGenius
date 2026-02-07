@@ -38,6 +38,7 @@ import { motion } from 'framer-motion';
 import patientAPI from '../../../services/patientAPI';
 import LoadingState from '../../../components/LoadingState';
 import ErrorState from '../../../components/ErrorState';
+import { formatDate } from '../../../utils/formatters';
 
 const PatientList = () => {
     const { t } = useTranslation();
@@ -181,6 +182,11 @@ const PatientList = () => {
                             <Typography variant="body2" color="text.secondary" noWrap>
                                 ID: {patient.patient_number}
                             </Typography>
+                            {patient.date_of_birth && (
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                    Né le {formatDate(patient.date_of_birth)}
+                                </Typography>
+                            )}
                             <Stack direction="row" spacing={1} mt={0.5}>
                                 <Chip
                                     label={`${patient.age} ans`}
@@ -207,7 +213,7 @@ const PatientList = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="body2" color="text.secondary">Dernière visite</Typography>
                             <Typography variant="body2" fontWeight="500">
-                                {patient.updated_at ? new Date(patient.updated_at).toLocaleDateString() : '-'}
+                                {patient.updated_at ? formatDate(patient.updated_at) : '-'}
                             </Typography>
                         </Box>
                     </Stack>

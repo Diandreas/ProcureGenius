@@ -153,12 +153,13 @@ class LabBarcodeView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTempl
 
 class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
-    Génère des étiquettes pour chaque tube nécessaire (1 étiquette par test)
+    Génère des étiquettes pour chaque tube nécessaire (1 étiquette par tube)
+    Plusieurs examens peuvent être regroupés sur le même tube
     Format: 100.5mm x 63.5mm paysage (imprimante thermique TSC)
     SIZE 100.5 MM, 63.5 MM - GAP 2 MM
     """
     model = LabOrder
-    template_name = 'laboratory/pdf_templates/lab_tube_labels.html'  # Template complexe
+    template_name = 'laboratory/pdf_templates/lab_tube_labels.html'
     pdf_attachment = False
 
     def get_pdf_filename(self):
@@ -176,29 +177,59 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
         # Get quantity parameter (number of copies per label)
         quantity = int(self.request.GET.get('quantity', 1))
 
-        # Generate 1 label per test
+        # Get max tests per tube (can be overridden by query param)
+        max_tests_per_tube = int(self.request.GET.get('max_tests_per_tube', 5))
+
+        # Group tests by container type (1 tube = 1 label)
+        tubes = {}  # Dict: container_type -> list of tests
+        for item in lab_order.items.all().select_related('lab_test'):
+            container = item.lab_test.container_type or 'other'
+            if container not in tubes:
+                tubes[container] = []
+            tubes[container].append(item)
+
+        # Generate labels - 1 label per tube
         labels = []
-        for item in lab_order.items.all():
-            # Barcode value: ORDER_NUMBER-TEST_CODE
-            barcode_value = f"{lab_order.order_number}-{item.lab_test.test_code or item.id}"
+        tube_counter = 1
+        for container_type, items in tubes.items():
+            # If more than max_tests_per_tube, split into multiple tubes
+            for i in range(0, len(items), max_tests_per_tube):
+                tube_items = items[i:i + max_tests_per_tube]
 
-            label_data = {
-                'test_code': item.lab_test.test_code or str(item.id)[:8],
-                'test_name': item.lab_test.name,
-                'container_type': item.lab_test.get_container_type_display() if item.lab_test.container_type else 'Tube',
-                'sample_type': item.lab_test.get_sample_type_display() if item.lab_test.sample_type else '',
-                'patient_name': lab_order.patient.name,
-                'patient_number': lab_order.patient.patient_number or lab_order.patient.id,
-                'patient_dob': lab_order.patient.date_of_birth,
-                'order_number': lab_order.order_number,
-                'order_date': lab_order.order_date,
-                'barcode_value': barcode_value,
-                'barcode_base64': self._generate_barcode(barcode_value)
-            }
+                # Build test list for display (only names)
+                test_list = []
+                for item in tube_items:
+                    test_list.append({
+                        'name': item.lab_test.name,
+                    })
 
-            # Add the label 'quantity' times
-            for _ in range(quantity):
-                labels.append(label_data.copy())
+                # Get display names using Django's get_FOO_display()
+                container_display = tube_items[0].lab_test.get_container_type_display() if tube_items[0].lab_test.container_type else 'Tube'
+                sample_display = tube_items[0].lab_test.get_sample_type_display() if tube_items[0].lab_test.sample_type else ''
+
+                # QR code contains just the lab order ID
+                qr_data = str(lab_order.id)
+
+                label_data = {
+                    'tube_number': tube_counter,
+                    'container_type': container_display,
+                    'container_type_code': container_type,
+                    'sample_type': sample_display,
+                    'tests': test_list,
+                    'tests_count': len(test_list),
+                    'patient_name': lab_order.patient.name,
+                    'patient_number': lab_order.patient.patient_number or lab_order.patient.id,
+                    'patient_dob': lab_order.patient.date_of_birth,
+                    'order_number': lab_order.order_number,
+                    'order_date': lab_order.order_date,
+                    'qrcode_base64': self._generate_qrcode(qr_data)
+                }
+
+                # Add the label 'quantity' times
+                for _ in range(quantity):
+                    labels.append(label_data.copy())
+
+                tube_counter += 1
 
         context['labels'] = labels
         context['lab_order'] = lab_order
@@ -206,15 +237,28 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
 
         return context
 
-    def _generate_barcode(self, value):
-        """Generate Code128 barcode as base64 image"""
+    def _generate_qrcode(self, value):
+        """Generate QR code as base64 image"""
         import io
         import base64
-        from barcode import Code128
-        from barcode.writer import ImageWriter
+        import qrcode
 
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=4,
+            border=1,
+        )
+        qr.add_data(value)
+        qr.make(fit=True)
+
+        # Generate image
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Convert to base64
         buffer = io.BytesIO()
-        Code128(value, writer=ImageWriter()).write(buffer)
+        img.save(buffer, format="PNG")
         return base64.b64encode(buffer.getvalue()).decode()
 
 

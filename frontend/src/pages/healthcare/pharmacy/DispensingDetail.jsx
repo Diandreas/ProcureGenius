@@ -36,6 +36,7 @@ import { useSnackbar } from 'notistack';
 import pharmacyAPI from '../../../services/pharmacyAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import { formatDate } from '../../../utils/formatters';
 
 const DispensingDetail = () => {
     const { t } = useTranslation();
@@ -138,7 +139,7 @@ const DispensingDetail = () => {
 
     const handleMarkInvoicePaid = async () => {
         if (!dispensing.pharmacy_invoice) return;
-        
+
         try {
             const paymentData = {
                 payment_date: new Date().toISOString().split('T')[0],
@@ -263,13 +264,7 @@ const DispensingDetail = () => {
                                             <Stack direction="row" spacing={1} alignItems="center">
                                                 <CalendarIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                                                 <Typography variant="body1">
-                                                    {new Date(dispensing.dispensed_at).toLocaleDateString('fr-FR', {
-                                                        day: 'numeric',
-                                                        month: 'long',
-                                                        year: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
+                                                    {formatDate(dispensing.dispensed_at)}
                                                 </Typography>
                                             </Stack>
                                         </Box>
@@ -470,8 +465,8 @@ const DispensingDetail = () => {
                 onClose={() => setPrintModalOpen(false)}
                 title={
                     printModalType === 'receipt' ? 'Reçu de Dispensation' :
-                    printModalType === 'report' ? 'Rapport Complet' :
-                    'Document'
+                        printModalType === 'report' ? 'Rapport Complet' :
+                            'Document'
                 }
                 loading={generatingPdf}
                 onPreview={() => handlePrintAction('preview')}

@@ -15,6 +15,14 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+// Initialize dayjs locale
+dayjs.locale('fr');
 
 const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
     const { t } = useTranslation();
@@ -33,6 +41,13 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDateChange = (date) => {
+        setFormData(prev => ({
+            ...prev,
+            date_of_birth: date ? date.format('YYYY-MM-DD') : ''
+        }));
     };
 
     const handleSubmit = async () => {
@@ -61,8 +76,8 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
             });
         } catch (error) {
             console.error('Error creating patient:', error);
-            const errorMessage = error.response?.data?.detail 
-                || error.response?.data?.phone?.[0] 
+            const errorMessage = error.response?.data?.detail
+                || error.response?.data?.phone?.[0]
                 || 'Erreur lors de la création du patient';
             enqueueSnackbar(errorMessage, { variant: 'error' });
         } finally {
@@ -88,16 +103,22 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
                             />
                         </Grid>
                         <Grid item xs={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                type="date"
-                                label="Date de Naissance"
-                                name="date_of_birth"
-                                value={formData.date_of_birth}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <DatePicker
+                                    label="Date de Naissance"
+                                    value={formData.date_of_birth ? dayjs(formData.date_of_birth) : null}
+                                    onChange={handleDateChange}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            required: true,
+                                            variant: 'outlined',
+                                            size: 'small'
+                                        }
+                                    }}
+                                    format="DD/MM/YYYY"
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={6}>
                             <TextField

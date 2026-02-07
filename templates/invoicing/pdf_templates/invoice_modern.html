@@ -1,20 +1,69 @@
-{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+{% load i18n %}{% load invoice_filters %}
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
+
 <head>
     <meta charset="UTF-8">
     <title>Facture {{ invoice.invoice_number }}</title>
     <style>
         @page {
-            {% if paper_size == 'thermal_80' %}
+                {
+                % if paper_size=='thermal_80' %
+            }
+
             size: 80mm 297mm;
-            margin: {{ print_margins|default:5 }}mm;
-            {% elif paper_size == 'thermal_58' %}
+
+            margin: {
+                    {
+                    print_margins|default: 5
+                }
+            }
+
+            mm;
+
+                {
+                % elif paper_size=='thermal_58' %
+            }
+
             size: 58mm 297mm;
-            margin: {{ print_margins|default:3 }}mm;
-            {% else %}
-            size: {{ paper_size|default:'A4' }} {{ paper_orientation|default:'portrait' }};
-            margin: {{ print_margins|default:12 }}mm;
-            {% endif %}
+
+            margin: {
+                    {
+                    print_margins|default: 3
+                }
+            }
+
+            mm;
+
+                {
+                % else %
+            }
+
+            size: {
+                    {
+                    paper_size|default: 'A4'
+                }
+            }
+
+                {
+                    {
+                    paper_orientation|default: 'portrait'
+                }
+            }
+
+            ;
+
+            margin: {
+                    {
+                    print_margins|default: 12
+                }
+            }
+
+            mm;
+
+                {
+                % endif %
+            }
         }
 
         body {
@@ -37,7 +86,14 @@
             width: 100%;
             margin-bottom: 18px;
             padding-bottom: 12px;
-            border-bottom: 3px solid {{ brand_color|default:'#2563eb' }};
+
+            border-bottom: 3px solid {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
         }
 
         .header-left {
@@ -61,7 +117,14 @@
         .company-name {
             font-size: 16pt;
             font-weight: 600;
-            color: {{ brand_color|default:'#2563eb' }};
+
+            color: {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             margin-bottom: 5px;
             letter-spacing: -0.5px;
         }
@@ -74,7 +137,14 @@
 
         .invoice-badge {
             display: inline-block;
-            background: {{ brand_color|default:'#2563eb' }};
+
+            background: {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             color: white;
             padding: 7px 15px;
             font-size: 24pt;
@@ -109,10 +179,17 @@
             background: #f9fafb;
             border-radius: 6px;
             padding: 12px;
-            border-left: 4px solid {{ brand_color|default:'#2563eb' }};
+
+            border-left: 4px solid {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
         }
 
-        .card + .card {
+        .card+.card {
             margin-left: 4%;
         }
 
@@ -121,7 +198,14 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: {{ brand_color|default:'#2563eb' }};
+
+            color: {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             margin-bottom: 7px;
         }
 
@@ -147,7 +231,14 @@
             color: #111827;
             margin-bottom: 10px;
             padding-bottom: 5px;
-            border-bottom: 2px solid {{ brand_color|default:'#2563eb' }};
+
+            border-bottom: 2px solid {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
         }
 
         .items-table {
@@ -156,7 +247,13 @@
         }
 
         .items-table thead {
-            background: {{ brand_color|default:'#2563eb' }};
+            background: {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             color: white;
         }
 
@@ -226,7 +323,13 @@
         }
 
         .totals-table .grand-total {
-            background: {{ brand_color|default:'#2563eb' }};
+            background: {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             color: white;
         }
 
@@ -258,7 +361,14 @@
         .footer-qr img {
             width: 65px;
             height: 65px;
-            border: 2px solid {{ brand_color|default:'#2563eb' }};
+
+            border: 2px solid {
+                    {
+                    brand_color|default: '#2563eb'
+                }
+            }
+
+            ;
             border-radius: 4px;
             padding: 3px;
             background: white;
@@ -293,6 +403,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <table class="header">
@@ -310,16 +421,17 @@
                     <br>
                     {# Affichage conditionnel selon la région fiscale #}
                     {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
-                        {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }} • {% endif %}
-                        {% if organization.rc_number %}<strong>RC:</strong> {{ organization.rc_number }}{% elif organization.rccm_number %}<strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
+                    {% if organization.niu %}<strong>NIU:</strong> {{ organization.niu }} • {% endif %}
+                    {% if organization.rc_number %}<strong>RC:</strong> {{ organization.rc_number }}{% elif
+                    organization.rccm_number %}<strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
                     {% elif organization.tax_region == 'eu' %}
-                        {% if organization.vat_number %}<strong>TVA:</strong> {{ organization.vat_number }}{% endif %}
+                    {% if organization.vat_number %}<strong>TVA:</strong> {{ organization.vat_number }}{% endif %}
                     {% elif organization.tax_region == 'canada' %}
-                        {% if organization.neq %}<strong>NEQ:</strong> {{ organization.neq }}<br>{% endif %}
-                        {% if organization.gst_number %}<strong>TPS/TVH:</strong> {{ organization.gst_number }}{% endif %}
-                        {% if organization.qst_number %} • <strong>TVQ:</strong> {{ organization.qst_number }}{% endif %}
+                    {% if organization.neq %}<strong>NEQ:</strong> {{ organization.neq }}<br>{% endif %}
+                    {% if organization.gst_number %}<strong>TPS/TVH:</strong> {{ organization.gst_number }}{% endif %}
+                    {% if organization.qst_number %} • <strong>TVQ:</strong> {{ organization.qst_number }}{% endif %}
                     {% elif organization.tax_region == 'usa' %}
-                        {% if organization.tax_number %}<strong>TIN:</strong> {{ organization.tax_number }}{% endif %}
+                    {% if organization.tax_number %}<strong>TIN:</strong> {{ organization.tax_number }}{% endif %}
                     {% endif %}
                 </div>
                 {% endif %}
@@ -386,8 +498,10 @@
                     <td>{{ item.product_reference|default:"-" }}</td>
                     <td>{{ item.description|default:"-" }}</td>
                     <td class="text-center">{{ item.quantity|default:0 }}</td>
-                    <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                    <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                    <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{
+                        organization.currency|default:"CAD" }}</td>
+                    <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{
+                        organization.currency|default:"CAD" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -431,12 +545,14 @@
                 <td class="footer-info">
                     <div class="footer-text">
                         {% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}
-                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
+                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif
+                        %}
                         {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                         {# Coordonnées bancaires (optionnel) #}
                         {% if organization.bank_account %}
-                            <br><strong>Banque:</strong> {{ organization.bank_name|default:"" }} • Compte: {{ organization.bank_account }}
+                        <br><strong>Banque:</strong> {{ organization.bank_name|default:"" }} • Compte: {{
+                        organization.bank_account }}
                         {% endif %}
                     </div>
                     <div class="footer-meta">
@@ -447,4 +563,5 @@
         </table>
     </div>
 </body>
+
 </html>
