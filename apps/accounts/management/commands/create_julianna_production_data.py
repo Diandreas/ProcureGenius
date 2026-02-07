@@ -268,7 +268,7 @@ class Command(BaseCommand):
                 'last_name': 'TCHUENTE',
                 'role': 'admin',
                 'is_staff': True,
-                'is_superuser': False,
+                'is_superuser': True,
             },
             {
                 'username': 'julianna_reception',
