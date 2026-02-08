@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from decimal import Decimal
 import uuid
+from apps.core.services.number_generator import NumberGeneratorService
 
 
 class Consultation(models.Model):
@@ -303,22 +304,12 @@ class Consultation(models.Model):
     
     def _generate_consultation_number(self):
         """Generate unique consultation number: CONS-YYYYMMDD-0001"""
-        today = timezone.now().strftime('%Y%m%d')
-        prefix = f"CONS-{today}"
-        
-        last_consultation = Consultation.objects.filter(
+        return NumberGeneratorService.generate_number(
+            prefix='CONS',
             organization=self.organization,
-            consultation_number__startswith=prefix
-        ).order_by('-consultation_number').first()
-        
-        if last_consultation and last_consultation.consultation_number:
-            try:
-                last_num = int(last_consultation.consultation_number.split('-')[-1])
-                return f"{prefix}-{last_num + 1:04d}"
-            except (ValueError, IndexError):
-                pass
-        
-        return f"{prefix}-0001"
+            model_class=Consultation,
+            field_name='consultation_number'
+        )
     
     def __str__(self):
         return f"{self.consultation_number} - {self.patient.name}"
@@ -571,22 +562,12 @@ class Prescription(models.Model):
     
     def _generate_prescription_number(self):
         """Generate unique prescription number: RX-YYYYMMDD-0001"""
-        today = timezone.now().strftime('%Y%m%d')
-        prefix = f"RX-{today}"
-        
-        last_rx = Prescription.objects.filter(
+        return NumberGeneratorService.generate_number(
+            prefix='RX',
             organization=self.organization,
-            prescription_number__startswith=prefix
-        ).order_by('-prescription_number').first()
-        
-        if last_rx and last_rx.prescription_number:
-            try:
-                last_num = int(last_rx.prescription_number.split('-')[-1])
-                return f"{prefix}-{last_num + 1:04d}"
-            except (ValueError, IndexError):
-                pass
-        
-        return f"{prefix}-0001"
+            model_class=Prescription,
+            field_name='prescription_number'
+        )
     
     def __str__(self):
         return f"{self.prescription_number} - {self.patient.name}"

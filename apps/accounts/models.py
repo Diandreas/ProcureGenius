@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 import uuid
 
 
@@ -314,22 +315,22 @@ class Client(models.Model):
     
     def _generate_patient_number(self):
         """Generate unique patient number: PAT-YYYYMM-0001"""
-        from django.utils import timezone
         now = timezone.now()
         prefix = f"PAT-{now.year}{now.month:02d}"
-        
-        # Find last patient number with this prefix
+
+        # Find last patient number with this prefix for this organization
         last_patient = Client.objects.filter(
+            organization=self.organization,
             patient_number__startswith=prefix
         ).order_by('-patient_number').first()
-        
+
         if last_patient and last_patient.patient_number:
             try:
                 last_num = int(last_patient.patient_number.split('-')[-1])
                 return f"{prefix}-{last_num + 1:04d}"
             except (ValueError, IndexError):
                 pass
-        
+
         return f"{prefix}-0001"
 
     def get_full_name(self):

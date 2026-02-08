@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from decimal import Decimal
 import uuid
+from apps.core.services.number_generator import NumberGeneratorService
 
 
 class LabTestCategory(models.Model):
@@ -463,22 +464,12 @@ class LabOrder(models.Model):
     
     def _generate_order_number(self):
         """Generate unique order number: LAB-YYYYMMDD-0001"""
-        today = timezone.now().strftime('%Y%m%d')
-        prefix = f"LAB-{today}"
-        
-        last_order = LabOrder.objects.filter(
+        return NumberGeneratorService.generate_number(
+            prefix='LAB',
             organization=self.organization,
-            order_number__startswith=prefix
-        ).order_by('-order_number').first()
-        
-        if last_order and last_order.order_number:
-            try:
-                last_num = int(last_order.order_number.split('-')[-1])
-                return f"{prefix}-{last_num + 1:04d}"
-            except (ValueError, IndexError):
-                pass
-        
-        return f"{prefix}-0001"
+            model_class=LabOrder,
+            field_name='order_number'
+        )
     
     def __str__(self):
         return f"{self.order_number} - {self.patient.name}"

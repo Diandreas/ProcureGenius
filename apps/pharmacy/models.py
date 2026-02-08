@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from decimal import Decimal
 import uuid
+from apps.core.services.number_generator import NumberGeneratorService
 
 
 class PharmacyDispensing(models.Model):
@@ -132,22 +133,12 @@ class PharmacyDispensing(models.Model):
     
     def _generate_dispensing_number(self):
         """Generate unique dispensing number: DISP-YYYYMMDD-0001"""
-        today = timezone.now().strftime('%Y%m%d')
-        prefix = f"DISP-{today}"
-        
-        last_dispensing = PharmacyDispensing.objects.filter(
+        return NumberGeneratorService.generate_number(
+            prefix='DISP',
             organization=self.organization,
-            dispensing_number__startswith=prefix
-        ).order_by('-dispensing_number').first()
-        
-        if last_dispensing and last_dispensing.dispensing_number:
-            try:
-                last_num = int(last_dispensing.dispensing_number.split('-')[-1])
-                return f"{prefix}-{last_num + 1:04d}"
-            except (ValueError, IndexError):
-                pass
-        
-        return f"{prefix}-0001"
+            model_class=PharmacyDispensing,
+            field_name='dispensing_number'
+        )
     
     def __str__(self):
         patient_name = self.patient.name if self.patient else "Vente comptoir"
