@@ -93,7 +93,8 @@
       "Bash(du:*)",
       "Bash(python:*)",
       "Bash(chmod:*)",
-      "Bash(set PYTHONIOENCODING=utf-8:*)"
+      "Bash(set PYTHONIOENCODING=utf-8:*)",
+      "Bash(for dir in apps/*/migrations/)"
     ],
     "deny": [],
     "ask": []
