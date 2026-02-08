@@ -234,4 +234,41 @@ cache/
 # Temporary directories
 tmp/
 temp/
-*.log
+
+# Test and diagnostic files
+test_*.py
+test_*.sh
+diagnostic_*.sh
+analysis_*.txt
+check_*.txt
+check_*.py
+debug_*.txt
+debug_*.py
+find_*.py
+analyze_*.py
+apply_*.py
+product_*.txt
+results.txt
+g.html
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Windows specific
+nul
+Thumbs.db
+
+# Alternative environments
+.venv_*/
+venv_*/
+
+# Deployment and update scripts (if temporary)
+update_*.py
+update_*.sh
+update_*.sql
+
+# Build mascots/assets (should be in source control if needed)
+build/mascote.zip
+public/mascote.zip
