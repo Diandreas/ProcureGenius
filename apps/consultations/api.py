@@ -10,6 +10,9 @@ from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse
 from .services import ConsultationPDFGenerator
+import logging
+
+logger = logging.getLogger(__name__)
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
@@ -255,7 +258,7 @@ class EndConsultationView(APIView):
                 
             except Exception as e:
                 # Don't fail consultation end if invoice creation fails
-                print(f"Error creating consultation invoice: {e}")
+                logger.error(f"Error creating consultation invoice: {e}", exc_info=True)
         
         return Response(ConsultationSerializer(consultation).data)
 
