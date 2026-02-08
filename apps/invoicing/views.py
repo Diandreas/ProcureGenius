@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
 from .models import Product, Invoice, InvoiceItem
-from .forms_simple import InvoiceForm, InvoiceItemForm, InvoiceItemFormSet, InvoiceSearchForm
+from .forms import InvoiceForm, InvoiceItemForm, InvoiceItemFormSet, InvoiceSearchForm
 import json
 
 User = get_user_model()

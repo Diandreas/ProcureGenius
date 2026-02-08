@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views_simple as views
+from . import views
 from . import views_admin
 from . import views_user_panel
 
