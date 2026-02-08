@@ -29,7 +29,10 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    CircularProgress
+    CircularProgress,
+    Stepper,
+    Step,
+    StepLabel
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -57,14 +60,65 @@ import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate, formatTime } from '../../../utils/formatters';
 
-// Helper for status transitions
-const getNextStatusLabel = (status) => {
-    switch (status) {
-        case 'pending': return 'Confirmer Prélèvement';
-        case 'sample_collected': return 'Démarrer Analyse';
-        case 'results_ready': return 'Marquer comme Remis';
-        default: return '';
-    }
+// Status display labels
+const getStatusLabel = (status) => {
+    const labels = {
+        pending: 'En attente',
+        sample_collected: 'Échantillon prélevé',
+        in_progress: 'En cours d\'analyse',
+        completed: 'Résultats saisis',
+        results_ready: 'Résultats validés',
+        results_delivered: 'Résultats remis',
+        cancelled: 'Annulé',
+    };
+    return labels[status] || status;
+};
+
+const getStatusColor = (status) => {
+    const colors = {
+        pending: 'warning',
+        sample_collected: 'info',
+        in_progress: 'info',
+        completed: 'primary',
+        results_ready: 'success',
+        results_delivered: 'default',
+        cancelled: 'error',
+    };
+    return colors[status] || 'default';
+};
+
+const getPriorityLabel = (priority) => {
+    const labels = {
+        routine: 'Routine',
+        urgent: 'Urgent',
+        stat: 'STAT (Immédiat)',
+    };
+    return labels[priority] || priority;
+};
+
+const getPriorityColor = (priority) => {
+    const colors = {
+        routine: 'default',
+        urgent: 'error',
+        stat: 'error',
+    };
+    return colors[priority] || 'default';
+};
+
+// Workflow steps for the stepper
+const WORKFLOW_STEPS = [
+    { status: 'pending', label: 'En attente' },
+    { status: 'sample_collected', label: 'Prélevé' },
+    { status: 'in_progress', label: 'En analyse' },
+    { status: 'completed', label: 'Résultats saisis' },
+    { status: 'results_ready', label: 'Validé' },
+    { status: 'results_delivered', label: 'Remis' },
+];
+
+const getActiveStep = (status) => {
+    if (status === 'cancelled') return -1;
+    const idx = WORKFLOW_STEPS.findIndex(s => s.status === status);
+    return idx >= 0 ? idx : 0;
 };
 
 const LabOrderDetail = () => {
@@ -570,7 +624,8 @@ const LabOrderDetail = () => {
         );
     }
 
-    const canEdit = ['pending', 'sample_collected', 'received', 'analyzing', 'results_entered', 'completed', 'results_ready'].includes(order.status);
+    // canEdit: allow entering/editing results when analysis is in progress or results just entered (not yet validated)
+    const canEdit = ['in_progress', 'completed'].includes(order.status);
 
     return (
         <Box>
@@ -584,7 +639,7 @@ const LabOrderDetail = () => {
                     </Typography>
                 </Box>
                 <Box>
-                    {['results_entered', 'verified', 'results_delivered', 'completed', 'results_ready'].includes(order.status) && (
+                    {['completed', 'results_ready', 'results_delivered'].includes(order.status) && (
                         <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
                             Rapport Complet
                         </Button>
@@ -655,13 +710,13 @@ const LabOrderDetail = () => {
                         </Button>
                     )}
 
-                    {canEdit && !['verified', 'results_ready', 'results_delivered'].includes(order.status) && (
+                    {canEdit && (
                         <Button variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
                             Enregistrer
                         </Button>
                     )}
 
-                    {(canEdit || order.status === 'completed') && !['verified', 'results_ready', 'results_delivered'].includes(order.status) && (
+                    {canEdit && (
                         <Button variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} sx={{ mr: 1 }}>
                             Valider
                         </Button>
@@ -679,8 +734,8 @@ const LabOrderDetail = () => {
                         </Button>
                     )}
 
-                    {/* Invalidate Button - Show only if verified/completed/results_ready and NOT delivered/cancelled */}
-                    {['verified', 'results_ready', 'completed'].includes(order.status) && (
+                    {/* Invalidate Button - Show only if results_ready to allow re-editing */}
+                    {order.status === 'results_ready' && (
                         <Button variant="outlined" color="warning" onClick={invalidateOrder} sx={{ ml: 1 }}>
                             Invalider
                         </Button>
@@ -709,13 +764,13 @@ const LabOrderDetail = () => {
                                 <Grid item xs={6}>
                                     <Typography variant="caption" color="text.secondary">Statut Actuel</Typography>
                                     <Box sx={{ mt: 0.5 }}>
-                                        <Chip label={order.status} color="primary" />
+                                        <Chip label={getStatusLabel(order.status)} color={getStatusColor(order.status)} />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <Typography variant="caption" color="text.secondary">Priorité</Typography>
                                     <Box sx={{ mt: 0.5 }}>
-                                        <Chip label={order.priority} color={order.priority === 'urgent' ? 'error' : 'default'} />
+                                        <Chip label={getPriorityLabel(order.priority)} color={getPriorityColor(order.priority)} />
                                     </Box>
                                 </Grid>
                                 {order.clinical_notes && (
@@ -730,6 +785,57 @@ const LabOrderDetail = () => {
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* Workflow Progress Stepper */}
+            {order.status !== 'cancelled' ? (
+                <Card sx={{ mb: 3 }}>
+                    <CardContent sx={{ py: 2 }}>
+                        <Stepper activeStep={getActiveStep(order.status)} alternativeLabel>
+                            {WORKFLOW_STEPS.map((step) => (
+                                <Step key={step.status} completed={getActiveStep(order.status) > WORKFLOW_STEPS.findIndex(s => s.status === step.status)}>
+                                    <StepLabel>{step.label}</StepLabel>
+                                </Step>
+                            ))}
+                        </Stepper>
+                    </CardContent>
+                </Card>
+            ) : (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    Cette commande a été annulée.
+                </Alert>
+            )}
+
+            {/* Workflow guidance message */}
+            {order.status === 'pending' && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    <strong>Étape 1 :</strong> Le prélèvement n'a pas encore été effectué. Cliquez sur "Prélèvement" pour confirmer la collecte de l'échantillon.
+                </Alert>
+            )}
+            {order.status === 'sample_collected' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    <strong>Étape 2 :</strong> L'échantillon a été prélevé. Cliquez sur "Analyser" pour démarrer l'analyse et pouvoir saisir les résultats.
+                </Alert>
+            )}
+            {order.status === 'in_progress' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    <strong>Étape 3 :</strong> Analyse en cours. Saisissez les résultats ci-dessous puis cliquez sur "Enregistrer" pour sauvegarder ou "Valider" pour finaliser.
+                </Alert>
+            )}
+            {order.status === 'completed' && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    <strong>Étape 4 :</strong> Résultats saisis. Vous pouvez encore les modifier. Cliquez sur "Valider" pour les finaliser.
+                </Alert>
+            )}
+            {order.status === 'results_ready' && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    <strong>Étape 5 :</strong> Résultats validés et prêts. Cliquez sur "Remettre Résultats" pour marquer comme remis au patient. Vous pouvez aussi "Invalider" pour revenir en mode édition.
+                </Alert>
+            )}
+            {order.status === 'results_delivered' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    Résultats remis au patient. Cette commande est terminée.
+                </Alert>
+            )}
 
             <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, mb: 3 }}>
                 <Table>

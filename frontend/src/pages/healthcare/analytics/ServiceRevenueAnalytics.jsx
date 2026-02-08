@@ -22,6 +22,7 @@ import FilterPanel from '../../../components/analytics/FilterPanel';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
 import { formatDate } from '../../../utils/formatters';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
@@ -109,6 +110,7 @@ const ServiceRevenueAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4, flexWrap: 'wrap', gap: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center">

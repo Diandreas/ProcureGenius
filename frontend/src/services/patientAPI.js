@@ -87,6 +87,24 @@ const patientAPI = {
     createQuickInvoice: async (patientId, data) => {
         const response = await api.post(`/healthcare/patients/${patientId}/quick-invoice/`, data);
         return response.data;
+    },
+
+    // Create a care service for a patient
+    createCareService: async (patientId, data) => {
+        const response = await api.post(`/healthcare/patients/${patientId}/care-services/`, data);
+        return response.data;
+    },
+
+    // Get medical summary for a patient
+    getMedicalSummary: async (id) => {
+        const response = await api.get(`/healthcare/patients/${id}/medical-summary/`);
+        return response.data;
+    },
+
+    // Get patient timeline
+    getTimeline: async (id, params) => {
+        const response = await api.get(`/healthcare/patients/${id}/timeline/`, { params });
+        return response.data;
     }
 };
 

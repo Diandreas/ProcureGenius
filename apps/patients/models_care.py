@@ -22,6 +22,8 @@ class PatientCareService(models.Model):
         ('pharmacy', _('Dispensation médicament')),
         ('imaging', _('Imagerie')),
         ('procedure', _('Procédure/Intervention')),
+        ('vaccination', _('Vaccination')),
+        ('physiotherapy', _('Kinésithérapie')),
         ('other', _('Autre')),
     ]
     

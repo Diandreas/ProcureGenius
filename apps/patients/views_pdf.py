@@ -4,79 +4,107 @@ from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateRes
 
 class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
-    Génère le résumé du dossier médical patient (A4)
+    Génère le dossier médical complet du patient (A4)
+    Inclut: identité, consultations détaillées (constantes, diagnostic, traitement),
+    ordonnances avec médicaments, examens labo avec résultats, dispensations pharmacie,
+    soins administrés, visites, documents.
     """
     model = Patient
     template_name = 'patients/pdf_templates/patient_summary.html'
     pdf_attachment = False
-    
+
     def get_pdf_filename(self):
         return f'dossier-medical-{self.get_object().id}.pdf'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         patient = self.get_object()
-        
-        print(f"\n{'='*80}")
-        print(f"[DEBUG] PatientSummaryView - Generating PDF for patient: {patient.name}")
-        print(f"[DEBUG] Patient ID: {patient.id}")
-        print(f"[DEBUG] Patient organization: {patient.organization}")
-        
+
         # Get comprehensive organization data (aligned with invoice pattern)
         org_data = self._get_comprehensive_organization_data(patient)
-        
-        print(f"[DEBUG] Organization data retrieved:")
-        print(f"  - company_name: '{org_data.get('company_name')}'")
-        print(f"  - company_address: '{org_data.get('company_address')}'")
-        print(f"  - company_phone: '{org_data.get('company_phone')}'")
-        print(f"  - company_logo: {org_data.get('company_logo')}")
-        print(f"  - brand_color: '{org_data.get('brand_color')}'")
-        
+
         # Sanitize brand_color to prevent WeasyPrint errors
         color = org_data.get('brand_color')
         if not color or not isinstance(color, str) or not color.startswith('#'):
             color = '#2563eb'
         org_data['brand_color'] = color
-            
+
         context['organization'] = org_data
         context['brand_color'] = color
-        
+
         logo_b64 = self._get_logo_base64(org_data)
         context['logo_base64'] = logo_b64
-        print(f"[DEBUG] Logo base64 generated: {bool(logo_b64)}")
-        
+
         context['patient'] = patient
-        
-        # Add summary data - Comprehensive History
-        context['recent_consultations'] = patient.consultations.all().order_by('-consultation_date')
-        context['all_prescriptions'] = patient.prescriptions.all().order_by('-prescribed_date')
-        
-        # Fetch lab orders with detailed test results
-        all_lab_orders = patient.lab_orders.all().order_by('-order_date').prefetch_related('items')
+
+        # ── 1. Consultations with full details (vitals, diagnosis, treatment) ──
+        consultations = patient.consultations.all().select_related(
+            'doctor', 'vitals_taken_by'
+        ).order_by('-consultation_date')
+        context['all_consultations'] = consultations
+
+        # ── 2. Prescriptions with their items (medications) ──
+        try:
+            from apps.consultations.models import Prescription
+            prescriptions = Prescription.objects.filter(
+                patient=patient
+            ).select_related(
+                'prescriber', 'consultation'
+            ).prefetch_related('items__medication').order_by('-prescribed_date')
+            context['all_prescriptions'] = prescriptions
+        except Exception:
+            context['all_prescriptions'] = []
+
+        # ── 3. Lab orders with detailed test results ──
+        all_lab_orders = patient.lab_orders.all().select_related(
+            'ordered_by', 'results_entered_by', 'results_verified_by'
+        ).prefetch_related('items__lab_test').order_by('-order_date')
         context['all_lab_orders'] = all_lab_orders
-        print(f"[DEBUG] Lab orders count: {all_lab_orders.count()}")
-        
-        # Fetch nursing care/procedures from invoice items
-        from apps.invoicing.models import InvoiceItem, ProductCategory
-        
-        # Get categories that represent nursing care
-        care_categories = ProductCategory.objects.filter(
-            organization=patient.organization,
-            name__iregex=r'(soin|pansement|vaccination|injection|perfusion)'
-        ).values_list('id', flat=True)
-        
-        context['nursing_care'] = InvoiceItem.objects.filter(
-            invoice__organization=patient.organization,
-            invoice__client=patient,
-            invoice__status='paid',
-            product__category__in=care_categories
-        ).select_related('product', 'invoice').order_by('-invoice__created_at')
-        
-        context['all_documents'] = patient.documents.all().order_by('-uploaded_at')
-        
-        print(f"[DEBUG] Context keys: {list(context.keys())}")
-        print(f"{'='*80}\n")
-        
+
+        # ── 4. Pharmacy dispensings with items ──
+        try:
+            dispensings = patient.pharmacy_dispensings.all().select_related(
+                'dispensed_by'
+            ).prefetch_related('items__medication').order_by('-dispensed_at')
+            context['all_dispensings'] = dispensings
+        except Exception:
+            context['all_dispensings'] = []
+
+        # ── 5. Care services (soins administrés) ──
+        try:
+            from apps.patients.models_care import PatientCareService
+            care_services = PatientCareService.objects.filter(
+                patient=patient
+            ).select_related('provided_by').order_by('-provided_at')
+            context['all_care_services'] = care_services
+        except Exception:
+            context['all_care_services'] = []
+
+        # ── 6. Patient visits ──
+        try:
+            visits = patient.visits.all().select_related(
+                'assigned_doctor', 'registered_by'
+            ).order_by('-arrived_at')
+            context['all_visits'] = visits
+        except Exception:
+            context['all_visits'] = []
+
+        # ── 7. Documents ──
+        try:
+            context['all_documents'] = patient.documents.all().order_by('-uploaded_at')
+        except Exception:
+            context['all_documents'] = []
+
+        # ── 8. Statistics summary ──
+        context['stats'] = {
+            'total_consultations': consultations.count(),
+            'total_lab_orders': all_lab_orders.count(),
+            'total_prescriptions': len(context['all_prescriptions']) if context['all_prescriptions'] else 0,
+            'total_dispensings': len(context['all_dispensings']) if context['all_dispensings'] else 0,
+            'total_care_services': len(context['all_care_services']) if context['all_care_services'] else 0,
+            'total_visits': len(context['all_visits']) if context['all_visits'] else 0,
+        }
+
         return context
     
     def _get_comprehensive_organization_data(self, patient):
@@ -128,7 +156,13 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
                     org_data['company_name'] = organization.name
         except Exception as e:
             print(f"[ERROR] Error retrieving organization data: {e}")
-        
+
+        # Add aliases used by pdf_base.html template
+        org_data['name'] = org_data.get('company_name') or ''
+        org_data['address'] = org_data.get('company_address') or ''
+        org_data['phone'] = org_data.get('company_phone') or ''
+        org_data['email'] = org_data.get('company_email') or ''
+
         return org_data
     
     def _get_logo_base64(self, org_data):

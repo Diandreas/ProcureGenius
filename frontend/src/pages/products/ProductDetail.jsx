@@ -45,6 +45,7 @@ import {
   PictureAsPdf,
   Print,
   Download,
+  Calculate,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -751,6 +752,43 @@ function ProductDetail() {
                           </Box>
                         </Box>
                       </Grid>
+                    )}
+
+                    {/* Paramètres Wilson EOQ */}
+                    {product.product_type === 'physical' && (product.ordering_cost || product.holding_cost_percent) && (
+                      <>
+                        <Grid item xs={12}>
+                          <Divider sx={{ my: 1, opacity: 0.6 }}>
+                            <Chip icon={<Calculate sx={{ fontSize: 16 }} />} label="Paramètres Wilson EOQ" size="small" />
+                          </Divider>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                              Coût de commande
+                            </Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              {formatCurrency(product.ordering_cost || 0)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Par passation de commande
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                              Coût de stockage
+                            </Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              {product.holding_cost_percent || 0}%
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Du prix d'achat par an
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </>
                     )}
                   </Grid>
                 </CardContent>

@@ -7,6 +7,10 @@ from . import views_settings
 from . import views_onboarding
 from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
+from apps.invoicing.batch_views import (
+    ProductBatchListCreateView, ProductBatchDetailView,
+    BatchOpenView, ExpiringBatchesView
+)
 
 app_name = 'api'
 
@@ -101,6 +105,12 @@ urlpatterns = [
 
     # Healthcare - Consultations
     path('healthcare/consultations/', include('apps.consultations.urls')),
+
+    # Batch/Lot management
+    path('products/<uuid:product_id>/batches/', ProductBatchListCreateView.as_view(), name='product-batches'),
+    path('batches/<uuid:batch_id>/', ProductBatchDetailView.as_view(), name='batch-detail'),
+    path('batches/<uuid:batch_id>/open/', BatchOpenView.as_view(), name='batch-open'),
+    path('batches/expiring/', ExpiringBatchesView.as_view(), name='batches-expiring'),
 
     # Keep existing endpoints if they exist
     # path('integrations/', include('apps.integrations.api_urls')),

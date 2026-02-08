@@ -49,6 +49,7 @@ import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
+import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 // import PeriodSelector from '../components/dashboard/PeriodSelector'; // Removed - old dashboard system
@@ -72,6 +73,7 @@ function MainLayout() {
   const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
 
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+  const { getModuleCount } = useNotification();
 
   // Activer les raccourcis clavier
   useKeyboardShortcuts();
@@ -126,6 +128,7 @@ function MainLayout() {
     { text: 'Patients', iconSrc: '/icon/user.png', path: '/healthcare/patients', moduleId: 'patients', isCore: false },
     { text: 'Réception', iconSrc: '/icon/support.png', path: '/healthcare/reception', moduleId: 'reception', isCore: false },
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
+    { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/inventory', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
@@ -423,13 +426,35 @@ function MainLayout() {
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
-                    <IconImage
-                      src={item.iconSrc}
-                      alt={item.text}
-                      size={22}
-                      withBackground={mode === 'dark'}
-                      style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
-                    />
+                    {(() => {
+                      const badgeCount = getModuleCount(item.moduleId);
+                      const icon = (
+                        <IconImage
+                          src={item.iconSrc}
+                          alt={item.text}
+                          size={22}
+                          withBackground={mode === 'dark'}
+                          style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
+                        />
+                      );
+                      return badgeCount > 0 ? (
+                        <Badge
+                          badgeContent={badgeCount > 9 ? '9+' : badgeCount}
+                          color="error"
+                          sx={{
+                            '& .MuiBadge-badge': {
+                              fontSize: '0.65rem',
+                              minWidth: 18,
+                              height: 18,
+                              padding: '0 4px',
+                              fontWeight: 700,
+                            },
+                          }}
+                        >
+                          {icon}
+                        </Badge>
+                      ) : icon;
+                    })()}
                   </ListItemIcon>
                   <ListItemText
                     primary={item.text}

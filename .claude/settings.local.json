@@ -96,7 +96,10 @@
       "Bash(set PYTHONIOENCODING=utf-8:*)",
       "Bash(for dir in apps/*/migrations/)",
       "Bash(wc:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(if not exist \"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\frontend\\\\src\\\\components\\\\navigation\" mkdir \"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\frontend\\\\src\\\\components\\\\navigation\")",
+      "Bash(api \")",
+      "Bash(npx react-scripts build:*)"
     ],
     "deny": [],
     "ask": []

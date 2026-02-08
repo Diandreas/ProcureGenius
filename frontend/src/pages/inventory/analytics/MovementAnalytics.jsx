@@ -10,6 +10,8 @@ import FilterPanel from '../../../components/analytics/FilterPanel';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
 import { formatDate } from '../../../utils/formatters';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
+import BackButton from '../../../components/navigation/BackButton';
 
 const MovementAnalytics = () => {
   const [data, setData] = useState(null);
@@ -83,8 +85,10 @@ const MovementAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <BackButton />
           <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="primary.main">

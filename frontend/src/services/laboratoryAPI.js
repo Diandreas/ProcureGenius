@@ -116,6 +116,60 @@ const laboratoryAPI = {
     getCategories: async () => {
         const response = await api.get('/healthcare/laboratory/categories/');
         return response.data;
+    },
+
+    // --- Test Catalog CRUD ---
+
+    // Get single test
+    getTest: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/tests/${id}/`);
+        return response.data;
+    },
+
+    // Create test
+    createTest: async (data) => {
+        const response = await api.post('/healthcare/laboratory/tests/', data);
+        return response.data;
+    },
+
+    // Update test
+    updateTest: async (id, data) => {
+        const response = await api.put(`/healthcare/laboratory/tests/${id}/`, data);
+        return response.data;
+    },
+
+    // Delete test
+    deleteTest: async (id) => {
+        const response = await api.delete(`/healthcare/laboratory/tests/${id}/`);
+        return response.data;
+    },
+
+    // --- Category CRUD ---
+
+    // Create category
+    createCategory: async (data) => {
+        const response = await api.post('/healthcare/laboratory/categories/', data);
+        return response.data;
+    },
+
+    // Update category
+    updateCategory: async (id, data) => {
+        const response = await api.put(`/healthcare/laboratory/categories/${id}/`, data);
+        return response.data;
+    },
+
+    // Delete category
+    deleteCategory: async (id) => {
+        const response = await api.delete(`/healthcare/laboratory/categories/${id}/`);
+        return response.data;
+    },
+
+    // --- Sample Collection ---
+
+    // Collect sample for a lab order
+    collectSample: async (orderId) => {
+        const response = await api.post(`/healthcare/laboratory/orders/${orderId}/status/`, { action: 'collect_sample' });
+        return response.data;
     }
 };
 

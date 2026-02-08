@@ -4,6 +4,8 @@ import { ReportProblem as RiskIcon } from '@mui/icons-material';
 import TableChart from '../../../components/analytics/charts/TableChart';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
+import BackButton from '../../../components/navigation/BackButton';
 
 const RiskProductsAnalytics = () => {
   const [data, setData] = useState(null);
@@ -85,8 +87,10 @@ const RiskProductsAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <BackButton />
           <RiskIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="warning.main">

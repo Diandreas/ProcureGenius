@@ -210,3 +210,46 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.organization.name} - {self.amount}"
+
+
+class WeeklyReportConfig(models.Model):
+    """Configuration des rapports periodiques par utilisateur"""
+    FREQUENCY_CHOICES = [
+        ('weekly', _('Hebdomadaire')),
+        ('biweekly', _('Bi-hebdomadaire')),
+        ('monthly', _('Mensuel')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='weekly_report_configs',
+        verbose_name=_("Organisation")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='weekly_report_configs',
+        verbose_name=_("Utilisateur")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    frequency = models.CharField(
+        max_length=20, choices=FREQUENCY_CHOICES, default='weekly',
+        verbose_name=_("Frequence")
+    )
+    include_healthcare = models.BooleanField(default=True, verbose_name=_("Inclure sante/labo"))
+    include_inventory = models.BooleanField(default=True, verbose_name=_("Inclure inventaire"))
+    include_finance = models.BooleanField(default=True, verbose_name=_("Inclure finances"))
+    include_stock_alerts = models.BooleanField(default=True, verbose_name=_("Inclure alertes stock"))
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Configuration rapport periodique")
+        verbose_name_plural = _("Configurations rapports periodiques")
+        unique_together = [['organization', 'user']]
+
+    def __str__(self):
+        return f"Rapport {self.get_frequency_display()} - {self.user.username}"

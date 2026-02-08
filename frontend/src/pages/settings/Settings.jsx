@@ -106,6 +106,7 @@ const Settings = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { t } = useTranslation(['settings', 'common']);
 
   // State principal
@@ -534,6 +535,24 @@ const Settings = () => {
                 settings={settings}
                 showSnackbar={showSnackbar}
               />
+              <Divider sx={{ my: 4 }} />
+              <Paper
+                onClick={() => navigate('/settings/reports')}
+                sx={{
+                  p: 3, display: 'flex', alignItems: 'center', gap: 2,
+                  cursor: 'pointer', border: '1px solid', borderColor: 'divider',
+                  borderRadius: 2, transition: 'all 0.2s ease',
+                  '&:hover': { borderColor: 'primary.main', transform: 'translateY(-1px)' }
+                }}
+              >
+                <EmailIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="700">Rapports Periodiques</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Configurez les rapports automatiques par email (hebdomadaire, bi-hebdo, mensuel)
+                  </Typography>
+                </Box>
+              </Paper>
             </>
           )}
 

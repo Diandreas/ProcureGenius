@@ -15,4 +15,7 @@ urlpatterns = [
 
     # User currency preference
     path('user/currency/', api_views.api_user_currency_preference, name='user_currency_preference'),
+
+    # Module notification counts (lightweight polling)
+    path('module-counts/', api_views.api_module_notification_counts, name='module_notification_counts'),
 ]

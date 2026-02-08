@@ -27,6 +27,7 @@ import {
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import { formatDate } from '../../../utils/formatters';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -162,6 +163,7 @@ const ActivityIndicatorsPage = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 3 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center">

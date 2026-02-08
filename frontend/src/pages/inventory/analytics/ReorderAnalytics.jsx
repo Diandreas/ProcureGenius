@@ -4,6 +4,8 @@ import { ShoppingCart as ShoppingCartIcon, Warning as WarningIcon } from '@mui/i
 import TableChart from '../../../components/analytics/charts/TableChart';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
+import BackButton from '../../../components/navigation/BackButton';
 
 const ReorderAnalytics = () => {
   const [data, setData] = useState(null);
@@ -95,8 +97,10 @@ const ReorderAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <BackButton />
           <ShoppingCartIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="primary.main">

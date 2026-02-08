@@ -14,6 +14,9 @@ urlpatterns = [
     path('<uuid:patient_id>/history/', api.PatientHistoryView.as_view(), name='patient-history'),
     path('<uuid:patient_id>/care-history/', api.PatientCareHistoryView.as_view(), name='patient-care-history'),
     path('<uuid:patient_id>/complete-history/', api.PatientCompleteHistoryView.as_view(), name='patient-complete-history'),
+    path('<uuid:patient_id>/medical-summary/', api.PatientMedicalSummaryView.as_view(), name='patient-medical-summary'),
+    path('<uuid:patient_id>/timeline/', api.PatientTimelineView.as_view(), name='patient-timeline'),
+    path('<uuid:patient_id>/care-services/', api.CreateCareServiceView.as_view(), name='patient-care-services'),
     path('<uuid:patient_id>/quick-invoice/', api.PatientQuickInvoiceView.as_view(), name='patient-quick-invoice'),
 
     # Visit endpoints (will be accessible at /healthcare/patients/visits/)

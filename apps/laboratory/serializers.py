@@ -23,8 +23,8 @@ class LabTestCategorySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-    
+        read_only_fields = ['id', 'organization', 'created_at', 'updated_at']
+
     def get_tests_count(self, obj):
         return obj.tests.filter(is_active=True).count()
 
@@ -67,7 +67,7 @@ class LabTestSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'organization', 'created_at', 'updated_at']
 
 
 class LabTestListSerializer(serializers.ModelSerializer):

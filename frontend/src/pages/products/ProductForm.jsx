@@ -152,6 +152,10 @@ function ProductForm() {
         sell_unit: 'piece',
         base_unit: 'piece',
         conversion_factor: 1,
+
+        // Wilson EOQ
+        ordering_cost: 5000,
+        holding_cost_percent: 20,
     });
 
     const UNIT_TYPES = [
@@ -481,10 +485,12 @@ function ProductForm() {
                 cleanedValues.warehouse = values.warehouse_id;
             }
 
-            // Ajouter stock pour produits physiques
+            // Ajouter stock et Wilson EOQ pour produits physiques
             if (values.product_type === 'physical') {
                 cleanedValues.stock_quantity = parseInt(values.stock_quantity) || 0;
                 cleanedValues.low_stock_threshold = parseInt(values.low_stock_threshold) || 5;
+                cleanedValues.ordering_cost = parseFloat(values.ordering_cost) || 5000;
+                cleanedValues.holding_cost_percent = parseFloat(values.holding_cost_percent) || 20;
             }
 
             if (isEdit) {
@@ -771,6 +777,34 @@ function ProductForm() {
                                                             >
                                                                 {warehouses.map(w => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
                                                             </TextField>
+                                                        </Grid>
+
+                                                        {/* Paramètres Wilson EOQ */}
+                                                        <Grid item xs={12}>
+                                                            <Divider sx={{ my: 0.5 }}>
+                                                                <Chip label="Paramètres Wilson EOQ" size="small" variant="outlined" />
+                                                            </Divider>
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="ordering_cost" label="Coût de commande (XAF)"
+                                                                value={values.ordering_cost} onChange={handleChange}
+                                                                helperText="Coût de passation d'une commande"
+                                                                InputProps={{ inputProps: { min: 0 } }}
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="holding_cost_percent" label="Coût stockage (%)"
+                                                                value={values.holding_cost_percent} onChange={handleChange}
+                                                                helperText="% du prix d'achat par an"
+                                                                InputProps={{
+                                                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                                                    inputProps: { min: 0, max: 100 }
+                                                                }}
+                                                            />
                                                         </Grid>
                                                     </Grid>
                                                 </CardContent>

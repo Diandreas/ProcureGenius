@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:25px 40px; text-align:center;">
+              <h1 style="color:#ffffff; margin:0; font-size:22px;">Alerte Lots Expirants</h1>
+              <p style="color:#fef3c7; margin:5px 0 0; font-size:14px;">{{ organization.name }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:25px 40px;">
+              <p style="color:#374151; font-size:14px;">Bonjour {{ user.first_name|default:user.username }},</p>
+              <p style="color:#6b7280; font-size:14px;">{{ total_count }} lot(s) expirent dans les 7 prochains jours :</p>
+
+              <table width="100%" cellpadding="8" cellspacing="0" style="font-size:13px; border:1px solid #e5e7eb; border-radius:6px; overflow:hidden; margin-top:15px;">
+                <tr style="background-color:#fef3c7;">
+                  <td style="font-weight:bold;">Produit</td>
+                  <td style="font-weight:bold;">Lot</td>
+                  <td align="center" style="font-weight:bold;">Qte</td>
+                  <td align="center" style="font-weight:bold;">Expire le</td>
+                  <td align="center" style="font-weight:bold;">Jours</td>
+                </tr>
+                {% for batch in batches %}
+                <tr style="border-top:1px solid #f3f4f6;">
+                  <td>{{ batch.product_name }}</td>
+                  <td>{{ batch.batch_number }}</td>
+                  <td align="center">{{ batch.quantity }}</td>
+                  <td align="center">{{ batch.expiry_date }}</td>
+                  <td align="center" style="color:{% if batch.days_left <= 0 %}#dc2626{% elif batch.days_left <= 3 %}#f59e0b{% else %}#374151{% endif %}; font-weight:bold;">
+                    {% if batch.days_left <= 0 %}PERIME{% else %}{{ batch.days_left }}j{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px; border-top:1px solid #e5e7eb; text-align:center;">
+              <p style="color:#9ca3af; font-size:12px; margin:0;">Alerte automatique ProcureGenius</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone
 from django.http import HttpResponse
 from .services import LabResultPDFGenerator
@@ -426,31 +426,68 @@ class EnterLabResultsView(APIView):
 
 
 class TodayLabOrdersView(APIView):
-    """Get today's lab orders grouped by status"""
+    """Get lab orders dashboard: active orders + today's stats"""
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
-        today = timezone.now().date()
-        orders = LabOrder.objects.filter(
-            organization=request.user.organization,
-            order_date__date=today
+        org_orders = LabOrder.objects.filter(
+            organization=request.user.organization
         ).select_related('patient').prefetch_related('items')
-        
+
+        # Active orders = all non-delivered, non-cancelled (regardless of date)
+        active_orders = org_orders.exclude(status__in=['results_delivered', 'cancelled'])
+
+        # Today's stats for the cards
+        today = timezone.now().date()
+        today_orders = org_orders.filter(order_date__date=today)
+
         result = {
-            'total': orders.count(),
-            'pending': orders.filter(status='pending').count(),
-            'sample_collected': orders.filter(status='sample_collected').count(),
-            'in_progress': orders.filter(status='in_progress').count(),
-            'completed': orders.filter(status='completed').count(),
-            'results_ready': orders.filter(status='results_ready').count(),
-            'delivered': orders.filter(status='results_delivered').count(),
-            'cancelled': orders.filter(status='cancelled').count(),
+            # Stats: active counts (not limited to today)
+            'total': active_orders.count(),
+            'pending': active_orders.filter(status='pending').count(),
+            'sample_collected': active_orders.filter(status='sample_collected').count(),
+            'in_progress': active_orders.filter(status='in_progress').count(),
+            'completed': active_orders.filter(status='completed').count(),
+            'results_ready': active_orders.filter(status='results_ready').count(),
+            # Today-specific
+            'today_total': today_orders.count(),
+            'today_delivered': today_orders.filter(status='results_delivered').count(),
         }
-        
-        # Get pending orders list
-        pending_orders = orders.exclude(status__in=['results_delivered', 'cancelled'])
-        result['pending_orders'] = LabOrderListSerializer(pending_orders, many=True).data
-        
+
+        # Active orders list (sorted by priority then date)
+        active_sorted = active_orders.order_by(
+            Case(
+                When(priority='stat', then=0),
+                When(priority='urgent', then=1),
+                default=2,
+                output_field=IntegerField(),
+            ),
+            'order_date'
+        )
+        serialized = LabOrderListSerializer(active_sorted, many=True).data
+
+        # Add wait_minutes to each order
+        now = timezone.now()
+        for order_data in serialized:
+            order_date = order_data.get('order_date')
+            if order_date:
+                try:
+                    from django.utils.dateparse import parse_datetime
+                    dt = parse_datetime(order_date) if isinstance(order_date, str) else order_date
+                    if dt:
+                        if timezone.is_naive(dt):
+                            dt = timezone.make_aware(dt)
+                        delta = now - dt
+                        order_data['wait_minutes'] = int(delta.total_seconds() / 60)
+                    else:
+                        order_data['wait_minutes'] = 0
+                except Exception:
+                    order_data['wait_minutes'] = 0
+            else:
+                order_data['wait_minutes'] = 0
+
+        result['pending_orders'] = serialized
+
         return Response(result)
 
 

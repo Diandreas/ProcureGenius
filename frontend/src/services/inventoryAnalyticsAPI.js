@@ -46,6 +46,41 @@ const inventoryAnalyticsAPI = {
     return response.data;
   },
 
+  // Wilson EOQ analysis
+  getWilsonEOQ: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.product_id) queryParams.append('product_id', params.product_id);
+    const response = await api.get(`/analytics/inventory/wilson-eoq/?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Product scores
+  getProductScores: async () => {
+    const response = await api.get('/analytics/inventory/product-scores/');
+    return response.data;
+  },
+
+  // EOQ Dashboard
+  getEOQDashboard: async () => {
+    const response = await api.get('/analytics/inventory/eoq-dashboard/');
+    return response.data;
+  },
+
+  // Predictive restock
+  getPredictiveRestock: async () => {
+    const response = await api.get('/analytics/inventory/predictive-restock/');
+    return response.data;
+  },
+
+  // Consumption stats
+  getConsumptionStats: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.product_id) queryParams.append('product_id', params.product_id);
+    if (params.period) queryParams.append('period', params.period);
+    const response = await api.get(`/analytics/inventory/consumption-stats/?${queryParams.toString()}`);
+    return response.data;
+  },
+
   // Get dashboard summary stats
   getDashboardStats: async (params = {}) => {
     const queryParams = new URLSearchParams();

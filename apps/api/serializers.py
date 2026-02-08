@@ -155,6 +155,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_active',
+            'base_unit', 'sell_unit', 'conversion_factor',
+            'ordering_cost', 'holding_cost_percent',
             'expiration_date', 'supply_lead_time_days',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from datetime import timedelta
 import uuid
 import qrcode
 from io import BytesIO
@@ -189,6 +190,18 @@ class Product(models.Model):
         blank=True,
         verbose_name=_("Date de péremption"),
         help_text=_("Date d'expiration du produit")
+    )
+
+    # Wilson EOQ parameters
+    ordering_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=5000,
+        verbose_name=_("Coût de passation de commande (XAF)"),
+        help_text=_("Coût fixe par commande passée")
+    )
+    holding_cost_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=20,
+        verbose_name=_("Coût de stockage (% du prix d'achat/an)"),
+        help_text=_("Pourcentage du coût d'achat pour le stockage annuel")
     )
 
     # Métadonnées
@@ -444,6 +457,10 @@ class StockMovement(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements', verbose_name="Produit")
+    batch = models.ForeignKey(
+        'ProductBatch', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='movements', verbose_name=_("Lot")
+    )
 
     # Détails du mouvement
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES, verbose_name="Type de mouvement")
@@ -500,6 +517,98 @@ class StockMovement(models.Model):
         if self.loss_reason:
             return dict(self.LOSS_REASONS).get(self.loss_reason, '')
         return ''
+
+
+class ProductBatch(models.Model):
+    """Lot/Batch de produit - pour traçabilité et gestion des péremptions"""
+    STATUS_CHOICES = [
+        ('available', 'Disponible'),
+        ('opened', 'Ouvert'),
+        ('expired', 'Périmé'),
+        ('depleted', 'Épuisé'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='product_batches',
+        verbose_name=_("Organisation")
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='batches',
+        verbose_name=_("Produit")
+    )
+    batch_number = models.CharField(max_length=100, verbose_name=_("Numéro de lot"))
+    lot_number = models.CharField(max_length=100, blank=True, verbose_name=_("Numéro de lot fournisseur"))
+    quantity = models.IntegerField(verbose_name=_("Quantité initiale"))
+    quantity_remaining = models.IntegerField(verbose_name=_("Quantité restante"))
+    expiry_date = models.DateField(verbose_name=_("Date de péremption"))
+    opened_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'ouverture"))
+    shelf_life_after_opening_days = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name=_("Durée de vie après ouverture (jours)"),
+        help_text=_("Ex: 14 jours pour réactifs")
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name=_("Statut"))
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    received_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de réception"))
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='created_batches', verbose_name=_("Créé par")
+    )
+
+    class Meta:
+        verbose_name = _("Lot de produit")
+        verbose_name_plural = _("Lots de produits")
+        ordering = ['expiry_date']
+        indexes = [
+            models.Index(fields=['product', 'status']),
+            models.Index(fields=['organization', 'expiry_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - Lot {self.batch_number} ({self.get_status_display()})"
+
+    @property
+    def effective_expiry(self):
+        """Date de péremption effective = min(expiry_date, opened_at + shelf_life) si ouvert"""
+        from django.utils import timezone
+        if self.opened_at and self.shelf_life_after_opening_days:
+            opening_expiry = (self.opened_at + timedelta(days=self.shelf_life_after_opening_days)).date()
+            return min(self.expiry_date, opening_expiry)
+        return self.expiry_date
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        return self.effective_expiry < timezone.now().date()
+
+    @property
+    def days_until_expiry(self):
+        from django.utils import timezone
+        return (self.effective_expiry - timezone.now().date()).days
+
+    def open_batch(self):
+        """Marquer le lot comme ouvert"""
+        from django.utils import timezone
+        self.opened_at = timezone.now()
+        self.status = 'opened'
+        self.save(update_fields=['opened_at', 'status'])
+
+    def update_status(self):
+        """Met à jour le statut automatiquement"""
+        if self.quantity_remaining <= 0:
+            self.status = 'depleted'
+        elif self.is_expired:
+            self.status = 'expired'
+        elif self.opened_at:
+            self.status = 'opened'
+        else:
+            self.status = 'available'
+        self.save(update_fields=['status'])
 
 
 class Invoice(models.Model):

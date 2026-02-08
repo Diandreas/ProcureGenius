@@ -28,7 +28,6 @@ const VisitForm = () => {
     const [formData, setFormData] = useState({
         patient: patientId || '',
         visit_type: 'consultation',
-        reason: '',
         priority: 'routine',
         notes: ''
     });
@@ -99,17 +98,20 @@ const VisitForm = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Auto-generate chief_complaint from visit_type label
+        const selectedType = visitTypes.find(vt => vt.value === formData.visit_type);
+        const chiefComplaint = selectedType ? selectedType.label : formData.visit_type;
+
         try {
             await patientAPI.registerVisit({
                 patient_id: formData.patient,
                 visit_type: formData.visit_type,
-                chief_complaint: formData.reason,
+                chief_complaint: chiefComplaint,
                 priority: formData.priority,
                 notes: formData.notes
             });
             enqueueSnackbar('Visite enregistrée avec succès', { variant: 'success' });
 
-            // Redirect to patient detail page if patient was preselected, otherwise to reception
             if (patientId) {
                 navigate(`/healthcare/patients/${patientId}`);
             } else {
@@ -117,9 +119,6 @@ const VisitForm = () => {
             }
         } catch (error) {
             console.error('Error registering visit:', error);
-            if (error.response?.data) {
-                console.error('Validation errors:', error.response.data);
-            }
             enqueueSnackbar(error?.response?.data?.message || 'Erreur lors de l\'enregistrement', { variant: 'error' });
         } finally {
             setLoading(false);
@@ -220,26 +219,13 @@ const VisitForm = () => {
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
-                                    required
-                                    label="Motif de la visite"
-                                    name="reason"
-                                    value={formData.reason}
-                                    onChange={handleChange}
-                                    multiline
-                                    rows={3}
-                                    placeholder="Ex: Retrait résultats d'examens sanguins, Consultation de suivi post-opératoire, etc."
-                                />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Notes additionnelles"
+                                    label="Notes complémentaires"
                                     name="notes"
                                     value={formData.notes}
                                     onChange={handleChange}
                                     multiline
-                                    rows={2}
+                                    rows={3}
+                                    placeholder="Informations complémentaires (optionnel)"
                                 />
                             </Grid>
 

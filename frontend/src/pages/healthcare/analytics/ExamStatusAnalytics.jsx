@@ -7,6 +7,8 @@ import PieChart from '../../../components/analytics/charts/PieChart';
 import TableChart from '../../../components/analytics/charts/TableChart';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
+import BackButton from '../../../components/navigation/BackButton';
 
 const ExamStatusAnalytics = () => {
   const [data, setData] = useState(null);
@@ -62,8 +64,10 @@ const ExamStatusAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <BackButton />
           <AssessmentIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="error.main">

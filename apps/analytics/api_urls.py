@@ -13,13 +13,20 @@ from .healthcare_analytics import (
     EnhancedRevenueAnalyticsView,
     ServiceRevenueAnalyticsView
 )
+from .report_views import ReportConfigView, ReportTestView
 from .inventory_analytics import (
     ReorderQuantitiesView,
     StockoutRiskAnalysisView,
     AtRiskProductsView,
     MovementAnalysisView,
     InventoryDashboardStatsView,
-    StockValueAnalyticsView
+    StockValueAnalyticsView,
+    WilsonEOQView,
+    ProductScoresView,
+    EOQDashboardView,
+    PredictiveRestockView,
+    ConsumptionStatsView,
+    UnifiedDashboardView,
 )
 
 app_name = 'analytics_api'
@@ -42,4 +49,18 @@ urlpatterns = [
     path('inventory/movements/', MovementAnalysisView.as_view(), name='inventory_movements'),
     path('inventory/dashboard-stats/', InventoryDashboardStatsView.as_view(), name='inventory_dashboard_stats'),
     path('inventory/stock-value/', StockValueAnalyticsView.as_view(), name='inventory_stock_value'),
+
+    # Wilson EOQ & Scoring
+    path('inventory/wilson-eoq/', WilsonEOQView.as_view(), name='inventory_wilson_eoq'),
+    path('inventory/product-scores/', ProductScoresView.as_view(), name='inventory_product_scores'),
+    path('inventory/eoq-dashboard/', EOQDashboardView.as_view(), name='inventory_eoq_dashboard'),
+    path('inventory/predictive-restock/', PredictiveRestockView.as_view(), name='inventory_predictive_restock'),
+    path('inventory/consumption-stats/', ConsumptionStatsView.as_view(), name='inventory_consumption_stats'),
+
+    # Unified Dashboard
+    path('unified-dashboard/', UnifiedDashboardView.as_view(), name='unified_dashboard'),
+
+    # Report Configuration
+    path('report-config/', ReportConfigView.as_view(), name='report_config'),
+    path('report-config/test/', ReportTestView.as_view(), name='report_config_test'),
 ]

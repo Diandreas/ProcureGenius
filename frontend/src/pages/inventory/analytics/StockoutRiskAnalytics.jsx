@@ -4,6 +4,8 @@ import { Warning as WarningIcon } from '@mui/icons-material';
 import TableChart from '../../../components/analytics/charts/TableChart';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
 import LoadingState from '../../../components/LoadingState';
+import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
+import BackButton from '../../../components/navigation/BackButton';
 
 const StockoutRiskAnalytics = () => {
   const [data, setData] = useState(null);
@@ -73,8 +75,10 @@ const StockoutRiskAnalytics = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="xl">
+        <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <BackButton />
           <WarningIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="error.main">

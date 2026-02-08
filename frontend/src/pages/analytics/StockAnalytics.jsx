@@ -19,6 +19,8 @@ import {
 } from 'recharts';
 import { useSnackbar } from 'notistack';
 import inventoryAnalyticsAPI from '../../services/inventoryAnalyticsAPI';
+import Breadcrumbs from '../../components/navigation/Breadcrumbs';
+import BackButton from '../../components/navigation/BackButton';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
@@ -107,9 +109,11 @@ const StockAnalytics = () => {
 
     return (
         <Box sx={{ p: 3 }}>
+            <Breadcrumbs />
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
+                    <BackButton />
                     <ValueIcon sx={{ fontSize: 36, color: 'primary.main' }} />
                     <Box>
                         <Typography variant="h4" fontWeight="700">

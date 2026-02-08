@@ -44,6 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import consultationAPI from '../../../services/consultationAPI';
 import { formatDate as formatDisplayDate, formatTime } from '../../../utils/formatters';
+import useAutoRefresh from '../../../hooks/useAutoRefresh';
 
 const ConsultationList = () => {
     const { t } = useTranslation();
@@ -67,10 +68,6 @@ const ConsultationList = () => {
         completed: consultations.filter(c => c.status === 'completed').length
     };
 
-    useEffect(() => {
-        fetchConsultations();
-    }, [search, startDate, endDate]);
-
     const fetchConsultations = async () => {
         setLoading(true);
         try {
@@ -88,6 +85,13 @@ const ConsultationList = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchConsultations();
+    }, [search, startDate, endDate]);
+
+    // Auto-refresh when notification system detects new consultation data
+    useAutoRefresh('consultations', fetchConsultations);
 
     // Date navigation helpers
     const formatISODate = (date) => {

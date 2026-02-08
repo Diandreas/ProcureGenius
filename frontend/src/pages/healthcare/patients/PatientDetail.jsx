@@ -22,16 +22,18 @@ import {
     MedicalServices as ConsultationIcon,
     Science as LabIcon,
     LocalPharmacy as PharmacyIcon,
-    Receipt as PrescriptionIcon
+    Receipt as PrescriptionIcon,
+    Dashboard as SummaryIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
-import VisitHistory from './VisitHistory';
 import PatientDocuments from './PatientDocuments';
-import PatientCareHistory from './PatientCareHistory';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
+import MedicalSummaryTab from './components/MedicalSummaryTab';
+import PatientTimeline from './components/PatientTimeline';
+import AdministerCareModal from './components/AdministerCareModal';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 
@@ -49,6 +51,9 @@ const PatientDetail = () => {
     const [printModalOpen, setPrintModalOpen] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
+    // Care Modal State
+    const [careModalOpen, setCareModalOpen] = useState(false);
+
     useEffect(() => {
         fetchData();
     }, [id]);
@@ -58,11 +63,10 @@ const PatientDetail = () => {
             setLoading(true);
             const [patientData, historyData] = await Promise.all([
                 patientAPI.getPatient(id),
-                patientAPI.getPatientCompleteHistory(id)  // NOUVEAU: Utilise l'historique complet
+                patientAPI.getPatientCompleteHistory(id)
             ]);
             setPatient(patientData);
             setHistory(historyData);
-            console.log('History Data:', historyData); // Debug
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -186,10 +190,19 @@ const PatientDetail = () => {
                         >
                             Nouvelle Facture
                         </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<HospitalIcon />}
+                            onClick={() => setCareModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Administrer un Soin
+                        </Button>
                     </Box>
                 </CardContent>
             </Card>
 
+            {/* Patient Info Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} md={4}>
                     <Card sx={{ height: '100%' }}>
@@ -249,21 +262,37 @@ const PatientDetail = () => {
                 </Grid>
             </Grid>
 
+            {/* Tabs - New structure */}
             <Card>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-                        <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique Consultations" />
-                        <Tab icon={<HospitalIcon />} iconPosition="start" label="Visites" />
-                        <Tab icon={<TimelineIcon />} iconPosition="start" label="Historique des Soins" />
+                    <Tabs
+                        value={tabValue}
+                        onChange={(e, v) => setTabValue(v)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                    >
+                        <Tab icon={<SummaryIcon />} iconPosition="start" label="Résumé Médical" />
+                        <Tab icon={<TimelineIcon />} iconPosition="start" label="Timeline" />
+                        <Tab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
                         <Tab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
                         <Tab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
                         <Tab icon={<FileIcon />} iconPosition="start" label="Documents" />
                     </Tabs>
                 </Box>
 
-                {/* Tab Panel 0: Consultations */}
+                {/* Tab 0: Medical Summary (default) */}
                 <Box role="tabpanel" hidden={tabValue !== 0} sx={{ p: 3 }}>
-                    {tabValue === 0 && (
+                    {tabValue === 0 && <MedicalSummaryTab patientId={id} patient={patient} />}
+                </Box>
+
+                {/* Tab 1: Timeline */}
+                <Box role="tabpanel" hidden={tabValue !== 1} sx={{ p: 3 }}>
+                    {tabValue === 1 && <PatientTimeline patientId={id} />}
+                </Box>
+
+                {/* Tab 2: Consultations */}
+                <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
+                    {tabValue === 2 && (
                         <Box>
                             {history?.consultations && history.consultations.length > 0 ? (
                                 <List>
@@ -315,27 +344,17 @@ const PatientDetail = () => {
                     )}
                 </Box>
 
-                {/* Tab Panel 1: Visits */}
-                <Box role="tabpanel" hidden={tabValue !== 1} sx={{ p: 3 }}>
-                    {tabValue === 1 && <VisitHistory patientId={id} />}
-                </Box>
-
-                {/* Tab Panel 2: Care History */}
-                <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
-                    {tabValue === 2 && <PatientCareHistory patientId={id} />}
-                </Box>
-
-                {/* Tab Panel 3: Lab Orders */}
+                {/* Tab 3: Lab Orders */}
                 <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
                     {tabValue === 3 && <LabOrderHistory labOrders={history?.lab_orders} />}
                 </Box>
 
-                {/* Tab Panel 4: Pharmacy Dispensings */}
+                {/* Tab 4: Pharmacy Dispensings */}
                 <Box role="tabpanel" hidden={tabValue !== 4} sx={{ p: 3 }}>
                     {tabValue === 4 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
                 </Box>
 
-                {/* Tab Panel 5: Documents */}
+                {/* Tab 5: Documents */}
                 <Box role="tabpanel" hidden={tabValue !== 5} sx={{ p: 3 }}>
                     {tabValue === 5 && <PatientDocuments patientId={id} />}
                 </Box>
@@ -350,6 +369,13 @@ const PatientDetail = () => {
                 onPrint={() => handlePrintAction('print')}
                 onDownload={() => handlePrintAction('download')}
                 helpText="Générer le dossier médical complet du patient (résumé, historique, etc)."
+            />
+
+            <AdministerCareModal
+                open={careModalOpen}
+                onClose={() => setCareModalOpen(false)}
+                patientId={id}
+                onSaved={fetchData}
             />
         </Box>
     );

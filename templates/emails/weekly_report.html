@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Periodique</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:30px 40px; text-align:center;">
+              <h1 style="color:#ffffff; margin:0; font-size:24px;">{{ organization.name }}</h1>
+              <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">Rapport Periodique - {{ period_start }} au {{ period_end }}</p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:30px 40px 15px;">
+              <p style="color:#374151; font-size:16px; margin:0;">Bonjour {{ user.first_name|default:user.username }},</p>
+              <p style="color:#6b7280; font-size:14px; margin:8px 0 0;">Voici le resume de votre activite pour la periode ecoulee.</p>
+            </td>
+          </tr>
+
+          {% if sections.healthcare %}
+          <!-- Healthcare Section -->
+          <tr>
+            <td style="padding:15px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
+                    <strong style="color:#dc2626; font-size:16px;">Sante & Laboratoire</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px;">Examens cette semaine</td>
+                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold;">{{ sections.healthcare.exams_week }}</td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Examens termines</td>
+                        <td align="right" style="color:#10b981; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.healthcare.completed_week }}</td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Consultations</td>
+                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.healthcare.consultations_week }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if sections.finance %}
+          <!-- Finance Section -->
+          <tr>
+            <td style="padding:15px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#eff6ff; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
+                    <strong style="color:#2563eb; font-size:16px;">Finances</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px;">Revenus de la semaine</td>
+                        <td align="right" style="color:#2563eb; font-size:18px; font-weight:bold;">{{ sections.finance.revenue_week|floatformat:0 }} FCFA</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if sections.inventory %}
+          <!-- Inventory Section -->
+          <tr>
+            <td style="padding:15px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#f0fdf4; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
+                    <strong style="color:#16a34a; font-size:16px;">Inventaire</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px;">Produits stock bas</td>
+                        <td align="right" style="color:#f59e0b; font-size:16px; font-weight:bold;">{{ sections.inventory.low_stock_count }}</td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Mouvements cette semaine</td>
+                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.inventory.movements_week }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if sections.alerts %}
+          <!-- Alerts Section -->
+          <tr>
+            <td style="padding:15px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #fca5a5; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #fca5a5;">
+                    <strong style="color:#dc2626; font-size:16px;">Alertes Stock</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    {% if sections.alerts.expiring_batches > 0 %}
+                    <div style="background-color:#fef3c7; border-radius:6px; padding:10px 15px; margin-bottom:10px;">
+                      <strong style="color:#92400e; font-size:13px;">{{ sections.alerts.expiring_batches }} lot(s) expirant dans les 30 prochains jours</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if sections.alerts.critical_count > 0 %}
+                    <div style="background-color:#fee2e2; border-radius:6px; padding:10px 15px; margin-bottom:10px;">
+                      <strong style="color:#991b1b; font-size:13px;">{{ sections.alerts.critical_count }} produit(s) en risque de rupture</strong>
+                    </div>
+
+                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size:12px; margin-top:10px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="font-weight:bold; color:#374151;">Produit</td>
+                        <td align="center" style="font-weight:bold; color:#374151;">Stock</td>
+                        <td align="center" style="font-weight:bold; color:#374151;">Jours</td>
+                        <td style="font-weight:bold; color:#374151;">Urgence</td>
+                      </tr>
+                      {% for product in sections.alerts.critical_products %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="color:#111827;">{{ product.product_name }}</td>
+                        <td align="center" style="color:#111827;">{{ product.current_stock }}</td>
+                        <td align="center" style="color:{% if product.urgency == 'critical' %}#dc2626{% else %}#f59e0b{% endif %}; font-weight:bold;">
+                          {{ product.days_remaining|default:"-" }}
+                        </td>
+                        <td>
+                          <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold; background-color:{% if product.urgency == 'critical' %}#fee2e2{% else %}#fef3c7{% endif %}; color:{% if product.urgency == 'critical' %}#991b1b{% else %}#92400e{% endif %};">
+                            {% if product.urgency == 'critical' %}CRITIQUE{% else %}URGENT{% endif %}
+                          </span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                    {% endif %}
+
+                    {% if sections.alerts.critical_count == 0 and sections.alerts.expiring_batches == 0 %}
+                    <p style="color:#16a34a; font-size:14px; margin:0; text-align:center;">Aucune alerte stock pour cette periode.</p>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:30px 40px; border-top:1px solid #e5e7eb; text-align:center;">
+              <p style="color:#9ca3af; font-size:12px; margin:0;">
+                Ce rapport est genere automatiquement par ProcureGenius.<br>
+                Pour modifier vos preferences, rendez-vous dans Parametres > Rapports.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

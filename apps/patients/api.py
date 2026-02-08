@@ -477,6 +477,307 @@ class PatientCompleteHistoryView(APIView):
         return Response(history, status=status.HTTP_200_OK)
 
 
+class PatientMedicalSummaryView(APIView):
+    """
+    Get a medical summary for a patient
+    GET /healthcare/patients/<uuid>/medical-summary/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        try:
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization,
+                client_type__in=['patient', 'both']
+            )
+        except Client.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        summary = {}
+
+        # Medical alerts
+        summary['alerts'] = {
+            'blood_type': patient.blood_type or '',
+            'allergies': patient.allergies or '',
+            'chronic_conditions': patient.chronic_conditions or '',
+        }
+
+        # Latest vitals from most recent visit
+        latest_visit = PatientVisit.objects.filter(
+            patient=patient
+        ).exclude(
+            vitals_systolic__isnull=True,
+            vitals_temperature__isnull=True,
+            vitals_weight__isnull=True,
+        ).order_by('-arrived_at').first()
+
+        if latest_visit:
+            summary['latest_vitals'] = {
+                'date': latest_visit.arrived_at,
+                'systolic': latest_visit.vitals_systolic,
+                'diastolic': latest_visit.vitals_diastolic,
+                'temperature': str(latest_visit.vitals_temperature) if latest_visit.vitals_temperature else None,
+                'weight': str(latest_visit.vitals_weight) if latest_visit.vitals_weight else None,
+                'height': str(latest_visit.vitals_height) if latest_visit.vitals_height else None,
+                'spo2': latest_visit.vitals_spo2,
+                'blood_glucose': str(latest_visit.vitals_blood_glucose) if latest_visit.vitals_blood_glucose else None,
+            }
+        else:
+            summary['latest_vitals'] = None
+
+        # Statistics
+        from django.db.models import Count
+        total_consultations = 0
+        if Consultation:
+            total_consultations = Consultation.objects.filter(patient=patient).count()
+
+        total_lab = 0
+        if LabOrder:
+            total_lab = LabOrder.objects.filter(patient=patient).count()
+
+        last_visit = PatientVisit.objects.filter(patient=patient).order_by('-arrived_at').first()
+        summary['statistics'] = {
+            'total_consultations': total_consultations,
+            'total_lab_orders': total_lab,
+            'total_visits': PatientVisit.objects.filter(patient=patient).count(),
+            'last_visit_date': last_visit.arrived_at if last_visit else None,
+        }
+
+        # Recent abnormal lab results
+        summary['abnormal_results'] = []
+        if LabOrder:
+            from apps.laboratory.models import LabOrderItem
+            abnormal_items = LabOrderItem.objects.filter(
+                lab_order__patient=patient,
+                is_abnormal=True,
+                result_value__isnull=False,
+            ).select_related('lab_test', 'lab_order').order_by('-result_entered_at')[:5]
+
+            for item in abnormal_items:
+                summary['abnormal_results'].append({
+                    'test_name': item.lab_test.name if item.lab_test else '',
+                    'test_code': item.lab_test.test_code if item.lab_test else '',
+                    'result_value': item.result_value,
+                    'reference_range': item.reference_range or '',
+                    'is_critical': item.is_critical,
+                    'date': item.result_entered_at or item.lab_order.order_date,
+                })
+
+        # Active prescriptions (from recent completed consultations)
+        summary['active_prescriptions'] = []
+        if Consultation:
+            try:
+                from apps.consultations.models import Prescription, PrescriptionItem
+                recent_prescriptions = Prescription.objects.filter(
+                    consultation__patient=patient,
+                ).select_related('consultation').prefetch_related('items').order_by('-created_at')[:3]
+
+                for rx in recent_prescriptions:
+                    items = []
+                    for item in rx.items.all():
+                        items.append({
+                            'medication_name': item.medication_name,
+                            'dosage': item.dosage,
+                            'frequency': item.frequency,
+                            'duration': item.duration,
+                        })
+                    summary['active_prescriptions'].append({
+                        'date': rx.created_at,
+                        'consultation_id': str(rx.consultation.id),
+                        'items': items,
+                    })
+            except (ImportError, Exception):
+                pass
+
+        return Response(summary)
+
+
+class PatientTimelineView(APIView):
+    """
+    Get unified timeline for a patient
+    GET /healthcare/patients/<uuid>/timeline/
+    Params: ?type=all|consultation|laboratory|pharmacy|care&start_date=&end_date=&page=
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        try:
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization,
+                client_type__in=['patient', 'both']
+            )
+        except Client.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        event_type = request.query_params.get('type', 'all')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        page = int(request.query_params.get('page', 1))
+        page_size = 20
+
+        events = []
+
+        # Consultations
+        if event_type in ('all', 'consultation') and Consultation:
+            consultations = Consultation.objects.filter(patient=patient).select_related('doctor')
+            if start_date:
+                consultations = consultations.filter(consultation_date__date__gte=start_date)
+            if end_date:
+                consultations = consultations.filter(consultation_date__date__lte=end_date)
+            for c in consultations:
+                events.append({
+                    'id': str(c.id),
+                    'type': 'consultation',
+                    'date': c.consultation_date.isoformat(),
+                    'title': f'Consultation #{c.consultation_number}',
+                    'summary': c.chief_complaint or '',
+                    'detail': c.diagnosis or '',
+                    'status': c.status,
+                    'provider': c.doctor.get_full_name() if c.doctor else None,
+                    'link': f'/healthcare/consultations/{c.id}',
+                })
+
+        # Lab Orders
+        if event_type in ('all', 'laboratory') and LabOrder:
+            lab_orders = LabOrder.objects.filter(patient=patient).prefetch_related('items__lab_test')
+            if start_date:
+                lab_orders = lab_orders.filter(order_date__date__gte=start_date)
+            if end_date:
+                lab_orders = lab_orders.filter(order_date__date__lte=end_date)
+            for lo in lab_orders:
+                tests = [item.lab_test.name for item in lo.items.all() if item.lab_test]
+                events.append({
+                    'id': str(lo.id),
+                    'type': 'laboratory',
+                    'date': lo.order_date.isoformat(),
+                    'title': f'Examens Labo #{lo.order_number}',
+                    'summary': f'{lo.items.count()} test(s): {", ".join(tests[:3])}{"..." if len(tests) > 3 else ""}',
+                    'detail': lo.clinical_notes or '',
+                    'status': lo.status,
+                    'provider': lo.ordered_by.get_full_name() if lo.ordered_by else None,
+                    'link': f'/healthcare/laboratory/{lo.id}',
+                })
+
+        # Pharmacy Dispensings
+        if event_type in ('all', 'pharmacy') and PharmacyDispensing:
+            dispensings = PharmacyDispensing.objects.filter(patient=patient).prefetch_related('items__medication')
+            if start_date:
+                dispensings = dispensings.filter(dispensed_at__date__gte=start_date)
+            if end_date:
+                dispensings = dispensings.filter(dispensed_at__date__lte=end_date)
+            for d in dispensings:
+                meds = [item.medication.name for item in d.items.all() if item.medication]
+                events.append({
+                    'id': str(d.id),
+                    'type': 'pharmacy',
+                    'date': d.dispensed_at.isoformat(),
+                    'title': f'Dispensation #{d.dispensing_number}',
+                    'summary': f'{d.items.count()} médicament(s): {", ".join(meds[:3])}{"..." if len(meds) > 3 else ""}',
+                    'detail': '',
+                    'status': d.status,
+                    'provider': d.dispensed_by.get_full_name() if d.dispensed_by else None,
+                    'link': f'/healthcare/pharmacy/dispensing/{d.id}',
+                })
+
+        # Care Services
+        if event_type in ('all', 'care'):
+            care_services = PatientCareService.objects.filter(patient=patient).select_related('provided_by')
+            if start_date:
+                care_services = care_services.filter(provided_at__date__gte=start_date)
+            if end_date:
+                care_services = care_services.filter(provided_at__date__lte=end_date)
+            for cs in care_services:
+                events.append({
+                    'id': str(cs.id),
+                    'type': 'care',
+                    'date': cs.provided_at.isoformat(),
+                    'title': cs.service_name,
+                    'summary': cs.get_service_type_display(),
+                    'detail': cs.notes or '',
+                    'status': 'completed',
+                    'provider': cs.provided_by.get_full_name() if cs.provided_by else None,
+                    'link': None,
+                })
+
+        # Sort by date descending
+        events.sort(key=lambda x: x['date'], reverse=True)
+
+        # Paginate
+        total = len(events)
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated = events[start:end]
+
+        return Response({
+            'events': paginated,
+            'total': total,
+            'page': page,
+            'page_size': page_size,
+            'has_next': end < total,
+        })
+
+
+class CreateCareServiceView(APIView):
+    """
+    Create a care service for a patient
+    POST /healthcare/patients/<uuid>/care-services/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, patient_id):
+        try:
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=request.user.organization,
+                client_type__in=['patient', 'both']
+            )
+        except Client.DoesNotExist:
+            return Response(
+                {'error': 'Patient not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        service_type = request.data.get('service_type')
+        service_name = request.data.get('service_name')
+        notes = request.data.get('notes', '')
+        quantity = request.data.get('quantity', 1)
+        visit_id = request.data.get('visit_id')
+
+        if not service_type or not service_name:
+            return Response(
+                {'error': 'service_type and service_name are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Optionally link to a visit
+        visit = None
+        if visit_id:
+            try:
+                visit = PatientVisit.objects.get(
+                    id=visit_id,
+                    organization=request.user.organization
+                )
+            except PatientVisit.DoesNotExist:
+                pass
+
+        care_service = PatientCareService.objects.create(
+            patient=patient,
+            service_type=service_type,
+            service_name=service_name,
+            notes=notes,
+            quantity=quantity,
+            provided_by=request.user,
+            visit=visit,
+        )
+
+        return Response(
+            PatientCareServiceSerializer(care_service).data,
+            status=status.HTTP_201_CREATED
+        )
+
+
 class PatientQuickInvoiceView(APIView):
     """
     Create a quick invoice for billable services when creating/updating a patient

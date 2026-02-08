@@ -9,6 +9,8 @@ from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, Ch
 from django.db.models.functions import TruncDate, Coalesce
 from datetime import date, timedelta, datetime
 from apps.invoicing.models import Product, StockMovement, ProductCategory
+from apps.analytics.wilson_service import get_wilson_analysis, calculate_eoq, calculate_reorder_point, calculate_product_score
+from apps.analytics.predictive_restock import get_all_predictions
 
 
 class ReorderQuantitiesView(APIView):
@@ -596,4 +598,353 @@ class StockValueAnalyticsView(APIView):
                 'categories': [{'id': str(c['id']), 'name': c['name']} for c in categories],
                 'warehouses': [{'id': str(w['id']), 'name': w['name']} for w in warehouses],
             }
+        })
+
+
+class WilsonEOQView(APIView):
+    """Wilson EOQ analysis for a specific product or all products"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        product_id = request.query_params.get('product_id')
+
+        if product_id:
+            try:
+                product = Product.objects.get(id=product_id, organization=organization)
+            except Product.DoesNotExist:
+                return Response({'error': 'Produit non trouve'}, status=404)
+            analysis = get_wilson_analysis(product)
+            return Response(analysis)
+
+        # All products
+        products = Product.objects.filter(
+            organization=organization,
+            product_type='physical',
+            is_active=True
+        )
+
+        results = []
+        for product in products:
+            try:
+                analysis = get_wilson_analysis(product)
+                results.append(analysis)
+            except Exception:
+                continue
+
+        # Sort by score descending
+        results.sort(key=lambda x: x['score']['total_score'], reverse=True)
+
+        return Response({
+            'products': results,
+            'total': len(results),
+            'should_order_count': sum(1 for r in results if r['should_order']),
+        })
+
+
+class ProductScoresView(APIView):
+    """Product scores based on Wilson analysis"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        products = Product.objects.filter(
+            organization=organization,
+            product_type='physical',
+            is_active=True
+        )
+
+        results = []
+        for product in products:
+            try:
+                score = calculate_product_score(product)
+                results.append({
+                    'product_id': str(product.id),
+                    'product_name': product.name,
+                    'reference': product.reference or '',
+                    'current_stock': product.stock_quantity,
+                    'score': score,
+                })
+            except Exception:
+                continue
+
+        results.sort(key=lambda x: x['score']['total_score'], reverse=True)
+        return Response({'products': results, 'total': len(results)})
+
+
+class EOQDashboardView(APIView):
+    """Dashboard overview of all products with EOQ calculations, sorted by urgency"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        products = Product.objects.filter(
+            organization=organization,
+            product_type='physical',
+            is_active=True,
+            stock_quantity__gt=0
+        ).order_by('stock_quantity')
+
+        results = []
+        for product in products:
+            try:
+                analysis = get_wilson_analysis(product)
+                # Calculate urgency
+                rop = analysis['reorder_point']['reorder_point']
+                daily = analysis['reorder_point']['daily_demand']
+                lead_time = analysis['reorder_point']['lead_time_days']
+
+                if daily > 0:
+                    days_left = product.stock_quantity / daily
+                    if days_left <= lead_time:
+                        urgency = 'critical'
+                    elif days_left <= lead_time * 1.5:
+                        urgency = 'high'
+                    elif days_left <= lead_time * 2:
+                        urgency = 'medium'
+                    else:
+                        urgency = 'low'
+                else:
+                    days_left = 999
+                    urgency = 'low'
+
+                analysis['urgency'] = urgency
+                analysis['days_until_stockout'] = round(days_left)
+                results.append(analysis)
+            except Exception:
+                continue
+
+        # Sort by urgency
+        urgency_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+        results.sort(key=lambda x: (urgency_order.get(x['urgency'], 4), x.get('days_until_stockout', 999)))
+
+        return Response({
+            'products': results,
+            'total': len(results),
+            'critical_count': sum(1 for r in results if r['urgency'] == 'critical'),
+            'high_count': sum(1 for r in results if r['urgency'] == 'high'),
+            'medium_count': sum(1 for r in results if r['urgency'] == 'medium'),
+            'should_order_count': sum(1 for r in results if r['should_order']),
+        })
+
+
+class PredictiveRestockView(APIView):
+    """Predictive restock analysis - products sorted by urgency"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        predictions = get_all_predictions(organization)
+
+        return Response({
+            'products': predictions,
+            'total': len(predictions),
+            'critical_count': sum(1 for p in predictions if p['urgency'] == 'critical'),
+            'high_count': sum(1 for p in predictions if p['urgency'] == 'high'),
+            'medium_count': sum(1 for p in predictions if p['urgency'] == 'medium'),
+            'total_recommended_value': sum(p.get('recommended_order_value', 0) for p in predictions if p['urgency'] in ('critical', 'high')),
+        })
+
+
+class ConsumptionStatsView(APIView):
+    """Consumption statistics for products"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        product_id = request.query_params.get('product_id')
+        period = request.query_params.get('period', 'weekly')
+
+        if not product_id:
+            return Response({'error': 'product_id requis'}, status=400)
+
+        try:
+            product = Product.objects.get(id=product_id, organization=organization)
+        except Product.DoesNotExist:
+            return Response({'error': 'Produit non trouve'}, status=404)
+
+        from django.db.models.functions import TruncWeek, TruncMonth
+
+        one_year_ago = date.today() - timedelta(days=365)
+        movements = StockMovement.objects.filter(
+            product=product,
+            movement_type='sale',
+            created_at__gte=one_year_ago
+        )
+
+        if period == 'weekly':
+            trunc_fn = TruncWeek
+            periods_count = 52
+        else:
+            trunc_fn = TruncMonth
+            periods_count = 12
+
+        breakdown = movements.annotate(
+            period=trunc_fn('created_at')
+        ).values('period').annotate(
+            total_qty=Sum('quantity')
+        ).order_by('period')
+
+        breakdown_data = [{
+            'period': b['period'].strftime('%Y-%m-%d'),
+            'quantity': abs(b['total_qty'] or 0)
+        } for b in breakdown]
+
+        quantities = [b['quantity'] for b in breakdown_data]
+        avg_consumption = sum(quantities) / len(quantities) if quantities else 0
+
+        # Trend detection
+        if len(quantities) >= 4:
+            recent_half = quantities[len(quantities)//2:]
+            older_half = quantities[:len(quantities)//2]
+            recent_avg = sum(recent_half) / len(recent_half) if recent_half else 0
+            older_avg = sum(older_half) / len(older_half) if older_half else 0
+
+            if recent_avg > older_avg * 1.1:
+                trend = 'increasing'
+            elif recent_avg < older_avg * 0.9:
+                trend = 'decreasing'
+            else:
+                trend = 'stable'
+        else:
+            trend = 'insufficient_data'
+
+        thirty_days = StockMovement.objects.filter(
+            product=product, movement_type='sale',
+            created_at__gte=date.today() - timedelta(days=30)
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+        seven_days = StockMovement.objects.filter(
+            product=product, movement_type='sale',
+            created_at__gte=date.today() - timedelta(days=7)
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+        return Response({
+            'product_id': str(product.id),
+            'product_name': product.name,
+            'period': period,
+            'avg_weekly_consumption': round(abs(seven_days), 1),
+            'avg_monthly_consumption': round(abs(thirty_days), 1),
+            'avg_per_period': round(avg_consumption, 1),
+            'consumption_trend': trend,
+            'breakdown': breakdown_data[-periods_count:],
+            'current_stock': product.stock_quantity,
+        })
+
+
+class UnifiedDashboardView(APIView):
+    """Unified dashboard - all KPIs in one call"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        today = date.today()
+
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            start_date = today - timedelta(days=30)
+            end_date = today
+
+        # Inventory stats
+        low_stock_count = Product.objects.filter(
+            organization=organization, product_type='physical',
+            stock_quantity__lte=F('low_stock_threshold'), is_active=True
+        ).count()
+
+        out_of_stock = Product.objects.filter(
+            organization=organization, product_type='physical',
+            stock_quantity=0, is_active=True
+        ).count()
+
+        inventory_value = Product.objects.filter(
+            organization=organization, product_type='physical', is_active=True
+        ).aggregate(
+            value=Sum(F('stock_quantity') * F('cost_price'))
+        )['value'] or 0
+
+        movements_today = StockMovement.objects.filter(
+            product__organization=organization,
+            created_at__date=today
+        ).count()
+
+        # Expiring batches
+        from apps.invoicing.models import ProductBatch
+        expiring_batches = ProductBatch.objects.filter(
+            organization=organization,
+            status__in=['available', 'opened'],
+            expiry_date__lte=today + timedelta(days=30),
+            quantity_remaining__gt=0
+        ).count()
+
+        # Predictive alerts count
+        predictions = get_all_predictions(organization)
+        critical_alerts = sum(1 for p in predictions if p['urgency'] in ('critical', 'high'))
+
+        # Healthcare stats
+        try:
+            from apps.laboratory.models import LabOrder
+            exams_today = LabOrder.objects.filter(
+                organization=organization,
+                created_at__date=today
+            ).count()
+            pending_results = LabOrder.objects.filter(
+                organization=organization,
+                status='pending'
+            ).count()
+        except Exception:
+            exams_today = 0
+            pending_results = 0
+
+        # Consultation stats
+        try:
+            from apps.consultations.models import Consultation
+            consultations_today = Consultation.objects.filter(
+                organization=organization,
+                created_at__date=today
+            ).count()
+        except Exception:
+            consultations_today = 0
+
+        # Revenue
+        from apps.invoicing.models import Invoice
+        revenue = Invoice.objects.filter(
+            organization=organization,
+            status='paid',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+        return Response({
+            'overview': {
+                'revenue_period': float(revenue),
+                'consultations_today': consultations_today,
+                'exams_today': exams_today,
+                'low_stock_count': low_stock_count,
+                'expiring_batches': expiring_batches,
+                'critical_alerts': critical_alerts,
+                'movements_today': movements_today,
+            },
+            'stock': {
+                'low_stock_count': low_stock_count,
+                'out_of_stock': out_of_stock,
+                'inventory_value': float(inventory_value),
+                'expiring_batches': expiring_batches,
+                'critical_alerts': critical_alerts,
+                'predictive_alerts': len([p for p in predictions if p['urgency'] in ('critical', 'high', 'medium')]),
+            },
+            'healthcare': {
+                'exams_today': exams_today,
+                'pending_results': pending_results,
+                'consultations_today': consultations_today,
+            },
+            'finance': {
+                'revenue_period': float(revenue),
+            },
+            'period_start': start_date.isoformat(),
+            'period_end': end_date.isoformat(),
         })

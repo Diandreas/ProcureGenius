@@ -7,6 +7,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from './store/store';
 import { ModuleProvider } from './contexts/ModuleContext';
 import { SharedElementProvider } from './contexts/SharedElementContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { fetchSettings } from './store/slices/settingsSlice';
@@ -46,6 +47,12 @@ import InvoiceForm from './pages/invoices/InvoiceForm';
 import Products from './pages/products/Products';
 import ProductDetail from './pages/products/ProductDetail';
 import ProductForm from './pages/products/ProductForm';
+import ProductBatches from './pages/products/ProductBatches';
+
+// New Analytics Pages
+import WilsonEOQAnalytics from './pages/inventory/analytics/WilsonEOQAnalytics';
+import PredictiveRestockPage from './pages/inventory/analytics/PredictiveRestockPage';
+import ConsumptionStatsPage from './pages/inventory/analytics/ConsumptionStatsPage';
 import Clients from './pages/clients/Clients';
 import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
@@ -54,6 +61,7 @@ import ImportReviews from './pages/ai-chat/ImportReviews';
 import DocumentImport from './pages/ai-chat/DocumentImport';
 import Settings from './pages/settings/Settings';
 import UserManagement from './pages/settings/UserManagement';
+import WeeklyReportSettings from './pages/settings/WeeklyReportSettings';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
 import DataImportPage from './pages/settings/DataImportPage';
@@ -77,6 +85,7 @@ import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
 import LabOrderForm from './pages/healthcare/laboratory/LabOrderForm';
 import LabOrderDispatch from './pages/healthcare/laboratory/LabOrderDispatch';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
+import LabQueueDashboard from './pages/healthcare/laboratory/LabQueueDashboard';
 import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
@@ -702,6 +711,7 @@ function App() {
             >
               <AppInitializer>
                 <ModuleProvider>
+                  <NotificationProvider>
                   <SharedElementProvider>
                     <AdSenseScript />
                     {onboardingChecked && (
@@ -742,6 +752,12 @@ function App() {
                               <Route path="/inventory/analytics/stockout-risk" element={<StockoutRiskAnalytics />} />
                               <Route path="/inventory/analytics/at-risk" element={<RiskProductsAnalytics />} />
                               <Route path="/inventory/analytics/movements" element={<MovementAnalytics />} />
+                              <Route path="/inventory/analytics/wilson-eoq" element={<WilsonEOQAnalytics />} />
+                              <Route path="/inventory/analytics/predictive-restock" element={<PredictiveRestockPage />} />
+                              <Route path="/inventory/analytics/consumption" element={<ConsumptionStatsPage />} />
+
+                              {/* Product Batches */}
+                              <Route path="/products/:productId/batches" element={<ProductBatches />} />
 
                               {/* Suppliers */}
                               <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />
@@ -786,6 +802,7 @@ function App() {
                               <Route path="/settings" element={<Settings />} />
                               <Route path="/settings/users" element={<UserManagement />} />
                               <Route path="/settings/import" element={<DataImportPage />} />
+                              <Route path="/settings/reports" element={<WeeklyReportSettings />} />
 
                               {/* Help & Documentation */}
                               <Route path="/help" element={<Help />} />
@@ -803,7 +820,8 @@ function App() {
                               <Route path="/healthcare/reception" element={<ModuleRoute module="patients"><ReceptionDashboard /></ModuleRoute>} />
 
                               {/* Laboratory */}
-                              <Route path="/healthcare/laboratory" element={<ModuleRoute module="laboratory"><LabOrderList /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory" element={<ModuleRoute module="laboratory"><LabQueueDashboard /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/orders" element={<ModuleRoute module="laboratory"><LabOrderList /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/new" element={<ModuleRoute module="laboratory"><LabOrderForm /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id/dispatch" element={<ModuleRoute module="laboratory"><LabOrderDispatch /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
@@ -831,6 +849,7 @@ function App() {
                       </Router>
                     )}
                   </SharedElementProvider>
+                  </NotificationProvider>
                 </ModuleProvider>
               </AppInitializer>
             </SnackbarProvider>
