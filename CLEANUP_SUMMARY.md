@@ -16,8 +16,10 @@ Ce nettoyage complet a été effectué pour simplifier la maintenance, réduire 
 | **Migrations** | 117 fichiers | 25 fichiers | **-78.6%** |
 | **Fichiers variant** | 69 fichiers (*_original, *_simple) | 0 fichiers | **-100%** |
 | **Fichiers temporaires** | 28+ fichiers | 0 fichiers | **-100%** |
+| **Fichiers settings** | 5 fichiers | 1 fichier | **-80%** |
 | **Code dupliqué** | 4 patterns répétés | 1 service centralisé | **-75%** |
 | **Imports non utilisés** | 4+ imports | 0 imports | **-100%** |
+| **Dépendances inutilisées** | 3 packages | 0 packages | **-100%** |
 | **Signaux dispersés** | models.py + signals.py | signals.py seulement | **Consolidé** |
 
 **Total** : **~200+ fichiers supprimés** et **codebase simplifié de ~50%**
@@ -204,43 +206,57 @@ python manage.py showmigrations
 
 ## Commits Structurés
 
-1. **a6eb6bdd** : Nettoyage fichiers temporaires (28 fichiers)
-2. **5f8704c9** : Suppression fichiers variant (69 fichiers)
-3. **653b61cf** : Normalisation migrations (117 → 25)
-4. **c767605a** : Consolidation code avec NumberGeneratorService
-5. **7d59a8be** : Consolidation signaux dans accounts/signals.py
-6. **74c13563** : Suppression imports non utilisés
-7. **3bb89745** : Amélioration gestion d'erreurs avec logger
-8. **758066a6** : Mise à jour .gitignore
+1. **101c5604** : Backup état avant nettoyage complet
+2. **a6eb6bdd** : Nettoyage fichiers temporaires (28 fichiers)
+3. **5f8704c9** : Suppression fichiers variant (69 fichiers)
+4. **653b61cf** : Normalisation migrations (117 → 25)
+5. **c767605a** : Consolidation code avec NumberGeneratorService
+6. **7d59a8be** : Consolidation signaux dans accounts/signals.py
+7. **74c13563** : Suppression imports non utilisés
+8. **3bb89745** : Amélioration gestion d'erreurs avec logger
+9. **758066a6** : Mise à jour .gitignore
+10. **bfcfa587** : Ajout documentation CLEANUP_SUMMARY.md
+11. **440ed66f** : Ajout guide migration MIGRATION_GUIDE.md
+12. **9cbf9386** : Nettoyage dépendances et fichiers settings
 
-**Total** : 8 commits bien structurés avec messages clairs
+**Total** : 12 commits bien structurés avec messages clairs
 
 ---
 
-## Prochaines Étapes (Optionnelles)
+## Tâches Supplémentaires Complétées ✅
 
-### Tâche #11 : Consolider Settings (Non effectué)
+### Tâche #11 : Consolidation Settings
 
-**Raison** : Les settings actuels fonctionnent bien. Cette tâche peut être reportée.
+**Actions** :
+- ✅ Supprimé 4 fichiers settings alternatifs inutilisés :
+  - `settings_dev.py` (221 lignes)
+  - `settings_simple.py` (221 lignes)
+  - `settings_api.py` (78 lignes)
+  - `settings_minimal.py` (153 lignes)
+- ✅ Gardé uniquement `settings.py` (420 lignes)
+- ✅ Vérifié : Tous les points d'entrée utilisent `saas_procurement.settings`
 
-**Si nécessaire** :
-```
-saas_procurement/
-  settings/
-    __init__.py          # Import conditionnel basé sur ENV
-    base.py              # Configuration commune
-    development.py       # Surcharges dev
-    production.py        # Surcharges prod
-```
+**Bénéfices** :
+- Configuration centralisée avec variables d'environnement
+- Pas de confusion sur quel fichier utiliser
+- **Réduction de 80%** des fichiers settings
 
-### Tâche #12 : Nettoyage Dépendances (Non effectué)
+### Tâche #12 : Nettoyage Dépendances
 
-**Raison** : Nécessite tests approfondis pour vérifier que les dépendances ne sont vraiment pas utilisées.
+**Analyse effectuée** :
+- ✅ `xhtml2pdf` : 0 utilisations → **SUPPRIMÉ** (weasyprint est utilisé)
+- ✅ `django-extensions` : 0 utilisations → **SUPPRIMÉ**
+- ✅ `django-debug-toolbar` : 0 utilisations → **SUPPRIMÉ**
+- ✅ `paypalrestsdk` : 9 utilisations → **GARDÉ** (utilisé dans invoicing/services.py)
+- ✅ `fuzzywuzzy`, `jellyfish`, `rapidfuzz` : Tous utilisés → **TOUS GARDÉS** (algorithmes différents dans ai_assistant/entity_matcher.py)
 
-**À examiner** :
-- `xhtml2pdf` vs `weasyprint`
-- `fuzzywuzzy` + `jellyfish` + `rapidfuzz` → Garder seulement `rapidfuzz`
-- `django-extensions`, `django-debug-toolbar`, `paypalrestsdk` (si non utilisés)
+**Résultat** :
+- 3 dépendances supprimées
+- Installation plus rapide
+- Moins de conflits potentiels
+- Surface d'attaque de sécurité réduite
+
+**Commit** : `9cbf9386`
 
 ---
 
@@ -286,11 +302,14 @@ saas_procurement/
 Ce nettoyage massif a permis de :
 - Supprimer **200+ fichiers** inutiles
 - Réduire la complexité de **50%**
-- Normaliser les migrations de **117 → 25 fichiers**
-- Éliminer **100%** des fichiers variant
+- Normaliser les migrations de **117 → 25 fichiers (-78.6%)**
+- Éliminer **100%** des fichiers variant (69 fichiers)
+- Supprimer **80%** des fichiers settings (5 → 1 fichier)
+- Supprimer **3 dépendances inutilisées**
 - Centraliser la génération de numéros
 - Améliorer la gestion d'erreurs
 - Organiser les signaux
+- Nettoyer les imports
 
 **Le code est maintenant plus maintenable, plus lisible et plus professionnel.**
 
