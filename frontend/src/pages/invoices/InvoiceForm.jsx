@@ -316,12 +316,13 @@ function InvoiceForm() {
       if (isEdit) {
         await invoicesAPI.update(id, payload);
         enqueueSnackbar(t('invoices:messages.invoiceUpdatedSuccess'), { variant: 'success' });
+        navigate(`/invoices/${id}`);
       } else {
-        await invoicesAPI.create(payload);
+        const response = await invoicesAPI.create(payload);
+        const invoiceId = response.data.id;
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
+        navigate(`/invoices/${invoiceId}`);
       }
-
-      navigate('/invoices');
     } catch (error) {
       console.error('Erreur API:', error);
       console.error('Response data:', error.response?.data);

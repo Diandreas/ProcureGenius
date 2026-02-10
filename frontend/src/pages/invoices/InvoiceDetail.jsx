@@ -114,7 +114,6 @@ function InvoiceDetail() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false);
-  const [markPaidDialogOpen, setMarkPaidDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
@@ -127,11 +126,6 @@ function InvoiceDetail() {
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
-  });
-  const [paymentData, setPaymentData] = useState({
-    payment_date: new Date().toISOString().split('T')[0],
-    payment_method: '',
-    notes: ''
   });
   const [newItem, setNewItem] = useState({
     description: '',
@@ -233,17 +227,6 @@ function InvoiceDetail() {
     }
   };
 
-  const handleMarkPaid = async () => {
-    try {
-      const response = await invoicesAPI.markPaid(id, paymentData);
-      setInvoice(response.data);
-      enqueueSnackbar(t('invoices:messages.invoiceMarkedPaidSuccess'), { variant: 'success' });
-      setMarkPaidDialogOpen(false);
-      setPaymentData({ payment_date: new Date().toISOString().split('T')[0], payment_method: '', notes: '' });
-    } catch (error) {
-      enqueueSnackbar(t('invoices:messages.markPaidError'), { variant: 'error' });
-    }
-  };
 
   const handleAddItem = async () => {
     try {
@@ -520,28 +503,6 @@ function InvoiceDetail() {
               <Send sx={{ fontSize: '1.1rem' }} />
             </IconButton>
           )}
-          {(invoice.status === 'sent' || isOverdue()) && (
-            <IconButton
-              size="small"
-              onClick={() => setMarkPaidDialogOpen(true)}
-              sx={{
-                bgcolor: 'warning.50',
-                color: 'warning.main',
-                width: 32,
-                height: 32,
-                borderRadius: 1,
-                '&:hover': {
-                  bgcolor: 'warning.main',
-                  color: 'white',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 8px rgba(255, 152, 0, 0.25)'
-                },
-                transition: 'all 0.2s'
-              }}
-            >
-              <Payment sx={{ fontSize: '1.1rem' }} />
-            </IconButton>
-          )}
         </Stack>
       </CardContent>
     </Card>
@@ -644,17 +605,6 @@ Cordialement`
           >
             {t('invoices:buttons.edit')}
           </Button>
-          {(invoice.status === 'sent' || isOverdue()) && (
-            <Button
-              variant="contained"
-              startIcon={<Payment />}
-              onClick={() => setMarkPaidDialogOpen(true)}
-              color="success"
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              {t('invoices:buttons.markPaid')}
-            </Button>
-          )}
           <IconButton
             onClick={(e) => setAnchorEl(e.currentTarget)}
             sx={{
@@ -1348,55 +1298,6 @@ Cordialement`
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
             {sendingEmail ? t('invoices:labels.sending') : t('invoices:dialogs.sendEmail.send')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Mark Paid Dialog */}
-      <Dialog open={markPaidDialogOpen} onClose={() => setMarkPaidDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{t('invoices:dialogs.markPaid')}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={t('invoices:fields.paymentDate')}
-                type="date"
-                value={paymentData.payment_date}
-                onChange={(e) => setPaymentData({ ...paymentData, payment_date: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={t('invoices:fields.paymentMethod')}
-                value={paymentData.payment_method}
-                onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
-                placeholder={t('invoices:fields.paymentMethodPlaceholder')}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={t('invoices:fields.notes')}
-                multiline
-                rows={3}
-                value={paymentData.notes}
-                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                placeholder={t('invoices:fields.notesPlaceholder')}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setMarkPaidDialogOpen(false)}>{t('invoices:buttons.cancel')}</Button>
-          <Button
-            onClick={handleMarkPaid}
-            variant="contained"
-            color="success"
-          >
-            {t('invoices:buttons.markPaid')}
           </Button>
         </DialogActions>
       </Dialog>

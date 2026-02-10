@@ -244,6 +244,8 @@ class LabOrderCreateView(APIView):
                 total_amount=0,
                 status='paid',
                 currency='XAF',
+                payment_method=data.get('payment_method', 'cash'),
+                organization=request.user.organization,
             )
             
             # Add invoice items from lab tests

@@ -263,6 +263,11 @@ class LabOrderCreateSerializer(serializers.Serializer):
         default='routine'
     )
     clinical_notes = serializers.CharField(required=False, allow_blank=True)
+    payment_method = serializers.ChoiceField(
+        choices=[('cash', 'Espèces'), ('mobile_money', 'Mobile Money')],
+        default='cash',
+        required=False
+    )
 
 
 class EnterResultsSerializer(serializers.Serializer):

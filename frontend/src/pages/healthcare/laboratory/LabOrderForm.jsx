@@ -63,7 +63,8 @@ const LabOrderForm = () => {
         patient: null,
         priority: 'routine',
         tests: [], // Array of test IDs
-        clinical_notes: ''
+        clinical_notes: '',
+        payment_method: 'cash' // Default to cash
     });
 
     useEffect(() => {
@@ -159,7 +160,8 @@ const LabOrderForm = () => {
                 patient_id: formData.patient.id,
                 test_ids: testIds,
                 priority: formData.priority,
-                clinical_notes: formData.clinical_notes || ''
+                clinical_notes: formData.clinical_notes || '',
+                payment_method: formData.payment_method || 'cash'
             };
 
             console.log('Sending lab order payload:', payload); // Debug log
@@ -251,6 +253,19 @@ const LabOrderForm = () => {
                                 <MenuItem value="routine">Routine</MenuItem>
                                 <MenuItem value="urgent">Urgente</MenuItem>
                                 <MenuItem value="stat">STAT (Immédiat)</MenuItem>
+                            </TextField>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <Typography variant="h6" gutterBottom>Méthode de Paiement</Typography>
+                            <TextField
+                                fullWidth
+                                select
+                                value={formData.payment_method}
+                                onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value }))}
+                            >
+                                <MenuItem value="cash">Espèces</MenuItem>
+                                <MenuItem value="mobile_money">Mobile Money</MenuItem>
                             </TextField>
 
                             <Divider sx={{ my: 2 }} />
