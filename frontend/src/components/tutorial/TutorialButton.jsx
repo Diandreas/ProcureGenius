@@ -77,7 +77,7 @@ const TutorialButton = ({
         </ListItemIcon>
         <ListItemText primary="Tutoriel" />
         {!tutorialCompleted && (
-          <Badge color="primary" variant="dot" sx={{ ml: 1 }} />
+          <Badge color="primary" variant="dot" />
         )}
       </MenuItem>
     );
@@ -96,7 +96,7 @@ const TutorialButton = ({
         >
           Aide
           {!tutorialCompleted && (
-            <Badge color="primary" variant="dot" sx={{ ml: 1 }} />
+            <Badge color="primary" variant="dot" />
           )}
         </Button>
         
@@ -212,18 +212,18 @@ const TutorialButton = ({
           <ListItemIcon>
             <PlayArrow fontSize="small" color="primary" />
           </ListItemIcon>
-          <ListItemText 
+          <ListItemText
             primary={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 Lancer le tutoriel
                 {!tutorialCompleted && (
-                  <Badge color="error" badgeContent="Nouveau" sx={{ 
-                    '& .MuiBadge-badge': { 
-                      fontSize: '0.6rem', 
-                      height: 16, 
+                  <Badge color="error" badgeContent="Nouveau" sx={{
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.6rem',
+                      height: 16,
                       minWidth: 16,
                       right: -30,
-                    } 
+                    }
                   }} />
                 )}
               </Box>

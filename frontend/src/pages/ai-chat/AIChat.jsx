@@ -869,7 +869,7 @@ const QUICK_ACTIONS_CATEGORIES = [
   {
     id: 'chat',
     label: 'Conversation IA',
-    icon: <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><Mascot pose="happy" animation="none" size={20} /></Box>,
+    icon: <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><Mascot pose="happy" animation="none" size={20} /></Box>,
     color: '#6366f1',
     actions: [
       {

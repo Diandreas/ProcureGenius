@@ -28,7 +28,6 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
-import PatientDocuments from './PatientDocuments';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
 import MedicalSummaryTab from './components/MedicalSummaryTab';
@@ -276,7 +275,6 @@ const PatientDetail = () => {
                         <Tab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
                         <Tab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
                         <Tab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
-                        <Tab icon={<FileIcon />} iconPosition="start" label="Documents" />
                     </Tabs>
                 </Box>
 
@@ -290,41 +288,123 @@ const PatientDetail = () => {
                     {tabValue === 1 && <PatientTimeline patientId={id} />}
                 </Box>
 
-                {/* Tab 2: Consultations */}
+                {/* Tab 2: Consultations - Carnet Médical */}
                 <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
                     {tabValue === 2 && (
                         <Box>
                             {history?.consultations && history.consultations.length > 0 ? (
-                                <List>
-                                    {history.consultations.map((consult) => (
-                                        <Card key={consult.id} sx={{ mb: 2, bgcolor: 'background.default', cursor: 'pointer' }}
-                                            variant="outlined"
-                                            onClick={() => navigate(`/healthcare/consultations/${consult.id}`)}>
-                                            <CardContent>
-                                                <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                                                    Consultation du {formatDate(consult.consultation_date)}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                    Dr. {consult.doctor_name || 'Non assigné'}
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ mt: 1 }}>
-                                                    <strong>Plaintes:</strong> {consult.chief_complaint}
-                                                </Typography>
-                                                <Typography variant="body1">
-                                                    <strong>Diagnostic:</strong> {consult.diagnosis || '-'}
-                                                </Typography>
-                                                {consult.status && (
+                                history.consultations.map((consult) => (
+                                    <Card key={consult.id} variant="outlined" sx={{ mb: 3, borderLeft: 4, borderColor: consult.status === 'completed' ? 'success.main' : 'warning.main' }}>
+                                        <CardContent sx={{ pb: '12px !important' }}>
+                                            {/* Header */}
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                                        {formatDate(consult.consultation_date)}
+                                                    </Typography>
                                                     <Chip
-                                                        label={consult.status}
+                                                        label={consult.status_display || consult.status}
                                                         size="small"
-                                                        color={consult.status === 'completed' ? 'success' : 'warning'}
-                                                        sx={{ mt: 1 }}
+                                                        color={consult.status === 'completed' ? 'success' : consult.status === 'in_consultation' ? 'info' : 'warning'}
+                                                        variant="outlined"
                                                     />
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        N° {consult.consultation_number}
+                                                    </Typography>
+                                                </Box>
+                                                <Button
+                                                    size="small"
+                                                    variant="text"
+                                                    onClick={() => navigate(`/healthcare/consultations/${consult.id}`)}
+                                                >
+                                                    Voir détails
+                                                </Button>
+                                            </Box>
+
+                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                                                Dr. {consult.doctor_name || 'Non assigné'}
+                                            </Typography>
+
+                                            <Divider sx={{ mb: 1.5 }} />
+
+                                            {/* Vitals row */}
+                                            {(consult.blood_pressure || consult.temperature || consult.heart_rate || consult.oxygen_saturation) && (
+                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
+                                                    {consult.blood_pressure && <Chip label={`TA: ${consult.blood_pressure} mmHg`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.temperature && <Chip label={`T°: ${consult.temperature}°C`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.heart_rate && <Chip label={`FC: ${consult.heart_rate} pls/min`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.oxygen_saturation && <Chip label={`SPO2: ${consult.oxygen_saturation}%`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.respiratory_rate && <Chip label={`FR: ${consult.respiratory_rate} c/min`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.blood_glucose && <Chip label={`Gly: ${consult.blood_glucose} g/L`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                    {consult.weight && <Chip label={`${consult.weight} kg`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />}
+                                                </Box>
+                                            )}
+
+                                            {/* Clinical info */}
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} md={6}>
+                                                    <Typography variant="caption" fontWeight="700" color="text.secondary">MOTIF</Typography>
+                                                    <Typography variant="body2">{consult.chief_complaint || '-'}</Typography>
+                                                </Grid>
+                                                {consult.physical_examination && (
+                                                    <Grid item xs={12} md={6}>
+                                                        <Typography variant="caption" fontWeight="700" color="text.secondary">EXAMEN PHYSIQUE</Typography>
+                                                        <Typography variant="body2">{consult.physical_examination}</Typography>
+                                                    </Grid>
                                                 )}
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </List>
+                                                {consult.diagnosis && (
+                                                    <Grid item xs={12} md={6}>
+                                                        <Typography variant="caption" fontWeight="700" color="text.secondary">DIAGNOSTIC</Typography>
+                                                        <Typography variant="body2" fontWeight="600" color="error.main">{consult.diagnosis}</Typography>
+                                                    </Grid>
+                                                )}
+                                                {consult.treatment_plan && (
+                                                    <Grid item xs={12} md={6}>
+                                                        <Typography variant="caption" fontWeight="700" color="text.secondary">PLAN DE TRAITEMENT</Typography>
+                                                        <Typography variant="body2">{consult.treatment_plan}</Typography>
+                                                    </Grid>
+                                                )}
+                                            </Grid>
+
+                                            {/* Prescriptions */}
+                                            {consult.prescriptions_data && consult.prescriptions_data.length > 0 && (
+                                                <Box sx={{ mt: 1.5, p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
+                                                    <Typography variant="caption" fontWeight="700" color="primary.main" sx={{ mb: 0.5, display: 'block' }}>
+                                                        ORDONNANCE
+                                                    </Typography>
+                                                    {consult.prescriptions_data.map((rx, rxIdx) => (
+                                                        <Box key={rxIdx}>
+                                                            {rx.items?.map((item, i) => (
+                                                                <Typography key={i} variant="body2" sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.light', mb: 0.3 }}>
+                                                                    <strong>{i + 1}. {item.medication_name}</strong>
+                                                                    {' — '}{item.dosage || ''} {item.frequency ? `- ${item.frequency}` : ''} {item.duration ? `(${item.duration})` : ''}
+                                                                </Typography>
+                                                            ))}
+                                                        </Box>
+                                                    ))}
+                                                </Box>
+                                            )}
+
+                                            {/* Lab Orders */}
+                                            {consult.lab_orders_data && consult.lab_orders_data.length > 0 && (
+                                                <Box sx={{ mt: 1, p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
+                                                    <Typography variant="caption" fontWeight="700" color="success.main" sx={{ mb: 0.5, display: 'block' }}>
+                                                        EXAMENS PRESCRITS
+                                                    </Typography>
+                                                    {consult.lab_orders_data.map((order, oIdx) => (
+                                                        <Box key={oIdx}>
+                                                            {order.tests?.map((test, i) => (
+                                                                <Typography key={i} variant="body2" sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'success.light', mb: 0.3 }}>
+                                                                    {i + 1}. {test.test_name} <Typography component="span" variant="caption" color="text.secondary">({test.test_code})</Typography>
+                                                                </Typography>
+                                                            ))}
+                                                        </Box>
+                                                    ))}
+                                                </Box>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))
                             ) : (
                                 <Box sx={{ textAlign: 'center', py: 4 }}>
                                     <Typography color="text.secondary" gutterBottom>
@@ -354,10 +434,6 @@ const PatientDetail = () => {
                     {tabValue === 4 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
                 </Box>
 
-                {/* Tab 5: Documents */}
-                <Box role="tabpanel" hidden={tabValue !== 5} sx={{ p: 3 }}>
-                    {tabValue === 5 && <PatientDocuments patientId={id} />}
-                </Box>
             </Card>
 
             <PrintModal

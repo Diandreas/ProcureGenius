@@ -184,7 +184,7 @@ const PatientForm = () => {
                     enqueueSnackbar(t('patients.update_success', 'Patient mis à jour avec succès'), { variant: 'success' });
                 }
 
-                navigate('/healthcare/patients');
+                navigate(`/healthcare/patients/${id}`);
             } else {
                 const response = await patientAPI.createPatient(formData);
 

@@ -108,6 +108,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   // Icon wrapper component avec neumorphisme doux
   const NavIcon = ({ src, alt, isSelected }) => (
     <Box
+      component="span"
       sx={{
         width: 32,
         height: 32,

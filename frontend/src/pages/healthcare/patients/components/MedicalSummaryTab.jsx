@@ -107,7 +107,7 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
                                     <Typography variant="caption" color="text.secondary">Tension</Typography>
                                     <Typography variant="body1" fontWeight="600">
                                         {summary.latest_vitals.systolic && summary.latest_vitals.diastolic
-                                            ? `${summary.latest_vitals.systolic}/${summary.latest_vitals.diastolic}`
+                                            ? `${summary.latest_vitals.systolic}/${summary.latest_vitals.diastolic} mmHg`
                                             : '-'}
                                     </Typography>
                                 </Grid>
@@ -118,9 +118,9 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <Typography variant="caption" color="text.secondary">Poids</Typography>
+                                    <Typography variant="caption" color="text.secondary">FC</Typography>
                                     <Typography variant="body1" fontWeight="600">
-                                        {summary.latest_vitals.weight ? `${summary.latest_vitals.weight} kg` : '-'}
+                                        {summary.latest_vitals.heart_rate ? `${summary.latest_vitals.heart_rate} pls/min` : '-'}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
@@ -130,9 +130,21 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
+                                    <Typography variant="caption" color="text.secondary">FR</Typography>
+                                    <Typography variant="body1" fontWeight="600">
+                                        {summary.latest_vitals.respiratory_rate ? `${summary.latest_vitals.respiratory_rate} c/min` : '-'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
                                     <Typography variant="caption" color="text.secondary">Glycémie</Typography>
                                     <Typography variant="body1" fontWeight="600">
                                         {summary.latest_vitals.blood_glucose ? `${summary.latest_vitals.blood_glucose} g/L` : '-'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Typography variant="caption" color="text.secondary">Poids</Typography>
+                                    <Typography variant="body1" fontWeight="600">
+                                        {summary.latest_vitals.weight ? `${summary.latest_vitals.weight} kg` : '-'}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
@@ -253,6 +265,47 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
                     </CardContent>
                 </Card>
             </Grid>
+
+            {/* Dernière Consultation */}
+            {summary.last_consultation && (
+                <Grid item xs={12}>
+                    <Card variant="outlined" sx={{ borderLeft: 4, borderColor: 'primary.main' }}>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                                <ConsultIcon color="primary" fontSize="small" />
+                                <Typography variant="subtitle1" fontWeight="bold">Dernière Consultation</Typography>
+                                <Chip
+                                    label={summary.last_consultation.status_display}
+                                    size="small"
+                                    color={summary.last_consultation.status === 'completed' ? 'success' : 'warning'}
+                                    variant="outlined"
+                                />
+                                <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+                                    {formatDate(summary.last_consultation.date)}
+                                </Typography>
+                            </Box>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={3}>
+                                    <Typography variant="caption" color="text.secondary">Médecin</Typography>
+                                    <Typography variant="body2" fontWeight="500">
+                                        Dr. {summary.last_consultation.doctor_name || '-'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <Typography variant="caption" color="text.secondary">Motif</Typography>
+                                    <Typography variant="body2">{summary.last_consultation.chief_complaint || '-'}</Typography>
+                                </Grid>
+                                <Grid item xs={12} md={5}>
+                                    <Typography variant="caption" color="text.secondary">Diagnostic</Typography>
+                                    <Typography variant="body2" fontWeight="600" color="error.main">
+                                        {summary.last_consultation.diagnosis || '-'}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            )}
         </Grid>
     );
 };

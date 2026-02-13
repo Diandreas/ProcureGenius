@@ -321,11 +321,66 @@ class ConsultationHistorySerializer(serializers.Serializer):
     id = serializers.UUIDField()
     consultation_number = serializers.CharField()
     consultation_date = serializers.DateTimeField()
+    status = serializers.CharField()
+    status_display = serializers.CharField(source='get_status_display', default='')
     doctor_name = serializers.SerializerMethodField()
     chief_complaint = serializers.CharField()
     diagnosis = serializers.CharField()
+    treatment_plan = serializers.CharField()
+    physical_examination = serializers.CharField()
+    # Vitals
+    temperature = serializers.DecimalField(max_digits=4, decimal_places=1, allow_null=True)
+    blood_pressure_systolic = serializers.IntegerField(allow_null=True)
+    blood_pressure_diastolic = serializers.IntegerField(allow_null=True)
+    blood_pressure = serializers.CharField(allow_null=True)
+    heart_rate = serializers.IntegerField(allow_null=True)
+    oxygen_saturation = serializers.IntegerField(allow_null=True)
+    respiratory_rate = serializers.IntegerField(allow_null=True)
+    blood_glucose = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    weight = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    height = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    # Related data
+    prescriptions_data = serializers.SerializerMethodField()
+    lab_orders_data = serializers.SerializerMethodField()
 
     def get_doctor_name(self, obj):
         if obj.doctor:
             return obj.doctor.get_full_name() or obj.doctor.username
         return None
+
+    def get_prescriptions_data(self, obj):
+        try:
+            prescriptions = obj.prescriptions.prefetch_related('items').all()
+            result = []
+            for rx in prescriptions:
+                items = [{
+                    'medication_name': item.medication_name,
+                    'dosage': item.dosage,
+                    'frequency': item.frequency,
+                    'duration': item.duration,
+                } for item in rx.items.all()]
+                result.append({
+                    'prescription_number': rx.prescription_number,
+                    'items': items,
+                })
+            return result
+        except Exception:
+            return []
+
+    def get_lab_orders_data(self, obj):
+        try:
+            orders = obj.lab_orders.prefetch_related('items__lab_test').all()
+            result = []
+            for order in orders:
+                tests = [{
+                    'test_name': item.lab_test.name if item.lab_test else '',
+                    'test_code': item.lab_test.test_code if item.lab_test else '',
+                } for item in order.items.all()]
+                result.append({
+                    'order_number': order.order_number,
+                    'status': order.status,
+                    'tests': tests,
+                })
+            return result
+        except Exception:
+            return []

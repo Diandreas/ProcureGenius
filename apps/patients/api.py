@@ -445,7 +445,9 @@ class PatientCompleteHistoryView(APIView):
         if Consultation:
             consultations = Consultation.objects.filter(
                 patient=patient
-            ).select_related('doctor').order_by('-consultation_date')[:10]
+            ).select_related('doctor').prefetch_related(
+                'prescriptions__items', 'lab_orders__items__lab_test'
+            ).order_by('-consultation_date')[:10]
             history['consultations'] = ConsultationHistorySerializer(consultations, many=True).data
         else:
             history['consultations'] = []
@@ -503,17 +505,33 @@ class PatientMedicalSummaryView(APIView):
             'chronic_conditions': patient.chronic_conditions or '',
         }
 
-        # Latest vitals from most recent visit
+        # Latest vitals: check both visits and consultations, pick the most recent
+        from django.db.models import Q
+
         latest_visit = PatientVisit.objects.filter(
             patient=patient
-        ).exclude(
-            vitals_systolic__isnull=True,
-            vitals_temperature__isnull=True,
-            vitals_weight__isnull=True,
+        ).filter(
+            Q(vitals_systolic__isnull=False) |
+            Q(vitals_temperature__isnull=False) |
+            Q(vitals_weight__isnull=False)
         ).order_by('-arrived_at').first()
 
+        latest_consultation = None
+        if Consultation:
+            latest_consultation = Consultation.objects.filter(
+                patient=patient
+            ).filter(
+                Q(blood_pressure_systolic__isnull=False) |
+                Q(temperature__isnull=False) |
+                Q(weight__isnull=False)
+            ).order_by('-consultation_date').first()
+
+        # Compare dates to pick the most recent source
+        vitals_from_visit = None
+        vitals_from_consultation = None
+
         if latest_visit:
-            summary['latest_vitals'] = {
+            vitals_from_visit = {
                 'date': latest_visit.arrived_at,
                 'systolic': latest_visit.vitals_systolic,
                 'diastolic': latest_visit.vitals_diastolic,
@@ -521,10 +539,33 @@ class PatientMedicalSummaryView(APIView):
                 'weight': str(latest_visit.vitals_weight) if latest_visit.vitals_weight else None,
                 'height': str(latest_visit.vitals_height) if latest_visit.vitals_height else None,
                 'spo2': latest_visit.vitals_spo2,
+                'heart_rate': latest_visit.vitals_heart_rate if hasattr(latest_visit, 'vitals_heart_rate') else None,
+                'respiratory_rate': latest_visit.vitals_respiratory_rate if hasattr(latest_visit, 'vitals_respiratory_rate') else None,
                 'blood_glucose': str(latest_visit.vitals_blood_glucose) if latest_visit.vitals_blood_glucose else None,
             }
+
+        if latest_consultation:
+            vitals_from_consultation = {
+                'date': latest_consultation.consultation_date,
+                'systolic': latest_consultation.blood_pressure_systolic,
+                'diastolic': latest_consultation.blood_pressure_diastolic,
+                'temperature': str(latest_consultation.temperature) if latest_consultation.temperature else None,
+                'weight': str(latest_consultation.weight) if latest_consultation.weight else None,
+                'height': str(latest_consultation.height) if latest_consultation.height else None,
+                'spo2': latest_consultation.oxygen_saturation,
+                'heart_rate': latest_consultation.heart_rate,
+                'respiratory_rate': latest_consultation.respiratory_rate,
+                'blood_glucose': str(latest_consultation.blood_glucose) if latest_consultation.blood_glucose else None,
+            }
+
+        # Pick the most recent one
+        if vitals_from_visit and vitals_from_consultation:
+            if vitals_from_consultation['date'] >= vitals_from_visit['date']:
+                summary['latest_vitals'] = vitals_from_consultation
+            else:
+                summary['latest_vitals'] = vitals_from_visit
         else:
-            summary['latest_vitals'] = None
+            summary['latest_vitals'] = vitals_from_consultation or vitals_from_visit
 
         # Statistics
         from django.db.models import Count
@@ -589,6 +630,23 @@ class PatientMedicalSummaryView(APIView):
                     })
             except (ImportError, Exception):
                 pass
+
+        # Last consultation summary
+        summary['last_consultation'] = None
+        if Consultation:
+            last_consult = Consultation.objects.filter(
+                patient=patient
+            ).select_related('doctor').order_by('-consultation_date').first()
+            if last_consult:
+                summary['last_consultation'] = {
+                    'id': str(last_consult.id),
+                    'date': last_consult.consultation_date,
+                    'doctor_name': last_consult.doctor.get_full_name() if last_consult.doctor else None,
+                    'chief_complaint': last_consult.chief_complaint or '',
+                    'diagnosis': last_consult.diagnosis or '',
+                    'status': last_consult.status,
+                    'status_display': last_consult.get_status_display(),
+                }
 
         return Response(summary)
 

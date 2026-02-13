@@ -191,17 +191,6 @@ const ConsultationDetail = () => {
                         Rapport Complet
                     </Button>
 
-                    {consultation.prescriptions && consultation.prescriptions.length > 0 && (
-                        <Button
-                            variant="outlined"
-                            startIcon={<PdfIcon />}
-                            onClick={() => handleOpenPrintModal('prescription')}
-                            sx={{ mr: 1 }}
-                        >
-                            Ordonnance
-                        </Button>
-                    )}
-
                     <Button
                         variant="outlined"
                         startIcon={<EditIcon />}
@@ -310,12 +299,12 @@ const ConsultationDetail = () => {
                     {/* Accordions for Prescriptions */}
                     <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <MedicationIcon fontSize="small" color="primary" />
                                 <Typography variant="body2" fontWeight="700">
                                     Ordonnance ({consultation.prescriptions?.length || 0})
                                 </Typography>
-                            </Stack>
+                            </Box>
                         </AccordionSummary>
                         <AccordionDetails sx={{ p: 1.5, pt: 0 }}>
                             {consultation.prescriptions && consultation.prescriptions.length > 0 ? (
@@ -354,12 +343,12 @@ const ConsultationDetail = () => {
                     {consultation.lab_orders_data && consultation.lab_orders_data.length > 0 && (
                         <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mt: 1, '&:before': { display: 'none' } }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                                <Stack direction="row" spacing={1} alignItems="center">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <ScienceIcon fontSize="small" color="success" />
                                     <Typography variant="body2" fontWeight="700">
                                         Examens Prescrits ({consultation.lab_orders_data.length})
                                     </Typography>
-                                </Stack>
+                                </Box>
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 1.5, pt: 0 }}>
                                 {consultation.lab_orders_data.map((order, idx) => (
