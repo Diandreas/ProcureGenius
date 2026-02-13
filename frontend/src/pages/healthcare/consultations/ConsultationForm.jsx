@@ -577,6 +577,7 @@ const ConsultationForm = () => {
                                         rows={2}
                                         fullWidth
                                         required
+                                        inputProps={{ spellCheck: true, lang: 'fr' }}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
@@ -588,6 +589,7 @@ const ConsultationForm = () => {
                                         multiline
                                         rows={3}
                                         fullWidth
+                                        inputProps={{ spellCheck: true, lang: 'fr' }}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
@@ -599,6 +601,7 @@ const ConsultationForm = () => {
                                         multiline
                                         rows={2}
                                         fullWidth
+                                        inputProps={{ spellCheck: true, lang: 'fr' }}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
