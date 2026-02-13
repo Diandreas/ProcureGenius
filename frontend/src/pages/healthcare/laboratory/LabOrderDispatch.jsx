@@ -169,23 +169,6 @@ const LabOrderDispatch = () => {
                                     </Button>
                                 </Paper>
 
-                                <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <QrCodeIcon color="primary" />
-                                        <Box>
-                                            <Typography variant="subtitle1" fontWeight="bold">Codes-barres</Typography>
-                                            <Typography variant="caption" color="text.secondary">Pour le suivi logistique</Typography>
-                                        </Box>
-                                    </Box>
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<PrintIcon />}
-                                        onClick={() => handlePrintAction('barcodes')}
-                                        disabled={generatingPdf}
-                                    >
-                                        Imprimer
-                                    </Button>
-                                </Paper>
                             </Stack>
 
                             <Divider sx={{ my: 4 }} />
