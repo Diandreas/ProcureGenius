@@ -860,7 +860,7 @@ class PatientQuickInvoiceView(APIView):
                             title=f"Services - {patient.name}",
                             payment_method=payment_method,
                             created_by=request.user,
-                            status='sent',
+                            status='paid',
                             subtotal=subtotal,
                             total_amount=subtotal,
                             tax_amount=Decimal('0')
