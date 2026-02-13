@@ -260,10 +260,14 @@ const ConsultationDetail = () => {
 
                         {/* Vitals - Super compact grid */}
                         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5 }}>
-                            <Chip label={`TA: ${consultation.blood_pressure || '-'}`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`TA: ${consultation.blood_pressure || '-'} mmHg`} size="small" sx={{ fontSize: '0.7rem' }} />
                             <Chip label={`T°: ${consultation.temperature || '-'}°C`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`FC: ${consultation.heart_rate || '-'} pls/min`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`SPO2: ${consultation.oxygen_saturation || '-'}%`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`FR: ${consultation.respiratory_rate || '-'} c/min`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`Gly: ${consultation.blood_glucose || '-'} g/L`} size="small" sx={{ fontSize: '0.7rem' }} />
                             <Chip label={`P: ${consultation.weight || '-'} kg`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`Gly: ${consultation.blood_glucose || '-'}`} size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Chip label={`T: ${consultation.height || '-'} cm`} size="small" sx={{ fontSize: '0.7rem' }} />
                         </Box>
                     </Paper>
                 </Grid>

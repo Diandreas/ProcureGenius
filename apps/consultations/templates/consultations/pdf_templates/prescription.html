@@ -94,6 +94,21 @@
     {% endfor %}
 </div>
 
+{% if lab_orders %}
+<div style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 4px; border-left: 3px solid #10b981;">
+    <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #10b981; margin-bottom: 6px;">
+        Examens complémentaires demandés
+    </div>
+    {% for order in lab_orders %}
+        {% for item in order.items.all %}
+        <div style="font-size: 9pt; padding: 2px 0;">
+            {{ forloop.counter }}. {{ item.lab_test.name }}
+        </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="signature-section">
     <div style="display: table-cell; width: 50%;">
         <div class="info-label">Fait à:</div>

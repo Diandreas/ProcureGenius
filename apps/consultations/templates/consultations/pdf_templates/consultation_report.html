@@ -55,6 +55,10 @@
         border-radius: 4px;
     }
 
+    .vitals-grid-row {
+        display: table-row;
+    }
+
     .vital-item {
         display: table-cell;
         width: 25%;
@@ -102,21 +106,41 @@
 <div class="section">
     <div class="section-title">Signes Vitaux</div>
     <div class="vitals-grid">
-        <div class="vital-item">
-            <span class="vital-label">Tension</span>
-            <span class="vital-value">{{ consultation.blood_pressure|default:"-" }} mmHg</span>
+        <div class="vitals-grid-row">
+            <div class="vital-item">
+                <span class="vital-label">Tension Artérielle</span>
+                <span class="vital-value">{{ consultation.blood_pressure|default:"-" }} mmHg</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">Température</span>
+                <span class="vital-value">{{ consultation.temperature|default:"-" }} °C</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">FC</span>
+                <span class="vital-value">{{ consultation.heart_rate|default:"-" }} pls/min</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">SPO2</span>
+                <span class="vital-value">{{ consultation.oxygen_saturation|default:"-" }} %</span>
+            </div>
         </div>
-        <div class="vital-item">
-            <span class="vital-label">Glycémie</span>
-            <span class="vital-value">{{ consultation.blood_glucose|default:"-" }} mg/dL</span>
-        </div>
-        <div class="vital-item">
-            <span class="vital-label">Température</span>
-            <span class="vital-value">{{ consultation.temperature|default:"-" }} °C</span>
-        </div>
-        <div class="vital-item">
-            <span class="vital-label">Poids</span>
-            <span class="vital-value">{{ consultation.weight|default:"-" }} kg</span>
+        <div class="vitals-grid-row">
+            <div class="vital-item">
+                <span class="vital-label">FR</span>
+                <span class="vital-value">{{ consultation.respiratory_rate|default:"-" }} cycle/min</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">Glycémie</span>
+                <span class="vital-value">{{ consultation.blood_glucose|default:"-" }} g/L</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">Poids</span>
+                <span class="vital-value">{{ consultation.weight|default:"-" }} kg</span>
+            </div>
+            <div class="vital-item">
+                <span class="vital-label">Taille / IMC</span>
+                <span class="vital-value">{{ consultation.height|default:"-" }} cm / {{ consultation.bmi|default:"-" }}</span>
+            </div>
         </div>
     </div>
 </div>
@@ -151,14 +175,57 @@
 
 {% if prescriptions %}
 <div class="section">
-    <div class="section-title">Prescriptions Associées</div>
-    <ul>
-        {% for pres in prescriptions %}
-        <li>
-            Ordonnance <b>{{ pres.prescription_number }}</b> - {{ pres.items.count }} médicaments
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="section-title">Ordonnance</div>
+    {% for pres in prescriptions %}
+    <p style="font-size: 9pt; color: #666;">{{ pres.prescription_number }}</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Médicament</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Posologie</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Fréquence</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Durée</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pres.items.all %}
+            <tr>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ item.medication_name }}</b></td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.dosage|default:"-" }}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.frequency|default:"-" }}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.duration|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if lab_orders %}
+<div class="section">
+    <div class="section-title">Examens de Laboratoire Prescrits</div>
+    {% for order in lab_orders %}
+    <p style="font-size: 9pt; color: #666;">{{ order.order_number }}</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <thead>
+            <tr style="background: #f0fdf4;">
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">#</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Examen</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ forloop.counter }}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ item.lab_test.name }}</b></td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.lab_test.test_code }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
 </div>
 {% endif %}
 
@@ -166,5 +233,9 @@
     <p>Signature:</p>
     <div style="height: 60px;"></div>
     <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
+</div>
+
+<div style="margin-top: 20px; font-size: 8pt; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 5px;">
+    Imprimé par: {{ printed_by.get_full_name|default:printed_by.username }} | {% now "d/m/Y à H:i" %}
 </div>
 {% endblock %}

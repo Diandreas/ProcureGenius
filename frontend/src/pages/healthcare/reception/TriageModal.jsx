@@ -29,12 +29,21 @@ const TriageModal = ({ open, onClose, visit, onVitalsSaved }) => {
         vitals_diastolic: visit?.vitals_diastolic || '',
         vitals_blood_glucose: visit?.vitals_blood_glucose || '',
         vitals_spo2: visit?.vitals_spo2 || '',
+        vitals_heart_rate: visit?.vitals_heart_rate || '',
+        vitals_respiratory_rate: visit?.vitals_respiratory_rate || '',
         notes: visit?.notes || '' // Allow updating notes during triage
     });
 
+    const numericFields = new Set([
+        'vitals_weight', 'vitals_height', 'vitals_temperature',
+        'vitals_systolic', 'vitals_diastolic', 'vitals_blood_glucose',
+        'vitals_spo2', 'vitals_heart_rate', 'vitals_respiratory_rate'
+    ]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const normalizedValue = numericFields.has(name) ? value.replace(',', '.') : value;
+        setFormData(prev => ({ ...prev, [name]: normalizedValue }));
     };
 
     const handleSubmit = async () => {
@@ -152,6 +161,32 @@ const TriageModal = ({ open, onClose, visit, onVitalsSaved }) => {
                             onChange={handleChange}
                             InputProps={{
                                 endAdornment: <InputAdornment position="end">mmHg</InputAdornment>,
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={6} md={4}>
+                        <TextField
+                            fullWidth
+                            label="Fréquence Cardiaque (FC)"
+                            name="vitals_heart_rate"
+                            type="number"
+                            value={formData.vitals_heart_rate}
+                            onChange={handleChange}
+                            InputProps={{
+                                endAdornment: <InputAdornment position="end">pls/min</InputAdornment>,
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={6} md={4}>
+                        <TextField
+                            fullWidth
+                            label="Fréquence Respiratoire (FR)"
+                            name="vitals_respiratory_rate"
+                            type="number"
+                            value={formData.vitals_respiratory_rate}
+                            onChange={handleChange}
+                            InputProps={{
+                                endAdornment: <InputAdornment position="end">cycle/min</InputAdornment>,
                             }}
                         />
                     </Grid>

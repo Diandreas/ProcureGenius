@@ -68,9 +68,12 @@ const ConsultationForm = () => {
         treatment_plan: '',  // Already exists in model
         // Vitals
         temperature: '',
-        blood_pressure: '',
-        blood_glucose: '',
+        blood_pressure_systolic: '',
+        blood_pressure_diastolic: '',
+        heart_rate: '',
+        oxygen_saturation: '',
         respiratory_rate: '',
+        blood_glucose: '',
         weight: '',
         height: '',
         bmi: '',
@@ -176,9 +179,12 @@ const ConsultationForm = () => {
                 diagnosis: data.diagnosis || '',
                 treatment_plan: data.treatment_plan || '',
                 temperature: data.temperature || '',
-                blood_pressure: data.blood_pressure || '',
-                blood_glucose: data.blood_glucose || '',
+                blood_pressure_systolic: data.blood_pressure_systolic || '',
+                blood_pressure_diastolic: data.blood_pressure_diastolic || '',
+                heart_rate: data.heart_rate || '',
+                oxygen_saturation: data.oxygen_saturation || '',
                 respiratory_rate: data.respiratory_rate || '',
+                blood_glucose: data.blood_glucose || '',
                 weight: data.weight || '',
                 height: data.height || '',
                 bmi: data.bmi || '',
@@ -193,9 +199,17 @@ const ConsultationForm = () => {
         }
     };
 
+    // Numeric vital fields where comma should be normalized to dot
+    const numericFields = new Set([
+        'temperature', 'blood_pressure_systolic', 'blood_pressure_diastolic',
+        'heart_rate', 'oxygen_saturation', 'respiratory_rate',
+        'blood_glucose', 'weight', 'height'
+    ]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const normalizedValue = numericFields.has(name) ? value.replace(',', '.') : value;
+        setFormData(prev => ({ ...prev, [name]: normalizedValue }));
     };
 
     const handlePatientSelect = (event, newPatient) => {
@@ -272,8 +286,12 @@ const ConsultationForm = () => {
                 diagnosis: formData.diagnosis || '',
                 treatment_plan: formData.treatment_plan || '',
                 temperature: formData.temperature || null,
-                blood_glucose: formData.blood_glucose || null,
+                blood_pressure_systolic: formData.blood_pressure_systolic || null,
+                blood_pressure_diastolic: formData.blood_pressure_diastolic || null,
+                heart_rate: formData.heart_rate || null,
+                oxygen_saturation: formData.oxygen_saturation || null,
                 respiratory_rate: formData.respiratory_rate || null,
+                blood_glucose: formData.blood_glucose || null,
                 weight: formData.weight || null,
                 height: formData.height || null,
                 started_at: formData.started_at,
@@ -434,41 +452,108 @@ const ConsultationForm = () => {
                                         name="temperature"
                                         value={formData.temperature}
                                         onChange={handleInputChange}
+                                        placeholder="37.5"
                                         size="small"
                                         fullWidth
+                                        inputProps={{ inputMode: 'decimal' }}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={3}>
                                     <TextField
-                                        label="Tension Arterielle"
-                                        name="blood_pressure"
-                                        value={formData.blood_pressure}
+                                        label="TA Systolique"
+                                        name="blood_pressure_systolic"
+                                        value={formData.blood_pressure_systolic}
                                         onChange={handleInputChange}
-                                        placeholder="120/80"
+                                        placeholder="120"
                                         size="small"
                                         fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
+                                        InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">mmHg</Typography> }}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={3}>
+                                    <TextField
+                                        label="TA Diastolique"
+                                        name="blood_pressure_diastolic"
+                                        value={formData.blood_pressure_diastolic}
+                                        onChange={handleInputChange}
+                                        placeholder="80"
+                                        size="small"
+                                        fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
+                                        InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">mmHg</Typography> }}
+                                    />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField
+                                        label="FC (pls/min)"
+                                        name="heart_rate"
+                                        value={formData.heart_rate}
+                                        onChange={handleInputChange}
+                                        placeholder="72"
+                                        size="small"
+                                        fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField
+                                        label="SPO2 (%)"
+                                        name="oxygen_saturation"
+                                        value={formData.oxygen_saturation}
+                                        onChange={handleInputChange}
+                                        placeholder="98"
+                                        size="small"
+                                        fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField
+                                        label="FR (cycle/min)"
+                                        name="respiratory_rate"
+                                        value={formData.respiratory_rate}
+                                        onChange={handleInputChange}
+                                        placeholder="16"
+                                        size="small"
+                                        fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={4}>
                                     <TextField
                                         label="Glycémie (g/L)"
                                         name="blood_glucose"
                                         value={formData.blood_glucose}
                                         onChange={handleInputChange}
+                                        placeholder="0.90"
                                         size="small"
-                                        type="number"
-                                        inputProps={{ step: "0.01" }}
                                         fullWidth
+                                        inputProps={{ inputMode: 'decimal' }}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={4}>
                                     <TextField
                                         label="Poids (kg)"
                                         name="weight"
                                         value={formData.weight}
                                         onChange={handleInputChange}
+                                        placeholder="70"
                                         size="small"
                                         fullWidth
+                                        inputProps={{ inputMode: 'decimal' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField
+                                        label="Taille (cm)"
+                                        name="height"
+                                        value={formData.height}
+                                        onChange={handleInputChange}
+                                        placeholder="170"
+                                        size="small"
+                                        fullWidth
+                                        inputProps={{ inputMode: 'numeric' }}
                                     />
                                 </Grid>
                             </Grid>

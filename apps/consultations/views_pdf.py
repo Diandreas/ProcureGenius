@@ -69,9 +69,10 @@ class ConsultationReportView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWe
         
         context['consultation'] = consultation
         context['patient'] = consultation.patient
-        context['prescriptions'] = consultation.prescriptions.all()
-        # Add lab orders if any linked to visit or patient/date
-        
+        context['prescriptions'] = consultation.prescriptions.prefetch_related('items__medication').all()
+        context['lab_orders'] = consultation.lab_orders.prefetch_related('items__lab_test').all()
+        context['printed_by'] = self.request.user
+
         return context
 
 
@@ -109,5 +110,9 @@ class PrescriptionPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasy
         context['patient'] = prescription.patient
         context['prescriber'] = prescription.prescriber
         context['items'] = prescription.items.all()
+
+        # Examens prescrits (indicatif) depuis la consultation liée
+        if prescription.consultation:
+            context['lab_orders'] = prescription.consultation.lab_orders.prefetch_related('items__lab_test').all()
         
         return context
