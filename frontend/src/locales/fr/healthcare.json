@@ -24,13 +24,13 @@
     "loading": "Chargement des consultations...",
     "search": "Rechercher par patient, motif, médecin..."
   },
-  "visits": {
-    "dashboard": "Visites du Jour",
-    "new_checkin": "Nouvelle Visite",
+  "reception": {
+    "dashboard": "Réception & Urgences",
+    "new_checkin": "Nouvelle Arrivée",
     "total_today": "Total Aujourd'hui",
-    "waiting": "En Attente",
-    "in_progress": "En Cours",
-    "completed": "Terminées"
+    "waiting": "En Salle d'Attente",
+    "consulting": "En Consultation",
+    "completed": "Terminés"
   },
   "pharmacy": {
     "inventory": "Pharmacie Stock",

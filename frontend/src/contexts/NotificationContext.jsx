@@ -14,7 +14,7 @@ const MODULE_MESSAGES = {
   'laboratory.pending': 'Nouveau prelevement en attente au laboratoire',
   'consultations.waiting': 'Nouveau patient en salle d\'attente',
   'pharmacy.pending': 'Nouvelle dispensation en attente',
-  'visits.waiting': 'Nouvelle visite en attente',
+  'reception.waiting': 'Nouveau patient a la reception',
 };
 
 function getCountValue(counts, path) {
@@ -98,7 +98,7 @@ export function NotificationProvider({ children }) {
       case 'consultations': return moduleData.waiting || 0;
       case 'laboratory': return moduleData.pending || 0;
       case 'pharmacy': return moduleData.pending || 0;
-      case 'visits': return moduleData.waiting || 0;
+      case 'reception': return moduleData.waiting || 0;
       default: return 0;
     }
   }, [counts]);

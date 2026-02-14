@@ -566,7 +566,7 @@ function InvoiceForm() {
                       <Add fontSize="small" />
                     </IconButton>
                   </Box>
-                    <Autocomplete
+                  <Autocomplete
                     options={clients}
                     getOptionLabel={(option) => option.name || ''}
                     value={formData.client}
@@ -580,11 +580,6 @@ function InvoiceForm() {
                         size="small"
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
-                    )}
-                    PopperComponent={(popperProps) => (
-                      <Popper {...popperProps} style={{ ...popperProps.style, zIndex: 1300 }}>
-                        {popperProps.children}
-                      </Popper>
                     )}
                   />
                   {formData.client && (
@@ -936,11 +931,6 @@ function InvoiceForm() {
                           </Box>
                         );
                       }}
-                      PopperComponent={(popperProps) => (
-                        <Popper {...popperProps} style={{ ...popperProps.style, zIndex: 1300 }}>
-                          {popperProps.children}
-                        </Popper>
-                      )}
                     />
                     {formData.client && (
                       <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>

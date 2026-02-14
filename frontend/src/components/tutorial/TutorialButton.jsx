@@ -77,17 +77,7 @@ const TutorialButton = ({
         </ListItemIcon>
         <ListItemText primary="Tutoriel" />
         {!tutorialCompleted && (
-          <Box
-            component="span"
-            sx={{
-              ml: 1,
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              bgcolor: 'primary.main',
-              display: 'inline-block'
-            }}
-          />
+          <Badge color="primary" variant="dot" />
         )}
       </MenuItem>
     );
@@ -106,20 +96,10 @@ const TutorialButton = ({
         >
           Aide
           {!tutorialCompleted && (
-            <Box
-              component="span"
-              sx={{
-                ml: 0.5,
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                display: 'inline-block'
-              }}
-            />
+            <Badge color="primary" variant="dot" />
           )}
         </Button>
-
+        
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -131,24 +111,24 @@ const TutorialButton = ({
             <ListItemIcon>
               <PlayArrow fontSize="small" color="primary" />
             </ListItemIcon>
-            <ListItemText
+            <ListItemText 
               primary="Lancer le tutoriel"
               secondary="Visite guidée de l'application"
             />
           </MenuItem>
-
+          
           {tutorialCompleted && (
             <MenuItem onClick={handleResetTutorial}>
               <ListItemIcon>
                 <Refresh fontSize="small" />
               </ListItemIcon>
-              <ListItemText
+              <ListItemText 
                 primary="Revoir le tutoriel"
                 secondary="Recommencer depuis le début"
               />
             </MenuItem>
           )}
-
+          
           <Divider />
 
           <MenuItem onClick={() => { handleCloseMenu(); navigate('/help'); }}>
@@ -206,13 +186,12 @@ const TutorialButton = ({
             color="primary"
             variant="dot"
             invisible={tutorialCompleted}
-            overlap="rectangular"
           >
             <HelpOutline sx={{ fontSize: { xs: 18, sm: 22 } }} />
           </Badge>
         </IconButton>
       </Tooltip>
-
+      
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -228,46 +207,43 @@ const TutorialButton = ({
             Besoin d'aide ?
           </Typography>
         </Box>
-
+        
         <MenuItem onClick={handleStartTutorial}>
           <ListItemIcon>
             <PlayArrow fontSize="small" color="primary" />
           </ListItemIcon>
           <ListItemText
-            primary="Lancer le tutoriel"
-            secondary={
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                Visite guidée interactive
+            primary={
+              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Lancer le tutoriel
                 {!tutorialCompleted && (
-                  <Typography component="span" variant="caption" sx={{
-                    ml: 0.5,
-                    px: 0.5,
-                    py: 0.25,
-                    bgcolor: 'error.main',
-                    color: 'white',
-                    borderRadius: 0.5,
-                    fontSize: '0.6rem'
-                  }}>
-                    Nouveau
-                  </Typography>
+                  <Badge color="error" badgeContent="Nouveau" sx={{
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.6rem',
+                      height: 16,
+                      minWidth: 16,
+                      right: -30,
+                    }
+                  }} />
                 )}
               </Box>
             }
+            secondary="Visite guidée interactive"
           />
         </MenuItem>
-
+        
         {tutorialCompleted && (
           <MenuItem onClick={handleResetTutorial}>
             <ListItemIcon>
               <Refresh fontSize="small" />
             </ListItemIcon>
-            <ListItemText
+            <ListItemText 
               primary="Revoir le tutoriel"
               secondary="Recommencer la visite"
             />
           </MenuItem>
         )}
-
+        
         <Divider sx={{ my: 1 }} />
 
         <MenuItem onClick={() => { handleCloseMenu(); navigate('/help'); }}>

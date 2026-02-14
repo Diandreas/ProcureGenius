@@ -153,7 +153,7 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                 </Typography>
 
                 {moduleInfo.features.length > 0 && (
-                    <Box>
+                    <>
                         <Typography variant="subtitle2" gutterBottom sx={{ mt: 2, mb: 1 }}>
                             Fonctionnalités incluses:
                         </Typography>
@@ -167,7 +167,7 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                                 </ListItem>
                             ))}
                         </List>
-                    </Box>
+                    </>
                 )}
 
                 <Box sx={{

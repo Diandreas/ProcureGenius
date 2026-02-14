@@ -2,8 +2,31 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSharedElement } from '../../contexts/SharedElementContext';
-import { Box, Card, CardContent, Typography, Button, IconButton, Chip, Avatar, Divider, Grid, Stack, CircularProgress, Alert, Tabs, useMediaQuery, useTheme, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
-import { SafeTab } from '../../components/safe';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+  Avatar,
+  Divider,
+  Grid,
+  Stack,
+  CircularProgress,
+  Alert,
+  Tabs,
+  Tab,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
   ArrowBack,
@@ -530,9 +553,9 @@ function ClientDetail() {
           }
         }}
       >
-        <SafeTab icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.info')} iconPosition="start" />
-        <SafeTab icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.invoices')} iconPosition="start" />
-        <SafeTab icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.products')} iconPosition="start" />
+        <Tab icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.info')} iconPosition="start" />
+        <Tab icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.invoices')} iconPosition="start" />
+        <Tab icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />} label={t('clients:tabs.products')} iconPosition="start" />
       </Tabs>
 
       {/* Loading skeleton pendant le chargement */}

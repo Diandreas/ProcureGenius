@@ -1,7 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Card, CardContent, Typography, Button, Chip, Divider, Grid, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, useTheme, Tabs, LinearProgress, Avatar, Tooltip } from '@mui/material';
-import { SafeTab } from '../../../components/safe';
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    Button,
+    Chip,
+    Divider,
+    Grid,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    CircularProgress,
+    Alert,
+    useTheme,
+    Tab,
+    Tabs,
+    LinearProgress,
+    Avatar,
+    Tooltip,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
     ArrowBack as ArrowBackIcon,
@@ -731,8 +755,8 @@ const MedicationDetail = () => {
                         },
                     }}
                 >
-                    <SafeTab icon={<InfoIcon />} iconPosition="start" label="Informations" />
-                    <SafeTab icon={<HistoryIcon />} iconPosition="start" label="Dispensations" />
+                    <Tab icon={<InfoIcon />} iconPosition="start" label="Informations" />
+                    <Tab icon={<HistoryIcon />} iconPosition="start" label="Dispensations" />
                 </Tabs>
             </Paper>
 

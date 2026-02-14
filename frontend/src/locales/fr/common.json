@@ -178,13 +178,13 @@
     "loading": "Chargement des patients...",
     "search": "Rechercher par nom, ID ou téléphone..."
   },
-  "visits": {
-    "dashboard": "Visites du Jour",
-    "new_checkin": "Nouvelle Visite",
+  "reception": {
+    "dashboard": "Réception & Urgences",
+    "new_checkin": "Enregistrer Patient (Arrivée)",
     "total_today": "Total Aujourd'hui",
-    "waiting": "En Attente",
-    "in_progress": "En Cours",
-    "completed": "Terminées"
+    "waiting": "En Salle d'Attente",
+    "consulting": "En Consultation",
+    "completed": "Terminés"
   },
   "pharmacy": {
     "inventory": "Pharmacie Stock",
@@ -198,8 +198,5 @@
     "search": "Rechercher une commande, un patient...",
     "loading": "Chargement...",
     "edit": "Modifier"
-  },
-  "dashboard": {
-    "title": "Tableau de Bord"
   }
 }

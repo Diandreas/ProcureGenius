@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, Tabs, Divider, List, Avatar } from '@mui/material';
-import { SafeTab } from '../../../components/safe';
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Grid,
+    Typography,
+    Chip,
+    Tabs,
+    Tab,
+    Divider,
+    List,
+    Avatar
+} from '@mui/material';
 import {
     Edit as EditIcon,
     Timeline as TimelineIcon,
@@ -258,11 +270,11 @@ const PatientDetail = () => {
                         variant="scrollable"
                         scrollButtons="auto"
                     >
-                        <SafeTab icon={<SummaryIcon />} iconPosition="start" label="Résumé Médical" />
-                        <SafeTab icon={<TimelineIcon />} iconPosition="start" label="Timeline" />
-                        <SafeTab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
-                        <SafeTab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
-                        <SafeTab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
+                        <Tab icon={<SummaryIcon />} iconPosition="start" label="Résumé Médical" />
+                        <Tab icon={<TimelineIcon />} iconPosition="start" label="Timeline" />
+                        <Tab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
+                        <Tab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
+                        <Tab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
                     </Tabs>
                 </Box>
 

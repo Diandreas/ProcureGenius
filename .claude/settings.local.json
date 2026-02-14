@@ -99,10 +99,7 @@
       "Bash(echo:*)",
       "Bash(if not exist \"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\frontend\\\\src\\\\components\\\\navigation\" mkdir \"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\frontend\\\\src\\\\components\\\\navigation\")",
       "Bash(api \")",
-      "Bash(npx react-scripts build:*)",
-      "Bash(magick:*)",
-      "Bash(convert:*)",
-      "Bash(npm dedupe:*)"
+      "Bash(npx react-scripts build:*)"
     ],
     "deny": [],
     "ask": []

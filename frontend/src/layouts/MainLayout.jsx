@@ -24,7 +24,6 @@ import {
   Badge,
   Divider,
 } from '@mui/material';
-import { SafeButton } from '../components/safe';
 import { motion, LayoutGroup } from 'framer-motion';
 import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
 import {
@@ -127,10 +126,9 @@ function MainLayout() {
 
     // Healthcare
     { text: 'Patients', iconSrc: '/icon/user.png', path: '/healthcare/patients', moduleId: 'patients', isCore: false },
-    { text: 'Visites', iconSrc: '/icon/support.png', path: '/healthcare/visits', moduleId: 'visits', isCore: false },
+    { text: 'Réception', iconSrc: '/icon/support.png', path: '/healthcare/reception', moduleId: 'reception', isCore: false },
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
     { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },
-    { text: 'Réactifs Ouverts', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/opened-reagents', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/inventory', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
@@ -368,175 +366,167 @@ function MainLayout() {
 
       {/* Navigation */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
-        <Box>
-          <List disablePadding>
-            {menuItems.filter(item => {
-              if (item.isCore) return true;
-              if (!hasModule(item.moduleId)) return false;
+        <List disablePadding>
+          {menuItems.filter(item => {
+            if (item.isCore) return true;
+            if (!hasModule(item.moduleId)) return false;
 
-              // Si accessible_modules est disponible (depuis l'objet profil), l'utiliser
-              // Sinon fallback sur permissions.module_access s'il n'est pas vide
-              // Exception pour l'admin principal (admin@csj.cm) qui a toujours tout accès
-              if (user?.email === 'admin@csj.cm') {
-                return true;
-              }
-
-              if (user?.accessible_modules) {
-                return user.accessible_modules.includes(item.moduleId);
-              }
-
-              if (userPermissions?.module_access && userPermissions.module_access.length > 0) {
-                return userPermissions.module_access.includes(item.moduleId);
-              }
-
+            // Si accessible_modules est disponible (depuis l'objet profil), l'utiliser
+            // Sinon fallback sur permissions.module_access s'il n'est pas vide
+            // Exception pour l'admin principal (admin@csj.cm) qui a toujours tout accès
+            if (user?.email === 'admin@csj.cm') {
               return true;
-            }).map((item) => {
-              const isSelected = location.pathname === item.path ||
-                (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+            }
 
-              return (
-                <Box key={item.text}>
-                  <ListItem disablePadding sx={{ mb: 1 }}>
-                    <ListItemButton
-                      selected={isSelected}
-                      onClick={() => handleModuleClick(item)}
-                      data-tutorial={`menu-${item.moduleId}`}
-                      sx={{
-                        minHeight: 48,
-                        px: 2,
-                        borderRadius: 3,
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          transform: 'translateX(4px)',
-                        },
-                        '&.Mui-selected': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.12),
-                          '&:before': {
-                            content: '""',
-                            position: 'absolute',
-                            left: 0,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            height: '50%',
-                            width: 4,
-                            borderRadius: '0 4px 4px 0',
-                            bgcolor: 'primary.main',
-                          },
-                          '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 700 },
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
-                        {(() => {
-                          const badgeCount = getModuleCount(item.moduleId);
-                          const icon = (
-                            <IconImage
-                              src={item.iconSrc}
-                              alt={item.text}
-                              size={22}
-                              withBackground={mode === 'dark'}
-                              style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
-                            />
-                          );
-                          return badgeCount > 0 ? (
-                            <Badge
-                              badgeContent={badgeCount > 9 ? '9+' : badgeCount}
-                              color="error"
-                              sx={{
-                                '& .MuiBadge-badge': {
-                                  fontSize: '0.65rem',
-                                  minWidth: 18,
-                                  height: 18,
-                                  padding: '0 4px',
-                                  fontWeight: 700,
-                                },
-                              }}
-                            >
-                              {icon}
-                            </Badge>
-                          ) : icon;
-                        })()}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={item.text}
-                        primaryTypographyProps={{
-                          fontSize: '0.9rem',
-                          fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? 'primary.main' : 'text.secondary',
-                        }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Box>
-              );
-            })}
-          </List>
-        </Box>
+            if (user?.accessible_modules) {
+              return user.accessible_modules.includes(item.moduleId);
+            }
+
+            if (userPermissions?.module_access && userPermissions.module_access.length > 0) {
+              return userPermissions.module_access.includes(item.moduleId);
+            }
+
+            return true;
+          }).map((item) => {
+            const isSelected = location.pathname === item.path ||
+              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+
+            return (
+              <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+                <ListItemButton
+                  selected={isSelected}
+                  onClick={() => handleModuleClick(item)}
+                  data-tutorial={`menu-${item.moduleId}`}
+                  sx={{
+                    minHeight: 48,
+                    px: 2,
+                    borderRadius: 3,
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      transform: 'translateX(4px)',
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        height: '50%',
+                        width: 4,
+                        borderRadius: '0 4px 4px 0',
+                        bgcolor: 'primary.main',
+                      },
+                      '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 700 },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
+                    {(() => {
+                      const badgeCount = getModuleCount(item.moduleId);
+                      const icon = (
+                        <IconImage
+                          src={item.iconSrc}
+                          alt={item.text}
+                          size={22}
+                          withBackground={mode === 'dark'}
+                          style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
+                        />
+                      );
+                      return badgeCount > 0 ? (
+                        <Badge
+                          badgeContent={badgeCount > 9 ? '9+' : badgeCount}
+                          color="error"
+                          sx={{
+                            '& .MuiBadge-badge': {
+                              fontSize: '0.65rem',
+                              minWidth: 18,
+                              height: 18,
+                              padding: '0 4px',
+                              fontWeight: 700,
+                            },
+                          }}
+                        >
+                          {icon}
+                        </Badge>
+                      ) : icon;
+                    })()}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{
+                      fontSize: '0.9rem',
+                      fontWeight: isSelected ? 700 : 500,
+                      color: isSelected ? 'primary.main' : 'text.secondary',
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
       </Box>
 
       {/* Bottom Section */}
       <Box sx={{ px: 2, pb: 3 }}>
         {userPermissions?.can_manage_users && (
-          <Box>
-            <ListItem disablePadding sx={{ mb: 1 }}>
-              <ListItemButton
-                onClick={() => navigate('/settings/users')}
-                sx={{
-                  minHeight: 48, px: 2, borderRadius: 3,
-                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  {mode === 'dark' ? (
-                    <Box sx={{
-                      width: 30, height: 30, borderRadius: '8px',
-                      bgcolor: '#fef7ed',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      <SupervisorAccount sx={{ fontSize: 18, color: '#475569' }} />
-                    </Box>
-                  ) : (
-                    <SupervisorAccount sx={{ fontSize: 22, color: 'text.secondary' }} />
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('navigation:menu.users')}
-                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
-                />
-              </ListItemButton>
-            </ListItem>
-          </Box>
+          <ListItem disablePadding sx={{ mb: 1 }}>
+            <ListItemButton
+              onClick={() => navigate('/settings/users')}
+              sx={{
+                minHeight: 48, px: 2, borderRadius: 3,
+                '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {mode === 'dark' ? (
+                  <Box sx={{
+                    width: 30, height: 30, borderRadius: '8px',
+                    bgcolor: '#fef7ed',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <SupervisorAccount sx={{ fontSize: 18, color: '#475569' }} />
+                  </Box>
+                ) : (
+                  <SupervisorAccount sx={{ fontSize: 22, color: 'text.secondary' }} />
+                )}
+              </ListItemIcon>
+              <ListItemText
+                primary={t('navigation:menu.users')}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+              />
+            </ListItemButton>
+          </ListItem>
         )}
         {userPermissions?.can_manage_settings && (
-          <Box>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => navigate('/settings')}
-                data-tutorial="menu-settings"
-                sx={{
-                  minHeight: 48, px: 2, borderRadius: 3,
-                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <IconImage
-                    src="/icon/setting.png"
-                    alt="Settings"
-                    size={22}
-                    withBackground={mode === 'dark'}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('navigation:menu.settings')}
-                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => navigate('/settings')}
+              data-tutorial="menu-settings"
+              sx={{
+                minHeight: 48, px: 2, borderRadius: 3,
+                '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <IconImage
+                  src="/icon/setting.png"
+                  alt="Settings"
+                  size={22}
+                  withBackground={mode === 'dark'}
                 />
-              </ListItemButton>
-            </ListItem>
-          </Box>
+              </ListItemIcon>
+              <ListItemText
+                primary={t('navigation:menu.settings')}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+              />
+            </ListItemButton>
+          </ListItem>
         )}
       </Box>
     </Box>
@@ -649,7 +639,7 @@ function MainLayout() {
                             }
                           }}
                         >
-                          <Box><Refresh sx={{ fontSize: 16 }} /></Box>
+                          <Refresh sx={{ fontSize: 16 }} />
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -657,7 +647,7 @@ function MainLayout() {
                     // Afficher le bouton "Nouveau" à gauche sur mobile pour les pages principales
                     <Button
                       variant="contained"
-                      {...(contextualActions.action.icon && { startIcon: contextualActions.action.icon })}
+                      startIcon={contextualActions.action.icon}
                       onClick={contextualActions.action.onClick}
                       disableElevation
                       size="small"
@@ -760,7 +750,7 @@ function MainLayout() {
                       '&:hover': { bgcolor: alpha(theme.palette.success.main, 0.08), color: 'success.main' }
                     }}
                   >
-                    <Box><Assignment sx={{ fontSize: 20 }} /></Box>
+                    <Assignment sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
 
@@ -775,11 +765,9 @@ function MainLayout() {
                       '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.08) }
                     }}
                   >
-                    <Box>
-                      <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" variant="dot">
-                        <Notifications sx={{ fontSize: 20 }} />
-                      </Badge>
-                    </Box>
+                    <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" variant="dot">
+                      <Notifications sx={{ fontSize: 20 }} />
+                    </Badge>
                   </IconButton>
                 </Tooltip>
 
@@ -794,11 +782,9 @@ function MainLayout() {
                       '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) }
                     }}
                   >
-                    <Box>
-                      <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" variant="dot">
-                        <Lightbulb sx={{ fontSize: 20 }} />
-                      </Badge>
-                    </Box>
+                    <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" variant="dot">
+                      <Lightbulb sx={{ fontSize: 20 }} />
+                    </Badge>
                   </IconButton>
                 </Tooltip>
               </Box>
@@ -830,23 +816,21 @@ function MainLayout() {
               }}>
                 {/* <PeriodSelector period={contextualActions.currentPeriod} onChange={contextualActions.onPeriodChange} /> */}
                 <Tooltip title="Actualiser">
-                  <Box>
-                    <IconButton
-                      onClick={contextualActions.onRefresh}
-                      size="small"
-                      sx={{
-                        p: { xs: 0.75, sm: 1 },
-                        borderRadius: 2,
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'primary.main',
-                          bgcolor: alpha(theme.palette.primary.main, 0.08)
-                        }
-                      }}
-                    >
-                      <Box><Refresh sx={{ fontSize: { xs: 16, sm: 18 } }} /></Box>
-                    </IconButton>
-                  </Box>
+                  <IconButton
+                    onClick={contextualActions.onRefresh}
+                    size="small"
+                    sx={{
+                      p: { xs: 0.75, sm: 1 },
+                      borderRadius: 2,
+                      color: 'text.secondary',
+                      '&:hover': {
+                        color: 'primary.main',
+                        bgcolor: alpha(theme.palette.primary.main, 0.08)
+                      }
+                    }}
+                  >
+                    <Refresh sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                  </IconButton>
                 </Tooltip>
               </Box>
             )}
@@ -878,7 +862,7 @@ function MainLayout() {
                 <Button
                   key={index}
                   variant="outlined"
-                  {...(action.icon && { startIcon: action.icon })}
+                  startIcon={action.icon}
                   onClick={action.onClick}
                   size="small"
                   sx={{
@@ -906,7 +890,7 @@ function MainLayout() {
             {contextualActions?.action && !contextualActions?.actions && (
               <Button
                 variant="contained"
-                {...(contextualActions.action.icon && { startIcon: contextualActions.action.icon })}
+                startIcon={contextualActions.action.icon}
                 onClick={contextualActions.action.onClick}
                 disableElevation
                 sx={{
@@ -972,9 +956,7 @@ function MainLayout() {
             )}
 
             {/* Tutorial Button - Visible partout */}
-            <Box>
-              <TutorialButton variant="icon" size="small" />
-            </Box>
+            <TutorialButton variant="icon" size="small" />
 
             {/* Theme Toggle - Design Premium (compact sur mobile) */}
             <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
@@ -1069,24 +1051,22 @@ function MainLayout() {
                 },
               }}
             >
-              <Box>
-                <MenuItem
-                  onClick={() => { navigate('/settings'); handleMenuClose(); }}
-                  sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
-                >
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    <Box><Tune fontSize="small" /></Box>
-                  </ListItemIcon>
-                  <Box>{t('navigation:userMenu.settings')}</Box>
-                </MenuItem>
-                <Divider sx={{ my: 0.5 }} />
-                <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5, color: 'error.main' }}>
-                  <ListItemIcon sx={{ minWidth: 32, color: 'error.main' }}>
-                    <Box component="span" sx={{ fontSize: 20 }}>⏻</Box>
-                  </ListItemIcon>
-                  <Box>{t('navigation:userMenu.logout')}</Box>
-                </MenuItem>
-              </Box>
+              <MenuItem
+                onClick={() => { navigate('/settings'); handleMenuClose(); }}
+                sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <Tune fontSize="small" />
+                </ListItemIcon>
+                {t('navigation:userMenu.settings')}
+              </MenuItem>
+              <Divider sx={{ my: 0.5 }} />
+              <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5, color: 'error.main' }}>
+                <ListItemIcon sx={{ minWidth: 32, color: 'error.main' }}>
+                  <Box component="span" sx={{ fontSize: 20 }}>⏻</Box>
+                </ListItemIcon>
+                {t('navigation:userMenu.logout')}
+              </MenuItem>
             </Menu>
           </Toolbar>
         </AppBar>
