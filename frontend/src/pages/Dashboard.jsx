@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Grid, Typography, Container, Paper, alpha, Tabs, Tab, Chip, Stack
+  Box, Grid, Typography, Container, Paper, alpha, Tabs, Chip, Stack
 } from '@mui/material';
+import { SafeTab } from '../components/safe';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -152,10 +153,30 @@ const Dashboard = () => {
             scrollButtons="auto"
             sx={{ px: 2 }}
           >
-            <Tab icon={<DashboardIcon />} iconPosition="start" label="Vue d'ensemble" />
-            <Tab icon={<InventoryIcon />} iconPosition="start" label="Stock & Alertes" />
-            <Tab icon={<MedicalIcon />} iconPosition="start" label="Sante & Labo" />
-            <Tab icon={<MoneyIcon />} iconPosition="start" label="Finances" />
+            <SafeTab
+              icon={<DashboardIcon />}
+              iconPosition="start"
+              label="Vue d'ensemble"
+              sx={{ minHeight: 48 }}
+            />
+            <SafeTab
+              icon={<InventoryIcon />}
+              iconPosition="start"
+              label="Stock & Alertes"
+              sx={{ minHeight: 48 }}
+            />
+            <SafeTab
+              icon={<MedicalIcon />}
+              iconPosition="start"
+              label="Sante & Labo"
+              sx={{ minHeight: 48 }}
+            />
+            <SafeTab
+              icon={<MoneyIcon />}
+              iconPosition="start"
+              label="Finances"
+              sx={{ minHeight: 48 }}
+            />
           </Tabs>
         </Paper>
 

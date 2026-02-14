@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box, Grid, Paper, Typography, Container, Tabs, Tab,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TablePagination, TableSortLabel, TextField, InputAdornment
-} from '@mui/material';
+import { Box, Grid, Paper, Typography, Container, Tabs, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TableSortLabel, TextField, InputAdornment } from '@mui/material';
+import { SafeTab } from '../../../components/safe';
 import { TrendingUp as TrendingUpIcon, Search as SearchIcon } from '@mui/icons-material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import FilterPanel from '../../../components/analytics/FilterPanel';
@@ -200,8 +197,8 @@ const MovementAnalytics = () => {
             {/* Tabs for charts vs full table */}
             <Paper sx={{ mb: 3 }}>
               <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ px: 2, pt: 1 }}>
-                <Tab label="Graphiques Top 10" />
-                <Tab label={`Classement complet (${filteredProducts.length})`} />
+                <SafeTab label="Graphiques Top 10" />
+                <SafeTab label={`Classement complet (${filteredProducts.length})`} />
               </Tabs>
 
               {tabValue === 0 && (

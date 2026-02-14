@@ -36,9 +36,15 @@ const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => 
           </Typography>
         ) : (
           <>
-            <Typography variant="h4" fontWeight="700" color={color}>
-              {value}
-            </Typography>
+            {typeof value === 'string' || typeof value === 'number' ? (
+              <Typography variant="h4" fontWeight="700" color={color}>
+                {value}
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', color, fontSize: '2rem', fontWeight: 700 }}>
+                {value}
+              </Box>
+            )}
             {subtitle && (
               <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                 {subtitle}

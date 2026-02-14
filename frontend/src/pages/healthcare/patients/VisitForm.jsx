@@ -115,7 +115,7 @@ const VisitForm = () => {
             if (patientId) {
                 navigate(`/healthcare/patients/${patientId}`);
             } else {
-                navigate('/healthcare/reception');
+                navigate('/healthcare/visits');
             }
         } catch (error) {
             console.error('Error registering visit:', error);

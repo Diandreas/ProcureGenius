@@ -46,8 +46,8 @@ import InvoiceDetail from './pages/invoices/InvoiceDetail';
 import InvoiceForm from './pages/invoices/InvoiceForm';
 import Products from './pages/products/Products';
 import ProductDetail from './pages/products/ProductDetail';
-import ProductForm from './pages/products/ProductForm';
 import ProductBatches from './pages/products/ProductBatches';
+import ProductForm from './pages/products/ProductForm';
 
 // New Analytics Pages
 import WilsonEOQAnalytics from './pages/inventory/analytics/WilsonEOQAnalytics';
@@ -79,13 +79,14 @@ import PatientList from './pages/healthcare/patients/PatientList';
 import PatientForm from './pages/healthcare/patients/PatientForm';
 import PatientDetail from './pages/healthcare/patients/PatientDetail';
 import VisitForm from './pages/healthcare/patients/VisitForm';
-import ReceptionDashboard from './pages/healthcare/reception/ReceptionDashboard';
+import VisitsDashboard from './pages/healthcare/reception/ReceptionDashboard';
 import LabOrderList from './pages/healthcare/laboratory/LabOrderList';
 import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
 import LabOrderForm from './pages/healthcare/laboratory/LabOrderForm';
 import LabOrderDispatch from './pages/healthcare/laboratory/LabOrderDispatch';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
 import LabQueueDashboard from './pages/healthcare/laboratory/LabQueueDashboard';
+import OpenedReagents from './pages/healthcare/laboratory/OpenedReagents';
 import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
@@ -782,6 +783,7 @@ function App() {
                               <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
                               <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                               <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                              <Route path="/products/:productId/batches" element={<ModuleRoute module="products"><ProductBatches /></ModuleRoute>} />
 
                               {/* Clients */}
                               <Route path="/clients" element={<ModuleRoute module="clients"><Clients /></ModuleRoute>} />
@@ -817,7 +819,7 @@ function App() {
                               <Route path="/healthcare/patients/:id" element={<ModuleRoute module="patients"><PatientDetail /></ModuleRoute>} />
                               <Route path="/healthcare/patients/:id/edit" element={<ModuleRoute module="patients"><PatientForm /></ModuleRoute>} />
                               <Route path="/healthcare/visits/new" element={<ModuleRoute module="patients"><VisitForm /></ModuleRoute>} />
-                              <Route path="/healthcare/reception" element={<ModuleRoute module="patients"><ReceptionDashboard /></ModuleRoute>} />
+                              <Route path="/healthcare/visits" element={<ModuleRoute module="visits"><VisitsDashboard /></ModuleRoute>} />
 
                               {/* Laboratory */}
                               <Route path="/healthcare/laboratory" element={<ModuleRoute module="laboratory"><LabQueueDashboard /></ModuleRoute>} />
@@ -825,6 +827,7 @@ function App() {
                               <Route path="/healthcare/laboratory/new" element={<ModuleRoute module="laboratory"><LabOrderForm /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id/dispatch" element={<ModuleRoute module="laboratory"><LabOrderDispatch /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}

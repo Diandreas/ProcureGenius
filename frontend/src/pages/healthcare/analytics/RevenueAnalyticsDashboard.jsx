@@ -1,25 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Grid,
-    Tabs,
-    Tab,
-    CircularProgress,
-    Alert,
-    Chip,
-    Stack,
-    useTheme,
-    Paper,
-    Avatar,
-    Divider,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Tabs, CircularProgress, Alert, Chip, Stack, useTheme, Paper, Avatar, Divider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { SafeTab } from '../../../components/safe';
 import { alpha } from '@mui/material/styles';
 import {
     TrendingUp as TrendingUpIcon,
@@ -149,9 +130,9 @@ const RevenueAnalyticsDashboard = () => {
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={6}>
                             <Tabs value={period} onChange={handlePeriodChange} variant="fullWidth">
-                                <Tab label="Jour" value="day" />
-                                <Tab label="Semaine" value="week" />
-                                <Tab label="Mois" value="month" />
+                                <SafeTab label="Jour" value="day" />
+                                <SafeTab label="Semaine" value="week" />
+                                <SafeTab label="Mois" value="month" />
                             </Tabs>
                         </Grid>
                         <Grid item xs={12} md={6}>

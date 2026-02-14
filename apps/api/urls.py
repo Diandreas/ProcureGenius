@@ -9,7 +9,7 @@ from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
 from apps.invoicing.batch_views import (
     ProductBatchListCreateView, ProductBatchDetailView,
-    BatchOpenView, ExpiringBatchesView
+    BatchOpenView, ExpiringBatchesView, OpenedReagentsView
 )
 
 app_name = 'api'
@@ -111,6 +111,7 @@ urlpatterns = [
     path('batches/<uuid:batch_id>/', ProductBatchDetailView.as_view(), name='batch-detail'),
     path('batches/<uuid:batch_id>/open/', BatchOpenView.as_view(), name='batch-open'),
     path('batches/expiring/', ExpiringBatchesView.as_view(), name='batches-expiring'),
+    path('batches/opened-reagents/', OpenedReagentsView.as_view(), name='opened-reagents'),
 
     # Keep existing endpoints if they exist
     # path('integrations/', include('apps.integrations.api_urls')),

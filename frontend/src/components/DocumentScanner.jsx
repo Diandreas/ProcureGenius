@@ -1,25 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-  Paper,
-  IconButton,
-  Tabs,
-  Tab,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, CircularProgress, Alert, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Paper, IconButton, Tabs,  } from '@mui/material';
+import { SafeTab } from '../components/safe';
 import {
   CameraAlt,
   CloudUpload,
@@ -183,8 +164,8 @@ function DocumentScanner({ open, onClose, onSuccess }) {
         {!capturedImage && !extractedData && (
           <>
             <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-              <Tab label="Caméra" icon={<CameraAlt />} />
-              <Tab label="Télécharger" icon={<CloudUpload />} />
+              <SafeTab label="Caméra" icon={<CameraAlt />} />
+              <SafeTab label="Télécharger" icon={<CloudUpload />} />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>

@@ -29,6 +29,12 @@ const batchAPI = {
   getExpiringBatches: async (days = 30) => {
     const response = await api.get(`/batches/expiring/?days=${days}`);
     return response.data;
+  },
+
+  // Get opened reagents
+  getOpenedReagents: async (showAll = false) => {
+    const response = await api.get(`/batches/opened-reagents/?all=${showAll}`);
+    return response.data;
   }
 };
 

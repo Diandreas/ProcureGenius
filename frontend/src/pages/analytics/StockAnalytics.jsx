@@ -4,8 +4,9 @@ import {
     TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
     CircularProgress, Alert, FormControl, InputLabel, Select,
     MenuItem, Stack, TextField, InputAdornment, TablePagination,
-    TableSortLabel, Tabs, Tab
+    TableSortLabel, Tabs
 } from '@mui/material';
+import { SafeTab } from '../../components/safe';
 import {
     Inventory as InventoryIcon,
     TrendingUp as TrendingUpIcon,
@@ -237,9 +238,9 @@ const StockAnalytics = () => {
             {/* Tabs */}
             <Paper sx={{ mb: 3 }}>
                 <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ px: 2, pt: 1 }}>
-                    <Tab label="Par categorie" icon={<CategoryIcon />} iconPosition="start" />
-                    <Tab label="Top valeur" icon={<ValueIcon />} iconPosition="start" />
-                    <Tab label={`Tous les produits (${sortedProducts.length})`} icon={<InventoryIcon />} iconPosition="start" />
+                    <SafeTab label="Par categorie" icon={<CategoryIcon />} iconPosition="start" />
+                    <SafeTab label="Top valeur" icon={<ValueIcon />} iconPosition="start" />
+                    <SafeTab label={`Tous les produits (${sortedProducts.length})`} icon={<InventoryIcon />} iconPosition="start" />
                 </Tabs>
 
                 {/* By Category Tab */}

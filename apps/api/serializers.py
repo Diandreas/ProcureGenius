@@ -138,8 +138,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     last_sale_date = serializers.SerializerMethodField()
     active_contracts_count = serializers.SerializerMethodField()
 
-    # Supply lead time
-    supply_lead_time_days = serializers.IntegerField(read_only=True)
+    # Supply lead time (now a real model field, writable)
     
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
@@ -157,7 +156,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'is_low_stock', 'is_out_of_stock', 'is_active',
             'base_unit', 'sell_unit', 'conversion_factor',
             'ordering_cost', 'holding_cost_percent',
-            'expiration_date', 'supply_lead_time_days',
+            'expiration_date', 'supply_lead_time_days', 'default_shelf_life_after_opening',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at'
@@ -166,7 +165,6 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
             'stock_status', 'is_low_stock', 'is_out_of_stock',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
-            'supply_lead_time_days',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count'
         ]

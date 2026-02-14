@@ -45,7 +45,7 @@ const AVAILABLE_MODULES = [
 
   // Healthcare Modules
   { code: 'patients', name: 'Gestion Patients', description: 'Dossiers et admissions', IconComponent: PersonIcon },
-  { code: 'reception', name: 'Réception', description: 'Files d\'attente et accueil', IconComponent: SupportIcon },
+  { code: 'visits', name: 'Visites', description: 'Gestion des visites patients', IconComponent: SupportIcon },
   { code: 'laboratory', name: 'Laboratoire', description: 'Analyses et LIMS', IconComponent: ScienceIcon },
   { code: 'pharmacy', name: 'Pharmacie', description: 'Stocks et délivrance', IconComponent: PharmacyIcon },
   { code: 'consultations', name: 'Consultations', description: 'Dossiers médicaux', IconComponent: MedicalServicesIcon },

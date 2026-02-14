@@ -262,6 +262,22 @@ function ProductDetail() {
               <PictureAsPdf />
             </IconButton>
           </Tooltip>
+          {product?.product_type === 'physical' && (
+            <Tooltip title="Gérer les lots">
+              <IconButton
+                onClick={() => navigate(`/products/${id}/batches`)}
+                sx={{
+                  color: 'info.main',
+                  '&:hover': {
+                    bgcolor: 'info.light',
+                    color: 'white',
+                  }
+                }}
+              >
+                <Inventory />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title={t('products:tooltips.editProduct')}>
             <IconButton
               onClick={() => navigate(`/products/${id}/edit`)}
@@ -1141,6 +1157,85 @@ function ProductDetail() {
                           product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
                       </Typography>
                     </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Traçabilité & Approvisionnement */}
+              {product.product_type === 'physical' && (product.barcode || product.expiration_date || product.supply_lead_time_days || product.default_shelf_life_after_opening) && (
+                <Card sx={{
+                  borderRadius: isMobile ? 2.5 : 2,
+                  boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                  backdropFilter: isMobile ? 'blur(10px)' : 'none',
+                  border: isMobile ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="600"
+                      gutterBottom
+                      sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
+                    >
+                      Traçabilité & Approvisionnement
+                    </Typography>
+                    <Stack spacing={isMobile ? 1 : 1.5} sx={{ mt: isMobile ? 1.5 : 2 }}>
+                      {product.barcode && (
+                        <Box sx={{
+                          p: isMobile ? 1 : 0,
+                          borderRadius: isMobile ? 1.5 : 0,
+                          bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                        }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.688rem' : undefined }}>
+                            Code-barres
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500" sx={{ fontSize: isMobile ? '0.875rem' : undefined }}>
+                            {product.barcode}
+                          </Typography>
+                        </Box>
+                      )}
+                      {product.expiration_date && (
+                        <Box sx={{
+                          p: isMobile ? 1 : 0,
+                          borderRadius: isMobile ? 1.5 : 0,
+                          bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                        }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.688rem' : undefined }}>
+                            Date de péremption
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500" sx={{ fontSize: isMobile ? '0.875rem' : undefined }}>
+                            {new Date(product.expiration_date).toLocaleDateString('fr-FR')}
+                          </Typography>
+                        </Box>
+                      )}
+                      {product.supply_lead_time_days && (
+                        <Box sx={{
+                          p: isMobile ? 1 : 0,
+                          borderRadius: isMobile ? 1.5 : 0,
+                          bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                        }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.688rem' : undefined }}>
+                            Délai de livraison
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500" sx={{ fontSize: isMobile ? '0.875rem' : undefined }}>
+                            {product.supply_lead_time_days} jours
+                          </Typography>
+                        </Box>
+                      )}
+                      {product.default_shelf_life_after_opening && (
+                        <Box sx={{
+                          p: isMobile ? 1 : 0,
+                          borderRadius: isMobile ? 1.5 : 0,
+                          bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.05 : 0.02) : 'transparent',
+                        }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.688rem' : undefined }}>
+                            Durée après ouverture
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500" sx={{ fontSize: isMobile ? '0.875rem' : undefined }}>
+                            {product.default_shelf_life_after_opening} jours
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
                   </CardContent>
                 </Card>
               )}

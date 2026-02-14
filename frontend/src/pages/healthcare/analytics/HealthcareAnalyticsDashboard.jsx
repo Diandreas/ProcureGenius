@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box, Grid, Paper, Typography, Container, Card, CardContent,
-  Stack, Chip, FormControl, InputLabel, Select, MenuItem,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  CircularProgress, Alert, Tabs, Tab, Button
-} from '@mui/material';
+import { Box, Grid, Paper, Typography, Container, Card, CardContent, Stack, Chip, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert, Tabs, Button } from '@mui/material';
+import { SafeTab } from '../../../components/safe';
 import {
   Analytics as AnalyticsIcon,
   Science as LabIcon,
@@ -248,9 +244,9 @@ const HealthcareAnalyticsDashboard = () => {
             {/* Exam analytics */}
             <Paper sx={{ mb: 3 }}>
               <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ px: 2, pt: 1 }}>
-                <Tab label="Examens les plus demandes" />
-                <Tab label="Examens les plus rentables" />
-                <Tab label="Par categorie" />
+                <SafeTab label="Examens les plus demandes" />
+                <SafeTab label="Examens les plus rentables" />
+                <SafeTab label="Par categorie" />
               </Tabs>
 
               {tabValue === 0 && (

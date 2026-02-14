@@ -13,9 +13,9 @@ import {
     TableHead,
     TableRow,
     Chip,
-    IconButton,
     Paper,
-    Avatar
+    Avatar,
+    Tooltip
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -23,14 +23,15 @@ import {
     AccessTime as WaitingIcon,
     CheckCircle as CompletedIcon,
     PlayArrow as InProgressIcon,
-    LocalHospital as HospitalIcon
+    LocalHospital as HospitalIcon,
+    Done as DoneIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
 import TriageModal from './TriageModal';
 import { useSnackbar } from 'notistack';
-import { formatDate, formatTime } from '../../../utils/formatters';
+import { formatTime } from '../../../utils/formatters';
 
 const StatCard = ({ title, value, icon, color }) => (
     <Card sx={{ height: '100%', borderRadius: 3 }}>
@@ -44,13 +45,13 @@ const StatCard = ({ title, value, icon, color }) => (
                 </Typography>
             </Box>
             <Avatar sx={{ bgcolor: `${color}.light`, color: `${color}.main`, width: 56, height: 56 }}>
-                {icon}
+                <Box>{icon}</Box>
             </Avatar>
         </CardContent>
     </Card>
 );
 
-const ReceptionDashboard = () => {
+const VisitsDashboard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
@@ -64,13 +65,12 @@ const ReceptionDashboard = () => {
     const [stats, setStats] = useState({
         total: 0,
         waiting: 0,
-        in_consultation: 0,
+        in_progress: 0,
         completed: 0
     });
 
     useEffect(() => {
         fetchVisits();
-        // Auto-refresh every minute
         const interval = setInterval(fetchVisits, 60000);
         return () => clearInterval(interval);
     }, []);
@@ -78,18 +78,17 @@ const ReceptionDashboard = () => {
     const fetchVisits = async () => {
         setLoading(true);
         try {
-            // Assuming getTodayVisits returns a list of visits directly or paginated
             const data = await patientAPI.getTodayVisits();
-            const visitList = Array.isArray(data) ? data : (data.results || []);
 
+            // API returns { total, waiting, in_consultation, at_lab, at_pharmacy, completed, cancelled, active_visits }
+            const visitList = data.active_visits || [];
             setVisits(visitList);
 
-            // Calculate Stats
             const newStats = {
-                total: visitList.length,
-                waiting: visitList.filter(v => ['checked_in', 'triage', 'waiting_doctor'].includes(v.status)).length,
-                in_consultation: visitList.filter(v => v.status === 'in_consultation').length,
-                completed: visitList.filter(v => v.status === 'completed').length
+                total: data.total || 0,
+                waiting: data.waiting || 0,
+                in_progress: (data.in_consultation || 0) + (data.at_lab || 0) + (data.at_pharmacy || 0),
+                completed: data.completed || 0
             };
             setStats(newStats);
 
@@ -102,12 +101,19 @@ const ReceptionDashboard = () => {
 
     const getStatusChip = (status) => {
         const statusConfig = {
-            checked_in: { label: 'Enregistré', color: 'info' },
+            registered: { label: 'Enregistré', color: 'default' },
+            checked_in: { label: 'Arrivé', color: 'info' },
             triage: { label: 'Tri (Constantes)', color: 'warning' },
             waiting_doctor: { label: 'Attente Médecin', color: 'warning' },
-            in_consultation: { label: 'En Consultation', color: 'primary' },
+            in_consultation: { label: 'Chez le Médecin', color: 'primary' },
+            waiting_lab: { label: 'Envoyé au Labo', color: 'secondary' },
+            in_lab: { label: 'Au Labo', color: 'secondary' },
+            waiting_results: { label: 'Attente Résultats', color: 'info' },
+            waiting_pharmacy: { label: 'Envoyé Pharmacie', color: 'secondary' },
+            at_pharmacy: { label: 'À la Pharmacie', color: 'secondary' },
             completed: { label: 'Terminé', color: 'success' },
             cancelled: { label: 'Annulé', color: 'error' },
+            no_show: { label: 'Absent', color: 'error' },
         };
         const config = statusConfig[status] || { label: status, color: 'default' };
         return <Chip label={config.label} color={config.color} size="small" variant="outlined" />;
@@ -118,22 +124,26 @@ const ReceptionDashboard = () => {
         setTriageModalOpen(true);
     };
 
-    const handleStartConsultation = async (visit) => {
+    const handleCompleteVisit = async (visit) => {
         try {
-            await patientAPI.updateVisitStatus(visit.id, 'start_consultation');
-            enqueueSnackbar('Consultation démarrée', { variant: 'success' });
+            await patientAPI.updateVisitStatus(visit.id, 'complete');
+            enqueueSnackbar('Visite terminée', { variant: 'success' });
             fetchVisits();
         } catch (error) {
-            console.error('Error starting consultation:', error);
-            enqueueSnackbar('Erreur lors du démarrage', { variant: 'error' });
+            console.error('Error completing visit:', error);
+            enqueueSnackbar('Erreur lors de la clôture', { variant: 'error' });
         }
     };
+
+    // Séparer visites actives et terminées
+    const activeVisits = visits.filter(v => !['completed', 'cancelled', 'no_show'].includes(v.status));
+    const completedVisits = visits.filter(v => ['completed', 'cancelled', 'no_show'].includes(v.status));
 
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
                 <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                    {t('reception.dashboard', 'Réception & Urgences')}
+                    {t('visits.dashboard', 'Visites du Jour')}
                 </Typography>
                 <Box>
                     <Button
@@ -147,10 +157,10 @@ const ReceptionDashboard = () => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => navigate('/healthcare/visits/new')} // Direct check-in page
+                        onClick={() => navigate('/healthcare/visits/new')}
                         sx={{ borderRadius: 2 }}
                     >
-                        {t('reception.new_checkin', 'Nouvelle Arrivée')}
+                        {t('visits.new_checkin', 'Nouvelle Visite')}
                     </Button>
                 </Box>
             </Box>
@@ -158,7 +168,7 @@ const ReceptionDashboard = () => {
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title={t('reception.total_today', 'Total Aujourd\'hui')}
+                        title={t('visits.total_today', 'Total Aujourd\'hui')}
                         value={stats.total}
                         icon={<HospitalIcon />}
                         color="info"
@@ -166,7 +176,7 @@ const ReceptionDashboard = () => {
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title={t('reception.waiting', 'En Salle d\'Attente')}
+                        title={t('visits.waiting', 'En Attente')}
                         value={stats.waiting}
                         icon={<WaitingIcon />}
                         color="warning"
@@ -174,15 +184,15 @@ const ReceptionDashboard = () => {
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title={t('reception.consulting', 'En Consultation')}
-                        value={stats.in_consultation}
+                        title={t('visits.in_progress', 'En Cours')}
+                        value={stats.in_progress}
                         icon={<InProgressIcon />}
                         color="primary"
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title={t('reception.completed', 'Terminés')}
+                        title={t('visits.completed', 'Terminées')}
                         value={stats.completed}
                         icon={<CompletedIcon />}
                         color="success"
@@ -190,72 +200,73 @@ const ReceptionDashboard = () => {
                 </Grid>
             </Grid>
 
+            {/* Visites Actives */}
             <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 2 }}>
-                File d'Attente et Visites en Cours
+                Visites en cours ({activeVisits.length})
             </Typography>
 
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, mb: 4 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
                             <TableCell>Heure</TableCell>
                             <TableCell>Patient</TableCell>
+                            <TableCell>Type</TableCell>
                             <TableCell>Priorité</TableCell>
-                            <TableCell>Motif / Plaintes</TableCell>
+                            <TableCell>Motif</TableCell>
                             <TableCell>Statut</TableCell>
-                            <TableCell>Médecin</TableCell>
                             <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {loading && visits.length === 0 ? (
+                        {loading && activeVisits.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} align="center">Chargement...</TableCell>
                             </TableRow>
-                        ) : visits.length === 0 ? (
+                        ) : activeVisits.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center">Aucune visite enregistrée aujourd'hui.</TableCell>
+                                <TableCell colSpan={7} align="center">Aucune visite active.</TableCell>
                             </TableRow>
                         ) : (
-                            visits.map((visit) => (
+                            activeVisits.map((visit) => (
                                 <TableRow key={visit.id} hover>
-                                    <TableCell>
-                                        {formatTime(visit.created_at)}
-                                    </TableCell>
+                                    <TableCell>{formatTime(visit.created_at)}</TableCell>
                                     <TableCell>
                                         <Typography variant="subtitle2" fontWeight="600">{visit.patient_name}</Typography>
                                     </TableCell>
                                     <TableCell>
+                                        <Chip label={visit.visit_type || 'Visite'} size="small" variant="outlined" />
+                                    </TableCell>
+                                    <TableCell>
                                         <Chip
-                                            label={visit.priority || 'Normale'}
+                                            label={visit.priority === 'emergency' ? 'Urgence' : visit.priority === 'urgent' ? 'Urgent' : 'Normal'}
                                             size="small"
-                                            color={visit.priority === 'emergency' ? 'error' : visit.priority === 'high' ? 'warning' : 'default'}
+                                            color={visit.priority === 'emergency' ? 'error' : visit.priority === 'urgent' ? 'warning' : 'default'}
                                         />
                                     </TableCell>
                                     <TableCell>{visit.chief_complaint || '-'}</TableCell>
                                     <TableCell>{getStatusChip(visit.status)}</TableCell>
-                                    <TableCell>{visit.doctor_name || '-'}</TableCell>
                                     <TableCell align="right">
-                                        {/* Actions based on status */}
-                                        {['checked_in', 'registered'].includes(visit.status) && (
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                onClick={() => handleOpenTriage(visit)}
-                                            >
-                                                Tri (Vitals)
-                                            </Button>
-                                        )}
-                                        {['waiting_doctor'].includes(visit.status) && (
-                                            <Button
-                                                size="small"
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={() => handleStartConsultation(visit)}
-                                            >
-                                                Consulter
-                                            </Button>
-                                        )}
+                                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                            {['checked_in', 'registered'].includes(visit.status) && (
+                                                <Button size="small" variant="outlined" onClick={() => handleOpenTriage(visit)}>
+                                                    Constantes
+                                                </Button>
+                                            )}
+                                            {!['checked_in', 'registered', 'completed', 'cancelled'].includes(visit.status) && (
+                                                <Tooltip title="Terminer la visite">
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        color="success"
+                                                        onClick={() => handleCompleteVisit(visit)}
+                                                        startIcon={<DoneIcon />}
+                                                    >
+                                                        Terminer
+                                                    </Button>
+                                                </Tooltip>
+                                            )}
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -263,6 +274,39 @@ const ReceptionDashboard = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Visites Terminées */}
+            {completedVisits.length > 0 && (
+                <>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 2, color: 'text.secondary' }}>
+                        Terminées ({completedVisits.length})
+                    </Typography>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, opacity: 0.8 }}>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Heure</TableCell>
+                                    <TableCell>Patient</TableCell>
+                                    <TableCell>Type</TableCell>
+                                    <TableCell>Motif</TableCell>
+                                    <TableCell>Statut</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {completedVisits.map((visit) => (
+                                    <TableRow key={visit.id}>
+                                        <TableCell>{formatTime(visit.created_at)}</TableCell>
+                                        <TableCell>{visit.patient_name}</TableCell>
+                                        <TableCell><Chip label={visit.visit_type || 'Visite'} size="small" variant="outlined" /></TableCell>
+                                        <TableCell>{visit.chief_complaint || '-'}</TableCell>
+                                        <TableCell>{getStatusChip(visit.status)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </>
+            )}
 
             {/* Triage Modal */}
             {selectedVisit && (
@@ -277,4 +321,4 @@ const ReceptionDashboard = () => {
     );
 };
 
-export default ReceptionDashboard;
+export default VisitsDashboard;
