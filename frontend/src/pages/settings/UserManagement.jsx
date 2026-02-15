@@ -75,7 +75,7 @@ function UserManagement() {
 
         // HEALTHCARE
         { id: 'patients', name: t('settings:userManagement.modules.patients'), icon: <AssignmentInd />, category: 'healthcare', description: 'Dossiers médicaux et historique patients' },
-        { id: 'reception', name: t('settings:userManagement.modules.reception'), icon: <MedicalServices />, category: 'healthcare', description: 'Accueil, rendez-vous et files d\'attente' },
+        { id: 'visits', name: t('settings:userManagement.modules.visits', 'Visites'), icon: <MedicalServices />, category: 'healthcare', description: 'Gestion des visites patients' },
         { id: 'consultations', name: t('settings:userManagement.modules.consultations'), icon: <HealthAndSafety />, category: 'healthcare', description: 'Consultations médicales et prescriptions' },
         { id: 'laboratory', name: t('settings:userManagement.modules.laboratory'), icon: <Science />, category: 'healthcare', description: 'Examens, résultats et plateaux techniques' },
         { id: 'pharmacy', name: t('settings:userManagement.modules.pharmacy'), icon: <LocalPharmacy />, category: 'healthcare', description: 'Dispensation et stocks de médicaments' },

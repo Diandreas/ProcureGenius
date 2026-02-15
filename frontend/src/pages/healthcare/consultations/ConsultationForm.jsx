@@ -613,6 +613,7 @@ const ConsultationForm = () => {
                                         multiline
                                         rows={2}
                                         fullWidth
+                                        inputProps={{ spellCheck: true, lang: 'fr' }}
                                         placeholder="Recommandations, instructions, plan thérapeutique..."
                                     />
                                 </Grid>

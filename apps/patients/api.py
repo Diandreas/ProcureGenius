@@ -253,12 +253,35 @@ class CheckInView(APIView):
             registered_by=request.user,
             status='registered'
         )
-        
+
         # If consultation, move to waiting_consultation
         if visit.visit_type == 'consultation':
             visit.status = 'waiting_consultation'
             visit.save()
-        
+
+        # Auto-create consultation for follow-up visits
+        if visit.visit_type in ['follow_up', 'follow_up_exam']:
+            if Consultation:
+                try:
+                    consultation = Consultation.objects.create(
+                        organization=request.user.organization,
+                        patient=patient,
+                        visit=visit,
+                        doctor=assigned_doctor,
+                        created_by=request.user,
+                        status='waiting',  # Waiting for nurse to take vitals
+                        consultation_date=timezone.now(),
+                        # Copy chief complaint and notes from visit
+                    )
+
+                    # Add note indicating this is an auto-created follow-up consultation
+                    visit.notes = f"{visit.notes}\n[Consultation de suivi créée automatiquement - {consultation.consultation_number}]".strip()
+                    visit.status = 'waiting_consultation'
+                    visit.save()
+                except Exception as e:
+                    # Log error but don't fail the visit creation
+                    print(f"Error creating auto consultation for follow-up: {e}")
+
         return Response(
             PatientVisitSerializer(visit).data,
             status=status.HTTP_201_CREATED

@@ -24,12 +24,12 @@
     "loading": "Loading consultations...",
     "search": "Search by patient, complaint, doctor..."
   },
-  "reception": {
-    "dashboard": "Reception & Emergencies",
-    "new_checkin": "New Arrival",
+  "visits": {
+    "dashboard": "Today's Visits",
+    "new_checkin": "New Visit",
     "total_today": "Total Today",
-    "waiting": "Waiting Room",
-    "consulting": "In Consultation",
+    "waiting": "Waiting",
+    "in_progress": "In Progress",
     "completed": "Completed"
   },
   "pharmacy": {

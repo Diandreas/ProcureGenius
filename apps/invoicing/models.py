@@ -192,6 +192,21 @@ class Product(models.Model):
         help_text=_("Date d'expiration du produit")
     )
 
+    # Durée de vie après ouverture (pour réactifs labo)
+    default_shelf_life_after_opening = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Durée de vie après ouverture (jours)"),
+        help_text=_("Nombre de jours de validité après ouverture d'un flacon/lot. Ex: 14 jours pour un réactif.")
+    )
+
+    # Délai de livraison fournisseur (en jours)
+    supply_lead_time_days = models.PositiveIntegerField(
+        default=7,
+        verbose_name=_("Délai de livraison (jours)"),
+        help_text=_("Temps moyen entre la commande et la réception du produit")
+    )
+
     # Wilson EOQ parameters
     ordering_cost = models.DecimalField(
         max_digits=10, decimal_places=2, default=5000,
@@ -358,19 +373,6 @@ class Product(models.Model):
             return delta.days
         return None
 
-    @property
-    def supply_lead_time_days(self):
-        """Get supply lead time from metadata (default: 90 days = 3 months)"""
-        if self.metadata and isinstance(self.metadata, dict):
-            return self.metadata.get('supply_lead_time_days', 90)
-        return 90
-
-    def set_supply_lead_time(self, days):
-        """Set supply lead time in metadata"""
-        if not self.metadata:
-            self.metadata = {}
-        self.metadata['supply_lead_time_days'] = days
-        self.save(update_fields=['metadata'])
 
     def format_price(self):
         """Formate le prix"""
@@ -596,7 +598,10 @@ class ProductBatch(models.Model):
         from django.utils import timezone
         self.opened_at = timezone.now()
         self.status = 'opened'
-        self.save(update_fields=['opened_at', 'status'])
+        # Copy default shelf life from product if batch doesn't have its own
+        if not self.shelf_life_after_opening_days and self.product.default_shelf_life_after_opening:
+            self.shelf_life_after_opening_days = self.product.default_shelf_life_after_opening
+        self.save(update_fields=['opened_at', 'status', 'shelf_life_after_opening_days'])
 
     def update_status(self):
         """Met à jour le statut automatiquement"""

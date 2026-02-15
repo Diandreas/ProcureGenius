@@ -1,9 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BottomNavigation, BottomNavigationAction, Paper, Box, useTheme, alpha, Badge } from '@mui/material';
+import { BottomNavigation, Paper, Box, useTheme, alpha, Badge } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { aiChatAPI } from '../services/api';
 import IconImage from './IconImage';
+import { SafeBottomNavigationAction } from './safe';
 
 function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const { t } = useTranslation(['navigation']);
@@ -76,7 +77,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
     // Healthcare
     { label: 'Patients', value: '/healthcare/patients', icon: '/icon/user.png', moduleId: 'patients', isCore: false },
-    { label: 'Réception', value: '/healthcare/reception', icon: '/icon/support.png', moduleId: 'reception', isCore: false },
+    { label: 'Visites', value: '/healthcare/visits', icon: '/icon/support.png', moduleId: 'visits', isCore: false },
     { label: 'Laboratoire', value: '/healthcare/laboratory', icon: '/icon/analysis.png', moduleId: 'laboratory', isCore: false },
     { label: 'Pharmacie', value: '/healthcare/pharmacy/inventory', icon: '/icon/product.png', moduleId: 'pharmacy', isCore: false },
     { label: 'Consultations', value: '/healthcare/consultations', icon: '/icon/contract.png', moduleId: 'consultations', isCore: false },
@@ -227,11 +228,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
             {navigationItems.map((item) => {
               const isSelected = currentPath === item.value;
               return (
-                <BottomNavigationAction
+                <SafeBottomNavigationAction
                   key={item.value}
-                  label={item.label}
+                  label={item.label || ''}
                   value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  icon={<NavIcon src={item.icon} alt={item.label || ''} isSelected={isSelected} />}
                   data-tutorial={`menu-${item.moduleId}`}
                 />
               );
@@ -361,11 +362,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
             {rightItems.map((item) => {
               const isSelected = currentPath === item.value;
               return (
-                <BottomNavigationAction
+                <SafeBottomNavigationAction
                   key={item.value}
-                  label={item.label}
+                  label={item.label || ''}
                   value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  icon={<NavIcon src={item.icon} alt={item.label || ''} isSelected={isSelected} />}
                   data-tutorial={`menu-${item.moduleId}`}
                 />
               );

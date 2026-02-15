@@ -1,33 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  TextField,
-  IconButton,
-  Typography,
-  List,
-  ListItem,
-  Avatar,
-  CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-  Drawer,
-  ListItemButton,
-  ListItemText,
-  Fade,
-  Tooltip,
-  useTheme,
-  alpha,
-  Chip,
-  Badge,
-  Tabs,
-  Tab,
-  Divider,
-  LinearProgress,
-  Button,
-} from '@mui/material';
+import { Box, Paper, TextField, IconButton, Typography, List, ListItem, Avatar, CircularProgress, Grid, Card, CardContent, Drawer, ListItemButton, ListItemText, Fade, Tooltip, useTheme, alpha, Chip, Badge, Tabs, Divider, LinearProgress, Button } from '@mui/material';
+import { SafeTab } from '../../components/safe';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, staggerContainer } from '../../animations/variants/scroll-reveal';
 import { messageIn, typingIndicator, avatarFloat } from '../../animations/variants/chat';
@@ -466,10 +440,10 @@ const NotificationsCenter = ({ open, onClose, notifications, onMarkRead }) => {
           variant="fullWidth"
           sx={{ mb: 2, minHeight: 40 }}
         >
-          <Tab label={`Tout (${notifications?.length || 0})`} value="all" sx={{ minHeight: 40 }} />
-          <Tab label={`Alertes (${notifications?.filter(n => n.type === 'alert').length || 0})`} value="alert" sx={{ minHeight: 40 }} />
-          <Tab label={`Insights (${notifications?.filter(n => n.type === 'insight').length || 0})`} value="insight" sx={{ minHeight: 40 }} />
-          <Tab label={`Succès (${notifications?.filter(n => n.type === 'achievement').length || 0})`} value="achievement" sx={{ minHeight: 40 }} />
+          <SafeTab label={`Tout (${notifications?.length || 0})`} value="all" sx={{ minHeight: 40 }} />
+          <SafeTab label={`Alertes (${notifications?.filter(n => n.type === 'alert').length || 0})`} value="alert" sx={{ minHeight: 40 }} />
+          <SafeTab label={`Insights (${notifications?.filter(n => n.type === 'insight').length || 0})`} value="insight" sx={{ minHeight: 40 }} />
+          <SafeTab label={`Succès (${notifications?.filter(n => n.type === 'achievement').length || 0})`} value="achievement" sx={{ minHeight: 40 }} />
         </Tabs>
 
         <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
@@ -869,7 +843,7 @@ const QUICK_ACTIONS_CATEGORIES = [
   {
     id: 'chat',
     label: 'Conversation IA',
-    icon: <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><Mascot pose="happy" animation="none" size={20} /></Box>,
+    icon: <Mascot pose="happy" animation="none" size={20} />,
     color: '#6366f1',
     actions: [
       {

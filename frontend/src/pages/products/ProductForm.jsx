@@ -156,6 +156,12 @@ function ProductForm() {
         // Wilson EOQ
         ordering_cost: 5000,
         holding_cost_percent: 20,
+
+        // Santé & Labo
+        barcode: '',
+        expiration_date: '',
+        supply_lead_time_days: 7,
+        default_shelf_life_after_opening: '',
     });
 
     const UNIT_TYPES = [
@@ -491,6 +497,10 @@ function ProductForm() {
                 cleanedValues.low_stock_threshold = parseInt(values.low_stock_threshold) || 5;
                 cleanedValues.ordering_cost = parseFloat(values.ordering_cost) || 5000;
                 cleanedValues.holding_cost_percent = parseFloat(values.holding_cost_percent) || 20;
+                cleanedValues.barcode = values.barcode || null;
+                cleanedValues.expiration_date = values.expiration_date || null;
+                cleanedValues.supply_lead_time_days = parseInt(values.supply_lead_time_days) || 7;
+                cleanedValues.default_shelf_life_after_opening = values.default_shelf_life_after_opening ? parseInt(values.default_shelf_life_after_opening) : null;
             }
 
             if (isEdit) {
@@ -804,6 +814,62 @@ function ProductForm() {
                                                                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                                                                     inputProps: { min: 0, max: 100 }
                                                                 }}
+                                                            />
+                                                        </Grid>
+
+                                                        {/* Traçabilité & Péremption */}
+                                                        <Grid item xs={12}>
+                                                            <Divider sx={{ my: 0.5 }}>
+                                                                <Chip label="Traçabilité & Péremption" size="small" variant="outlined" />
+                                                            </Divider>
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small"
+                                                                name="barcode" label="Code-barres"
+                                                                value={values.barcode} onChange={handleChange}
+                                                                placeholder="Ex: 3760001..."
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="date"
+                                                                name="expiration_date" label="Date de péremption"
+                                                                value={values.expiration_date || ''} onChange={handleChange}
+                                                                InputLabelProps={{ shrink: true }}
+                                                                helperText="Péremption générale du produit"
+                                                            />
+                                                        </Grid>
+
+                                                        {/* Approvisionnement */}
+                                                        <Grid item xs={12}>
+                                                            <Divider sx={{ my: 0.5 }}>
+                                                                <Chip label="Approvisionnement & Réactifs" size="small" variant="outlined" />
+                                                            </Divider>
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="supply_lead_time_days" label="Délai de livraison"
+                                                                value={values.supply_lead_time_days} onChange={handleChange}
+                                                                helperText="Jours entre commande et réception"
+                                                                InputProps={{
+                                                                    endAdornment: <InputAdornment position="end">jours</InputAdornment>,
+                                                                    inputProps: { min: 0 }
+                                                                }}
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <TextField
+                                                                fullWidth size="small" type="number"
+                                                                name="default_shelf_life_after_opening" label="Durée après ouverture"
+                                                                value={values.default_shelf_life_after_opening} onChange={handleChange}
+                                                                helperText="Pour réactifs : jours de validité après ouverture"
+                                                                InputProps={{
+                                                                    endAdornment: <InputAdornment position="end">jours</InputAdornment>,
+                                                                    inputProps: { min: 0 }
+                                                                }}
+                                                                placeholder="Ex: 14"
                                                             />
                                                         </Grid>
                                                     </Grid>

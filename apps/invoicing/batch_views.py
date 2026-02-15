@@ -118,3 +118,58 @@ class ExpiringBatchesView(APIView):
             'expired_count': sum(1 for b in results if b['is_expired']),
             'expiring_soon_count': sum(1 for b in results if 0 < b['days_until_expiry'] <= 7),
         })
+
+
+class OpenedReagentsView(APIView):
+    """Get all opened batches (reagents) with their effective expiry tracking"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        show_all = request.query_params.get('all', 'false') == 'true'
+
+        filters = {
+            'organization': organization,
+            'quantity_remaining__gt': 0,
+        }
+
+        if show_all:
+            filters['status__in'] = ['available', 'opened']
+        else:
+            filters['status'] = 'opened'
+
+        batches = ProductBatch.objects.filter(
+            **filters
+        ).select_related('product').order_by('expiry_date')
+
+        results = []
+        for batch in batches:
+            eff_expiry = batch.effective_expiry
+            days_left = (eff_expiry - date.today()).days if eff_expiry else batch.days_until_expiry
+
+            results.append({
+                'id': str(batch.id),
+                'product_id': str(batch.product_id),
+                'product_name': batch.product.name,
+                'product_reference': batch.product.reference,
+                'batch_number': batch.batch_number,
+                'lot_number': batch.lot_number or '',
+                'quantity': batch.quantity,
+                'quantity_remaining': batch.quantity_remaining,
+                'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
+                'opened_at': batch.opened_at.isoformat() if batch.opened_at else None,
+                'shelf_life_after_opening_days': batch.shelf_life_after_opening_days,
+                'effective_expiry': eff_expiry.isoformat() if eff_expiry else None,
+                'days_until_expiry': days_left,
+                'status': batch.status,
+                'is_expired': batch.is_expired,
+                'default_shelf_life': getattr(batch.product, 'default_shelf_life_after_opening', None),
+            })
+
+        return Response({
+            'batches': results,
+            'total': len(results),
+            'opened_count': sum(1 for b in results if b['status'] == 'opened'),
+            'expired_count': sum(1 for b in results if b['is_expired']),
+            'expiring_soon_count': sum(1 for b in results if b['days_until_expiry'] is not None and 0 < b['days_until_expiry'] <= 3),
+        })
