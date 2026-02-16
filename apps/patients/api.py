@@ -271,7 +271,8 @@ class CheckInView(APIView):
                         created_by=request.user,
                         status='waiting',  # Waiting for nurse to take vitals
                         consultation_date=timezone.now(),
-                        # Copy chief complaint and notes from visit
+                        chief_complaint=visit.chief_complaint or 'Consultation de suivi',
+                        # Vitals will be copied when nurse takes them
                     )
 
                     # Add note indicating this is an auto-created follow-up consultation
@@ -280,7 +281,9 @@ class CheckInView(APIView):
                     visit.save()
                 except Exception as e:
                     # Log error but don't fail the visit creation
-                    print(f"Error creating auto consultation for follow-up: {e}")
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error creating auto consultation for follow-up: {e}")
 
         return Response(
             PatientVisitSerializer(visit).data,
