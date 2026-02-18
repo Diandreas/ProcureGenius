@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════════
+    RELANCER L'APPLICATION SUR VOTRE VPS
+    Serveur : appback.centrejulianna.com
+═══════════════════════════════════════════════════════════════════
+
+✅ VOUS AVEZ DÉJÀ :
+   - Le code pull sur le VPS
+   - Le serveur configuré
+
+🎯 VOUS VOULEZ :
+   - Mettre à jour les dépendances
+   - Lancer le backend (port 8090 avec venv)
+   - Lancer le frontend (port 3000 avec npm)
+
+═══════════════════════════════════════════════════════════════════
+
+⚡ SOLUTION RAPIDE (COPIER-COLLER)
+
+Connectez-vous au VPS et exécutez :
+
+root@srv1333813:/home/centrejulianna-appback/htdocs/appback.centrejulianna.com# chmod +x relancer_vps.sh
+root@srv1333813:/home/centrejulianna-appback/htdocs/appback.centrejulianna.com# ./relancer_vps.sh
+
+C'EST TOUT ! ✅
+
+═══════════════════════════════════════════════════════════════════
+
+📋 CE QUE LE SCRIPT FAIT :
+
+1. Arrête les processus existants (PM2)
+2. Active le venv Python
+3. Met à jour les dépendances Python
+4. Met à jour les dépendances npm frontend
+5. Applique les migrations
+6. Collecte les fichiers statiques
+7. Démarre backend (8090) + frontend (3000) avec PM2
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 COMMANDES MANUELLES (SI VOUS PRÉFÉREZ)
+
+Si vous voulez tout faire manuellement :
+
+# 1. Aller dans le répertoire
+cd /home/centrejulianna-appback/htdocs/appback.centrejulianna.com
+
+# 2. Arrêter PM2
+pm2 delete all
+
+# 3. Backend - Activer venv et installer
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Frontend - Installer dépendances
+cd frontend
+npm install
+cd ..
+
+# 5. Migrations
+python manage.py migrate
+python manage.py collectstatic --noinput
+
+# 6. Démarrer avec PM2
+pm2 start ecosystem.config.js
+pm2 save
+
+═══════════════════════════════════════════════════════════════════
+
+🌐 URLS
+
+Une fois lancé :
+
+   Frontend : http://appback.centrejulianna.com:3000
+   Backend  : http://appback.centrejulianna.com:8090
+   Admin    : http://appback.centrejulianna.com:8090/admin
+
+═══════════════════════════════════════════════════════════════════
+
+📊 VÉRIFIER QUE ÇA TOURNE
+
+pm2 status
+
+Vous devriez voir :
+┌────┬────────────────────┬─────────┬─────────┬──────────┐
+│ id │ name               │ status  │ restart │ uptime   │
+├────┼────────────────────┼─────────┼─────────┼──────────┤
+│ 0  │ backend-django     │ online  │ 0       │ 2s       │
+│ 1  │ frontend-react     │ online  │ 0       │ 2s       │
+└────┴────────────────────┴─────────┴─────────┴──────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+📝 VOIR LES LOGS
+
+# Tous les logs
+pm2 logs
+
+# Logs backend seulement
+pm2 logs backend-django
+
+# Logs frontend seulement
+pm2 logs frontend-react
+
+# Sortir : Ctrl+C
+
+═══════════════════════════════════════════════════════════════════
+
+🔄 REDÉMARRER PLUS TARD
+
+Pour redémarrer après un changement :
+
+pm2 restart all
+
+Ou pour tout refaire :
+
+./relancer_vps.sh
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 PROBLÈMES COURANTS
+
+1. "pm2: command not found"
+   → Installer PM2 : sudo npm install -g pm2
+
+2. "venv/bin/activate: No such file"
+   → Créer venv : python3 -m venv venv
+
+3. Port déjà utilisé
+   → pm2 delete all
+   → sudo lsof -i :3000 (puis kill le processus)
+   → sudo lsof -i :8090 (puis kill le processus)
+
+4. Erreur base de données
+   → Vérifier PostgreSQL : sudo systemctl status postgresql
+   → Vérifier .env : nano .env
+
+═══════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST
+
+Avant de lancer, vérifiez :
+
+[ ] Vous êtes dans /home/centrejulianna-appback/htdocs/appback.centrejulianna.com
+[ ] Le fichier relancer_vps.sh existe
+[ ] PM2 est installé (npm install -g pm2)
+[ ] Le fichier .env existe et est configuré
+[ ] Le fichier frontend/.env existe
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 COMMANDE MAGIQUE
+
+root@srv1333813:/home/centrejulianna-appback/htdocs/appback.centrejulianna.com# ./relancer_vps.sh
+
+═══════════════════════════════════════════════════════════════════
