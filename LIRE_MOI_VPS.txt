@@ -1,0 +1,157 @@
+═══════════════════════════════════════════════════════════════════
+    DÉPLOIEMENT VPS - CENTRE DE SANTÉ JULIANNA
+═══════════════════════════════════════════════════════════════════
+
+📌 RÉSUMÉ DE VOTRE DEMANDE
+
+Vous voulez :
+  ✅ Frontend sur port 3000 (npm start)
+  ✅ Backend sur port 8090 (avec venv)
+  ✅ Base de données avec données de production fraîches
+  ✅ Tout démarre avec une commande
+
+═══════════════════════════════════════════════════════════════════
+
+🚀 SOLUTION FOURNIE
+
+3 fichiers principaux créés :
+
+1. COMMANDES_VPS.md
+   → Installation en 5 minutes (commandes copier-coller)
+
+2. DEPLOIEMENT_VPS.md
+   → Guide complet étape par étape avec explications
+
+3. deploy_vps.sh
+   → Script automatique de déploiement
+
+═══════════════════════════════════════════════════════════════════
+
+⚡ INSTALLATION RAPIDE (8 ÉTAPES)
+
+Sur votre VPS Linux :
+
+1. Installer les dépendances (Node.js, Python, PostgreSQL)
+   → Voir COMMANDES_VPS.md section 2
+
+2. Créer la base de données PostgreSQL
+   → sudo -u postgres psql
+   → CREATE DATABASE julianna_db;
+   → CREATE USER julianna_user WITH PASSWORD 'xxx';
+
+3. Déployer le code
+   → cd /var/www/julianna
+   → git clone <repo> .
+
+4. Configurer .env (backend)
+   → nano .env
+   → DEBUG=False
+   → DATABASE_ENGINE=django.db.backends.postgresql
+   → DATABASE_NAME=julianna_db
+
+5. Configurer .env (frontend)
+   → nano frontend/.env
+   → VITE_BACKEND_URL=http://votre-ip:8090
+
+6. Lancer le script de déploiement
+   → chmod +x deploy_vps.sh
+   → ./deploy_vps.sh
+
+7. Restaurer les données de production
+   → python manage.py loaddata data_production.json
+   (voir section RESTAURER DONNÉES ci-dessous)
+
+8. Configurer le pare-feu
+   → sudo ufw allow 3000
+   → sudo ufw allow 8090
+
+═══════════════════════════════════════════════════════════════════
+
+📊 RESTAURER LES DONNÉES DE PRODUCTION
+
+Option 1 - Depuis votre db.sqlite3 locale :
+
+  Sur votre machine :
+  $ python manage.py dumpdata --natural-foreign \
+      --natural-primary --exclude contenttypes \
+      --exclude auth.Permission --indent 2 > data_production.json
+
+  Uploadez data_production.json sur le VPS
+
+  Sur le VPS :
+  $ cd /var/www/julianna
+  $ source venv/bin/activate
+  $ python manage.py loaddata data_production.json
+  $ pm2 restart all
+
+Option 2 - Depuis un backup PostgreSQL :
+
+  $ psql -U julianna_user -d julianna_db < backup.sql
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 COMMANDES PM2
+
+Après déploiement, gérez l'application avec :
+
+  pm2 status          # Voir le statut
+  pm2 logs            # Voir les logs
+  pm2 restart all     # Redémarrer
+  pm2 stop all        # Arrêter
+
+═══════════════════════════════════════════════════════════════════
+
+🌐 URLS
+
+Une fois déployé :
+
+  Frontend :  http://votre-ip-vps:3000
+  Backend  :  http://votre-ip-vps:8090
+  Admin    :  http://votre-ip-vps:8090/admin
+
+═══════════════════════════════════════════════════════════════════
+
+📖 DOCUMENTATION COMPLÈTE
+
+Pour plus de détails, consultez dans l'ordre :
+
+  1. COMMANDES_VPS.md     - Commandes rapides (5 min)
+  2. DEPLOIEMENT_VPS.md   - Guide complet détaillé
+  3. PM2_LINUX_GUIDE.md   - Configuration avancée
+
+═══════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST
+
+Avant de déployer, assurez-vous d'avoir :
+
+  [ ] Accès SSH au VPS
+  [ ] Node.js installé (v18+)
+  [ ] Python 3 installé
+  [ ] PostgreSQL installé
+  [ ] Fichier .env configuré
+  [ ] Données de production exportées (data_production.json)
+  [ ] PM2 installé (npm install -g pm2)
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 EN CAS DE PROBLÈME
+
+Logs :
+  pm2 logs --lines 50
+
+Base de données :
+  sudo systemctl status postgresql
+  psql -U julianna_user -d julianna_db
+
+Ports :
+  sudo lsof -i :3000
+  sudo lsof -i :8090
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 BONNE INSTALLATION !
+
+   Commencez par COMMANDES_VPS.md pour le guide rapide.
+
+═══════════════════════════════════════════════════════════════════

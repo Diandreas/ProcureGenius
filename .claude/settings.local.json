@@ -104,7 +104,8 @@
       "Bash(convert:*)",
       "Bash(npm dedupe:*)",
       "Bash(./cleanup_for_production.sh:*)",
-      "Bash(FICHIERS_PRODUCTION.md:*)"
+      "Bash(FICHIERS_PRODUCTION.md:*)",
+      "Bash(__NEW_LINE_9b7fd0fdb74234cb__ cat GUIDE_LECTURE.md)"
     ],
     "deny": [],
     "ask": []
