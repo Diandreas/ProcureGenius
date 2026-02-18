@@ -102,7 +102,9 @@
       "Bash(npx react-scripts build:*)",
       "Bash(magick:*)",
       "Bash(convert:*)",
-      "Bash(npm dedupe:*)"
+      "Bash(npm dedupe:*)",
+      "Bash(./cleanup_for_production.sh:*)",
+      "Bash(FICHIERS_PRODUCTION.md:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,31 @@
 {
+  "name": "procuregenius",
+  "version": "1.0.0",
+  "description": "Système de gestion pour Centre de Santé Julianna",
+  "scripts": {
+    "frontend": "cd frontend && npm start",
+    "backend": "python manage.py runserver 0.0.0.0:8090",
+    "backend:win": "venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8090",
+    "backend:unix": "./venv/bin/python manage.py runserver 0.0.0.0:8090",
+
+    "start": "npm run start:prod",
+    "start:prod": "concurrently --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" \"npm run backend:win\" \"npm run frontend\"",
+    "start:prod:unix": "concurrently --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" \"npm run backend:unix\" \"npm run frontend\"",
+
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js",
+    "pm2:delete": "pm2 delete ecosystem.config.js",
+    "pm2:logs": "pm2 logs",
+    "pm2:status": "pm2 status",
+    "pm2:monit": "pm2 monit",
+
+    "install:all": "npm install && cd frontend && npm install",
+    "clean": "pm2 delete all || true"
+  },
   "dependencies": {
-    "playwright": "^1.58.1"
+    "playwright": "^1.58.1",
+    "concurrently": "^9.1.2",
+    "pm2": "^5.4.2"
   }
 }

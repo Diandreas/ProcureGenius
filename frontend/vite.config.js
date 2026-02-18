@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   // En production: URL du backend Django
   // En développement: localhost pour le serveur de développement
   const BACKEND_URL = mode === 'production'
-    ? 'https://appback.centrejulianna.com'  // URL du backend en production
-    : 'http://localhost:8000';  // URL du backend en développement
+    ? process.env.VITE_BACKEND_URL || 'https://appback.centrejulianna.com'  // URL du backend en production
+    : process.env.VITE_BACKEND_URL || 'http://localhost:8090';  // URL du backend en développement (port 8090)
 
   // #region agent log
   console.log('[Vite Config] Mode:', mode, 'Backend URL:', BACKEND_URL);
