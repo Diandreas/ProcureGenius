@@ -85,6 +85,7 @@ class LabTestListSerializer(serializers.ModelSerializer):
             'category',
             'category_name',
             'price',
+            'discount',
             'sample_type',
             'fasting_required',
             'estimated_turnaround_hours',

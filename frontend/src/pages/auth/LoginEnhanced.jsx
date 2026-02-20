@@ -171,39 +171,8 @@ function LoginEnhanced() {
             </Alert>
           )}
 
-          {/* Google Sign In Button */}
-          <Button
-            fullWidth
-            variant="outlined"
-            size="large"
-            startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
-            sx={{
-              mb: 2,
-              py: 1.5,
-              borderColor: '#4285F4',
-              color: '#4285F4',
-              textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: 500,
-              '&:hover': {
-                borderColor: '#4285F4',
-                backgroundColor: 'rgba(66, 133, 244, 0.04)',
-              },
-            }}
-          >
-            {t('auth:login.google')}
-          </Button>
-
-          {/* Divider */}
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              {t('auth:login.or')}
-            </Typography>
-          </Divider>
-
           {/* Email/Password Form */}
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -277,33 +246,6 @@ function LoginEnhanced() {
             >
               {loading ? <CircularProgress size={24} /> : t('auth:login.signIn')}
             </Button>
-
-            {/* Sign Up Link */}
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                {t('auth:login.noAccount')}{' '}
-                <Link
-                  component={RouterLink}
-                  to="/register"
-                  sx={{ textDecoration: 'none', fontWeight: 600 }}
-                >
-                  {t('auth:login.signUp')}
-                </Link>
-              </Typography>
-            </Box>
-
-            {/* Pricing Link */}
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                <Link
-                  component={RouterLink}
-                  to="/pricing"
-                  sx={{ textDecoration: 'none' }}
-                >
-                  {t('auth:login.viewPricing')}
-                </Link>
-              </Typography>
-            </Box>
           </Box>
         </Paper>
       </Box>

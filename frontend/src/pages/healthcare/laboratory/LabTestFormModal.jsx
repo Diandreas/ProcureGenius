@@ -175,28 +175,30 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
 
         setLoading(true);
         try {
+            // Créer une copie propre des données
             const payload = { ...formData };
             
-            // Clean and convert numeric fields safely
+            // Nettoyage des champs numériques
             payload.price = (payload.price === '' || payload.price === null) ? 0 : parseFloat(payload.price);
             payload.discount = (payload.discount === '' || payload.discount === null) ? 0 : parseFloat(payload.discount);
             
-            if (payload.fasting_hours === '' || payload.fasting_hours === null) {
-                payload.fasting_hours = null;
-            } else {
-                payload.fasting_hours = parseInt(payload.fasting_hours);
-            }
+            // Gestion des entiers optionnels (null si vide)
+            payload.fasting_hours = (payload.fasting_hours === '' || payload.fasting_hours === null) ? null : parseInt(payload.fasting_hours);
+            payload.estimated_turnaround_hours = (payload.estimated_turnaround_hours === '' || payload.estimated_turnaround_hours === null) ? 24 : parseInt(payload.estimated_turnaround_hours);
             
-            if (payload.estimated_turnaround_hours === '' || payload.estimated_turnaround_hours === null) {
-                payload.estimated_turnaround_hours = 24;
-            } else {
-                payload.estimated_turnaround_hours = parseInt(payload.estimated_turnaround_hours);
+            // Assurer que la catégorie est un UUID valide ou null
+            if (!payload.category || payload.category === '') {
+                payload.category = null;
             }
 
-            // Keep sample_volume as string (it's a CharField in model)
-            if (payload.sample_volume !== undefined && payload.sample_volume !== null) {
-                payload.sample_volume = String(payload.sample_volume);
-            }
+            // Champs texte optionnels : s'assurer que les valeurs vides sont des chaînes vides (pas null)
+            // car Django attend blank=True sans null=True pour ces champs
+            const optionalTextFields = ['short_name', 'description', 'sample_volume', 'normal_range_general', 'normal_range_male', 'normal_range_female', 'normal_range_child', 'unit_of_measurement', 'preparation_instructions', 'methodology'];
+            optionalTextFields.forEach(field => {
+                if (payload[field] === null || payload[field] === undefined) {
+                    payload[field] = '';
+                }
+            });
 
             if (test) {
                 await laboratoryAPI.updateTest(test.id, payload);

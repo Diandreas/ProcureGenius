@@ -40,6 +40,7 @@ def setup_production():
     categories = [
         ('consultations', 'Consultations'),
         ('procedures', 'Actes Medicaux'),
+        ('nursing', 'Soins Infirmiers'),
         ('services', 'Autres Services'),
         ('lab_consumables', 'Consommables Laboratoire'),
     ]
@@ -53,7 +54,7 @@ def setup_production():
     print("v Importation des services médicaux...")
     svc_cat_map = {
         'Consultations':     'consultations',
-        'Hospitalisation':   'services',
+        'Hospitalisation':   'nursing',
         'Petite Chirurgie':  'procedures',
         'ORL':               'procedures',
         'Kit Prélèvement':   'lab_consumables',
