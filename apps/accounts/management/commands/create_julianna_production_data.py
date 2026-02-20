@@ -553,7 +553,7 @@ class Command(BaseCommand):
         # Map MEDICAL_SERVICES category names → product categories
         cat_map = {
             'Consultations':     'consultations',
-            'Hospitalisation':   'services',
+            'Hospitalisation':   'nursing',
             'Petite Chirurgie':  'procedures',
             'ORL':               'procedures',
             'Kit Prélèvement':   'services',
