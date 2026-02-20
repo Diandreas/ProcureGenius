@@ -1,3 +1,4 @@
+
 import csv
 import os
 from apps.accounts.models import Organization, CustomUser, UserPermissions, UserPreferences
@@ -42,39 +43,74 @@ def setup_production():
     )
     print(f"v Kit de prélèvement configuré à 500 FCFA.")
 
-    # 3. Import du Catalogue d'Analyses (CSV)
+    # 3. Import du Catalogue d'Analyses (CSV) avec gestion d'encodage
     csv_file = "Liste Analyses Médicales - CSJ version finale.csv"
+    if not os.path.exists(csv_file):
+        # Essai avec un nom sans caractères spéciaux au cas où
+        csv_file = "Liste Analyses Medicales - CSJ version finale.csv"
+
     if os.path.exists(csv_file):
         print(f"v Importation du catalogue depuis {csv_file}...")
-        with open(csv_file, mode='r', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f, delimiter=';')
-            count = 0
-            for row in reader:
-                try:
-                    # On assume les colonnes: Categorie;Code;Examen;Prix
-                    cat_name = row.get('Categorie', 'Général').strip()
-                    lab_cat, _ = LabTestCategory.objects.get_or_create(
-                        organization=org, name=cat_name, defaults={'slug': slugify(cat_name)}
-                    )
+        
+        # Tester différents encodages
+        encodings = ['utf-8-sig', 'latin-1', 'cp1252']
+        data_loaded = False
+        
+        for enc in encodings:
+            try:
+                with open(csv_file, mode='r', encoding=enc) as f:
+                    # Détection automatique du délimiteur
+                    sample = f.read(2048)
+                    f.seek(0)
+                    dialect = csv.Sniffer().sniff(sample)
+                    reader = csv.DictReader(f, dialect=dialect)
                     
-                    price_str = row.get('Prix', '0').replace(' ', '').replace('FCFA', '')
+                    count = 0
+                    for row in reader:
+                        # Nettoyer les noms de colonnes (enlever BOM ou espaces)
+                        row = {k.strip() if k else k: v for k, v in row.items()}
+                        
+                        try:
+                            # Mapping des colonnes (ajustez si vos colonnes ont des noms exacts différents)
+                            cat_name = row.get('Categorie') or row.get('Catégorie') or 'Général'
+                            test_name = row.get('Examen') or row.get('Test') or row.get('Nom')
+                            test_code = row.get('Code') or f"LAB-{count:04d}"
+                            price_val = row.get('Prix') or '0'
+                            
+                            if not test_name: continue
+
+                            lab_cat, _ = LabTestCategory.objects.get_or_create(
+                                organization=org, name=cat_name.strip(), 
+                                defaults={'slug': slugify(cat_name)}
+                            )
+                            
+                            price_str = str(price_val).replace(' ', '').replace('FCFA', '').replace('XAF', '')
+                            
+                            LabTest.objects.update_or_create(
+                                organization=org,
+                                test_code=test_code.strip(),
+                                defaults={
+                                    'name': test_name.strip(),
+                                    'category': lab_cat,
+                                    'price': Decimal(price_str) if price_str and price_str != 'None' else 0,
+                                    'is_active': True
+                                }
+                            )
+                            count += 1
+                        except Exception as e:
+                            pass # Ignorer les lignes mal formées
                     
-                    LabTest.objects.update_or_create(
-                        organization=org,
-                        test_code=row.get('Code', f"LAB-{count}"),
-                        defaults={
-                            'name': row.get('Examen', 'Inconnu'),
-                            'category': lab_cat,
-                            'price': Decimal(price_str) if price_str else 0,
-                            'is_active': True
-                        }
-                    )
-                    count += 1
-                except Exception as e:
-                    print(f"  ! Erreur ligne {row}: {e}")
-            print(f"v {count} analyses importées avec succès.")
+                    print(f"v SUCCESS: {count} analyses importées avec l'encodage {enc}.")
+                    data_loaded = True
+                    break
+            except Exception as e:
+                print(f"  ... échec avec {enc}: {e}")
+                continue
+        
+        if not data_loaded:
+            print("X Impossible de lire le fichier CSV. Vérifiez l'encodage et le format.")
     else:
-        print(f"X Fichier {csv_file} introuvable à la racine.")
+        print(f"X Fichier CSV introuvable.")
 
     # 4. Personnel
     staff = [
@@ -92,6 +128,7 @@ def setup_production():
         u, _ = CustomUser.objects.get_or_create(email=m['email'], defaults={'username': m['username'], 'role': m['role'], 'first_name': m['first_name'], 'last_name': m['last_name'], 'organization': org, 'is_staff': (m['role'] == 'admin')})
         u.username = m['username']
         u.set_password(m['password'])
+        u.organization = org
         u.save()
         UserPermissions.objects.get_or_create(user=u)
         prefs, _ = UserPreferences.objects.get_or_create(user=u)
@@ -101,5 +138,4 @@ def setup_production():
 
     print("\n=== INITIALISATION TERMINÉE AVEC SUCCÈS ===\n")
 
-# Exécution immédiate
 setup_production()
