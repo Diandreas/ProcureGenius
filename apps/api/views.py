@@ -310,12 +310,18 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             )
         
         # Exclure les produits liés à un test de laboratoire (consommables)
-        queryset = queryset.exclude(
-            Q(category__slug__in=['lab_consumables', 'lab-consumables', 'laboratory', 'lab-tests', 'lab_tests']) |
-            Q(linked_lab_tests__isnull=False)
-        )
+        # On utilise une exclusion basée sur les slugs de catégorie et la présence de tests liés
+        try:
+            queryset = queryset.exclude(
+                Q(category__slug__in=['lab_consumables', 'lab-consumables', 'laboratory', 'lab-tests', 'lab_tests']) |
+                Q(linked_lab_tests__isnull=False)
+            )
+        except Exception as e:
+            # En cas d'erreur (ex: relation non chargée), on continue sans ce filtre spécifique
+            print(f"Erreur lors de l'exclusion des consommables labo: {e}")
+            pass
 
-        return queryset
+        return queryset.distinct()
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
@@ -357,6 +363,66 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             ])
         
         return response
+
+    @action(detail=False, methods=['get'])
+    def expired_report(self, request):
+        """Rapport des produits et lots périmés ou expirant bientôt"""
+        from apps.invoicing.models import ProductBatch
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        # 1. Produits avec date de péremption globale dépassée
+        expired_products = self.get_queryset().filter(
+            product_type='physical',
+            expiration_date__lte=today,
+            stock_quantity__gt=0
+        )
+        
+        # 2. Lots spécifiques périmés
+        expired_batches = ProductBatch.objects.filter(
+            organization=request.user.organization,
+            expiry_date__lte=today,
+            quantity_remaining__gt=0
+        ).select_related('product')
+        
+        results = {
+            'summary': {
+                'total_expired_products': expired_products.count(),
+                'total_expired_batches': expired_batches.count(),
+                'estimated_loss_value': 0,
+            },
+            'expired_products': [],
+            'expired_batches': []
+        }
+        
+        total_loss = 0
+        
+        for p in expired_products:
+            loss = float(p.stock_quantity * (p.cost_price or 0))
+            total_loss += loss
+            results['expired_products'].append({
+                'id': str(p.id),
+                'name': p.name,
+                'reference': p.reference,
+                'stock': p.stock_quantity,
+                'expiry_date': p.expiration_date,
+                'loss_value': loss
+            })
+            
+        for b in expired_batches:
+            loss = float(b.quantity_remaining * (b.product.cost_price or 0))
+            total_loss += loss
+            results['expired_batches'].append({
+                'id': str(b.id),
+                'product_name': b.product.name,
+                'batch_number': b.batch_number,
+                'quantity': b.quantity_remaining,
+                'expiry_date': b.expiry_date,
+                'loss_value': loss
+            })
+            
+        results['summary']['estimated_loss_value'] = total_loss
+        return Response(results)
 
     @action(detail=True, methods=['get'])
     def stock_movements(self, request, pk=None):
@@ -1389,7 +1455,7 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.INVOICES
-    organization_field = 'created_by__organization'  # Filter via user's org
+    organization_field = 'organization'  # Use direct organization field
     filterset_fields = ['status', 'client', 'created_by']
     search_fields = ['invoice_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'due_date']

@@ -722,14 +722,16 @@ Cordialement`
                     {formatCurrency(invoice.subtotal || 0)}
                   </Typography>
                 </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                    {t('invoices:labels.taxes')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
-                    {formatCurrency(invoice.tax_amount || 0)}
-                  </Typography>
-                </Box>
+                {invoice.tax_amount > 0 && (
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                      {t('invoices:labels.taxes')}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                      {formatCurrency(invoice.tax_amount || 0)}
+                    </Typography>
+                  </Box>
+                )}
                 <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
@@ -993,7 +995,7 @@ Cordialement`
                   {t('invoices:labels.financialSummary')}
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={invoice.tax_amount > 0 ? 4 : 6}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.subtotal || 0)}
@@ -1003,17 +1005,19 @@ Cordialement`
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
-                      <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
-                        {formatCurrency(invoice.tax_amount || 0)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('invoices:labels.taxes')}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
+                  {invoice.tax_amount > 0 && (
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
+                        <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
+                          {formatCurrency(invoice.tax_amount || 0)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {t('invoices:labels.taxes')}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+                  <Grid item xs={12} sm={invoice.tax_amount > 0 ? 4 : 6}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="success.main" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.total_amount || 0)}

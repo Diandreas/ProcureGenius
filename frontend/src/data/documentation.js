@@ -2280,3 +2280,13 @@ export const getRelatedArticles = (articleId) => {
 export const getArticlesByCategory = (categoryId) => {
   return documentationArticles.filter(article => article.category === categoryId);
 };
+
+// Fonction pour obtenir une catégorie par ID
+export const getCategoryById = (categoryId) => {
+  return documentationCategories.find(cat => cat.id === categoryId);
+};
+
+// Fonction pour obtenir un article par ID
+export const getArticleById = (articleId) => {
+  return documentationArticles.find(article => article.id === articleId);
+};

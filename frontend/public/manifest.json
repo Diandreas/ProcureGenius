@@ -1,7 +1,7 @@
 {
   "short_name": "CSJ",
   "name": "CSJ - Centre de Santé Julianna",
-  "description": "Système de gestion hospitalière intégré pour le Centre de Santé Julianna",
+  "description": "Système de gestion hospitalière - Centre de Santé Julianna, Makepe Saint-Tropez, Douala",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -20,44 +20,58 @@
   "background_color": "#F9FAFB",
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#4F46E5",
+  "theme_color": "#2563eb",
   "orientation": "any",
   "categories": [
-    "business",
+    "medical",
+    "health",
     "productivity"
   ],
   "shortcuts": [
     {
+      "name": "File d'attente",
+      "short_name": "File att.",
+      "description": "Voir la file d'attente des patients",
+      "url": "/consultations",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Nouveau patient",
+      "short_name": "Patient",
+      "description": "Enregistrer un nouveau patient",
+      "url": "/patients/new",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Laboratoire",
+      "short_name": "Labo",
+      "description": "Ordres et résultats de laboratoire",
+      "url": "/laboratory/orders",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Nouvelle facture",
       "short_name": "Facture",
-      "description": "Créer une nouvelle facture",
+      "description": "Créer une nouvelle facture patient",
       "url": "/invoices/new",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Assistant IA",
-      "short_name": "IA",
-      "description": "Ouvrir l'assistant IA",
-      "url": "/ai-chat",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Scanner document",
-      "short_name": "Scanner",
-      "description": "Scanner un document",
-      "url": "/ai-chat?action=scan",
       "icons": [
         {
           "src": "/icon-192.png",

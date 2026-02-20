@@ -48,6 +48,15 @@ const ProductBatches = () => {
   });
 
   useEffect(() => {
+    if (product && !formData.shelf_life_after_opening_days) {
+      setFormData(prev => ({
+        ...prev,
+        shelf_life_after_opening_days: product.default_shelf_life_after_opening || ''
+      }));
+    }
+  }, [product]);
+
+  useEffect(() => {
     fetchData();
   }, [productId]);
 

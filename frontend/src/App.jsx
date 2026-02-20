@@ -33,6 +33,7 @@ import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
 import StockoutRiskAnalytics from './pages/inventory/analytics/StockoutRiskAnalytics';
 import RiskProductsAnalytics from './pages/inventory/analytics/RiskProductsAnalytics';
 import MovementAnalytics from './pages/inventory/analytics/MovementAnalytics';
+import ExpiredInventoryReport from './pages/inventory/analytics/ExpiredInventoryReport';
 import StockAnalytics from './pages/analytics/StockAnalytics';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
@@ -751,6 +752,7 @@ function App() {
                               <Route path="/inventory/analytics/reorder" element={<ReorderAnalytics />} />
                               <Route path="/inventory/analytics/stockout-risk" element={<StockoutRiskAnalytics />} />
                               <Route path="/inventory/analytics/at-risk" element={<RiskProductsAnalytics />} />
+                              <Route path="/inventory/analytics/expired-report" element={<ExpiredInventoryReport />} />
                               <Route path="/inventory/analytics/movements" element={<MovementAnalytics />} />
                               <Route path="/inventory/analytics/wilson-eoq" element={<WilsonEOQAnalytics />} />
                               <Route path="/inventory/analytics/predictive-restock" element={<PredictiveRestockPage />} />

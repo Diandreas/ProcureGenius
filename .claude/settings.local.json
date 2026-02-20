@@ -111,7 +111,9 @@
       "Bash(powershell.exe -Command \"Get-ChildItem ''d:\\\\project\\\\BFMa\\\\ProcureGenius\\\\'' -Filter ''*.csv'' | ForEach-Object { Get-Content $_FullName -Encoding UTF8 | Select-Object -First 30 }\")",
       "Bash(cmd.exe /c \"type \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\Liste Analyses M\\\\xe9dicales - CSJ version finale.csv\"\" 2>nul\")",
       "Bash(cmd.exe /c \"dir \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\" /b\")",
-      "Bash(cmd.exe /c \"dir /b \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\"\")"
+      "Bash(cmd.exe /c \"dir /b \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\"\")",
+      "Bash(source:*)",
+      "Bash(1:*)"
     ],
     "deny": [],
     "ask": []

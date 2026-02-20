@@ -50,6 +50,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
+import batchAPI from '../../services/batchAPI';
+import dayjs from 'dayjs';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import LoadingState from '../../components/LoadingState';
@@ -116,6 +118,7 @@ function ProductDetail() {
 
   const [product, setProduct] = useState(null);
   const [statistics, setStatistics] = useState(null);
+  const [productBatches, setProductBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
@@ -125,6 +128,7 @@ function ProductDetail() {
   useEffect(() => {
     fetchProduct();
     fetchStatistics();
+    if (id) fetchBatches();
   }, [id]);
 
   const fetchProduct = async () => {
@@ -146,6 +150,15 @@ function ProductDetail() {
       setStatistics(response.data);
     } catch (error) {
       console.error('Error loading product statistics:', error);
+    }
+  };
+
+  const fetchBatches = async () => {
+    try {
+      const batches = await batchAPI.getProductBatches(id);
+      setProductBatches(batches);
+    } catch (error) {
+      console.error('Error loading product batches:', error);
     }
   };
 
@@ -232,6 +245,14 @@ function ProductDetail() {
   // Configuration du type de produit
   const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
   const TypeIcon = typeConfig.icon;
+
+  const expiringBatches = productBatches.filter(b => {
+    if (b.status === 'depleted') return false;
+    const days = dayjs(b.expiry_date).diff(dayjs(), 'day');
+    return days <= 30;
+  });
+
+  const expiredCount = expiringBatches.filter(b => dayjs(b.expiry_date).isBefore(dayjs())).length;
 
   return (
     <Box sx={{
@@ -444,6 +465,22 @@ function ProductDetail() {
       {/* Tab: Informations */}
       {activeTab === 0 && (
         <Box sx={{ px: isMobile ? 2 : 0 }}>
+          {expiringBatches.length > 0 && (
+            <Alert 
+              severity={expiredCount > 0 ? "error" : "warning"} 
+              sx={{ mb: 3, borderRadius: 2 }}
+              action={
+                <Button color="inherit" size="small" onClick={() => navigate(`/products/${id}/batches`)}>
+                  Gérer
+                </Button>
+              }
+            >
+              {expiredCount > 0 
+                ? `${expiredCount} lot(s) périmé(s) détecté(s) !` 
+                : `${expiringBatches.length} lot(s) expirent dans moins de 30 jours.`
+              }
+            </Alert>
+          )}
           <Grid container spacing={isMobile ? 1.5 : 3}>
             {/* Card principale - Style mobile app */}
             <Grid item xs={12} md={8}>

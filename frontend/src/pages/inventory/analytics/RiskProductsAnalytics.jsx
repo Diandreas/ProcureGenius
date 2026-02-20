@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Container, Chip } from '@mui/material';
+import { Box, Grid, Paper, Typography, Container, Chip, Button } from '@mui/material';
 import { ReportProblem as RiskIcon } from '@mui/icons-material';
 import TableChart from '../../../components/analytics/charts/TableChart';
 import inventoryAnalyticsAPI from '../../../services/inventoryAnalyticsAPI';
@@ -92,7 +92,7 @@ const RiskProductsAnalytics = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
           <BackButton />
           <RiskIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
-          <Box>
+          <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h4" fontWeight="700" color="warning.main">
               Produits à Risque
             </Typography>
@@ -100,6 +100,14 @@ const RiskProductsAnalytics = () => {
               Produits proches expiration et mouvements lents
             </Typography>
           </Box>
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={() => navigate('/inventory/analytics/expired-report')}
+            sx={{ borderRadius: 2 }}
+          >
+            Rapport des Périmés
+          </Button>
         </Box>
 
         {loading ? (

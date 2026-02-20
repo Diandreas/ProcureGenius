@@ -225,6 +225,7 @@ const Dashboard = () => {
                   title="Lots Expirants"
                   value={loading ? '...' : overview.expiring_batches || 0}
                   icon={<ScheduleIcon />} color="#ef4444"
+                  onClick={() => navigate('/inventory/analytics/at-risk')}
                   loading={loading}
                 />
               </Grid>
@@ -258,6 +259,16 @@ const Dashboard = () => {
                 />
               </Grid>
             </Grid>
+
+            {/* Batch alerts if any */}
+            {(overview.expiring_batches > 0 || overview.critical_alerts > 0) && (
+              <Box mb={4}>
+                <Typography variant="h6" fontWeight="700" mb={2}>
+                  Alertes de Peremption & Stock
+                </Typography>
+                <BatchAlertCard days={30} />
+              </Box>
+            )}
           </>
         )}
 

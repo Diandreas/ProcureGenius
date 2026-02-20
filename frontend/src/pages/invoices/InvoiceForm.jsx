@@ -9,6 +9,7 @@ import {
   Grid,
   TextField,
   Autocomplete,
+  Popper,
   Table,
   TableBody,
   TableCell,
@@ -53,6 +54,7 @@ import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
+import dayjs from 'dayjs';
 
 const UNIT_LABELS = {
   'piece': 'Pièce',
@@ -98,7 +100,7 @@ function InvoiceForm() {
     title: '',
     description: '',
     client: null,
-    tax_rate: 20,
+    tax_rate: 0,
     status: 'paid', // Default to paid
     payment_method: 'cash' // Default to cash
   });
@@ -116,7 +118,8 @@ function InvoiceForm() {
     unit_price: 0,
     product_reference: '',
     product: null,
-    unit_of_measure: 'piece'
+    unit_of_measure: 'piece',
+    batch: null
   });
 
   // Quick Create states
@@ -174,7 +177,7 @@ function InvoiceForm() {
         client: invoice.client,
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         // due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
-        tax_rate: invoice.tax_rate || 20,
+        tax_rate: invoice.tax_rate !== undefined ? invoice.tax_rate : 0,
         status: invoice.status || 'paid',
         payment_method: invoice.payment_method || 'cash'
       });
@@ -306,6 +309,8 @@ function InvoiceForm() {
           unit_price: item.unit_price,
           unit_of_measure: item.unit_of_measure,
           product_reference: item.product_reference,
+          product_id: item.product?.id || null,
+          batch_id: item.batch?.id || null,
           total_price: item.total_price
         })),
         subtotal: subtotal || 0,
@@ -368,7 +373,13 @@ function InvoiceForm() {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
           <Box>
             <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-              {item.product_reference || 'N/A'}
+              {item.product_reference || 'N/A'} {item.batch && (
+                <Chip 
+                  label={`Lot: ${item.batch.batch_number}`} 
+                  size="small" 
+                  sx={{ height: 16, fontSize: '0.6rem', ml: 1 }} 
+                />
+              )}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
               {item.description}
@@ -639,7 +650,7 @@ function InvoiceForm() {
                     {t('invoices:labels.financialSummary')}
                   </Typography>
                   <Grid container spacing={1}>
-                    <Grid item xs={4}>
+                    <Grid item xs={6}>
                       <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
                         <Typography variant="h6" color="primary" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                           {formatCurrency(calculateSubtotal())}
@@ -649,7 +660,7 @@ function InvoiceForm() {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={4} sx={{ display: 'none' }}>
                       <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'warning.50', borderRadius: 1 }}>
                         <Typography variant="h6" color="warning.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                           {formatCurrency(calculateTaxAmount())}
@@ -659,7 +670,7 @@ function InvoiceForm() {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={6}>
                       <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
                         <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                           {formatCurrency(calculateTotal())}
@@ -670,16 +681,7 @@ function InvoiceForm() {
                       </Box>
                     </Grid>
                   </Grid>
-                  <TextField
-                    fullWidth
-                    label={t('invoices:labels.vatRateField')}
-                    type="number"
-                    value={formData.tax_rate}
-                    onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                    inputProps={{ min: 0, max: 100, step: 0.1 }}
-                    size="small"
-                    sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
+                  {/* VAT Rate field hidden as requested */}
                 </CardContent>
               </Card>
 
@@ -771,6 +773,7 @@ function InvoiceForm() {
                           <TableRow>
                             <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.reference')}</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Lot / Batch</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Unité</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
@@ -783,6 +786,16 @@ function InvoiceForm() {
                             <TableRow key={index} hover>
                               <TableCell>{item.product_reference || '-'}</TableCell>
                               <TableCell>{item.description}</TableCell>
+                              <TableCell>
+                                {item.batch ? (
+                                  <Box>
+                                    <Typography variant="body2" fontWeight="bold">{item.batch.batch_number}</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      Exp: {dayjs(item.batch.expiry_date).format('DD/MM/YY')}
+                                    </Typography>
+                                  </Box>
+                                ) : '-'}
+                              </TableCell>
                               <TableCell>{UNIT_LABELS[item.unit_of_measure] || item.unit_of_measure}</TableCell>
                               <TableCell align="right">{item.quantity}</TableCell>
                               <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
@@ -837,7 +850,7 @@ function InvoiceForm() {
                       Résumé financier
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={3}>
+                      <Grid item xs={12} sm={4}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
                           <Typography variant="h5" color="primary" sx={{ fontWeight: 600 }}>
                             {formatCurrency(calculateSubtotal())}
@@ -847,7 +860,7 @@ function InvoiceForm() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
+                      <Grid item xs={12} sm={4} sx={{ display: 'none' }}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
                           <Typography variant="h5" color="warning.main" sx={{ fontWeight: 600 }}>
                             {formatCurrency(calculateTaxAmount())}
@@ -857,7 +870,7 @@ function InvoiceForm() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
+                      <Grid item xs={12} sm={4}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                           <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>
                             {formatCurrency(calculateTotal())}
@@ -867,17 +880,7 @@ function InvoiceForm() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <TextField
-                          fullWidth
-                          label={t('invoices:labels.vatRateField')}
-                          type="number"
-                          value={formData.tax_rate}
-                          onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                          inputProps={{ min: 0, max: 100, step: 0.1 }}
-                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        />
-                      </Grid>
+                      {/* VAT Input hidden */}
                     </Grid>
                   </CardContent>
                 </Card>
@@ -922,10 +925,10 @@ function InvoiceForm() {
                           }}
                         />
                       )}
+                      isOptionEqualToValue={(option, value) => option.id === value?.id}
                       renderOption={(props, option) => {
-                        const { key, ...otherProps } = props;
                         return (
-                          <Box component="li" key={key} {...otherProps}>
+                          <Box component="li" {...props} key={option.id}>
                             <Business sx={{ mr: 2, color: 'action.active' }} />
                             <Box>
                               <Typography variant="body1">{option.name}</Typography>

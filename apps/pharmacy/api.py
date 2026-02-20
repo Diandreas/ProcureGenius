@@ -117,7 +117,29 @@ class DispensingCreateView(APIView):
                     if item_data.get('unit') == 'sell':
                         quantity_requested = quantity_requested * medication.conversion_factor
 
-                    if medication.stock_quantity < quantity_requested:
+                    # Check batch stock if batch_id provided
+                    if item_data.get('batch_id'):
+                        from apps.invoicing.models import ProductBatch
+                        try:
+                            batch = ProductBatch.objects.get(
+                                id=item_data['batch_id'], 
+                                product=medication,
+                                organization=request.user.organization
+                            )
+                            if batch.quantity_remaining < quantity_requested:
+                                stock_issues.append({
+                                    'medication': f"{medication.name} (Lot: {batch.batch_number})",
+                                    'needed': float(quantity_requested),
+                                    'available': float(batch.quantity_remaining),
+                                })
+                        except ProductBatch.DoesNotExist:
+                            return Response(
+                                {'error': f"Lot non trouvé ou invalide pour {medication.name}"},
+                                status=status.HTTP_404_NOT_FOUND
+                            )
+                    
+                    # Otherwise check global stock
+                    elif medication.stock_quantity < quantity_requested:
                         stock_issues.append({
                             'medication': medication.name,
                             'needed': float(quantity_requested),
@@ -132,7 +154,7 @@ class DispensingCreateView(APIView):
         if stock_issues:
             return Response(
                 {
-                    'error': 'Insufficient stock',
+                    'error': 'Stock insuffisant',
                     'details': stock_issues
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -157,6 +179,7 @@ class DispensingCreateView(APIView):
             DispensingItem.objects.create(
                 dispensing=dispensing,
                 medication=medication,
+                batch_id=item_data.get('batch_id'),
                 quantity_dispensed=item_data['quantity'],
                 dispensing_unit=item_data.get('unit', 'base'),
                 unit_cost=medication.cost_price,

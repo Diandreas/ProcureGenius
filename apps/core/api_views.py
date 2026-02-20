@@ -131,10 +131,20 @@ def api_module_notification_counts(request):
     from django.db.models import Q, Count
 
     user = request.user
-    org = user.organization
+    org = getattr(user, 'organization', None)
     today = timezone.now().date()
 
-    result = {}
+    # Initial values
+    result = {
+        'consultations': {'waiting': 0, 'active': 0},
+        'laboratory': {'pending': 0, 'in_progress': 0, 'results_ready': 0},
+        'pharmacy': {'pending': 0},
+        'reception': {'waiting': 0}
+    }
+
+    if not org:
+        result['timestamp'] = timezone.now().isoformat()
+        return Response(result)
 
     # Consultations counts (today only)
     try:
@@ -143,54 +153,46 @@ def api_module_notification_counts(request):
             organization=org,
             consultation_date__date=today,
         )
-        waiting = consultation_qs.filter(
+        result['consultations']['waiting'] = consultation_qs.filter(
             status__in=['waiting', 'vitals_pending', 'ready_for_doctor']
         ).count()
-        active = consultation_qs.filter(status='in_consultation').count()
-        result['consultations'] = {'waiting': waiting, 'active': active}
-    except Exception:
-        result['consultations'] = {'waiting': 0, 'active': 0}
+        result['consultations']['active'] = consultation_qs.filter(status='in_consultation').count()
+    except (ImportError, Exception):
+        pass
 
     # Laboratory counts
     try:
         from apps.laboratory.models import LabOrder
         lab_qs = LabOrder.objects.filter(organization=org)
-        pending = lab_qs.filter(status='pending').count()
-        in_progress = lab_qs.filter(
+        result['laboratory']['pending'] = lab_qs.filter(status='pending').count()
+        result['laboratory']['in_progress'] = lab_qs.filter(
             status__in=['sample_collected', 'in_progress']
         ).count()
-        results_ready = lab_qs.filter(
+        result['laboratory']['results_ready'] = lab_qs.filter(
             status__in=['completed', 'results_ready']
         ).count()
-        result['laboratory'] = {
-            'pending': pending,
-            'in_progress': in_progress,
-            'results_ready': results_ready,
-        }
-    except Exception:
-        result['laboratory'] = {'pending': 0, 'in_progress': 0, 'results_ready': 0}
+    except (ImportError, Exception):
+        pass
 
     # Pharmacy counts
     try:
         from apps.pharmacy.models import PharmacyDispensing
-        pending_disp = PharmacyDispensing.objects.filter(
+        result['pharmacy']['pending'] = PharmacyDispensing.objects.filter(
             organization=org, status='pending'
         ).count()
-        result['pharmacy'] = {'pending': pending_disp}
-    except Exception:
-        result['pharmacy'] = {'pending': 0}
+    except (ImportError, Exception):
+        pass
 
     # Reception counts (today's visits still waiting)
     try:
         from apps.patients.models import PatientVisit
-        waiting_visits = PatientVisit.objects.filter(
+        result['reception']['waiting'] = PatientVisit.objects.filter(
             organization=org,
             arrived_at__date=today,
             status__in=['registered', 'waiting_consultation'],
         ).count()
-        result['reception'] = {'waiting': waiting_visits}
-    except Exception:
-        result['reception'] = {'waiting': 0}
+    except (ImportError, Exception):
+        pass
 
     result['timestamp'] = timezone.now().isoformat()
 

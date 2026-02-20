@@ -25,10 +25,10 @@
     "placeholder": "Rechercher une facture..."
   },
   "messages": {
-    "loading": "Chargement des factures...",
-    "loadingError": "Erreur lors du chargement des factures",
-    "loadInvoiceError": "Erreur lors du chargement de la facture",
-    "noInvoices": "Aucune facture",
+            "loading": "Chargement des factures...",
+            "loadingError": "Erreur lors du chargement des factures",
+            "loadingErrorDescription": "Impossible de charger les factures. Veuillez réessayer.",
+            "loadInvoiceError": "Erreur lors du chargement de la facture",    "noInvoices": "Aucune facture",
     "noInvoicesDescription": "Aucune facture ne correspond à vos critères de recherche.",
     "invoiceNotFound": "Facture introuvable",
     "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cette facture ?",
@@ -124,7 +124,7 @@
     "servicesAndDigital": "Services et numériques",
     "productReference": "Référence produit",
     "quantity": "Quantité",
-    "unitPriceExclTax": "Prix unitaire HT",
+    "unitPriceExclTax": "Prix unitaire",
     "lineTotal": "Total ligne",
     "serviceReference": "Référence service",
     "searchProduct": "Rechercher un produit..."

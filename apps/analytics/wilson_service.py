@@ -13,31 +13,44 @@ from apps.suppliers.models import SupplierProduct
 def calculate_annual_demand(product):
     """
     Calculate annual demand (D) from stock movements (sales).
-    Uses last 12 months of data, annualized.
+    Uses a weighted average of long-term (12m) and short-term (30d) data.
     """
-    one_year_ago = date.today() - timedelta(days=365)
+    today = date.today()
+    one_year_ago = today - timedelta(days=365)
+    thirty_days_ago = today - timedelta(days=30)
 
-    usage = StockMovement.objects.filter(
+    # 1. Long term usage (12 months)
+    usage_year = StockMovement.objects.filter(
         product=product,
         movement_type='sale',
         created_at__gte=one_year_ago
     ).aggregate(total=Sum('quantity'))['total'] or 0
+    usage_year = abs(usage_year)
 
-    # Sales quantities are negative, use absolute value
-    annual_demand = abs(usage)
+    # 2. Short term usage (30 days)
+    usage_month = StockMovement.objects.filter(
+        product=product,
+        movement_type='sale',
+        created_at__gte=thirty_days_ago
+    ).aggregate(total=Sum('quantity'))['total'] or 0
+    usage_month = abs(usage_month)
+    
+    # Annualized short term
+    annualized_month = usage_month * 12
 
-    # If less than a year of data, annualize from available period
-    if annual_demand == 0:
-        # Try last 90 days
-        ninety_days_ago = date.today() - timedelta(days=90)
-        usage_90 = StockMovement.objects.filter(
-            product=product,
-            movement_type='sale',
-            created_at__gte=ninety_days_ago
-        ).aggregate(total=Sum('quantity'))['total'] or 0
-        annual_demand = abs(usage_90) * 4  # Annualize from 90 days
+    # Weighted demand: 70% short term, 30% long term (if both exist)
+    if usage_year > 0 and annualized_month > 0:
+        annual_demand = (annualized_month * 0.7) + (usage_year * 0.3)
+    elif annualized_month > 0:
+        annual_demand = annualized_month
+    elif usage_year > 0:
+        annual_demand = usage_year
+    else:
+        # Fallback: estimate demand based on low stock threshold
+        # If threshold is 10, assume we sell 10 every 2 months => 60/year
+        annual_demand = (product.low_stock_threshold or 10) * 6
 
-    return annual_demand
+    return float(annual_demand)
 
 
 def _get_lead_time(product):

@@ -198,6 +198,14 @@ class DispensingItem(models.Model):
         related_name='dispensing_items',
         verbose_name=_("Médicament")
     )
+    batch = models.ForeignKey(
+        'invoicing.ProductBatch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='dispensing_items',
+        verbose_name=_("Lot / Batch")
+    )
     
     # Quantity and pricing
     quantity_dispensed = models.DecimalField(
@@ -319,13 +327,27 @@ class DispensingItem(models.Model):
             )
             
             if movement:
+                # Link movement to batch if selected
+                if self.batch:
+                    movement.batch = self.batch
+                    
+                    # Also deduct from the batch quantity_remaining
+                    quantity_base = self.medication.convert_to_base_unit(
+                        self.quantity_dispensed, 
+                        from_unit=self.dispensing_unit
+                    )
+                    self.batch.quantity_remaining -= quantity_base
+                    self.batch.update_status()
+                    movement.notes = f"{movement.notes} (Lot: {self.batch.batch_number})"
+                    movement.save(update_fields=['batch', 'notes'])
+
                 self.stock_movement = movement
                 self.save(update_fields=['stock_movement'])
     
     def restore_stock(self):
         """Restore stock when dispensing is cancelled"""
         if self.medication and self.medication.product_type == 'physical':
-            self.medication.adjust_stock(
+            movement = self.medication.adjust_stock(
                 quantity=self.quantity_dispensed,
                 movement_type='return',
                 unit=self.dispensing_unit,
@@ -334,6 +356,17 @@ class DispensingItem(models.Model):
                 notes=f"Annulation dispensation {self.dispensing.dispensing_number}",
                 user=self.dispensing.dispensed_by
             )
+
+            if movement and self.batch:
+                # Restore batch quantity
+                quantity_base = self.medication.convert_to_base_unit(
+                    self.quantity_dispensed, 
+                    from_unit=self.dispensing_unit
+                )
+                self.batch.quantity_remaining += quantity_base
+                self.batch.update_status()
+                movement.batch = self.batch
+                movement.save(update_fields=['batch'])
     
     def __str__(self):
         return f"{self.medication.name} x{self.quantity_dispensed}"

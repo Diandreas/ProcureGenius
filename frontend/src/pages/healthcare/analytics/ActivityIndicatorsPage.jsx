@@ -291,8 +291,8 @@ const ActivityIndicatorsPage = () => {
                         </PieChart>
                       </ResponsiveContainer>
                       <Stack spacing={1} mt={1}>
-                        {actsBreakdown.map((item) => (
-                          <Box key={item.name} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {actsBreakdown.map((item, idx) => (
+                          <Box key={`act-${idx}-${item.name}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Stack direction="row" spacing={1} alignItems="center">
                               <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
                               <Typography variant="body2">{item.name}</Typography>
@@ -487,8 +487,8 @@ const ActivityIndicatorsPage = () => {
                         </PieChart>
                       </ResponsiveContainer>
                       <Stack spacing={1} mt={1}>
-                        {revenuePie.map((item) => (
-                          <Box key={item.name} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {revenuePie.map((item, idx) => (
+                          <Box key={`rev-${idx}-${item.name}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Stack direction="row" spacing={1} alignItems="center">
                               <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
                               <Typography variant="body2">{item.name}</Typography>

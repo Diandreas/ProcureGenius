@@ -1,24 +1,50 @@
 // Service Worker pour PWA
-const CACHE_NAME = 'gestion-app-v1';
-const API_CACHE_NAME = 'gestion-app-api-v1';
+const CACHE_NAME = 'csj-app-v2';
+const API_CACHE_NAME = 'csj-app-api-v2';
 const DEBUG = false; // Mettre à true pour activer les logs de debug
 
-// URLs à mettre en cache lors de l'installation
+// URLs essentielles à mettre en cache lors de l'installation
+// Note: Vite génère des noms de fichiers hachés, on ne met que les fichiers stables
 const urlsToCache = [
   '/',
-  '/index.html',
+  '/offline.html',
   '/manifest.json',
-  '/static/css/main.css',
-  '/static/js/main.js',
 ];
+
+// Utilitaire : mettre en cache sans planter si quota dépassé
+async function safeCachePut(cache, request, response) {
+  try {
+    await cache.put(request, response);
+  } catch (error) {
+    if (error.name === 'QuotaExceededError') {
+      // Quota dépassé : vider le cache API (le moins critique) et réessayer
+      if (DEBUG) console.warn('Quota cache dépassé, nettoyage...');
+      try {
+        await caches.delete(API_CACHE_NAME);
+        await cache.put(request, response);
+      } catch (retryError) {
+        // Silencieux - la mise en cache est un bonus, pas obligatoire
+        if (DEBUG) console.warn('Impossible de mettre en cache:', retryError.message);
+      }
+    }
+  }
+}
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
+      .then(async (cache) => {
         if (DEBUG) console.log('Cache ouvert');
-        return cache.addAll(urlsToCache);
+        // Mise en cache individuelle pour éviter qu'un échec bloque tout
+        const results = await Promise.allSettled(
+          urlsToCache.map(url => cache.add(url).catch(() => null))
+        );
+        if (DEBUG) {
+          results.forEach((r, i) => {
+            if (r.status === 'rejected') console.warn('Cache échec:', urlsToCache[i]);
+          });
+        }
       })
       .then(() => self.skipWaiting())
   );
@@ -60,14 +86,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Stratégie pour l'API
-  // Ne pas intercepter les requêtes POST/PUT/DELETE/PATCH - laisser passer directement au réseau
   if (url.pathname.startsWith('/api/')) {
-    // Pour les requêtes de modification (POST, PUT, DELETE, PATCH), ne pas intercepter
-    // Laisser le navigateur gérer directement pour éviter les problèmes de cache
     if (request.method !== 'GET') {
-      return; // Laisser passer la requête sans interception
+      return;
     }
-    // Pour les GET, utiliser la stratégie network-first avec cache
     event.respondWith(networkFirstStrategy(request));
     return;
   }
@@ -97,12 +119,11 @@ async function cacheFirstStrategy(request) {
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+      await safeCachePut(cache, request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
     if (DEBUG) console.warn('Erreur réseau:', error.message);
-    // Retourner une page offline si disponible
     const offlineResponse = await cache.match('/offline.html');
     return offlineResponse || new Response('Offline', { status: 503 });
   }
@@ -114,23 +135,17 @@ async function networkFirstStrategy(request) {
 
   try {
     const networkResponse = await fetch(request);
-    // Ne pas mettre en cache les requêtes POST, PUT, DELETE, PATCH
     if (networkResponse.ok && request.method === 'GET') {
-      cache.put(request, networkResponse.clone());
+      await safeCachePut(cache, request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
-    // Log silencieux - les erreurs réseau sont normales en mode offline
     if (DEBUG) console.warn('Erreur réseau, tentative depuis le cache:', error.message);
 
-    // Pour les requêtes non-GET vers l'API, laisser passer l'erreur réseau native
-    // Ne pas retourner de 503 car cela masque les vraies erreurs du serveur
     if (request.url.includes('/api/') && request.method !== 'GET') {
-      // Re-lancer l'erreur pour que le navigateur la gère normalement
       throw error;
     }
 
-    // Ne chercher dans le cache que pour les requêtes GET
     if (request.method === 'GET') {
       const cachedResponse = await cache.match(request);
       if (cachedResponse) {
@@ -138,7 +153,6 @@ async function networkFirstStrategy(request) {
       }
     }
 
-    // Pour les requêtes API GET, retourner une erreur JSON seulement si vraiment offline
     if (request.url.includes('/api/') && request.method === 'GET') {
       return new Response(
         JSON.stringify({ error: 'Offline', message: 'Vous êtes hors ligne' }),
@@ -149,7 +163,6 @@ async function networkFirstStrategy(request) {
       );
     }
 
-    // Pour les pages, retourner la page offline
     const offlineResponse = await cache.match('/offline.html');
     return offlineResponse || new Response('Offline', { status: 503 });
   }
@@ -181,7 +194,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Application de Gestion', options)
+    self.registration.showNotification('CSJ - Centre de Santé Julianna', options)
   );
 });
 
@@ -191,7 +204,6 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'explore') {
-    // Ouvrir l'application
     event.waitUntil(
       clients.openWindow('/')
     );
@@ -206,21 +218,11 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncData() {
-  // Logique de synchronisation des données hors ligne
   if (DEBUG) console.log('Synchronisation des données...');
-
-  // Récupérer les données en attente depuis IndexedDB
-  // Envoyer les données au serveur
-  // Nettoyer les données synchronisées
 }
 
 // Fonction pour gérer le partage de fichiers
 async function handleShare(request) {
   const formData = await request.formData();
-  const file = formData.get('document');
-  const title = formData.get('title');
-  const text = formData.get('text');
-
-  // Rediriger vers l'interface de scan avec le fichier
   return Response.redirect('/ai-chat?action=scan&shared=true', 303);
 }

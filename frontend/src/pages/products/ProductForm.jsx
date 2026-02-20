@@ -199,10 +199,8 @@ function ProductForm() {
         if (productType === 'physical') {
             return Yup.object({
                 ...baseSchema,
-                // Warehouse requis seulement s'il y en a de disponibles
-                warehouse_id: hasWarehouses
-                    ? Yup.string().required(t('products:validation.warehouseRequired'))
-                    : Yup.string().nullable(),
+                // Warehouse optionnel (champ retiré de l'UI)
+                warehouse_id: Yup.string().nullable(),
                 stock_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
                 low_stock_threshold: Yup.number().min(0, t('products:validation.thresholdNegative')).required(t('products:validation.thresholdRequired')),
             });
@@ -219,19 +217,6 @@ function ProductForm() {
         setLoading(true);
         try {
             // Charger les données de manière indépendante pour gérer les erreurs 403
-            // Suppliers (optionnel si module désactivé)
-            try {
-                const suppliersRes = await suppliersAPI.list();
-                setSuppliers(suppliersRes.data.results || suppliersRes.data);
-            } catch (error) {
-                if (error.response?.status === 403) {
-                    console.log('Module Suppliers non accessible - continuer sans');
-                    setSuppliers([]);
-                } else {
-                    throw error;
-                }
-            }
-
             // Categories (optionnel)
             try {
                 const categoriesRes = await productCategoriesAPI.list();
@@ -266,6 +251,23 @@ function ProductForm() {
                     supplier_id: productData.supplier || '',
                     category_id: productData.category || '',
                     warehouse_id: productData.warehouse || '',
+                    // Prevent null values on controlled inputs
+                    name: productData.name || '',
+                    reference: productData.reference || '',
+                    description: productData.description || '',
+                    barcode: productData.barcode || '',
+                    expiration_date: productData.expiration_date || '',
+                    default_shelf_life_after_opening: productData.default_shelf_life_after_opening ?? '',
+                    price: productData.price ?? '',
+                    cost_price: productData.cost_price ?? '',
+                    stock_quantity: productData.stock_quantity ?? 0,
+                    low_stock_threshold: productData.low_stock_threshold ?? 5,
+                    ordering_cost: productData.ordering_cost ?? 5000,
+                    holding_cost_percent: productData.holding_cost_percent ?? 20,
+                    supply_lead_time_days: productData.supply_lead_time_days ?? 7,
+                    conversion_factor: productData.conversion_factor ?? 1,
+                    sell_unit: productData.sell_unit || 'piece',
+                    base_unit: productData.base_unit || 'piece',
                 });
             }
         } catch (error) {
@@ -779,15 +781,6 @@ function ProductForm() {
                                                                 value={values.low_stock_threshold} onChange={handleChange}
                                                             />
                                                         </Grid>
-                                                        <Grid item xs={12}>
-                                                            <TextField
-                                                                select fullWidth size="small"
-                                                                name="warehouse_id" label="Entrepôt"
-                                                                value={values.warehouse_id} onChange={handleChange}
-                                                            >
-                                                                {warehouses.map(w => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
-                                                            </TextField>
-                                                        </Grid>
 
                                                         {/* Paramètres Wilson EOQ */}
                                                         <Grid item xs={12}>
@@ -908,22 +901,25 @@ function ProductForm() {
                                                     Organisation
                                                 </Typography>
                                                 <Stack spacing={2}>
-                                                    <TextField
-                                                        select fullWidth size="small"
-                                                        name="category_id" label="Catégorie"
-                                                        value={values.category_id} onChange={handleChange}
-                                                    >
-                                                        <MenuItem value=""><em>Aucune</em></MenuItem>
-                                                        {categories.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                                                    </TextField>
-                                                    <TextField
-                                                        select fullWidth size="small"
-                                                        name="supplier_id" label="Fournisseur"
-                                                        value={values.supplier_id} onChange={handleChange}
-                                                    >
-                                                        <MenuItem value=""><em>Aucun</em></MenuItem>
-                                                        {suppliers.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-                                                    </TextField>
+                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                        <TextField
+                                                            select fullWidth size="small"
+                                                            name="category_id" label="Catégorie"
+                                                            value={values.category_id} onChange={handleChange}
+                                                        >
+                                                            <MenuItem value=""><em>Aucune</em></MenuItem>
+                                                            {categories.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                                                        </TextField>
+                                                        <Tooltip title="Gérer les catégories">
+                                                            <IconButton 
+                                                                size="small" 
+                                                                onClick={() => setCategoryModalOpen(true)}
+                                                                sx={{ bgcolor: 'secondary.50', color: 'secondary.main' }}
+                                                            >
+                                                                <Add />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
                                                 </Stack>
                                             </CardContent>
                                         </Card>
@@ -935,18 +931,12 @@ function ProductForm() {
                 </Formik>
             </Box>
 
-            {/* Supplier Selection Modal - Modern Design */}
+            {/* Supplier Selection Modal - Hidden (not needed for CSJ) */}
             < Dialog
-                open={supplierModalOpen}
+                open={false}
                 onClose={() => setSupplierModalOpen(false)}
                 maxWidth="sm"
                 fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }
-                }}
             >
                 <DialogTitle sx={{ pb: 2, pt: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

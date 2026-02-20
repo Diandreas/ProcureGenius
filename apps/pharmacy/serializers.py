@@ -121,6 +121,7 @@ class PharmacyDispensingListSerializer(serializers.ModelSerializer):
 class DispensingItemCreateSerializer(serializers.Serializer):
     """Serializer for creating a dispensing item"""
     medication_id = serializers.UUIDField()
+    batch_id = serializers.UUIDField(required=False, allow_null=True)
     quantity = serializers.DecimalField(max_digits=12, decimal_places=4)
     unit = serializers.ChoiceField(choices=['base', 'sell'], default='base')
     price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)

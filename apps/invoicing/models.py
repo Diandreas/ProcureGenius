@@ -1109,6 +1109,15 @@ class InvoiceItem(models.Model):
         verbose_name=_("Produit"),
         help_text=_("Produit facturé (si applicable)")
     )
+    batch = models.ForeignKey(
+        'ProductBatch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoice_items',
+        verbose_name=_("Lot / Batch"),
+        help_text=_("Lot spécifique pour la traçabilité")
+    )
     
     # Informations service/produit
     service_code = models.CharField(max_length=100, verbose_name=_("Code service"), default="SVC-001")

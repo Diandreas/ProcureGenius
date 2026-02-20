@@ -156,7 +156,7 @@ class OrganizationSettings(models.Model):
     default_tax_rate = models.DecimalField(
         max_digits=5,
         decimal_places=3,
-        default=15.000,
+        default=0.000,
         verbose_name=_("Taux de taxe par défaut (%)")
     )
     gst_hst_rate = models.DecimalField(

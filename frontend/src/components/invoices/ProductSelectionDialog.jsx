@@ -27,6 +27,8 @@ import {
 } from '../../utils/productHelpers';
 import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
+import batchAPI from '../../services/batchAPI';
 
 const UNIT_LABELS = {
   'piece': 'Pièce',
@@ -81,6 +83,8 @@ function ProductSelectionDialog({
   const { format: formatCurrency } = useCurrency();
   const [tabValue, setTabValue] = useState(0);
   const [stockError, setStockError] = useState('');
+  const [productBatches, setProductBatches] = useState([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
 
   // Séparer les produits par type
   const physicalProducts = useMemo(
@@ -96,7 +100,7 @@ function ProductSelectionDialog({
     [products]
   );
 
-  const handleProductSelect = (product) => {
+  const handleProductSelect = async (product) => {
     if (product) {
       // Vérifier la disponibilité
       const { canAdd, reason } = canAddProductToInvoice(
@@ -116,10 +120,29 @@ function ProductSelectionDialog({
         description: product.name,
         unit_price: product.price || 0,
         product_reference: product.reference || '',
-        unit_of_measure: product.sell_unit || 'piece' // Default to sell unit
+        unit_of_measure: product.sell_unit || 'piece',
+        batch: null
       }));
+
+      // Fetch batches
+      if (product.product_type === 'physical') {
+        setLoadingBatches(true);
+        try {
+          const batches = await batchAPI.getProductBatches(product.id);
+          const availableBatches = batches
+            .filter(b => b.status !== 'depleted' && b.quantity_remaining > 0)
+            .sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
+          
+          setProductBatches(availableBatches);
+        } catch (error) {
+          console.error('Error fetching batches:', error);
+        } finally {
+          setLoadingBatches(false);
+        }
+      }
     } else {
       setStockError('');
+      setProductBatches([]);
     }
   };
 
@@ -171,24 +194,16 @@ function ProductSelectionDialog({
   };
 
   const renderProductOption = (props, option) => {
-    const { key, ...otherProps } = props;
-    const { canAdd, reason } = canAddProductToInvoice(
-      option,
-      newItem.quantity || 1,
-      { allowOutOfStock }
-    );
-    const isDisabled = !canAdd;
-
     return (
-      <Tooltip title={isDisabled ? reason : ''} key={key}>
+      <Tooltip title={!canAddProductToInvoice(option, newItem.quantity || 1, { allowOutOfStock }).canAdd ? canAddProductToInvoice(option, newItem.quantity || 1, { allowOutOfStock }).reason : ''} key={option.id}>
         <Box
           component="li"
-          {...otherProps}
+          {...props}
           sx={{
-            opacity: isDisabled ? 0.5 : 1,
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            opacity: !canAddProductToInvoice(option, newItem.quantity || 1, { allowOutOfStock }).canAdd ? 0.5 : 1,
+            cursor: !canAddProductToInvoice(option, newItem.quantity || 1, { allowOutOfStock }).canAdd ? 'not-allowed' : 'pointer',
             '&:hover': {
-              backgroundColor: isDisabled ? 'transparent' : 'action.hover',
+              backgroundColor: !canAddProductToInvoice(option, newItem.quantity || 1, { allowOutOfStock }).canAdd ? 'transparent' : 'action.hover',
             },
           }}
         >
@@ -262,6 +277,7 @@ function ProductSelectionDialog({
                   <Autocomplete
                     options={physicalProducts}
                     getOptionLabel={(option) => option.name || ''}
+                    isOptionEqualToValue={(option, value) => option.id === value?.id}
                     value={newItem.product}
                     onChange={(event, newValue) => handleProductSelect(newValue)}
                     fullWidth
@@ -303,6 +319,44 @@ function ProductSelectionDialog({
               {stockError && (
                 <Grid item xs={12}>
                   <Alert severity="error">{stockError}</Alert>
+                </Grid>
+              )}
+
+              {/* Batch Selection */}
+              {newItem.product && newItem.product.product_type === 'physical' && (
+                <Grid item xs={12}>
+                  <Autocomplete
+                    options={productBatches}
+                    getOptionLabel={(option) => `${option.batch_number} (${dayjs(option.expiry_date).format('DD/MM/YY')}) - Reste: ${option.quantity_remaining}`}
+                    isOptionEqualToValue={(option, value) => option.id === value?.id}
+                    value={newItem.batch}
+                    onChange={(e, v) => setNewItem({ ...newItem, batch: v })}
+                    loading={loadingBatches}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Sélectionner Lot / Batch"
+                        helperText={newItem.batch ? `Expire le ${dayjs(newItem.batch.expiry_date).format('LL')}` : "Optionnel - recommandé pour la traçabilité"}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    )}
+                    renderOption={(props, option) => {
+                      const isExpiringSoon = dayjs(option.expiry_date).isBefore(dayjs().add(3, 'month'));
+                      return (
+                        <Box component="li" {...props} key={option.id} sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">{option.batch_number}</Typography>
+                            <Typography variant="caption" color="text.secondary">Stock: {option.quantity_remaining}</Typography>
+                          </Box>
+                          <Chip 
+                            label={dayjs(option.expiry_date).format('DD/MM/YYYY')} 
+                            size="small" 
+                            color={isExpiringSoon ? 'warning' : 'default'}
+                          />
+                        </Box>
+                      );
+                    }}
+                  />
                 </Grid>
               )}
 
@@ -409,6 +463,7 @@ function ProductSelectionDialog({
                   <Autocomplete
                     options={servicesAndDigital}
                     getOptionLabel={(option) => option.name || ''}
+                    isOptionEqualToValue={(option, value) => option.id === value?.id}
                     value={newItem.product}
                     onChange={(event, newValue) => handleProductSelect(newValue)}
                     fullWidth
@@ -425,7 +480,11 @@ function ProductSelectionDialog({
                         }}
                       />
                     )}
-                    renderOption={renderProductOption}
+                    renderOption={(props, option) => (
+                      <Box component="li" {...props} key={option.id}>
+                        {option.name}
+                      </Box>
+                    )}
                   />
                   <IconButton
                     onClick={onCreateProduct}

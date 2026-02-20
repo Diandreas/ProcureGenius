@@ -458,18 +458,22 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de facture"""
     product_name = serializers.CharField(source='product.name', read_only=True)
+    batch_number = serializers.CharField(source='batch.batch_number', read_only=True)
 
     class Meta:
         model = InvoiceItem
         fields = [
-            'id', 'product', 'product_reference', 'product_name', 'description', 'quantity',
+            'id', 'product', 'product_reference', 'product_name', 
+            'batch', 'batch_number',
+            'description', 'quantity',
             'unit_price', 'discount_percent', 'total_price'
         ]
-        read_only_fields = ['id', 'total_price', 'product_name']
+        read_only_fields = ['id', 'total_price', 'product_name', 'batch_number']
     
     def validate(self, attrs):
         """Valider la disponibilité du stock pour les produits physiques"""
         product = attrs.get('product')
+        batch = attrs.get('batch')
         quantity = attrs.get('quantity', 1)
         
         # Vérifier le stock uniquement si un produit est lié
@@ -481,10 +485,19 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             else:
                 stock_needed = quantity
             
-            # Vérifier si le stock est suffisant
-            if stock_needed > 0 and product.stock_quantity < stock_needed:
+            # Si un lot est spécifié, vérifier le stock du lot
+            if batch:
+                if batch.product != product:
+                    raise serializers.ValidationError({"batch": "Le lot sélectionné n'appartient pas à ce produit."})
+                
+                if stock_needed > 0 and batch.quantity_remaining < stock_needed:
+                    raise serializers.ValidationError({
+                        'quantity': f"Stock de lot insuffisant ({batch.batch_number}). Disponible: {batch.quantity_remaining}, Demandé: {stock_needed}"
+                    })
+            # Sinon, vérifier le stock global
+            elif stock_needed > 0 and product.stock_quantity < stock_needed:
                 raise serializers.ValidationError({
-                    'quantity': f"Stock insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
+                    'quantity': f"Stock global insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
                 })
         
         return attrs

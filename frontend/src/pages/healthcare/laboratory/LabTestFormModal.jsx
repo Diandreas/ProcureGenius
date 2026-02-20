@@ -174,11 +174,26 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         setLoading(true);
         try {
             const payload = { ...formData };
-            // Convert numeric fields
-            if (payload.price) payload.price = parseFloat(payload.price);
-            if (payload.fasting_hours) payload.fasting_hours = parseInt(payload.fasting_hours);
-            if (payload.estimated_turnaround_hours) payload.estimated_turnaround_hours = parseInt(payload.estimated_turnaround_hours);
-            if (payload.sample_volume) payload.sample_volume = parseFloat(payload.sample_volume);
+            
+            // Clean and convert numeric fields
+            payload.price = payload.price === '' ? 0 : parseFloat(payload.price);
+            
+            if (payload.fasting_hours === '') {
+                payload.fasting_hours = null;
+            } else {
+                payload.fasting_hours = parseInt(payload.fasting_hours);
+            }
+            
+            if (payload.estimated_turnaround_hours === '') {
+                payload.estimated_turnaround_hours = 24; // Default value from model
+            } else {
+                payload.estimated_turnaround_hours = parseInt(payload.estimated_turnaround_hours);
+            }
+
+            // Keep sample_volume as string (it's a CharField in model)
+            if (payload.sample_volume !== null && payload.sample_volume !== undefined) {
+                payload.sample_volume = String(payload.sample_volume);
+            }
 
             if (test) {
                 await laboratoryAPI.updateTest(test.id, payload);
@@ -191,10 +206,11 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             onClose();
         } catch (error) {
             console.error('Error saving test:', error);
-            enqueueSnackbar(
-                error?.response?.data?.detail || 'Erreur lors de l\'enregistrement',
-                { variant: 'error' }
-            );
+            const errorMsg = error?.response?.data 
+                ? Object.entries(error.response.data).map(([k, v]) => `${k}: ${v}`).join(', ')
+                : 'Erreur lors de l\'enregistrement';
+            
+            enqueueSnackbar(errorMsg, { variant: 'error' });
         } finally {
             setLoading(false);
         }
