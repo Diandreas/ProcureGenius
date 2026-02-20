@@ -131,8 +131,23 @@ const LabOrderForm = () => {
         }
     };
 
+    const handleDiscountChange = (testId, newDiscount) => {
+        setFormData(prev => ({
+            ...prev,
+            tests: prev.tests.map(t => 
+                t.id === testId ? { ...t, discount: newDiscount } : t
+            )
+        }));
+    };
+
     const calculateTotal = () => {
-        return formData.tests.reduce((sum, test) => sum + (parseFloat(test.price) || 0), 0);
+        // Includes the 500 XAF lab kit that is automatically added on backend
+        const testsTotal = formData.tests.reduce((sum, test) => {
+            const price = parseFloat(test.price) || 0;
+            const discount = parseFloat(test.discount) || 0;
+            return sum + (price - discount);
+        }, 0);
+        return testsTotal + 500; // Always add 500 for the kit
     };
 
     const handleSubmit = async () => {
@@ -158,7 +173,10 @@ const LabOrderForm = () => {
 
             const payload = {
                 patient_id: formData.patient.id,
-                test_ids: testIds,
+                tests_data: formData.tests.map(test => ({
+                    test_id: test.id,
+                    discount: parseFloat(test.discount) || 0
+                })),
                 priority: formData.priority,
                 clinical_notes: formData.clinical_notes || '',
                 payment_method: formData.payment_method || 'cash'
@@ -266,6 +284,9 @@ const LabOrderForm = () => {
                             >
                                 <MenuItem value="cash">Espèces</MenuItem>
                                 <MenuItem value="mobile_money">Mobile Money</MenuItem>
+                                <MenuItem value="card">Carte Bancaire</MenuItem>
+                                <MenuItem value="insurance">Assurance</MenuItem>
+                                <MenuItem value="other">Autre</MenuItem>
                             </TextField>
 
                             <Divider sx={{ my: 2 }} />
@@ -274,6 +295,10 @@ const LabOrderForm = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                 <Typography>Tests sélectionnés:</Typography>
                                 <Typography fontWeight="bold">{formData.tests.length}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2">Kit de prélèvement:</Typography>
+                                <Typography variant="body2" fontWeight="bold">500 XAF</Typography>
                             </Box>
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
@@ -349,6 +374,7 @@ const LabOrderForm = () => {
                                             <TableCell>Nom du Test</TableCell>
                                             <TableCell>Catégorie</TableCell>
                                             <TableCell>Prix</TableCell>
+                                            <TableCell>Réduction</TableCell>
                                             <TableCell align="center">Sélection</TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -383,6 +409,24 @@ const LabOrderForm = () => {
                                                         />
                                                     </TableCell>
                                                     <TableCell>{test.price || 0} XAF</TableCell>
+                                                    <TableCell onClick={(e) => e.stopPropagation()}>
+                                                        {isSelected ? (
+                                                            <TextField
+                                                                size="small"
+                                                                type="number"
+                                                                value={formData.tests.find(t => t.id === test.id).discount || 0}
+                                                                onChange={(e) => handleDiscountChange(test.id, e.target.value)}
+                                                                sx={{ width: 100 }}
+                                                                InputProps={{
+                                                                    endAdornment: <InputAdornment position="end">XAF</InputAdornment>,
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {test.discount || 0} XAF
+                                                            </Typography>
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell align="center">
                                                         {isSelected ? (
                                                             <Chip label="✓" color="primary" size="small" />

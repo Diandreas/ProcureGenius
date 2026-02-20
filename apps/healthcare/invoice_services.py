@@ -81,16 +81,8 @@ class LabOrderInvoiceService:
     @staticmethod
     def generate_invoice(lab_order):
         """
-        Génère facture pour commande laboratoire
-
-        Args:
-            lab_order: Instance de LabOrder
-
-        Returns:
-            Invoice: La facture créée
-
-        Raises:
-            ValueError: Si facture existe déjà ou aucun test
+        Génère facture pour commande laboratoire avec kit de prélèvement automatique
+        et gestion des réductions.
         """
         if lab_order.lab_invoice:
             raise ValueError("Une facture existe déjà pour cette commande labo")
@@ -98,31 +90,60 @@ class LabOrderInvoiceService:
         if not lab_order.items.exists():
             raise ValueError("Aucun test dans cette commande")
 
+        # Obtenir le kit de prélèvement
+        kit_product = Product.objects.filter(
+            organization=lab_order.organization,
+            name__icontains='Kit de prélèvement'
+        ).first()
+
         # Créer facture
         invoice = Invoice.objects.create(
             organization=lab_order.organization,
             client=lab_order.patient,
             invoice_type='healthcare_laboratory',
-            created_by=lab_order.ordered_by,
+            created_by=lab_order.ordered_by or lab_order.results_entered_by,
             title=f"Analyses laboratoire {lab_order.order_number}",
             description=f"Commande laboratoire #{lab_order.order_number}",
             due_date=timezone.now().date(),
             status='paid',
+            currency='XAF',
+            payment_method=lab_order.payment_method or 'cash',
             subtotal=0,
             tax_amount=0,
             total_amount=0
         )
 
-        # Créer lignes de facture pour chaque test
-        for lab_item in lab_order.items.all():
+        # 1. Ajouter le kit de prélèvement (Toujours ajouté pour le labo)
+        if kit_product:
             InvoiceItem.objects.create(
                 invoice=invoice,
-                product=None,  # LabTest n'est pas un Product
+                product=kit_product,
+                description=kit_product.name,
+                quantity=1,
+                unit_price=kit_product.price,
+                total_price=kit_product.price,
+                notes="Ajouté automatiquement pour toute commande labo"
+            )
+
+        # 2. Ajouter les tests de laboratoire avec réductions
+        for lab_item in lab_order.items.all():
+            test_price = lab_item.price or lab_item.lab_test.price
+            test_discount = lab_item.discount or 0
+            final_price = test_price - test_discount
+            
+            notes = f"Code: {lab_item.lab_test.test_code}"
+            if test_discount > 0:
+                notes += f" (Réduction de {test_discount} XAF appliquée sur ce test)"
+
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                product=None,
                 description=lab_item.lab_test.name,
                 quantity=1,
-                unit_price=lab_item.lab_test.price,
-                total_price=lab_item.lab_test.price,
-                notes=f"Code: {lab_item.lab_test.test_code}"
+                unit_price=test_price,
+                discount_amount=test_discount,
+                total_price=final_price,
+                notes=notes
             )
 
         # Recalculer totaux

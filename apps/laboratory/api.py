@@ -10,6 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone
 from django.http import HttpResponse
+from decimal import Decimal
 from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
@@ -194,8 +195,13 @@ class LabOrderCreateView(APIView):
                 pass
         
         # Get tests
+        if data.get('tests_data'):
+            test_ids = [item['test_id'] for item in data['tests_data']]
+        else:
+            test_ids = data.get('test_ids', [])
+
         tests = LabTest.objects.filter(
-            id__in=data['test_ids'],
+            id__in=test_ids,
             organization=request.user.organization,
             is_active=True
         )
@@ -214,61 +220,69 @@ class LabOrderCreateView(APIView):
             priority=data.get('priority', 'routine'),
             clinical_notes=data.get('clinical_notes', ''),
             ordered_by=request.user,
+            payment_method=data.get('payment_method', 'cash'),
         )
         
         # Create order items for each test
-        for test in tests:
-            LabOrderItem.objects.create(
-                lab_order=order,
-                lab_test=test,
-            )
+        total_order_price = 0
+        total_order_discount = 0
         
+        # Handle tests_data (new format with individual discounts)
+        if data.get('tests_data'):
+            for item_data in data['tests_data']:
+                try:
+                    test = LabTest.objects.get(
+                        id=item_data['test_id'],
+                        organization=request.user.organization
+                    )
+                    item_discount = Decimal(str(item_data.get('discount', test.discount or 0)))
+                    
+                    LabOrderItem.objects.create(
+                        lab_order=order,
+                        lab_test=test,
+                        price=test.price,
+                        discount=item_discount,
+                    )
+                    total_order_price += test.price
+                    total_order_discount += item_discount
+                except (LabTest.DoesNotExist, KeyError):
+                    continue
+        
+        # Handle legacy test_ids (simple list)
+        elif data.get('test_ids'):
+            for test in tests:
+                item_price = test.price
+                item_discount = test.discount or 0
+                
+                LabOrderItem.objects.create(
+                    lab_order=order,
+                    lab_test=test,
+                    price=item_price,
+                    discount=item_discount,
+                )
+                total_order_price += item_price
+                total_order_discount += item_discount
+        
+        # Update order totals
+        order.total_price = total_order_price
+        order.discount = total_order_discount
+        order.save() # Use standard save to ensure everything is committed
+
         # Update visit status if linked
         if visit:
             visit.send_to_lab()
         
-        # Auto-create invoice for lab order
+        # Auto-create invoice for lab order using service
         try:
-            from apps.invoicing.models import Invoice, InvoiceItem
-            from django.utils import timezone
-            from datetime import timedelta
-            
-            # Create invoice
-            invoice = Invoice.objects.create(
-                created_by=request.user,
-                client=patient,
-                title=f"Analyses laboratoire - {order.order_number}",
-                description=f"Commande laboratoire #{order.order_number}",
-                due_date=timezone.now().date() + timedelta(days=30),
-                subtotal=0,
-                total_amount=0,
-                status='paid',
-                currency='XAF',
-                payment_method=data.get('payment_method', 'cash'),
-                organization=request.user.organization,
-            )
-            
-            # Add invoice items from lab tests
-            for test in tests:
-                InvoiceItem.objects.create(
-                    invoice=invoice,
-                    service_code=test.test_code or 'LAB',
-                    description=test.name,
-                    quantity=1,
-                    unit_price=test.price,
-                    total_price=test.price,
-                )
-            
-            # Recalculate invoice totals
-            invoice.recalculate_totals()
-            
-            # Link invoice to lab order
-            order.lab_invoice = invoice
-            order.save(update_fields=['lab_invoice'])
-
+            from apps.healthcare.invoice_services import LabOrderInvoiceService
+            # Ensure we have the latest version of the order with its items
+            order.refresh_from_db()
+            LabOrderInvoiceService.generate_invoice(order)
         except Exception as e:
             # Don't fail the order if invoice creation fails
+            import traceback
             print(f"Error creating lab invoice: {e}")
+            traceback.print_exc()
 
         # Refresh order from database to ensure all relationships are loaded
         order.refresh_from_db()

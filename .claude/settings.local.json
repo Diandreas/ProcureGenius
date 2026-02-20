@@ -113,7 +113,9 @@
       "Bash(cmd.exe /c \"dir \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\" /b\")",
       "Bash(cmd.exe /c \"dir /b \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\"\")",
       "Bash(source:*)",
-      "Bash(1:*)"
+      "Bash(1:*)",
+      "Bash(.venv_specify/Scripts/python.exe:*)",
+      "Bash(venv/Scripts/python.exe:*)"
     ],
     "deny": [],
     "ask": []

@@ -181,6 +181,7 @@ const LabTestCatalog = () => {
                             <TableCell>Nom</TableCell>
                             <TableCell>Catégorie</TableCell>
                             <TableCell>Prix (XAF)</TableCell>
+                            <TableCell>Réduction</TableCell>
                             <TableCell>Échantillon</TableCell>
                             <TableCell align="center">Jeûne</TableCell>
                             <TableCell align="center">Statut</TableCell>
@@ -208,6 +209,11 @@ const LabTestCatalog = () => {
                                     <TableCell>
                                         <Typography variant="body2" fontWeight="600">
                                             {test.price ? new Intl.NumberFormat('fr-FR').format(test.price) : '-'}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" color="success.main">
+                                            {test.discount ? new Intl.NumberFormat('fr-FR').format(test.discount) : '0'}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>

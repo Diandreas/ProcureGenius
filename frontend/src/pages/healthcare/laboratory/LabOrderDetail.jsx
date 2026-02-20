@@ -139,6 +139,7 @@ const LabOrderDetail = () => {
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [selectedTests, setSelectedTests] = useState([]);
     const [priority, setPriority] = useState('routine');
+    const [payment_method, setPaymentMethodState] = useState('cash');
     const [clinicalNotes, setClinicalNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
@@ -410,8 +411,12 @@ const LabOrderDetail = () => {
         try {
             const orderData = {
                 patient_id: selectedPatient.id,
-                test_ids: selectedTests.map(t => t.id),
+                tests_data: selectedTests.map(t => ({
+                    test_id: t.id,
+                    discount: parseFloat(t.discount) || 0
+                })),
                 priority: priority,
+                payment_method: payment_method,
                 clinical_notes: clinicalNotes
             };
 
@@ -432,12 +437,24 @@ const LabOrderDetail = () => {
         if (exists) {
             setSelectedTests(selectedTests.filter(t => t.id !== test.id));
         } else {
-            setSelectedTests([...selectedTests, test]);
+            // Initialize with default test discount
+            setSelectedTests([...selectedTests, { ...test, discount: test.discount || 0 }]);
         }
     };
 
+    const handleDiscountChange = (testId, newDiscount) => {
+        setSelectedTests(prev => prev.map(t => 
+            t.id === testId ? { ...t, discount: newDiscount } : t
+        ));
+    };
+
     const getTotalPrice = () => {
-        return selectedTests.reduce((sum, test) => sum + parseFloat(test.price || 0), 0);
+        const testsTotal = selectedTests.reduce((sum, test) => {
+            const price = parseFloat(test.price) || 0;
+            const discount = parseFloat(test.discount) || 0;
+            return sum + (price - discount);
+        }, 0);
+        return testsTotal + 500; // Kit fee
     };
 
     if (loading) return <Typography>Chargement...</Typography>;
@@ -522,6 +539,21 @@ const LabOrderDetail = () => {
                                     </Select>
                                 </FormControl>
 
+                                <FormControl fullWidth sx={{ mb: 2 }}>
+                                    <InputLabel>Méthode de Paiement</InputLabel>
+                                    <Select
+                                        value={payment_method}
+                                        label="Méthode de Paiement"
+                                        onChange={(e) => setPaymentMethodState(e.target.value)}
+                                    >
+                                        <MenuItem value="cash">Espèces</MenuItem>
+                                        <MenuItem value="mobile_money">Mobile Money</MenuItem>
+                                        <MenuItem value="card">Carte Bancaire</MenuItem>
+                                        <MenuItem value="insurance">Assurance</MenuItem>
+                                        <MenuItem value="other">Autre</MenuItem>
+                                    </Select>
+                                </FormControl>
+
                                 <TextField
                                     fullWidth
                                     multiline
@@ -557,6 +589,7 @@ const LabOrderDetail = () => {
                                                 <TableCell>Nom du Test</TableCell>
                                                 <TableCell>Catégorie</TableCell>
                                                 <TableCell>Prix</TableCell>
+                                                <TableCell>Réduction</TableCell>
                                                 <TableCell>À jeun requis</TableCell>
                                                 <TableCell>Délai estimé</TableCell>
                                             </TableRow>
@@ -579,6 +612,21 @@ const LabOrderDetail = () => {
                                                         <TableCell><strong>{test.name}</strong></TableCell>
                                                         <TableCell>{test.category_name || '-'}</TableCell>
                                                         <TableCell>{test.price} FCFA</TableCell>
+                                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                                            {isSelected ? (
+                                                                <TextField
+                                                                    size="small"
+                                                                    type="number"
+                                                                    value={selectedTests.find(t => t.id === test.id).discount || 0}
+                                                                    onChange={(e) => handleDiscountChange(test.id, e.target.value)}
+                                                                    sx={{ width: 100 }}
+                                                                />
+                                                            ) : (
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    {test.discount || 0} FCFA
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
                                                         <TableCell>
                                                             {test.fasting_required ? (
                                                                 <Chip label="Oui" size="small" color="warning" />
@@ -605,11 +653,15 @@ const LabOrderDetail = () => {
                                 {selectedTests.length > 0 && (
                                     <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
                                         <Grid container spacing={2}>
-                                            <Grid item xs={12} sm={6}>
+                                            <Grid item xs={12} sm={4}>
                                                 <Typography variant="body2" color="text.secondary">Tests sélectionnés</Typography>
                                                 <Typography variant="h6">{selectedTests.length}</Typography>
                                             </Grid>
-                                            <Grid item xs={12} sm={6}>
+                                            <Grid item xs={12} sm={4}>
+                                                <Typography variant="body2" color="text.secondary">Kit de prélèvement</Typography>
+                                                <Typography variant="h6">500 FCFA</Typography>
+                                            </Grid>
+                                            <Grid item xs={12} sm={4}>
                                                 <Typography variant="body2" color="text.secondary">Prix total estimé</Typography>
                                                 <Typography variant="h6">{getTotalPrice().toFixed(0)} FCFA</Typography>
                                             </Grid>

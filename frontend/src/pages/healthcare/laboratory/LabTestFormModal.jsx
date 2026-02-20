@@ -39,7 +39,7 @@ const CONTAINER_TYPES = [
     { value: 'fluoride', label: 'Fluorure (gris)' },
     { value: 'urine_cup', label: 'Pot à urine' },
     { value: 'stool_cup', label: 'Pot à selles' },
-    { value: 'swab_tube', label: 'Tube écouvillon' },
+    { value: 'swab_kit', label: 'Tube écouvillon' },
     { value: 'other', label: 'Autre' },
 ];
 
@@ -58,6 +58,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         category: '',
         description: '',
         price: '',
+        discount: '',
         sample_type: 'blood',
         container_type: 'serum',
         sample_volume: '',
@@ -86,6 +87,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     category: test.category || '',
                     description: test.description || '',
                     price: test.price || '',
+                    discount: test.discount || '',
                     sample_type: test.sample_type || 'blood',
                     container_type: test.container_type || 'serum',
                     sample_volume: test.sample_volume || '',
@@ -175,23 +177,24 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         try {
             const payload = { ...formData };
             
-            // Clean and convert numeric fields
-            payload.price = payload.price === '' ? 0 : parseFloat(payload.price);
+            // Clean and convert numeric fields safely
+            payload.price = (payload.price === '' || payload.price === null) ? 0 : parseFloat(payload.price);
+            payload.discount = (payload.discount === '' || payload.discount === null) ? 0 : parseFloat(payload.discount);
             
-            if (payload.fasting_hours === '') {
+            if (payload.fasting_hours === '' || payload.fasting_hours === null) {
                 payload.fasting_hours = null;
             } else {
                 payload.fasting_hours = parseInt(payload.fasting_hours);
             }
             
-            if (payload.estimated_turnaround_hours === '') {
-                payload.estimated_turnaround_hours = 24; // Default value from model
+            if (payload.estimated_turnaround_hours === '' || payload.estimated_turnaround_hours === null) {
+                payload.estimated_turnaround_hours = 24;
             } else {
                 payload.estimated_turnaround_hours = parseInt(payload.estimated_turnaround_hours);
             }
 
             // Keep sample_volume as string (it's a CharField in model)
-            if (payload.sample_volume !== null && payload.sample_volume !== undefined) {
+            if (payload.sample_volume !== undefined && payload.sample_volume !== null) {
                 payload.sample_volume = String(payload.sample_volume);
             }
 
@@ -206,11 +209,20 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             onClose();
         } catch (error) {
             console.error('Error saving test:', error);
-            const errorMsg = error?.response?.data 
-                ? Object.entries(error.response.data).map(([k, v]) => `${k}: ${v}`).join(', ')
-                : 'Erreur lors de l\'enregistrement';
+            let errorMsg = 'Erreur lors de l\'enregistrement';
             
-            enqueueSnackbar(errorMsg, { variant: 'error' });
+            if (error?.response?.data) {
+                const data = error.response.data;
+                if (typeof data === 'object') {
+                    errorMsg = Object.entries(data)
+                        .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                        .join(' | ');
+                } else if (typeof data === 'string') {
+                    errorMsg = data;
+                }
+            }
+            
+            enqueueSnackbar(errorMsg, { variant: 'error', autoHideDuration: 6000 });
         } finally {
             setLoading(false);
         }
@@ -268,6 +280,9 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     <Grid item xs={12} sm={2}>
                         <TextField fullWidth label="Prix (XAF)" name="price" value={formData.price} onChange={handleChange} size="small" type="number" />
                     </Grid>
+                    <Grid item xs={12} sm={2}>
+                        <TextField fullWidth label="Réduction (XAF)" name="discount" value={formData.discount} onChange={handleChange} size="small" type="number" />
+                    </Grid>
                     <Grid item xs={12}>
                         <TextField fullWidth multiline rows={2} label="Description" name="description" value={formData.description} onChange={handleChange} size="small" />
                     </Grid>
@@ -285,7 +300,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                         </TextField>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                        <TextField fullWidth label="Volume (mL)" name="sample_volume" value={formData.sample_volume} onChange={handleChange} size="small" type="number" />
+                        <TextField fullWidth label="Volume requis" name="sample_volume" value={formData.sample_volume} onChange={handleChange} size="small" placeholder="ex: 5 mL" />
                     </Grid>
 
                     {/* Valeurs de référence */}

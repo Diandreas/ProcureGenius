@@ -29,7 +29,8 @@ const QuickLabOrderModal = ({ open, onClose, patientId, patientName, onSuccess }
     const [formData, setFormData] = useState({
         selectedTests: [],
         priority: 'routine',
-        clinical_notes: ''
+        clinical_notes: '',
+        payment_method: 'cash'
     });
 
     useEffect(() => {
@@ -57,7 +58,12 @@ const QuickLabOrderModal = ({ open, onClose, patientId, patientName, onSuccess }
     };
 
     const calculateTotal = () => {
-        return formData.selectedTests.reduce((sum, test) => sum + (parseFloat(test.price) || 0), 0);
+        const testsTotal = formData.selectedTests.reduce((sum, test) => {
+            const price = parseFloat(test.price) || 0;
+            const discount = parseFloat(test.discount) || 0;
+            return sum + (price - discount);
+        }, 0);
+        return testsTotal + 500; // Automatic lab kit fee
     };
 
     const handleSubmit = async (e) => {
@@ -72,9 +78,13 @@ const QuickLabOrderModal = ({ open, onClose, patientId, patientName, onSuccess }
         try {
             const payload = {
                 patient_id: patientId,
-                test_ids: formData.selectedTests.map(test => test.id),
+                tests_data: formData.selectedTests.map(test => ({
+                    test_id: test.id,
+                    discount: parseFloat(test.discount) || 0
+                })),
                 priority: formData.priority,
-                clinical_notes: formData.clinical_notes || ''
+                clinical_notes: formData.clinical_notes || '',
+                payment_method: formData.payment_method || 'cash'
             };
 
             const response = await laboratoryAPI.createOrder(payload);
@@ -161,12 +171,21 @@ const QuickLabOrderModal = ({ open, onClose, patientId, patientName, onSuccess }
                                         <Box key={test.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
                                             <Typography variant="body2">
                                                 {idx + 1}. {test.test_code} - {test.name}
+                                                {parseFloat(test.discount) > 0 && (
+                                                    <Typography component="span" variant="caption" color="success.main" sx={{ ml: 1 }}>
+                                                        (-{test.discount} XAF)
+                                                    </Typography>
+                                                )}
                                             </Typography>
                                             <Typography variant="body2" fontWeight="bold">
-                                                {test.price?.toLocaleString()} FCFA
+                                                {((parseFloat(test.price) || 0) - (parseFloat(test.discount) || 0)).toLocaleString()} FCFA
                                             </Typography>
                                         </Box>
                                     ))}
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                        <Typography variant="body2">Kit de prélèvement</Typography>
+                                        <Typography variant="body2" fontWeight="bold">500 FCFA</Typography>
+                                    </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, pt: 1, borderTop: 1, borderColor: 'divider' }}>
                                         <Typography variant="subtitle1" fontWeight="bold">
                                             Total
@@ -191,6 +210,23 @@ const QuickLabOrderModal = ({ open, onClose, patientId, patientName, onSuccess }
                                 <MenuItem value="routine">Routine</MenuItem>
                                 <MenuItem value="urgent">Urgent</MenuItem>
                                 <MenuItem value="stat">STAT (Immédiat)</MenuItem>
+                            </TextField>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                select
+                                fullWidth
+                                label="Méthode de Paiement"
+                                name="payment_method"
+                                value={formData.payment_method}
+                                onChange={handleChange}
+                            >
+                                <MenuItem value="cash">Espèces</MenuItem>
+                                <MenuItem value="mobile_money">Mobile Money</MenuItem>
+                                <MenuItem value="card">Carte Bancaire</MenuItem>
+                                <MenuItem value="insurance">Assurance</MenuItem>
+                                <MenuItem value="other">Autre</MenuItem>
                             </TextField>
                         </Grid>
 

@@ -21,7 +21,7 @@ class LabTestCategory(models.Model):
         verbose_name=_("Organisation")
     )
     name = models.CharField(max_length=100, verbose_name=_("Nom"))
-    slug = models.SlugField(max_length=100, verbose_name=_("Slug"))
+    slug = models.SlugField(max_length=100, verbose_name=_("Slug"), blank=True)
     description = models.TextField(blank=True, verbose_name=_("Description"))
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     display_order = models.IntegerField(default=0, verbose_name=_("Ordre d'affichage"))
@@ -36,6 +36,12 @@ class LabTestCategory(models.Model):
     
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class LabTest(models.Model):
@@ -103,6 +109,13 @@ class LabTest(models.Model):
         decimal_places=2,
         verbose_name=_("Prix"),
         help_text=_("Prix du test en devise locale")
+    )
+    discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Réduction"),
+        help_text=_("Réduction par défaut pour ce test")
     )
 
     # Inventory Link
@@ -351,6 +364,24 @@ class LabOrder(models.Model):
         decimal_places=2,
         default=0,
         verbose_name=_("Prix total")
+    )
+    discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Réduction totale")
+    )
+    payment_method = models.CharField(
+        max_length=50,
+        choices=[
+            ('cash', _('Espèces')),
+            ('mobile_money', _('Mobile Money')),
+            ('card', _('Carte Bancaire')),
+            ('insurance', _('Assurance')),
+            ('other', _('Autre')),
+        ],
+        default='cash',
+        verbose_name=_("Méthode de paiement")
     )
     
     # Staff tracking
@@ -604,6 +635,12 @@ class LabOrderItem(models.Model):
         decimal_places=2,
         default=0,
         verbose_name=_("Prix")
+    )
+    discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Réduction")
     )
     
     # Abnormality flagging

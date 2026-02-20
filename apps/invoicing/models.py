@@ -1131,6 +1131,7 @@ class InvoiceItem(models.Model):
     # Informations supplémentaires
     unit_of_measure = models.CharField(max_length=20, default="unité", verbose_name=_("Unité de mesure"))
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_("Remise (%)"))
+    discount_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name=_("Montant remise"))
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_("Taux de taxe (%)"))
     notes = models.TextField(blank=True, default="", verbose_name=_("Notes"))
     
@@ -1154,10 +1155,18 @@ class InvoiceItem(models.Model):
             if not self.description or self.description == "":
                 self.description = self.product.name
         
-        # Calcul avec remise
+        # Calcul avec remise (Priorité au montant fixe si défini, sinon pourcentage)
         base_total = self.quantity * self.unit_price
-        discount_amount = base_total * (self.discount_percent / Decimal('100'))
-        self.total_price = base_total - discount_amount
+        
+        if self.discount_amount > 0:
+            # Si un montant fixe est déjà défini (ex: depuis le labo), on l'utilise
+            actual_discount = self.discount_amount
+        else:
+            # Sinon on calcule à partir du pourcentage
+            actual_discount = base_total * (self.discount_percent / Decimal('100'))
+            self.discount_amount = actual_discount
+
+        self.total_price = base_total - actual_discount
 
         super().save(*args, **kwargs)
         # Recalculer les totaux de la facture seulement si elle existe déjà
@@ -1170,10 +1179,9 @@ class InvoiceItem(models.Model):
         return self.quantity * self.unit_price
 
     @property
-    def discount_amount(self):
-        """Retourne le montant de la remise"""
-        from decimal import Decimal
-        return self.total_before_discount * (self.discount_percent / Decimal('100'))
+    def get_discount_amount(self):
+        """Retourne le montant de la remise (pour compatibilité)"""
+        return self.discount_amount
 
 
 # ====================================

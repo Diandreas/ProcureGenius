@@ -134,7 +134,7 @@ const laboratoryAPI = {
 
     // Update test
     updateTest: async (id, data) => {
-        const response = await api.put(`/healthcare/laboratory/tests/${id}/`, data);
+        const response = await api.patch(`/healthcare/laboratory/tests/${id}/`, data);
         return response.data;
     },
 
@@ -154,7 +154,7 @@ const laboratoryAPI = {
 
     // Update category
     updateCategory: async (id, data) => {
-        const response = await api.put(`/healthcare/laboratory/categories/${id}/`, data);
+        const response = await api.patch(`/healthcare/laboratory/categories/${id}/`, data);
         return response.data;
     },
 

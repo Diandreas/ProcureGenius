@@ -47,6 +47,7 @@ class LabTestSerializer(serializers.ModelSerializer):
             'short_name',
             'description',
             'price',
+            'discount',
             'normal_range_male',
             'normal_range_female',
             'normal_range_child',
@@ -107,6 +108,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'test_name',
             'test_code',
             'price',
+            'discount',
             'result_value',
             'result_numeric',
             'result_unit',
@@ -171,6 +173,8 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'lab_invoice',
             'items',
             'total_price',
+            'discount',
+            'payment_method',
             'tests_count',
             'all_results_entered',
             'biologist_diagnosis',
@@ -250,24 +254,43 @@ class LabOrderListSerializer(serializers.ModelSerializer):
 
 
 class LabOrderCreateSerializer(serializers.Serializer):
-    """Serializer for creating a lab order with tests"""
+    """Serializer for creating a lab order with tests and optional discounts"""
     patient_id = serializers.UUIDField()
     visit_id = serializers.UUIDField(required=False, allow_null=True)
+    
+    # We can accept test_ids as simple list or list of objects with discounts
     test_ids = serializers.ListField(
         child=serializers.UUIDField(),
-        min_length=1,
-        help_text="List of lab test IDs to order"
+        required=False
     )
+    
+    # New preferred format: [{test_id: uuid, discount: decimal}]
+    tests_data = serializers.ListField(
+        child=serializers.DictField(),
+        required=False
+    )
+    
     priority = serializers.ChoiceField(
         choices=LabOrder.PRIORITY_CHOICES,
         default='routine'
     )
     clinical_notes = serializers.CharField(required=False, allow_blank=True)
     payment_method = serializers.ChoiceField(
-        choices=[('cash', 'Espèces'), ('mobile_money', 'Mobile Money')],
+        choices=[
+            ('cash', 'Espèces'), 
+            ('mobile_money', 'Mobile Money'),
+            ('card', 'Carte Bancaire'),
+            ('insurance', 'Assurance'),
+            ('other', 'Autre')
+        ],
         default='cash',
         required=False
     )
+
+    def validate(self, data):
+        if not data.get('test_ids') and not data.get('tests_data'):
+            raise serializers.ValidationError("Either test_ids or tests_data is required")
+        return data
 
 
 class EnterResultsSerializer(serializers.Serializer):

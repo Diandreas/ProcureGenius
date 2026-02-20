@@ -24,10 +24,9 @@ import os
 # Add the commands directory to the path
 sys.path.append(os.path.dirname(__file__))
 
-# Import parsers and configuration
-from julianna_data_parsers import parse_all_source_files
+# Import configuration (no external file parsers needed)
+from julianna_tests_config import LAB_TESTS, LAB_CATEGORIES, MEDICAL_SERVICES
 from julianna_medications_config import load_all_medications, enrich_medication_data
-from julianna_medical_reference import LAB_TEST_REFERENCES, get_reference_range
 from julianna_simulation_scenarios import PATIENT_PROFILES, CLINICAL_SCENARIOS
 
 # Import models
@@ -168,6 +167,16 @@ class Command(BaseCommand):
             LabTestCategory.objects.filter(organization=org).delete()
 
             self.stdout.write('  [12/12] Deleting Users & Organization...')
+            # Delete any invoices created by org users but belonging to other orgs
+            # (cross-org FK would block user deletion due to PROTECTED constraint)
+            org_user_ids = list(User.objects.filter(organization=org).values_list('id', flat=True))
+            if org_user_ids:
+                cross_org_invoices = Invoice.objects.filter(created_by_id__in=org_user_ids)
+                cross_org_invoices_ids = list(cross_org_invoices.values_list('id', flat=True))
+                if cross_org_invoices_ids:
+                    InvoiceItem.objects.filter(invoice_id__in=cross_org_invoices_ids).delete()
+                    Payment.objects.filter(invoice_id__in=cross_org_invoices_ids).delete()
+                    cross_org_invoices.delete()
             User.objects.filter(organization=org).delete()
             org.delete()
 
@@ -185,24 +194,17 @@ class Command(BaseCommand):
     # ========================================================================
 
     def _load_source_data(self):
-        """Load and parse source files"""
-        self.stdout.write('[DATA] Chargement des fichiers sources...')
+        """Load catalog data from config modules (no external files required)"""
+        self.stdout.write('[DATA] Chargement du catalogue depuis la configuration...')
 
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+        # Lab tests and medical services come directly from julianna_tests_config.
+        # Medications: no external source file needed; enrich_medication_data
+        # will produce an empty list which is fine for production setup.
+        self.medications_data = load_all_medications({'medications': []})
 
-        soins_path = os.path.join(base_path, 'soins.md')
-        medicament_path = os.path.join(base_path, 'medicament.md')
-        html_path = os.path.join(base_path, 'g.html')
-
-        # Parse source files
-        self.source_data = parse_all_source_files(soins_path, medicament_path, html_path)
-
-        # Enrich medication data
-        self.medications_data = load_all_medications({'medications': self.source_data['medications']})
-
-        self.stdout.write(f'  [OK] {len(self.source_data["services"])} services charges')
+        self.stdout.write(f'  [OK] {len(MEDICAL_SERVICES)} services medicaux charges')
         self.stdout.write(f'  [OK] {len(self.medications_data["medications"])} medicaments charges')
-        self.stdout.write(f'  [OK] {len(self.source_data["lab_tests"])} tests de laboratoire charges')
+        self.stdout.write(f'  [OK] {len(LAB_TESTS)} tests de laboratoire charges')
         self.stdout.write('')
 
     # ========================================================================
@@ -383,15 +385,15 @@ class Command(BaseCommand):
             user.is_active = True
             user.save()
 
-            # Créer les permissions avec les modules restreints
-            UserPermissions.objects.create(
-                user=user,
-                module_access=modules,
-                can_manage_users=(role == 'admin'),
-                can_manage_settings=(role == 'admin'),
-                can_view_analytics=(role in ['admin', 'manager']),
-                can_approve_purchases=(role == 'admin'),
-            )
+            # Créer/mettre à jour les permissions avec les modules restreints
+            # (un signal peut déjà avoir créé un UserPermissions vide)
+            perms, _ = UserPermissions.objects.get_or_create(user=user)
+            perms.module_access = modules
+            perms.can_manage_users = (role == 'admin')
+            perms.can_manage_settings = (role == 'admin')
+            perms.can_view_analytics = (role in ['admin', 'manager'])
+            perms.can_approve_purchases = (role == 'admin')
+            perms.save()
 
             # Stocker par rôle (pour les scénarios de simulation)
             if role not in self.users:
@@ -480,124 +482,85 @@ class Command(BaseCommand):
         self.lab_tests = {}
         test_count = 0
 
-        # Map categories
-        category_map = {
-            'Hematologie': 'hematology',
-            'Biochimie Generale': 'biochemistry',
-            'Ionogrammes': 'ionogram',
-            'Serologie': 'serology',
-            'Bacteriologie': 'bacteriology',
-            'Parasitologie': 'parasitology',
-            'Hormonologie': 'endocrinology',
-            'Électrophoreses': 'electrophoresis',
+        # Slug mapping: julianna_tests_config category slugs → lab_categories dict keys
+        category_slug_map = {
+            'hematologie':     'hematology',
+            'biochimie':       'biochemistry',
+            'ionogramme':      'ionogram',
+            'serologie':       'serology',
+            'bacteriologie':   'bacteriology',
+            'parasitologie':   'parasitology',
+            'hormonologie':    'endocrinology',
+            'electrophorese':  'electrophoresis',
         }
 
-        # Create tests from source data (82 items)
-        for source_test in self.source_data['lab_tests']:
-            test_name = source_test['name']
-            
-            # Find matching reference data if available
-            ref_data = {}
-            for key, ref in LAB_TEST_REFERENCES.items():
-                if key.replace('_', ' ').lower() in test_name.lower() or \
-                   test_name.lower() in key.replace('_', ' ').lower():
-                    ref_data = ref
-                    break
-            
-            # Determine category
-            category_name = source_test.get('category', 'Biochimie Generale')
-            if not category_name or category_name == 'Analyses':
-                category_name = ref_data.get('category', 'Biochimie Generale')
-            
-            category_slug = category_map.get(category_name, 'biochemistry')
-            category = self.lab_categories.get(category_slug, self.lab_categories['biochemistry'])
+        # Create tests directly from LAB_TESTS config (already has all reference data)
+        for test_cfg in LAB_TESTS:
+            test_code = test_cfg['code']
+            test_name = test_cfg['name']
+            short_name = test_cfg.get('short_name', test_name[:30])
 
-            # Generate test code
-            test_code = source_test.get('code')
-            if not test_code or not test_code.startswith('JUL-'):
-                if 'code' in ref_data:
-                     test_code = ref_data['code']
-                else:
-                     test_code = f'JUL-LAB-{test_count:03d}'
-            
-            if not test_code.startswith('JUL-'):
-                test_code = f'JUL-{test_code}'
+            cat_slug = category_slug_map.get(test_cfg.get('category', 'biochimie'), 'biochemistry')
+            category = self.lab_categories.get(cat_slug, self.lab_categories['biochemistry'])
 
-            # Create LabTest (Service)
             lab_test = LabTest.objects.create(
                 organization=self.organization,
                 test_code=test_code,
                 name=test_name,
-                short_name=test_name[:20],
+                short_name=short_name,
                 category=category,
-                price=source_test['price'],
-                sample_type=ref_data.get('sample_type', 'blood'),
-                container_type=ref_data.get('container_type', 'serum'),
-                fasting_required=ref_data.get('fasting_required', False),
-                fasting_hours=ref_data.get('fasting_hours', 0),
-                normal_range_male=ref_data.get('normal_range_male', ''),
-                normal_range_female=ref_data.get('normal_range_female', ''),
-                normal_range_child=ref_data.get('normal_range_child', ''),
-                normal_range_general=ref_data.get('normal_range_general', ''),
-                unit_of_measurement=ref_data.get('unit', ''),
-                methodology=ref_data.get('methodology', ''),
+                price=test_cfg['price'],
+                sample_type=test_cfg.get('sample_type', 'blood'),
+                container_type=test_cfg.get('container', 'serum'),
+                fasting_required=test_cfg.get('fasting', False),
+                fasting_hours=test_cfg.get('fasting_hours', 0),
+                normal_range_male=test_cfg.get('normal_male', ''),
+                normal_range_female=test_cfg.get('normal_female', ''),
+                normal_range_child=test_cfg.get('normal_child', ''),
+                normal_range_general=test_cfg.get('normal_general', ''),
+                unit_of_measurement=test_cfg.get('unit', ''),
+                methodology=test_cfg.get('methodology', ''),
                 requires_approval=True,
-                estimated_turnaround_hours=24,
+                estimated_turnaround_hours=test_cfg.get('turnaround', 24),
             )
 
-            # Create corresponding Service Product
-            Product.objects.create(
-                organization=self.organization,
-                name=test_name,
-                reference=test_code,
-                product_type='service',
-                category=self.categories['laboratory'], # Assign to Laboratory category
-                price=source_test['price'],
-                cost_price=0,
-                stock_quantity=0,
-                low_stock_threshold=0,
-                is_active=True,
-            )
+            # NOTE: Lab tests are NOT duplicated as Products.
+            # They are managed and invoiced via the LabTest model directly.
 
             self.lab_tests[test_name] = lab_test
             test_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'  [OK] {test_count} tests de laboratoire crees (Services)\n'))
+        self.stdout.write(self.style.SUCCESS(f'  [OK] {test_count} tests de laboratoire crees\n'))
 
     # ========================================================================
     # CREATE MEDICAL SERVICES
     # ========================================================================
 
     def _create_medical_services(self):
-        """Create medical services from parsed data"""
+        """Create medical services from MEDICAL_SERVICES config (tarifs officiels CSJ 2026)"""
         self.stdout.write('[SERVICES] Creation du catalogue de services...')
 
+        # Map MEDICAL_SERVICES category names → product categories
+        cat_map = {
+            'Consultations':     'consultations',
+            'Hospitalisation':   'services',
+            'Petite Chirurgie':  'procedures',
+            'ORL':               'procedures',
+            'Kit Prélèvement':   'services',
+            'Maternité':         'services',
+            'Vaccinations':      'services',
+        }
+
         service_count = 0
-        for service in self.source_data['services']:
-            # Determine category based on name keywords
-            name_lower = service['name'].lower()
-            category_key = 'services' # Default
-
-            if 'consultation' in name_lower:
-                category_key = 'consultations'
-            elif any(x in name_lower for x in ['pansement', 'injection', 'perfusion', 'sondage', 'lavement', 'ablation']):
-                category_key = 'nursing'
-            elif any(x in name_lower for x in ['echographie', 'radio']):
-                category_key = 'imaging'
-            elif any(x in name_lower for x in ['suture', 'incision', 'circoncision', 'accouchement', 'extraction']):
-                category_key = 'procedures'
-            
-            # Fallback for known specific items
-            if 'accouchement' in name_lower:
-                category_key = 'procedures'
-
+        for svc in MEDICAL_SERVICES:
+            cat_key = cat_map.get(svc['category'], 'services')
             Product.objects.create(
                 organization=self.organization,
-                name=service['name'],
-                reference=service['code'],
+                name=svc['name'],
+                reference=svc.get('code', ''),
                 product_type='service',
-                category=self.categories.get(category_key, self.categories['services']),
-                price=service['price'],
+                category=self.categories.get(cat_key, self.categories['services']),
+                price=svc['price'],
                 cost_price=0,
                 stock_quantity=0,
                 low_stock_threshold=0,
@@ -612,12 +575,16 @@ class Command(BaseCommand):
     # ========================================================================
 
     def _create_medications(self):
-        """Create medications with batch/expiration tracking"""
+        """Create medications with real batch/expiration tracking (inventaire CSJ Fév 2026)"""
         self.stdout.write('[PHARMA] Creation du catalogue de medicaments...')
+
+        from apps.invoicing.models import ProductBatch
 
         med_count = 0
 
         for med in self.medications_data['medications']:
+            initial_stock = med['initial_stock']
+
             # Create product
             medication = Product.objects.create(
                 organization=self.organization,
@@ -628,26 +595,40 @@ class Command(BaseCommand):
                 category=self.categories['medications'],
                 price=med['selling_price'],
                 cost_price=med['cost_price'],
-                stock_quantity=med['initial_stock'],
+                stock_quantity=initial_stock,
                 low_stock_threshold=med['min_stock_threshold'],
                 is_active=True,
-                metadata={'batches': med['batches']} if med['batches'] else {},
             )
 
-            # Create initial stock movement
-            StockMovement.objects.create(
-                product=medication,
-                movement_type='initial',
-                quantity=med['initial_stock'],
-                quantity_before=0,
-                quantity_after=med['initial_stock'],
-                reference_type='manual',
-                notes='Stock initial (Mise en production)',
-            )
+            # Create real ProductBatch records for each batch
+            for batch_info in med.get('batches', []):
+                qty = batch_info.get('qty', 0)
+                expiry = batch_info.get('expiry')
+                ProductBatch.objects.create(
+                    organization=self.organization,
+                    product=medication,
+                    batch_number=batch_info['number'],
+                    quantity=qty,
+                    quantity_remaining=qty,
+                    expiry_date=expiry,
+                    status='available',
+                )
+
+            # Create single initial stock movement for the total
+            if initial_stock > 0:
+                StockMovement.objects.create(
+                    product=medication,
+                    movement_type='initial',
+                    quantity=initial_stock,
+                    quantity_before=0,
+                    quantity_after=initial_stock,
+                    reference_type='manual',
+                    notes='Stock initial (Mise en production - inventaire Fév 2026)',
+                )
 
             med_count += 1
 
-        # Create medical supplies
+        # Create medical supplies (consommables: bétadine, compresses, etc.)
         for supply in self.medications_data['supplies']:
             supply_prod = Product.objects.create(
                 organization=self.organization,
@@ -662,6 +643,20 @@ class Command(BaseCommand):
                 low_stock_threshold=supply['min_stock_threshold'],
                 is_active=True,
             )
+
+            for batch_info in supply.get('batches', []):
+                qty = batch_info.get('qty', 0)
+                expiry = batch_info.get('expiry')
+                if qty > 0 and expiry:
+                    ProductBatch.objects.create(
+                        organization=self.organization,
+                        product=supply_prod,
+                        batch_number=batch_info['number'],
+                        quantity=qty,
+                        quantity_remaining=qty,
+                        expiry_date=expiry,
+                        status='available',
+                    )
 
             if supply['initial_stock'] > 0:
                 StockMovement.objects.create(
