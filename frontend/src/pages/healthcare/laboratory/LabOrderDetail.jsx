@@ -713,7 +713,7 @@ const LabOrderDetail = () => {
                                 Étiquettes Thermiques
                             </Button>
 
-                            {order.lab_invoice ? (
+                            {order.lab_invoice && (
                                 <Button
                                     variant="outlined"
                                     color="success"
@@ -722,16 +722,6 @@ const LabOrderDetail = () => {
                                     sx={{ mr: 1 }}
                                 >
                                     Voir Facture
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    startIcon={<InvoiceIcon />}
-                                    onClick={handleGenerateInvoice}
-                                    sx={{ mr: 1 }}
-                                >
-                                    Générer Facture
                                 </Button>
                             )}
                         </>
