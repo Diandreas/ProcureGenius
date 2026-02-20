@@ -556,7 +556,7 @@
                         {% endif %}
                     </div>
                     <div class="footer-meta">
-                        Document généré le {% now "d/m/Y à H:i" %}
+                        Document généré le {% now "d/m/Y à H:i" %} par {{ invoice.created_by.get_full_name|default:invoice.created_by.username }}
                     </div>
                 </td>
             </tr>

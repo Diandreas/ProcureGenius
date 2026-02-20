@@ -103,7 +103,7 @@
         {% if qr_code_base64 %}<div class="qr-code"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="label">Vérification</div></div>{% endif %}
         <div class="footer-info">{% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}{% if organization.phone or organization.email %}<div style="margin-top: 5px;">{% if organization.phone %}{{ organization.phone }}{% endif %}{% if organization.phone and organization.email %}  {% endif %}{% if organization.email %}{{ organization.email }}{% endif %}</div>{% endif %}
             {% if organization.bank_account %}<div style="margin-top: 5px;"><strong>Banque:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}Compte: {{ organization.bank_account }}</div>{% endif %}
-            <div class="footer-meta">Généré le {% now "d/m/Y à H:i" %}</div>
+            <div class="footer-meta">Généré le {% now "d/m/Y à H:i" %} par {{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</div>
         </div>
     </div>
 </body>
