@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { isValidElement } from 'react';
 import { Card, CardContent, Typography, Box, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
 
@@ -25,7 +25,11 @@ const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => 
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          {icon && <Box sx={{ color, mr: 1, fontSize: 28 }}>{icon}</Box>}
+          {icon && (
+            <Box sx={{ color, mr: 1, display: 'flex', alignItems: 'center' }}>
+              {icon}
+            </Box>
+          )}
           <Typography variant="subtitle2" color="text.secondary" fontWeight="600">
             {title}
           </Typography>
@@ -40,11 +44,11 @@ const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => 
               <Typography variant="h4" fontWeight="700" color={color}>
                 {value}
               </Typography>
-            ) : (
+            ) : isValidElement(value) ? (
               <Box sx={{ display: 'flex', alignItems: 'center', color, fontSize: '2rem', fontWeight: 700 }}>
                 {value}
               </Box>
-            )}
+            ) : null}
             {subtitle && (
               <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                 {subtitle}

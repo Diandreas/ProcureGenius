@@ -12,11 +12,11 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText,
   Divider,
   Typography,
   Box,
 } from '@mui/material';
+import { SafeListItemText } from '../safe';
 import {
   School as TutorialIcon,
   PlayArrow,
@@ -75,7 +75,7 @@ const TutorialButton = ({
         <ListItemIcon>
           <TutorialIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText primary="Tutoriel" />
+        <SafeListItemText primary="Tutoriel" />
         {!tutorialCompleted && (
           <Box
             component="span"
@@ -131,7 +131,7 @@ const TutorialButton = ({
             <ListItemIcon>
               <PlayArrow fontSize="small" color="primary" />
             </ListItemIcon>
-            <ListItemText
+            <SafeListItemText
               primary="Lancer le tutoriel"
               secondary="Visite guidée de l'application"
             />
@@ -142,7 +142,7 @@ const TutorialButton = ({
               <ListItemIcon>
                 <Refresh fontSize="small" />
               </ListItemIcon>
-              <ListItemText
+              <SafeListItemText
                 primary="Revoir le tutoriel"
                 secondary="Recommencer depuis le début"
               />
@@ -155,7 +155,7 @@ const TutorialButton = ({
             <ListItemIcon>
               <MenuBook fontSize="small" />
             </ListItemIcon>
-            <ListItemText
+            <SafeListItemText
               primary="Documentation"
               secondary="Centre d'aide complet"
             />
@@ -165,23 +165,23 @@ const TutorialButton = ({
             <ListItemIcon>
               <LiveHelp fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="FAQ" />
+            <SafeListItemText primary="FAQ" />
           </MenuItem>
 
           <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
             <ListItemIcon>
               <Keyboard fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Raccourcis clavier" />
+            <SafeListItemText primary="Raccourcis clavier" />
           </MenuItem>
 
           <Divider />
 
-          <MenuItem onClick={() => window.open('mailto:support@procuregenius.com', '_blank')}>
+          <MenuItem onClick={() => window.open('mailto:contact@centrejulianna.com', '_blank')}>
             <ListItemIcon>
               <Support fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Contacter le support" />
+            <SafeListItemText primary="Contacter le support" />
           </MenuItem>
         </Menu>
       </>
@@ -233,10 +233,10 @@ const TutorialButton = ({
           <ListItemIcon>
             <PlayArrow fontSize="small" color="primary" />
           </ListItemIcon>
-          <ListItemText
+          <SafeListItemText
             primary="Lancer le tutoriel"
             secondary={
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography component="span" variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
                 Visite guidée interactive
                 {!tutorialCompleted && (
                   <Typography component="span" variant="caption" sx={{
@@ -251,7 +251,7 @@ const TutorialButton = ({
                     Nouveau
                   </Typography>
                 )}
-              </Box>
+              </Typography>
             }
           />
         </MenuItem>
@@ -261,7 +261,7 @@ const TutorialButton = ({
             <ListItemIcon>
               <Refresh fontSize="small" />
             </ListItemIcon>
-            <ListItemText
+            <SafeListItemText
               primary="Revoir le tutoriel"
               secondary="Recommencer la visite"
             />
@@ -274,7 +274,7 @@ const TutorialButton = ({
           <ListItemIcon>
             <MenuBook fontSize="small" />
           </ListItemIcon>
-          <ListItemText
+          <SafeListItemText
             primary="Documentation"
             secondary="Centre d'aide complet"
           />
@@ -284,23 +284,23 @@ const TutorialButton = ({
           <ListItemIcon>
             <LiveHelp fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="FAQ" />
+          <SafeListItemText primary="FAQ" />
         </MenuItem>
 
         <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
           <ListItemIcon>
             <Keyboard fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Raccourcis clavier" />
+          <SafeListItemText primary="Raccourcis clavier" />
         </MenuItem>
 
         <Divider sx={{ my: 1 }} />
 
-        <MenuItem onClick={() => { handleCloseMenu(); window.open('mailto:support@procuregenius.com', '_blank'); }}>
+        <MenuItem onClick={() => { handleCloseMenu(); window.open('mailto:contact@centrejulianna.com', '_blank'); }}>
           <ListItemIcon>
             <Support fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Contacter le support" />
+          <SafeListItemText primary="Contacter le support" />
         </MenuItem>
       </Menu>
     </>
@@ -308,4 +308,3 @@ const TutorialButton = ({
 };
 
 export default TutorialButton;
-

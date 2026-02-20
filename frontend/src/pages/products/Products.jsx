@@ -31,6 +31,7 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  TablePagination,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -111,6 +112,8 @@ function Products() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
   const [reportFilters, setReportFilters] = useState({
     dateStart: '',
     dateEnd: '',
@@ -130,6 +133,11 @@ function Products() {
     dispatch(fetchProducts());
     fetchWarehousesData();
   }, [dispatch, fetchWarehousesData]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, categoryFilter, statusFilter, warehouseFilter, stockFilter]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = !searchTerm ||
@@ -165,6 +173,12 @@ function Products() {
 
     return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus && matchesStock;
   });
+
+  // Calculate paginated products
+  const paginatedProducts = filteredProducts.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   // Tous les hooks doivent être appelés avant tout return conditionnel
   const handleGenerateReportClick = useCallback(() => {
@@ -1003,15 +1017,34 @@ function Products() {
           onAction={() => navigate('/products/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-                <ProductCard product={product} index={index} />
-              </Grid>
-            ))}
-          </AnimatePresence>
-        </Grid>
+        <>
+          <Grid container spacing={isMobile ? 2 : 3}>
+            <AnimatePresence mode="popLayout">
+              {paginatedProducts.map((product, index) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+                  <ProductCard product={product} index={index} />
+                </Grid>
+              ))}
+            </AnimatePresence>
+          </Grid>
+
+          {/* Pagination */}
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <TablePagination
+              component="div"
+              count={filteredProducts.length}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[12, 24, 48, 96]}
+              labelRowsPerPage={t('common:pagination.rowsPerPage', 'Lignes par page')}
+            />
+          </Box>
+        </>
       )}
 
       {/* Configuration Dialog */}

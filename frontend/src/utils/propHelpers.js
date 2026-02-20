@@ -40,6 +40,7 @@ export const safeLabel = (label) => {
   if (!label) return '';
   if (typeof label === 'string') return label;
   if (typeof label === 'number') return String(label);
+  if (isValidElement(label)) return label;
   return '';
 };
 

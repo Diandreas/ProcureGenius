@@ -105,7 +105,13 @@
       "Bash(npm dedupe:*)",
       "Bash(./cleanup_for_production.sh:*)",
       "Bash(FICHIERS_PRODUCTION.md:*)",
-      "Bash(__NEW_LINE_9b7fd0fdb74234cb__ cat GUIDE_LECTURE.md)"
+      "Bash(__NEW_LINE_9b7fd0fdb74234cb__ cat GUIDE_LECTURE.md)",
+      "Bash(python3:*)",
+      "Bash(powershell.exe -Command \":*)",
+      "Bash(powershell.exe -Command \"Get-ChildItem ''d:\\\\project\\\\BFMa\\\\ProcureGenius\\\\'' -Filter ''*.csv'' | ForEach-Object { Get-Content $_FullName -Encoding UTF8 | Select-Object -First 30 }\")",
+      "Bash(cmd.exe /c \"type \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\Liste Analyses M\\\\xe9dicales - CSJ version finale.csv\"\" 2>nul\")",
+      "Bash(cmd.exe /c \"dir \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\" /b\")",
+      "Bash(cmd.exe /c \"dir /b \"\"D:\\\\project\\\\BFMa\\\\ProcureGenius\\\\\"\"\")"
     ],
     "deny": [],
     "ask": []

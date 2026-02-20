@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Grid,
-    Typography,
-    Chip,
-    IconButton,
-    Avatar,
-    Tabs,
-    Tab,
-    LinearProgress,
-    Tooltip,
-    Badge,
-    Divider
-} from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider } from '@mui/material';
+import { SafeTab } from '../../../components/safe';
 import {
     Add as AddIcon,
     Refresh as RefreshIcon,
@@ -526,17 +511,17 @@ const LabQueueDashboard = () => {
                             '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', fontSize: '0.95rem' }
                         }}
                     >
-                        <Tab label={
+                        <SafeTab label={
                             <Badge badgeContent={pendingOrders.length} color="warning" max={99}>
                                 <Box sx={{ pr: pendingOrders.length > 0 ? 2 : 0 }}>Prélèvements</Box>
                             </Badge>
                         } />
-                        <Tab label={
+                        <SafeTab label={
                             <Badge badgeContent={inProgressOrders.length} color="info" max={99}>
                                 <Box sx={{ pr: inProgressOrders.length > 0 ? 2 : 0 }}>En cours</Box>
                             </Badge>
                         } />
-                        <Tab label={
+                        <SafeTab label={
                             <Badge badgeContent={resultsOrders.length} color="success" max={99}>
                                 <Box sx={{ pr: resultsOrders.length > 0 ? 2 : 0 }}>Résultats</Box>
                             </Badge>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Grid, Typography, Container, Paper, alpha, Tabs, Chip, Stack
+  Box, Grid, Typography, Container, Paper, alpha, Tabs, Tab, Chip, Stack
 } from '@mui/material';
 import { SafeTab } from '../components/safe';
 import { useNavigate, useOutletContext } from 'react-router-dom';

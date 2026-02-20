@@ -123,7 +123,7 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 
         <div class="footer">
           <div>Généré le ${formatDate(new Date())}</div>
-          <div>ProcureGenius - Gestion des factures</div>
+          <div>Centre de Santé Julianna - Gestion hospitalière</div>
         </div>
       </body>
       </html>
@@ -273,7 +273,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
 
         <div class="footer">
           <div>Généré le ${formatDate(new Date())}</div>
-          <div>ProcureGenius - Gestion des achats</div>
+          <div>Centre de Santé Julianna - Gestion des achats</div>
         </div>
       </body>
       </html>

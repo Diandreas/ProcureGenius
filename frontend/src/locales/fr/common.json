@@ -201,5 +201,10 @@
   },
   "dashboard": {
     "title": "Tableau de Bord"
+  },
+  "pagination": {
+    "rowsPerPage": "Lignes par page",
+    "of": "sur",
+    "page": "Page"
   }
 }

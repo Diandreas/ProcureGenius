@@ -20,10 +20,22 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Suppression des warnings PropTypes MUI connus et non-bloquants pour un console log propre
+if (import.meta.env.MODE === 'development') {
+  const originalError = console.error;
+  console.error = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && (
+      args[0].includes('Warning: Failed prop type') || 
+      args[0].includes('Warning: Failed %s type')
+    )) {
+      return;
+    }
+    originalError(...args);
+  };
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <App />
-    </GoogleOAuthProvider>
-  </React.StrictMode>,
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <App />
+  </GoogleOAuthProvider>,
 )

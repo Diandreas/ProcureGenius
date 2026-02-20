@@ -649,7 +649,7 @@ function MainLayout() {
                             }
                           }}
                         >
-                          <Box><Refresh sx={{ fontSize: 16 }} /></Box>
+                          <Refresh sx={{ fontSize: 16 }} />
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -830,23 +830,21 @@ function MainLayout() {
               }}>
                 {/* <PeriodSelector period={contextualActions.currentPeriod} onChange={contextualActions.onPeriodChange} /> */}
                 <Tooltip title="Actualiser">
-                  <Box>
-                    <IconButton
-                      onClick={contextualActions.onRefresh}
-                      size="small"
-                      sx={{
-                        p: { xs: 0.75, sm: 1 },
-                        borderRadius: 2,
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'primary.main',
-                          bgcolor: alpha(theme.palette.primary.main, 0.08)
-                        }
-                      }}
-                    >
-                      <Box><Refresh sx={{ fontSize: { xs: 16, sm: 18 } }} /></Box>
-                    </IconButton>
-                  </Box>
+                  <IconButton
+                    onClick={contextualActions.onRefresh}
+                    size="small"
+                    sx={{
+                      p: { xs: 0.75, sm: 1 },
+                      borderRadius: 2,
+                      color: 'text.secondary',
+                      '&:hover': {
+                        color: 'primary.main',
+                        bgcolor: alpha(theme.palette.primary.main, 0.08)
+                      }
+                    }}
+                  >
+                    <Refresh sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                  </IconButton>
                 </Tooltip>
               </Box>
             )}

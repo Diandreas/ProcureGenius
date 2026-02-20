@@ -1,7 +1,6 @@
 import React, { useMemo, createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from './store/store';

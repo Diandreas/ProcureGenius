@@ -163,5 +163,10 @@
       "iosHint": "Tap ",
       "iosHint2": " then \"Add to Home Screen\""
     }
+  },
+  "pagination": {
+    "rowsPerPage": "Rows per page",
+    "of": "of",
+    "page": "Page"
   }
 }

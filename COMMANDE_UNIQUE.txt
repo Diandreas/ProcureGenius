@@ -1,0 +1,40 @@
+═══════════════════════════════════════════════════════════════
+  COMMANDE UNIQUE POUR RELANCER VOTRE APPLICATION VPS
+═══════════════════════════════════════════════════════════════
+
+Sur votre VPS, exécutez simplement :
+
+root@srv1333813:~# cd /home/centrejulianna-appback/htdocs/appback.centrejulianna.com
+root@srv1333813:/home/centrejulianna-appback/htdocs/appback.centrejulianna.com# ./relancer_vps.sh
+
+═══════════════════════════════════════════════════════════════
+
+C'EST TOUT ! ✅
+
+Le script va :
+  ✅ Arrêter PM2
+  ✅ Activer venv Python
+  ✅ Installer dépendances Python
+  ✅ Installer dépendances npm frontend
+  ✅ Appliquer migrations Django
+  ✅ Collecter fichiers statiques
+  ✅ Démarrer backend (8090) + frontend (3000) avec PM2
+
+═══════════════════════════════════════════════════════════════
+
+URLS :
+  Frontend : http://appback.centrejulianna.com:3000
+  Backend  : http://appback.centrejulianna.com:8090
+  Admin    : http://appback.centrejulianna.com:8090/admin
+
+═══════════════════════════════════════════════════════════════
+
+VÉRIFIER :
+  pm2 status        # Voir si ça tourne
+  pm2 logs          # Voir les logs
+
+REDÉMARRER :
+  pm2 restart all   # Redémarrage rapide
+  ./relancer_vps.sh # Mise à jour complète
+
+═══════════════════════════════════════════════════════════════

@@ -120,7 +120,7 @@ const Help = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          {t('help:title', 'Centre d\'aide ProcureGenius')}
+          {t('help:title', 'Centre d\'aide - Centre de Santé Julianna')}
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
           {t('help:subtitle', 'Trouvez rapidement les réponses à vos questions')}

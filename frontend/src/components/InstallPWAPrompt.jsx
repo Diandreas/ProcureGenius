@@ -167,7 +167,7 @@ const InstallPWAPrompt = () => {
               fontSize: '1.1rem',
             }}
           >
-            {t('pwa.install.title', 'Installer ProcureGenius')}
+            {t('pwa.install.title', 'Installer CSJ - Julianna')}
           </Typography>
 
           {/* Description */}

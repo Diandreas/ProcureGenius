@@ -72,7 +72,7 @@ const HomeRedirect = () => {
                 textAlign="center"
             >
                 <Typography variant="h4" gutterBottom>
-                    Bienvenue sur ProcureGenius
+                    Bienvenue sur le système du Centre de Santé Julianna
                 </Typography>
                 <Typography variant="body1" color="textSecondary" paragraph>
                     Vous n'avez accès à aucun module pour le moment.

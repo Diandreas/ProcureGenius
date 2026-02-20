@@ -31,7 +31,7 @@ from julianna_medical_reference import LAB_TEST_REFERENCES, get_reference_range
 from julianna_simulation_scenarios import PATIENT_PROFILES, CLINICAL_SCENARIOS
 
 # Import models
-from apps.accounts.models import Organization, Client
+from apps.accounts.models import Organization, Client, UserPermissions
 from apps.core.models import OrganizationSettings
 from apps.patients.models import PatientVisit
 from apps.consultations.models import Consultation, Prescription, PrescriptionItem
@@ -255,65 +255,153 @@ class Command(BaseCommand):
     # ========================================================================
 
     def _create_users(self):
-        """Create staff users"""
+        """Create staff users for Centre de Santé JULIANNA"""
         self.stdout.write('[USERS] Creation des utilisateurs...')
+
+        from apps.core.modules import Modules
 
         self.users = {}
 
+        # ── Modules par rôle ──────────────────────────────────────────────────
+        # Liste vide = accès à tous les modules de l'org (cas admin uniquement)
+        # Liste remplie = restriction aux modules listés
+        MODULE_DOCTOR = [
+            Modules.PATIENTS, Modules.CONSULTATIONS,
+            Modules.LABORATORY, Modules.PHARMACY,
+        ]
+        MODULE_LAB_TECH = [
+            Modules.PATIENTS, Modules.LABORATORY,
+        ]
+        MODULE_NURSE = [
+            Modules.PATIENTS, Modules.CONSULTATIONS,
+            Modules.PHARMACY, Modules.LABORATORY,
+        ]
+        MODULE_NURSE_SECRETARY = [
+            Modules.PATIENTS, Modules.CONSULTATIONS,
+            Modules.PHARMACY, Modules.LABORATORY,
+            Modules.INVOICES, Modules.CLIENTS, Modules.PRODUCTS,
+        ]
+        MODULE_SECRETARY = [
+            Modules.PATIENTS, Modules.CONSULTATIONS,
+            Modules.INVOICES, Modules.CLIENTS,
+            Modules.LABORATORY, Modules.PRODUCTS,
+        ]
+
         users_to_create = [
+            # ── ADMIN ─────────────────────────────────────────────────────────
             {
-                'username': 'julianna_admin',
-                'email': 'admin@csj.cm',
+                'username': 'boris',
+                'password': 'staneDU@#1989',
+                'email': 'boris@csj.cm',
                 'first_name': 'Boris',
-                'last_name': 'TCHUENTE',
+                'last_name': 'ADMIN',
                 'role': 'admin',
                 'is_staff': True,
                 'is_superuser': True,
+                'modules': [],  # Admin = accès total
             },
+            # ── MÉDECIN ───────────────────────────────────────────────────────
             {
-                'username': 'julianna_reception',
-                'email': 'reception@csj.cm',
-                'first_name': 'Marie',
-                'last_name': 'NGONO',
-                'role': 'receptionist',
-            },
-            {
-                'username': 'julianna_doctor',
-                'email': 'docteur@csj.cm',
-                'first_name': 'Paul',
-                'last_name': 'EBODE',
+                'username': 'dr.fabrice',
+                'password': 'Mbeze!237x',
+                'email': 'fabrice.mbezele@csj.cm',
+                'first_name': 'Fabrice',
+                'last_name': 'MBEZELE ESSAMA',
                 'role': 'doctor',
+                'modules': MODULE_DOCTOR,
             },
+            # ── TECHNICIENNE MÉDICO-SANITAIRE (labo) ─────────────────────────
             {
-                'username': 'julianna_lab',
-                'email': 'labo@csj.cm',
-                'first_name': 'Jean',
-                'last_name': 'FOTSO',
+                'username': 'lauriane',
+                'password': 'kNj$09Tms!',
+                'email': 'lauriane.njapoup@csj.cm',
+                'first_name': 'Lauriane Karelle',
+                'last_name': 'NJAPOUP KAMDEM',
                 'role': 'lab_tech',
+                'modules': MODULE_LAB_TECH,
+            },
+            # ── INFIRMIÈRES ───────────────────────────────────────────────────
+            {
+                'username': 'mariama',
+                'password': 'Pem7!xRi03',
+                'email': 'mariama.pememzi@csj.cm',
+                'first_name': 'Mariama',
+                'last_name': 'PEMEMZI',
+                'role': 'nurse',
+                'modules': MODULE_NURSE,
             },
             {
-                'username': 'julianna_pharmacist',
-                'email': 'pharma@csj.cm',
-                'first_name': 'Alice',
-                'last_name': 'BELLA',
-                'role': 'pharmacist',
+                'username': 'gaelle',
+                'password': 'Nte#4Sie!8',
+                'email': 'gaelle.ntiechou@csj.cm',
+                'first_name': 'Gaëlle',
+                'last_name': 'NTIECHOU SIEBANOU',
+                'role': 'nurse',
+                'modules': MODULE_NURSE,
+            },
+            # ── INFIRMIÈRE + SECRÉTAIRE MÉDICALE ─────────────────────────────
+            {
+                'username': 'sidoine',
+                'password': 'Kts@56Rai!',
+                'email': 'sidoine.kentsop@csj.cm',
+                'first_name': 'Sidoine Raïssa',
+                'last_name': 'KENTSOP',
+                'role': 'nurse',
+                'modules': MODULE_NURSE_SECRETARY,
+            },
+            # ── SECRÉTAIRES MÉDICALES ─────────────────────────────────────────
+            {
+                'username': 'gertrude',
+                'password': 'yGn!Car83#',
+                'email': 'gertrude.yagna@csj.cm',
+                'first_name': 'Gertrude Carême',
+                'last_name': 'YAGNA MBEUFET',
+                'role': 'receptionist',
+                'modules': MODULE_SECRETARY,
+            },
+            {
+                'username': 'nelie',
+                'password': 'Dj$17Nel!x',
+                'email': 'nelie.djossi@csj.cm',
+                'first_name': 'Nelie Grace',
+                'last_name': 'DJOSSI',
+                'role': 'receptionist',
+                'modules': MODULE_SECRETARY,
             },
         ]
 
         for user_data in users_to_create:
-            role = user_data.get('role', 'buyer')  # Get but don't remove
+            modules = user_data.pop('modules', [])
+            password = user_data.pop('password')
+            role = user_data.get('role', 'buyer')
+
             user = User.objects.create_user(
-                password='julianna2025',
+                password=password,
                 organization=self.organization,
                 **user_data
             )
             user.is_active = True
             user.save()
 
-            self.users[role] = user
-            self.stdout.write(f'  [OK] {role}: {user.get_full_name()} ({user.email})')
+            # Créer les permissions avec les modules restreints
+            UserPermissions.objects.create(
+                user=user,
+                module_access=modules,
+                can_manage_users=(role == 'admin'),
+                can_manage_settings=(role == 'admin'),
+                can_view_analytics=(role in ['admin', 'manager']),
+                can_approve_purchases=(role == 'admin'),
+            )
 
-        self.stdout.write(self.style.SUCCESS(f'  Total: {len(self.users)} utilisateurs crees\n'))
+            # Stocker par rôle (pour les scénarios de simulation)
+            if role not in self.users:
+                self.users[role] = user
+
+            self.stdout.write(
+                f'  [OK] {role:<15} {user.get_full_name():<35} ({user.email})'
+            )
+
+        self.stdout.write(self.style.SUCCESS(f'  Total: {len(users_to_create)} utilisateurs crees\n'))
 
     # ========================================================================
     # CREATE PRODUCT CATEGORIES
