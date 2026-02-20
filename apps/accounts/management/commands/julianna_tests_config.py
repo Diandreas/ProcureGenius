@@ -1237,71 +1237,49 @@ LAB_TESTS = [
 # Services et Soins médicaux
 MEDICAL_SERVICES = [
     # ── CONSULTATIONS ─────────────────────────────────────────────────────────
-    # Tarifs officiels CSJ 2026
-    {'code': 'CONS-INF',    'name': 'Consultation Infirmier',            'category': 'Consultations', 'price': 3000,   'duration': 15},
-    {'code': 'CONS-MED',    'name': 'Consultation Médecin général',      'category': 'Consultations', 'price': 5000,   'duration': 30},
-    {'code': 'CONS-SPEC',   'name': 'Consultation Spécialiste',          'category': 'Consultations', 'price': 10000,  'duration': 45},
+    {'code': 'CONS-INF',    'name': 'Consultation Infirmier',            'category': 'Consultations', 'price': 3000},
+    {'code': 'CONS-MED',    'name': 'Consultation Médecin général',      'category': 'Consultations', 'price': 5000},
 
-    # ── HOSPITALISATION (tarif journalier) ────────────────────────────────────
-    {'code': 'HOSP-JOUR',   'name': 'Hospitalisation par jour',          'category': 'Hospitalisation', 'price': 3000},
-    {'code': 'HOSP-NUIT',   'name': 'Hospitalisation par nuit',          'category': 'Hospitalisation', 'price': 5000},
-    {'code': 'HOSP-PARF',   'name': 'Hospitalisation forfait 2 jours',   'category': 'Hospitalisation', 'price': 10000},
-    {'code': 'HOSP-SOINS',  'name': 'Soins hospitaliers',                'category': 'Hospitalisation', 'price': 5000},
-    {'code': 'HOSP-CATH',   'name': 'Cathétérisme / Sondage',            'category': 'Hospitalisation', 'price': 3000},
-    {'code': 'HOSP-PERF',   'name': 'Pose de perfusion',                 'category': 'Hospitalisation', 'price': 3000},
-    {'code': 'HOSP-FORF3',  'name': 'Forfait hospitalisation 3 jours',   'category': 'Hospitalisation', 'price': 15000},
-    {'code': 'HOSP-FORF5',  'name': 'Forfait hospitalisation 5 jours',   'category': 'Hospitalisation', 'price': 25000},
-    {'code': 'HOSP-FORF7',  'name': 'Forfait hospitalisation 7 jours',   'category': 'Hospitalisation', 'price': 35000},
-    {'code': 'HOSP-FORF10', 'name': 'Forfait hospitalisation 10 jours',  'category': 'Hospitalisation', 'price': 50000},
+    # ── HOSPITALISATION ────────────────────────────────────
+    {'code': 'HOSP-CATH',   'name': 'Pose de cathéter - Perfusion',      'category': 'Hospitalisation', 'price': 1000},
+    {'code': 'HOSP-SOND',   'name': 'Pose de sonde urinaire',            'category': 'Hospitalisation', 'price': 1000},
+    {'code': 'HOSP-DRAP',   'name': 'Drap pour lit',                     'category': 'Hospitalisation', 'price': 1000},
+    {'code': 'HOSP-F2L',    'name': 'Forfait simple deux lits',          'category': 'Hospitalisation', 'price': 7500},
+    {'code': 'HOSP-F2L-V',  'name': 'Forfait VIP deux lits',              'category': 'Hospitalisation', 'price': 7500},
+    {'code': 'HOSP-MEO',    'name': 'Mise En Observation (MEO) - Soins', 'category': 'Hospitalisation', 'price': 1500},
+    {'code': 'HOSP-CONC',   'name': 'Forfait concentrateur / Heure',     'category': 'Hospitalisation', 'price': 5000},
+    {'code': 'HOSP-PONC-P', 'name': 'Ponction pleural',                  'category': 'Hospitalisation', 'price': 7500},
+    {'code': 'HOSP-PONC-A', 'name': 'Ponction d\'ascite',                'category': 'Hospitalisation', 'price': 7500},
+    {'code': 'HOSP-NEBU',   'name': 'Nebulisation',                      'category': 'Hospitalisation', 'price': 5000},
 
     # ── PETITE CHIRURGIE ──────────────────────────────────────────────────────
-    {'code': 'CHIR-CORPS',  'name': 'Corps étranger',                    'category': 'Petite Chirurgie', 'price': 3000},
-    {'code': 'CHIR-SUP',    'name': 'Suppuration / Abcès',               'category': 'Petite Chirurgie', 'price': 3000},
-    {'code': 'CHIR-SUT',    'name': 'Suture (plaie simple)',             'category': 'Petite Chirurgie', 'price': 5000},
-    {'code': 'CHIR-PAN',    'name': 'Pansement chirurgical',             'category': 'Petite Chirurgie', 'price': 3000},
-    {'code': 'CHIR-EXT',    'name': 'Extraction dentaire',               'category': 'Petite Chirurgie', 'price': 5000},
-    {'code': 'CHIR-DETART', 'name': 'Détartrage dentaire',               'category': 'Petite Chirurgie', 'price': 10000},
-    {'code': 'CHIR-OBT',    'name': 'Obturation dentaire',               'category': 'Petite Chirurgie', 'price': 10000},
-    {'code': 'CHIR-CIRC',   'name': 'Circoncision',                      'category': 'Petite Chirurgie', 'price': 50000},
-    {'code': 'CHIR-LAPARO', 'name': 'Laparotomie exploratrice',          'category': 'Petite Chirurgie', 'price': 100000},
-    {'code': 'CHIR-APPEND', 'name': 'Appendicectomie',                   'category': 'Petite Chirurgie', 'price': 150000},
-    {'code': 'CHIR-HERNIO', 'name': 'Herniorrhaphie',                    'category': 'Petite Chirurgie', 'price': 150000},
-    {'code': 'CHIR-HYST',   'name': 'Hystérectomie',                     'category': 'Petite Chirurgie', 'price': 200000},
-    {'code': 'CHIR-FRACT',  'name': 'Réduction de fracture',             'category': 'Petite Chirurgie', 'price': 30000},
-    {'code': 'CHIR-PLAT',   'name': 'Plâtrage / Attelle',                'category': 'Petite Chirurgie', 'price': 10000},
-    {'code': 'CHIR-DRAIN',  'name': 'Drainage thoracique',               'category': 'Petite Chirurgie', 'price': 20000},
-    {'code': 'CHIR-OPHTMO', 'name': 'Opération ophtalmologique',         'category': 'Petite Chirurgie', 'price': 100000},
-    {'code': 'CHIR-VEINE',  'name': 'Prélèvement veineux',               'category': 'Petite Chirurgie', 'price': 2000},
-    {'code': 'CHIR-ECG',    'name': 'ECG (Électrocardiogramme)',         'category': 'Petite Chirurgie', 'price': 5000},
-    {'code': 'CHIR-ECHO',   'name': 'Échographie',                       'category': 'Petite Chirurgie', 'price': 15000},
-    {'code': 'CHIR-RADIO',  'name': 'Radiographie',                      'category': 'Petite Chirurgie', 'price': 10000},
+    {'code': 'CHIR-ONG',    'name': 'Ongle incarné',                     'category': 'Petite Chirurgie', 'price': 15000},
+    {'code': 'CHIR-PAN-I',  'name': 'Incision et drainage panaris',      'category': 'Petite Chirurgie', 'price': 10000},
+    {'code': 'CHIR-INF-C',  'name': 'Infiltration corticoïdes',          'category': 'Petite Chirurgie', 'price': 2500},
+    {'code': 'CHIR-KYS',    'name': 'Kystectomie/Lipomectomie S-C',      'category': 'Petite Chirurgie', 'price': 5000},
+    {'code': 'CHIR-CHEL',   'name': 'Petite cheloïdectomie',             'category': 'Petite Chirurgie', 'price': 5000},
+    {'code': 'CHIR-PAN-S',  'name': 'Pansement simple',                  'category': 'Petite Chirurgie', 'price': 500},
+    {'code': 'CHIR-SUT-5',  'name': 'Suture +5 points/trois plans',      'category': 'Petite Chirurgie', 'price': 12000},
+    {'code': 'CHIR-SUT-1',  'name': 'Suture 1 à 3 points/un plan',       'category': 'Petite Chirurgie', 'price': 3000},
+    {'code': 'CHIR-SUT-3',  'name': 'Suture 3 à 5 points/deux plans',     'category': 'Petite Chirurgie', 'price': 4000},
+    {'code': 'CHIR-CE',     'name': 'Extraction corps étranger',         'category': 'Petite Chirurgie', 'price': 5000},
+    {'code': 'CHIR-ABC-I',  'name': 'Incision + drainage Abcès',         'category': 'Petite Chirurgie', 'price': 15000},
+    {'code': 'CHIR-CIRC',   'name': 'Circonsition',                      'category': 'Petite Chirurgie', 'price': 5000},
+    {'code': 'CHIR-LIP-A',  'name': 'Ablation petite lipome',            'category': 'Petite Chirurgie', 'price': 10000},
+    {'code': 'CHIR-INJ-S',  'name': 'Injection simple',                  'category': 'Petite Chirurgie', 'price': 500},
+    {'code': 'CHIR-ORE',    'name': 'Lavage des oreilles',               'category': 'Petite Chirurgie', 'price': 5000},
+    {'code': 'CHIR-FREIN',  'name': 'Ablation d\'un frein de langue',    'category': 'Petite Chirurgie', 'price': 1500},
+    {'code': 'CHIR-PLAT',   'name': 'Attelle plâtrée/Plâtre',            'category': 'Petite Chirurgie', 'price': 7000},
+    {'code': 'CHIR-ABC-C',  'name': 'Incision d\'Abcès complexe',        'category': 'Petite Chirurgie', 'price': 6000},
+    {'code': 'CHIR-PAN-C',  'name': 'Pansement complexe',                'category': 'Petite Chirurgie', 'price': 2500},
+    {'code': 'CHIR-ABC-S',  'name': 'Incision d\'Abcès simple',          'category': 'Petite Chirurgie', 'price': 3000},
+    {'code': 'CHIR-LAV-P',  'name': 'Lavage plaies',                     'category': 'Petite Chirurgie', 'price': 3000},
 
     # ── ORL ───────────────────────────────────────────────────────────────────
-    {'code': 'ORL-CONS',    'name': 'Consultation ORL',                  'category': 'ORL', 'price': 5000},
-    {'code': 'ORL-CERUMEN', 'name': 'Extraction de cérumen',             'category': 'ORL', 'price': 3000},
-    {'code': 'ORL-CORPS',   'name': 'Corps étranger ORL',                'category': 'ORL', 'price': 5000},
-    {'code': 'ORL-AMYG',    'name': 'Amygdalectomie',                    'category': 'ORL', 'price': 80000},
-    {'code': 'ORL-ADENO',   'name': 'Adénoïdectomie',                    'category': 'ORL', 'price': 80000},
+    {'code': 'ORL-NAS',     'name': 'Lavage nasal',                      'category': 'ORL', 'price': 500},
 
     # ── KIT PRÉLÈVEMENT ───────────────────────────────────────────────────────
-    {'code': 'KIT-PRELEV',  'name': 'Kit de prélèvement',                'category': 'Kit Prélèvement', 'price': 1000},
-
-    # ── MATERNITÉ ─────────────────────────────────────────────────────────────
-    {'code': 'MAT-CPN',     'name': 'Consultation prénatale (CPN)',       'category': 'Maternité', 'price': 5000},
-    {'code': 'MAT-ACC',     'name': 'Accouchement voie basse normal',     'category': 'Maternité', 'price': 100000},
-    {'code': 'MAT-CACC',    'name': 'Accouchement compliqué',             'category': 'Maternité', 'price': 150000},
-    {'code': 'MAT-CESAR',   'name': 'Césarienne',                         'category': 'Maternité', 'price': 250000},
-
-    # ── VACCINATIONS ─────────────────────────────────────────────────────────
-    {'code': 'VAC-BCG',     'name': 'Vaccin BCG',                        'category': 'Vaccinations', 'price': 3500},
-    {'code': 'VAC-POLIO',   'name': 'Vaccin Poliomyélite oral',          'category': 'Vaccinations', 'price': 2000},
-    {'code': 'VAC-DTCP',    'name': 'Vaccin DTC-Polio (Pentavalent)',    'category': 'Vaccinations', 'price': 8000},
-    {'code': 'VAC-ROR',     'name': 'Vaccin Rougeole-Oreillons-Rubéole', 'category': 'Vaccinations', 'price': 12000},
-    {'code': 'VAC-FJ',      'name': 'Vaccin Fièvre Jaune',               'category': 'Vaccinations', 'price': 10000},
-    {'code': 'VAC-HEPATB',  'name': 'Vaccin Hépatite B',                 'category': 'Vaccinations', 'price': 8000},
-    {'code': 'VAC-MENINGO', 'name': 'Vaccin Méningite',                  'category': 'Vaccinations', 'price': 15000},
-    {'code': 'VAC-GRIPPE',  'name': 'Vaccin Grippe saisonnière',         'category': 'Vaccinations', 'price': 6000},
-    {'code': 'VAC-PNEUMO',  'name': 'Vaccin Pneumocoque',                'category': 'Vaccinations', 'price': 15000},
+    {'code': 'KIT-PRELEV',  'name': 'Kit de prélèvement',                'category': 'Kit Prélèvement', 'price': 500},
 ]
 
 # Informations du centre

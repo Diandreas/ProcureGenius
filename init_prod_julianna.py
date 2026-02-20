@@ -1,4 +1,3 @@
-
 import csv
 import os
 from apps.accounts.models import Organization, CustomUser, UserPermissions, UserPreferences
@@ -7,6 +6,9 @@ from apps.laboratory.models import LabTest, LabTestCategory
 from apps.core.modules import ProfileTypes, Modules
 from django.utils.text import slugify
 from decimal import Decimal
+
+# Import source data from existing config command modules
+from apps.accounts.management.commands.julianna_tests_config import LAB_TESTS, MEDICAL_SERVICES
 
 def setup_production():
     print("\n=== DÉMARRAGE INITIALISATION PRODUCTION JULIANNA ===")
@@ -33,86 +35,82 @@ def setup_production():
         org.save()
     print(f"v Organisation: {org.name} configurée.")
 
-    # 2. Kit de prélèvement
-    cat_cons, _ = ProductCategory.objects.get_or_create(
-        organization=org, name="Consommables", defaults={'slug': 'consommables'}
-    )
-    Product.objects.update_or_create(
-        organization=org, reference='KIT-PRELEV',
-        defaults={'name': "Kit de prélèvement", 'price': Decimal('500.00'), 'product_type': 'physical', 'category': cat_cons, 'stock_quantity': 1000, 'is_active': True}
-    )
-    print(f"v Kit de prélèvement configuré à 500 FCFA.")
+    # 2. Catégories de Produits
+    cat_map = {}
+    categories = [
+        ('consultations', 'Consultations'),
+        ('procedures', 'Actes Medicaux'),
+        ('services', 'Autres Services'),
+        ('lab_consumables', 'Consommables Laboratoire'),
+    ]
+    for slug, name in categories:
+        cat, _ = ProductCategory.objects.get_or_create(
+            organization=org, slug=slug, defaults={'name': name}
+        )
+        cat_map[slug] = cat
 
-    # 3. Import du Catalogue d'Analyses (CSV) avec gestion d'encodage
-    csv_file = "Liste Analyses Médicales - CSJ version finale.csv"
-    if not os.path.exists(csv_file):
-        # Essai avec un nom sans caractères spéciaux au cas où
-        csv_file = "Liste Analyses Medicales - CSJ version finale.csv"
+    # 3. Services Médicaux (Soins)
+    print("v Importation des services médicaux...")
+    svc_cat_map = {
+        'Consultations':     'consultations',
+        'Hospitalisation':   'services',
+        'Petite Chirurgie':  'procedures',
+        'ORL':               'procedures',
+        'Kit Prélèvement':   'lab_consumables',
+        'Maternité':         'services',
+        'Vaccinations':      'services',
+    }
+    
+    for svc in MEDICAL_SERVICES:
+        cat_slug = svc_cat_map.get(svc['category'], 'services')
+        Product.objects.update_or_create(
+            organization=org,
+            reference=svc.get('code', ''),
+            defaults={
+                'name': svc['name'],
+                'product_type': 'service',
+                'category': cat_map.get(cat_slug),
+                'price': Decimal(str(svc['price'])),
+                'is_active': True
+            }
+        )
+    print(f"v {len(MEDICAL_SERVICES)} services configurés.")
 
-    if os.path.exists(csv_file):
-        print(f"v Importation du catalogue depuis {csv_file}...")
+    # 4. Catalogue d'Analyses Laboratoire
+    print("v Importation des analyses de laboratoire...")
+    lab_cat_slugs = {
+        'hematologie': 'Hematologie',
+        'biochimie': 'Biochimie Generale',
+        'ionogramme': 'Ionogrammes et Électrolytes',
+        'serologie': 'Serologie',
+        'bacteriologie': 'Bacteriologie',
+        'parasitologie': 'Parasitologie',
+        'hormonologie': 'Hormonologie',
+        'electrophorese': 'Électrophorèses',
+    }
+
+    for test_cfg in LAB_TESTS:
+        cat_name = lab_cat_slugs.get(test_cfg['category'], 'Autres')
+        lab_cat, _ = LabTestCategory.objects.get_or_create(
+            organization=org, name=cat_name, defaults={'slug': slugify(cat_name)}
+        )
         
-        # Tester différents encodages
-        encodings = ['utf-8-sig', 'latin-1', 'cp1252']
-        data_loaded = False
-        
-        for enc in encodings:
-            try:
-                with open(csv_file, mode='r', encoding=enc) as f:
-                    # Détection automatique du délimiteur
-                    sample = f.read(2048)
-                    f.seek(0)
-                    dialect = csv.Sniffer().sniff(sample)
-                    reader = csv.DictReader(f, dialect=dialect)
-                    
-                    count = 0
-                    for row in reader:
-                        # Nettoyer les noms de colonnes (enlever BOM ou espaces)
-                        row = {k.strip() if k else k: v for k, v in row.items()}
-                        
-                        try:
-                            # Mapping des colonnes (ajustez si vos colonnes ont des noms exacts différents)
-                            cat_name = row.get('Categorie') or row.get('Catégorie') or 'Général'
-                            test_name = row.get('Examen') or row.get('Test') or row.get('Nom')
-                            test_code = row.get('Code') or f"LAB-{count:04d}"
-                            price_val = row.get('Prix') or '0'
-                            
-                            if not test_name: continue
+        LabTest.objects.update_or_create(
+            organization=org,
+            test_code=test_cfg['code'],
+            defaults={
+                'name': test_cfg['name'],
+                'short_name': test_cfg.get('short_name', ''),
+                'category': lab_cat,
+                'price': Decimal(str(test_cfg['price'])),
+                'sample_type': test_cfg.get('sample_type', 'blood'),
+                'container_type': test_cfg.get('container', 'serum'),
+                'is_active': True
+            }
+        )
+    print(f"v {len(LAB_TESTS)} analyses configurées.")
 
-                            lab_cat, _ = LabTestCategory.objects.get_or_create(
-                                organization=org, name=cat_name.strip(), 
-                                defaults={'slug': slugify(cat_name)}
-                            )
-                            
-                            price_str = str(price_val).replace(' ', '').replace('FCFA', '').replace('XAF', '')
-                            
-                            LabTest.objects.update_or_create(
-                                organization=org,
-                                test_code=test_code.strip(),
-                                defaults={
-                                    'name': test_name.strip(),
-                                    'category': lab_cat,
-                                    'price': Decimal(price_str) if price_str and price_str != 'None' else 0,
-                                    'is_active': True
-                                }
-                            )
-                            count += 1
-                        except Exception as e:
-                            pass # Ignorer les lignes mal formées
-                    
-                    print(f"v SUCCESS: {count} analyses importées avec l'encodage {enc}.")
-                    data_loaded = True
-                    break
-            except Exception as e:
-                print(f"  ... échec avec {enc}: {e}")
-                continue
-        
-        if not data_loaded:
-            print("X Impossible de lire le fichier CSV. Vérifiez l'encodage et le format.")
-    else:
-        print(f"X Fichier CSV introuvable.")
-
-    # 4. Personnel
+    # 5. Personnel
     staff = [
         {'username': 'dr.fabrice', 'email': 'fabrice.mbezele@csj.cm', 'password': 'Mbeze!237x', 'role': 'doctor', 'first_name': 'Fabrice', 'last_name': 'MBEZELE ESSAMA'},
         {'username': 'lauriane', 'email': 'lauriane.njapoup@csj.cm', 'password': 'kNj$09Tms!', 'role': 'lab_tech', 'first_name': 'Lauriane Karelle', 'last_name': 'NJAPOUP KAMDEM'},
@@ -125,11 +123,12 @@ def setup_production():
     ]
 
     for m in staff:
-        u, _ = CustomUser.objects.get_or_create(email=m['email'], defaults={'username': m['username'], 'role': m['role'], 'first_name': m['first_name'], 'last_name': m['last_name'], 'organization': org, 'is_staff': (m['role'] == 'admin')})
+        u, _ = CustomUser.objects.get_or_create(email=m['email'], defaults={'username': m['username'], 'role': m['role'], 'first_name': m['first_name'], 'last_name': m['last_name'], 'organization': org, 'is_staff': (m['role'] == 'admin'), 'is_superuser': (m['role'] == 'admin')})
         u.username = m['username']
         u.set_password(m['password'])
         u.organization = org
         u.save()
+        
         UserPermissions.objects.get_or_create(user=u)
         prefs, _ = UserPreferences.objects.get_or_create(user=u)
         prefs.onboarding_completed = True

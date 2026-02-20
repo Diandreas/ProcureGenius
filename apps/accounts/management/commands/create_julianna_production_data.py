@@ -302,6 +302,16 @@ class Command(BaseCommand):
                 'is_superuser': True,
                 'modules': [],  # Admin = accès total
             },
+            {
+                'username': 'admin_julianna',
+                'password': 'julianna2025',
+                'email': 'admin@csj.cm',
+                'first_name': 'Admin',
+                'last_name': 'Julianna',
+                'role': 'admin',
+                'is_staff': True,
+                'modules': [],
+            },
             # ── MÉDECIN ───────────────────────────────────────────────────────
             {
                 'username': 'dr.fabrice',

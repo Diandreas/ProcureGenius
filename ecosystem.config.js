@@ -41,8 +41,8 @@ module.exports = {
     },
     {
       name: 'frontend-react',
-      script: 'npm',
-      args: 'start',
+      script: isWindows ? 'npm' : 'serve',
+      args: isWindows ? 'start' : '-s build -l 3000',
       cwd: path.join(__dirname, 'frontend'),
       instances: 1,
       autorestart: true,
