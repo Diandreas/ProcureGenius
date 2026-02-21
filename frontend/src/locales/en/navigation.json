@@ -4,8 +4,8 @@
         "suppliers": "Suppliers",
         "purchaseOrders": "Purchase Orders",
         "invoices": "Invoices",
-        "products": "Products",
-        "clients": "Clients",
+        "products": "Stock",
+        "clients": "Patients | Financial",
         "eSourcing": "E-Sourcing (RFQ)",
         "contracts": "Contracts",
         "aiAssistant": "AI Assistant",
@@ -18,7 +18,7 @@
         "newPurchaseOrder": "New purchase order",
         "newInvoice": "New invoice",
         "newProduct": "New product",
-        "newClient": "New client",
+        "newClient": "New patient",
         "newRfqEvent": "New RFQ event",
         "newContract": "New contract",
         "newConversation": "New conversation",
@@ -39,8 +39,8 @@
         "suppliers": "Suppliers",
         "orders": "Orders",
         "invoices": "Invoices",
-        "products": "Products",
-        "clients": "Clients",
+        "products": "Stock",
+        "clients": "Patients",
         "ai": "AI"
     }
 }

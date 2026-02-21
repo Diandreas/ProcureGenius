@@ -87,11 +87,9 @@ import LabOrderDispatch from './pages/healthcare/laboratory/LabOrderDispatch';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
 import LabQueueDashboard from './pages/healthcare/laboratory/LabQueueDashboard';
 import OpenedReagents from './pages/healthcare/laboratory/OpenedReagents';
-import InventoryList from './pages/healthcare/pharmacy/InventoryList';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
 import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
-import MedicationDetail from './pages/healthcare/pharmacy/MedicationDetail';
 import ConsultationList from './pages/healthcare/consultations/ConsultationList';
 import ConsultationForm from './pages/healthcare/consultations/ConsultationForm';
 import ConsultationDetail from './pages/healthcare/consultations/ConsultationDetail';
@@ -832,8 +830,6 @@ function App() {
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}
-                              <Route path="/healthcare/pharmacy/inventory" element={<ModuleRoute module="pharmacy"><InventoryList /></ModuleRoute>} />
-                              <Route path="/healthcare/pharmacy/medications/:id" element={<ModuleRoute module="pharmacy"><MedicationDetail /></ModuleRoute>} />
                               <Route path="/healthcare/pharmacy/dispensing" element={<ModuleRoute module="pharmacy"><DispensingList /></ModuleRoute>} />
                               <Route path="/healthcare/pharmacy/dispense/new" element={<ModuleRoute module="pharmacy"><DispensingForm /></ModuleRoute>} />
                               <Route path="/healthcare/pharmacy/dispensing/:id" element={<ModuleRoute module="pharmacy"><DispensingDetail /></ModuleRoute>} />

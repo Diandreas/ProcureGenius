@@ -1,9 +1,9 @@
 {
-  "title": "Clients",
-  "newClient": "Nouveau client",
-  "editClient": "Modifier le client",
+  "title": "Patients | financier",
+  "newClient": "Nouveau patient",
+  "editClient": "Modifier le patient",
   "search": {
-    "placeholder": "Rechercher un client..."
+    "placeholder": "Rechercher un patient..."
   },
   "filters": {
     "active": "Actifs",
@@ -22,7 +22,7 @@
     "products": "Produits"
   },
   "fields": {
-    "name": "Nom du client *",
+    "name": "Nom du patient *",
     "contactPerson": "Personne de contact",
     "email": "Email",
     "phone": "Téléphone",
@@ -44,13 +44,13 @@
     "contactInfo": "Informations de contact",
     "commercialConditions": "Conditions commerciales",
     "statusAndOptions": "Statut et options",
-    "name": "Nom du client",
+    "name": "Nom du patient",
     "legalName": "Nom légal (optionnel)",
     "businessNumber": "Numéro d'entreprise (optionnel)",
     "billingAddress": "Adresse de facturation",
-    "activeClient": "Client actif",
+    "activeClient": "Patient actif",
     "aiInfo": "Informations IA",
-    "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le client créé et qu'il aura un historique de transactions.",
+    "aiInfoDescription": "Les scores de risque de paiement et les modèles de comportement seront automatiquement calculés par l'IA une fois le patient créé et qu'il aura un historique de transactions.",
     "productUnavailable": "Produit non disponible",
     "ref": "Réf",
     "generatingLabel": "Génération du rapport en cours...",
@@ -73,9 +73,9 @@
     "generateReport": "Rapport PDF"
   },
   "report": {
-    "title": "Générer un Rapport de Clients",
-    "itemLabel": "client",
-    "itemsLabel": "clients"
+    "title": "Générer un Rapport de Patients",
+    "itemLabel": "patient",
+    "itemsLabel": "patients"
   },
   "buttons": {
     "preview": "Aperçu",
@@ -87,12 +87,12 @@
     "generatePdf": "Générer un PDF du rapport"
   },
   "tooltips": {
-    "editClient": "Modifier le client",
-    "deleteClient": "Supprimer le client",
+    "editClient": "Modifier le patient",
+    "deleteClient": "Supprimer le patient",
     "downloadPdfReport": "Télécharger le rapport PDF"
   },
   "pdf": {
-    "title": "Rapport PDF Client",
+    "title": "Rapport PDF Patient",
     "ready": "Le rapport PDF est prêt. Choisissez une action:",
     "description": "Génération du rapport PDF..."
   },
@@ -114,21 +114,21 @@
     "totalSpent": "Total dépensé"
   },
   "messages": {
-    "loading": "Chargement des clients...",
-    "noClients": "Aucun client",
-    "noClientsDescription": "Aucun client ne correspond à vos critères de recherche.",
-    "loadingError": "Erreur lors du chargement des clients",
-    "loadClientError": "Erreur lors du chargement du client",
-    "clientDeleted": "Client supprimé",
+    "loading": "Chargement des patients...",
+    "noClients": "Aucun patient",
+    "noClientsDescription": "Aucun patient ne correspond à vos critères de recherche.",
+    "loadingError": "Erreur lors du chargement des patients",
+    "loadClientError": "Erreur lors du chargement du patient",
+    "clientDeleted": "Patient supprimé",
     "deleteError": "Erreur lors de la suppression",
-    "clientNotFound": "Client introuvable",
+    "clientNotFound": "Patient introuvable",
     "deleteConfirmation": "Supprimer {{name}} ?",
     "deleteWarningTitle": "⚠️ Attention : Suppression définitive",
-    "deleteWarningMessage": "Êtes-vous sûr de vouloir supprimer le client \"{{name}}\" ?\n\n❌ TOUTES LES FACTURES ASSOCIÉES À CE CLIENT SERONT ÉGALEMENT SUPPRIMÉES DÉFINITIVEMENT.\n\nCette action est irréversible.",
-    "createSuccess": "Client créé avec succès",
-    "updateSuccess": "Client modifié avec succès",
+    "deleteWarningMessage": "Êtes-vous sûr de vouloir supprimer le patient \"{{name}}\" ?\n\n❌ TOUTES LES FACTURES ASSOCIÉES À CE PATIENT SERONT ÉGALEMENT SUPPRIMÉES DÉFINITIVEMENT.\n\nCette action est irréversible.",
+    "createSuccess": "Patient créé avec succès",
+    "updateSuccess": "Patient modifié avec succès",
     "saveError": "Erreur lors de l'enregistrement",
-    "noInvoicesForClient": "Aucune facture pour ce client",
+    "noInvoicesForClient": "Aucune facture pour ce patient",
     "noProductsPurchased": "Aucun produit acheté",
     "invoicesWillBeDeleted": "{{count}} facture(s) seront supprimée(s)",
     "reportError": "Erreur lors de la génération du rapport",

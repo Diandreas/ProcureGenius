@@ -46,11 +46,22 @@ import {
   Print,
   Download,
   Calculate,
+  LocalPharmacy as PharmacyIcon,
 } from '@mui/icons-material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  LinearProgress,
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
 import batchAPI from '../../services/batchAPI';
+import pharmacyAPI from '../../services/pharmacyAPI';
 import dayjs from 'dayjs';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -124,6 +135,8 @@ function ProductDetail() {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+  const [dispensingHistory, setDispensingHistory] = useState([]);
+  const [loadingDispensing, setLoadingDispensing] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -159,6 +172,18 @@ function ProductDetail() {
       setProductBatches(batches);
     } catch (error) {
       console.error('Error loading product batches:', error);
+    }
+  };
+
+  const fetchDispensingHistory = async () => {
+    setLoadingDispensing(true);
+    try {
+      const response = await pharmacyAPI.getDispensingList({ medication_id: id });
+      setDispensingHistory(Array.isArray(response) ? response : response.results || []);
+    } catch (error) {
+      console.error('Error loading dispensing history:', error);
+    } finally {
+      setLoadingDispensing(false);
     }
   };
 
@@ -458,6 +483,15 @@ function ProductDetail() {
             icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
             label={t('products:tabs.movements')}
             iconPosition="start"
+          />
+        )}
+        {/* Onglet Dispensations pour les médicaments */}
+        {product?.category?.slug === 'medications' && (
+          <Tab
+            icon={<PharmacyIcon sx={{ fontSize: isMobile ? 18 : 20 }} />}
+            label="Dispensations"
+            iconPosition="start"
+            onClick={() => { if (dispensingHistory.length === 0 && !loadingDispensing) fetchDispensingHistory(); }}
           />
         )}
       </Tabs>
@@ -1381,6 +1415,79 @@ function ProductDetail() {
       {product?.product_type === 'physical' && activeTab === 3 && (
         <Box>
           <StockMovementsTab productId={id} productType={product?.product_type} />
+        </Box>
+      )}
+
+      {/* Tab: Dispensations - Affiché uniquement pour les médicaments */}
+      {product?.category?.slug === 'medications' && activeTab === (product?.product_type === 'physical' ? 4 : 3) && (
+        <Box>
+          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+              <Typography variant="h6" gutterBottom fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PharmacyIcon sx={{ color: 'primary.main' }} />
+                Historique des Dispensations
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+
+              {loadingDispensing ? (
+                <Box sx={{ py: 3 }}>
+                  <LinearProgress />
+                </Box>
+              ) : dispensingHistory.length > 0 ? (
+                <TableContainer component={Box} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.06) }}>
+                        <TableCell sx={{ fontWeight: 700 }}>N° Dispensation</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Patient</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>Statut</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {dispensingHistory.map((dispensing) => (
+                        <TableRow
+                          key={dispensing.id}
+                          hover
+                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: theme => alpha(theme.palette.primary.main, 0.03) } }}
+                          onClick={() => navigate(`/healthcare/pharmacy/dispensings/${dispensing.id}`)}
+                        >
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={600} fontFamily="monospace">
+                              {dispensing.dispensing_number}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{formatDate(dispensing.dispensed_at)}</TableCell>
+                          <TableCell>{dispensing.patient_name || 'Vente Comptoir'}</TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={dispensing.status_display || dispensing.status}
+                              size="small"
+                              color={dispensing.status === 'dispensed' ? 'success' : dispensing.status === 'cancelled' ? 'error' : 'default'}
+                              sx={{ fontWeight: 600 }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={600}>
+                              {formatCurrency(dispensing.total_amount || 0)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 6 }}>
+                  <PharmacyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+                  <Typography variant="body1" color="text.secondary">
+                    Aucune dispensation enregistrée pour ce médicament
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
         </Box>
       )}
 

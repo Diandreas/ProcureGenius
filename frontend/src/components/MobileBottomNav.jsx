@@ -79,7 +79,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: 'Patients', value: '/healthcare/patients', icon: '/icon/user.png', moduleId: 'patients', isCore: false },
     { label: 'Visites', value: '/healthcare/visits', icon: '/icon/support.png', moduleId: 'visits', isCore: false },
     { label: 'Laboratoire', value: '/healthcare/laboratory', icon: '/icon/analysis.png', moduleId: 'laboratory', isCore: false },
-    { label: 'Pharmacie', value: '/healthcare/pharmacy/inventory', icon: '/icon/product.png', moduleId: 'pharmacy', isCore: false },
+    { label: 'Pharmacie Stock', value: '/products', icon: '/icon/product.png', moduleId: 'pharmacy', isCore: false },
     { label: 'Consultations', value: '/healthcare/consultations', icon: '/icon/contract.png', moduleId: 'consultations', isCore: false },
   ];
 

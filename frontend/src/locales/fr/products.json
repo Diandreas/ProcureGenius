@@ -21,7 +21,7 @@
     "tabs": {
         "info": "Infos",
         "invoices": "Factures",
-        "clients": "Clients",
+        "clients": "Patients",
         "movements": "Mouvements",
         "stock": "Stock"
     },
@@ -65,9 +65,9 @@
         "sellUnit": "Unité de Vente",
         "baseUnit": "Unité de Stockage",
         "unit": "Unité",
-        "noClient": "Aucun client",
+        "noClient": "Aucun patient",
         "qtyShort": "Qté: {{qty}}",
-        "unknownClient": "Client inconnu",
+        "unknownClient": "Patient inconnu",
         "purchaseCount_one": "{{count}} achat",
         "purchaseCount_other": "{{count}} achats",
         "unitsCount_one": "{{count}} unité",
@@ -86,7 +86,7 @@
     },
     "table": {
         "invoiceNumber": "N° Facture",
-        "client": "Client",
+        "client": "Patient",
         "quantity": "Quantité",
         "amount": "Montant",
         "date": "Date",
@@ -152,7 +152,7 @@
         "leaveEmptyForAuto": "Laissez vide pour générer automatiquement",
         "alertLowStock": "Alerte si stock <= ce seuil",
         "noInvoicesForProduct": "Aucune facture pour ce produit",
-        "noClientsPurchased": "Aucun client n'a encore acheté ce produit",
+        "noClientsPurchased": "Aucun patient n'a encore acheté ce produit",
         "supplierCreated": "Fournisseur créé avec succès",
         "supplierCreateError": "Erreur lors de la création du fournisseur",
         "reportError": "Erreur lors de la génération du rapport",

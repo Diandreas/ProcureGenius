@@ -36,7 +36,7 @@ const HomeRedirect = () => {
                 'patients': '/healthcare/patients', // Assuming this is the main route for patients
                 'consultations': '/healthcare/consultations',
                 'laboratory': '/healthcare/laboratory/orders',
-                'pharmacy': '/healthcare/pharmacy/inventory',
+                'pharmacy': '/products',
             };
 
             // Find the first enabled module that has a mapped route

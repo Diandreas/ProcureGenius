@@ -1,9 +1,9 @@
 {
-    "title": "Clients",
-    "newClient": "New Client",
-    "editClient": "Edit Client",
+    "title": "Patients",
+    "newClient": "New Patient",
+    "editClient": "Edit Patient",
     "search": {
-        "placeholder": "Search for a client..."
+        "placeholder": "Search for a patient..."
     },
     "filters": {
         "active": "Active",
@@ -37,13 +37,13 @@
         "contactInfo": "Contact Information",
         "commercialConditions": "Commercial Conditions",
         "statusAndOptions": "Status and Options",
-        "name": "Client Name",
+        "name": "Patient Name",
         "legalName": "Legal Name (optional)",
         "businessNumber": "Business Number (optional)",
         "billingAddress": "Billing Address",
-        "activeClient": "Active Client",
+        "activeClient": "Active Patient",
         "aiInfo": "AI Information",
-        "aiInfoDescription": "Payment risk scores and behavior patterns will be automatically calculated by AI once the client is created and has a transaction history.",
+        "aiInfoDescription": "Payment risk scores and behavior patterns will be automatically calculated by AI once the patient is created and has a transaction history.",
         "productUnavailable": "Product unavailable",
         "ref": "Ref",
         "generatingLabel": "Generating report...",
@@ -62,12 +62,13 @@
         "create": "Create",
         "modify": "Modify",
         "save": "Save",
+        "deletePermanently": "Delete Permanently",
         "generateReport": "PDF Report"
     },
     "report": {
-        "title": "Generate Clients Report",
-        "itemLabel": "client",
-        "itemsLabel": "clients"
+        "title": "Generate Patients Report",
+        "itemLabel": "patient",
+        "itemsLabel": "patients"
     },
     "buttons": {
         "preview": "Preview",
@@ -79,12 +80,12 @@
         "generatePdf": "Generate report PDF"
     },
     "tooltips": {
-        "editClient": "Edit Client",
-        "deleteClient": "Delete Client",
+        "editClient": "Edit Patient",
+        "deleteClient": "Delete Patient",
         "downloadPdfReport": "Download PDF Report"
     },
     "pdf": {
-        "title": "Client PDF Report",
+        "title": "Patient PDF Report",
         "ready": "PDF report is ready. Choose an action:",
         "description": "Generating PDF report..."
     },
@@ -106,26 +107,31 @@
         "totalSpent": "Total Spent"
     },
     "messages": {
-        "noClients": "No clients",
-        "noClientsDescription": "No clients match your search criteria.",
-        "loadingError": "Error loading clients",
-        "loadClientError": "Error loading client",
-        "clientDeleted": "Client deleted",
-        "deleteError": "Error deleting client",
-        "clientNotFound": "Client not found",
+        "loading": "Loading patients...",
+        "noClients": "No patients",
+        "noClientsDescription": "No patients match your search criteria.",
+        "loadingError": "Error loading patients",
+        "loadClientError": "Error loading patient",
+        "clientDeleted": "Patient deleted",
+        "deleteError": "Error deleting patient",
+        "clientNotFound": "Patient not found",
         "deleteConfirmation": "Delete {{name}}?",
         "deleteWarningTitle": "⚠️ Warning: Permanent Deletion",
-        "deleteWarningMessage": "Are you sure you want to delete the client \"{{name}}\"?\n\n❌ ALL INVOICES ASSOCIATED WITH THIS CLIENT WILL ALSO BE PERMANENTLY DELETED.\n\nThis action cannot be undone.",
-        "createSuccess": "Client created successfully",
-        "updateSuccess": "Client updated successfully",
-        "saveError": "Error saving client",
-        "noInvoicesForClient": "No invoices for this client",
+        "deleteWarningMessage": "Are you sure you want to delete the patient \"{{name}}\"?\n\n❌ ALL INVOICES ASSOCIATED WITH THIS PATIENT WILL ALSO BE PERMANENTLY DELETED.\n\nThis action cannot be undone.",
+        "createSuccess": "Patient created successfully",
+        "updateSuccess": "Patient updated successfully",
+        "saveError": "Error saving patient",
+        "noInvoicesForClient": "No invoices for this patient",
         "noProductsPurchased": "No products purchased",
+        "invoicesWillBeDeleted": "{{count}} invoice(s) will be deleted",
         "reportError": "Error generating report",
         "reportGenerated": "Report generated successfully! Choose an action below.",
         "pdfGenerationHelpText": "You can preview, download or print the report directly.",
         "pdfDownloadedSuccess": "PDF downloaded successfully",
-        "printWindowOpened": "Print window opened"
+        "printWindowOpened": "Print window opened",
+        "pdfError": "Error generating PDF",
+        "pdfDownloaded": "PDF report downloaded successfully",
+        "cannotOpenPrintWindow": "Cannot open print window"
     },
     "validation": {
         "nameRequired": "Name is required",
