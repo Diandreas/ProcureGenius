@@ -1262,7 +1262,114 @@ LAB_TESTS = [
         'normal_general': '<0.05 ng/mL (normal), 0.05-0.5 (légère), 0.5-2 (modérée), >2 (sévère/sepsis)',
         'methodology': 'Immunoturbidimétrie BRAHMS / ECLIA',
     },
+    {
+        'code': 'HORM-IGE',
+        'name': 'IgE TOTAL (Immunoglobulines E)',
+        'short_name': 'IgE Total',
+        'category': 'hormonologie',
+        'price': 20000,
+        'sample_type': 'blood',
+        'container': 'edta',
+        'sample_volume': '3 ml',
+        'fasting': False,
+        'turnaround': 4,
+        'unit': 'UI/mL',
+        'normal_general': '< 100 UI/mL',
+        'methodology': 'Immunoturbidimétrie / ECLIA',
+    },
 ]
+
+# =============================================================================
+# REMISES TARIFS 2026 - Centre de Santé JULIANNA
+# Format : 'CODE_TEST': (prix_2026, prix_avec_remise)
+# discount stocké en base = prix_2026 - prix_avec_remise
+# =============================================================================
+LAB_DISCOUNTS_2026 = {
+    # ── BIOCHIMIE GÉNÉRALE ────────────────────────────────────────────────────
+    'BIO-AU':       (3000,  2000),   # ACIDE URIQUE
+    'BIO-ALB':      (2000,  1500),   # ALBUMINE
+    'BIO-BLIP':     (20000, 15000),  # BILAN LIPIDIQUE
+    'BIO-BILD':     (4000,  3000),   # BILIRUBINE DIRECTE
+    'BIO-BILT':     (4000,  3000),   # BILIRUBINE TOTALE
+    'BIO-CAS':      (4000,  3000),   # CALCIUM Ca++
+    'URO-CHIM':     (2000,  1500),   # CHIMIE URINAIRE
+    'BIO-CT':       (5000,  4000),   # CHOLESTEROL TOTAL
+    'BIO-HDL':      (5000,  4000),   # CHOLESTEROL HDL
+    'BIO-LDL':      (5000,  4000),   # CHOLESTEROL LDL
+    'BIO-CREAS':    (3000,  2500),   # CREATININE
+    'BIO-CRP':      (4000,  3000),   # CRP (Biochimie)
+    'BIO-CRP-H':    (6000,  4500),   # CRP (Hormonologie / quantitatif)
+    'ION-CS':       (15000, 12000),  # IONOGRAMME COMPLET
+    'ION-SIMP':     (9000,  7000),   # IONOGRAMME SIMPLE
+    'BIO-MGS':      (4000,  3000),   # MAGNESIUM
+    'BIO-PHS':      (4000,  3000),   # PHOSPHORE
+    'ION-KS':       (3000,  2500),   # POTASSIUM K+
+    'ION-NA':       (3000,  2500),   # SODIUM Na+
+    'BIO-FER':      (15000, 12000),  # FER SERIQUE
+    'BIO-GGT':      (5000,  4000),   # GAMMA GT
+    'BIO-PAL':      (5000,  4000),   # PAL
+    'BIO-GLU':      (2000,  1500),   # GLYCEMIE A JEUN
+    'BIO-GLUPP':    (2000,  1500),   # GLYCEMIE POST PRANDIALE
+    'BIO-PROT':     (3000,  2500),   # PROTEINES TOTALES
+    'BIO-TRANS':    (6000,  5000),   # SGOT/SGPT TRANSAMINASES
+    'BIO-TG':       (5000,  4000),   # TRIGLYCERIDES
+    'BIO-UREE':     (3000,  2500),   # UREE
+    'BIO-ASLO':     (3000,  2500),   # ASLO (Test rapide semi-quantitatif)
+    # ── ÉLECTROPHORÈSES ───────────────────────────────────────────────────────
+    'HEM-ELPHB':    (12000, 9000),   # ELECTROPHORESE HEMOGLOBINE
+    'BIO-ELPROT':   (15000, 12000),  # ELECTROPHORESE PROTEINES
+    # ── HÉMATOLOGIE ───────────────────────────────────────────────────────────
+    'HEM-VS':       (3000,  2500),   # VITESSE DE SEDIMENTATION
+    'HEM-G6PD':     (10000, 7500),   # G6PD
+    'HEM-GS':       (4000,  3000),   # GROUPE SANGUIN
+    'HEM-NFS':      (7000,  5000),   # NFS
+    'HEM-RETIC':    (3000,  2500),   # RETICULOCYTES
+    'HEM-TP':       (10000, 7500),   # TAUX DE PROTHROMBINE
+    'HEM-HBA1C':    (10000, 7500),   # HbA1C
+    # ── SÉROLOGIE ─────────────────────────────────────────────────────────────
+    'SERO-ASLO':    (5000,  2500),   # ASLO (Sérologie quantitatif)
+    'SERO-HEPA':    (3000,  1500),   # HEPATITE A
+    'SERO-HBS':     (3000,  1500),   # HEPATITE B Ag HBs
+    'SERO-HCV':     (3000,  1500),   # HEPATITE C Ac Anti-HCV
+    'SERO-HERPES':  (10000, 5000),   # HERPES IgG/IgM
+    'SERO-FR':      (5000,  2500),   # FACTEUR RHUMATOIDE
+    'SERO-SYPH':    (3000,  1500),   # SYPHILIS TPHA-VDRL
+    'SERO-HIV':     (2000,  1000),   # VIH 1 & 2
+    'SERO-TOXO':    (5000,  2500),   # TOXOPLASMOSE
+    'SERO-RUBEO':   (5000,  2500),   # RUBEOLE
+    'SERO-CHLAM':   (5000,  2500),   # CHLAMYDIA TRACHOMATIS
+    # ── PARASITOLOGIE ─────────────────────────────────────────────────────────
+    'PARA-PALU':    (3000,  3000),   # PALUDISME (pas de remise)
+    'PARA-KAOP':    (3000,  3000),   # SELLES KAOP (pas de remise)
+    # ── BACTÉRIOLOGIE ─────────────────────────────────────────────────────────
+    'BACT-GONOC':       (12000, 12000),  # GONOCOQUE (pas de remise)
+    'BACT-ECBU':        (12000, 12000),  # ECB URINES (pas de remise)
+    'BACT-PCV':         (12000, 12000),  # ECB PCV (pas de remise)
+    'BACT-PUS':         (12000, 12000),  # ECB PUS (pas de remise)
+    'BACT-URETH':       (12000, 12000),  # ECB PU (pas de remise)
+    'BACT-PONCT':       (20000, 20000),  # ECB LIQUIDE DE PONCTION (pas de remise)
+    'BACT-CUTANE':      (20000, 20000),  # ECB CUTANE (pas de remise)
+    'BACT-HEMO':        (20000, 20000),  # HEMOCULTURE (pas de remise)
+    'BACT-COPRO':       (14000, 14000),  # COPROCULTURE (pas de remise)
+    'BACT-SPERMO':      (14000, 14000),  # SPERMOCULTURE (pas de remise)
+    'BACT-SPERMO-EXAM': (14000, 14000),  # SPERMOGRAMME (pas de remise)
+    'BACT-MYCO':        (15000, 15000),  # MYCOPLASME (pas de remise)
+    # ── HORMONOLOGIE ──────────────────────────────────────────────────────────
+    'HORM-HCG':     (3000,  2500),   # HCG GROSSESSE (paillasse)
+    'HORM-HCG-Q':   (20000, 15000),  # HCG GROSSESSE (quantitatif automate)
+    'HORM-PSA':     (14000, 10500),  # PSA TOTAL
+    'HORM-PSAL':    (20000, 15000),  # PSA LIBRE
+    'HORM-TSH':     (20000, 15000),  # TSH
+    'HORM-T3':      (20000, 15000),  # T3
+    'HORM-T4':      (20000, 15000),  # T4
+    'HORM-OESTRO':  (20000, 15000),  # OESTROGENE
+    'HORM-PROG':    (20000, 15000),  # PROGESTERONE
+    'HORM-TESTO':   (20000, 15000),  # TESTOSTERONE
+    'HORM-FSH':     (20000, 15000),  # FSH
+    'HORM-LH':      (20000, 15000),  # LH
+    'HORM-PCT':     (20000, 15000),  # PROCALCITONINE
+    'HORM-IGE':     (20000, 15000),  # IgE TOTAL
+}
 
 # Services et Soins médicaux - Tarifs 2026
 MEDICAL_SERVICES = [

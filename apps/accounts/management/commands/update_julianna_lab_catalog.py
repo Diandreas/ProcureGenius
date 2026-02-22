@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 sys.path.append(os.path.dirname(__file__))
-from julianna_tests_config import LAB_TESTS, LAB_CATEGORIES, DEACTIVATED_TEST_CODES
+from julianna_tests_config import LAB_TESTS, LAB_CATEGORIES, DEACTIVATED_TEST_CODES, LAB_DISCOUNTS_2026
 
 from apps.accounts.models import Organization
 from apps.laboratory.models import LabTest, LabTestCategory
@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
         # Trouver l'organisation
         org = self._find_organization(org_name)
-        self.stdout.write(f'\n✓ Organisation trouvée : {org.name}')
+        self.stdout.write(f'\n[OK] Organisation trouvée : {org.name}')
 
         # Statistiques
         stats = {
@@ -85,6 +85,7 @@ class Command(BaseCommand):
             'unchanged': 0,
             'deactivated': 0,
             'errors': 0,
+            'discounts_set': 0,
         }
 
         try:
@@ -93,17 +94,17 @@ class Command(BaseCommand):
                 categories = self._ensure_categories(org, dry_run)
 
                 # 2. Traiter chaque test du catalogue
-                self.stdout.write('\n── Mise à jour des analyses ──────────────────────────────────')
+                self.stdout.write('\n-- Mise à jour des analyses ----------------------------------')
                 for test_data in LAB_TESTS:
                     try:
                         self._process_test(org, test_data, categories, stats, dry_run)
                     except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'  ✗ ERREUR [{test_data["code"]}]: {e}'))
+                        self.stdout.write(self.style.ERROR(f'  [X] ERREUR [{test_data["code"]}]: {e}'))
                         stats['errors'] += 1
 
                 # 3. Désactiver les tests retirés si demandé
                 if deactivate_removed:
-                    self.stdout.write('\n── Désactivation des tests retirés ───────────────────────────')
+                    self.stdout.write('\n-- Désactivation des tests retirés ---------------------------')
                     for code in DEACTIVATED_TEST_CODES:
                         self._deactivate_test(org, code, stats, dry_run)
 
@@ -144,7 +145,7 @@ class Command(BaseCommand):
         return orgs.first()
 
     def _ensure_categories(self, org, dry_run):
-        """Crée les catégories manquantes et retourne un dict slug→instance."""
+        """Crée les catégories manquantes et retourne un dict slug->instance."""
         categories = {}
         for cat_data in LAB_CATEGORIES:
             if not dry_run:
@@ -175,6 +176,11 @@ class Command(BaseCommand):
                 categories[cat_data['slug']] = cat
         return categories
 
+    @staticmethod
+    def _safe(text, length=42):
+        """Tronque et remplace les caractères non-cp1252 pour l'affichage console."""
+        return text[:length].encode('cp1252', errors='replace').decode('cp1252')
+
     def _process_test(self, org, test_data, categories, stats, dry_run):
         """Met à jour ou crée un test. Retourne True si modifié."""
         code = test_data['code']
@@ -183,11 +189,23 @@ class Command(BaseCommand):
 
         container = CONTAINER_MAP.get(test_data.get('container', 'other'), 'other')
 
+        # Remise depuis LAB_DISCOUNTS_2026
+        discount_entry = LAB_DISCOUNTS_2026.get(code)
+        if discount_entry:
+            prix_2026, prix_reduit = discount_entry
+            discount_amount = prix_2026 - prix_reduit
+            # Utilise le prix 2026 officiel de la table de remises
+            final_price = prix_2026
+        else:
+            discount_amount = 0
+            final_price = test_data['price']
+
         defaults = {
             'name': test_data['name'],
             'short_name': test_data.get('short_name', test_data['name'][:50]),
             'category': category,
-            'price': test_data['price'],
+            'price': final_price,
+            'discount': discount_amount,
             'sample_type': test_data.get('sample_type', 'blood'),
             'container_type': container,
             'sample_volume': test_data.get('sample_volume', ''),
@@ -206,18 +224,24 @@ class Command(BaseCommand):
         try:
             existing = LabTest.objects.get(organization=org, test_code=code)
 
-            # Comparer prix (changement le plus important)
             old_price = int(existing.price)
             new_price = int(defaults['price'])
+            old_discount = int(existing.discount)
+            new_discount = int(defaults['discount'])
             price_changed = old_price != new_price
+            discount_changed = old_discount != new_discount
 
             changes = []
             if price_changed:
-                changes.append(f'prix {old_price:,} → {new_price:,} FCFA')
+                changes.append(f'prix {old_price:,} -> {new_price:,} F')
+            if discount_changed:
+                prix_net = new_price - new_discount
+                changes.append(f'remise {new_discount:,} F (net={prix_net:,} F)')
+                stats['discounts_set'] += 1
             if existing.name != defaults['name']:
                 changes.append('nom')
             if not existing.is_active:
-                changes.append('réactivé')
+                changes.append('reactivé')
 
             if changes:
                 if not dry_run:
@@ -225,7 +249,7 @@ class Command(BaseCommand):
                         setattr(existing, field, value)
                     existing.save()
                 change_str = ', '.join(changes)
-                self.stdout.write(f'  ✎ [{code}] {existing.name[:45]:<45} — {change_str}')
+                self.stdout.write(f'  ^ [{code}] {self._safe(existing.name):<42} {change_str}')
                 stats['updated'] += 1
             else:
                 stats['unchanged'] += 1
@@ -237,9 +261,12 @@ class Command(BaseCommand):
                     test_code=code,
                     **defaults
                 )
+            net = final_price - discount_amount
             self.stdout.write(self.style.SUCCESS(
-                f'  + [{code}] {defaults["name"][:45]:<45} — NOUVEAU ({defaults["price"]:,} FCFA)'
+                f'  + [{code}] {self._safe(defaults["name"]):<42} NOUVEAU {final_price:,} F (net={net:,} F)'
             ))
+            if discount_amount > 0:
+                stats['discounts_set'] += 1
             stats['created'] += 1
 
     def _deactivate_test(self, org, code, stats, dry_run):
@@ -250,7 +277,7 @@ class Command(BaseCommand):
                 test.is_active = False
                 test.save()
             self.stdout.write(self.style.WARNING(
-                f'  ✗ [{code}] {test.name[:50]:<50} — DÉSACTIVÉ'
+                f'  [X] [{code}] {test.name[:50]:<50} - DÉSACTIVÉ'
             ))
             stats['deactivated'] += 1
         except LabTest.DoesNotExist:
@@ -261,19 +288,20 @@ class Command(BaseCommand):
         self.stdout.write('\n' + '=' * 70)
         self.stdout.write(self.style.SUCCESS(f'  {prefix}RÉSUMÉ'))
         self.stdout.write('=' * 70)
-        self.stdout.write(f'  ✎ Tests mis à jour    : {stats["updated"]}')
-        self.stdout.write(f'  + Tests créés         : {stats["created"]}')
-        self.stdout.write(f'  = Tests inchangés     : {stats["unchanged"]}')
+        self.stdout.write(f'  ^ Tests mis a jour    : {stats["updated"]}')
+        self.stdout.write(f'  + Tests crees         : {stats["created"]}')
+        self.stdout.write(f'  = Tests inchanges     : {stats["unchanged"]}')
+        self.stdout.write(f'  % Remises appliquees  : {stats["discounts_set"]}')
         if deactivate_removed:
-            self.stdout.write(f'  ✗ Tests désactivés    : {stats["deactivated"]}')
+            self.stdout.write(f'  X Tests desactives    : {stats["deactivated"]}')
         if stats['errors']:
-            self.stdout.write(self.style.ERROR(f'  ✗ Erreurs             : {stats["errors"]}'))
+            self.stdout.write(self.style.ERROR(f'  ! Erreurs             : {stats["errors"]}'))
         self.stdout.write('')
         if dry_run:
             self.stdout.write(self.style.WARNING(
-                '  Mode DRY RUN : aucune modification enregistrée en base.'
+                '  Mode DRY RUN : aucune modification enregistree en base.'
             ))
             self.stdout.write('  Relancez sans --dry-run pour appliquer les changements.')
         else:
-            self.stdout.write(self.style.SUCCESS('  ✓ Catalogue mis à jour avec succès !'))
+            self.stdout.write(self.style.SUCCESS('  [OK] Catalogue mis a jour avec succes !'))
         self.stdout.write('=' * 70)
