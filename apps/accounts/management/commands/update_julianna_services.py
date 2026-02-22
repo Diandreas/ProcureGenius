@@ -124,10 +124,43 @@ class Command(BaseCommand):
         products = self._find_product(org, name)
 
         if not products.exists():
-            self.stdout.write(self.style.WARNING(
-                f'  ? {name[:50]:<50} — NON TROUVE en base'
-            ))
-            stats['not_found'] += 1
+            # Créer le service manquant
+            if not dry_run:
+                try:
+                    from apps.invoicing.models import ProductCategory
+                    cat_name = svc_data.get('category', 'Services Médicaux')
+                    cat = ProductCategory.objects.filter(
+                        organization=org, name__icontains=cat_name
+                    ).first() or ProductCategory.objects.filter(
+                        organization=org, product_type='service'
+                    ).first() or ProductCategory.objects.filter(
+                        organization=org
+                    ).first()
+                    Product.objects.create(
+                        organization=org,
+                        name=name,
+                        product_type='service',
+                        category=cat,
+                        price=new_price,
+                        description=f'Service médical: {name}',
+                        is_active=True,
+                        stock_quantity=0,
+                        low_stock_threshold=0,
+                    )
+                    self.stdout.write(self.style.SUCCESS(
+                        f'  + {name[:50]:<50} CREE à {new_price:>7,} FCFA'
+                    ))
+                    stats['updated'] += 1
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(
+                        f'  ? {name[:50]:<50} — NON TROUVE, echec creation: {e}'
+                    ))
+                    stats['not_found'] += 1
+            else:
+                self.stdout.write(self.style.WARNING(
+                    f'  ? {name[:50]:<50} — NON TROUVE en base (serait cree)'
+                ))
+                stats['not_found'] += 1
             return
 
         for product in products:
