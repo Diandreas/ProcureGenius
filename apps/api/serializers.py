@@ -125,6 +125,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
     price_editable = serializers.BooleanField(required=False, default=False)
+    reference = serializers.CharField(required=False, allow_blank=True)
+    default_shelf_life_after_opening = serializers.IntegerField(required=False, allow_null=True)
 
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)

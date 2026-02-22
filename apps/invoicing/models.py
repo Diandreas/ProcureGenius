@@ -49,6 +49,19 @@ class ProductCategory(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+            
+            # Uniqueness check
+            counter = 1
+            while ProductCategory.objects.filter(organization=self.organization, slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
 
 class Warehouse(models.Model):
     """Entrepôt pour la gestion multi-warehouse"""
@@ -249,27 +262,34 @@ class Product(models.Model):
                 )
 
     def save(self, *args, **kwargs):
+        # Générer une référence automatique si absente AVANT la validation
+        if not self.reference:
+            prefix = 'PRD' if self.product_type == 'physical' else ('DIG' if self.product_type == 'digital' else 'SVC')
+            
+            try:
+                from apps.core.services.number_generator import NumberGeneratorService
+                self.reference = NumberGeneratorService.generate_number(
+                    prefix=prefix,
+                    organization=self.organization,
+                    model_class=Product,
+                    field_name='reference'
+                )
+            except ImportError:
+                # Fallback if service not found
+                last_product = Product.objects.filter(reference__startswith=prefix).order_by('-reference').first()
+                if last_product and last_product.reference:
+                    try:
+                        import re
+                        match = re.search(r'\d+', last_product.reference)
+                        last_number = int(match.group()) if match else 0
+                        self.reference = f"{prefix}{last_number + 1:04d}"
+                    except:
+                        self.reference = f"{prefix}{uuid.uuid4().hex[:6]}"
+                else:
+                    self.reference = f"{prefix}0001"
+
         # Validation avant sauvegarde
         self.full_clean()
-
-        if not self.reference:
-            # Générer une référence automatique selon le type
-            if self.product_type == 'physical':
-                prefix = 'PRD'
-            elif self.product_type == 'digital':
-                prefix = 'DIG'
-            else:
-                prefix = 'SVC'
-
-            last_product = Product.objects.filter(reference__startswith=prefix).order_by('-reference').first()
-            if last_product and last_product.reference:
-                try:
-                    last_number = int(last_product.reference[3:])
-                    self.reference = f"{prefix}{last_number + 1:04d}"
-                except:
-                    self.reference = f"{prefix}0001"
-            else:
-                self.reference = f"{prefix}0001"
         super().save(*args, **kwargs)
 
     def get_stock_in_sell_units(self):

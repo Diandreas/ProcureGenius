@@ -91,73 +91,38 @@ function ProductForm() {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
     const isEdit = Boolean(id);
 
     const [loading, setLoading] = useState(false);
-    const [suppliers, setSuppliers] = useState([]);
     const [categories, setCategories] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
-    const [expandedSections, setExpandedSections] = useState({
-        general: true,
-        pricing: true,
-        inventory: true,
-        advanced: false,
-    });
-    const [activeStep, setActiveStep] = useState(0);
-
-    // Modal states
-    const [supplierModalOpen, setSupplierModalOpen] = useState(false);
-    const [warehouseModalOpen, setWarehouseModalOpen] = useState(false);
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-    const [supplierSearch, setSupplierSearch] = useState('');
-    const [warehouseSearch, setWarehouseSearch] = useState('');
-    const [categorySearch, setCategorySearch] = useState('');
-
-    // CRUD states for warehouses and categories
-    const [warehouseFormOpen, setWarehouseFormOpen] = useState(false);
-    const [categoryFormOpen, setCategoryFormOpen] = useState(false);
-    const [editingWarehouse, setEditingWarehouse] = useState(null);
-    const [editingCategory, setEditingCategory] = useState(null);
-    const [warehouseFormData, setWarehouseFormData] = useState({ name: '', code: '', city: '', address: '', province: '', postal_code: '', country: 'Canada' });
+    const [warehouseModalOpen, setWarehouseModalOpen] = useState(false);
     const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
+    const [warehouseFormData, setWarehouseFormData] = useState({ name: '', code: '', city: '' });
 
-    // Refs to access Formik values and setFieldValue from modals
-    const formikRef = useRef({ setFieldValue: null, values: null });
+    const formikRef = useRef(null);
 
     const [initialValues, setInitialValues] = useState({
-        // Informations de base
         name: '',
         reference: '',
         description: '',
         product_type: 'physical',
         source_type: 'purchased',
         category_id: '',
-
-        // Prix
         price: '',
         cost_price: '',
         price_editable: false,
-
-        // Relations et stock
         supplier_id: '',
         warehouse_id: '',
         stock_quantity: 0,
         low_stock_threshold: 5,
-
-        // Métadonnées
         is_active: true,
-
-        // Unités
         sell_unit: 'piece',
         base_unit: 'piece',
         conversion_factor: 1,
-
-        // Wilson EOQ
         ordering_cost: 5000,
         holding_cost_percent: 20,
-
-        // Santé & Labo
         barcode: '',
         expiration_date: '',
         supply_lead_time_days: 7,
@@ -180,1441 +145,296 @@ function ProductForm() {
         { value: 'kg', label: 'Kilogramme' },
     ];
 
-    // Validation dynamique selon le type de produit
-    const getValidationSchema = (productType, hasWarehouses = true) => {
-        const baseSchema = {
-            name: Yup.string().required(t('products:validation.nameRequired')),
-            reference: Yup.string(),
-            description: Yup.string().required(t('products:validation.descriptionRequired')),
-            price: Yup.number().positive(t('products:validation.pricePositive')).required(t('products:validation.priceRequired')),
-            cost_price: Yup.number().min(0, t('products:validation.costNegative')),
-            category_id: Yup.string().nullable(),
-            supplier_id: Yup.string().nullable(),
-            sell_unit: Yup.string().required(t('products:validation.required')),
-            base_unit: Yup.string().required(t('products:validation.required')),
-            conversion_factor: Yup.number().positive().required(t('products:validation.required')),
-        };
-
-        // Ajout des validations spécifiques selon le type
-        if (productType === 'physical') {
-            return Yup.object({
-                ...baseSchema,
-                // Warehouse optionnel (champ retiré de l'UI)
-                warehouse_id: Yup.string().nullable(),
-                stock_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
-                low_stock_threshold: Yup.number().min(0, t('products:validation.thresholdNegative')).required(t('products:validation.thresholdRequired')),
-            });
-        } else {
-            return Yup.object(baseSchema);
-        }
-    };
+    const validationSchema = Yup.object({
+        name: Yup.string().required('Le nom est requis'),
+        price: Yup.number().typeError('Doit être un nombre').min(0, 'Prix positif requis').required('Le prix est requis'),
+        cost_price: Yup.number().typeError('Doit être un nombre').min(0, 'Coût positif requis').nullable(),
+        stock_quantity: Yup.number().when('product_type', {
+            is: 'physical',
+            then: (schema) => schema.typeError('Doit être un nombre').min(0, 'Stock positif requis').required('Requis'),
+            otherwise: (schema) => schema.nullable()
+        }),
+        sell_unit: Yup.string().required('Requis'),
+        base_unit: Yup.string().required('Requis'),
+        conversion_factor: Yup.number().typeError('Doit être un nombre').positive('Doit être positif').required('Requis'),
+    });
 
     useEffect(() => {
-        fetchData();
-    }, [id]);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            // Charger les données de manière indépendante pour gérer les erreurs 403
-            // Categories (optionnel)
+        const loadData = async () => {
+            setLoading(true);
             try {
-                const categoriesRes = await productCategoriesAPI.list();
-                setCategories(categoriesRes.data.results || categoriesRes.data);
-            } catch (error) {
-                if (error.response?.status === 403) {
-                    console.log('Catégories non accessibles - continuer sans');
-                    setCategories([]);
-                } else {
-                    console.error('Erreur catégories:', error);
-                    setCategories([]);
+                const [cats, whs] = await Promise.all([
+                    productCategoriesAPI.list().catch(() => ({ data: [] })),
+                    warehousesAPI.list().catch(() => ({ data: [] }))
+                ]);
+                setCategories(cats.data.results || cats.data);
+                setWarehouses(whs.data.results || whs.data);
+
+                if (isEdit) {
+                    const res = await productsAPI.get(id);
+                    const p = res.data;
+                    setInitialValues({
+                        ...initialValues,
+                        ...p,
+                        category_id: p.category?.id || '',
+                        warehouse_id: p.warehouse || '',
+                        price: p.price ?? '',
+                        cost_price: p.cost_price ?? '',
+                        expiration_date: p.expiration_date || '',
+                    });
                 }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
             }
+        };
+        loadData();
+    }, [id, isEdit]);
 
-            // Warehouses (requis pour produits physiques)
-            try {
-                const warehousesRes = await warehousesAPI.list();
-                setWarehouses(warehousesRes.data.results || warehousesRes.data);
-            } catch (error) {
-                console.error('Error loading warehouses:', error);
-                setWarehouses([]);
-                enqueueSnackbar(t('products:messages.warehousesLoadError'), { variant: 'warning' });
-            }
-
-            // Charger le produit si en mode édition
-            if (isEdit) {
-                const response = await productsAPI.get(id);
-                const productData = response.data;
-                setInitialValues({
-                    ...initialValues,
-                    ...productData,
-                    supplier_id: productData.supplier || '',
-                    category_id: productData.category?.id || '',
-                    warehouse_id: productData.warehouse || '',
-                    // Prevent null values on controlled inputs
-                    name: productData.name || '',
-                    reference: productData.reference || '',
-                    description: productData.description || '',
-                    barcode: productData.barcode || '',
-                    expiration_date: productData.expiration_date || '',
-                    default_shelf_life_after_opening: productData.default_shelf_life_after_opening ?? '',
-                    price: productData.price ?? '',
-                    cost_price: productData.cost_price ?? '',
-                    stock_quantity: productData.stock_quantity ?? 0,
-                    low_stock_threshold: productData.low_stock_threshold ?? 5,
-                    ordering_cost: productData.ordering_cost ?? 5000,
-                    holding_cost_percent: productData.holding_cost_percent ?? 20,
-                    supply_lead_time_days: productData.supply_lead_time_days ?? 7,
-                    conversion_factor: productData.conversion_factor ?? 1,
-                    sell_unit: productData.sell_unit || 'piece',
-                    base_unit: productData.base_unit || 'piece',
-                });
-            }
-        } catch (error) {
-            console.error('Erreur lors du chargement:', error);
-            enqueueSnackbar(t('products:messages.loadingError'), { variant: 'error' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const toggleSection = (section) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [section]: !prev[section]
-        }));
-    };
-
-    const handleOpenWarehouseForm = (warehouse = null) => {
-        if (warehouse) {
-            setEditingWarehouse(warehouse);
-            setWarehouseFormData({
-                name: warehouse.name || '',
-                code: warehouse.code || '',
-                city: warehouse.city || '',
-                address: warehouse.address || '',
-                province: warehouse.province || '',
-                postal_code: warehouse.postal_code || '',
-                country: warehouse.country || 'Canada'
-            });
-        } else {
-            setEditingWarehouse(null);
-            setWarehouseFormData({ name: '', code: '', city: '', address: '', province: '', postal_code: '', country: 'Canada' });
-        }
-        setWarehouseFormOpen(true);
-    };
-
-    const handleOpenCategoryForm = (category = null) => {
-        if (category) {
-            setEditingCategory(category);
-            setCategoryFormData({
-                name: category.name || '',
-                description: category.description || ''
-            });
-        } else {
-            setEditingCategory(null);
-            setCategoryFormData({ name: '', description: '' });
-        }
-        setCategoryFormOpen(true);
-    };
-
-    // Modal handlers that use setFieldValue
-    const handleSupplierSelect = (supplier) => {
-        if (formikRef.current.setFieldValue) {
-            formikRef.current.setFieldValue('supplier_id', supplier.id);
-        }
-        setSupplierModalOpen(false);
-        setSupplierSearch('');
-    };
-
-    const handleWarehouseSelect = (warehouse) => {
-        if (formikRef.current.setFieldValue) {
-            formikRef.current.setFieldValue('warehouse_id', warehouse.id);
-        }
-        setWarehouseModalOpen(false);
-        setWarehouseSearch('');
-    };
-
-    const handleCategorySelect = (category) => {
-        if (formikRef.current.setFieldValue) {
-            formikRef.current.setFieldValue('category_id', category.id);
-        }
-        setCategoryModalOpen(false);
-        setCategorySearch('');
-    };
-
-    const handleCreateSupplier = async (name, email) => {
+    const handleSaveCategory = async () => {
         try {
-            const response = await suppliersAPI.create({ name, email });
-            const newSupplier = response.data;
-            setSuppliers(prev => [...prev, newSupplier]);
-            if (formikRef.current.setFieldValue) {
-                formikRef.current.setFieldValue('supplier_id', newSupplier.id);
-            }
-            setSupplierModalOpen(false);
-            enqueueSnackbar(t('products:messages.supplierCreated'), { variant: 'success' });
-        } catch (error) {
-            enqueueSnackbar(t('products:messages.supplierCreateError'), { variant: 'error' });
+            const res = await productCategoriesAPI.create(categoryFormData);
+            setCategories(prev => [...prev, res.data]);
+            formikRef.current.setFieldValue('category_id', res.data.id);
+            setCategoryModalOpen(false);
+            enqueueSnackbar('Catégorie créée', { variant: 'success' });
+        } catch (err) {
+            enqueueSnackbar('Erreur', { variant: 'error' });
         }
     };
 
     const handleSaveWarehouse = async () => {
         try {
-            // Nettoyer les données - ne garder que les champs remplis
-            const cleanedData = {
-                name: warehouseFormData.name.trim(),
-                code: warehouseFormData.code.trim().toUpperCase(),
-            };
-
-            // Ajouter les champs optionnels seulement s'ils sont remplis
-            if (warehouseFormData.address?.trim()) {
-                cleanedData.address = warehouseFormData.address.trim();
-            }
-            if (warehouseFormData.city?.trim()) {
-                cleanedData.city = warehouseFormData.city.trim();
-            }
-            if (warehouseFormData.province?.trim()) {
-                cleanedData.province = warehouseFormData.province.trim();
-            }
-            if (warehouseFormData.postal_code?.trim()) {
-                cleanedData.postal_code = warehouseFormData.postal_code.trim();
-            }
-            // Country a toujours une valeur par défaut
-            cleanedData.country = (warehouseFormData.country?.trim() || 'Canada');
-
-            let response;
-            if (editingWarehouse) {
-                response = await warehousesAPI.update(editingWarehouse.id, cleanedData);
-                setWarehouses(prev => prev.map(w => w.id === editingWarehouse.id ? response.data : w));
-                enqueueSnackbar(t('products:messages.warehouseUpdated', 'Entrepôt modifié avec succès'), { variant: 'success' });
-            } else {
-                response = await warehousesAPI.create(cleanedData);
-                setWarehouses(prev => [...prev, response.data]);
-                // Auto-select the newly created warehouse
-                if (formikRef.current.setFieldValue) {
-                    formikRef.current.setFieldValue('warehouse_id', response.data.id);
-                }
-                enqueueSnackbar(t('products:messages.warehouseCreated'), { variant: 'success' });
-            }
-            setWarehouseFormOpen(false);
-            setEditingWarehouse(null);
-            setWarehouseFormData({ name: '', code: '', city: '', address: '', province: '', postal_code: '', country: 'Canada' });
-        } catch (error) {
-            console.error('Warehouse error:', error);
-            const errorMessage = error.response?.data?.code?.[0] ||
-                error.response?.data?.name?.[0] ||
-                error.response?.data?.detail ||
-                error.response?.data?.message ||
-                t('products:messages.warehouseCreateError');
-            enqueueSnackbar(errorMessage, { variant: 'error' });
+            const res = await warehousesAPI.create(warehouseFormData);
+            setWarehouses(prev => [...prev, res.data]);
+            formikRef.current.setFieldValue('warehouse_id', res.data.id);
+            setWarehouseModalOpen(false);
+            enqueueSnackbar('Entrepôt créé', { variant: 'success' });
+        } catch (err) {
+            enqueueSnackbar('Erreur', { variant: 'error' });
         }
     };
-
-    const handleDeleteWarehouse = async (warehouseId) => {
-        if (window.confirm(t('products:messages.deleteWarehouseConfirm', 'Êtes-vous sûr de vouloir supprimer cet entrepôt ?'))) {
-            try {
-                await warehousesAPI.delete(warehouseId);
-                setWarehouses(prev => prev.filter(w => w.id !== warehouseId));
-                if (formikRef.current.values && formikRef.current.values.warehouse_id === warehouseId && formikRef.current.setFieldValue) {
-                    formikRef.current.setFieldValue('warehouse_id', '');
-                }
-                enqueueSnackbar(t('products:messages.warehouseDeleted', 'Entrepôt supprimé avec succès'), { variant: 'success' });
-            } catch (error) {
-                enqueueSnackbar(t('products:messages.warehouseDeleteError', 'Erreur lors de la suppression'), { variant: 'error' });
-            }
-        }
-    };
-
-    const handleSaveCategory = async () => {
-        try {
-            let response;
-            if (editingCategory) {
-                response = await productCategoriesAPI.update(editingCategory.id, categoryFormData);
-                setCategories(prev => prev.map(c => c.id === editingCategory.id ? response.data : c));
-                enqueueSnackbar(t('products:messages.categoryUpdated', 'Catégorie modifiée avec succès'), { variant: 'success' });
-            } else {
-                response = await productCategoriesAPI.create(categoryFormData);
-                setCategories(prev => [...prev, response.data]);
-                // Auto-select the newly created category
-                if (formikRef.current.setFieldValue) {
-                    formikRef.current.setFieldValue('category_id', response.data.id);
-                }
-                enqueueSnackbar(t('products:messages.categoryCreated'), { variant: 'success' });
-            }
-            setCategoryFormOpen(false);
-            setEditingCategory(null);
-            setCategoryFormData({ name: '', description: '' });
-        } catch (error) {
-            enqueueSnackbar(t('products:messages.categoryCreateError'), { variant: 'error' });
-        }
-    };
-
-    const handleDeleteCategory = async (categoryId) => {
-        if (window.confirm(t('products:messages.deleteCategoryConfirm', 'Êtes-vous sûr de vouloir supprimer cette catégorie ?'))) {
-            try {
-                await productCategoriesAPI.delete(categoryId);
-                setCategories(prev => prev.filter(c => c.id !== categoryId));
-                if (formikRef.current.values && formikRef.current.values.category_id === categoryId && formikRef.current.setFieldValue) {
-                    formikRef.current.setFieldValue('category_id', '');
-                }
-                enqueueSnackbar(t('products:messages.categoryDeleted', 'Catégorie supprimée avec succès'), { variant: 'success' });
-            } catch (error) {
-                enqueueSnackbar(t('products:messages.categoryDeleteError', 'Erreur lors de la suppression'), { variant: 'error' });
-            }
-        }
-    };
-
 
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
-            // Nettoyer les valeurs selon le type de produit
-            const cleanedValues = {
-                name: values.name,
-                reference: values.reference || '',
-                description: values.description,
-                product_type: values.product_type,
-                source_type: values.source_type,
-                price: parseFloat(values.price),
-                cost_price: parseFloat(values.cost_price) || 0,
-                price_editable: values.price_editable,
+            const payload = {
+                ...values,
+                price: values.price === '' ? 0 : parseFloat(values.price),
+                cost_price: values.cost_price === '' ? 0 : parseFloat(values.cost_price),
+                conversion_factor: values.conversion_factor === '' ? 1 : parseFloat(values.conversion_factor),
                 category: values.category_id || null,
-                is_active: true, // Toujours actif par défaut
-                sell_unit: values.sell_unit,
-                base_unit: values.base_unit,
-                conversion_factor: parseFloat(values.conversion_factor) || 1,
+                warehouse: values.warehouse_id || null,
+                expiration_date: values.expiration_date || null,
+                barcode: values.barcode || null,
+                reference: values.reference || undefined,
+                ordering_cost: values.ordering_cost === '' ? null : parseFloat(values.ordering_cost),
+                holding_cost_percent: values.holding_cost_percent === '' ? null : parseFloat(values.holding_cost_percent),
+                supply_lead_time_days: values.supply_lead_time_days === '' ? null : parseInt(values.supply_lead_time_days),
+                default_shelf_life_after_opening: values.default_shelf_life_after_opening === '' ? null : parseInt(values.default_shelf_life_after_opening),
             };
 
-            // Ajouter supplier et warehouse pour tous les types si définis
-            if (values.supplier_id) {
-                cleanedValues.supplier = values.supplier_id;
-            }
+            delete payload.category_id;
+            delete payload.warehouse_id;
+            delete payload.supplier_id;
 
-            if (values.warehouse_id) {
-                cleanedValues.warehouse = values.warehouse_id;
-            }
+            // Remove undefined or empty values
+            Object.keys(payload).forEach(key => {
+                if (payload[key] === undefined || payload[key] === '') {
+                    delete payload[key];
+                }
+            });
 
-            // Ajouter stock et Wilson EOQ pour produits physiques
-            if (values.product_type === 'physical') {
-                cleanedValues.stock_quantity = parseInt(values.stock_quantity) || 0;
-                cleanedValues.low_stock_threshold = parseInt(values.low_stock_threshold) || 5;
-                cleanedValues.ordering_cost = parseFloat(values.ordering_cost) || 5000;
-                cleanedValues.holding_cost_percent = parseFloat(values.holding_cost_percent) || 20;
-                cleanedValues.barcode = values.barcode || null;
-                cleanedValues.expiration_date = values.expiration_date || null;
-                cleanedValues.supply_lead_time_days = parseInt(values.supply_lead_time_days) || 7;
-                cleanedValues.default_shelf_life_after_opening = values.default_shelf_life_after_opening ? parseInt(values.default_shelf_life_after_opening) : null;
+            if (values.product_type !== 'physical') {
+                payload.stock_quantity = 0;
+                payload.low_stock_threshold = 0;
+                payload.warehouse = null;
             }
 
             if (isEdit) {
-                await productsAPI.update(id, cleanedValues);
-                enqueueSnackbar(t('products:messages.updateSuccess'), { variant: 'success' });
+                await productsAPI.update(id, payload);
+                enqueueSnackbar('Produit mis à jour', { variant: 'success' });
             } else {
-                await productsAPI.create(cleanedValues);
-                enqueueSnackbar(t('products:messages.createSuccess'), { variant: 'success' });
+                await productsAPI.create(payload);
+                enqueueSnackbar('Produit créé', { variant: 'success' });
             }
             navigate('/products');
         } catch (error) {
-            console.error('Erreur:', error);
-
-            // Afficher message d'erreur plus détaillé
-            if (error.response?.data) {
-                const errorData = error.response.data;
-                const errorMessages = [];
-
-                // Parser les erreurs de validation Django
-                for (const [field, messages] of Object.entries(errorData)) {
-                    if (Array.isArray(messages)) {
-                        errorMessages.push(`${field}: ${messages.join(', ')}`);
-                    } else if (typeof messages === 'string') {
-                        errorMessages.push(messages);
-                    }
-                }
-
-                if (errorMessages.length > 0) {
-                    enqueueSnackbar(`${t('products:messages.saveError')}: ${errorMessages.join(' | ')}`, { variant: 'error' });
-                } else {
-                    enqueueSnackbar(t('products:messages.saveError'), { variant: 'error' });
-                }
-            } else {
-                enqueueSnackbar(t('products:messages.saveError'), { variant: 'error' });
-            }
+            console.error(error);
+            const msg = error.response?.data ? JSON.stringify(error.response.data) : 'Erreur';
+            enqueueSnackbar(msg, { variant: 'error' });
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    const ProductTypeSelector = ({ value, onChange }) => (
-        <ToggleButtonGroup
-            value={value}
-            exclusive
-            onChange={(e, newValue) => newValue && onChange({ target: { name: 'product_type', value: newValue } })}
-            fullWidth
-            size="small"
-            sx={{ mb: 2 }}
-        >
-            <ToggleButton value="physical" sx={{ py: 1 }}>
-                <Inventory sx={{ mr: 1, fontSize: 20 }} />
-                <Typography variant="body2" fontWeight="bold">{t('products:productTypes.physical')}</Typography>
-            </ToggleButton>
-            <ToggleButton value="service" sx={{ py: 1 }}>
-                <Build sx={{ mr: 1, fontSize: 20 }} />
-                <Typography variant="body2" fontWeight="bold">{t('products:productTypes.service')}</Typography>
-            </ToggleButton>
-        </ToggleButtonGroup>
-    );
+    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
 
     return (
-        <Box sx={{
-            maxWidth: 1400,
-            mx: 'auto',
-            p: { xs: 0, sm: 2, md: 3 },
-            bgcolor: 'background.default',
-            minHeight: '100vh'
-        }}>
-            {/* Header - Caché sur mobile (géré par top navbar) */}
-            <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
-                <Typography variant={isMobile ? "h5" : "h4"} fontWeight={700} sx={{ mb: 0.5 }}>
-                    {isEdit ? t('products:editProduct') : t('products:newProduct')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {isEdit ? t('products:messages.editProductDescription') : t('products:messages.createProductDescription')}
-                </Typography>
-            </Box>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+                enableReinitialize
+                innerRef={formikRef}
+            >
+                {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
+                    <Form>
+                        <Stack spacing={3}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="h4" fontWeight={700}>{isEdit ? 'Modifier Produit' : 'Nouveau Produit'}</Typography>
+                                <Stack direction="row" spacing={1}>
+                                    <Button variant="outlined" onClick={() => navigate('/products')}>Annuler</Button>
+                                    <Button variant="contained" type="submit" disabled={isSubmitting} startIcon={isSubmitting && <CircularProgress size={20} />}>
+                                        Enregistrer
+                                    </Button>
+                                </Stack>
+                            </Box>
 
-            {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
-            <Box sx={{
-                mb: 1.5,
-                display: { xs: 'flex', md: 'none' },
-                justifyContent: 'flex-end',
-                px: 2,
-                py: 1
-            }}>
-                {/* Les actions sont gérées par le top navbar sur mobile */}
-            </Box>
-            <Box sx={{ px: isMobile ? 2 : 0 }}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={8}>
+                                    <Stack spacing={3}>
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom>Type de produit</Typography>
+                                                <ToggleButtonGroup
+                                                    value={values.product_type}
+                                                    exclusive
+                                                    onChange={(e, v) => v && handleChange({ target: { name: 'product_type', value: v } })}
+                                                    fullWidth
+                                                >
+                                                    <ToggleButton value="physical"><Inventory sx={{ mr: 1 }} /> Physique</ToggleButton>
+                                                    <ToggleButton value="service"><Build sx={{ mr: 1 }} /> Service</ToggleButton>
+                                                </ToggleButtonGroup>
+                                            </CardContent>
+                                        </Card>
 
-                {/* Message d'information si warehouses manquants */}
-                {warehouses.length === 0 && (
-                    <Alert
-                        severity="info"
-                        sx={{
-                            mb: 3,
-                            borderRadius: 1.5,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                            border: 'none',
-                            '& .MuiAlert-icon': {
-                                alignItems: 'center'
-                            }
-                        }}
-                    >
-                        {t('products:messages.missingWarehouses')}
-                    </Alert>
-                )}
-
-                <Formik
-                    initialValues={initialValues}
-                    validationSchema={getValidationSchema(initialValues.product_type, warehouses.length > 0)}
-                    onSubmit={handleSubmit}
-                    enableReinitialize
-                >
-                    {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
-                        // Update refs to access from modals
-                        formikRef.current.setFieldValue = setFieldValue;
-                        formikRef.current.values = values;
-
-                        return (
-                            <Form>
-                                <Grid container spacing={2}>
-                                    {/* Section principale */}
-                                    <Grid item xs={12} md={8}>
-                                        <ProductTypeSelector value={values.product_type} onChange={handleChange} />
-
-                                        <Card variant="outlined" sx={{ mb: 2 }}>
-                                            <CardContent sx={{ p: 2 }}>
-                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                                    <Info sx={{ mr: 1, fontSize: 20, color: 'primary.main' }} />
-                                                    Informations
-                                                </Typography>
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom>Informations</Typography>
                                                 <Grid container spacing={2}>
                                                     <Grid item xs={12} sm={8}>
-                                                        <TextField
-                                                            fullWidth size="small"
-                                                            name="name" label={t('products:labels.name')}
-                                                            value={values.name} onChange={handleChange} onBlur={handleBlur}
-                                                            error={touched.name && Boolean(errors.name)}
-                                                            required
-                                                        />
+                                                        <TextField fullWidth name="name" label="Nom" value={values.name} onChange={handleChange} onBlur={handleBlur} error={touched.name && Boolean(errors.name)} helperText={touched.name && errors.name} required />
                                                     </Grid>
                                                     <Grid item xs={12} sm={4}>
-                                                        <TextField
-                                                            fullWidth size="small"
-                                                            name="reference" label={t('products:labels.reference')}
-                                                            value={values.reference} onChange={handleChange} onBlur={handleBlur}
-                                                            placeholder="Auto"
-                                                        />
+                                                        <TextField fullWidth name="reference" label="Référence" value={values.reference} onChange={handleChange} placeholder="Auto" />
                                                     </Grid>
                                                     <Grid item xs={12}>
-                                                        <TextField
-                                                            fullWidth multiline rows={2} size="small"
-                                                            name="description" label={t('products:labels.description')}
-                                                            value={values.description} onChange={handleChange}
-                                                        />
+                                                        <TextField fullWidth multiline rows={2} name="description" label="Description" value={values.description} onChange={handleChange} />
                                                     </Grid>
                                                 </Grid>
                                             </CardContent>
                                         </Card>
 
-                                        {/* Unités et Prix */}
-                                        <Card variant="outlined" sx={{ mb: 2 }}>
-                                            <CardContent sx={{ p: 2 }}>
-                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                                    <AttachMoney sx={{ mr: 1, fontSize: 20, color: 'success.main' }} />
-                                                    Unités & Prix
-                                                </Typography>
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom>Prix & Unités</Typography>
                                                 <Grid container spacing={2}>
-                                                    <Grid item xs={12} sm={values.product_type === 'physical' ? 4 : 12}>
-                                                        <TextField
-                                                            select fullWidth size="small"
-                                                            name="sell_unit" label={values.product_type === 'physical' ? t('products:labels.sellUnit', 'Unité de Vente') : t('products:labels.unit', 'Unité')}
-                                                            value={values.sell_unit} onChange={(e) => {
-                                                                handleChange(e);
-                                                                if (values.product_type === 'service') {
-                                                                    setFieldValue('base_unit', e.target.value);
-                                                                }
-                                                            }}
-                                                        >
+                                                    <Grid item xs={12} sm={6}>
+                                                        <TextField fullWidth type="number" name="price" label="Prix de vente" value={values.price} onChange={handleChange} onBlur={handleBlur} error={touched.price && Boolean(errors.price)} helperText={touched.price && errors.price} required />
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={6}>
+                                                        <TextField fullWidth type="number" name="cost_price" label="Prix d'achat" value={values.cost_price} onChange={handleChange} />
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField select fullWidth name="sell_unit" label="Unité de vente" value={values.sell_unit} onChange={handleChange}>
                                                             {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
                                                         </TextField>
                                                     </Grid>
-                                                    {values.product_type === 'physical' && (
-                                                        <>
-                                                            <Grid item xs={12} sm={4}>
-                                                                <TextField
-                                                                    select fullWidth size="small"
-                                                                    name="base_unit" label={t('products:labels.baseUnit', 'Unité de Stockage')}
-                                                                    value={values.base_unit} onChange={handleChange}
-                                                                    helperText="(Stocké)"
-                                                                >
-                                                                    {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
-                                                                </TextField>
-                                                            </Grid>
-                                                            <Grid item xs={12} sm={4}>
-                                                                <TextField
-                                                                    fullWidth size="small" type="number"
-                                                                    name="conversion_factor" label="Facteur"
-                                                                    value={values.conversion_factor} onChange={handleChange}
-                                                                    helperText={`1 ${values.sell_unit} = ${values.conversion_factor} ${values.base_unit}`}
-                                                                />
-                                                            </Grid>
-                                                        </>
-                                                    )}
-                                                    <Grid item xs={12} sm={6}>
-                                                        <TextField
-                                                            fullWidth size="small" type="number"
-                                                            name="price" label="Prix de Vente"
-                                                            value={values.price} onChange={handleChange}
-                                                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                                                        />
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField select fullWidth name="base_unit" label="Unité de base" value={values.base_unit} onChange={handleChange}>
+                                                            {UNIT_TYPES.map(u => <MenuItem key={u.value} value={u.value}>{u.label}</MenuItem>)}
+                                                        </TextField>
                                                     </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <TextField
-                                                            fullWidth size="small" type="number"
-                                                            name="cost_price" label="Coût d'achat"
-                                                            value={values.cost_price} onChange={handleChange}
-                                                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <FormControlLabel
-                                                            control={
-                                                                <Checkbox
-                                                                    name="price_editable"
-                                                                    checked={values.price_editable}
-                                                                    onChange={handleChange}
-                                                                    color="primary"
-                                                                />
-                                                            }
-                                                            label={
-                                                                <Box>
-                                                                    <Typography variant="body2" fontWeight={500}>
-                                                                        {t('products:labels.priceEditable', 'Prix modifiable lors de la facturation')}
-                                                                    </Typography>
-                                                                    <Typography variant="caption" color="text.secondary">
-                                                                        Permet d'ajuster le prix manuellement sur chaque facture
-                                                                    </Typography>
-                                                                </Box>
-                                                            }
-                                                        />
+                                                    <Grid item xs={12} sm={4}>
+                                                        <TextField fullWidth type="number" name="conversion_factor" label="Facteur" value={values.conversion_factor} onChange={handleChange} />
                                                     </Grid>
                                                 </Grid>
                                             </CardContent>
                                         </Card>
 
-                                        {/* Stock (Physique seulement) */}
                                         {values.product_type === 'physical' && (
-                                            <Card variant="outlined">
-                                                <CardContent sx={{ p: 2 }}>
-                                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                                        <Inventory sx={{ mr: 1, fontSize: 20, color: 'warning.main' }} />
-                                                        Stock
-                                                    </Typography>
+                                            <Card>
+                                                <CardContent>
+                                                    <Typography variant="h6" gutterBottom>Stock & Traçabilité</Typography>
                                                     <Grid container spacing={2}>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="stock_quantity" label={`Quantité (${values.base_unit})`}
-                                                                value={values.stock_quantity} onChange={handleChange}
-                                                            />
+                                                            <TextField fullWidth type="number" name="stock_quantity" label="Stock actuel" value={values.stock_quantity} onChange={handleChange} error={touched.stock_quantity && Boolean(errors.stock_quantity)} helperText={touched.stock_quantity && errors.stock_quantity} />
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="low_stock_threshold" label="Seuil alerte"
-                                                                value={values.low_stock_threshold} onChange={handleChange}
-                                                            />
-                                                        </Grid>
-
-                                                        {/* Paramètres Wilson EOQ */}
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 0.5 }}>
-                                                                <Chip label="Paramètres Wilson EOQ" size="small" variant="outlined" />
-                                                            </Divider>
+                                                            <TextField fullWidth type="number" name="low_stock_threshold" label="Seuil alerte" value={values.low_stock_threshold} onChange={handleChange} />
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="ordering_cost" label="Coût de commande (XAF)"
-                                                                value={values.ordering_cost} onChange={handleChange}
-                                                                helperText="Coût de passation d'une commande"
-                                                                InputProps={{ inputProps: { min: 0 } }}
-                                                            />
+                                                            <TextField fullWidth name="barcode" label="Code-barres" value={values.barcode} onChange={handleChange} />
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="holding_cost_percent" label="Coût stockage (%)"
-                                                                value={values.holding_cost_percent} onChange={handleChange}
-                                                                helperText="% du prix d'achat par an"
-                                                                InputProps={{
-                                                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                                                    inputProps: { min: 0, max: 100 }
-                                                                }}
-                                                            />
-                                                        </Grid>
-
-                                                        {/* Traçabilité & Péremption */}
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 0.5 }}>
-                                                                <Chip label="Traçabilité & Péremption" size="small" variant="outlined" />
-                                                            </Divider>
-                                                        </Grid>
-                                                        <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small"
-                                                                name="barcode" label="Code-barres"
-                                                                value={values.barcode} onChange={handleChange}
-                                                                placeholder="Ex: 3760001..."
-                                                            />
-                                                        </Grid>
-                                                        <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="date"
-                                                                name="expiration_date" label="Date de péremption"
-                                                                value={values.expiration_date || ''} onChange={handleChange}
-                                                                InputLabelProps={{ shrink: true }}
-                                                                helperText="Péremption générale du produit"
-                                                            />
-                                                        </Grid>
-
-                                                        {/* Approvisionnement */}
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 0.5 }}>
-                                                                <Chip label="Approvisionnement & Réactifs" size="small" variant="outlined" />
-                                                            </Divider>
-                                                        </Grid>
-                                                        <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="supply_lead_time_days" label="Délai de livraison"
-                                                                value={values.supply_lead_time_days} onChange={handleChange}
-                                                                helperText="Jours entre commande et réception"
-                                                                InputProps={{
-                                                                    endAdornment: <InputAdornment position="end">jours</InputAdornment>,
-                                                                    inputProps: { min: 0 }
-                                                                }}
-                                                            />
-                                                        </Grid>
-                                                        <Grid item xs={12} sm={6}>
-                                                            <TextField
-                                                                fullWidth size="small" type="number"
-                                                                name="default_shelf_life_after_opening" label="Durée après ouverture"
-                                                                value={values.default_shelf_life_after_opening} onChange={handleChange}
-                                                                helperText="Pour réactifs : jours de validité après ouverture"
-                                                                InputProps={{
-                                                                    endAdornment: <InputAdornment position="end">jours</InputAdornment>,
-                                                                    inputProps: { min: 0 }
-                                                                }}
-                                                                placeholder="Ex: 14"
-                                                            />
+                                                            <TextField fullWidth type="date" name="expiration_date" label="Péremption" value={values.expiration_date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
                                                         </Grid>
                                                     </Grid>
                                                 </CardContent>
                                             </Card>
                                         )}
-                                    </Grid>
+                                    </Stack>
+                                </Grid>
 
-                                    {/* Sidebar (Catégorie, Fournisseur, Actions) */}
-                                    <Grid item xs={12} md={4}>
-                                        <Card variant="outlined" sx={{ mb: 2 }}>
-                                            <CardContent sx={{ p: 2 }}>
-                                                <Button
-                                                    type="submit"
-                                                    variant="contained"
-                                                    fullWidth
-                                                    disabled={isSubmitting}
-                                                    startIcon={<Save />}
-                                                    sx={{ mb: 1 }}
-                                                >
-                                                    {isEdit ? t('common:save') : t('common:create')}
-                                                </Button>
-                                                <Button
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    onClick={() => navigate('/products')}
-                                                >
-                                                    {t('common:cancel')}
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
-
-                                        <Card variant="outlined">
-                                            <CardContent sx={{ p: 2 }}>
-                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
-                                                    Organisation
-                                                </Typography>
+                                <Grid item xs={12} md={4}>
+                                    <Stack spacing={3}>
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant="subtitle2" gutterBottom>Organisation</Typography>
                                                 <Stack spacing={2}>
-                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                        <TextField
-                                                            select fullWidth size="small"
-                                                            name="category_id" label="Catégorie"
-                                                            value={values.category_id} onChange={handleChange}
-                                                        >
-                                                            <MenuItem value=""><em>Aucune</em></MenuItem>
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <TextField select fullWidth label="Catégorie" name="category_id" value={values.category_id} onChange={handleChange} size="small">
+                                                            <MenuItem value="">Aucune</MenuItem>
                                                             {categories.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
                                                         </TextField>
-                                                        <Tooltip title="Gérer les catégories">
-                                                            <IconButton 
-                                                                size="small" 
-                                                                onClick={() => setCategoryModalOpen(true)}
-                                                                sx={{ bgcolor: 'secondary.50', color: 'secondary.main' }}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Tooltip>
+                                                        <IconButton onClick={() => setCategoryModalOpen(true)} color="primary"><Add /></IconButton>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <TextField select fullWidth label="Entrepôt" name="warehouse_id" value={values.warehouse_id} onChange={handleChange} size="small" disabled={values.product_type !== 'physical'}>
+                                                            <MenuItem value="">Aucun</MenuItem>
+                                                            {warehouses.map(w => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
+                                                        </TextField>
+                                                        <IconButton onClick={() => setWarehouseModalOpen(true)} color="primary" disabled={values.product_type !== 'physical'}><Add /></IconButton>
                                                     </Box>
                                                 </Stack>
                                             </CardContent>
                                         </Card>
-                                    </Grid>
+                                    </Stack>
                                 </Grid>
-                            </Form>
-                        );
-                    }}
-                </Formik>
-            </Box>
+                            </Grid>
+                        </Stack>
+                    </Form>
+                )}
+            </Formik>
 
-            {/* Supplier Selection Modal - Hidden (not needed for CSJ) */}
-            < Dialog
-                open={false}
-                onClose={() => setSupplierModalOpen(false)}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle sx={{ pb: 2, pt: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Box sx={{
-                                p: 1,
-                                borderRadius: 2,
-                                bgcolor: 'info.50',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Business color="info" />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" fontWeight={600}>
-                                    {t('products:modals.selectSupplier', 'Sélectionner un fournisseur')}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Choisissez un fournisseur pour ce produit
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Button
-                            startIcon={<Add />}
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                                const name = prompt(t('products:modals.supplierName', 'Nom du fournisseur:'));
-                                const email = prompt(t('products:modals.supplierEmail', 'Email (optionnel):'));
-                                if (name) {
-                                    handleCreateSupplier(name, email || '');
-                                }
-                            }}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            {t('products:actions.add', 'Ajouter')}
-                        </Button>
-                    </Box>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 2 }}>
-                    <TextField
-                        fullWidth
-                        size="medium"
-                        placeholder={t('products:modals.searchSupplier', 'Rechercher un fournisseur...')}
-                        value={supplierSearch}
-                        onChange={(e) => setSupplierSearch(e.target.value)}
-                        sx={{ mb: 2 }}
-                        InputProps={{
-                            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                        }}
-                    />
-                    <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                        {suppliers
-                            .filter(s => !supplierSearch || s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
-                            .map((supplier) => (
-                                <ListItem
-                                    key={supplier.id}
-                                    disablePadding
-                                    sx={{
-                                        mb: 1,
-                                        borderRadius: 2,
-                                        bgcolor: 'background.default',
-                                        '&:hover': {
-                                            bgcolor: 'action.hover'
-                                        }
-                                    }}
-                                >
-                                    <ListItemButton
-                                        onClick={() => handleSupplierSelect(supplier)}
-                                        sx={{ borderRadius: 1 }}
-                                    >
-                                        <ListItemIcon>
-                                            <Box sx={{
-                                                p: 1,
-                                                borderRadius: 1.5,
-                                                bgcolor: 'info.50',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Business color="info" fontSize="small" />
-                                            </Box>
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={supplier.name}
-                                            secondary={supplier.email || t('common:labels.noEmail')}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                        {suppliers.length === 0 && (
-                            <ListItem>
-                                <ListItemText
-                                    primary={t('products:messages.noSuppliers', 'Aucun fournisseur disponible')}
-                                    secondary={t('products:messages.clickAddToCreateFirstSupplier')}
-                                />
-                            </ListItem>
-                        )}
-                    </List>
+            {/* Modals */}
+            <Dialog open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)}>
+                <DialogTitle>Nouvelle catégorie</DialogTitle>
+                <DialogContent>
+                    <TextField fullWidth label="Nom" sx={{ mt: 2 }} value={categoryFormData.name} onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })} />
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button
-                        onClick={() => setSupplierModalOpen(false)}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {t('products:actions.cancel')}
-                    </Button>
+                <DialogActions>
+                    <Button onClick={() => setCategoryModalOpen(false)}>Annuler</Button>
+                    <Button variant="contained" onClick={handleSaveCategory}>Créer</Button>
                 </DialogActions>
-            </Dialog >
+            </Dialog>
 
-            {/* Warehouse Selection Modal - Modern Design */}
-            < Dialog
-                open={warehouseModalOpen}
-                onClose={() => setWarehouseModalOpen(false)}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }
-                }}
-            >
-                <DialogTitle sx={{ pb: 2, pt: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Box sx={{
-                                p: 1,
-                                borderRadius: 2,
-                                bgcolor: 'primary.50',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Warehouse color="primary" />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" fontWeight={600}>
-                                    {t('products:modals.manageWarehouses', 'Gérer les entrepôts')}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Sélectionnez ou gérez vos entrepôts
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Button
-                            startIcon={<Add />}
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                                setWarehouseModalOpen(false);
-                                handleOpenWarehouseForm();
-                            }}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            {t('products:actions.add', 'Ajouter')}
-                        </Button>
-                    </Box>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 2 }}>
-                    <TextField
-                        fullWidth
-                        size="medium"
-                        placeholder={t('products:modals.searchWarehouse', 'Rechercher un entrepôt...')}
-                        value={warehouseSearch}
-                        onChange={(e) => setWarehouseSearch(e.target.value)}
-                        sx={{ mb: 2 }}
-                        InputProps={{
-                            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                        }}
-                    />
-                    <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                        {warehouses
-                            .filter(w => !warehouseSearch || w.name.toLowerCase().includes(warehouseSearch.toLowerCase()) || w.code.toLowerCase().includes(warehouseSearch.toLowerCase()))
-                            .map((warehouse) => (
-                                <ListItem
-                                    key={warehouse.id}
-                                    sx={{
-                                        mb: 1,
-                                        borderRadius: 2,
-                                        bgcolor: 'background.default',
-                                        '&:hover': {
-                                            bgcolor: 'action.hover'
-                                        }
-                                    }}
-                                    secondaryAction={
-                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={() => {
-                                                    setWarehouseModalOpen(false);
-                                                    handleOpenWarehouseForm(warehouse);
-                                                }}
-                                                sx={{
-                                                    '&:hover': { bgcolor: 'primary.50' }
-                                                }}
-                                            >
-                                                <Edit fontSize="small" />
-                                            </IconButton>
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={() => handleDeleteWarehouse(warehouse.id)}
-                                                sx={{
-                                                    '&:hover': { bgcolor: 'error.50' }
-                                                }}
-                                            >
-                                                <Delete fontSize="small" color="error" />
-                                            </IconButton>
-                                        </Box>
-                                    }
-                                >
-                                    <ListItemButton
-                                        onClick={() => {
-                                            handleWarehouseSelect(warehouse);
-                                        }}
-                                        sx={{ borderRadius: 1 }}
-                                    >
-                                        <ListItemIcon>
-                                            <Box sx={{
-                                                p: 1,
-                                                borderRadius: 1.5,
-                                                bgcolor: 'primary.50',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Warehouse color="primary" fontSize="small" />
-                                            </Box>
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={
-                                                <Typography fontWeight={500}>
-                                                    {warehouse.name} <Chip label={warehouse.code} size="small" sx={{ ml: 1, height: 20 }} />
-                                                </Typography>
-                                            }
-                                            secondary={warehouse.city || warehouse.address}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                        {warehouses.length === 0 && (
-                            <ListItem>
-                                <ListItemText
-                                    primary={t('products:messages.noWarehouses', 'Aucun entrepôt disponible')}
-                                    secondary={t('products:messages.clickAddToCreateFirstWarehouse')}
-                                />
-                            </ListItem>
-                        )}
-                    </List>
+            <Dialog open={warehouseModalOpen} onClose={() => setWarehouseModalOpen(false)}>
+                <DialogTitle>Nouvel entrepôt</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                        <TextField fullWidth label="Nom" value={warehouseFormData.name} onChange={e => setWarehouseFormData({ ...warehouseFormData, name: e.target.value })} />
+                        <TextField fullWidth label="Code" value={warehouseFormData.code} onChange={e => setWarehouseFormData({ ...warehouseFormData, code: e.target.value })} />
+                    </Stack>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button
-                        onClick={() => setWarehouseModalOpen(false)}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {t('products:actions.cancel')}
-                    </Button>
+                <DialogActions>
+                    <Button onClick={() => setWarehouseModalOpen(false)}>Annuler</Button>
+                    <Button variant="contained" onClick={handleSaveWarehouse}>Créer</Button>
                 </DialogActions>
-            </Dialog >
-
-            {/* Warehouse Form Modal - Modern Design */}
-            < Dialog
-                open={warehouseFormOpen}
-                onClose={() => {
-                    setWarehouseFormOpen(false);
-                    setEditingWarehouse(null);
-                    setWarehouseFormData({ name: '', code: '', city: '', address: '', province: '', postal_code: '', country: 'Canada' });
-                }}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }
-                }}
-            >
-                <DialogTitle sx={{ pb: 1, pt: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{
-                            p: 1,
-                            borderRadius: 2,
-                            bgcolor: 'primary.50',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Warehouse color="primary" />
-                        </Box>
-                        <Box>
-                            <Typography variant="h6" fontWeight={600}>
-                                {editingWarehouse ? t('products:modals.editWarehouse', 'Modifier l\'entrepôt') : t('products:modals.newWarehouse', 'Nouvel entrepôt')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {editingWarehouse ? t('products:messages.editWarehouseDescription') : t('products:messages.createWarehouseDescription')}
-                            </Typography>
-                        </Box>
-                    </Box>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={8}>
-                                <TextField
-                                    fullWidth
-                                    label={t('products:modals.warehouseName', 'Nom de l\'entrepôt')}
-                                    value={warehouseFormData.name}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, name: e.target.value })}
-                                    required
-                                    autoFocus
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                                <TextField
-                                    fullWidth
-                                    label={t('products:modals.warehouseCode', 'Code')}
-                                    value={warehouseFormData.code}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, code: e.target.value.toUpperCase() })}
-                                    required
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                    helperText={t('products:messages.uniqueCode')}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label={t('products:modals.warehouseAddress', 'Adresse')}
-                                    value={warehouseFormData.address}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, address: e.target.value })}
-                                    multiline
-                                    rows={2}
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label={t('products:modals.warehouseCity', 'Ville')}
-                                    value={warehouseFormData.city}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, city: e.target.value })}
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label={t('common:labels.province')}
-                                    value={warehouseFormData.province}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, province: e.target.value })}
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label={t('common:labels.postalCode')}
-                                    value={warehouseFormData.postal_code}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, postal_code: e.target.value })}
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label={t('common:labels.country')}
-                                    value={warehouseFormData.country}
-                                    onChange={(e) => setWarehouseFormData({ ...warehouseFormData, country: e.target.value })}
-                                    variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                                />
-                            </Grid>
-                        </Grid>
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
-                    <Button
-                        onClick={() => {
-                            setWarehouseFormOpen(false);
-                            setEditingWarehouse(null);
-                            setWarehouseFormData({ name: '', code: '', city: '', address: '', province: '', postal_code: '', country: 'Canada' });
-                        }}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {t('products:actions.cancel')}
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleSaveWarehouse}
-                        disabled={!warehouseFormData.name || !warehouseFormData.code}
-                        startIcon={<Save />}
-                        sx={{ borderRadius: 2, px: 3 }}
-                    >
-                        {editingWarehouse ? t('products:actions.save', 'Enregistrer') : t('products:actions.create')}
-                    </Button>
-                </DialogActions>
-            </Dialog >
-
-            {/* Category Selection Modal - Modern Design */}
-            < Dialog
-                open={categoryModalOpen}
-                onClose={() => setCategoryModalOpen(false)}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }
-                }}
-            >
-                <DialogTitle sx={{ pb: 2, pt: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Box sx={{
-                                p: 1,
-                                borderRadius: 2,
-                                bgcolor: 'secondary.50',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Category color="secondary" />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" fontWeight={600}>
-                                    {t('products:modals.manageCategories', 'Gérer les catégories')}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Organisez vos produits par catégories
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Button
-                            startIcon={<Add />}
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                                setCategoryModalOpen(false);
-                                handleOpenCategoryForm();
-                            }}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            {t('products:actions.add', 'Ajouter')}
-                        </Button>
-                    </Box>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 2 }}>
-                    <TextField
-                        fullWidth
-                        size="medium"
-                        placeholder={t('products:modals.searchCategory', 'Rechercher une catégorie...')}
-                        value={categorySearch}
-                        onChange={(e) => setCategorySearch(e.target.value)}
-                        sx={{ mb: 2 }}
-                        InputProps={{
-                            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                        }}
-                    />
-                    <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                        <ListItem
-                            disablePadding
-                            sx={{
-                                mb: 1,
-                                borderRadius: 2,
-                                bgcolor: 'background.default',
-                                '&:hover': {
-                                    bgcolor: 'action.hover'
-                                }
-                            }}
-                        >
-                            <ListItemButton
-                                onClick={() => {
-                                    if (formikRef.current.setFieldValue) {
-                                        formikRef.current.setFieldValue('category_id', '');
-                                    }
-                                    setCategoryModalOpen(false);
-                                }}
-                                sx={{ borderRadius: 2 }}
-                            >
-                                <ListItemIcon>
-                                    <Box sx={{
-                                        p: 1,
-                                        borderRadius: 1.5,
-                                        bgcolor: 'grey.100',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <Category color="disabled" fontSize="small" />
-                                    </Box>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={t('products:labels.uncategorized')}
-                                    secondary={t('products:messages.uncategorizedProduct')}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                        {categories
-                            .filter(c => !categorySearch || c.name.toLowerCase().includes(categorySearch.toLowerCase()))
-                            .map((category) => (
-                                <ListItem
-                                    key={category.id}
-                                    sx={{
-                                        mb: 1,
-                                        borderRadius: 2,
-                                        bgcolor: 'background.default',
-                                        '&:hover': {
-                                            bgcolor: 'action.hover'
-                                        }
-                                    }}
-                                    secondaryAction={
-                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={() => {
-                                                    setCategoryModalOpen(false);
-                                                    handleOpenCategoryForm(category);
-                                                }}
-                                                sx={{
-                                                    '&:hover': { bgcolor: 'secondary.50' }
-                                                }}
-                                            >
-                                                <Edit fontSize="small" />
-                                            </IconButton>
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={() => handleDeleteCategory(category.id)}
-                                                sx={{
-                                                    '&:hover': { bgcolor: 'error.50' }
-                                                }}
-                                            >
-                                                <Delete fontSize="small" color="error" />
-                                            </IconButton>
-                                        </Box>
-                                    }
-                                >
-                                    <ListItemButton
-                                        onClick={() => handleCategorySelect(category)}
-                                        sx={{ borderRadius: 1 }}
-                                    >
-                                        <ListItemIcon>
-                                            <Box sx={{
-                                                p: 1,
-                                                borderRadius: 1.5,
-                                                bgcolor: 'secondary.50',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Category color="secondary" fontSize="small" />
-                                            </Box>
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={category.name}
-                                            secondary={category.description || t('common:labels.noDescription')}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                        {categories.length === 0 && (
-                            <ListItem>
-                                <ListItemText
-                                    primary={t('products:messages.noCategories', 'Aucune catégorie disponible')}
-                                    secondary={t('products:messages.clickAddToCreateFirstCategory')}
-                                />
-                            </ListItem>
-                        )}
-                    </List>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button
-                        onClick={() => setCategoryModalOpen(false)}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {t('products:actions.cancel')}
-                    </Button>
-                </DialogActions>
-            </Dialog >
-
-            {/* Category Form Modal - Modern Design */}
-            < Dialog
-                open={categoryFormOpen}
-                onClose={() => {
-                    setCategoryFormOpen(false);
-                    setEditingCategory(null);
-                    setCategoryFormData({ name: '', description: '' });
-                }}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }
-                }}
-            >
-                <DialogTitle sx={{ pb: 1, pt: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{
-                            p: 1,
-                            borderRadius: 2,
-                            bgcolor: 'secondary.50',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Category color="secondary" />
-                        </Box>
-                        <Box>
-                            <Typography variant="h6" fontWeight={600}>
-                                {editingCategory ? t('products:modals.editCategory', 'Modifier la catégorie') : t('products:modals.newCategory', 'Nouvelle catégorie')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {editingCategory ? t('products:messages.editCategoryDescription') : t('products:messages.createCategoryDescription')}
-                            </Typography>
-                        </Box>
-                    </Box>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                        <TextField
-                            fullWidth
-                            label={t('products:modals.categoryName', 'Nom de la catégorie')}
-                            value={categoryFormData.name}
-                            onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                            required
-                            autoFocus
-                            variant="outlined"
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        />
-                        <TextField
-                            fullWidth
-                            label={t('products:modals.categoryDescription', 'Description')}
-                            value={categoryFormData.description}
-                            onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                            multiline
-                            rows={3}
-                            variant="outlined"
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                            helperText={t('products:modals.categoryDescriptionHelper', 'Description optionnelle de la catégorie')}
-                        />
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
-                    <Button
-                        onClick={() => {
-                            setCategoryFormOpen(false);
-                            setEditingCategory(null);
-                            setCategoryFormData({ name: '', description: '' });
-                        }}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        {t('products:actions.cancel')}
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleSaveCategory}
-                        disabled={!categoryFormData.name}
-                        startIcon={<Save />}
-                        sx={{ borderRadius: 2, px: 3 }}
-                    >
-                        {editingCategory ? t('products:actions.save', 'Enregistrer') : t('products:actions.create')}
-                    </Button>
-                </DialogActions>
-            </Dialog >
-        </Box >
+            </Dialog>
+        </Box>
     );
 }
 
