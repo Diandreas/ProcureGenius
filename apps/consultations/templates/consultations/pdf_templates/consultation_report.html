@@ -147,26 +147,69 @@
 
 <div class="section">
     <div class="section-title">Motif & Histoire</div>
-    <div style="margin-bottom: 10px;">
-        <span class="label">Motif:</span> {{ consultation.chief_complaint }}
+    <div style="margin-bottom: 5px;">
+        <span class="label">Motif:</span> <b>{{ consultation.chief_complaint }}</b>
     </div>
-    <div>
+    {% if consultation.history_of_present_illness %}
+    <div style="margin-bottom: 5px;">
         <span class="label" style="vertical-align: top;">Histoire:</span>
         <div style="display: inline-block; width: 80%; vertical-align: top;">
-            {{ consultation.history_of_present_illness|default:"Non spécifié" }}
+            {{ consultation.history_of_present_illness|linebreaksbr }}
         </div>
     </div>
+    {% endif %}
 </div>
+
+{% if consultation.antecedents_medical or consultation.antecedents_surgical or consultation.antecedents_immuno_allergies or consultation.antecedents_gyneco_obs or consultation.antecedents_lifestyle or consultation.antecedents_family %}
+<div class="section">
+    <div class="section-title">Antécédents</div>
+    <div style="font-size: 10pt;">
+        {% if consultation.antecedents_medical %}<div><span class="label">Médicaux:</span> {{ consultation.antecedents_medical }}</div>{% endif %}
+        {% if consultation.antecedents_surgical %}<div><span class="label">Chirurgicaux:</span> {{ consultation.antecedents_surgical }}</div>{% endif %}
+        {% if consultation.antecedents_immuno_allergies %}<div><span class="label">Immuno-allergies:</span> {{ consultation.antecedents_immuno_allergies }}</div>{% endif %}
+        {% if consultation.antecedents_gyneco_obs %}<div><span class="label">Gynéco-obs:</span> {{ consultation.antecedents_gyneco_obs }}</div>{% endif %}
+        {% if consultation.antecedents_lifestyle %}<div><span class="label">Mode de vie:</span> {{ consultation.antecedents_lifestyle }}</div>{% endif %}
+        {% if consultation.antecedents_family %}<div><span class="label">Familiaux:</span> {{ consultation.antecedents_family }}</div>{% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if consultation.enquetes_systeme %}
+<div class="section">
+    <div class="section-title">Enquêtes & Système</div>
+    <p>{{ consultation.enquetes_systeme|linebreaksbr }}</p>
+</div>
+{% endif %}
 
 <div class="section">
     <div class="section-title">Examen Clinique</div>
-    <p>{{ consultation.physical_examination|linebreaks|default:"RAS" }}</p>
+    <p>{{ consultation.physical_examination|linebreaksbr|default:"RAS" }}</p>
 </div>
 
 <div class="section">
     <div class="section-title">Diagnostic</div>
-    <p style="font-weight: bold;">{{ consultation.diagnosis|default:"En cours d'investigation" }}</p>
+    <p style="font-weight: bold; font-size: 11pt; color: #c0392b;">{{ consultation.diagnosis|default:"En cours d'investigation" }}</p>
 </div>
+
+{% if consultation.complementary_exams or consultation.imaging %}
+<div class="section">
+    <div class="section-title">Examens & Imagerie</div>
+    <div class="grid-row">
+        {% if consultation.complementary_exams %}
+        <div class="grid-col" style="padding-right: 10px;">
+            <div style="font-weight: bold; font-size: 9pt; color: #666; margin-bottom: 5px;">Examens complémentaires</div>
+            <div style="font-size: 9pt;">{{ consultation.complementary_exams|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+        {% if consultation.imaging %}
+        <div class="grid-col">
+            <div style="font-weight: bold; font-size: 9pt; color: #666; margin-bottom: 5px;">Imagerie</div>
+            <div style="font-size: 9pt;">{{ consultation.imaging|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 <div class="section">
     <div class="section-title">Plan de Traitement</div>
@@ -202,11 +245,35 @@
 </div>
 {% endif %}
 
+{% if prescribed_lab_tests %}
+<div class="section">
+    <div class="section-title">Examens de Laboratoire Prescrits (Indicatif)</div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <thead>
+            <tr style="background: #f0f9ff;">
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">#</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Examen</th>
+                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test in prescribed_lab_tests %}
+            <tr>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ forloop.counter }}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ test.name }}</b></td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ test.test_code }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 {% if lab_orders %}
 <div class="section">
-    <div class="section-title">Examens de Laboratoire Prescrits</div>
+    <div class="section-title">Commandes de Laboratoire (Générées)</div>
     {% for order in lab_orders %}
-    <p style="font-size: 9pt; color: #666;">{{ order.order_number }}</p>
+    <p style="font-size: 9pt; color: #666;">{{ order.order_number }} - Statut: {{ order.get_status_display }}</p>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
         <thead>
             <tr style="background: #f0fdf4;">
@@ -233,6 +300,9 @@
     <p>Signature:</p>
     <div style="height: 60px;"></div>
     <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
+    {% if consultation.completed_by %}
+    <p style="font-size: 8pt; color: #666;">Consultation terminée par: {{ consultation.completed_by.get_full_name|default:consultation.completed_by.username }} le {{ consultation.ended_at|date:"d/m/Y à H:i" }}</p>
+    {% endif %}
 </div>
 
 <div style="margin-top: 20px; font-size: 8pt; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 5px;">

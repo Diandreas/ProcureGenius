@@ -125,12 +125,19 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
     price_editable = serializers.BooleanField(required=False, default=False)
-    
+
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
     warehouse_code = serializers.CharField(source='warehouse.code', read_only=True)
     warehouse_location = serializers.SerializerMethodField()
-    
+
+    # Category (write accepts UUID, read returns nested object via to_representation)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=ProductCategory.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
     # Statistiques
     total_invoices = serializers.SerializerMethodField()
     total_sales_amount = serializers.SerializerMethodField()
@@ -139,7 +146,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     active_contracts_count = serializers.SerializerMethodField()
 
     # Supply lead time (now a real model field, writable)
-    
+
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
         'suppliers': ['supplier', 'supplier_name'],
@@ -149,7 +156,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         model = Product
         fields = [
             'id', 'name', 'reference', 'description', 'barcode',
-            'product_type', 'source_type', 'supplier', 'supplier_name',
+            'product_type', 'source_type', 'category', 'supplier', 'supplier_name',
             'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
             'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
@@ -168,35 +175,31 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count'
         ]
-    
-    
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Return category as nested object for frontend compatibility
+        if instance.category_id:
+            data['category'] = {
+                'id': str(instance.category.id),
+                'name': instance.category.name,
+                'slug': instance.category.slug,
+            }
+        else:
+            data['category'] = None
+        return data
+
     def validate(self, attrs):
-        """Validation stricte des produits selon leur type"""
+        """Validation des produits selon leur type"""
         product_type = attrs.get('product_type', getattr(self.instance, 'product_type', 'physical'))
 
         # Services/digital ne peuvent pas avoir de stock
         if product_type in ['service', 'digital']:
-            if attrs.get('stock_quantity', 0) != 0:
-                raise serializers.ValidationError({
-                    'stock_quantity': 'Les services/produits digitaux ne gèrent pas de stock'
-                })
-            if attrs.get('low_stock_threshold', 0) != 0:
-                raise serializers.ValidationError({
-                    'low_stock_threshold': 'Les services/produits digitaux ne gèrent pas de stock'
-                })
-            if attrs.get('warehouse'):
-                raise serializers.ValidationError({
-                    'warehouse': 'Pas de warehouse pour services/digitaux'
-                })
-
-        # Physiques doivent avoir warehouse si disponible
-        elif product_type == 'physical':
-            from apps.invoicing.models import Warehouse
-            if not attrs.get('warehouse') and not getattr(self.instance, 'warehouse', None):
-                if Warehouse.objects.exists():
-                    raise serializers.ValidationError({
-                        'warehouse': 'Warehouse requis pour produits physiques'
-                    })
+            # Force stock fields to 0 (required by model clean() validation)
+            attrs['stock_quantity'] = 0
+            attrs['low_stock_threshold'] = 0
+            # Remove warehouse for services/digital if accidentally provided
+            attrs.pop('warehouse', None)
 
         return attrs
 

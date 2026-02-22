@@ -110,6 +110,16 @@ class Consultation(models.Model):
         help_text=_("Heure à laquelle les paramètres vitaux ont été pris")
     )
 
+    # Completion tracking
+    completed_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='completed_consultations',
+        verbose_name=_("Terminé par")
+    )
+
     # Consultation date/time
     consultation_date = models.DateTimeField(
         default=timezone.now,
@@ -203,6 +213,38 @@ class Consultation(models.Model):
         blank=True,
         verbose_name=_("Histoire de la maladie actuelle")
     )
+    
+    # Antecedents
+    antecedents_medical = models.TextField(
+        blank=True,
+        verbose_name=_("Antécédents médicaux")
+    )
+    antecedents_surgical = models.TextField(
+        blank=True,
+        verbose_name=_("Antécédents chirurgicaux")
+    )
+    antecedents_immuno_allergies = models.TextField(
+        blank=True,
+        verbose_name=_("Antécédents immuno-allergies")
+    )
+    antecedents_gyneco_obs = models.TextField(
+        blank=True,
+        verbose_name=_("Antécédents gynéco-obstétrique")
+    )
+    antecedents_lifestyle = models.TextField(
+        blank=True,
+        verbose_name=_("Mode de vie (Toxicologie/alcool)")
+    )
+    antecedents_family = models.TextField(
+        blank=True,
+        verbose_name=_("Antécédents familiaux")
+    )
+
+    enquetes_systeme = models.TextField(
+        blank=True,
+        verbose_name=_("Enquêtes & système")
+    )
+
     physical_examination = models.TextField(
         blank=True,
         verbose_name=_("Examen physique"),
@@ -219,6 +261,16 @@ class Consultation(models.Model):
         verbose_name=_("Codes diagnostiques"),
         help_text=_("Codes ICD-10 ou autres")
     )
+
+    complementary_exams = models.TextField(
+        blank=True,
+        verbose_name=_("Examens complémentaires (morphologiques & biologiques)")
+    )
+    imaging = models.TextField(
+        blank=True,
+        verbose_name=_("Imagerie")
+    )
+
     treatment_plan = models.TextField(
         blank=True,
         verbose_name=_("Plan de traitement"),
@@ -257,7 +309,15 @@ class Consultation(models.Model):
         'laboratory.LabOrder',
         blank=True,
         related_name='consultations',
-        verbose_name=_("Prescriptions d'examens")
+        verbose_name=_("Commandes de laboratoire (Générées)")
+    )
+
+    # Examens prescrits (Indicatif pour le rapport)
+    prescribed_lab_tests = models.ManyToManyField(
+        'laboratory.LabTest',
+        blank=True,
+        related_name='consultation_prescriptions',
+        verbose_name=_("Examens prescrits (Indicatif)")
     )
 
     # Billing
@@ -395,7 +455,7 @@ class Consultation(models.Model):
             self.started_at = timezone.now()
         self.save()
 
-    def complete_consultation(self):
+    def complete_consultation(self, user=None):
         """
         Terminer la consultation
         Transitions: in_consultation -> completed
@@ -403,6 +463,8 @@ class Consultation(models.Model):
         self.status = 'completed'
         if not self.ended_at:
             self.ended_at = timezone.now()
+        if user:
+            self.completed_by = user
         self.save()
 
     @classmethod

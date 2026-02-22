@@ -209,7 +209,8 @@ class EndConsultationView(APIView):
             
             # Determine next step based on prescriptions and lab orders
             has_prescriptions = consultation.prescriptions.filter(status='pending').exists()
-            has_lab_orders = consultation.visit.lab_orders.exclude(
+            # On vérifie si il y a des examens PRESCRITS (même si pas encore de LabOrder)
+            has_lab_orders = consultation.prescribed_lab_tests.exists() or consultation.lab_orders.exclude(
                 status__in=['results_delivered', 'cancelled']
             ).exists()
             
@@ -220,6 +221,10 @@ class EndConsultationView(APIView):
             else:
                 consultation.visit.complete_visit()
         
+        # Marquer comme terminé si pas déjà fait
+        if consultation.status != 'completed':
+            consultation.complete_consultation(user=request.user)
+
         # Auto-create invoice for consultation
         if not consultation.consultation_invoice:
             try:
@@ -400,7 +405,7 @@ class CompleteConsultationWorkflowView(APIView):
             )
 
         # Complete consultation
-        consultation.complete_consultation()
+        consultation.complete_consultation(user=request.user)
 
         return Response(
             ConsultationSerializer(consultation).data,

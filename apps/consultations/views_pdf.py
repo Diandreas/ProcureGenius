@@ -70,6 +70,9 @@ class ConsultationReportView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWe
         context['consultation'] = consultation
         context['patient'] = consultation.patient
         context['prescriptions'] = consultation.prescriptions.prefetch_related('items__medication').all()
+        # On inclut les examens prescrits (le nouveau champ indicatif)
+        context['prescribed_lab_tests'] = consultation.prescribed_lab_tests.all()
+        # On garde les lab_orders existants s'il y en a
         context['lab_orders'] = consultation.lab_orders.prefetch_related('items__lab_test').all()
         context['printed_by'] = self.request.user
 

@@ -307,10 +307,9 @@ function InvoiceForm() {
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
-          unit_of_measure: item.unit_of_measure,
           product_reference: item.product_reference,
-          product_id: item.product?.id || null,
-          batch_id: item.batch?.id || null,
+          product: item.product?.id || null,
+          batch: item.batch?.id || null,
           total_price: item.total_price
         })),
         subtotal: subtotal || 0,

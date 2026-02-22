@@ -117,6 +117,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
     consultation_invoice = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     vitals_taken_by_name = serializers.SerializerMethodField()
+    completed_by_name = serializers.SerializerMethodField()
+    prescribed_lab_tests_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Consultation
@@ -139,6 +141,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'vitals_taken_by',
             'vitals_taken_by_name',
             'vitals_taken_at',
+            'completed_by',
+            'completed_by_name',
             # Timing
             'started_at',
             'ended_at',
@@ -160,9 +164,18 @@ class ConsultationSerializer(serializers.ModelSerializer):
             # Clinical info
             'chief_complaint',
             'history_of_present_illness',
+            'antecedents_medical',
+            'antecedents_surgical',
+            'antecedents_immuno_allergies',
+            'antecedents_gyneco_obs',
+            'antecedents_lifestyle',
+            'antecedents_family',
+            'enquetes_systeme',
             'physical_examination',
             'diagnosis',
             'diagnosis_codes',
+            'complementary_exams',
+            'imaging',
             'treatment_plan',
             # Follow-up
             'follow_up_required',
@@ -174,6 +187,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
             # Prescriptions
             'prescriptions',
             'lab_orders_data',
+            'prescribed_lab_tests',
+            'prescribed_lab_tests_data',
             # Invoice
             'consultation_invoice',
             # Timestamps
@@ -191,6 +206,24 @@ class ConsultationSerializer(serializers.ModelSerializer):
         if obj.vitals_taken_by:
             return obj.vitals_taken_by.get_full_name() or obj.vitals_taken_by.username
         return None
+
+    def get_completed_by_name(self, obj):
+        if obj.completed_by:
+            return obj.completed_by.get_full_name() or obj.completed_by.username
+        return None
+
+    def get_prescribed_lab_tests_data(self, obj):
+        """Get prescribed lab tests (indicative)"""
+        tests = obj.prescribed_lab_tests.all()
+        return [
+            {
+                'id': str(test.id),
+                'name': test.name,
+                'test_code': test.test_code,
+                'price': float(test.price)
+            }
+            for test in tests
+        ]
 
     def get_lab_orders_data(self, obj):
         """Get lab orders with items"""
