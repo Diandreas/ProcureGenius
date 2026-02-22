@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(__file__))
 from julianna_tests_config import MEDICAL_SERVICES
 
 from apps.accounts.models import Organization
-from apps.inventory.models import Product
+from apps.invoicing.models import Product
 
 
 class Command(BaseCommand):
