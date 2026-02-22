@@ -249,7 +249,7 @@ function ProductForm() {
                     ...initialValues,
                     ...productData,
                     supplier_id: productData.supplier || '',
-                    category_id: productData.category || '',
+                    category_id: productData.category?.id || '',
                     warehouse_id: productData.warehouse || '',
                     // Prevent null values on controlled inputs
                     name: productData.name || '',

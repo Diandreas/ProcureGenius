@@ -17,12 +17,11 @@ import {
     TableHead,
     TableRow,
     IconButton,
-    InputAdornment,
-    MenuItem,
     Checkbox,
-    FormControlLabel,
     Chip,
-    Tooltip
+    Tabs,
+    Tab,
+    CircularProgress
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -30,9 +29,11 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     ArrowBack as ArrowBackIcon,
-    ArrowForward as ArrowForwardIcon,
-    Print as PrintIcon,
-    WarningAmber as ExternalIcon
+    History as HistoryIcon,
+    Person as PersonIcon,
+    HealthAndSafety as VitalsIcon,
+    Assignment as ExamIcon,
+    Medication as RxIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -43,17 +44,27 @@ import pharmacyAPI from '../../../services/pharmacyAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 
+const TabPanel = (props) => {
+    const { children, value, index, ...other } = props;
+    return (
+        <div role="tabpanel" hidden={value !== index} {...other}>
+            {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+        </div>
+    );
+};
+
 const ConsultationForm = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { id } = useParams(); // Consultation ID (if editing/continuing)
+    const { id } = useParams();
     const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
 
-    const isNew = !id; // Actually, we might start "new" from waiting list, so ID might exist as a visit ID...
-    // Simplified: If ID exists, we are editing/viewing a consultation object.
-
+    const isNew = !id;
+    const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [initializing, setInitializing] = useState(true);
+
     const [patients, setPatients] = useState([]);
     const [medications, setMedications] = useState([]);
     const [labTests, setLabTests] = useState([]);
@@ -63,10 +74,18 @@ const ConsultationForm = () => {
         consultation_date: new Date().toISOString().split('T')[0],
         chief_complaint: '',
         history_of_present_illness: '',
+        antecedents_medical: '',
+        antecedents_surgical: '',
+        antecedents_immuno_allergies: '',
+        antecedents_gyneco_obs: '',
+        antecedents_lifestyle: '',
+        antecedents_family: '',
+        enquetes_systeme: '',
         physical_examination: '',
         diagnosis: '',
-        treatment_plan: '',  // Already exists in model
-        // Vitals
+        complementary_exams: '',
+        imaging: '',
+        treatment_plan: '',
         temperature: '',
         blood_pressure_systolic: '',
         blood_pressure_diastolic: '',
@@ -77,174 +96,119 @@ const ConsultationForm = () => {
         weight: '',
         height: '',
         bmi: '',
-        // Timing
         started_at: null,
         ended_at: null,
-        // Prescription
-        medications: [], // { medication, dosage, frequency, duration, instructions }
-        // Lab tests
-        lab_tests: [] // Array of test IDs
+        medications: [],
+        lab_tests: []
     });
 
     useEffect(() => {
-        const initializeForm = async () => {
-            await fetchOptions();
+        const initialize = async () => {
+            try {
+                console.log("Initializing Consultation Form, ID:", id);
+                setInitializing(true);
+                
+                const [patData, medData, labData] = await Promise.all([
+                    patientAPI.getPatients({ page_size: 100 }),
+                    pharmacyAPI.getMedications({ page_size: 100 }),
+                    laboratoryAPI.getTests({ page_size: 200, is_active: true })
+                ]);
+                
+                setPatients(patData.results || patData || []);
+                setMedications(medData.results || medData || []);
+                setLabTests(labData.results || labData || []);
 
-            // If editing existing consultation
-            if (id) {
-                await fetchConsultation();
-            }
-            // If creating new consultation with preselected patient from URL
-            else {
-                const preselectedPatientId = searchParams.get('patientId');
-                if (preselectedPatientId) {
-                    try {
-                        const patientData = await patientAPI.getPatient(preselectedPatientId);
-                        setFormData(prev => ({
-                            ...prev,
-                            patient: { id: patientData.id, name: patientData.name }
+                if (id) {
+                    const data = await consultationAPI.getConsultation(id);
+                    console.log("Loaded Consultation Data:", data);
+                    
+                    let medicationsList = [];
+                    if (data.prescriptions && data.prescriptions.length > 0) {
+                        const prescription = data.prescriptions[0];
+                        medicationsList = prescription.items.map(item => ({
+                            medication: item.medication ? { id: item.medication, name: item.medication_name } : null,
+                            medication_name: item.medication_name || '',
+                            dosage: item.dosage || '',
+                            frequency: item.frequency || '',
+                            duration: item.duration || '',
+                            instructions: item.instructions || '',
+                            quantity: item.quantity_prescribed || 1,
+                            is_external: !item.medication
                         }));
-                    } catch (error) {
-                        console.error('Error loading preselected patient:', error);
+                    }
+
+                    setFormData({
+                        patient: { id: data.patient, name: data.patient_name },
+                        consultation_date: data.consultation_date?.split('T')[0] || new Date().toISOString().split('T')[0],
+                        chief_complaint: data.chief_complaint || '',
+                        history_of_present_illness: data.history_of_present_illness || '',
+                        antecedents_medical: data.antecedents_medical || '',
+                        antecedents_surgical: data.antecedents_surgical || '',
+                        antecedents_immuno_allergies: data.antecedents_immuno_allergies || '',
+                        antecedents_gyneco_obs: data.antecedents_gyneco_obs || '',
+                        antecedents_lifestyle: data.antecedents_lifestyle || '',
+                        antecedents_family: data.antecedents_family || '',
+                        enquetes_systeme: data.enquetes_systeme || '',
+                        physical_examination: data.physical_examination || '',
+                        diagnosis: data.diagnosis || '',
+                        complementary_exams: data.complementary_exams || '',
+                        imaging: data.imaging || '',
+                        treatment_plan: data.treatment_plan || '',
+                        temperature: data.temperature || '',
+                        blood_pressure_systolic: data.blood_pressure_systolic || '',
+                        blood_pressure_diastolic: data.blood_pressure_diastolic || '',
+                        heart_rate: data.heart_rate || '',
+                        oxygen_saturation: data.oxygen_saturation || '',
+                        respiratory_rate: data.respiratory_rate || '',
+                        blood_glucose: data.blood_glucose || '',
+                        weight: data.weight || '',
+                        height: data.height || '',
+                        bmi: data.bmi || '',
+                        started_at: data.started_at || null,
+                        ended_at: data.ended_at || null,
+                        medications: medicationsList,
+                        lab_tests: data.prescribed_lab_tests || []
+                    });
+                } else {
+                    const prePatientId = searchParams.get('patientId');
+                    if (prePatientId) {
+                        const pat = await patientAPI.getPatient(prePatientId);
+                        setFormData(prev => ({ ...prev, patient: { id: pat.id, name: pat.name } }));
                     }
                 }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
+            } finally {
+                setInitializing(false);
             }
         };
+        initialize();
+    }, [id, searchParams, enqueueSnackbar]);
 
-        initializeForm();
-    }, [id]);
-
-    const fetchOptions = async () => {
-        try {
-            const [patData, medData, labData] = await Promise.all([
-                patientAPI.getPatients({ page_size: 100 }),
-                pharmacyAPI.getMedications({ page_size: 100 }),
-                laboratoryAPI.getTests({ page_size: 200, is_active: true })
-            ]);
-            setPatients(patData.results || []);
-
-            // Process medications to ensure unique names for Autocomplete options
-            // First, count occurrences of each name
-            const nameCounts = {};
-            medData.results?.forEach(med => {
-                nameCounts[med.name] = (nameCounts[med.name] || 0) + 1;
-            });
-
-            // Then create unique names for duplicates
-            const uniqueMeds = medData.results?.map(med => {
-                if (nameCounts[med.name] > 1) {
-                    // If there are duplicates, append the ID to make it unique
-                    med.uniqueName = `${med.name} (${med.id})`;
-                } else {
-                    // If unique, keep the original name
-                    med.uniqueName = med.name;
+    useEffect(() => {
+        if (formData.weight && formData.height) {
+            const w = parseFloat(formData.weight);
+            const hM = parseFloat(formData.height) / 100;
+            if (w > 0 && hM > 0) {
+                const bmiValue = (w / (hM * hM)).toFixed(1);
+                if (bmiValue !== formData.bmi) {
+                    setFormData(prev => ({ ...prev, bmi: bmiValue }));
                 }
-                return med;
-            }) || [];
-
-            setMedications(uniqueMeds);
-            setLabTests(labData.results || labData || []);
-        } catch (error) {
-            console.error('Error fetching options:', error);
-        }
-    };
-
-    const fetchConsultation = async () => {
-        try {
-            setLoading(true);
-            const data = await consultationAPI.getConsultation(id);
-
-            // Load prescription items if any
-            let medicationsList = [];
-            if (data.prescriptions && data.prescriptions.length > 0) {
-                const prescription = data.prescriptions[0]; // Get first prescription
-                medicationsList = prescription.items.map(item => ({
-                    medication: item.medication ? { id: item.medication, name: item.medication_name } : null,
-                    medication_name: item.medication_name || '',
-                    dosage: item.dosage || '',
-                    frequency: item.frequency || '',
-                    duration: item.duration || '',
-                    instructions: item.instructions || '',
-                    quantity: item.quantity_prescribed || 1,
-                    is_external: !item.medication // If no medication ID, it's external
-                }));
             }
-
-            setFormData(prev => ({
-                ...prev,
-                patient: { id: data.patient, name: data.patient_name }, // simplified
-                chief_complaint: data.chief_complaint || '',
-                history_of_present_illness: data.history_of_present_illness || '',
-                physical_examination: data.physical_examination || '',
-                diagnosis: data.diagnosis || '',
-                treatment_plan: data.treatment_plan || '',
-                temperature: data.temperature || '',
-                blood_pressure_systolic: data.blood_pressure_systolic || '',
-                blood_pressure_diastolic: data.blood_pressure_diastolic || '',
-                heart_rate: data.heart_rate || '',
-                oxygen_saturation: data.oxygen_saturation || '',
-                respiratory_rate: data.respiratory_rate || '',
-                blood_glucose: data.blood_glucose || '',
-                weight: data.weight || '',
-                height: data.height || '',
-                bmi: data.bmi || '',
-                started_at: data.started_at || null,
-                ended_at: data.ended_at || null,
-                medications: medicationsList,
-                lab_tests: data.prescribed_lab_tests || []
-            }));
-        } catch (error) {
-            console.error('Error fetching consultation:', error);
-        } finally {
-            setLoading(false);
         }
-    };
-
-    // Numeric vital fields where comma should be normalized to dot
-    const numericFields = new Set([
-        'temperature', 'blood_pressure_systolic', 'blood_pressure_diastolic',
-        'heart_rate', 'oxygen_saturation', 'respiratory_rate',
-        'blood_glucose', 'weight', 'height'
-    ]);
+    }, [formData.weight, formData.height, formData.bmi]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        const normalizedValue = numericFields.has(name) ? value.replace(',', '.') : value;
-        setFormData(prev => ({ ...prev, [name]: normalizedValue }));
+        setFormData(prev => ({ ...prev, [name]: value.replace(',', '.') }));
     };
 
     const handlePatientSelect = (event, newPatient) => {
         setFormData(prev => ({ ...prev, patient: newPatient }));
-
-        // Auto-start timer when patient is selected (only for new consultations)
         if (newPatient && isNew && !formData.started_at) {
-            const now = new Date().toISOString();
-            setFormData(prev => ({ ...prev, started_at: now }));
-            enqueueSnackbar('⏱️ Timer démarré automatiquement', { variant: 'info' });
+            setFormData(prev => ({ ...prev, started_at: new Date().toISOString() }));
         }
-    };
-
-    // Prescription helpers
-    const addMedication = () => {
-        setFormData(prev => ({
-            ...prev,
-            medications: [...prev.medications, {
-                medication: null,
-                medication_name: '',
-                is_external: false,
-                dosage: '',
-                frequency: '',
-                duration: '',
-                instructions: ''
-            }]
-        }));
-    };
-
-    const removeMedication = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            medications: prev.medications.filter((_, i) => i !== index)
-        }));
     };
 
     const handleMedicationChange = (index, field, value) => {
@@ -253,39 +217,31 @@ const ConsultationForm = () => {
         setFormData(prev => ({ ...prev, medications: newMeds }));
     };
 
-    const handleTimerStart = (timestamp) => {
-        setFormData(prev => ({ ...prev, started_at: timestamp }));
-    };
-
-    const handleTimerEnd = (timestamp) => {
-        setFormData(prev => ({ ...prev, ended_at: timestamp }));
-    };
-
-    const handleSubmit = async (status = 'in_consultation') => {
-        if (!formData.patient && isNew) {
+    const handleSubmit = async (statusArg = 'in_consultation') => {
+        if (!formData.patient) {
             enqueueSnackbar('Sélectionner un patient', { variant: 'warning' });
+            setTabValue(0);
             return;
         }
 
         setLoading(true);
         try {
-            // Auto-stop timer if not already stopped when completing consultation
-            let finalEndedAt = formData.ended_at;
-            if (status === 'completed' && formData.started_at && !formData.ended_at) {
-                finalEndedAt = new Date().toISOString();
-                // Update local state for UI feedback
-                setFormData(prev => ({ ...prev, ended_at: finalEndedAt }));
-                enqueueSnackbar('⏱️ Timer arrêté automatiquement', { variant: 'info' });
-            }
-
-            // Clean payload - only send valid model fields
             const payload = {
-                patient: formData.patient?.id,
-                chief_complaint: formData.chief_complaint || '',
-                history_of_present_illness: formData.history_of_present_illness || '',
-                physical_examination: formData.physical_examination || '',
-                diagnosis: formData.diagnosis || '',
-                treatment_plan: formData.treatment_plan || '',
+                patient: formData.patient.id,
+                chief_complaint: formData.chief_complaint,
+                history_of_present_illness: formData.history_of_present_illness,
+                antecedents_medical: formData.antecedents_medical,
+                antecedents_surgical: formData.antecedents_surgical,
+                antecedents_immuno_allergies: formData.antecedents_immuno_allergies,
+                antecedents_gyneco_obs: formData.antecedents_gyneco_obs,
+                antecedents_lifestyle: formData.antecedents_lifestyle,
+                antecedents_family: formData.antecedents_family,
+                enquetes_systeme: formData.enquetes_systeme,
+                physical_examination: formData.physical_examination,
+                diagnosis: formData.diagnosis,
+                complementary_exams: formData.complementary_exams,
+                imaging: formData.imaging,
+                treatment_plan: formData.treatment_plan,
                 prescribed_lab_tests: formData.lab_tests,
                 temperature: formData.temperature || null,
                 blood_pressure_systolic: formData.blood_pressure_systolic || null,
@@ -297,23 +253,10 @@ const ConsultationForm = () => {
                 weight: formData.weight || null,
                 height: formData.height || null,
                 started_at: formData.started_at,
-                ended_at: finalEndedAt
+                ended_at: statusArg === 'completed' ? (formData.ended_at || new Date().toISOString()) : formData.ended_at
             };
 
-            // Remove null/empty values (but keep started_at and ended_at even if undefined)
-            Object.keys(payload).forEach(key => {
-                // Skip timing fields - let backend handle them
-                if (key === 'started_at' || key === 'ended_at') {
-                    // Keep these fields if they have a value, delete if undefined
-                    if (payload[key] === undefined) {
-                        delete payload[key];
-                    }
-                } else if (payload[key] === null || payload[key] === '') {
-                    delete payload[key];
-                }
-            });
-
-            console.log('Final payload before sending:', payload);
+            console.log("Submitting Consultation, Payload:", payload);
 
             let consultId = id;
             if (isNew) {
@@ -323,429 +266,175 @@ const ConsultationForm = () => {
                 await consultationAPI.updateConsultation(id, payload);
             }
 
-            // Create Prescription if items exist
             if (formData.medications.length > 0) {
-                const prescriptionPayload = {
-                    patient_id: formData.patient?.id,
+                await consultationAPI.createPrescription({
+                    patient_id: formData.patient.id,
                     consultation_id: consultId,
                     items: formData.medications.map(m => ({
-                        // External medication: send medication_name only
-                        // Internal medication: send medication_id
-                        ...(m.is_external ? {
-                            medication_name: m.medication_name,
-                            medication_id: null
-                        } : {
-                            medication_id: m.medication?.id,
-                            medication_name: m.medication?.name
-                        }),
-                        dosage: m.dosage || '',
-                        frequency: m.frequency || '',
-                        duration: m.duration || '',
-                        instructions: m.instructions || '',
+                        ...(m.is_external ? { medication_name: m.medication_name, medication_id: null } : { medication_id: m.medication?.id, medication_name: m.medication?.name }),
+                        dosage: m.dosage,
+                        frequency: m.frequency,
+                        duration: m.duration,
+                        instructions: m.instructions,
                         quantity_prescribed: parseInt(m.quantity) || 1
                     }))
-                };
-                await consultationAPI.createPrescription(prescriptionPayload);
+                });
             }
 
-            // Complete consultation via workflow endpoint if status is completed
-            if (status === 'completed') {
+            if (statusArg === 'completed') {
                 await consultationAPI.completeConsultation(consultId);
             }
 
-            enqueueSnackbar('Consultation enregistrée', { variant: 'success' });
-
-            // Handle navigation - Always redirect to detail page (show view)
+            enqueueSnackbar('Dossier médical enregistré', { variant: 'success' });
             navigate(`/healthcare/consultations/${consultId}`);
         } catch (error) {
-            console.error('Error saving:', error);
-            console.error('Error response:', error.response?.data);
-            console.error('Error status:', error.response?.status);
-            const errorMsg = error.response?.data?.detail ||
-                           error.response?.data?.message ||
-                           JSON.stringify(error.response?.data) ||
-                           'Erreur lors de l\'enregistrement';
-            enqueueSnackbar(errorMsg, { variant: 'error' });
+            console.error('Save error:', error);
+            enqueueSnackbar(error.response?.data?.detail || 'Erreur lors de l\'enregistrement', { variant: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
+    if (initializing) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5, alignItems: 'center', minHeight: '50vh' }}><CircularProgress /><Typography sx={{ ml: 2 }}>Initialisation du dossier...</Typography></Box>;
+
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')}>
-                        Retour
-                    </Button>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                        Dossier Médical
-                    </Typography>
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')}>Retour</Button>
+                    <Typography variant="h4" sx={{ fontWeight: 600 }}>Consultation</Typography>
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<SaveIcon />}
-                        onClick={() => handleSubmit('in_consultation', false)}
-                        disabled={loading}
-                    >
-                        Enregistrer
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<CompleteIcon />}
-                        color="success"
-                        onClick={() => handleSubmit('completed', false)}
-                        disabled={loading}
-                    >
-                        Terminer Consultation
-                    </Button>
+                    <Button variant="outlined" startIcon={<SaveIcon />} onClick={() => handleSubmit('in_consultation')} disabled={loading}>Enregistrer</Button>
+                    <Button variant="contained" startIcon={<CompleteIcon />} color="success" onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
                 </Box>
             </Box>
 
-            <Grid container spacing={3}>
-                {/* Left Column: Vitals & History */}
-                <Grid item xs={12} md={4}>
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>Patient</Typography>
-                            {isNew ? (
-                                <Autocomplete
-                                    options={patients}
-                                    getOptionLabel={(option) => option.name || ''}
-                                    value={formData.patient}
-                                    onChange={handlePatientSelect}
-                                    renderInput={(params) => <TextField {...params} label="Rechercher Patient" />}
-                                />
-                            ) : (
-                                <Typography variant="h5" color="primary">{formData.patient?.name}</Typography>
-                            )}
-                        </CardContent>
-                    </Card>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
+                    <Tab icon={<PersonIcon />} label="Vitals" />
+                    <Tab icon={<HistoryIcon />} label="Histoire" />
+                    <Tab icon={<ExamIcon />} label="Examen" />
+                    <Tab icon={<RxIcon />} label="Traitement" />
+                </Tabs>
+            </Box>
 
-                    {/* Timer Component */}
-                    <Box sx={{ mb: 3 }}>
-                        <ConsultationTimer
-                            onStart={handleTimerStart}
-                            onEnd={handleTimerEnd}
-                            initialStartTime={formData.started_at}
-                            initialEndTime={formData.ended_at}
-                        />
-                    </Box>
+            <TabPanel value={tabValue} index={0}>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={4}>
+                        <Card sx={{ height: '100%' }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>Identification</Typography>
+                                {isNew ? (
+                                    <Autocomplete
+                                        options={patients}
+                                        getOptionLabel={(o) => o.name || ''}
+                                        value={formData.patient}
+                                        onChange={handlePatientSelect}
+                                        renderInput={(p) => <TextField {...p} label="Rechercher Patient" />}
+                                    />
+                                ) : (
+                                    <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>{formData.patient?.name}</Typography>
+                                )}
+                                <Box sx={{ mt: 3 }}>
+                                    <ConsultationTimer
+                                        onStart={(t) => setFormData(prev => ({ ...prev, started_at: t }))}
+                                        onEnd={(t) => setFormData(prev => ({ ...prev, ended_at: t }))}
+                                        initialStartTime={formData.started_at}
+                                        initialEndTime={formData.ended_at}
+                                    />
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                    <Grid item xs={12} md={8}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom color="primary">Signes Vitaux</Typography>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={6} sm={3}><TextField label="T° (°C)" name="temperature" value={formData.temperature} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="TAS (mmHg)" name="blood_pressure_systolic" value={formData.blood_pressure_systolic} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="TAD (mmHg)" name="blood_pressure_diastolic" value={formData.blood_pressure_diastolic} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="FC (bpm)" name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="SpO2 (%)" name="oxygen_saturation" value={formData.oxygen_saturation} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="FR" name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="Gly (g/L)" name="blood_glucose" value={formData.blood_glucose} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="Poids (kg)" name="weight" value={formData.weight} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="Taille (cm)" name="height" value={formData.height} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}>
+                                        <TextField label="IMC" value={formData.bmi} disabled fullWidth size="small" 
+                                            helperText={formData.bmi ? (formData.bmi < 18.5 ? "Insuffisance" : formData.bmi < 25 ? "Normal" : formData.bmi < 30 ? "Surpoids" : "Obésité") : ""} />
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </TabPanel>
 
+            <TabPanel value={tabValue} index={1}>
+                <Card>
+                    <CardContent>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}><TextField label="Motif de Consultation" name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} multiline rows={2} fullWidth required /></Grid>
+                            <Grid item xs={12}><TextField label="Histoire de la Maladie" name="history_of_present_illness" value={formData.history_of_present_illness} onChange={handleInputChange} multiline rows={3} fullWidth /></Grid>
+                            <Grid item xs={12}><Divider sx={{ my: 1 }}>Antécédents</Divider></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Médicaux" name="antecedents_medical" value={formData.antecedents_medical} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Chirurgicaux" name="antecedents_surgical" value={formData.antecedents_surgical} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Immuno-allergies" name="antecedents_immuno_allergies" value={formData.antecedents_immuno_allergies} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Gynéco-obstétrique" name="antecedents_gyneco_obs" value={formData.antecedents_gyneco_obs} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Mode de vie" name="antecedents_lifestyle" value={formData.antecedents_lifestyle} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Familiaux" name="antecedents_family" value={formData.antecedents_family} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+                <Card>
+                    <CardContent>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}><TextField label="Enquêtes & Systèmes" name="enquetes_systeme" value={formData.enquetes_systeme} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12}><TextField label="Examens Physiques" name="physical_examination" value={formData.physical_examination} onChange={handleInputChange} multiline rows={3} fullWidth /></Grid>
+                            <Grid item xs={12}><TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline rows={2} fullWidth color="error" /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Examens Complémentaires" name="complementary_exams" value={formData.complementary_exams} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}><TextField label="Imagerie" name="imaging" value={formData.imaging} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+                <Stack spacing={3}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom color="error">Signes Vitaux</Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={6}>
-                                    <TextField
-                                        label="Température (°C)"
-                                        name="temperature"
-                                        value={formData.temperature}
-                                        onChange={handleInputChange}
-                                        placeholder="37.5"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'decimal' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <TextField
-                                        label="TA Systolique"
-                                        name="blood_pressure_systolic"
-                                        value={formData.blood_pressure_systolic}
-                                        onChange={handleInputChange}
-                                        placeholder="120"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                        InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">mmHg</Typography> }}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <TextField
-                                        label="TA Diastolique"
-                                        name="blood_pressure_diastolic"
-                                        value={formData.blood_pressure_diastolic}
-                                        onChange={handleInputChange}
-                                        placeholder="80"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                        InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">mmHg</Typography> }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="FC (pls/min)"
-                                        name="heart_rate"
-                                        value={formData.heart_rate}
-                                        onChange={handleInputChange}
-                                        placeholder="72"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="SPO2 (%)"
-                                        name="oxygen_saturation"
-                                        value={formData.oxygen_saturation}
-                                        onChange={handleInputChange}
-                                        placeholder="98"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="FR (cycle/min)"
-                                        name="respiratory_rate"
-                                        value={formData.respiratory_rate}
-                                        onChange={handleInputChange}
-                                        placeholder="16"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="Glycémie (g/L)"
-                                        name="blood_glucose"
-                                        value={formData.blood_glucose}
-                                        onChange={handleInputChange}
-                                        placeholder="0.90"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'decimal' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="Poids (kg)"
-                                        name="weight"
-                                        value={formData.weight}
-                                        onChange={handleInputChange}
-                                        placeholder="70"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'decimal' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <TextField
-                                        label="Taille (cm)"
-                                        name="height"
-                                        value={formData.height}
-                                        onChange={handleInputChange}
-                                        placeholder="170"
-                                        size="small"
-                                        fullWidth
-                                        inputProps={{ inputMode: 'numeric' }}
-                                    />
-                                </Grid>
-                            </Grid>
+                            <Typography variant="h6" gutterBottom>Traitement Recommandé</Typography>
+                            <TextField label="Instructions & Plan de traitement" name="treatment_plan" value={formData.treatment_plan} onChange={handleInputChange} multiline rows={3} fullWidth />
                         </CardContent>
                     </Card>
-                </Grid>
-
-                {/* Right Column: Clinical Notes & Prescription */}
-                <Grid item xs={12} md={8}>
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>Notes Cliniques</Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Motif de Consultation (Plaintes)"
-                                        name="chief_complaint"
-                                        value={formData.chief_complaint}
-                                        onChange={handleInputChange}
-                                        multiline
-                                        rows={2}
-                                        fullWidth
-                                        required
-                                        inputProps={{ spellCheck: true, lang: 'fr' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Examen Physique"
-                                        name="physical_examination"
-                                        value={formData.physical_examination}
-                                        onChange={handleInputChange}
-                                        multiline
-                                        rows={3}
-                                        fullWidth
-                                        inputProps={{ spellCheck: true, lang: 'fr' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Diagnostic"
-                                        name="diagnosis"
-                                        value={formData.diagnosis}
-                                        onChange={handleInputChange}
-                                        multiline
-                                        rows={2}
-                                        fullWidth
-                                        inputProps={{ spellCheck: true, lang: 'fr' }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Plan de Traitement"
-                                        name="treatment_plan"
-                                        value={formData.treatment_plan}
-                                        onChange={handleInputChange}
-                                        multiline
-                                        rows={2}
-                                        fullWidth
-                                        inputProps={{ spellCheck: true, lang: 'fr' }}
-                                        placeholder="Recommandations, instructions, plan thérapeutique..."
-                                    />
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
-
-                    {/* Lab Tests Section */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>Examens de Laboratoire</Typography>
-                            <Autocomplete
-                                multiple
-                                options={labTests}
-                                getOptionLabel={(option) => `${option.test_code} - ${option.name} (${option.price} XAF)`}
-                                value={labTests.filter(test => formData.lab_tests.includes(test.id))}
-                                onChange={(e, newValue) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        lab_tests: newValue.map(test => test.id)
-                                    }));
-                                }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        placeholder="Sélectionner les examens à prescrire"
-                                        helperText="Rechercher et sélectionner les tests de laboratoire"
-                                    />
-                                )}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip
-                                            label={`${option.test_code} - ${option.name}`}
-                                            {...getTagProps({ index })}
-                                            size="small"
-                                        />
-                                    ))
-                                }
-                            />
-                        </CardContent>
-                    </Card>
-
                     <Card>
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                <Typography variant="h6">Ordonnance</Typography>
-                                <Button startIcon={<AddIcon />} onClick={addMedication} size="small">
-                                    Ajouter Médicament
-                                </Button>
+                                <Typography variant="h6">Ordonnance Médicamenteuse</Typography>
+                                <Button startIcon={<AddIcon />} variant="contained" size="small" onClick={() => setFormData(p => ({ ...p, medications: [...p.medications, { medication: null, medication_name: '', is_external: false, dosage: '', frequency: '', duration: '', instructions: '', quantity: 1 }] }))}>Ajouter Médicament</Button>
                             </Box>
-
                             <TableContainer>
                                 <Table size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell width="35%">Médicament</TableCell>
-                                            <TableCell width="18%">Dosage</TableCell>
-                                            <TableCell width="18%">Fréquence</TableCell>
-                                            <TableCell width="18%">Durée</TableCell>
-                                            <TableCell width="11%"></TableCell>
-                                        </TableRow>
-                                    </TableHead>
+                                    <TableHead><TableRow><TableCell>Médicament</TableCell><TableCell>Dosage</TableCell><TableCell>Fréquence</TableCell><TableCell>Action</TableCell></TableRow></TableHead>
                                     <TableBody>
-                                        {formData.medications.map((item, index) => (
-                                            <TableRow key={index}>
+                                        {formData.medications.map((m, i) => (
+                                            <TableRow key={i}>
                                                 <TableCell>
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                size="small"
-                                                                checked={item.is_external}
-                                                                onChange={(e) => handleMedicationChange(index, 'is_external', e.target.checked)}
-                                                            />
-                                                        }
-                                                        label={
-                                                            <Tooltip title="Médicament non disponible dans l'inventaire">
-                                                                <Chip
-                                                                    label="Externe"
-                                                                    size="small"
-                                                                    icon={<ExternalIcon />}
-                                                                    color={item.is_external ? "warning" : "default"}
-                                                                    variant={item.is_external ? "filled" : "outlined"}
-                                                                />
-                                                            </Tooltip>
-                                                        }
-                                                        sx={{ mb: 1 }}
-                                                    />
-                                                    {item.is_external ? (
-                                                        <TextField
-                                                            fullWidth
-                                                            variant="standard"
-                                                            placeholder="Nom du médicament externe"
-                                                            value={item.medication_name}
-                                                            onChange={(e) => handleMedicationChange(index, 'medication_name', e.target.value)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        <ExternalIcon color="warning" fontSize="small" />
-                                                                    </InputAdornment>
-                                                                )
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <Autocomplete
-                                                            options={medications}
-                                                            getOptionLabel={(option) => option.uniqueName || option.name}
-                                                            value={item.medication}
-                                                            onChange={(e, v) => handleMedicationChange(index, 'medication', v)}
-                                                            renderInput={(params) => <TextField {...params} variant="standard" placeholder="Sélectionner..." />}
-                                                        />
-                                                    )}
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                        <Checkbox size="small" checked={m.is_external} onChange={(e) => handleMedicationChange(i, 'is_external', e.target.checked)} />
+                                                        <Typography variant="caption">Externe</Typography>
+                                                    </Box>
+                                                    {m.is_external ? <TextField fullWidth size="small" value={m.medication_name} onChange={(e) => handleMedicationChange(i, 'medication_name', e.target.value)} placeholder="Nom du médicament" /> : 
+                                                        <Autocomplete options={medications} getOptionLabel={(o) => o.name || ''} value={m.medication} onChange={(e, v) => handleMedicationChange(i, 'medication', v)} renderInput={(p) => <TextField {...p} size="small" placeholder="Rechercher..." />} />}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <TextField
-                                                        value={item.dosage}
-                                                        onChange={(e) => handleMedicationChange(index, 'dosage', e.target.value)}
-                                                        variant="standard"
-                                                        placeholder="ex: 500mg"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <TextField
-                                                        value={item.frequency}
-                                                        onChange={(e) => handleMedicationChange(index, 'frequency', e.target.value)}
-                                                        variant="standard"
-                                                        placeholder="ex: 2x/jour"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <TextField
-                                                        value={item.duration}
-                                                        onChange={(e) => handleMedicationChange(index, 'duration', e.target.value)}
-                                                        variant="standard"
-                                                        placeholder="ex: 5 jours"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <IconButton size="small" color="error" onClick={() => removeMedication(index)}>
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </TableCell>
+                                                <TableCell><TextField size="small" value={m.dosage} onChange={(e) => handleMedicationChange(i, 'dosage', e.target.value)} placeholder="500mg" /></TableCell>
+                                                <TableCell><TextField size="small" value={m.frequency} onChange={(e) => handleMedicationChange(i, 'frequency', e.target.value)} placeholder="3x/j" /></TableCell>
+                                                <TableCell><IconButton color="error" onClick={() => setFormData(p => ({ ...p, medications: p.medications.filter((_, idx) => idx !== i) }))}><DeleteIcon /></IconButton></TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -753,8 +442,14 @@ const ConsultationForm = () => {
                             </TableContainer>
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>Examens de Laboratoire à Prescrire</Typography>
+                            <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens" />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
+                        </CardContent>
+                    </Card>
+                </Stack>
+            </TabPanel>
         </Box>
     );
 };

@@ -12,25 +12,21 @@ import {
     AccordionSummary,
     AccordionDetails,
     Stack,
-    Paper
+    Paper,
+    CircularProgress
 } from '@mui/material';
 import {
     Edit as EditIcon,
     PictureAsPdf as PdfIcon,
     ArrowBack as ArrowBackIcon,
-    Receipt as ReceiptIcon,
-    AttachMoney as InvoiceIcon,
     ArrowForward as ArrowForwardIcon,
     ExpandMore as ExpandMoreIcon,
-    Medication as MedicationIcon,
-    Science as ScienceIcon,
-    Assignment as AssignmentIcon
+    Medication as MedicationIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
-import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
@@ -43,15 +39,9 @@ const ConsultationDetail = () => {
 
     const [loading, setLoading] = useState(true);
     const [consultation, setConsultation] = useState(null);
-
-    // Print Modal State
     const [printModalOpen, setPrintModalOpen] = useState(false);
-    const [printModalType, setPrintModalType] = useState(null); // 'report', 'prescription', or 'receipt'
+    const [printModalType, setPrintModalType] = useState(null);
     const [generatingPdf, setGeneratingPdf] = useState(false);
-
-    useEffect(() => {
-        fetchData();
-    }, [id]);
 
     const fetchData = async () => {
         try {
@@ -59,59 +49,41 @@ const ConsultationDetail = () => {
             const data = await consultationAPI.getConsultation(id);
             setConsultation(data);
         } catch (error) {
-            console.error('Error fetching consultation:', error);
+            console.error('Fetch error:', error);
+            enqueueSnackbar('Erreur lors du chargement de la consultation', { variant: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleTimerStart = async (timestamp) => {
+    useEffect(() => {
+        fetchData();
+    }, [id]);
+
+    const handleTimerAction = async (timestamp, field) => {
         try {
-            await consultationAPI.updateConsultation(id, { started_at: timestamp });
-            // Refresh data to show updated timer
+            await consultationAPI.updateConsultation(id, { [field]: timestamp });
             fetchData();
         } catch (error) {
-            console.error('Error updating start time:', error);
+            console.error('Timer update error:', error);
         }
-    };
-
-    const handleTimerEnd = async (timestamp) => {
-        try {
-            await consultationAPI.updateConsultation(id, { ended_at: timestamp });
-            // Refresh data to show updated timer
-            fetchData();
-        } catch (error) {
-            console.error('Error updating end time:', error);
-        }
-    };
-
-    const handleOpenPrintModal = (type) => {
-        setPrintModalType(type);
-        setPrintModalOpen(true);
     };
 
     const handlePrintAction = async (action) => {
         if (!printModalType) return;
-
         setGeneratingPdf(true);
         try {
             let blob;
             let filename;
-
             if (printModalType === 'report') {
                 blob = await consultationAPI.getConsultationReportPDF(id);
-                filename = `rapport_consultation_${consultation.consultation_number}.pdf`;
-            } else if (printModalType === 'receipt') {
-                blob = await consultationAPI.getConsultationReceiptPDF(id);
-                filename = `recu_consultation_${consultation.consultation_number}.pdf`;
+                filename = `rapport_${consultation.consultation_number}.pdf`;
             } else if (printModalType === 'prescription') {
-                if (consultation.prescriptions && consultation.prescriptions.length > 0) {
-                    const prescriptionId = consultation.prescriptions[0].id;
-                    blob = await consultationAPI.getPrescriptionPDF(prescriptionId);
+                if (consultation.prescriptions?.length > 0) {
+                    blob = await consultationAPI.getPrescriptionPDF(consultation.prescriptions[0].id);
                     filename = `ordonnance_${consultation.consultation_number}.pdf`;
                 } else {
-                    alert('Aucune ordonnance trouvée');
-                    setGeneratingPdf(false);
+                    enqueueSnackbar('Aucune ordonnance', { variant: 'warning' });
                     return;
                 }
             }
@@ -124,335 +96,117 @@ const ConsultationDetail = () => {
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                setTimeout(() => window.URL.revokeObjectURL(url), 100);
-            } else if (action === 'preview' || action === 'print') {
+            } else {
                 const url = window.URL.createObjectURL(blob);
-                const printWindow = window.open(url, '_blank');
-
-                if (printWindow && action === 'print') {
-                    printWindow.onload = () => {
-                        printWindow.print();
-                    };
-                }
+                window.open(url, '_blank');
             }
-
             setPrintModalOpen(false);
         } catch (error) {
-            console.error('Error handling PDF action:', error);
-            alert('Erreur lors de la génération du PDF');
+            console.error('PDF error:', error);
+            enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
         } finally {
             setGeneratingPdf(false);
         }
     };
 
-    const handleNextPatient = async () => {
-        try {
-            setLoading(true);
-            const nextPatient = await consultationAPI.getNextPatient();
-            if (nextPatient && nextPatient.id) {
-                enqueueSnackbar('✅ Passage au patient suivant...', { variant: 'info' });
-                navigate(`/healthcare/consultations/${nextPatient.id}/edit`);
-            } else {
-                enqueueSnackbar('✅ Plus de patients en attente', { variant: 'success' });
-                navigate('/healthcare/consultations');
-            }
-        } catch (error) {
-            console.error('Error getting next patient:', error);
-            enqueueSnackbar('Plus de patients en attente', { variant: 'info' });
-            navigate('/healthcare/consultations');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    if (loading || !consultation) return <Typography>Chargement...</Typography>;
+    if (loading || !consultation) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
 
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')} sx={{ mr: 2 }}>
-                        Retour
-                    </Button>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                        Consultation du {formatDate(consultation.consultation_date)}
-                    </Typography>
-                </Box>
-                <Box>
-
-
-                    <Button
-                        variant="outlined"
-                        startIcon={<PdfIcon />}
-                        onClick={() => handleOpenPrintModal('report')}
-                        sx={{ mr: 1 }}
-                    >
-                        Rapport Complet
-                    </Button>
-
-                    <Button
-                        variant="outlined"
-                        startIcon={<EditIcon />}
-                        onClick={() => navigate(`/healthcare/consultations/${id}/edit`)}
-                        sx={{ mr: 1 }}
-                    >
-                        Modifier
-                    </Button>
-                    <Button
-                        variant="contained"
-                        endIcon={<ArrowForwardIcon />}
-                        onClick={handleNextPatient}
-                        color="primary"
-                        disabled={loading}
-                    >
-                        Patient Suivant
-                    </Button>
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')}>Retour</Button>
+                    <Typography variant="h4" sx={{ fontWeight: 600 }}>Dossier Médical</Typography>
+                </Stack>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => { setPrintModalType('report'); setPrintModalOpen(true); }}>Rapport</Button>
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/healthcare/consultations/${id}/edit`)}>Modifier</Button>
+                    <Button variant="contained" onClick={async () => {
+                        const next = await consultationAPI.getNextPatient();
+                        if (next?.id) navigate(`/healthcare/consultations/${next.id}/edit`);
+                        else navigate('/healthcare/consultations');
+                    }}>Suivant</Button>
                 </Box>
             </Box>
 
-            {/* Timer Component */}
             <Box sx={{ mb: 3 }}>
                 <ConsultationTimer
-                    onStart={handleTimerStart}
-                    onEnd={handleTimerEnd}
+                    onStart={(t) => handleTimerAction(t, 'started_at')}
+                    onEnd={(t) => handleTimerAction(t, 'ended_at')}
                     initialStartTime={consultation.started_at}
                     initialEndTime={consultation.ended_at}
-                    compact={true}
+                    compact
                 />
             </Box>
 
-            {/* Ultra-Compact Layout with better space usage */}
-            <Grid container spacing={1.5}>
-                {/* Left Column: Patient Info + Vitals - More compact */}
+            <Grid container spacing={2}>
                 <Grid item xs={12} md={3}>
-                    <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                        <Typography
-                            variant="subtitle2"
-                            color="primary"
-                            sx={{
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                fontSize: '1rem',
-                                mb: 0.5,
-                                '&:hover': { textDecoration: 'underline' }
-                            }}
-                            onClick={() => navigate(`/healthcare/patients/${consultation.patient}`)}
-                        >
-                            {consultation.patient_name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                            {consultation.patient_number}
-                        </Typography>
-
-                        {consultation.completed_by_name && (
-                            <Typography variant="caption" color="success.main" display="block" sx={{ mb: 1, fontWeight: 700 }}>
-                                Terminé par: {consultation.completed_by_name}
-                            </Typography>
-                        )}
-
+                    <Paper sx={{ p: 2, borderRadius: 2 }}>
+                        <Typography variant="h6" color="primary">{consultation.patient_name}</Typography>
+                        <Typography variant="caption" display="block" gutterBottom>{consultation.patient_number}</Typography>
                         <Divider sx={{ my: 1 }} />
-
-                        {/* Vitals - Super compact grid */}
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5 }}>
-                            <Chip label={`TA: ${consultation.blood_pressure || '-'} mmHg`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`T°: ${consultation.temperature || '-'}°C`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`FC: ${consultation.heart_rate || '-'} pls/min`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`SPO2: ${consultation.oxygen_saturation || '-'}%`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`FR: ${consultation.respiratory_rate || '-'} c/min`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`Gly: ${consultation.blood_glucose || '-'} g/L`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`P: ${consultation.weight || '-'} kg`} size="small" sx={{ fontSize: '0.7rem' }} />
-                            <Chip label={`T: ${consultation.height || '-'} cm`} size="small" sx={{ fontSize: '0.7rem' }} />
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                            <Chip label={`T°: ${consultation.temperature || '-'}`} size="small" />
+                            <Chip label={`TA: ${consultation.blood_pressure || '-'}`} size="small" />
+                            <Chip label={`FC: ${consultation.heart_rate || '-'}`} size="small" />
+                            <Chip label={`IMC: ${consultation.bmi || '-'}`} size="small" color="primary" />
                         </Box>
                     </Paper>
                 </Grid>
 
-                {/* Middle Column: Clinical Info */}
                 <Grid item xs={12} md={6}>
-                    {/* Motif + Diagnostic - Inline compact */}
-                    <Paper elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                        <Stack spacing={1}>
-                            <Box>
-                                <Typography variant="caption" fontWeight="700" color="text.secondary">MOTIF</Typography>
-                                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{consultation.chief_complaint}</Typography>
-                            </Box>
-
-                            {consultation.physical_examination && (
-                                <Box>
-                                    <Typography variant="caption" fontWeight="700" color="text.secondary">EXAMEN</Typography>
-                                    <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{consultation.physical_examination}</Typography>
-                                </Box>
-                            )}
-
-                            {consultation.diagnosis && (
-                                <Box>
-                                    <Typography variant="caption" fontWeight="700" color="text.secondary">DIAGNOSTIC</Typography>
-                                    <Typography variant="body2" fontWeight="700" color="error.main" sx={{ fontSize: '0.9rem' }}>
-                                        {consultation.diagnosis}
-                                    </Typography>
-                                </Box>
-                            )}
-
-                            {consultation.treatment_plan && (
-                                <Box>
-                                    <Typography variant="caption" fontWeight="700" color="text.secondary">PLAN DE TRAITEMENT</Typography>
-                                    <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>{consultation.treatment_plan}</Typography>
-                                </Box>
-                            )}
+                    <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+                        <Stack spacing={2}>
+                            <Box><Typography variant="caption" fontWeight={700}>MOTIF</Typography><Typography variant="body2">{consultation.chief_complaint}</Typography></Box>
+                            <Box><Typography variant="caption" fontWeight={700}>DIAGNOSTIC</Typography><Typography variant="body2" color="error.main" fontWeight={700}>{consultation.diagnosis}</Typography></Box>
+                            <Accordion elevation={0}>
+                                <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography variant="caption" fontWeight={700}>ANTÉCÉDENTS</Typography></AccordionSummary>
+                                <AccordionDetails>
+                                    <Typography variant="caption" display="block">Médicaux: {consultation.antecedents_medical || '-'}</Typography>
+                                    <Typography variant="caption" display="block">Chirurgicaux: {consultation.antecedents_surgical || '-'}</Typography>
+                                    <Typography variant="caption" display="block">Allergies: {consultation.antecedents_immuno_allergies || '-'}</Typography>
+                                </AccordionDetails>
+                            </Accordion>
+                            <Box><Typography variant="caption" fontWeight={700}>PLAN DE TRAITEMENT</Typography><Typography variant="body2">{consultation.treatment_plan}</Typography></Box>
                         </Stack>
                     </Paper>
 
-                    {/* Accordions for Prescriptions */}
-                    <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <MedicationIcon fontSize="small" color="primary" />
-                                <Typography variant="body2" fontWeight="700">
-                                    Ordonnance ({consultation.prescriptions?.length || 0})
-                                </Typography>
-                            </Box>
+                    <Accordion defaultExpanded elevation={0}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 1 }}>
+                            <MedicationIcon sx={{ mr: 1 }} fontSize="small" /><Typography variant="body2" fontWeight={700}>ORDONNANCE</Typography>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ p: 1.5, pt: 0 }}>
-                            {consultation.prescriptions && consultation.prescriptions.length > 0 ? (
-                                consultation.prescriptions.map((prescription, idx) => (
-                                    <Box key={idx}>
-                                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                            {prescription.prescription_number}
-                                        </Typography>
-                                        {prescription.items && prescription.items.length > 0 ? (
-                                            <Stack spacing={0.3} sx={{ mt: 0.5 }}>
-                                                {prescription.items.map((item, itemIdx) => (
-                                                    <Box key={itemIdx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.light' }}>
-                                                        <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
-                                                            {itemIdx + 1}. {item.medication_name}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                                                            {item.dosage} - {item.frequency} {item.duration && `(${item.duration})`}
-                                                        </Typography>
-                                                    </Box>
-                                                ))}
-                                            </Stack>
-                                        ) : (
-                                            <Typography variant="caption" color="text.secondary">Aucun médicament</Typography>
-                                        )}
-                                    </Box>
-                                ))
-                            ) : (
-                                <Typography variant="caption" color="text.secondary" fontStyle="italic">
-                                    Aucune ordonnance
-                                </Typography>
-                            )}
+                        <AccordionDetails>
+                            {consultation.prescriptions?.map((p, i) => (
+                                <Box key={i} sx={{ mb: 2 }}>
+                                    <Typography variant="caption" fontWeight={700}>Ordonnance N° {p.prescription_number}</Typography>
+                                    {p.items?.map((item, idx) => (
+                                        <Box key={idx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.main', mt: 1 }}>
+                                            <Typography variant="body2" fontWeight={700}>{item.medication_name} - {item.dosage}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{item.frequency} - {item.duration}</Typography>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            ))}
                         </AccordionDetails>
                     </Accordion>
-
-                    {/* Lab Tests Accordion */}
-                    {(consultation.prescribed_lab_tests_data?.length > 0 || consultation.lab_orders_data?.length > 0) && (
-                        <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mt: 1, '&:before': { display: 'none' } }}>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <ScienceIcon fontSize="small" color="success" />
-                                    <Typography variant="body2" fontWeight="700">
-                                        Examens Prescrits
-                                    </Typography>
-                                </Box>
-                            </AccordionSummary>
-                            <AccordionDetails sx={{ p: 1.5, pt: 0 }}>
-                                {consultation.prescribed_lab_tests_data?.length > 0 && (
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="caption" color="primary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
-                                            EXAMENS PRESCRITS (INDICATIF)
-                                        </Typography>
-                                        <Stack spacing={0.3}>
-                                            {consultation.prescribed_lab_tests_data.map((test, idx) => (
-                                                <Box key={idx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.light' }}>
-                                                    <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
-                                                        {idx + 1}. {test.name}
-                                                    </Typography>
-                                                    <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                                                        {test.test_code} - {test.price} XAF
-                                                    </Typography>
-                                                </Box>
-                                            ))}
-                                        </Stack>
-                                    </Box>
-                                )}
-
-                                {consultation.lab_orders_data?.length > 0 && (
-                                    <Box>
-                                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
-                                            COMMANDES DE LABORATOIRE (GÉNÉRÉES)
-                                        </Typography>
-                                        {consultation.lab_orders_data.map((order, idx) => (
-                                            <Box key={idx} sx={{ mb: 1.5 }}>
-                                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                                    {order.order_number} - {order.status_display}
-                                                </Typography>
-                                                {order.tests && order.tests.length > 0 ? (
-                                                    <Stack spacing={0.3} sx={{ mt: 0.5 }}>
-                                                        {order.tests.map((test, testIdx) => (
-                                                            <Box key={testIdx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'success.light' }}>
-                                                                <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
-                                                                    {testIdx + 1}. {test.test_name}
-                                                                </Typography>
-                                                                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                                                                    {test.test_code} - {test.price} XAF
-                                                                </Typography>
-                                                            </Box>
-                                                        ))}
-                                                    </Stack>
-                                                ) : (
-                                                    <Typography variant="caption" color="text.secondary">Aucun examen</Typography>
-                                                )}
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                )}
-                            </AccordionDetails>
-                        </Accordion>
-                    )}
                 </Grid>
 
-                {/* Right Column: Notes & Instructions (if any) */}
                 <Grid item xs={12} md={3}>
-                    {consultation.patient_instructions && (
-                        <Paper elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid', borderColor: 'info.light', borderRadius: 2, bgcolor: 'info.lighter' }}>
-                            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 0.5 }}>
-                                <AssignmentIcon fontSize="small" color="info" />
-                                <Typography variant="caption" fontWeight="700" color="info.dark">INSTRUCTIONS PATIENT</Typography>
-                            </Stack>
-                            <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                                {consultation.patient_instructions}
-                            </Typography>
-                        </Paper>
-                    )}
-
-                    {consultation.private_notes && (
-                        <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'warning.light', borderRadius: 2, bgcolor: 'warning.lighter' }}>
-                            <Typography variant="caption" fontWeight="700" color="warning.dark" display="block" sx={{ mb: 0.5 }}>
-                                NOTES PRIVÉES
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                                {consultation.private_notes}
-                            </Typography>
-                        </Paper>
-                    )}
+                    <Paper sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 2 }}>
+                        <Typography variant="caption" fontWeight={700} color="info.dark">INSTRUCTIONS</Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>{consultation.patient_instructions || 'Aucune instruction'}</Typography>
+                    </Paper>
                 </Grid>
             </Grid>
 
             <PrintModal
                 open={printModalOpen}
                 onClose={() => setPrintModalOpen(false)}
-                title={
-                    printModalType === 'report' ? "Rapport Complet" :
-                        printModalType === 'receipt' ? "Reçu de Consultation" :
-                            printModalType === 'prescription' ? "Ordonnance" :
-                                "Document"
-                }
+                title={printModalType === 'report' ? "Rapport" : "Ordonnance"}
                 loading={generatingPdf}
                 onPreview={() => handlePrintAction('preview')}
                 onPrint={() => handlePrintAction('print')}
                 onDownload={() => handlePrintAction('download')}
-                helpText="Choisissez une action pour générer le document"
             />
         </Box>
     );
