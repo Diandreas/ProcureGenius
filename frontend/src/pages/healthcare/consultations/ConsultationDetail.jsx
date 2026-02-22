@@ -245,6 +245,12 @@ const ConsultationDetail = () => {
                             {consultation.patient_number}
                         </Typography>
 
+                        {consultation.completed_by_name && (
+                            <Typography variant="caption" color="success.main" display="block" sx={{ mb: 1, fontWeight: 700 }}>
+                                Terminé par: {consultation.completed_by_name}
+                            </Typography>
+                        )}
+
                         <Divider sx={{ my: 1 }} />
 
                         {/* Vitals - Super compact grid */}
@@ -340,40 +346,67 @@ const ConsultationDetail = () => {
                     </Accordion>
 
                     {/* Lab Tests Accordion */}
-                    {consultation.lab_orders_data && consultation.lab_orders_data.length > 0 && (
+                    {(consultation.prescribed_lab_tests_data?.length > 0 || consultation.lab_orders_data?.length > 0) && (
                         <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mt: 1, '&:before': { display: 'none' } }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <ScienceIcon fontSize="small" color="success" />
                                     <Typography variant="body2" fontWeight="700">
-                                        Examens Prescrits ({consultation.lab_orders_data.length})
+                                        Examens Prescrits
                                     </Typography>
                                 </Box>
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 1.5, pt: 0 }}>
-                                {consultation.lab_orders_data.map((order, idx) => (
-                                    <Box key={idx}>
-                                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                            {order.order_number}
+                                {consultation.prescribed_lab_tests_data?.length > 0 && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" color="primary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
+                                            EXAMENS PRESCRITS (INDICATIF)
                                         </Typography>
-                                        {order.tests && order.tests.length > 0 ? (
-                                            <Stack spacing={0.3} sx={{ mt: 0.5 }}>
-                                                {order.tests.map((test, testIdx) => (
-                                                    <Box key={testIdx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'success.light' }}>
-                                                        <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
-                                                            {testIdx + 1}. {test.test_name}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                                                            {test.test_code} - {test.price} XAF
-                                                        </Typography>
-                                                    </Box>
-                                                ))}
-                                            </Stack>
-                                        ) : (
-                                            <Typography variant="caption" color="text.secondary">Aucun examen</Typography>
-                                        )}
+                                        <Stack spacing={0.3}>
+                                            {consultation.prescribed_lab_tests_data.map((test, idx) => (
+                                                <Box key={idx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.light' }}>
+                                                    <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
+                                                        {idx + 1}. {test.name}
+                                                    </Typography>
+                                                    <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                                                        {test.test_code} - {test.price} XAF
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                        </Stack>
                                     </Box>
-                                ))}
+                                )}
+
+                                {consultation.lab_orders_data?.length > 0 && (
+                                    <Box>
+                                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
+                                            COMMANDES DE LABORATOIRE (GÉNÉRÉES)
+                                        </Typography>
+                                        {consultation.lab_orders_data.map((order, idx) => (
+                                            <Box key={idx} sx={{ mb: 1.5 }}>
+                                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                                    {order.order_number} - {order.status_display}
+                                                </Typography>
+                                                {order.tests && order.tests.length > 0 ? (
+                                                    <Stack spacing={0.3} sx={{ mt: 0.5 }}>
+                                                        {order.tests.map((test, testIdx) => (
+                                                            <Box key={testIdx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'success.light' }}>
+                                                                <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
+                                                                    {testIdx + 1}. {test.test_name}
+                                                                </Typography>
+                                                                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                                                                    {test.test_code} - {test.price} XAF
+                                                                </Typography>
+                                                            </Box>
+                                                        ))}
+                                                    </Stack>
+                                                ) : (
+                                                    <Typography variant="caption" color="text.secondary">Aucun examen</Typography>
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
                             </AccordionDetails>
                         </Accordion>
                     )}

@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   // En développement: localhost pour le serveur de développement
   const BACKEND_URL = mode === 'production'
     ? process.env.VITE_BACKEND_URL || 'https://appback.centrejulianna.com'  // URL du backend en production
-    : process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8090';  // URL du backend en développement (port 8090)
+    : process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';  // URL du backend en développement (port 8000)
 
   // #region agent log
   console.log('[Vite Config] Mode:', mode, 'Backend URL:', BACKEND_URL);

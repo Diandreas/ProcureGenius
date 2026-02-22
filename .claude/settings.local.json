@@ -118,7 +118,8 @@
       "Bash(venv/Scripts/python.exe:*)",
       "Bash(TOKEN=\"498bebe50171a9bc3f414f2c1d1121888af03588\")",
       "Bash(__NEW_LINE_8f82d119f076db34__ echo \"=== TEST 1: Création produit PHYSIQUE \\(sans warehouse\\) ===\")",
-      "Bash(__NEW_LINE_5bb1b04ce81da136__ echo \"=== TEST 2: Création produit SERVICE ===\")"
+      "Bash(__NEW_LINE_5bb1b04ce81da136__ echo \"=== TEST 2: Création produit SERVICE ===\")",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

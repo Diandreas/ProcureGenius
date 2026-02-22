@@ -190,7 +190,8 @@ const ConsultationForm = () => {
                 bmi: data.bmi || '',
                 started_at: data.started_at || null,
                 ended_at: data.ended_at || null,
-                medications: medicationsList
+                medications: medicationsList,
+                lab_tests: data.prescribed_lab_tests || []
             }));
         } catch (error) {
             console.error('Error fetching consultation:', error);
@@ -285,6 +286,7 @@ const ConsultationForm = () => {
                 physical_examination: formData.physical_examination || '',
                 diagnosis: formData.diagnosis || '',
                 treatment_plan: formData.treatment_plan || '',
+                prescribed_lab_tests: formData.lab_tests,
                 temperature: formData.temperature || null,
                 blood_pressure_systolic: formData.blood_pressure_systolic || null,
                 blood_pressure_diastolic: formData.blood_pressure_diastolic || null,
@@ -344,17 +346,6 @@ const ConsultationForm = () => {
                     }))
                 };
                 await consultationAPI.createPrescription(prescriptionPayload);
-            }
-
-            // Create Lab Order if tests selected
-            if (formData.lab_tests.length > 0) {
-                const labOrderPayload = {
-                    patient_id: formData.patient?.id,
-                    consultation_id: consultId,
-                    tests: formData.lab_tests,
-                    priority: 'routine'
-                };
-                await consultationAPI.createLabOrder(labOrderPayload);
             }
 
             // Complete consultation via workflow endpoint if status is completed
