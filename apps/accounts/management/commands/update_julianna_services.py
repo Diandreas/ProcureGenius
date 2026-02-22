@@ -79,47 +79,72 @@ class Command(BaseCommand):
             raise CommandError(f'Plusieurs organisations : {names}. Utilisez --org-name.')
         return orgs.first()
 
+    # Variantes de noms pour les services dont le nom a changé en base
+    NAME_ALIASES = {
+        'Consultation Infirmière':        ['Consultation Infirmier', 'Consultation infirmier'],
+        'KIT Drap pour lit':              ['Drap pour lit', 'Kit drap pour lit'],
+        'Forfait concentrateur par heure':['Forfait concentrateur / Heure', 'Concentrateur/Heure', 'Forfait concentrateur/Heure'],
+        'Ponction pleurale':              ['Ponction pleural', 'Ponction Pleural'],
+        'Nébulisation':                   ['Nebulisation', 'Nébulisation'],
+        "Ponction d'ascite":              ["Ponction d'ascite", 'Ponction ascite'],
+        'Petite chéloïdectomie':          ['Petite cheloïdectomie', 'Petite cheloidectomie', 'Petite Cheloïdectomie'],
+        'Circoncision':                   ['Circonsition', 'Circoncision'],
+        'Injection simple externe':       ['Injection simple', 'Injection Simple'],
+        'Hospitalisation par jour':       ['Hospitalisation/jour', 'Hospitalisation jour'],
+    }
+
+    def _find_product(self, org, name):
+        """Cherche un service par nom exact ou par alias."""
+        # 1. Essai exact
+        qs = Product.objects.filter(organization=org, name__iexact=name, product_type='service')
+        if qs.exists():
+            return qs
+
+        # 2. Essai avec les alias
+        for alias in self.NAME_ALIASES.get(name, []):
+            qs = Product.objects.filter(organization=org, name__iexact=alias, product_type='service')
+            if qs.exists():
+                return qs
+
+        # 3. Recherche partielle (mots-clés du nom)
+        keywords = [w for w in name.split() if len(w) > 4]
+        if keywords:
+            qs = Product.objects.filter(organization=org, product_type='service')
+            for kw in keywords[:2]:
+                qs = qs.filter(name__icontains=kw)
+            if qs.count() == 1:
+                return qs
+
+        return Product.objects.none()
+
     def _process_service(self, org, svc_data, stats, dry_run):
         name = svc_data['name']
         new_price = svc_data['price']
 
-        try:
-            product = Product.objects.get(
-                organization=org,
-                name__iexact=name,
-                product_type='service',
-            )
+        products = self._find_product(org, name)
+
+        if not products.exists():
+            self.stdout.write(self.style.WARNING(
+                f'  ? {name[:50]:<50} — NON TROUVE en base'
+            ))
+            stats['not_found'] += 1
+            return
+
+        for product in products:
             old_price = int(product.price)
-            if old_price != new_price:
+            old_name = product.name
+            if old_price != new_price or old_name != name:
                 if not dry_run:
                     product.price = new_price
-                    product.save(update_fields=['price'])
+                    product.name = name
+                    product.save(update_fields=['price', 'name'])
+                label = f'{old_name[:40]} → {name[:40]}' if old_name != name else name[:50]
                 self.stdout.write(
-                    f'  ✎ {name[:50]:<50} {old_price:>7,} → {new_price:>7,} FCFA'
+                    f'  [OK] {label:<55} {old_price:>7,} → {new_price:>7,} FCFA'
                 )
                 stats['updated'] += 1
             else:
                 stats['unchanged'] += 1
-
-        except Product.DoesNotExist:
-            self.stdout.write(self.style.WARNING(
-                f'  ? {name[:50]:<50} — NON TROUVÉ en base'
-            ))
-            stats['not_found'] += 1
-        except Product.MultipleObjectsReturned:
-            products = Product.objects.filter(
-                organization=org,
-                name__iexact=name,
-                product_type='service',
-            )
-            for product in products:
-                if not dry_run:
-                    product.price = new_price
-                    product.save(update_fields=['price'])
-            self.stdout.write(
-                f'  ✎ {name[:50]:<50} → {new_price:>7,} FCFA (doublon mis à jour)'
-            )
-            stats['updated'] += 1
 
     def _print_summary(self, stats, dry_run):
         prefix = '[DRY RUN] ' if dry_run else ''
