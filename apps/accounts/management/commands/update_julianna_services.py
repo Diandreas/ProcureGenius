@@ -132,7 +132,7 @@ class Command(BaseCommand):
                     cat = ProductCategory.objects.filter(
                         organization=org, name__icontains=cat_name
                     ).first() or ProductCategory.objects.filter(
-                        organization=org, product_type='service'
+                        organization=org, name__icontains='service'
                     ).first() or ProductCategory.objects.filter(
                         organization=org
                     ).first()
