@@ -327,7 +327,9 @@ function ProductSelectionDialog({
                 <Grid item xs={12}>
                   <Autocomplete
                     options={productBatches}
-                    getOptionLabel={(option) => `${option.batch_number} (${dayjs(option.expiry_date).format('DD/MM/YY')}) - Reste: ${option.quantity_remaining}`}
+                    getOptionLabel={(option) =>
+                      `Péremption : ${dayjs(option.expiry_date).format('MM/YYYY')}  —  Stock : ${option.quantity_remaining}  —  Lot : ${option.batch_number}`
+                    }
                     isOptionEqualToValue={(option, value) => option.id === value?.id}
                     value={newItem.batch}
                     onChange={(e, v) => setNewItem({ ...newItem, batch: v })}
@@ -335,23 +337,53 @@ function ProductSelectionDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Sélectionner Lot / Batch"
-                        helperText={newItem.batch ? `Expire le ${dayjs(newItem.batch.expiry_date).format('LL')}` : "Optionnel - recommandé pour la traçabilité"}
+                        label="Sélectionner le lot (date de péremption)"
+                        required
+                        error={!newItem.batch && productBatches.length > 0}
+                        helperText={
+                          newItem.batch
+                            ? `✓ Expire le ${dayjs(newItem.batch.expiry_date).format('MMMM YYYY')}  —  Stock restant : ${newItem.batch.quantity_remaining}`
+                            : productBatches.length > 0
+                            ? "⚠ Veuillez sélectionner le lot pour identifier la date de péremption"
+                            : loadingBatches ? "Chargement des lots..." : "Aucun lot disponible"
+                        }
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     )}
                     renderOption={(props, option) => {
                       const isExpiringSoon = dayjs(option.expiry_date).isBefore(dayjs().add(3, 'month'));
+                      const isExpired = dayjs(option.expiry_date).isBefore(dayjs());
                       return (
-                        <Box component="li" {...props} key={option.id} sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                        <Box
+                          component="li"
+                          {...props}
+                          key={option.id}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
+                            gap: 1,
+                            bgcolor: isExpired ? 'error.50' : isExpiringSoon ? 'warning.50' : 'inherit',
+                          }}
+                        >
                           <Box>
-                            <Typography variant="body2" fontWeight="bold">{option.batch_number}</Typography>
-                            <Typography variant="caption" color="text.secondary">Stock: {option.quantity_remaining}</Typography>
+                            <Typography variant="body2" fontWeight="bold" color={isExpired ? 'error' : 'text.primary'}>
+                              Péremption : {dayjs(option.expiry_date).format('MM/YYYY')}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Lot : {option.batch_number}  •  Stock : {option.quantity_remaining}
+                            </Typography>
                           </Box>
-                          <Chip 
-                            label={dayjs(option.expiry_date).format('DD/MM/YYYY')} 
-                            size="small" 
-                            color={isExpiringSoon ? 'warning' : 'default'}
+                          <Chip
+                            label={
+                              isExpired ? 'PÉRIMÉ'
+                              : isExpiringSoon ? `${dayjs(option.expiry_date).diff(dayjs(), 'day')}j`
+                              : dayjs(option.expiry_date).format('MMM YYYY')
+                            }
+                            size="small"
+                            color={isExpired ? 'error' : isExpiringSoon ? 'warning' : 'success'}
+                            sx={{ fontWeight: 'bold', minWidth: 70 }}
                           />
                         </Box>
                       );

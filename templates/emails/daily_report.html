@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Journalier</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#059669,#047857); padding:30px 40px; text-align:center;">
+              <h1 style="color:#ffffff; margin:0; font-size:24px;">{{ organization.name }}</h1>
+              <p style="color:#a7f3d0; margin:8px 0 0; font-size:16px; font-weight:bold;">Rapport Journalier</p>
+              <p style="color:#a7f3d0; margin:4px 0 0; font-size:14px;">{{ report_date }}</p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:25px 40px 10px;">
+              <p style="color:#374151; font-size:15px; margin:0;">Bonjour,</p>
+              <p style="color:#6b7280; font-size:14px; margin:8px 0 0;">Voici le résumé de l'activité du centre pour la journée du <strong>{{ report_date }}</strong>.</p>
+            </td>
+          </tr>
+
+          <!-- ===== RÉSUMÉ CHIFFRES CLÉS ===== -->
+          <tr>
+            <td style="padding:15px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="25%" style="padding:8px;">
+                    <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#ecfdf5; border-radius:8px; text-align:center;">
+                      <tr><td>
+                        <div style="font-size:28px; font-weight:bold; color:#059669;">{{ stats.total_consultations }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Consultations</div>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="25%" style="padding:8px;">
+                    <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#eff6ff; border-radius:8px; text-align:center;">
+                      <tr><td>
+                        <div style="font-size:28px; font-weight:bold; color:#2563eb;">{{ stats.total_lab_orders }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Examens labo</div>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="25%" style="padding:8px;">
+                    <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#fefce8; border-radius:8px; text-align:center;">
+                      <tr><td>
+                        <div style="font-size:28px; font-weight:bold; color:#d97706;">{{ stats.total_invoices }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Factures</div>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="25%" style="padding:8px;">
+                    <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#fdf4ff; border-radius:8px; text-align:center;">
+                      <tr><td>
+                        <div style="font-size:28px; font-weight:bold; color:#9333ea;">{{ stats.new_patients }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Nv. patients</div>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ===== CONSULTATIONS ===== -->
+          {% if consultations %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d1fae5; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#ecfdf5; padding:12px 20px; border-bottom:1px solid #d1fae5;">
+                    <strong style="color:#065f46; font-size:15px;">Consultations ({{ stats.total_consultations }})</strong>
+                    {% if stats.consultations_completed %}
+                    <span style="float:right; font-size:12px; color:#059669;">{{ stats.consultations_completed }} terminée(s)</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151;">Patient</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151;">Médecin</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Heure</td>
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151; text-align:center;">Statut</td>
+                      </tr>
+                      {% for c in consultations %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#111827;">{{ c.patient.name }}</td>
+                        <td style="padding:8px 10px; color:#6b7280;">
+                          {% if c.doctor %}{{ c.doctor.get_full_name|default:c.doctor.username }}{% else %}—{% endif %}
+                        </td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">
+                          {{ c.consultation_date|date:"H:i" }}
+                        </td>
+                        <td style="padding:8px 20px; text-align:center;">
+                          <span style="display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:bold;
+                            {% if c.status == 'completed' %}background-color:#d1fae5; color:#065f46;
+                            {% elif c.status == 'in_consultation' %}background-color:#dbeafe; color:#1e40af;
+                            {% elif c.status == 'cancelled' %}background-color:#fee2e2; color:#991b1b;
+                            {% else %}background-color:#f3f4f6; color:#374151;{% endif %}">
+                            {% if c.status == 'completed' %}Terminée
+                            {% elif c.status == 'in_consultation' %}En cours
+                            {% elif c.status == 'cancelled' %}Annulée
+                            {% elif c.status == 'waiting' %}En attente
+                            {% elif c.status == 'ready_for_doctor' %}Prêt médecin
+                            {% else %}{{ c.status }}{% endif %}
+                          </span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- ===== EXAMENS DE LABORATOIRE ===== -->
+          {% if lab_orders %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dbeafe; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#eff6ff; padding:12px 20px; border-bottom:1px solid #dbeafe;">
+                    <strong style="color:#1e40af; font-size:15px;">Examens de Laboratoire ({{ stats.total_lab_orders }})</strong>
+                    {% if stats.lab_completed %}
+                    <span style="float:right; font-size:12px; color:#2563eb;">{{ stats.lab_completed }} terminé(s)</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151;">N° Ordre</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151;">Patient</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Tests</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:right;">Montant</td>
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151; text-align:center;">Statut</td>
+                      </tr>
+                      {% for order in lab_orders %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#6b7280; font-size:11px;">{{ order.order_number }}</td>
+                        <td style="padding:8px 10px; color:#111827;">{{ order.patient.name }}</td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">{{ order.items.count }}</td>
+                        <td style="padding:8px 10px; color:#111827; text-align:right; font-weight:bold;">{{ order.total_price|floatformat:0 }}</td>
+                        <td style="padding:8px 20px; text-align:center;">
+                          <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;
+                            {% if order.status == 'completed' or order.status == 'results_ready' or order.status == 'results_delivered' %}background-color:#d1fae5; color:#065f46;
+                            {% elif order.status == 'in_progress' %}background-color:#dbeafe; color:#1e40af;
+                            {% elif order.status == 'cancelled' %}background-color:#fee2e2; color:#991b1b;
+                            {% else %}background-color:#fef3c7; color:#92400e;{% endif %}">
+                            {% if order.status == 'pending' %}En attente
+                            {% elif order.status == 'sample_collected' %}Prélevé
+                            {% elif order.status == 'in_progress' %}En cours
+                            {% elif order.status == 'completed' %}Terminé
+                            {% elif order.status == 'results_ready' %}Résultats prêts
+                            {% elif order.status == 'results_delivered' %}Livré
+                            {% elif order.status == 'cancelled' %}Annulé
+                            {% else %}{{ order.status }}{% endif %}
+                          </span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- ===== FACTURATION ===== -->
+          {% if invoices_summary %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fde68a; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fffbeb; padding:12px 20px; border-bottom:1px solid #fde68a;">
+                    <strong style="color:#92400e; font-size:15px;">Facturation ({{ stats.total_invoices }} facture(s))</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px;">Total facturé</td>
+                        <td align="right" style="color:#d97706; font-size:20px; font-weight:bold;">{{ stats.total_revenue|floatformat:0 }} FCFA</td>
+                      </tr>
+                      {% if stats.revenue_paid %}
+                      <tr>
+                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Dont encaissé</td>
+                        <td align="right" style="color:#059669; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ stats.revenue_paid|floatformat:0 }} FCFA</td>
+                      </tr>
+                      {% endif %}
+                      {% if invoices_summary.consultation_count %}
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Consultations</td>
+                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.consultation_count }}</td>
+                      </tr>
+                      {% endif %}
+                      {% if invoices_summary.lab_count %}
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Examens labo</td>
+                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.lab_count }}</td>
+                      </tr>
+                      {% endif %}
+                      {% if invoices_summary.pharmacy_count %}
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Pharmacie</td>
+                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.pharmacy_count }}</td>
+                      </tr>
+                      {% endif %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- ===== NOUVEAUX PATIENTS ===== -->
+          {% if new_patients %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e9d5ff; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fdf4ff; padding:12px 20px; border-bottom:1px solid #e9d5ff;">
+                    <strong style="color:#6b21a8; font-size:15px;">Nouveaux patients enregistrés ({{ stats.new_patients }})</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 20px;">
+                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size:13px;">
+                      {% for patient in new_patients %}
+                      <tr {% if not forloop.first %}style="border-top:1px solid #f3f4f6;"{% endif %}>
+                        <td style="color:#111827;">{{ patient.name }}</td>
+                        <td style="color:#6b7280; text-align:right;">
+                          {% if patient.date_of_birth %}{{ patient.date_of_birth|date:"d/m/Y" }}{% endif %}
+                          {% if patient.gender %} · {{ patient.gender }}{% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- ===== ORDONNANCES ===== -->
+          {% if stats.total_prescriptions %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px;">
+                <tr>
+                  <td style="padding:12px 20px;">
+                    <span style="color:#374151; font-size:14px;">
+                      <strong>{{ stats.total_prescriptions }}</strong> ordonnance(s) émise(s) aujourd'hui
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Message si aucune activité -->
+          {% if not consultations and not lab_orders and not stats.total_invoices and not new_patients %}
+          <tr>
+            <td style="padding:30px 40px; text-align:center;">
+              <p style="color:#9ca3af; font-size:15px; margin:0;">Aucune activité enregistrée pour cette journée.</p>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:25px 40px; border-top:1px solid #e5e7eb; text-align:center; margin-top:10px;">
+              <p style="color:#9ca3af; font-size:12px; margin:0;">
+                Rapport généré automatiquement par ProcureGenius.<br>
+                {{ organization.name }} — {{ report_date }}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

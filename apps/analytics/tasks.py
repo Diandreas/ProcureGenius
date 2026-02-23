@@ -151,75 +151,167 @@ def check_predictive_stockout_alerts():
 
 
 def _send_report_for_config(config, today):
-    """Generate and send a report for a specific config."""
+    """Generate and send a comprehensive weekly report for a specific config."""
     from apps.invoicing.models import Product, StockMovement, Invoice, ProductBatch
     from apps.analytics.predictive_restock import get_all_predictions
 
     org = config.organization
     user = config.user
     period_start = today - timedelta(days=7)
+    prev_period_start = period_start - timedelta(days=7)
 
     context = {
         'user': user,
         'organization': org,
         'period_start': period_start.strftime('%d/%m/%Y'),
         'period_end': today.strftime('%d/%m/%Y'),
+        'config_frequency': config.get_frequency_display(),
         'sections': {},
     }
 
-    # Healthcare section
+    # ---- Healthcare section ----
     if config.include_healthcare:
         try:
             from apps.laboratory.models import LabOrder
-            exams_week = LabOrder.objects.filter(
-                organization=org,
-                created_at__date__gte=period_start
-            ).count()
-            completed_week = LabOrder.objects.filter(
+            from apps.consultations.models import Consultation
+            from apps.accounts.models import Client
+
+            lab_qs = LabOrder.objects.filter(
                 organization=org,
                 created_at__date__gte=period_start,
-                status='completed'
-            ).count()
-        except Exception:
-            exams_week = 0
-            completed_week = 0
-
-        try:
-            from apps.consultations.models import Consultation
-            consultations_week = Consultation.objects.filter(
+                created_at__date__lte=today,
+            )
+            lab_prev = LabOrder.objects.filter(
                 organization=org,
-                created_at__date__gte=period_start
+                created_at__date__gte=prev_period_start,
+                created_at__date__lt=period_start,
             ).count()
-        except Exception:
-            consultations_week = 0
 
-        context['sections']['healthcare'] = {
-            'exams_week': exams_week,
-            'completed_week': completed_week,
-            'consultations_week': consultations_week,
+            # Commandes labo en attente (non terminées)
+            lab_pending = lab_qs.exclude(
+                status__in=['completed', 'results_ready', 'results_delivered', 'cancelled']
+            ).select_related('patient').order_by('created_at')[:10]
+
+            consult_qs = Consultation.objects.filter(
+                organization=org,
+                consultation_date__date__gte=period_start,
+                consultation_date__date__lte=today,
+            )
+            consult_prev = Consultation.objects.filter(
+                organization=org,
+                consultation_date__date__gte=prev_period_start,
+                consultation_date__date__lt=period_start,
+            ).count()
+
+            # Consultations par médecin
+            from django.db.models import Count as models_Count
+            by_doctor = (
+                consult_qs.exclude(doctor=None)
+                .values('doctor__first_name', 'doctor__last_name', 'doctor__username')
+                .annotate(total=models_Count('id'))
+                .order_by('-total')[:5]
+            )
+
+            # Nouveaux patients cette semaine
+            new_patients_count = Client.objects.filter(
+                organization=org,
+                client_type__in=['patient', 'both'],
+                created_at__date__gte=period_start,
+                created_at__date__lte=today,
+            ).count()
+
+            # Ordonnances
+            try:
+                from apps.consultations.models import Prescription
+                prescriptions_count = Prescription.objects.filter(
+                    organization=org,
+                    prescribed_date__gte=period_start,
+                    prescribed_date__lte=today,
+                ).count()
+            except Exception:
+                prescriptions_count = 0
+
+            context['sections']['healthcare'] = {
+                'exams_week': lab_qs.count(),
+                'exams_prev': lab_prev,
+                'completed_week': lab_qs.filter(
+                    status__in=['completed', 'results_ready', 'results_delivered']
+                ).count(),
+                'lab_pending_list': list(lab_pending),
+                'consultations_week': consult_qs.count(),
+                'consultations_prev': consult_prev,
+                'consultations_completed': consult_qs.filter(status='completed').count(),
+                'by_doctor': list(by_doctor),
+                'new_patients': new_patients_count,
+                'prescriptions': prescriptions_count,
+            }
+        except Exception as e:
+            logger.error(f"Error building healthcare section: {e}")
+            context['sections']['healthcare'] = {
+                'exams_week': 0, 'completed_week': 0,
+                'consultations_week': 0, 'consultations_completed': 0,
+                'by_doctor': [], 'new_patients': 0, 'prescriptions': 0,
+                'lab_pending_list': [], 'exams_prev': 0, 'consultations_prev': 0,
+            }
+
+    # ---- Finance section ----
+    if config.include_finance:
+        inv_qs = Invoice.objects.filter(
+            organization=org,
+            created_at__date__gte=period_start,
+            created_at__date__lte=today,
+        )
+        prev_revenue = Invoice.objects.filter(
+            organization=org,
+            created_at__date__gte=prev_period_start,
+            created_at__date__lt=period_start,
+            status='paid',
+        ).aggregate(total=models_Sum('total_amount'))['total'] or 0
+
+        revenue_paid = inv_qs.filter(status='paid').aggregate(
+            total=models_Sum('total_amount'))['total'] or 0
+        revenue_total = inv_qs.aggregate(
+            total=models_Sum('total_amount'))['total'] or 0
+        revenue_unpaid = inv_qs.filter(
+            status__in=['sent', 'draft', 'overdue']
+        ).aggregate(total=models_Sum('total_amount'))['total'] or 0
+
+        # Par type
+        by_type = {
+            'consultation': inv_qs.filter(invoice_type='healthcare_consultation').aggregate(
+                t=models_Sum('total_amount'), c=models_Count_('id'))['t'] or 0,
+            'consultation_count': inv_qs.filter(invoice_type='healthcare_consultation').count(),
+            'laboratory': inv_qs.filter(invoice_type='healthcare_laboratory').aggregate(
+                t=models_Sum('total_amount'))['t'] or 0,
+            'laboratory_count': inv_qs.filter(invoice_type='healthcare_laboratory').count(),
+            'pharmacy': inv_qs.filter(invoice_type='healthcare_pharmacy').aggregate(
+                t=models_Sum('total_amount'))['t'] or 0,
+            'pharmacy_count': inv_qs.filter(invoice_type='healthcare_pharmacy').count(),
         }
 
-    # Finance section
-    if config.include_finance:
-        revenue = Invoice.objects.filter(
-            organization=org, status='paid',
-            created_at__date__gte=period_start,
-            created_at__date__lte=today
-        ).aggregate(
-            total=models_Sum('total_amount')
-        )['total'] or 0
+        # Factures impayées > 7 jours
+        overdue_invoices = inv_qs.filter(
+            status__in=['sent', 'overdue']
+        ).select_related('client').order_by('-total_amount')[:8]
 
         context['sections']['finance'] = {
-            'revenue_week': float(revenue),
+            'revenue_week': float(revenue_paid),
+            'revenue_total': float(revenue_total),
+            'revenue_unpaid': float(revenue_unpaid),
+            'revenue_prev': float(prev_revenue),
+            'invoices_count': inv_qs.count(),
+            'by_type': by_type,
+            'overdue_list': list(overdue_invoices),
+            'overdue_count': inv_qs.filter(status__in=['sent', 'overdue']).count(),
         }
 
-    # Inventory section
+    # ---- Inventory section ----
     if config.include_inventory:
-        low_stock = Product.objects.filter(
+        low_stock_products = Product.objects.filter(
             organization=org, product_type='physical',
             stock_quantity__lte=models_F('low_stock_threshold'),
             is_active=True
-        ).count()
+        ).order_by('stock_quantity')[:12]
 
         movements_week = StockMovement.objects.filter(
             product__organization=org,
@@ -227,37 +319,110 @@ def _send_report_for_config(config, today):
         ).count()
 
         context['sections']['inventory'] = {
-            'low_stock_count': low_stock,
+            'low_stock_count': low_stock_products.count(),
+            'low_stock_products': list(low_stock_products),
             'movements_week': movements_week,
         }
 
-    # Stock alerts
+    # ---- Alerts section ----
     if config.include_stock_alerts:
-        expiring_batches = ProductBatch.objects.filter(
+        expiring_soon = ProductBatch.objects.filter(
             organization=org,
             status__in=['available', 'opened'],
             expiry_date__lte=today + timedelta(days=30),
             quantity_remaining__gt=0
-        ).count()
+        ).select_related('product').order_by('expiry_date')[:15]
 
-        predictions = get_all_predictions(org)
-        critical_products = [p for p in predictions if p['urgency'] in ('critical', 'high')]
+        expiring_list = []
+        for b in expiring_soon:
+            try:
+                expiry = b.effective_expiry
+                days_left = b.days_until_expiry
+            except Exception:
+                expiry = b.expiry_date
+                days_left = (b.expiry_date - today).days if b.expiry_date else None
+            expiring_list.append({
+                'product_name': b.product.name,
+                'batch_number': b.batch_number or '—',
+                'expiry_date': expiry.strftime('%d/%m/%Y') if expiry else '—',
+                'days_left': days_left,
+                'quantity': b.quantity_remaining,
+                'is_critical': days_left is not None and days_left <= 7,
+            })
+
+        try:
+            predictions = get_all_predictions(org)
+            critical_products = [p for p in predictions if p['urgency'] in ('critical', 'high')]
+        except Exception:
+            critical_products = []
 
         context['sections']['alerts'] = {
-            'expiring_batches': expiring_batches,
+            'expiring_batches': len(expiring_list),
+            'expiring_list': expiring_list,
             'critical_products': critical_products[:10],
             'critical_count': len(critical_products),
         }
 
-    # Render and send
-    subject = f"[{org.name}] Rapport {config.get_frequency_display()} - {today.strftime('%d/%m/%Y')}"
+    # ---- Render and send via org SMTP ----
+    subject = f"[{org.name}] Rapport {config.get_frequency_display()} — {period_start.strftime('%d/%m')} au {today.strftime('%d/%m/%Y')}"
     html = render_to_string('emails/weekly_report.html', context)
 
-    send_mail(
-        subject, '', settings.DEFAULT_FROM_EMAIL,
-        [user.email], html_message=html, fail_silently=False
-    )
+    # Destinataire : email de l'org (EmailConfiguration) en priorité, sinon user.email
+    try:
+        from apps.accounts.models import EmailConfiguration
+        org_email_config = EmailConfiguration.objects.filter(organization=org).first()
+        recipient = org_email_config.default_from_email if org_email_config else user.email
+    except Exception:
+        recipient = user.email
+
+    _send_via_org_smtp(org, recipient, subject, html)
 
 
-# Lazy imports for aggregate functions used in _send_report_for_config
-from django.db.models import Sum as models_Sum, F as models_F
+def _send_via_org_smtp(org, recipient_email, subject, html_content):
+    """Envoie un email via la configuration SMTP de l'organisation."""
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    try:
+        from apps.accounts.models import EmailConfiguration
+        email_config = EmailConfiguration.objects.filter(organization=org).first()
+    except Exception:
+        email_config = None
+
+    if not email_config:
+        # Fallback : Django send_mail avec settings globaux
+        send_mail(subject, '', settings.DEFAULT_FROM_EMAIL,
+                  [recipient_email], html_message=html_content, fail_silently=True)
+        return
+
+    password = email_config.get_decrypted_password()
+    if not password:
+        logger.error(f"Cannot decrypt SMTP password for org {org.name}")
+        return
+
+    from_header = f"{email_config.default_from_name} <{email_config.default_from_email}>"
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = from_header
+    msg['To'] = recipient_email
+    msg.attach(MIMEText('Veuillez consulter la version HTML.', 'plain', 'utf-8'))
+    msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+    try:
+        if email_config.use_ssl:
+            server = smtplib.SMTP_SSL(email_config.smtp_host, email_config.smtp_port, timeout=30)
+        else:
+            server = smtplib.SMTP(email_config.smtp_host, email_config.smtp_port, timeout=30)
+            if email_config.use_tls:
+                server.starttls()
+        server.login(email_config.smtp_username, password)
+        server.sendmail(email_config.default_from_email, [recipient_email], msg.as_string())
+        server.quit()
+        logger.info(f"Weekly report sent to {recipient_email} via org SMTP")
+    except Exception as e:
+        logger.error(f"Failed to send weekly report to {recipient_email}: {e}")
+
+
+# Lazy imports for aggregate functions
+from django.db.models import Sum as models_Sum, F as models_F, Count as models_Count_

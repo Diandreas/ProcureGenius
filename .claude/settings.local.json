@@ -125,7 +125,8 @@
       "Bash(claude mcp list:*)",
       "Bash(then)",
       "Bash(break)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

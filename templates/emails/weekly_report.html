@@ -3,185 +3,400 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rapport Periodique</title>
+  <title>Rapport Hebdomadaire</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <!-- Header -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:30px 40px; text-align:center;">
-              <h1 style="color:#ffffff; margin:0; font-size:24px;">{{ organization.name }}</h1>
-              <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">Rapport Periodique - {{ period_start }} au {{ period_end }}</p>
-            </td>
-          </tr>
+<body style="margin:0; padding:0; background-color:#f1f5f9; font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; padding:24px 0;">
+<tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.10);">
 
-          <!-- Greeting -->
-          <tr>
-            <td style="padding:30px 40px 15px;">
-              <p style="color:#374151; font-size:16px; margin:0;">Bonjour {{ user.first_name|default:user.username }},</p>
-              <p style="color:#6b7280; font-size:14px; margin:8px 0 0;">Voici le resume de votre activite pour la periode ecoulee.</p>
-            </td>
-          </tr>
+  <!-- ===== HEADER ===== -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#1e3a5f,#2563eb); padding:32px 40px 24px; text-align:center;">
+      <h1 style="color:#ffffff; margin:0; font-size:22px; letter-spacing:0.5px;">{{ organization.name }}</h1>
+      <p style="color:#93c5fd; margin:8px 0 0; font-size:15px; font-weight:bold;">Rapport {{ config_frequency|default:"Hebdomadaire" }}</p>
+      <p style="color:#bfdbfe; margin:4px 0 0; font-size:13px;">Semaine du {{ period_start }} au {{ period_end }}</p>
+    </td>
+  </tr>
 
-          {% if sections.healthcare %}
-          <!-- Healthcare Section -->
-          <tr>
-            <td style="padding:15px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
-                    <strong style="color:#dc2626; font-size:16px;">Sante & Laboratoire</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:15px 20px;">
-                    <table width="100%" cellpadding="8" cellspacing="0">
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px;">Examens cette semaine</td>
-                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold;">{{ sections.healthcare.exams_week }}</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Examens termines</td>
-                        <td align="right" style="color:#10b981; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.healthcare.completed_week }}</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Consultations</td>
-                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.healthcare.consultations_week }}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endif %}
+  <!-- ===== GREETING ===== -->
+  <tr>
+    <td style="padding:24px 40px 8px;">
+      <p style="color:#374151; font-size:15px; margin:0;">Bonjour {{ user.first_name|default:user.username }},</p>
+      <p style="color:#6b7280; font-size:13px; margin:6px 0 0;">Voici le bilan complet de l'activité du centre pour la semaine écoulée.</p>
+    </td>
+  </tr>
 
-          {% if sections.finance %}
-          <!-- Finance Section -->
-          <tr>
-            <td style="padding:15px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="background-color:#eff6ff; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
-                    <strong style="color:#2563eb; font-size:16px;">Finances</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:15px 20px;">
-                    <table width="100%" cellpadding="8" cellspacing="0">
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px;">Revenus de la semaine</td>
-                        <td align="right" style="color:#2563eb; font-size:18px; font-weight:bold;">{{ sections.finance.revenue_week|floatformat:0 }} FCFA</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endif %}
+  {% if sections.healthcare %}
+  {% with h=sections.healthcare %}
 
-          {% if sections.inventory %}
-          <!-- Inventory Section -->
-          <tr>
-            <td style="padding:15px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="background-color:#f0fdf4; padding:12px 20px; border-bottom:1px solid #e5e7eb;">
-                    <strong style="color:#16a34a; font-size:16px;">Inventaire</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:15px 20px;">
-                    <table width="100%" cellpadding="8" cellspacing="0">
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px;">Produits stock bas</td>
-                        <td align="right" style="color:#f59e0b; font-size:16px; font-weight:bold;">{{ sections.inventory.low_stock_count }}</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Mouvements cette semaine</td>
-                        <td align="right" style="color:#111827; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ sections.inventory.movements_week }}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endif %}
+  <!-- ===== KPI SANTÉ ===== -->
+  <tr>
+    <td style="padding:16px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" style="padding:6px 6px 6px 0;">
+            <table width="100%" cellpadding="12" cellspacing="0" style="background:#ecfdf5; border-radius:8px; text-align:center; border:1px solid #d1fae5;">
+              <tr><td>
+                <div style="font-size:30px; font-weight:bold; color:#059669;">{{ h.consultations_week }}</div>
+                <div style="font-size:11px; color:#065f46; margin-top:2px;">Consultations</div>
+                {% if h.consultations_prev %}
+                <div style="font-size:10px; color:#9ca3af; margin-top:3px;">sem. préc. : {{ h.consultations_prev }}</div>
+                {% endif %}
+              </td></tr>
+            </table>
+          </td>
+          <td width="33%" style="padding:6px;">
+            <table width="100%" cellpadding="12" cellspacing="0" style="background:#eff6ff; border-radius:8px; text-align:center; border:1px solid #dbeafe;">
+              <tr><td>
+                <div style="font-size:30px; font-weight:bold; color:#2563eb;">{{ h.exams_week }}</div>
+                <div style="font-size:11px; color:#1e40af; margin-top:2px;">Examens labo</div>
+                {% if h.exams_prev %}
+                <div style="font-size:10px; color:#9ca3af; margin-top:3px;">sem. préc. : {{ h.exams_prev }}</div>
+                {% endif %}
+              </td></tr>
+            </table>
+          </td>
+          <td width="33%" style="padding:6px 0 6px 6px;">
+            <table width="100%" cellpadding="12" cellspacing="0" style="background:#fdf4ff; border-radius:8px; text-align:center; border:1px solid #e9d5ff;">
+              <tr><td>
+                <div style="font-size:30px; font-weight:bold; color:#9333ea;">{{ h.new_patients }}</div>
+                <div style="font-size:11px; color:#6b21a8; margin-top:2px;">Nouveaux patients</div>
+                {% if h.prescriptions %}
+                <div style="font-size:10px; color:#9ca3af; margin-top:3px;">{{ h.prescriptions }} ordonnance(s)</div>
+                {% endif %}
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 
-          {% if sections.alerts %}
-          <!-- Alerts Section -->
-          <tr>
-            <td style="padding:15px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #fca5a5; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #fca5a5;">
-                    <strong style="color:#dc2626; font-size:16px;">Alertes Stock</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:15px 20px;">
-                    {% if sections.alerts.expiring_batches > 0 %}
-                    <div style="background-color:#fef3c7; border-radius:6px; padding:10px 15px; margin-bottom:10px;">
-                      <strong style="color:#92400e; font-size:13px;">{{ sections.alerts.expiring_batches }} lot(s) expirant dans les 30 prochains jours</strong>
-                    </div>
-                    {% endif %}
+  <!-- ===== CONSULTATIONS PAR MÉDECIN ===== -->
+  {% if h.by_doctor %}
+  <tr>
+    <td style="padding:12px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d1fae5; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#ecfdf5; padding:10px 16px; border-bottom:1px solid #d1fae5;">
+            <strong style="color:#065f46; font-size:13px;">Consultations par médecin</strong>
+            <span style="float:right; font-size:12px; color:#059669;">{{ h.consultations_completed }} terminée(s) / {{ h.consultations_week }}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+              {% for doc in h.by_doctor %}
+              <tr {% if not forloop.first %}style="border-top:1px solid #f3f4f6;"{% endif %}>
+                <td style="padding:7px 16px; color:#374151;">
+                  {{ doc.doctor__first_name }} {{ doc.doctor__last_name }}{% if not doc.doctor__first_name %}{{ doc.doctor__username }}{% endif %}
+                </td>
+                <td style="padding:7px 16px; text-align:right;">
+                  <span style="display:inline-block; background:#d1fae5; color:#065f46; border-radius:10px; padding:2px 10px; font-size:12px; font-weight:bold;">{{ doc.total }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
 
-                    {% if sections.alerts.critical_count > 0 %}
-                    <div style="background-color:#fee2e2; border-radius:6px; padding:10px 15px; margin-bottom:10px;">
-                      <strong style="color:#991b1b; font-size:13px;">{{ sections.alerts.critical_count }} produit(s) en risque de rupture</strong>
-                    </div>
+  <!-- ===== EXAMENS LABO EN ATTENTE ===== -->
+  {% if h.lab_pending_list %}
+  <tr>
+    <td style="padding:12px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fde68a; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#fefce8; padding:10px 16px; border-bottom:1px solid #fde68a;">
+            <strong style="color:#92400e; font-size:13px;">⚠ Examens en attente de résultats</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;">
+              <tr style="background:#f9fafb;">
+                <td style="padding:6px 16px; font-weight:bold; color:#6b7280;">N° Ordre</td>
+                <td style="padding:6px 8px; font-weight:bold; color:#6b7280;">Patient</td>
+                <td style="padding:6px 16px; font-weight:bold; color:#6b7280; text-align:center;">Statut</td>
+              </tr>
+              {% for o in h.lab_pending_list %}
+              <tr style="border-top:1px solid #f3f4f6;">
+                <td style="padding:6px 16px; color:#6b7280;">{{ o.order_number }}</td>
+                <td style="padding:6px 8px; color:#111827;">{{ o.patient.name }}</td>
+                <td style="padding:6px 16px; text-align:center;">
+                  <span style="display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; background:#fef3c7; color:#92400e; font-weight:bold;">
+                    {% if o.status == 'pending' %}En attente
+                    {% elif o.status == 'sample_collected' %}Prélevé
+                    {% elif o.status == 'in_progress' %}En cours
+                    {% else %}{{ o.status }}{% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
 
-                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size:12px; margin-top:10px;">
-                      <tr style="background-color:#f9fafb;">
-                        <td style="font-weight:bold; color:#374151;">Produit</td>
-                        <td align="center" style="font-weight:bold; color:#374151;">Stock</td>
-                        <td align="center" style="font-weight:bold; color:#374151;">Jours</td>
-                        <td style="font-weight:bold; color:#374151;">Urgence</td>
-                      </tr>
-                      {% for product in sections.alerts.critical_products %}
-                      <tr style="border-top:1px solid #f3f4f6;">
-                        <td style="color:#111827;">{{ product.product_name }}</td>
-                        <td align="center" style="color:#111827;">{{ product.current_stock }}</td>
-                        <td align="center" style="color:{% if product.urgency == 'critical' %}#dc2626{% else %}#f59e0b{% endif %}; font-weight:bold;">
-                          {{ product.days_remaining|default:"-" }}
-                        </td>
-                        <td>
-                          <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold; background-color:{% if product.urgency == 'critical' %}#fee2e2{% else %}#fef3c7{% endif %}; color:{% if product.urgency == 'critical' %}#991b1b{% else %}#92400e{% endif %};">
-                            {% if product.urgency == 'critical' %}CRITIQUE{% else %}URGENT{% endif %}
-                          </span>
-                        </td>
-                      </tr>
-                      {% endfor %}
-                    </table>
-                    {% endif %}
+  {% endwith %}
+  {% endif %}
 
-                    {% if sections.alerts.critical_count == 0 and sections.alerts.expiring_batches == 0 %}
-                    <p style="color:#16a34a; font-size:14px; margin:0; text-align:center;">Aucune alerte stock pour cette periode.</p>
-                    {% endif %}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endif %}
+  <!-- ===== FINANCES ===== -->
+  {% if sections.finance %}
+  {% with f=sections.finance %}
+  <tr>
+    <td style="padding:16px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fde68a; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#fffbeb; padding:10px 16px; border-bottom:1px solid #fde68a;">
+            <strong style="color:#92400e; font-size:14px;">Finances — {{ f.invoices_count }} facture(s)</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px 4px;">
+            <!-- Revenus principaux -->
+            <table width="100%" cellpadding="6" cellspacing="0">
+              <tr>
+                <td style="color:#6b7280; font-size:13px;">Total facturé</td>
+                <td align="right" style="color:#374151; font-size:18px; font-weight:bold;">{{ f.revenue_total|floatformat:0 }} FCFA</td>
+              </tr>
+              <tr>
+                <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Encaissé</td>
+                <td align="right" style="color:#059669; font-size:18px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ f.revenue_week|floatformat:0 }} FCFA</td>
+              </tr>
+              {% if f.revenue_unpaid %}
+              <tr>
+                <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Non encaissé</td>
+                <td align="right" style="color:#dc2626; font-size:15px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ f.revenue_unpaid|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endif %}
+              {% if f.revenue_prev %}
+              <tr>
+                <td style="color:#9ca3af; font-size:12px; border-top:1px solid #f3f4f6;">Sem. précédente (encaissé)</td>
+                <td align="right" style="color:#9ca3af; font-size:13px; border-top:1px solid #f3f4f6;">{{ f.revenue_prev|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endif %}
+            </table>
+            <!-- Répartition par type -->
+            {% with bt=f.by_type %}
+            {% if bt.consultation_count or bt.laboratory_count or bt.pharmacy_count %}
+            <table width="100%" cellpadding="5" cellspacing="0" style="margin-top:8px; border-top:2px solid #fde68a;">
+              <tr style="background:#fffbeb;">
+                <td style="font-size:11px; color:#92400e; font-weight:bold; padding:6px 8px;">Répartition par service</td>
+                <td align="center" style="font-size:11px; color:#92400e; font-weight:bold; padding:6px 8px;">Nb</td>
+                <td align="right" style="font-size:11px; color:#92400e; font-weight:bold; padding:6px 8px;">Montant</td>
+              </tr>
+              {% if bt.consultation_count %}
+              <tr style="border-top:1px solid #f3f4f6;">
+                <td style="font-size:12px; color:#374151; padding:5px 8px;">Consultations</td>
+                <td align="center" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.consultation_count }}</td>
+                <td align="right" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.consultation|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endif %}
+              {% if bt.laboratory_count %}
+              <tr style="border-top:1px solid #f3f4f6;">
+                <td style="font-size:12px; color:#374151; padding:5px 8px;">Laboratoire</td>
+                <td align="center" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.laboratory_count }}</td>
+                <td align="right" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.laboratory|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endif %}
+              {% if bt.pharmacy_count %}
+              <tr style="border-top:1px solid #f3f4f6;">
+                <td style="font-size:12px; color:#374151; padding:5px 8px;">Pharmacie</td>
+                <td align="center" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.pharmacy_count }}</td>
+                <td align="right" style="font-size:12px; color:#374151; padding:5px 8px;">{{ bt.pharmacy|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endif %}
+            </table>
+            {% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+        <!-- Factures impayées -->
+        {% if f.overdue_list %}
+        <tr>
+          <td style="padding:0 16px 12px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2; border-radius:6px; border:1px solid #fca5a5; margin-top:4px;">
+              <tr>
+                <td style="padding:8px 12px; border-bottom:1px solid #fca5a5;">
+                  <strong style="color:#991b1b; font-size:12px;">{{ f.overdue_count }} facture(s) non encaissée(s)</strong>
+                </td>
+              </tr>
+              {% for inv in f.overdue_list %}
+              <tr {% if not forloop.first %}style="border-top:1px solid #fee2e2;"{% endif %}>
+                <td style="padding:5px 12px; font-size:12px; color:#374151;">
+                  {% if inv.client %}{{ inv.client.name }}{% else %}—{% endif %}
+                </td>
+                <td style="padding:5px 12px; font-size:12px; color:#dc2626; text-align:right; font-weight:bold;">{{ inv.total_amount|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+  {% endwith %}
+  {% endif %}
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding:30px 40px; border-top:1px solid #e5e7eb; text-align:center;">
-              <p style="color:#9ca3af; font-size:12px; margin:0;">
-                Ce rapport est genere automatiquement par ProcureGenius.<br>
-                Pour modifier vos preferences, rendez-vous dans Parametres > Rapports.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+  <!-- ===== INVENTAIRE ===== -->
+  {% if sections.inventory %}
+  {% with inv=sections.inventory %}
+  <tr>
+    <td style="padding:16px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #bbf7d0; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#f0fdf4; padding:10px 16px; border-bottom:1px solid #bbf7d0;">
+            <strong style="color:#166534; font-size:14px;">Inventaire</strong>
+            <span style="float:right; font-size:12px; color:#16a34a;">{{ inv.movements_week }} mouvement(s) de stock</span>
+          </td>
+        </tr>
+        {% if inv.low_stock_products %}
+        <tr>
+          <td style="padding:10px 16px 8px;">
+            <p style="margin:0 0 8px; font-size:12px; color:#dc2626; font-weight:bold;">
+              {{ inv.low_stock_count }} produit(s) en stock bas :
+            </p>
+            <table width="100%" cellpadding="5" cellspacing="0" style="font-size:12px;">
+              <tr style="background:#f9fafb;">
+                <td style="padding:5px 8px; font-weight:bold; color:#6b7280;">Produit</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#6b7280;">Stock actuel</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#6b7280;">Seuil min.</td>
+              </tr>
+              {% for prod in inv.low_stock_products %}
+              <tr style="border-top:1px solid #f3f4f6;">
+                <td style="padding:5px 8px; color:#111827;">{{ prod.name }}</td>
+                <td align="center" style="padding:5px 8px; color:#dc2626; font-weight:bold;">{{ prod.stock_quantity }}</td>
+                <td align="center" style="padding:5px 8px; color:#6b7280;">{{ prod.low_stock_threshold }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td style="padding:12px 16px;">
+            <p style="color:#16a34a; font-size:13px; margin:0; text-align:center;">✓ Tous les stocks sont à niveau normal.</p>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+  {% endwith %}
+  {% endif %}
+
+  <!-- ===== ALERTES ===== -->
+  {% if sections.alerts %}
+  {% with al=sections.alerts %}
+  {% if al.expiring_batches > 0 or al.critical_count > 0 %}
+  <tr>
+    <td style="padding:16px 40px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #fca5a5; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#fef2f2; padding:10px 16px; border-bottom:1px solid #fca5a5;">
+            <strong style="color:#991b1b; font-size:14px;">Alertes</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px;">
+
+            <!-- Lots expirant -->
+            {% if al.expiring_list %}
+            <p style="margin:0 0 6px; font-size:13px; font-weight:bold; color:#92400e;">
+              {{ al.expiring_batches }} lot(s) expirant dans les 30 jours :
+            </p>
+            <table width="100%" cellpadding="5" cellspacing="0" style="font-size:12px; margin-bottom:12px;">
+              <tr style="background:#fef3c7;">
+                <td style="padding:5px 8px; font-weight:bold; color:#92400e;">Produit</td>
+                <td style="padding:5px 8px; font-weight:bold; color:#92400e;">Lot</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#92400e;">Expiration</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#92400e;">Jours</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#92400e;">Qté</td>
+              </tr>
+              {% for b in al.expiring_list %}
+              <tr style="border-top:1px solid #fde68a; {% if b.is_critical %}background:#fff7ed;{% endif %}">
+                <td style="padding:5px 8px; color:#111827;">{{ b.product_name }}</td>
+                <td style="padding:5px 8px; color:#6b7280;">{{ b.batch_number }}</td>
+                <td align="center" style="padding:5px 8px; color:{% if b.is_critical %}#dc2626{% else %}#92400e{% endif %}; font-weight:bold;">{{ b.expiry_date }}</td>
+                <td align="center" style="padding:5px 8px; color:{% if b.is_critical %}#dc2626{% else %}#f59e0b{% endif %}; font-weight:bold;">
+                  {% if b.days_left is not None %}{{ b.days_left }}j{% else %}—{% endif %}
+                </td>
+                <td align="center" style="padding:5px 8px; color:#374151;">{{ b.quantity }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+
+            <!-- Risques de rupture -->
+            {% if al.critical_count > 0 %}
+            <p style="margin:0 0 6px; font-size:13px; font-weight:bold; color:#991b1b;">
+              {{ al.critical_count }} produit(s) en risque de rupture de stock :
+            </p>
+            <table width="100%" cellpadding="5" cellspacing="0" style="font-size:12px;">
+              <tr style="background:#fee2e2;">
+                <td style="padding:5px 8px; font-weight:bold; color:#991b1b;">Produit</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#991b1b;">Stock</td>
+                <td align="center" style="padding:5px 8px; font-weight:bold; color:#991b1b;">Jours restants</td>
+                <td style="padding:5px 8px; font-weight:bold; color:#991b1b;">Urgence</td>
+              </tr>
+              {% for p in al.critical_products %}
+              <tr style="border-top:1px solid #fca5a5;">
+                <td style="padding:5px 8px; color:#111827;">{{ p.product_name }}</td>
+                <td align="center" style="padding:5px 8px; color:#374151;">{{ p.current_stock }}</td>
+                <td align="center" style="padding:5px 8px; color:{% if p.urgency == 'critical' %}#dc2626{% else %}#f59e0b{% endif %}; font-weight:bold;">
+                  {{ p.days_remaining|default:"—" }}
+                </td>
+                <td style="padding:5px 8px;">
+                  <span style="display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;
+                    background:{% if p.urgency == 'critical' %}#fee2e2{% else %}#fef3c7{% endif %};
+                    color:{% if p.urgency == 'critical' %}#991b1b{% else %}#92400e{% endif %};">
+                    {% if p.urgency == 'critical' %}CRITIQUE{% else %}URGENT{% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% else %}
+  <tr>
+    <td style="padding:12px 40px 4px;">
+      <table width="100%" cellpadding="12" cellspacing="0" style="border:1px solid #bbf7d0; border-radius:8px; background:#f0fdf4; text-align:center;">
+        <tr><td style="color:#16a34a; font-size:13px;">✓ Aucune alerte stock cette semaine.</td></tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+  {% endwith %}
+  {% endif %}
+
+  <!-- ===== FOOTER ===== -->
+  <tr>
+    <td style="padding:24px 40px 28px; border-top:1px solid #e5e7eb; text-align:center; margin-top:16px;">
+      <p style="color:#9ca3af; font-size:11px; margin:0; line-height:1.6;">
+        Ce rapport est généré automatiquement chaque semaine par ProcureGenius.<br>
+        Pour modifier les paramètres d'envoi : <em>Paramètres → Rapports</em><br>
+        <strong>{{ organization.name }}</strong> — {{ period_start }} au {{ period_end }}
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>
