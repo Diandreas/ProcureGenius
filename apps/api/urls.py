@@ -1,3 +1,4 @@
+print("DEBUG: Loading apps/api/urls.py")
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
@@ -11,6 +12,7 @@ from apps.invoicing.batch_views import (
     ProductBatchListCreateView, ProductBatchDetailView,
     BatchOpenView, ExpiringBatchesView, OpenedReagentsView
 )
+from . import erpnext_export_views
 
 app_name = 'api'
 
@@ -112,6 +114,13 @@ urlpatterns = [
     path('batches/<uuid:batch_id>/open/', BatchOpenView.as_view(), name='batch-open'),
     path('batches/expiring/', ExpiringBatchesView.as_view(), name='batches-expiring'),
     path('batches/opened-reagents/', OpenedReagentsView.as_view(), name='opened-reagents'),
+
+    # ERPNext Export (admin/manager only)
+    path('erpnext/sales-invoices/', erpnext_export_views.export_sales_invoices, name='erpnext-sales-invoices'),
+    path('erpnext/customers/', erpnext_export_views.export_customers, name='erpnext-customers'),
+    path('erpnext/items/', erpnext_export_views.export_items, name='erpnext-items'),
+    path('erpnext/payments/', erpnext_export_views.export_payments, name='erpnext-payments'),
+    path('erpnext/purchase-orders/', erpnext_export_views.export_purchase_orders, name='erpnext-purchase-orders'),
 
     # Keep existing endpoints if they exist
     # path('integrations/', include('apps.integrations.api_urls')),

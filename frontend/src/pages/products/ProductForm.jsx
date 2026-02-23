@@ -82,7 +82,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI } from '../../services/api';
+import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI, authAPI } from '../../services/api';
 
 function ProductForm() {
     const { t } = useTranslation(['products', 'common']);
@@ -94,6 +94,7 @@ function ProductForm() {
     const isEdit = Boolean(id);
 
     const [loading, setLoading] = useState(false);
+    const [canSeeCostPrice, setCanSeeCostPrice] = useState(false);
     const [categories, setCategories] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -158,6 +159,13 @@ function ProductForm() {
         base_unit: Yup.string().required('Requis'),
         conversion_factor: Yup.number().typeError('Doit être un nombre').positive('Doit être positif').required('Requis'),
     });
+
+    useEffect(() => {
+        authAPI.getProfile().then(res => {
+            const role = res.data?.role;
+            setCanSeeCostPrice(role === 'admin' || role === 'manager');
+        }).catch(() => {});
+    }, []);
 
     useEffect(() => {
         const loadData = async () => {
@@ -335,7 +343,7 @@ function ProductForm() {
                                                         <TextField fullWidth type="number" name="price" label="Prix de vente" value={values.price} onChange={handleChange} onBlur={handleBlur} error={touched.price && Boolean(errors.price)} helperText={touched.price && errors.price} required />
                                                     </Grid>
                                                     <Grid item xs={12} sm={6}>
-                                                        <TextField fullWidth type="number" name="cost_price" label="Prix d'achat" value={values.cost_price} onChange={handleChange} />
+                                                        {canSeeCostPrice && <TextField fullWidth type="number" name="cost_price" label="Prix d'achat" value={values.cost_price} onChange={handleChange} />}
                                                     </Grid>
                                                     <Grid item xs={12} sm={4}>
                                                         <TextField select fullWidth name="sell_unit" label="Unité de vente" value={values.sell_unit} onChange={handleChange}>
@@ -369,8 +377,22 @@ function ProductForm() {
                                                             <TextField fullWidth name="barcode" label="Code-barres" value={values.barcode} onChange={handleChange} />
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField fullWidth type="date" name="expiration_date" label="Péremption" value={values.expiration_date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+                                                            <TextField fullWidth type="date" name="expiration_date" label="Péremption (produit global)" value={values.expiration_date} onChange={handleChange} InputLabelProps={{ shrink: true }} helperText="Pour les médicaments, gérez les dates par lot ci-dessous" />
                                                         </Grid>
+                                                        {isEdit && (
+                                                            <Grid item xs={12}>
+                                                                <Button
+                                                                    variant="outlined"
+                                                                    color="warning"
+                                                                    fullWidth
+                                                                    startIcon={<Edit />}
+                                                                    onClick={() => navigate(`/products/${id}/batches`)}
+                                                                    sx={{ borderStyle: 'dashed' }}
+                                                                >
+                                                                    Gérer les lots & dates de péremption →
+                                                                </Button>
+                                                            </Grid>
+                                                        )}
                                                     </Grid>
                                                 </CardContent>
                                             </Card>

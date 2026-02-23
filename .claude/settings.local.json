@@ -126,7 +126,8 @@
       "Bash(then)",
       "Bash(break)",
       "Bash(fi)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(pip show:*)"
     ],
     "deny": [],
     "ask": []

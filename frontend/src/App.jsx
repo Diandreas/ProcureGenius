@@ -65,6 +65,7 @@ import WeeklyReportSettings from './pages/settings/WeeklyReportSettings';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
 import DataImportPage from './pages/settings/DataImportPage';
+import ErpNextExport from './pages/settings/ErpNextExport';
 import Pricing from './pages/Pricing';
 import Register from './pages/auth/Register';
 import LoginEnhanced from './pages/auth/LoginEnhanced';
@@ -804,6 +805,7 @@ function App() {
                               <Route path="/settings/users" element={<UserManagement />} />
                               <Route path="/settings/import" element={<DataImportPage />} />
                               <Route path="/settings/reports" element={<WeeklyReportSettings />} />
+                              <Route path="/settings/erpnext-export" element={<ErpNextExport />} />
 
                               {/* Help & Documentation */}
                               <Route path="/help" element={<Help />} />

@@ -499,11 +499,54 @@ const Settings = () => {
         <Box p={{ xs: 2, sm: 2.5, md: 3 }}>
           {/* Section Général */}
           {activeTab === 0 && (
-            <GeneralSection
-              settings={settings}
-              onUpdate={handleUpdateSetting}
-              onFileSelect={handleFileSelect}
-            />
+            <>
+              <GeneralSection
+                settings={settings}
+                onUpdate={handleUpdateSetting}
+                onFileSelect={handleFileSelect}
+              />
+              <Divider sx={{ my: 4 }} />
+              <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                Outils & Intégrations
+              </Typography>
+              <Stack spacing={2}>
+                <Paper
+                  onClick={() => navigate('/settings/reports')}
+                  sx={{
+                    p: 3, display: 'flex', alignItems: 'center', gap: 2,
+                    cursor: 'pointer', border: '1px solid', borderColor: 'divider',
+                    borderRadius: 2, transition: 'all 0.2s ease',
+                    '&:hover': { borderColor: 'primary.main', transform: 'translateY(-1px)' }
+                  }}
+                >
+                  <Box sx={{ fontSize: 32, color: 'primary.main', display: 'flex', alignItems: 'center' }}>📧</Box>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight="700">Rapports Périodiques</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Configurez les rapports automatiques par email (hebdomadaire, bi-hebdo, mensuel)
+                    </Typography>
+                  </Box>
+                </Paper>
+                <Paper
+                  onClick={() => navigate('/settings/erpnext-export')}
+                  sx={{
+                    p: 3, display: 'flex', alignItems: 'center', gap: 2,
+                    cursor: 'pointer', border: '1px solid', borderColor: 'warning.light',
+                    borderRadius: 2, transition: 'all 0.2s ease',
+                    '&:hover': { borderColor: 'warning.main', transform: 'translateY(-1px)', bgcolor: '#fffde7' }
+                  }}
+                >
+                  <Box sx={{ fontSize: 32, color: 'warning.main', display: 'flex', alignItems: 'center' }}>📊</Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="subtitle1" fontWeight="700">Export ERPNext — Comptabilité</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Exportez factures, clients, articles, paiements et bons de commande (CSV / Excel / ERPNext natif)
+                    </Typography>
+                  </Box>
+                  <Chip label="Admin" color="warning" size="small" />
+                </Paper>
+              </Stack>
+            </>
           )}
 
           {/* Section Modules */}
@@ -550,6 +593,23 @@ const Settings = () => {
                   <Typography variant="subtitle1" fontWeight="700">Rapports Periodiques</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Configurez les rapports automatiques par email (hebdomadaire, bi-hebdo, mensuel)
+                  </Typography>
+                </Box>
+              </Paper>
+              <Paper
+                onClick={() => navigate('/settings/erpnext-export')}
+                sx={{
+                  p: 3, display: 'flex', alignItems: 'center', gap: 2,
+                  cursor: 'pointer', border: '1px solid', borderColor: 'divider',
+                  borderRadius: 2, transition: 'all 0.2s ease', mt: 2,
+                  '&:hover': { borderColor: 'warning.main', transform: 'translateY(-1px)' }
+                }}
+              >
+                <Box sx={{ fontSize: 32, color: 'warning.main', display: 'flex', alignItems: 'center' }}>📊</Box>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="700">Export ERPNext — Comptabilité</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Exportez factures, clients, articles, paiements et bons de commande au format ERPNext (CSV)
                   </Typography>
                 </Box>
               </Paper>

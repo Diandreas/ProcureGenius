@@ -154,6 +154,16 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         'suppliers': ['supplier', 'supplier_name'],
     }
 
+    COST_FIELDS = ['cost_price', 'margin', 'margin_percent', 'ordering_cost', 'holding_cost_percent']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            if request.user.role not in ('admin', 'manager'):
+                for field in self.COST_FIELDS:
+                    self.fields.pop(field, None)
+
     class Meta:
         model = Product
         fields = [

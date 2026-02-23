@@ -106,6 +106,39 @@ def check_batch_expiry_alerts():
     return "Batch expiry alerts processed"
 
 
+@shared_task(name='analytics.cleanup_stale_consultations')
+def cleanup_stale_consultations():
+    """
+    Supprime automatiquement les consultations en attente (waiting/vitals_pending)
+    depuis plus de 24h. Tourne toutes les heures.
+
+    Une consultation abandonnée = patient enregistré mais jamais vu par un médecin
+    et dont le statut n'a pas évolué depuis >24h.
+    """
+    from apps.consultations.models import Consultation
+    from apps.accounts.models import Organization
+
+    cutoff = timezone.now() - timedelta(hours=24)
+    total_deleted = 0
+
+    for org in Organization.objects.all():
+        stale = Consultation.objects.filter(
+            organization=org,
+            status__in=['waiting', 'vitals_pending'],
+            consultation_date__lte=cutoff,
+        )
+        count = stale.count()
+        if count > 0:
+            stale.delete()
+            total_deleted += count
+            logger.info(
+                f"[cleanup_stale_consultations] {org.name}: "
+                f"{count} consultation(s) abandonnée(s) supprimée(s) (>24h en attente)"
+            )
+
+    return f"Stale consultations cleaned: {total_deleted} deleted"
+
+
 @shared_task(name='analytics.check_predictive_stockout_alerts')
 def check_predictive_stockout_alerts():
     """Check for predicted stockouts and alert. Runs daily 8h30."""

@@ -31,6 +31,11 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=8, minute=30),  # Daily 8h30
         'options': {'queue': 'alerts'},
     },
+    'cleanup-stale-consultations': {
+        'task': 'analytics.cleanup_stale_consultations',
+        'schedule': crontab(minute=0),  # Toutes les heures
+        'options': {'queue': 'alerts'},
+    },
 }
 
 

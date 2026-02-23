@@ -500,18 +500,13 @@ function ProductDetail() {
       {activeTab === 0 && (
         <Box sx={{ px: isMobile ? 2 : 0 }}>
           {expiringBatches.length > 0 && (
-            <Alert 
-              severity={expiredCount > 0 ? "error" : "warning"} 
+            <Alert
+              severity={expiredCount > 0 ? "error" : "warning"}
               sx={{ mb: 3, borderRadius: 2 }}
-              action={
-                <Button color="inherit" size="small" onClick={() => navigate(`/products/${id}/batches`)}>
-                  Gérer
-                </Button>
-              }
             >
-              {expiredCount > 0 
-                ? `${expiredCount} lot(s) périmé(s) détecté(s) !` 
-                : `${expiringBatches.length} lot(s) expirent dans moins de 30 jours.`
+              {expiredCount > 0
+                ? `⚠ ${expiredCount} lot(s) périmé(s) — voir la section "Lots & Péremptions" ci-dessous.`
+                : `${expiringBatches.length} lot(s) expirent dans moins de 30 jours — voir la section "Lots & Péremptions" ci-dessous.`
               }
             </Alert>
           )}
@@ -948,7 +943,7 @@ function ProductDetail() {
                   </Card>
                 </Grid>
 
-                {product.cost_price > 0 && (
+                {product.cost_price != null && product.cost_price > 0 && (
                   <Grid item xs={6}>
                     <Card sx={{
                       borderRadius: isMobile ? 3 : 2,
@@ -1307,6 +1302,71 @@ function ProductDetail() {
                         </Box>
                       )}
                     </Stack>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Lots & Péremptions */}
+              {product.product_type === 'physical' && productBatches.length > 0 && (
+                <Card sx={{
+                  borderRadius: isMobile ? 2.5 : 2,
+                  mb: isMobile ? 1.5 : 3,
+                  boxShadow: isMobile ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.1)',
+                  border: '1px solid',
+                  borderColor: expiringBatches.length > 0 ? (expiredCount > 0 ? 'error.light' : 'warning.light') : 'divider',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3, pb: '12px !important' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ fontSize: isMobile ? '0.938rem' : undefined }}>
+                        Lots & Péremptions
+                      </Typography>
+                      <Button size="small" variant="outlined" onClick={() => navigate(`/products/${id}/batches`)} sx={{ fontSize: '0.72rem' }}>
+                        Gérer
+                      </Button>
+                    </Box>
+                    <Stack spacing={0.75}>
+                      {productBatches
+                        .filter(b => b.status !== 'depleted' && b.quantity_remaining > 0)
+                        .sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date))
+                        .map(batch => {
+                          const daysLeft = dayjs(batch.expiry_date).diff(dayjs(), 'day');
+                          const isExpired = daysLeft < 0;
+                          const isCritical = daysLeft >= 0 && daysLeft <= 30;
+                          const bgColor = isExpired ? 'error.50' : isCritical ? 'warning.50' : 'transparent';
+                          const textColor = isExpired ? 'error.main' : isCritical ? 'warning.main' : 'text.primary';
+                          return (
+                            <Box key={batch.id} sx={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              px: 1, py: 0.75, borderRadius: 1,
+                              bgcolor: theme => isExpired
+                                ? alpha(theme.palette.error.main, 0.08)
+                                : isCritical ? alpha(theme.palette.warning.main, 0.08) : alpha(theme.palette.text.primary, 0.03),
+                              border: '1px solid',
+                              borderColor: isExpired ? 'error.light' : isCritical ? 'warning.light' : 'divider',
+                            }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.68rem' }}>
+                                  {batch.batch_number || batch.lot_number || 'Lot'}
+                                </Typography>
+                                <Typography variant="body2" fontWeight={600} color={textColor} sx={{ fontSize: '0.8rem' }}>
+                                  Péremption : {dayjs(batch.expiry_date).format('MM/YYYY')}
+                                  {isExpired ? ' ⚠ PÉRIMÉ' : isCritical ? ` (${daysLeft}j)` : ''}
+                                </Typography>
+                              </Box>
+                              <Chip
+                                label={`${batch.quantity_remaining} ${product.sell_unit || 'u.'}`}
+                                size="small"
+                                color={isExpired ? 'error' : isCritical ? 'warning' : 'default'}
+                                variant={isExpired || isCritical ? 'filled' : 'outlined'}
+                                sx={{ fontSize: '0.72rem', height: 22 }}
+                              />
+                            </Box>
+                          );
+                        })}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      {productBatches.filter(b => b.quantity_remaining > 0).length} lot(s) actif(s) — Total : {product.stock_quantity} {product.sell_unit || 'u.'}
+                    </Typography>
                   </CardContent>
                 </Card>
               )}

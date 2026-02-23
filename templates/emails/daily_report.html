@@ -28,7 +28,7 @@
             </td>
           </tr>
 
-          <!-- ===== RÉSUMÉ CHIFFRES CLÉS ===== -->
+          <!-- ===== KPIs CLÉS ===== -->
           <tr>
             <td style="padding:15px 40px;">
               <table width="100%" cellpadding="0" cellspacing="0">
@@ -52,16 +52,16 @@
                   <td width="25%" style="padding:8px;">
                     <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#fefce8; border-radius:8px; text-align:center;">
                       <tr><td>
-                        <div style="font-size:28px; font-weight:bold; color:#d97706;">{{ stats.total_invoices }}</div>
-                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Factures</div>
+                        <div style="font-size:28px; font-weight:bold; color:#d97706;">{{ stats.new_patients }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Nv. patients</div>
                       </td></tr>
                     </table>
                   </td>
                   <td width="25%" style="padding:8px;">
                     <table width="100%" cellpadding="12" cellspacing="0" style="background-color:#fdf4ff; border-radius:8px; text-align:center;">
                       <tr><td>
-                        <div style="font-size:28px; font-weight:bold; color:#9333ea;">{{ stats.new_patients }}</div>
-                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Nv. patients</div>
+                        <div style="font-size:28px; font-weight:bold; color:#9333ea;">{{ stats.pharmacy_sales_count }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">Ventes pharma</div>
                       </td></tr>
                     </table>
                   </td>
@@ -70,14 +70,78 @@
             </td>
           </tr>
 
-          <!-- ===== CONSULTATIONS ===== -->
+          <!-- ===== 💰 FINANCES DU JOUR ===== -->
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d1fae5; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#ecfdf5; padding:12px 20px; border-bottom:1px solid #d1fae5;">
+                    <strong style="color:#065f46; font-size:15px;">💰 Finances du jour</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:15px 20px;">
+                    <!-- CA total facturé -->
+                    <table width="100%" cellpadding="8" cellspacing="0" style="margin-bottom:15px;">
+                      <tr>
+                        <td colspan="2" style="padding-bottom:8px; border-bottom:1px solid #e5e7eb;">
+                          <span style="color:#6b7280; font-size:13px;">CA total facturé</span>
+                          <span style="float:right; color:#059669; font-size:20px; font-weight:bold;">{{ stats.total_revenue|floatformat:0 }} FCFA</span>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Ventilation CA par activité -->
+                    <table width="100%" cellpadding="6" cellspacing="0" style="margin-bottom:15px;">
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px;">Consultations</td>
+                        <td align="right" style="color:#374151; font-size:13px; font-weight:bold;">{{ stats.revenue_by_type.consultation|floatformat:0 }} FCFA</td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px; padding-top:6px;">Laboratoire</td>
+                        <td align="right" style="color:#374151; font-size:13px; font-weight:bold; padding-top:6px;">{{ stats.revenue_by_type.lab|floatformat:0 }} FCFA</td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6b7280; font-size:12px; padding-top:6px;">Pharmacie</td>
+                        <td align="right" style="color:#374151; font-size:13px; font-weight:bold; padding-top:6px;">{{ stats.revenue_by_type.pharmacy|floatformat:0 }} FCFA</td>
+                      </tr>
+                    </table>
+
+                    <!-- Encaissements réels -->
+                    <table width="100%" cellpadding="8" cellspacing="0" style="background-color:#f0fdf4; border-radius:6px; padding:10px;">
+                      <tr>
+                        <td colspan="2" style="padding-bottom:8px; border-bottom:1px solid #bbf7d0;">
+                          <span style="color:#166534; font-size:13px; font-weight:bold;">Encaissements réels</span>
+                          <span style="float:right; color:#16a34a; font-size:18px; font-weight:bold;">{{ stats.total_collections|floatformat:0 }} FCFA</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color:#166534; font-size:12px; padding-top:8px;">Espèces (Cash)</td>
+                        <td align="right" style="color:#16a34a; font-size:14px; font-weight:bold; padding-top:8px;">{{ stats.cash_collections|floatformat:0 }} FCFA</td>
+                      </tr>
+                      {% if stats.mobile_money_collections > 0 %}
+                      <tr>
+                        <td style="color:#166534; font-size:12px; padding-top:6px;">Mobile Money</td>
+                        <td align="right" style="color:#16a34a; font-size:14px; font-weight:bold; padding-top:6px;">{{ stats.mobile_money_collections|floatformat:0 }} FCFA</td>
+                      </tr>
+                      {% endif %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ===== 🏥 ACTIVITÉ MÉDICALE ===== -->
+          
+          <!-- Consultations -->
           {% if consultations %}
           <tr>
             <td style="padding:15px 40px 5px;">
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d1fae5; border-radius:8px; overflow:hidden;">
                 <tr>
                   <td style="background-color:#ecfdf5; padding:12px 20px; border-bottom:1px solid #d1fae5;">
-                    <strong style="color:#065f46; font-size:15px;">Consultations ({{ stats.total_consultations }})</strong>
+                    <strong style="color:#065f46; font-size:15px;">🏥 Consultations ({{ stats.total_consultations }})</strong>
                     {% if stats.consultations_completed %}
                     <span style="float:right; font-size:12px; color:#059669;">{{ stats.consultations_completed }} terminée(s)</span>
                     {% endif %}
@@ -125,14 +189,14 @@
           </tr>
           {% endif %}
 
-          <!-- ===== EXAMENS DE LABORATOIRE ===== -->
+          <!-- Examens de laboratoire -->
           {% if lab_orders %}
           <tr>
             <td style="padding:15px 40px 5px;">
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dbeafe; border-radius:8px; overflow:hidden;">
                 <tr>
                   <td style="background-color:#eff6ff; padding:12px 20px; border-bottom:1px solid #dbeafe;">
-                    <strong style="color:#1e40af; font-size:15px;">Examens de Laboratoire ({{ stats.total_lab_orders }})</strong>
+                    <strong style="color:#1e40af; font-size:15px;">🔬 Examens de Laboratoire ({{ stats.total_lab_orders }})</strong>
                     {% if stats.lab_completed %}
                     <span style="float:right; font-size:12px; color:#2563eb;">{{ stats.lab_completed }} terminé(s)</span>
                     {% endif %}
@@ -180,63 +244,14 @@
           </tr>
           {% endif %}
 
-          <!-- ===== FACTURATION ===== -->
-          {% if invoices_summary %}
-          <tr>
-            <td style="padding:15px 40px 5px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fde68a; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="background-color:#fffbeb; padding:12px 20px; border-bottom:1px solid #fde68a;">
-                    <strong style="color:#92400e; font-size:15px;">Facturation ({{ stats.total_invoices }} facture(s))</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:15px 20px;">
-                    <table width="100%" cellpadding="8" cellspacing="0">
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px;">Total facturé</td>
-                        <td align="right" style="color:#d97706; font-size:20px; font-weight:bold;">{{ stats.total_revenue|floatformat:0 }} FCFA</td>
-                      </tr>
-                      {% if stats.revenue_paid %}
-                      <tr>
-                        <td style="color:#6b7280; font-size:13px; border-top:1px solid #f3f4f6;">Dont encaissé</td>
-                        <td align="right" style="color:#059669; font-size:16px; font-weight:bold; border-top:1px solid #f3f4f6;">{{ stats.revenue_paid|floatformat:0 }} FCFA</td>
-                      </tr>
-                      {% endif %}
-                      {% if invoices_summary.consultation_count %}
-                      <tr>
-                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Consultations</td>
-                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.consultation_count }}</td>
-                      </tr>
-                      {% endif %}
-                      {% if invoices_summary.lab_count %}
-                      <tr>
-                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Examens labo</td>
-                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.lab_count }}</td>
-                      </tr>
-                      {% endif %}
-                      {% if invoices_summary.pharmacy_count %}
-                      <tr>
-                        <td style="color:#6b7280; font-size:12px; border-top:1px solid #f3f4f6; padding-top:6px;">Pharmacie</td>
-                        <td align="right" style="color:#374151; font-size:13px; border-top:1px solid #f3f4f6; padding-top:6px;">{{ invoices_summary.pharmacy_count }}</td>
-                      </tr>
-                      {% endif %}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endif %}
-
-          <!-- ===== NOUVEAUX PATIENTS ===== -->
+          <!-- Nouveaux patients -->
           {% if new_patients %}
           <tr>
             <td style="padding:15px 40px 5px;">
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e9d5ff; border-radius:8px; overflow:hidden;">
                 <tr>
                   <td style="background-color:#fdf4ff; padding:12px 20px; border-bottom:1px solid #e9d5ff;">
-                    <strong style="color:#6b21a8; font-size:15px;">Nouveaux patients enregistrés ({{ stats.new_patients }})</strong>
+                    <strong style="color:#6b21a8; font-size:15px;">👥 Nouveaux patients ({{ stats.new_patients }})</strong>
                   </td>
                 </tr>
                 <tr>
@@ -259,7 +274,151 @@
           </tr>
           {% endif %}
 
-          <!-- ===== ORDONNANCES ===== -->
+          <!-- ===== 💊 PHARMACIE ===== -->
+          {% if dispensings %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fef3c7; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fffbeb; padding:12px 20px; border-bottom:1px solid #fef3c7;">
+                    <strong style="color:#92400e; font-size:15px;">💊 Pharmacie ({{ stats.pharmacy_sales_count }} ventes)</strong>
+                    <span style="float:right; font-size:12px; color:#d97706;">CA: {{ stats.pharmacy_revenue|floatformat:0 }} FCFA</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151;">N° Dispensation</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151;">Patient</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Items</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:right;">Montant</td>
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151; text-align:center;">Statut</td>
+                      </tr>
+                      {% for d in dispensings %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#6b7280; font-size:11px;">{{ d.dispensing_number }}</td>
+                        <td style="padding:8px 10px; color:#111827;">
+                          {% if d.patient %}{{ d.patient.name }}{% else %}<em>Vente comptoir</em>{% endif %}
+                        </td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">{{ d.items_count }}</td>
+                        <td style="padding:8px 10px; color:#111827; text-align:right; font-weight:bold;">{{ d.total_amount|floatformat:0 }}</td>
+                        <td style="padding:8px 20px; text-align:center;">
+                          <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;
+                            {% if d.status == 'dispensed' %}background-color:#d1fae5; color:#065f46;
+                            {% elif d.status == 'partial' %}background-color:#fef3c7; color:#92400e;
+                            {% else %}background-color:#f3f4f6; color:#374151;{% endif %}">
+                            {% if d.status == 'dispensed' %}Dispensé
+                            {% elif d.status == 'partial' %}Partiel
+                            {% elif d.status == 'pending' %}En attente
+                            {% elif d.status == 'cancelled' %}Annulé
+                            {% else %}{{ d.status }}{% endif %}
+                          </span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- ===== 📦 STOCK ===== -->
+          {% if out_of_stock or low_stock %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fecaca; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #fecaca;">
+                    <strong style="color:#991b1b; font-size:15px;">📦 Alerte Stock</strong>
+                    {% if stats.out_of_stock_count %}
+                    <span style="float:right; font-size:12px; color:#dc2626;">{{ stats.out_of_stock_count }} rupture(s)</span>
+                    {% endif %}
+                    {% if stats.low_stock_count %}
+                    <span style="float:right; font-size:12px; color:#d97706; margin-right:15px;">{{ stats.low_stock_count }} stock(s) bas</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151;">Produit</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Stock</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Seuil</td>
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151; text-align:center;">État</td>
+                      </tr>
+                      {% for p in out_of_stock %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#111827;">{{ p.name }}</td>
+                        <td style="padding:8px 10px; color:#dc2626; font-weight:bold; text-align:center;">0</td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">{{ p.low_stock_threshold }}</td>
+                        <td style="padding:8px 20px; text-align:center;">
+                          <span style="display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:bold; background-color:#fee2e2; color:#991b1b;">Rupture</span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                      {% for p in low_stock %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#111827;">{{ p.name }}</td>
+                        <td style="padding:8px 10px; color:#d97706; font-weight:bold; text-align:center;">{{ p.stock_quantity }}</td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">{{ p.low_stock_threshold }}</td>
+                        <td style="padding:8px 20px; text-align:center;">
+                          <span style="display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:bold; background-color:#fef3c7; color:#92400e;">Stock bas</span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Pertes de stock du jour -->
+          {% if stock_losses %}
+          <tr>
+            <td style="padding:15px 40px 5px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fee2e2; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#fef2f2; padding:12px 20px; border-bottom:1px solid #fee2e2;">
+                    <strong style="color:#991b1b; font-size:15px;">⚠️ Pertes de stock du jour</strong>
+                    <span style="float:right; font-size:12px; color:#dc2626;">{{ stats.stock_losses_count }} perte(s) - {{ stats.total_loss_value|floatformat:0 }} FCFA</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                      <tr style="background-color:#f9fafb;">
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151;">Produit</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Quantité</td>
+                        <td style="padding:8px 10px; font-weight:bold; color:#374151; text-align:center;">Raison</td>
+                        <td style="padding:8px 20px; font-weight:bold; color:#374151; text-align:right;">Valeur</td>
+                      </tr>
+                      {% for loss in stock_losses %}
+                      <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:8px 20px; color:#111827;">{{ loss.product.name }}</td>
+                        <td style="padding:8px 10px; color:#dc2626; font-weight:bold; text-align:center;">{{ loss.quantity_abs }}</td>
+                        <td style="padding:8px 10px; color:#6b7280; text-align:center;">
+                          {% if loss.loss_reason %}{{ loss.get_loss_reason_display }}{% else %}—{% endif %}
+                        </td>
+                        <td style="padding:8px 20px; color:#dc2626; font-weight:bold; text-align:right;">
+                          {% if loss.loss_value %}{{ loss.loss_value|floatformat:0 }} FCFA{% else %}—{% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Ordonnances summary -->
           {% if stats.total_prescriptions %}
           <tr>
             <td style="padding:15px 40px 5px;">
@@ -277,7 +436,7 @@
           {% endif %}
 
           <!-- Message si aucune activité -->
-          {% if not consultations and not lab_orders and not stats.total_invoices and not new_patients %}
+          {% if not consultations and not lab_orders and not stats.total_invoices and not new_patients and not dispensings %}
           <tr>
             <td style="padding:30px 40px; text-align:center;">
               <p style="color:#9ca3af; font-size:15px; margin:0;">Aucune activité enregistrée pour cette journée.</p>

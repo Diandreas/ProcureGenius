@@ -77,6 +77,8 @@ class Command(BaseCommand):
         self.stdout.write(f"  Factures         : {stats['total_invoices']}")
         self.stdout.write(f"  Nouveaux patients: {stats['new_patients']}")
         self.stdout.write(f"  Total facturé    : {stats['total_revenue']:,.0f} FCFA")
+        self.stdout.write(f"  Rupture de stock : {stats['out_of_stock_count']} produit(s)")
+        self.stdout.write(f"  Stock bas        : {stats['low_stock_count']} produit(s)")
 
         if options['dry_run']:
             self.stdout.write(self.style.WARNING("\nMode dry-run : email non envoyé."))
@@ -99,8 +101,10 @@ class Command(BaseCommand):
         """Collecte toutes les données pour le rapport de la journée."""
         from apps.consultations.models import Consultation
         from apps.laboratory.models import LabOrder
-        from apps.invoicing.models import Invoice
+        from apps.invoicing.models import Invoice, Payment, Product, StockMovement
         from apps.accounts.models import Client
+        from apps.pharmacy.models import PharmacyDispensing
+        from django.db import models
 
         # --- Consultations ---
         consultations = Consultation.objects.filter(
@@ -135,12 +139,52 @@ class Command(BaseCommand):
             'pharmacy_count': invoices.filter(invoice_type='healthcare_pharmacy').count(),
         }
 
+        # --- Encaissements du jour (par méthode de paiement) ---
+        # Payment is linked to Invoice, which has organization
+        payments = Payment.objects.filter(
+            invoice__organization=org,
+            payment_date=report_date,
+            status='success'
+        )
+        
+        total_collections = payments.aggregate(total=Sum('amount'))['total'] or 0
+        cash_collections = payments.filter(payment_method='cash').aggregate(total=Sum('amount'))['total'] or 0
+        mobile_money_collections = payments.filter(
+            payment_method__in=['paypal', 'other']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Try to detect mobile money from reference/transaction fields
+        mobile_payments = payments.filter(
+            Q(reference_number__icontains='mobile') | 
+            Q(reference_number__icontains='momo') |
+            Q(reference_number__icontains='orange') |
+            Q(reference_number__icontains='mtn') |
+            Q(transaction_id__icontains='mobile') |
+            Q(transaction_id__icontains='momo')
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        if mobile_payments > mobile_money_collections:
+            mobile_money_collections = mobile_payments
+
+        # --- CA par type d'activité ---
+        revenue_by_type = {
+            'consultation': invoices.filter(
+                invoice_type='healthcare_consultation'
+            ).aggregate(total=Sum('total_amount'))['total'] or 0,
+            'lab': invoices.filter(
+                invoice_type='healthcare_laboratory'
+            ).aggregate(total=Sum('total_amount'))['total'] or 0,
+            'pharmacy': invoices.filter(
+                invoice_type='healthcare_pharmacy'
+            ).aggregate(total=Sum('total_amount'))['total'] or 0,
+        }
+
         # --- Ordonnances ---
         try:
             from apps.consultations.models import Prescription
             total_prescriptions = Prescription.objects.filter(
                 organization=org,
-                prescribed_date=report_date
+                prescribed_date__date=report_date
             ).count()
         except Exception:
             total_prescriptions = 0
@@ -152,6 +196,42 @@ class Command(BaseCommand):
             created_at__date=report_date
         ).order_by('name')
 
+        # --- Pharmacie : Ventes du jour ---
+        dispensings = PharmacyDispensing.objects.filter(
+            organization=org,
+            dispensed_at__date=report_date,
+            status__in=['dispensed', 'partial']
+        ).select_related('patient').prefetch_related('items').order_by('dispensed_at')
+        
+        pharmacy_sales_count = dispensings.count()
+        pharmacy_revenue = sum(d.total_amount for d in dispensings)
+        otc_sales = dispensings.filter(patient__isnull=True).count()
+
+        # --- Stock critique ---
+        low_stock_products = Product.objects.filter(
+            organization=org,
+            product_type='physical',
+            is_active=True,
+            stock_quantity__lte=models.F('low_stock_threshold')
+        ).order_by('stock_quantity')
+
+        out_of_stock = [p for p in low_stock_products if p.stock_quantity == 0]
+        low_stock = [p for p in low_stock_products if p.stock_quantity > 0]
+
+        # --- Pertes de stock du jour ---
+        # StockMovement is linked to Product, which has organization
+        stock_losses = StockMovement.objects.filter(
+            product__organization=org,
+            movement_type='loss',
+            created_at__date=report_date
+        ).select_related('product').order_by('-created_at')
+        
+        total_loss_value = stock_losses.aggregate(total=Sum('loss_value'))['total'] or 0
+        
+        # Add absolute quantity for display
+        for loss in stock_losses:
+            loss.quantity_abs = abs(loss.quantity)
+
         stats = {
             'total_consultations': consultations.count(),
             'consultations_completed': consultations_completed,
@@ -162,6 +242,18 @@ class Command(BaseCommand):
             'revenue_paid': float(revenue_paid),
             'new_patients': new_patients.count(),
             'total_prescriptions': total_prescriptions,
+            'out_of_stock_count': len(out_of_stock),
+            'low_stock_count': len(low_stock),
+            # New stats
+            'total_collections': float(total_collections),
+            'cash_collections': float(cash_collections),
+            'mobile_money_collections': float(mobile_money_collections),
+            'revenue_by_type': {k: float(v) for k, v in revenue_by_type.items()},
+            'pharmacy_sales_count': pharmacy_sales_count,
+            'pharmacy_revenue': float(pharmacy_revenue),
+            'otc_sales': otc_sales,
+            'total_loss_value': float(total_loss_value),
+            'stock_losses_count': stock_losses.count(),
         }
 
         return {
@@ -172,6 +264,10 @@ class Command(BaseCommand):
             'lab_orders': list(lab_orders),
             'invoices_summary': invoices_summary,
             'new_patients': list(new_patients),
+            'out_of_stock': out_of_stock,
+            'low_stock': low_stock,
+            'dispensings': list(dispensings),
+            'stock_losses': list(stock_losses),
         }
 
     def _get_recipients(self, org, email_override):
@@ -181,7 +277,7 @@ class Command(BaseCommand):
 
         # Admins actifs de l'organisation
         recipients = list(
-            org.members.filter(
+            org.users.filter(
                 is_active=True,
                 role__in=['admin', 'manager', 'doctor']
             ).exclude(email='').values_list('email', flat=True)
@@ -190,7 +286,7 @@ class Command(BaseCommand):
         # Fallback : tous les membres actifs avec email
         if not recipients:
             recipients = list(
-                org.members.filter(is_active=True).exclude(email='').values_list('email', flat=True)[:5]
+                org.users.filter(is_active=True).exclude(email='').values_list('email', flat=True)[:5]
             )
 
         return recipients
