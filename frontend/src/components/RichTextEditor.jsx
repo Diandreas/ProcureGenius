@@ -128,8 +128,6 @@ const RichTextEditor = ({
                 data-placeholder={placeholder}
                 sx={{
                     minHeight,
-                    maxHeight: minHeight < 150 ? 220 : undefined,
-                    overflowY: 'auto',
                     p: 1,
                     outline: 'none',
                     fontSize: '0.875rem',

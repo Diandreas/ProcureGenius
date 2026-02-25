@@ -957,13 +957,32 @@ const LabOrderDetail = () => {
                                 <TableCell>{item.category_name}</TableCell>
                                 <TableCell>
                                     {canEdit ? (
-                                        <RichTextEditor
-                                            value={results[item.id]?.result_value || ''}
-                                            onChange={(val) => handleResultChange(item.id, 'result_value', val)}
-                                            placeholder="Entrer valeur"
-                                            minHeight={60}
-                                            onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
-                                        />
+                                        <Box>
+                                            <RichTextEditor
+                                                value={results[item.id]?.result_value || ''}
+                                                onChange={(val) => handleResultChange(item.id, 'result_value', val)}
+                                                placeholder="Entrer valeur"
+                                                minHeight={60}
+                                                onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
+                                            />
+                                            {item.result_template && (
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    color="secondary"
+                                                    sx={{ mt: 0.5, fontSize: '0.7rem', py: 0.3 }}
+                                                    onClick={() => {
+                                                        const html = item.result_template
+                                                            .split('\n')
+                                                            .map(line => `<p>${line.trim() || '<br>'}</p>`)
+                                                            .join('');
+                                                        handleResultChange(item.id, 'result_value', html);
+                                                    }}
+                                                >
+                                                    Pré-remplir
+                                                </Button>
+                                            )}
+                                        </Box>
                                     ) : (
                                         <Typography
                                             fontWeight="bold"
@@ -974,9 +993,16 @@ const LabOrderDetail = () => {
                                     )}
                                 </TableCell>
                                 <TableCell>{item.result_unit || item.unit || '-'}</TableCell>
-                                <TableCell>
-                                    {/* Simplified range display, ideally conditional on gender */}
-                                    {item.reference_range || item.normal_range || '-'}
+                                <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'top', maxWidth: 180 }}>
+                                    {(() => {
+                                        const gender = order.patient_gender;
+                                        if (gender === 'M') {
+                                            return item.normal_range_male || item.normal_range_general || '-';
+                                        } else if (gender === 'F') {
+                                            return item.normal_range_female || item.normal_range_general || '-';
+                                        }
+                                        return item.normal_range_general || item.normal_range_male || '-';
+                                    })()}
                                 </TableCell>
                                 <TableCell>
                                     {canEdit ? (

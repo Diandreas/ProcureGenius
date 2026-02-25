@@ -126,6 +126,15 @@ const patientAPI = {
     deleteFollowUp: async (followUpId) => {
         await api.delete(`/healthcare/patients/follow-ups/${followUpId}/`);
     },
+
+    updateCareService: async (careId, data) => {
+        const response = await api.patch(`/healthcare/patients/care-services/${careId}/`, data);
+        return response.data;
+    },
+
+    deleteCareService: async (careId) => {
+        await api.delete(`/healthcare/patients/care-services/${careId}/`);
+    },
 };
 
 export default patientAPI;

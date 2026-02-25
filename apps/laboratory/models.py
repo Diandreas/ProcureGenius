@@ -131,28 +131,29 @@ class LabTest(models.Model):
     )
     
     # Reference ranges (can vary by gender/age)
-    normal_range_male = models.CharField(
-        max_length=200,
+    normal_range_male = models.TextField(
         blank=True,
         verbose_name=_("Valeurs normales (Homme)"),
         help_text=_("Ex: 4.5-5.5 x10^6/µL")
     )
-    normal_range_female = models.CharField(
-        max_length=200,
+    normal_range_female = models.TextField(
         blank=True,
         verbose_name=_("Valeurs normales (Femme)"),
         help_text=_("Ex: 4.0-5.0 x10^6/µL")
     )
-    normal_range_child = models.CharField(
-        max_length=200,
+    normal_range_child = models.TextField(
         blank=True,
         verbose_name=_("Valeurs normales (Enfant)")
     )
-    normal_range_general = models.CharField(
-        max_length=200,
+    normal_range_general = models.TextField(
         blank=True,
         verbose_name=_("Valeurs normales (Général)"),
         help_text=_("Si pas de distinction par genre/âge")
+    )
+    result_template = models.TextField(
+        blank=True,
+        verbose_name=_("Gabarit de saisie des résultats"),
+        help_text=_("Pré-rempli dans le formulaire de saisie pour guider le technicien")
     )
     unit_of_measurement = models.CharField(
         max_length=50,

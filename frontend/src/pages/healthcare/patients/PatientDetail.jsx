@@ -15,7 +15,10 @@ import {
     TrackChanges as FollowUpIcon,
     ExpandMore as ExpandMoreIcon,
     FiberManualRecord as DotIcon,
+    Delete as DeleteIcon,
+    MenuBook as JournalIcon,
 } from '@mui/icons-material';
+import { IconButton, Tooltip } from '@mui/material';
 import { Accordion, AccordionSummary, AccordionDetails, Table, TableBody, TableCell, TableRow, Paper } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +29,7 @@ import MedicalSummaryTab from './components/MedicalSummaryTab';
 import PatientTimeline from './components/PatientTimeline';
 import AdministerCareModal from './components/AdministerCareModal';
 import PatientFollowUpModal from './components/PatientFollowUpModal';
+import PatientJournalTab from './components/PatientJournalTab';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 
@@ -49,6 +53,7 @@ const PatientDetail = () => {
     // Follow-up Modal & data
     const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
     const [followUps, setFollowUps] = useState([]);
+    const [editingFollowUp, setEditingFollowUp] = useState(null); // { id, ...data } pour édition
 
     useEffect(() => {
         fetchData();
@@ -61,6 +66,27 @@ const PatientDetail = () => {
             setFollowUps(Array.isArray(data) ? data : data.results || []);
         } catch (e) {
             console.error('Error fetching follow-ups', e);
+        }
+    };
+
+    const canEditOrDelete = (createdAt) => {
+        if (!createdAt) return false;
+        return (Date.now() - new Date(createdAt).getTime()) < 30 * 60 * 1000;
+    };
+
+    const handleEditFollowUp = (fu) => {
+        setEditingFollowUp(fu);
+        setFollowUpModalOpen(true);
+    };
+
+    const handleDeleteFollowUp = async (fu) => {
+        if (!window.confirm('Supprimer ce suivi ?')) return;
+        try {
+            await patientAPI.deleteFollowUp(fu.id);
+            setFollowUps(prev => prev.filter(f => f.id !== fu.id));
+        } catch (err) {
+            const msg = err.response?.data?.detail || 'Erreur lors de la suppression';
+            alert(msg);
         }
     };
 
@@ -287,6 +313,7 @@ const PatientDetail = () => {
                         scrollButtons="auto"
                     >
                         <SafeTab icon={<SummaryIcon />} iconPosition="start" label="Résumé Médical" />
+                        <SafeTab icon={<JournalIcon />} iconPosition="start" label="Carnet de Suivi" />
                         <SafeTab icon={<TimelineIcon />} iconPosition="start" label="Timeline" />
                         <SafeTab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
                         <SafeTab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
@@ -299,14 +326,19 @@ const PatientDetail = () => {
                     {tabValue === 0 && <MedicalSummaryTab patientId={id} patient={patient} />}
                 </Box>
 
-                {/* Tab 1: Timeline */}
+                {/* Tab 1: Carnet de Suivi (follow-ups + soins par jour) */}
                 <Box role="tabpanel" hidden={tabValue !== 1} sx={{ p: 3 }}>
-                    {tabValue === 1 && <PatientTimeline patientId={id} />}
+                    {tabValue === 1 && <PatientJournalTab patientId={id} patientName={patient?.name} />}
                 </Box>
 
-                {/* Tab 2: Consultations - Carnet Médical */}
+                {/* Tab 2: Timeline */}
                 <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
-                    {tabValue === 2 && (
+                    {tabValue === 2 && <PatientTimeline patientId={id} />}
+                </Box>
+
+                {/* Tab 3: Consultations - Carnet Médical */}
+                <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
+                    {tabValue === 3 && (
                         <Box>
                             {history?.consultations && history.consultations.length > 0 ? (
                                 history.consultations.map((consult) => (
@@ -440,14 +472,14 @@ const PatientDetail = () => {
                     )}
                 </Box>
 
-                {/* Tab 3: Lab Orders */}
-                <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
-                    {tabValue === 3 && <LabOrderHistory labOrders={history?.lab_orders} />}
+                {/* Tab 4: Lab Orders */}
+                <Box role="tabpanel" hidden={tabValue !== 4} sx={{ p: 3 }}>
+                    {tabValue === 4 && <LabOrderHistory labOrders={history?.lab_orders} />}
                 </Box>
 
-                {/* Tab 4: Pharmacy Dispensings */}
-                <Box role="tabpanel" hidden={tabValue !== 4} sx={{ p: 3 }}>
-                    {tabValue === 4 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
+                {/* Tab 5: Pharmacy Dispensings */}
+                <Box role="tabpanel" hidden={tabValue !== 5} sx={{ p: 3 }}>
+                    {tabValue === 5 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
                 </Box>
 
             </Card>
@@ -488,13 +520,29 @@ const PatientDetail = () => {
                                 variant="outlined"
                                 sx={{ m: 2, p: 2, borderLeft: 4, borderColor: 'secondary.main' }}
                             >
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                     <Typography variant="subtitle2" fontWeight={700}>
                                         {formatDate(fu.follow_up_date)}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        {fu.provided_by_name || '—'}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {fu.provided_by_name || '—'}
+                                        </Typography>
+                                        {canEditOrDelete(fu.created_at) && (
+                                            <>
+                                                <Tooltip title="Modifier (dans les 30 min)">
+                                                    <IconButton size="small" color="primary" onClick={() => handleEditFollowUp(fu)}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Supprimer (dans les 30 min)">
+                                                    <IconButton size="small" color="error" onClick={() => handleDeleteFollowUp(fu)}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </>
+                                        )}
+                                    </Box>
                                 </Box>
 
                                 {/* Vitaux résumés */}
@@ -527,10 +575,19 @@ const PatientDetail = () => {
 
             <PatientFollowUpModal
                 open={followUpModalOpen}
-                onClose={() => setFollowUpModalOpen(false)}
+                onClose={() => { setFollowUpModalOpen(false); setEditingFollowUp(null); }}
                 patientId={id}
                 patientName={patient?.name}
-                onSaved={(fu) => setFollowUps(prev => [fu, ...prev])}
+                followUpId={editingFollowUp?.id || null}
+                initialData={editingFollowUp}
+                onSaved={(fu) => {
+                    if (editingFollowUp) {
+                        setFollowUps(prev => prev.map(f => f.id === fu.id ? fu : f));
+                    } else {
+                        setFollowUps(prev => [fu, ...prev]);
+                    }
+                    setEditingFollowUp(null);
+                }}
             />
         </Box>
     );

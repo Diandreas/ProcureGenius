@@ -1,0 +1,168 @@
+{% extends 'pdf_base.html' %}
+{% load i18n %}
+
+{% block title %}Catalogue des Valeurs de Référence{% endblock %}
+
+{% block extra_css %}
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 15mm 12mm 15mm 12mm;
+    }
+
+    .catalog-title {
+        font-size: 16pt;
+        font-weight: 800;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #1e3a5f;
+        margin-bottom: 4px;
+    }
+    .catalog-subtitle {
+        text-align: center;
+        font-size: 9pt;
+        color: #6b7280;
+        margin-bottom: 12px;
+    }
+
+    .category-header {
+        background-color: #1e3a5f;
+        color: white;
+        font-weight: 800;
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 5px 8px;
+        margin-top: 10px;
+        margin-bottom: 0;
+    }
+
+    table.ref-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 7.5pt;
+        margin-bottom: 0;
+    }
+    table.ref-table th {
+        background-color: #e5e7eb;
+        color: #374151;
+        font-weight: 700;
+        font-size: 7pt;
+        text-transform: uppercase;
+        padding: 4px 6px;
+        border: 1px solid #d1d5db;
+        text-align: left;
+    }
+    table.ref-table td {
+        padding: 4px 6px;
+        border: 1px solid #e5e7eb;
+        vertical-align: top;
+        line-height: 1.5;
+    }
+    table.ref-table tr:nth-child(even) td {
+        background-color: #f9fafb;
+    }
+    .test-name {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 8pt;
+    }
+    .test-code {
+        font-size: 6.5pt;
+        color: #9ca3af;
+        display: block;
+    }
+    .ref-val {
+        white-space: pre-line;
+        font-size: 7pt;
+        color: #374151;
+        line-height: 1.6;
+    }
+    .ref-val-empty {
+        color: #9ca3af;
+        font-style: italic;
+        font-size: 7pt;
+    }
+    .unit-cell {
+        color: #6b7280;
+        font-size: 7pt;
+        white-space: nowrap;
+    }
+    .page-break-before {
+        page-break-before: always;
+    }
+    .footer-note {
+        margin-top: 15px;
+        padding: 8px;
+        background-color: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 4px;
+        font-size: 7pt;
+        color: #92400e;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-title">Valeurs de Référence du Laboratoire</div>
+<div class="catalog-subtitle">
+    Document de référence interne — Édité le {% now "d/m/Y" %}
+    {% if organization %} — {{ organization.company_name }}{% endif %}
+</div>
+
+{% regroup tests by category as category_list %}
+
+{% for category_group in category_list %}
+<div class="category-header">
+    {% if category_group.grouper %}{{ category_group.grouper.name }}{% else %}Autres Examens{% endif %}
+</div>
+<table class="ref-table">
+    <thead>
+        <tr>
+            <th style="width: 22%">Examen</th>
+            <th style="width: 8%">Unité</th>
+            <th style="width: 35%">Valeurs Normales Homme / Général</th>
+            <th style="width: 35%">Valeurs Normales Femme</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for test in category_group.list %}
+        <tr>
+            <td>
+                <span class="test-name">{{ test.name }}</span>
+                <span class="test-code">{{ test.test_code }}</span>
+            </td>
+            <td class="unit-cell">{{ test.unit_of_measurement|default:"—" }}</td>
+            <td>
+                {% if test.normal_range_male %}
+                    <span class="ref-val">{{ test.normal_range_male }}</span>
+                {% elif test.normal_range_general %}
+                    <span class="ref-val">{{ test.normal_range_general }}</span>
+                {% else %}
+                    <span class="ref-val-empty">Voir résultat</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if test.normal_range_female %}
+                    <span class="ref-val">{{ test.normal_range_female }}</span>
+                {% elif test.normal_range_general %}
+                    <span class="ref-val">{{ test.normal_range_general }}</span>
+                {% else %}
+                    <span class="ref-val-empty">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% empty %}
+<p style="color: #6b7280; text-align: center; padding: 20px;">Aucun examen disponible.</p>
+{% endfor %}
+
+<div class="footer-note">
+    Ce document est à usage interne uniquement. Les valeurs de référence peuvent varier selon l'âge, l'état physiologique et la méthode analytique utilisée.
+    Toujours interpréter les résultats en contexte clinique.
+</div>
+{% endblock %}

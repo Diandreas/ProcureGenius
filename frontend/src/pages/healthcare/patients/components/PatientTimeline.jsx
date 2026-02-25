@@ -8,7 +8,8 @@ import {
     Button,
     CircularProgress,
     Collapse,
-    IconButton
+    IconButton,
+    Tooltip,
 } from '@mui/material';
 import {
     MedicalServices as ConsultIcon,
@@ -17,11 +18,19 @@ import {
     HealthAndSafety as CareIcon,
     ExpandMore as ExpandMoreIcon,
     ExpandLess as ExpandLessIcon,
-    ArrowForward as ArrowIcon
+    ArrowForward as ArrowIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import patientAPI from '../../../../services/patientAPI';
 import { formatDate, formatTime } from '../../../../utils/formatters';
+import AdministerCareModal from './AdministerCareModal';
+
+const canEditOrDelete = (createdAt) => {
+    if (!createdAt) return false;
+    return (Date.now() - new Date(createdAt).getTime()) < 30 * 60 * 1000;
+};
 
 const typeConfig = {
     consultation: { icon: <ConsultIcon fontSize="small" />, color: '#2563eb', label: 'Consultation' },
@@ -41,10 +50,11 @@ const statusColors = {
     sample_collected: 'info',
 };
 
-const TimelineEvent = ({ event }) => {
+const TimelineEvent = ({ event, onEdit, onDelete }) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
     const config = typeConfig[event.type] || typeConfig.care;
+    const editable = event.type === 'care' && canEditOrDelete(event.created_at);
 
     return (
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -77,14 +87,30 @@ const TimelineEvent = ({ event }) => {
                                 <Typography variant="caption" color="text.secondary">Par: {event.provider}</Typography>
                             )}
                         </Box>
-                        <Box sx={{ textAlign: 'right', minWidth: 80 }}>
-                            <Typography variant="caption" color="text.secondary">
-                                {event.date ? formatDate(event.date) : ''}
-                            </Typography>
-                            <br />
-                            <Typography variant="caption" color="text.secondary">
-                                {event.date ? formatTime(event.date) : ''}
-                            </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+                            {editable && (
+                                <>
+                                    <Tooltip title="Modifier">
+                                        <IconButton size="small" color="primary" onClick={() => onEdit?.(event)}>
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Supprimer">
+                                        <IconButton size="small" color="error" onClick={() => onDelete?.(event)}>
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            )}
+                            <Box sx={{ textAlign: 'right', minWidth: 80 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                    {event.date ? formatDate(event.date) : ''}
+                                </Typography>
+                                <br />
+                                <Typography variant="caption" color="text.secondary">
+                                    {event.date ? formatTime(event.date) : ''}
+                                </Typography>
+                            </Box>
                         </Box>
                     </Box>
 
@@ -133,6 +159,10 @@ const PatientTimeline = ({ patientId }) => {
     const [hasNext, setHasNext] = useState(false);
     const [filterType, setFilterType] = useState('all');
 
+    // Care edit modal
+    const [careModal, setCareModal] = useState(false);
+    const [editingCare, setEditingCare] = useState(null);
+
     const fetchTimeline = useCallback(async (pageNum = 1, append = false) => {
         setLoading(true);
         try {
@@ -160,6 +190,28 @@ const PatientTimeline = ({ patientId }) => {
 
     const handleLoadMore = () => {
         fetchTimeline(page + 1, true);
+    };
+
+    const handleEditCare = (event) => {
+        setEditingCare({
+            id: event.id,
+            service_type: event.service_type,
+            service_name: event.title,
+            notes: event.notes,
+            quantity: event.quantity || 1,
+        });
+        setCareModal(true);
+    };
+
+    const handleDeleteCare = async (event) => {
+        if (!window.confirm(`Supprimer le soin "${event.title}" ?`)) return;
+        try {
+            await patientAPI.deleteCareService(event.id);
+            setEvents(prev => prev.filter(e => !(e.type === 'care' && e.id === event.id)));
+            setTotal(prev => prev - 1);
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Erreur lors de la suppression');
+        }
     };
 
     const filterOptions = [
@@ -200,7 +252,12 @@ const PatientTimeline = ({ patientId }) => {
             ) : (
                 <>
                     {events.map((event) => (
-                        <TimelineEvent key={`${event.type}-${event.id}`} event={event} />
+                        <TimelineEvent
+                            key={`${event.type}-${event.id}`}
+                            event={event}
+                            onEdit={handleEditCare}
+                            onDelete={handleDeleteCare}
+                        />
                     ))}
 
                     {hasNext && (
@@ -212,6 +269,14 @@ const PatientTimeline = ({ patientId }) => {
                     )}
                 </>
             )}
+            <AdministerCareModal
+                open={careModal}
+                onClose={() => { setCareModal(false); setEditingCare(null); }}
+                patientId={patientId}
+                careId={editingCare?.id || null}
+                initialData={editingCare}
+                onSaved={() => fetchTimeline(1, false)}
+            />
         </Box>
     );
 };

@@ -149,6 +149,16 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // PDF catalogue des valeurs de référence
+    getReferenceCatalogPDF: async () => {
+        const token = localStorage.getItem('access_token');
+        const response = await api.get('/healthcare/laboratory/tests/reference-catalog/', {
+            params: { token },
+            responseType: 'blob',
+        });
+        return response.data;
+    },
+
     // --- Category CRUD ---
 
     // Create category

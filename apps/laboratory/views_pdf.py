@@ -1,9 +1,9 @@
 """
 Vues PDF pour laboratoire: résultats détaillés ET reçus thermal
 """
-from django.views.generic import DetailView
+from django.views.generic import DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import LabOrder # Imports checked
+from .models import LabOrder, LabTest  # Imports checked
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, TokenAuthMixin, TokenLoginRequiredMixin
 
 
@@ -346,3 +346,46 @@ class LabBulkBenchSheetView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWea
         context['generated_date'] = timezone.now()
 
         return context
+
+
+class LabReferenceCatalogPDFView(TokenLoginRequiredMixin, SafeWeasyTemplateResponseMixin, View):
+    """
+    Génère un PDF catalogue de tous les tests avec leurs valeurs de référence.
+    Accessible depuis le catalogue des tests (/healthcare/laboratory/tests/).
+    """
+    template_name = 'laboratory/pdf_templates/lab_reference_catalog.html'
+    pdf_attachment = False
+
+    def get_pdf_filename(self):
+        from django.utils import timezone
+        return f'valeurs-reference-labo-{timezone.now().strftime("%Y%m%d")}.pdf'
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
+
+    def get_context_data(self, **kwargs):
+        from apps.core.models import OrganizationSettings
+
+        organization = self.request.user.organization
+
+        # Organisation data
+        org_data = {}
+        try:
+            org_settings = OrganizationSettings.objects.get(organization=organization)
+            org_data = {
+                'company_name': org_settings.company_name or organization.name,
+                'company_address': org_settings.company_address or '',
+            }
+        except Exception:
+            org_data = {'company_name': getattr(organization, 'name', '')}
+
+        # All active tests for this org, ordered by category then name
+        tests = LabTest.objects.filter(
+            organization=organization,
+            is_active=True
+        ).select_related('category').order_by('category__name', 'name')
+
+        return {
+            'organization': org_data,
+            'tests': tests,
+        }

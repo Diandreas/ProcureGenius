@@ -99,7 +99,12 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     test_code = serializers.CharField(source='lab_test.test_code', read_only=True)
     price = serializers.DecimalField(source='lab_test.price', max_digits=10, decimal_places=2, read_only=True)
     abnormality_type_display = serializers.CharField(source='get_abnormality_type_display', read_only=True)
-    
+    result_template = serializers.CharField(source='lab_test.result_template', read_only=True)
+    normal_range_male = serializers.CharField(source='lab_test.normal_range_male', read_only=True)
+    normal_range_female = serializers.CharField(source='lab_test.normal_range_female', read_only=True)
+    normal_range_general = serializers.CharField(source='lab_test.normal_range_general', read_only=True)
+    category_name = serializers.CharField(source='lab_test.category.name', read_only=True, default='')
+
     class Meta:
         model = LabOrderItem
         fields = [
@@ -109,6 +114,11 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'test_name',
             'test_code',
             'price',
+            'result_template',
+            'normal_range_male',
+            'normal_range_female',
+            'normal_range_general',
+            'category_name',
             'discount',
             'result_value',
             'result_numeric',
@@ -137,6 +147,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     items = LabOrderItemSerializer(many=True, read_only=True)
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
+    patient_gender = serializers.CharField(source='patient.gender', read_only=True)
     ordered_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
@@ -145,7 +156,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     all_results_entered = serializers.BooleanField(read_only=True)
     lab_invoice = serializers.SerializerMethodField()
     diagnosed_by_name = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = LabOrder
         fields = [
@@ -155,6 +166,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'patient',
             'patient_name',
             'patient_number',
+            'patient_gender',
             'visit',
             'order_date',
             'status',

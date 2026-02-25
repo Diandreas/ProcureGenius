@@ -4,7 +4,7 @@ URL patterns for Laboratory (LIMS) app
 from django.urls import path
 from . import api
 from . import api, views_pdf
-from .views_pdf import LabResultPDFView
+from .views_pdf import LabResultPDFView, LabReferenceCatalogPDFView
 
 app_name = 'laboratory'
 
@@ -30,6 +30,9 @@ urlpatterns = [
     path('orders/<uuid:pk>/bench-sheet/', views_pdf.LabBenchSheetView.as_view(), name='order-bench-sheet'),
     path('orders/bulk-bench-sheets/', views_pdf.LabBulkBenchSheetView.as_view(), name='bulk-bench-sheets'),
     path('orders/<uuid:pk>/generate-invoice/', api.GenerateLabOrderInvoiceView.as_view(), name='generate-invoice'),
+
+    # Reference catalog PDF
+    path('tests/reference-catalog/', LabReferenceCatalogPDFView.as_view(), name='reference-catalog-pdf'),
 
     # Dashboard views
     path('orders/today/', api.TodayLabOrdersView.as_view(), name='orders-today'),

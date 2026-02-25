@@ -56,6 +56,33 @@
         font-size: 7.5pt;
         color: #4b5563;
     }
+
+    /* Cellule résultat : hauteur minimale pour laisser de l'espace */
+    td.result-cell {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        min-height: 32px;
+        vertical-align: top;
+        white-space: pre-wrap;
+    }
+
+    /* Valeurs de référence : chaque ligne séparée */
+    .ref-line {
+        display: block;
+        line-height: 1.6;
+        white-space: nowrap;
+    }
+    .ref-label {
+        font-weight: 700;
+        color: #374151;
+        font-size: 7pt;
+        text-transform: uppercase;
+        margin-right: 2px;
+    }
+    .ref-value {
+        color: #4b5563;
+        font-size: 8pt;
+    }
 </style>
 {% endblock %}
 
@@ -98,12 +125,12 @@
 <table class="compact-table">
     <thead>
         <tr>
-            <th style="width: 40%">Examen / Test</th>
-            <th style="width: 20%">Résultat</th>
-            <th style="width: 10%">Unités</th>
-            <th style="width: 15%">Valeurs Réf.</th>
-            <th style="width: 15%">Antérieur</th>
-            <th style="width: 10%; text-align: right;">Flag</th>
+            <th style="width: 30%">Examen / Test</th>
+            <th style="width: 25%">Résultat</th>
+            <th style="width: 8%">Unités</th>
+            <th style="width: 24%">Valeurs de Référence</th>
+            <th style="width: 9%">Antérieur</th>
+            <th style="width: 4%; text-align: right;">Flag</th>
         </tr>
     </thead>
     <tbody>
@@ -123,22 +150,36 @@
         {% with item=item_data.item previous=item_data.previous_result prev_date=item_data.previous_date %}
         <tr>
             <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
-            <td>
+            <td class="result-cell">
                 {% if item.result_value %}
-                <strong>{{ item.result_value|safe }}</strong>
-                {% else %}-{% endif %}
+                {{ item.result_value|safe }}
+                {% else %}&nbsp;{% endif %}
                 {% if item.technician_notes %}
                 <div class="technician-notes">{{ item.technician_notes|safe }}</div>
                 {% endif %}
             </td>
             <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
-            <td>
-                {% if patient.gender == 'M' and item.lab_test.normal_range_male %}
-                {{ item.lab_test.normal_range_male }}
-                {% elif patient.gender == 'F' and item.lab_test.normal_range_female %}
-                {{ item.lab_test.normal_range_female }}
-                {% else %}
-                {{ item.lab_test.normal_range_general|default:"-" }}
+            <td style="vertical-align: top; padding-top: 6px;">
+                {% if item.lab_test.normal_range_male %}
+                <span class="ref-line">
+                    <span class="ref-label">H :</span>
+                    <span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span>
+                </span>
+                {% endif %}
+                {% if item.lab_test.normal_range_female %}
+                <span class="ref-line">
+                    <span class="ref-label">F :</span>
+                    <span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span>
+                </span>
+                {% endif %}
+                {% if not item.lab_test.normal_range_male and not item.lab_test.normal_range_female %}
+                    {% if item.lab_test.normal_range_general %}
+                    <span class="ref-line">
+                        <span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span>
+                    </span>
+                    {% else %}
+                    <span class="ref-value">—</span>
+                    {% endif %}
                 {% endif %}
             </td>
             <td>

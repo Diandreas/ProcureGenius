@@ -30,7 +30,8 @@ import {
     Delete as DeleteIcon,
     Restaurant as FastingIcon,
     CheckCircle as ActiveIcon,
-    Cancel as InactiveIcon
+    Cancel as InactiveIcon,
+    PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -44,6 +45,7 @@ const LabTestCatalog = () => {
     const { isAdmin } = useCurrentUser();
 
     const [loading, setLoading] = useState(false);
+    const [downloadingCatalog, setDownloadingCatalog] = useState(false);
     const [tests, setTests] = useState([]);
     const [categories, setCategories] = useState([]);
     const [search, setSearch] = useState('');
@@ -122,22 +124,52 @@ const LabTestCatalog = () => {
         fetchCategories();
     };
 
+    const handleDownloadCatalog = async () => {
+        setDownloadingCatalog(true);
+        try {
+            const blob = await laboratoryAPI.getReferenceCatalogPDF();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'valeurs-reference-labo.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        } catch (error) {
+            enqueueSnackbar('Erreur lors de la génération du catalogue', { variant: 'error' });
+        } finally {
+            setDownloadingCatalog(false);
+        }
+    };
+
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
                 <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                     Catalogue des Examens
                 </Typography>
-                {isAdmin && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={handleNewTest}
+                        variant="outlined"
+                        startIcon={<PdfIcon />}
+                        onClick={handleDownloadCatalog}
+                        disabled={downloadingCatalog}
                         sx={{ borderRadius: 2 }}
                     >
-                        Nouveau Test
+                        {downloadingCatalog ? 'Génération...' : 'Valeurs de Référence PDF'}
                     </Button>
-                )}
+                    {isAdmin && (
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={handleNewTest}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Nouveau Test
+                        </Button>
+                    )}
+                </Box>
             </Box>
 
             <Card sx={{ mb: 3 }}>

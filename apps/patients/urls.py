@@ -38,4 +38,7 @@ urlpatterns = [
     # Follow-up endpoints
     path('<uuid:patient_id>/follow-ups/', api.PatientFollowUpListCreateView.as_view(), name='patient-follow-ups'),
     path('follow-ups/<uuid:pk>/', api.PatientFollowUpDetailView.as_view(), name='follow-up-detail'),
+
+    # Care service detail (edit/delete within 30 min)
+    path('care-services/<uuid:pk>/', api.PatientCareServiceDetailView.as_view(), name='care-service-detail'),
 ]

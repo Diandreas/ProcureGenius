@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -24,15 +24,36 @@ const SERVICE_TYPES = [
     { value: 'other', label: 'Autre' },
 ];
 
-const AdministerCareModal = ({ open, onClose, patientId, onSaved }) => {
+const EMPTY = { service_type: 'nursing_care', service_name: '', notes: '', quantity: 1 };
+
+/**
+ * Props :
+ *   open       : bool
+ *   onClose    : () => void
+ *   patientId  : string (UUID)
+ *   onSaved    : () => void
+ *   careId     : string (UUID) — si fourni, mode édition
+ *   initialData: object — données pré-remplies (mode édition)
+ */
+const AdministerCareModal = ({ open, onClose, patientId, onSaved, careId = null, initialData = null }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        service_type: 'nursing_care',
-        service_name: '',
-        notes: '',
-        quantity: 1,
-    });
+    const [formData, setFormData] = useState(EMPTY);
+
+    const isEditing = !!careId;
+
+    useEffect(() => {
+        if (open && initialData) {
+            setFormData({
+                service_type: initialData.service_type || 'nursing_care',
+                service_name: initialData.service_name || '',
+                notes: initialData.notes || '',
+                quantity: initialData.quantity || 1,
+            });
+        } else if (open && !initialData) {
+            setFormData(EMPTY);
+        }
+    }, [open, initialData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -47,18 +68,25 @@ const AdministerCareModal = ({ open, onClose, patientId, onSaved }) => {
 
         setLoading(true);
         try {
-            await patientAPI.createCareService(patientId, {
+            const payload = {
                 service_type: formData.service_type,
                 service_name: formData.service_name,
                 notes: formData.notes,
                 quantity: parseInt(formData.quantity) || 1,
-            });
-            enqueueSnackbar('Soin administré avec succès', { variant: 'success' });
-            setFormData({ service_type: 'nursing_care', service_name: '', notes: '', quantity: 1 });
+            };
+            if (isEditing) {
+                await patientAPI.updateCareService(careId, payload);
+                enqueueSnackbar('Soin modifié', { variant: 'success' });
+            } else {
+                await patientAPI.createCareService(patientId, payload);
+                enqueueSnackbar('Soin administré avec succès', { variant: 'success' });
+            }
+            setFormData(EMPTY);
             onSaved?.();
             onClose();
         } catch (error) {
-            enqueueSnackbar('Erreur lors de l\'enregistrement du soin', { variant: 'error' });
+            const msg = error.response?.data?.detail || "Erreur lors de l'enregistrement du soin";
+            enqueueSnackbar(msg, { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -67,7 +95,7 @@ const AdministerCareModal = ({ open, onClose, patientId, onSaved }) => {
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Administrer un Soin
+                {isEditing ? 'Modifier le Soin' : 'Administrer un Soin'}
                 <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
             </DialogTitle>
             <DialogContent dividers>
@@ -124,7 +152,7 @@ const AdministerCareModal = ({ open, onClose, patientId, onSaved }) => {
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button onClick={onClose} disabled={loading}>Annuler</Button>
                 <Button variant="contained" onClick={handleSubmit} disabled={loading}>
-                    {loading ? <CircularProgress size={24} /> : 'Enregistrer'}
+                    {loading ? <CircularProgress size={24} /> : isEditing ? 'Modifier' : 'Enregistrer'}
                 </Button>
             </DialogActions>
         </Dialog>

@@ -783,6 +783,10 @@ class PatientTimelineView(APIView):
                     'status': 'completed',
                     'provider': cs.provided_by.get_full_name() if cs.provided_by else None,
                     'link': None,
+                    'created_at': cs.created_at.isoformat(),
+                    'service_type': cs.service_type,
+                    'notes': cs.notes or '',
+                    'quantity': cs.quantity,
                 })
 
         # Sort by date descending
@@ -1047,6 +1051,7 @@ class PatientFollowUpListCreateView(generics.ListCreateAPIView):
 class PatientFollowUpDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET/PATCH/DELETE /healthcare/patients/follow-ups/<pk>/
+    Modification/suppression autorisée dans les 30 premières minutes.
     """
     serializer_class = PatientFollowUpSerializer
     permission_classes = [IsAuthenticated]
@@ -1055,3 +1060,49 @@ class PatientFollowUpDetailView(generics.RetrieveUpdateDestroyAPIView):
         return PatientFollowUp.objects.filter(
             organization=self.request.user.organization,
         )
+
+    def _check_editable(self, instance):
+        from datetime import timedelta
+        if timezone.now() - instance.created_at > timedelta(minutes=30):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Modification impossible après 30 minutes.')
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_editable(instance)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_editable(instance)
+        return super().destroy(request, *args, **kwargs)
+
+
+class PatientCareServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /healthcare/patients/care-services/<pk>/
+    Modification/suppression autorisée dans les 30 premières minutes.
+    """
+    serializer_class = PatientCareServiceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PatientCareService.objects.filter(
+            patient__organization=self.request.user.organization,
+        )
+
+    def _check_editable(self, instance):
+        from datetime import timedelta
+        if timezone.now() - instance.created_at > timedelta(minutes=30):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Modification impossible après 30 minutes.')
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_editable(instance)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_editable(instance)
+        return super().destroy(request, *args, **kwargs)

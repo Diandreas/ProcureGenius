@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -9,7 +9,6 @@ import {
     Grid,
     TextField,
     Typography,
-    Divider,
     InputAdornment,
     CircularProgress,
 } from '@mui/material';
@@ -21,7 +20,6 @@ import {
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
 
-// ─── Valeur initiale du formulaire ───────────────────────────────────────────
 const EMPTY = {
     chief_complaint: '',
     temperature: '',
@@ -43,16 +41,44 @@ const EMPTY = {
  * Modal de suivi patient (Follow-up).
  *
  * Props :
- *   open       : bool
- *   onClose    : () => void
- *   onSaved    : (followUp) => void   — appelé après enregistrement
- *   patientId  : string (UUID)
- *   patientName: string
+ *   open        : bool
+ *   onClose     : () => void
+ *   onSaved     : (followUp) => void
+ *   patientId   : string (UUID)
+ *   patientName : string
+ *   followUpId  : string (UUID) — si fourni, mode édition
+ *   initialData : object — données pré-remplies (mode édition)
  */
-const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }) => {
+const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, followUpId = null, initialData = null }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [form, setForm] = useState(EMPTY);
     const [saving, setSaving] = useState(false);
+
+    const isEditing = !!followUpId;
+
+    // Pré-remplir le formulaire en mode édition
+    useEffect(() => {
+        if (open && initialData) {
+            setForm({
+                chief_complaint: initialData.chief_complaint || '',
+                temperature: initialData.temperature || '',
+                blood_pressure_systolic: initialData.blood_pressure_systolic || '',
+                blood_pressure_diastolic: initialData.blood_pressure_diastolic || '',
+                heart_rate: initialData.heart_rate || '',
+                oxygen_saturation: initialData.oxygen_saturation || '',
+                respiratory_rate: initialData.respiratory_rate || '',
+                weight: initialData.weight || '',
+                blood_glucose: initialData.blood_glucose || '',
+                physical_examination: initialData.physical_examination || '',
+                diagnosis: initialData.diagnosis || '',
+                evolution: initialData.evolution || '',
+                treatment: initialData.treatment || '',
+                notes: initialData.notes || '',
+            });
+        } else if (open && !initialData) {
+            setForm(EMPTY);
+        }
+    }, [open, initialData]);
 
     const handleChange = (field) => (e) => {
         setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -64,7 +90,6 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
     };
 
     const handleSave = async () => {
-        // Construire le payload — on n'envoie que les valeurs non vides
         const payload = {};
         Object.entries(form).forEach(([k, v]) => {
             if (v !== '' && v !== null) payload[k] = v;
@@ -77,13 +102,20 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
 
         setSaving(true);
         try {
-            const result = await patientAPI.createFollowUp(patientId, payload);
-            enqueueSnackbar('Suivi enregistré', { variant: 'success' });
+            let result;
+            if (isEditing) {
+                result = await patientAPI.updateFollowUp(followUpId, payload);
+                enqueueSnackbar('Suivi modifié', { variant: 'success' });
+            } else {
+                result = await patientAPI.createFollowUp(patientId, payload);
+                enqueueSnackbar('Suivi enregistré', { variant: 'success' });
+            }
             if (onSaved) onSaved(result);
             handleClose();
         } catch (err) {
             console.error(err);
-            enqueueSnackbar("Erreur lors de l'enregistrement", { variant: 'error' });
+            const msg = err.response?.data?.detail || "Erreur lors de l'enregistrement";
+            enqueueSnackbar(msg, { variant: 'error' });
         } finally {
             setSaving(false);
         }
@@ -92,7 +124,9 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
             <DialogTitle sx={{ pb: 1 }}>
-                <Typography variant="h6" fontWeight={700}>Suivi Patient</Typography>
+                <Typography variant="h6" fontWeight={700}>
+                    {isEditing ? 'Modifier le Suivi' : 'Suivi Patient'}
+                </Typography>
                 {patientName && (
                     <Typography variant="body2" color="text.secondary">{patientName}</Typography>
                 )}
@@ -117,8 +151,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="Tension Sys."
-                            placeholder="120"
-                            type="number"
+                            placeholder="120" type="number"
                             value={form.blood_pressure_systolic}
                             onChange={handleChange('blood_pressure_systolic')}
                             InputProps={{ endAdornment: <InputAdornment position="end">mmHg</InputAdornment> }}
@@ -127,8 +160,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="Tension Dia."
-                            placeholder="80"
-                            type="number"
+                            placeholder="80" type="number"
                             value={form.blood_pressure_diastolic}
                             onChange={handleChange('blood_pressure_diastolic')}
                             InputProps={{ endAdornment: <InputAdornment position="end">mmHg</InputAdornment> }}
@@ -137,9 +169,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="Température"
-                            placeholder="37.0"
-                            type="number"
-                            inputProps={{ step: '0.1' }}
+                            placeholder="37.0" type="number" inputProps={{ step: '0.1' }}
                             value={form.temperature}
                             onChange={handleChange('temperature')}
                             InputProps={{ endAdornment: <InputAdornment position="end">°C</InputAdornment> }}
@@ -148,8 +178,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="FC"
-                            placeholder="75"
-                            type="number"
+                            placeholder="75" type="number"
                             value={form.heart_rate}
                             onChange={handleChange('heart_rate')}
                             InputProps={{ endAdornment: <InputAdornment position="end">bpm</InputAdornment> }}
@@ -158,8 +187,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="SpO2"
-                            placeholder="98"
-                            type="number"
+                            placeholder="98" type="number"
                             value={form.oxygen_saturation}
                             onChange={handleChange('oxygen_saturation')}
                             InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
@@ -168,8 +196,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="FR"
-                            placeholder="16"
-                            type="number"
+                            placeholder="16" type="number"
                             value={form.respiratory_rate}
                             onChange={handleChange('respiratory_rate')}
                             InputProps={{ endAdornment: <InputAdornment position="end">cyc/min</InputAdornment> }}
@@ -178,9 +205,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="Poids"
-                            placeholder="70"
-                            type="number"
-                            inputProps={{ step: '0.1' }}
+                            placeholder="70" type="number" inputProps={{ step: '0.1' }}
                             value={form.weight}
                             onChange={handleChange('weight')}
                             InputProps={{ endAdornment: <InputAdornment position="end">kg</InputAdornment> }}
@@ -189,9 +214,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     <Grid item xs={6} sm={3}>
                         <TextField
                             fullWidth size="small" label="Glycémie"
-                            placeholder="1.0"
-                            type="number"
-                            inputProps={{ step: '0.01' }}
+                            placeholder="1.0" type="number" inputProps={{ step: '0.01' }}
                             value={form.blood_glucose}
                             onChange={handleChange('blood_glucose')}
                             InputProps={{ endAdornment: <InputAdornment position="end">mg/dL</InputAdornment> }}
@@ -223,7 +246,7 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                 <SectionTitle icon={<ClinicalIcon fontSize="small" />} label="Évolution" />
                 <TextField
                     fullWidth multiline rows={2}
-                    placeholder="Évolution par rapport à la dernière visite (amélioration, stable, aggravation)..."
+                    placeholder="Évolution par rapport à la dernière visite..."
                     value={form.evolution}
                     onChange={handleChange('evolution')}
                     sx={{ mb: 3 }}
@@ -255,14 +278,13 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName }
                     onClick={handleSave}
                     disabled={saving}
                 >
-                    {saving ? 'Enregistrement...' : 'Enregistrer le suivi'}
+                    {saving ? 'Enregistrement...' : isEditing ? 'Modifier le suivi' : 'Enregistrer le suivi'}
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
 
-// Petit sous-composant titre de section
 const SectionTitle = ({ icon, label }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
         <Box sx={{ color: 'primary.main' }}>{icon}</Box>
