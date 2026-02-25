@@ -78,11 +78,13 @@ import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useCurrentUser();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -427,10 +429,12 @@ function PurchaseOrderDetail() {
               <Add fontSize="small" sx={{ mr: 1 }} />
               {t('purchaseOrders:buttons.addItem')}
             </MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-              <Delete fontSize="small" sx={{ mr: 1 }} />
-              {t('purchaseOrders:buttons.delete')}
-            </MenuItem>
+            {isAdmin && (
+              <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                <Delete fontSize="small" sx={{ mr: 1 }} />
+                {t('purchaseOrders:buttons.delete')}
+              </MenuItem>
+            )}
           </Menu>
         </Box>
       </Box>

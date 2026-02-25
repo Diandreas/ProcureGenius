@@ -71,6 +71,7 @@ import ProductInvoicesTable from '../../components/products/ProductInvoicesTable
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
 import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 // Configuration des types de produits (harmonisé avec ProductCard)
 const TYPE_CONFIG = {
@@ -123,6 +124,7 @@ function ProductDetail() {
   const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useCurrentUser();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -338,20 +340,22 @@ function ProductDetail() {
               <Edit />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t('products:tooltips.deleteProduct')}>
-            <IconButton
-              onClick={handleDelete}
-              sx={{
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.light',
-                  color: 'white',
-                }
-              }}
-            >
-              <Delete />
-            </IconButton>
-          </Tooltip>
+          {isAdmin && (
+            <Tooltip title={t('products:tooltips.deleteProduct')}>
+              <IconButton
+                onClick={handleDelete}
+                sx={{
+                  color: 'error.main',
+                  '&:hover': {
+                    bgcolor: 'error.light',
+                    color: 'white',
+                  }
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Box>
 
@@ -408,28 +412,30 @@ function ProductDetail() {
             <Edit sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title={t('products:tooltips.deleteProduct')}>
-          <IconButton
-            onClick={handleDelete}
-            size="small"
-            sx={{
-              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
-              color: 'error.main',
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: 'error.main',
-                color: 'white',
-                transform: 'scale(1.05)',
-              },
-              transition: 'all 0.2s ease',
-              boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-            }}
-          >
-            <Delete sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
+        {isAdmin && (
+          <Tooltip title={t('products:tooltips.deleteProduct')}>
+            <IconButton
+              onClick={handleDelete}
+              size="small"
+              sx={{
+                bgcolor: theme => alpha(theme.palette.error.main, 0.1),
+                color: 'error.main',
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease',
+                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
+              }}
+            >
+              <Delete sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {/* Tabs - Style mobile app */}

@@ -127,7 +127,11 @@
       "Bash(break)",
       "Bash(fi)",
       "Bash(git push:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(\"d:/project/BFMa/ProcureGenius/apps/patients/serializers.py\":*)",
+      "Bash(\"d:/project/BFMa/ProcureGenius/apps/patients/api.py\":*)",
+      "Read(//d/d/**)",
+      "Read(//d/project/BFMa/ProcureGenius/frontend/src/pages/**)"
     ],
     "deny": [],
     "ask": []

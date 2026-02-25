@@ -210,6 +210,7 @@ const LabOrderForm = () => {
                     </Typography>
                 </Stack>
                 <Button
+                    data-testid="lab-btn-submit"
                     variant="contained"
                     startIcon={<SaveIcon />}
                     onClick={handleSubmit}
@@ -232,7 +233,7 @@ const LabOrderForm = () => {
                                     getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
                                     value={formData.patient}
                                     onChange={(e, v) => setFormData(prev => ({ ...prev, patient: v }))}
-                                    renderInput={(params) => <TextField {...params} label="Rechercher Patient" required />}
+                                    renderInput={(params) => <TextField {...params} label="Rechercher Patient" required inputProps={{...params.inputProps, 'data-testid': 'lab-input-patient'}} />}
                                 />
                                 <Button
                                     variant="outlined"

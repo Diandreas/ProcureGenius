@@ -1000,3 +1000,58 @@ class PatientQuickInvoiceView(APIView):
                 {'error': f'Error creating invoice: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# =============================================================================
+# Patient Follow-Up Views
+# =============================================================================
+
+from .models_followup import PatientFollowUp
+from .serializers import PatientFollowUpSerializer
+
+
+class PatientFollowUpListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/patients/<patient_id>/follow-ups/  → liste des suivis
+    POST /healthcare/patients/<patient_id>/follow-ups/  → créer un suivi
+    """
+    serializer_class = PatientFollowUpSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        patient_id = self.kwargs['patient_id']
+        return PatientFollowUp.objects.filter(
+            organization=self.request.user.organization,
+            patient_id=patient_id,
+        ).select_related('provided_by')
+
+    def perform_create(self, serializer):
+        patient_id = self.kwargs['patient_id']
+        try:
+            from apps.accounts.models import Client
+            patient = Client.objects.get(
+                id=patient_id,
+                organization=self.request.user.organization,
+            )
+        except Client.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Patient introuvable')
+
+        serializer.save(
+            organization=self.request.user.organization,
+            patient=patient,
+            provided_by=self.request.user,
+        )
+
+
+class PatientFollowUpDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /healthcare/patients/follow-ups/<pk>/
+    """
+    serializer_class = PatientFollowUpSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PatientFollowUp.objects.filter(
+            organization=self.request.user.organization,
+        )

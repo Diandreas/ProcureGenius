@@ -105,7 +105,27 @@ const patientAPI = {
     getTimeline: async (id, params) => {
         const response = await api.get(`/healthcare/patients/${id}/timeline/`, { params });
         return response.data;
-    }
+    },
+
+    // ── Follow-up (suivi clinique léger) ──────────────────────────────────
+    getFollowUps: async (patientId) => {
+        const response = await api.get(`/healthcare/patients/${patientId}/follow-ups/`);
+        return response.data;
+    },
+
+    createFollowUp: async (patientId, data) => {
+        const response = await api.post(`/healthcare/patients/${patientId}/follow-ups/`, data);
+        return response.data;
+    },
+
+    updateFollowUp: async (followUpId, data) => {
+        const response = await api.patch(`/healthcare/patients/follow-ups/${followUpId}/`, data);
+        return response.data;
+    },
+
+    deleteFollowUp: async (followUpId) => {
+        await api.delete(`/healthcare/patients/follow-ups/${followUpId}/`);
+    },
 };
 
 export default patientAPI;

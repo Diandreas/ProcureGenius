@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import useCurrentUser from '../../hooks/useCurrentUser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSharedElement } from '../../contexts/SharedElementContext';
 import { Box, Card, CardContent, Typography, Button, IconButton, Chip, Avatar, Divider, Grid, Stack, CircularProgress, Alert, Tabs, useMediaQuery, useTheme, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
@@ -41,6 +42,7 @@ function ClientDetail() {
   const { format: formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useCurrentUser();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -467,17 +469,19 @@ function ClientDetail() {
                 <Edit />
               </IconButton>
             </Tooltip>
-            <Tooltip title={t('clients:tooltips.deleteClient')}>
-              <IconButton
-                onClick={handleDeleteClick}
-                sx={{
-                  color: 'error.main',
-                  '&:hover': { bgcolor: 'error.light', color: 'white' }
-                }}
-              >
-                <Delete />
-              </IconButton>
-            </Tooltip>
+            {isAdmin && (
+              <Tooltip title={t('clients:tooltips.deleteClient')}>
+                <IconButton
+                  onClick={handleDeleteClick}
+                  sx={{
+                    color: 'error.main',
+                    '&:hover': { bgcolor: 'error.light', color: 'white' }
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         </Box>
       </Box>
@@ -502,15 +506,17 @@ function ClientDetail() {
             <Edit />
           </IconButton>
         </Tooltip>
-        <Tooltip title={t('clients:tooltips.deleteClient')}>
-          <IconButton
-            onClick={handleDeleteClick}
-            size="small"
-            sx={{ color: 'error.main' }}
-          >
-            <Delete />
-          </IconButton>
-        </Tooltip>
+        {isAdmin && (
+          <Tooltip title={t('clients:tooltips.deleteClient')}>
+            <IconButton
+              onClick={handleDeleteClick}
+              size="small"
+              sx={{ color: 'error.main' }}
+            >
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {/* Tabs */}

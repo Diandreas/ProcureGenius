@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import {
     Add as AddIcon,
@@ -18,13 +18,15 @@ import {
     Person as PersonIcon,
     ArrowForward as ArrowIcon,
     LocalFireDepartment as FireIcon,
-    Timer as TimerIcon
+    Timer as TimerIcon,
+    DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import { formatDate, formatTime } from '../../../utils/formatters';
 import useAutoRefresh from '../../../hooks/useAutoRefresh';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 
 // ── Helpers ──
 
@@ -113,7 +115,7 @@ const StatCard = ({ title, value, icon, color, subtitle }) => (
 
 // ── Queue Order Card (single row in queue) ──
 
-const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate }) => {
+const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, onDelete, isAdmin }) => {
     const waitMinutes = order.wait_minutes || 0;
     const waitColor = getWaitColor(waitMinutes);
     const waitBg = getWaitBgColor(waitMinutes);
@@ -295,6 +297,20 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate }
                     <Box sx={{ minWidth: 140, textAlign: 'right' }}>
                         {getActionButton()}
                     </Box>
+
+                    {/* Delete button — admin only */}
+                    {isAdmin && (
+                        <Tooltip title="Supprimer (admin)">
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => { e.stopPropagation(); onDelete(order); }}
+                                sx={{ ml: 0.5 }}
+                            >
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                 </Box>
             </CardContent>
         </Card>
@@ -306,6 +322,7 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate }
 const LabQueueDashboard = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
+    const { isAdmin } = useCurrentUser();
 
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState(null);
@@ -314,6 +331,7 @@ const LabQueueDashboard = () => {
     const [resultsOrders, setResultsOrders] = useState([]);
     const [tabValue, setTabValue] = useState(0);
     const [actionLoading, setActionLoading] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null); // order to confirm delete
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -358,6 +376,18 @@ const LabQueueDashboard = () => {
         navigate(`/healthcare/laboratory/${orderId}`);
     };
 
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        try {
+            await laboratoryAPI.deleteOrder(deleteTarget.id);
+            enqueueSnackbar('Commande supprimée', { variant: 'success' });
+            setDeleteTarget(null);
+            fetchData();
+        } catch {
+            enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        }
+    };
+
     // Calculate avg wait for pending
     const avgWaitPending = pendingOrders.length > 0
         ? Math.round(pendingOrders.reduce((sum, o) => sum + (o.wait_minutes || 0), 0) / pendingOrders.length)
@@ -384,6 +414,8 @@ const LabQueueDashboard = () => {
                 onAction={handleAction}
                 actionLoading={actionLoading}
                 onNavigate={handleNavigate}
+                onDelete={setDeleteTarget}
+                isAdmin={isAdmin}
             />
         ));
     };
@@ -418,6 +450,7 @@ const LabQueueDashboard = () => {
                         Historique
                     </Button>
                     <Button
+                        data-testid="lab-btn-new-order"
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/healthcare/laboratory/new')}
@@ -562,6 +595,26 @@ const LabQueueDashboard = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Dialog confirmation suppression — admin only */}
+            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>Supprimer la commande</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Supprimer la commande <strong>{deleteTarget?.order_number}</strong> pour{' '}
+                        <strong>{deleteTarget?.patient_name}</strong> ?
+                    </Typography>
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        Cette action est irréversible.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteTarget(null)}>Annuler</Button>
+                    <Button variant="contained" color="error" onClick={handleDeleteConfirm}>
+                        Supprimer
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

@@ -305,17 +305,17 @@ const ConsultationForm = () => {
                     <Typography variant="h4" sx={{ fontWeight: 600 }}>Consultation</Typography>
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" startIcon={<SaveIcon />} onClick={() => handleSubmit('in_consultation')} disabled={loading}>Enregistrer</Button>
-                    <Button variant="contained" startIcon={<CompleteIcon />} color="success" onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
+                    <Button data-testid="consult-btn-save" variant="outlined" startIcon={<SaveIcon />} onClick={() => handleSubmit('in_consultation')} disabled={loading}>Enregistrer</Button>
+                    <Button data-testid="consult-btn-terminate" variant="contained" startIcon={<CompleteIcon />} color="success" onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
                 </Box>
             </Box>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
-                    <Tab icon={<PersonIcon />} label="Vitals" />
-                    <Tab icon={<HistoryIcon />} label="Histoire" />
-                    <Tab icon={<ExamIcon />} label="Examen" />
-                    <Tab icon={<RxIcon />} label="Traitement" />
+                    <Tab data-testid="consult-tab-vitals" icon={<PersonIcon />} label="Vitals" />
+                    <Tab data-testid="consult-tab-history" icon={<HistoryIcon />} label="Histoire" />
+                    <Tab data-testid="consult-tab-exam" icon={<ExamIcon />} label="Examen" />
+                    <Tab data-testid="consult-tab-treatment" icon={<RxIcon />} label="Traitement" />
                 </Tabs>
             </Box>
 
@@ -331,7 +331,7 @@ const ConsultationForm = () => {
                                         getOptionLabel={(o) => o.name || ''}
                                         value={formData.patient}
                                         onChange={handlePatientSelect}
-                                        renderInput={(p) => <TextField {...p} label="Rechercher Patient" />}
+                                        renderInput={(p) => <TextField {...p} label="Rechercher Patient" inputProps={{...p.inputProps, 'data-testid': 'consult-input-patient'}} />}
                                     />
                                 ) : (
                                     <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>{formData.patient?.name}</Typography>
@@ -352,10 +352,10 @@ const ConsultationForm = () => {
                             <CardContent>
                                 <Typography variant="h6" gutterBottom color="primary">Signes Vitaux</Typography>
                                 <Grid container spacing={2}>
-                                    <Grid item xs={6} sm={3}><TextField label="T° (°C)" name="temperature" value={formData.temperature} onChange={handleInputChange} fullWidth size="small" /></Grid>
-                                    <Grid item xs={6} sm={3}><TextField label="TAS (mmHg)" name="blood_pressure_systolic" value={formData.blood_pressure_systolic} onChange={handleInputChange} fullWidth size="small" /></Grid>
-                                    <Grid item xs={6} sm={3}><TextField label="TAD (mmHg)" name="blood_pressure_diastolic" value={formData.blood_pressure_diastolic} onChange={handleInputChange} fullWidth size="small" /></Grid>
-                                    <Grid item xs={6} sm={3}><TextField label="FC (bpm)" name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} fullWidth size="small" /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="T° (°C)" name="temperature" value={formData.temperature} onChange={handleInputChange} fullWidth size="small" inputProps={{'data-testid':'consult-input-temp'}} /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="TAS (mmHg)" name="blood_pressure_systolic" value={formData.blood_pressure_systolic} onChange={handleInputChange} fullWidth size="small" inputProps={{'data-testid':'consult-input-tas'}} /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="TAD (mmHg)" name="blood_pressure_diastolic" value={formData.blood_pressure_diastolic} onChange={handleInputChange} fullWidth size="small" inputProps={{'data-testid':'consult-input-tad'}} /></Grid>
+                                    <Grid item xs={6} sm={3}><TextField label="FC (bpm)" name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} fullWidth size="small" inputProps={{'data-testid':'consult-input-fc'}} /></Grid>
                                     <Grid item xs={6} sm={3}><TextField label="SpO2 (%)" name="oxygen_saturation" value={formData.oxygen_saturation} onChange={handleInputChange} fullWidth size="small" /></Grid>
                                     <Grid item xs={6} sm={3}><TextField label="FR" name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} fullWidth size="small" /></Grid>
                                     <Grid item xs={6} sm={3}><TextField label="Gly (g/L)" name="blood_glucose" value={formData.blood_glucose} onChange={handleInputChange} fullWidth size="small" /></Grid>
@@ -396,7 +396,7 @@ const ConsultationForm = () => {
                         <Grid container spacing={2}>
                             <Grid item xs={12}><TextField label="Enquêtes & Systèmes" name="enquetes_systeme" value={formData.enquetes_systeme} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
                             <Grid item xs={12}><TextField label="Examens Physiques" name="physical_examination" value={formData.physical_examination} onChange={handleInputChange} multiline rows={3} fullWidth /></Grid>
-                            <Grid item xs={12}><TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline rows={2} fullWidth color="error" /></Grid>
+                            <Grid item xs={12}><TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline rows={2} fullWidth color="error" inputProps={{'data-testid':'consult-input-diagnosis'}} /></Grid>
                             <Grid item xs={12} md={6}><TextField label="Examens Complémentaires" name="complementary_exams" value={formData.complementary_exams} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
                             <Grid item xs={12} md={6}><TextField label="Imagerie" name="imaging" value={formData.imaging} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
                         </Grid>
@@ -416,7 +416,7 @@ const ConsultationForm = () => {
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                 <Typography variant="h6">Ordonnance Médicamenteuse</Typography>
-                                <Button startIcon={<AddIcon />} variant="contained" size="small" onClick={() => setFormData(p => ({ ...p, medications: [...p.medications, { medication: null, medication_name: '', is_external: false, dosage: '', frequency: '', duration: '', instructions: '', quantity: 1 }] }))}>Ajouter Médicament</Button>
+                                <Button data-testid="consult-btn-add-medication" startIcon={<AddIcon />} variant="contained" size="small" onClick={() => setFormData(p => ({ ...p, medications: [...p.medications, { medication: null, medication_name: '', is_external: false, dosage: '', frequency: '', duration: '', instructions: '', quantity: 1 }] }))}>Ajouter Médicament</Button>
                             </Box>
                             <TableContainer>
                                 <Table size="small">
@@ -445,7 +445,7 @@ const ConsultationForm = () => {
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Examens de Laboratoire à Prescrire</Typography>
-                            <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens" />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
+                            <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens" inputProps={{...p.inputProps, 'data-testid': 'consult-input-lab-tests'}} />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
                         </CardContent>
                     </Card>
                 </Stack>

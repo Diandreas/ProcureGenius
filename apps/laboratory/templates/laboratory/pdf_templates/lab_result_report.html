@@ -36,6 +36,26 @@
         font-size: 8pt;
         color: #92400e;
     }
+
+    /* Contenu HTML riche (WYSIWYG) dans les cellules et blocs */
+    td ul, td ol, .rich-content ul, .rich-content ol {
+        padding-left: 1.2em;
+        margin: 2px 0;
+    }
+    td li, .rich-content li { margin-bottom: 1px; }
+    td p, .rich-content p  { margin: 0; }
+    td strong, .rich-content strong { font-weight: 700; }
+    td em, .rich-content em { font-style: italic; }
+    td u, .rich-content u  { text-decoration: underline; }
+    td s, .rich-content s  { text-decoration: line-through; }
+
+    .technician-notes {
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 7.5pt;
+        color: #4b5563;
+    }
 </style>
 {% endblock %}
 
@@ -104,7 +124,12 @@
         <tr>
             <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
             <td>
-                <strong>{{ item.result_value|default:"-" }}</strong>
+                {% if item.result_value %}
+                <strong>{{ item.result_value|safe }}</strong>
+                {% else %}-{% endif %}
+                {% if item.technician_notes %}
+                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
+                {% endif %}
             </td>
             <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
             <td>
@@ -142,7 +167,7 @@
 {% if lab_order.clinical_notes %}
 <div class="notes" style="background-color: #eff6ff; border-color: #3b82f6; color: #1e40af;">
     <strong>Diagnostic du Médecin / Renseignements Cliniques :</strong><br>
-    {{ lab_order.clinical_notes|linebreaksbr }}
+    <div class="rich-content">{{ lab_order.clinical_notes|safe }}</div>
 </div>
 {% endif %}
 
@@ -153,8 +178,8 @@
         style="font-size: 10pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #22c55e; padding-bottom: 3px;">
         Conclusion / Diagnostic du Biologiste :
     </div>
-    <div style="font-size: 11pt; line-height: 1.5; font-weight: 500;">
-        {{ lab_order.biologist_diagnosis|linebreaksbr }}
+    <div class="rich-content" style="font-size: 11pt; line-height: 1.5; font-weight: 500;">
+        {{ lab_order.biologist_diagnosis|safe }}
     </div>
 </div>
 {% endif %}

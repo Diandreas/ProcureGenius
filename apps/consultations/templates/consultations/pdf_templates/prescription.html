@@ -94,18 +94,28 @@
     {% endfor %}
 </div>
 
-{% if lab_orders %}
-<div style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 4px; border-left: 3px solid #10b981;">
+{% if prescribed_lab_tests or lab_orders %}
+<div style="margin-top: 15px; padding: 10px; background: #f0fdf4; border-radius: 4px; border-left: 3px solid #10b981;">
     <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #10b981; margin-bottom: 6px;">
-        Examens complémentaires demandés
+        Examens de Laboratoire Prescrits
     </div>
+    {% if prescribed_lab_tests %}
+    {% for test in prescribed_lab_tests %}
+    <div style="font-size: 9pt; padding: 3px 0;">
+        {{ forloop.counter }}. <b>{{ test.name }}</b>
+        <span style="color: #6b7280; font-size: 8pt;"> — {{ test.test_code }}</span>
+    </div>
+    {% endfor %}
+    {% elif lab_orders %}
     {% for order in lab_orders %}
         {% for item in order.items.all %}
-        <div style="font-size: 9pt; padding: 2px 0;">
-            {{ forloop.counter }}. {{ item.lab_test.name }}
+        <div style="font-size: 9pt; padding: 3px 0;">
+            {{ forloop.counter }}. <b>{{ item.lab_test.name }}</b>
+            <span style="color: #6b7280; font-size: 8pt;"> — {{ item.lab_test.test_code }}</span>
         </div>
         {% endfor %}
     {% endfor %}
+    {% endif %}
 </div>
 {% endif %}
 
@@ -117,13 +127,17 @@
         </div>
     </div>
     <div style="display: table-cell; width: 50%; text-align: right;">
-        <div class="info-label">Prescripteur ({{ prescription.prescriber_type }}):</div>
+        <div class="info-label">Prescripteur :</div>
         <div class="info-value"
             style="margin-top: 30px; border-top: 1px dotted #9ca3af; display: inline-block; width: 180px; text-align: center;">
-            {% if prescription.prescriber %}{{
-            prescription.prescriber.get_full_name|default:prescription.prescriber.username }}{% else %}Non spécifié{%
-            endif %}<br>
-            <span style="font-size: 8pt; font-weight: normal;">Signature & Cachet</span>
+            {% if prescription.consultation and prescription.consultation.completed_by %}
+                {{ prescription.consultation.completed_by.get_full_name }}
+            {% elif prescription.prescriber %}
+                {{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }}
+            {% else %}
+                Non spécifié
+            {% endif %}<br>
+            <span style="font-size: 8pt; font-weight: normal;">Signature &amp; Cachet</span>
         </div>
     </div>
 </div>

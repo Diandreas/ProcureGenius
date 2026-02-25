@@ -36,10 +36,12 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import LabTestFormModal from './LabTestFormModal';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 
 const LabTestCatalog = () => {
     const { t } = useTranslation();
     const { enqueueSnackbar } = useSnackbar();
+    const { isAdmin } = useCurrentUser();
 
     const [loading, setLoading] = useState(false);
     const [tests, setTests] = useState([]);
@@ -126,14 +128,16 @@ const LabTestCatalog = () => {
                 <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                     Catalogue des Examens
                 </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleNewTest}
-                    sx={{ borderRadius: 2 }}
-                >
-                    Nouveau Test
-                </Button>
+                {isAdmin && (
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={handleNewTest}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        Nouveau Test
+                    </Button>
+                )}
             </Box>
 
             <Card sx={{ mb: 3 }}>
@@ -233,12 +237,16 @@ const LabTestCatalog = () => {
                                     </TableCell>
                                     <TableCell>{test.estimated_turnaround_hours ? `${test.estimated_turnaround_hours}h` : '-'}</TableCell>
                                     <TableCell align="right">
-                                        <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
-                                        <IconButton size="small" onClick={() => handleDeleteClick(test)} title="Supprimer" color="error">
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
+                                        {isAdmin && (
+                                            <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                        {isAdmin && (
+                                            <IconButton size="small" onClick={() => handleDeleteClick(test)} title="Supprimer" color="error">
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

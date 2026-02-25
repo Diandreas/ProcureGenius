@@ -250,6 +250,7 @@ const ConsultationList = () => {
                         Consultations Médicales
                     </Typography>
                     <Button
+                        data-testid="consult-list-btn-new"
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/healthcare/consultations/new')}

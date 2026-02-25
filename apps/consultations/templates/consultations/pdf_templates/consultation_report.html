@@ -97,8 +97,16 @@
             <div><span class="label">Âge/Sexe:</span> {{ patient.get_age }} ans / {{ patient.gender }}</div>
         </div>
         <div class="grid-col">
+            {% if consultation.completed_by %}
+            <div><span class="label">Responsable:</span> <b>{{ consultation.completed_by.get_full_name }}</b></div>
+            {% elif consultation.doctor %}
             <div><span class="label">Médecin:</span> <b>Dr. {{ consultation.doctor.get_full_name }}</b></div>
-            <div><span class="label">Spécialité:</span> Médecine Générale</div>
+            {% endif %}
+            {% if consultation.doctor and consultation.completed_by %}
+                {% if consultation.doctor.id != consultation.completed_by.id %}
+            <div><span class="label">Médecin réf.:</span> Dr. {{ consultation.doctor.get_full_name }}</div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>
@@ -216,92 +224,125 @@
     <p>{{ consultation.treatment_plan|linebreaks|default:"-" }}</p>
 </div>
 
-{% if prescriptions %}
-<div class="section">
-    <div class="section-title">Ordonnance</div>
+{% if prescriptions or prescribed_lab_tests or lab_orders %}
+{# ═══════════════════════════════════════════════════════════════════════
+   PAGE DÉDIÉE : ORDONNANCE + EXAMENS PRESCRITS
+   ═══════════════════════════════════════════════════════════════════════ #}
+<div style="page-break-before: always;">
+
+    {# En-tête rappel patient/responsable sur la page ordonnance #}
+    <div style="display: table; width: 100%; margin-bottom: 20px; font-size: 9pt; color: #555; border-bottom: 2px solid {{ organization.brand_color|default:'#2563eb' }}; padding-bottom: 8px;">
+        <div style="display: table-cell; width: 60%;">
+            <strong style="font-size: 11pt; color: #111;">ORDONNANCE MÉDICALE</strong><br>
+            Patient : <b>{{ patient.name }}</b>
+            {% if patient.date_of_birth %} | {{ patient.get_age }} ans{% endif %}
+            {% if patient.gender %} | {{ patient.gender }}{% endif %}
+        </div>
+        <div style="display: table-cell; width: 40%; text-align: right;">
+            Date : {{ consultation.consultation_date|date:"d/m/Y" }}<br>
+            {% if consultation.completed_by %}
+            Dr/Resp. : <b>{{ consultation.completed_by.get_full_name }}</b>
+            {% elif consultation.doctor %}
+            Dr. : <b>{{ consultation.doctor.get_full_name }}</b>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Médicaments ── #}
+    {% if prescriptions %}
     {% for pres in prescriptions %}
-    <p style="font-size: 9pt; color: #666;">{{ pres.prescription_number }}</p>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-        <thead>
-            <tr style="background: #f8f9fa;">
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Médicament</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Posologie</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Fréquence</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Durée</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in pres.items.all %}
-            <tr>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ item.medication_name }}</b></td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.dosage|default:"-" }}</td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.frequency|default:"-" }}</td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.duration|default:"-" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div style="margin-bottom: 20px;">
+        <div style="font-size: 8pt; color: #888; margin-bottom: 6px;">{{ pres.prescription_number }}</div>
+        {% for item in pres.items.all %}
+        <div style="margin-bottom: 8px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 6px;">
+            <div style="display: table; width: 100%;">
+                <div style="display: table-cell; vertical-align: top;">
+                    <span style="font-weight: 700; font-size: 10pt;">{{ forloop.counter }}. {{ item.medication_name }}</span>
+                </div>
+                <div style="display: table-cell; text-align: right; vertical-align: top; font-size: 9pt; color: #4b5563; font-style: italic;">
+                    {{ item.dosage|default:"" }}{% if item.frequency %} — {{ item.frequency }}{% endif %}{% if item.duration %} ({{ item.duration }}){% endif %}
+                </div>
+            </div>
+            {% if item.instructions %}
+            <div style="padding-left: 12px; margin-top: 2px; border-left: 2px solid {{ organization.brand_color|default:'#2563eb' }}; font-size: 9pt; color: #4b5563;">
+                {{ item.instructions }}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p style="color: #9ca3af; font-style: italic; text-align: center;">Aucun médicament prescrit.</p>
+        {% endfor %}
+        {% if pres.notes %}
+        <div style="margin-top: 10px; padding: 8px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 4px; font-size: 9pt;">
+            <strong>Note :</strong> {{ pres.notes }}
+        </div>
+        {% endif %}
+    </div>
     {% endfor %}
-</div>
-{% endif %}
+    {% endif %}
 
-{% if prescribed_lab_tests %}
-<div class="section">
-    <div class="section-title">Examens de Laboratoire Prescrits (Indicatif)</div>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-        <thead>
-            <tr style="background: #f0f9ff;">
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">#</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Examen</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Code</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for test in prescribed_lab_tests %}
-            <tr>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ forloop.counter }}</td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ test.name }}</b></td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ test.test_code }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
-
-{% if lab_orders %}
-<div class="section">
-    <div class="section-title">Commandes de Laboratoire (Générées)</div>
-    {% for order in lab_orders %}
-    <p style="font-size: 9pt; color: #666;">{{ order.order_number }} - Statut: {{ order.get_status_display }}</p>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-        <thead>
-            <tr style="background: #f0fdf4;">
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">#</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Examen</th>
-                <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt;">Code</th>
-            </tr>
-        </thead>
-        <tbody>
+    {# ── Examens de laboratoire prescrits ── #}
+    {% if prescribed_lab_tests or lab_orders %}
+    <div style="margin-top: 20px; padding: 10px; background: #f0fdf4; border-radius: 4px; border-left: 3px solid #10b981;">
+        <div style="font-size: 9pt; text-transform: uppercase; font-weight: 700; color: #10b981; margin-bottom: 8px;">
+            Examens de Laboratoire Prescrits
+        </div>
+        {% if prescribed_lab_tests %}
+        {% for test in prescribed_lab_tests %}
+        <div style="font-size: 9pt; padding: 3px 0;">
+            {{ forloop.counter }}. <b>{{ test.name }}</b>
+            <span style="color: #6b7280; font-size: 8pt;"> — {{ test.test_code }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if lab_orders %}
+        {% for order in lab_orders %}
             {% for item in order.items.all %}
-            <tr>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ forloop.counter }}</td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;"><b>{{ item.lab_test.name }}</b></td>
-                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 9pt;">{{ item.lab_test.test_code }}</td>
-            </tr>
+            {% if not prescribed_lab_tests %}
+            <div style="font-size: 9pt; padding: 3px 0;">
+                {{ forloop.counter }}. <b>{{ item.lab_test.name }}</b>
+                <span style="color: #6b7280; font-size: 8pt;"> — {{ item.lab_test.test_code }}</span>
+            </div>
+            {% endif %}
             {% endfor %}
-        </tbody>
-    </table>
-    {% endfor %}
+        {% endfor %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── Signature sur la page ordonnance ── #}
+    <div style="display: table; width: 100%; margin-top: 40px;">
+        <div style="display: table-cell; width: 50%;">
+            <div style="font-size: 8pt; color: #666;">Fait à {{ organization.address|default:"Yaoundé" }}, le {{ consultation.consultation_date|date:"d/m/Y" }}</div>
+        </div>
+        <div style="display: table-cell; width: 50%; text-align: right;">
+            <div style="display: inline-block; width: 180px; text-align: center;">
+                <div style="height: 50px;"></div>
+                <div style="border-top: 1px dotted #9ca3af; padding-top: 4px;">
+                    {% if consultation.completed_by %}
+                    <b>{{ consultation.completed_by.get_full_name }}</b>
+                    {% elif consultation.doctor %}
+                    <b>Dr. {{ consultation.doctor.get_full_name }}</b>
+                    {% endif %}
+                    <br><span style="font-size: 8pt; font-weight: normal;">Signature &amp; Cachet</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endif %}
 
 <div style="margin-top: 50px; text-align: right;">
-    <p>Signature:</p>
+    <p>Signature &amp; Cachet :</p>
     <div style="height: 60px;"></div>
-    <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
     {% if consultation.completed_by %}
-    <p style="font-size: 8pt; color: #666;">Consultation terminée par: {{ consultation.completed_by.get_full_name|default:consultation.completed_by.username }} le {{ consultation.ended_at|date:"d/m/Y à H:i" }}</p>
+    <p><b>{{ consultation.completed_by.get_full_name }}</b></p>
+    <p style="font-size: 8pt; color: #555;">
+        Terminé le {{ consultation.ended_at|date:"d/m/Y à H:i" }}
+    </p>
+    {% elif consultation.doctor %}
+    <p><b>Dr. {{ consultation.doctor.get_full_name }}</b></p>
     {% endif %}
 </div>
 

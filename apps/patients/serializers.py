@@ -384,3 +384,31 @@ class ConsultationHistorySerializer(serializers.Serializer):
             return result
         except Exception:
             return []
+
+
+# ─── PatientFollowUp Serializer ───────────────────────────────────────────────
+from .models_followup import PatientFollowUp
+
+
+class PatientFollowUpSerializer(serializers.ModelSerializer):
+    provided_by_name = serializers.SerializerMethodField()
+    blood_pressure = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = PatientFollowUp
+        fields = [
+            'id', 'patient', 'organization', 'provided_by', 'provided_by_name',
+            'visit', 'follow_up_date',
+            'chief_complaint', 'physical_examination', 'diagnosis',
+            'evolution', 'treatment', 'notes',
+            'temperature', 'blood_pressure_systolic', 'blood_pressure_diastolic',
+            'blood_pressure', 'heart_rate', 'oxygen_saturation',
+            'respiratory_rate', 'weight', 'blood_glucose',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'patient', 'organization', 'provided_by', 'blood_pressure', 'created_at', 'updated_at']
+
+    def get_provided_by_name(self, obj):
+        if obj.provided_by:
+            return obj.provided_by.get_full_name() or obj.provided_by.username
+        return None

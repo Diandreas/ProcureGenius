@@ -65,10 +65,12 @@ import useCurrency from '../../hooks/useCurrency';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 function SupplierDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useCurrentUser();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['suppliers', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -246,14 +248,16 @@ function SupplierDetail() {
             >
               {t('suppliers:actions.edit')}
             </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
-              onClick={handleDelete}
-            >
-              {t('suppliers:actions.delete')}
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<Delete />}
+                onClick={handleDelete}
+              >
+                {t('suppliers:actions.delete')}
+              </Button>
+            )}
           </Stack>
         </Box>
       </Box>
@@ -289,28 +293,30 @@ function SupplierDetail() {
             <Edit sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title={t('suppliers:tooltips.deleteSupplier')}>
-          <IconButton
-            onClick={handleDelete}
-            size="small"
-            sx={{
-              bgcolor: 'error.50',
-              color: 'error.main',
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: 'error.main',
-                color: 'white',
-                transform: 'scale(1.05)',
-              },
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Delete sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
+        {isAdmin && (
+          <Tooltip title={t('suppliers:tooltips.deleteSupplier')}>
+            <IconButton
+              onClick={handleDelete}
+              size="small"
+              sx={{
+                bgcolor: 'error.50',
+                color: 'error.main',
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            >
+              <Delete sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {/* Quick Actions */}

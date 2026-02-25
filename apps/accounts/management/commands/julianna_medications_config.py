@@ -865,7 +865,16 @@ TARIFS_2026_INVENTAIRE = [
     ('Paracetamol 125 mg sirop',                                                     1,  'box',     1500, 'mai-28'),
     ('Paracetamol 125 mg sirop',                                                     4,  'box',     1500, 'janv-28'),
     ('Amoxiciline 250 mg sirop',                                                     5,  'box',     1500, 'nov-26'),
-    ('Catheter 24 G Jaune - B/100',                                                  1,  'piece',    500, None),
+    ('Catheter 24 G Jaune - B/100',                                                100,  'piece',    500, 'mars-30'),
+    # ── Nouveaux produits ajoutés 18-02-2026 ──────────────────────────────────
+    ('Catheter 22 G Bleu - B/100',                                                 100,  'piece',    500, 'janv-28'),
+    ('Artémether 80 mg injection - B/6',                                             1,  'box',     2500, 'avr-28'),
+    ('Artémether comprimé 20/120 - B/24',                                            5,  'blister', 1500, 'nov-27'),
+    ('Albendazole sirop - B/1',                                                      5,  'box',     1000, 'janv-27'),
+    ('Albendazole 400 mg comprimé - B/20',                                           1,  'box',      500, 'févr-28'),
+    ('Artesunate 60 mg injection - B/1',                                             5,  'vial',    1000, 'oct-27'),
+    ('Ceftriaxon 1g sans eau - B/10',                                               10,  'vial',    1000, 'oct-27'),
+    ('Vitamines B complex comprimés - B/100',                                       10,  'vial',     500, 'juin-28'),
 ]
 
 

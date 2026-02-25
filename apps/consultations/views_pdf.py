@@ -114,8 +114,9 @@ class PrescriptionPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasy
         context['prescriber'] = prescription.prescriber
         context['items'] = prescription.items.all()
 
-        # Examens prescrits (indicatif) depuis la consultation liée
+        # Examens prescrits depuis la consultation liée
         if prescription.consultation:
             context['lab_orders'] = prescription.consultation.lab_orders.prefetch_related('items__lab_test').all()
-        
+            context['prescribed_lab_tests'] = prescription.consultation.prescribed_lab_tests.all()
+
         return context

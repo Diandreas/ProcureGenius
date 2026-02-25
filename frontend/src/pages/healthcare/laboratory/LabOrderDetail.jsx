@@ -58,7 +58,9 @@ import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import RichTextEditor from '../../../components/RichTextEditor';
 import { formatDate, formatTime } from '../../../utils/formatters';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 
 // Status display labels
 const getStatusLabel = (status) => {
@@ -126,8 +128,10 @@ const LabOrderDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { enqueueSnackbar } = useSnackbar();
+    const { isAdmin } = useCurrentUser();
 
     const [loading, setLoading] = useState(true);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [order, setOrder] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
     const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
@@ -161,6 +165,11 @@ const LabOrderDetail = () => {
     // Tube Labels Quantity Modal
     const [tubeLabelsModalOpen, setTubeLabelsModalOpen] = useState(false);
     const [tubeLabelsQuantity, setTubeLabelsQuantity] = useState(1);
+
+    // WYSIWYG Expand Modal
+    const [wysiwygModal, setWysiwygModal] = useState({
+        open: false, itemId: null, field: null, label: '', value: ''
+    });
 
     useEffect(() => {
         if (!isNewOrder) {
@@ -394,6 +403,29 @@ const LabOrderDetail = () => {
         setHistoryModalOpen(false);
         setHistoryData(null);
         setSelectedItem(null);
+    };
+
+    // ─── WYSIWYG modal helpers ───────────────────────────────────────────────
+    const openWysiwygModal = (itemId, field, label) => {
+        const currentValue =
+            field === 'biologist_diagnosis'
+                ? biologistDiagnosis
+                : (results[itemId]?.[field] || '');
+        setWysiwygModal({ open: true, itemId, field, label, value: currentValue });
+    };
+
+    const handleModalChange = (newValue) => {
+        setWysiwygModal(prev => ({ ...prev, value: newValue }));
+    };
+
+    const saveAndCloseModal = () => {
+        const { itemId, field, value } = wysiwygModal;
+        if (field === 'biologist_diagnosis') {
+            setBiologistDiagnosis(value);
+        } else {
+            handleResultChange(itemId, field, value);
+        }
+        setWysiwygModal({ open: false, itemId: null, field: null, label: '', value: '' });
     };
 
 
@@ -679,6 +711,17 @@ const LabOrderDetail = () => {
     // canEdit: allow entering/editing results when analysis is in progress or results just entered (not yet validated)
     const canEdit = ['in_progress', 'completed'].includes(order.status);
 
+    const handleDeleteOrder = async () => {
+        try {
+            await laboratoryAPI.deleteOrder(order.id);
+            enqueueSnackbar('Commande supprimée', { variant: 'success' });
+            navigate('/healthcare/laboratory');
+        } catch {
+            enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        }
+        setDeleteDialogOpen(false);
+    };
+
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
@@ -691,8 +734,19 @@ const LabOrderDetail = () => {
                     </Typography>
                 </Box>
                 <Box>
+                    {isAdmin && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => setDeleteDialogOpen(true)}
+                            sx={{ mr: 1 }}
+                        >
+                            Supprimer
+                        </Button>
+                    )}
                     {['completed', 'results_ready', 'results_delivered'].includes(order.status) && (
-                        <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
+                        <Button data-testid="lab-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
                             Rapport Complet
                         </Button>
                     )}
@@ -700,6 +754,7 @@ const LabOrderDetail = () => {
                     {!isNewOrder && (
                         <>
                             <Button
+                                data-testid="lab-detail-btn-receipt"
                                 variant="outlined"
                                 color="primary"
                                 startIcon={<ReceiptIcon />}
@@ -709,7 +764,7 @@ const LabOrderDetail = () => {
                                 Imprimer Reçu
                             </Button>
 
-                            <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} sx={{ mr: 1 }}>
+                            <Button data-testid="lab-detail-btn-labels" variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} sx={{ mr: 1 }}>
                                 Étiquettes Thermiques
                             </Button>
 
@@ -730,6 +785,7 @@ const LabOrderDetail = () => {
                     {/* Workflow Actions */}
                     {order.status === 'pending' && (
                         <Button
+                            data-testid="lab-detail-btn-collect"
                             variant="contained"
                             color="warning"
                             startIcon={<ColorizeIcon />}
@@ -742,6 +798,7 @@ const LabOrderDetail = () => {
 
                     {order.status === 'sample_collected' && (
                         <Button
+                            data-testid="lab-detail-btn-analyze"
                             variant="contained"
                             color="info"
                             startIcon={<ScienceIcon />}
@@ -753,13 +810,13 @@ const LabOrderDetail = () => {
                     )}
 
                     {canEdit && (
-                        <Button variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
+                        <Button data-testid="lab-detail-btn-save-results" variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
                             Enregistrer
                         </Button>
                     )}
 
                     {canEdit && (
-                        <Button variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} sx={{ mr: 1 }}>
+                        <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} sx={{ mr: 1 }}>
                             Valider
                         </Button>
                     )}
@@ -900,19 +957,20 @@ const LabOrderDetail = () => {
                                 <TableCell>{item.category_name}</TableCell>
                                 <TableCell>
                                     {canEdit ? (
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            multiline
-                                            rows={2}
+                                        <RichTextEditor
                                             value={results[item.id]?.result_value || ''}
-                                            onChange={(e) => handleResultChange(item.id, 'result_value', e.target.value)}
+                                            onChange={(val) => handleResultChange(item.id, 'result_value', val)}
                                             placeholder="Entrer valeur"
+                                            minHeight={60}
+                                            onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
                                         />
                                     ) : (
-                                        <Typography fontWeight="bold" sx={{ whiteSpace: 'pre-wrap' }}>
-                                            {item.result_value}
-                                        </Typography>
+                                        <Typography
+                                            fontWeight="bold"
+                                            component="div"
+                                            dangerouslySetInnerHTML={{ __html: item.result_value || '-' }}
+                                            sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                        />
                                     )}
                                 </TableCell>
                                 <TableCell>{item.result_unit || item.unit || '-'}</TableCell>
@@ -922,22 +980,23 @@ const LabOrderDetail = () => {
                                 </TableCell>
                                 <TableCell>
                                     {canEdit ? (
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            multiline
-                                            rows={2}
+                                        <RichTextEditor
                                             value={results[item.id]?.technician_notes || ''}
-                                            onChange={(e) => handleResultChange(item.id, 'technician_notes', e.target.value)}
+                                            onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
                                             placeholder="Commentaires du technicien"
+                                            minHeight={60}
+                                            onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
                                         />
                                     ) : (
                                         <Box>
-                                            {item.technician_notes && (
-                                                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                                    <strong>Notes:</strong> {item.technician_notes}
-                                                </Typography>
-                                            )}
+                                            {item.technician_notes ? (
+                                                <Typography
+                                                    variant="body2"
+                                                    component="div"
+                                                    dangerouslySetInnerHTML={{ __html: item.technician_notes }}
+                                                    sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                                />
+                                            ) : !item.interpretation ? '-' : null}
                                             {item.interpretation && (
                                                 <Alert severity="info" sx={{ mt: 1, py: 0 }}>
                                                     <Typography variant="caption">
@@ -945,7 +1004,6 @@ const LabOrderDetail = () => {
                                                     </Typography>
                                                 </Alert>
                                             )}
-                                            {!item.technician_notes && !item.interpretation && '-'}
                                         </Box>
                                     )}
                                 </TableCell>
@@ -991,24 +1049,13 @@ const LabOrderDetail = () => {
                         )}
                     </Box>
 
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
-                        variant="outlined"
-                        placeholder="Interprétation globale des résultats par le biologiste superviseur..."
+                    <RichTextEditor
                         value={biologistDiagnosis}
-                        onChange={(e) => setBiologistDiagnosis(e.target.value)}
+                        onChange={setBiologistDiagnosis}
                         disabled={!canEdit}
-                        helperText="Synthèse et diagnostic global basé sur l'ensemble des résultats d'analyse"
-                        sx={{
-                            bgcolor: 'white',
-                            '& .MuiOutlinedInput-root': {
-                                '&.Mui-disabled': {
-                                    bgcolor: '#f5f5f5'
-                                }
-                            }
-                        }}
+                        placeholder="Interprétation globale des résultats par le biologiste superviseur..."
+                        minHeight={120}
+                        onExpand={canEdit ? () => openWysiwygModal(null, 'biologist_diagnosis', 'Diagnostic du Biologiste') : null}
                     />
                 </CardContent>
             </Card>
@@ -1097,6 +1144,32 @@ const LabOrderDetail = () => {
                     <Button onClick={() => setPaymentModalOpen(false)}>Annuler</Button>
                     <Button onClick={handleMarkInvoicePaid} variant="contained" color="primary">
                         Confirmer le Paiement
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* WYSIWYG Expand Modal */}
+            <Dialog
+                open={wysiwygModal.open}
+                onClose={() => setWysiwygModal(prev => ({ ...prev, open: false }))}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ sx: { minHeight: '70vh' } }}
+            >
+                <DialogTitle sx={{ fontWeight: 600 }}>{wysiwygModal.label}</DialogTitle>
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', pt: 1 }}>
+                    <RichTextEditor
+                        value={wysiwygModal.value}
+                        onChange={handleModalChange}
+                        minHeight={400}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setWysiwygModal(prev => ({ ...prev, open: false }))}>
+                        Annuler
+                    </Button>
+                    <Button onClick={saveAndCloseModal} variant="contained" startIcon={<CheckIcon />}>
+                        Enregistrer
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1208,6 +1281,26 @@ const LabOrderDetail = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseHistory}>Fermer</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog confirmation suppression — admin only */}
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Supprimer la commande</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Supprimer la commande <strong>#{order?.order_number}</strong> pour{' '}
+                        <strong>{order?.patient_name}</strong> ?
+                    </Typography>
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        Cette action est irréversible.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+                    <Button variant="contained" color="error" startIcon={<DeleteIcon />} onClick={handleDeleteOrder}>
+                        Supprimer
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>

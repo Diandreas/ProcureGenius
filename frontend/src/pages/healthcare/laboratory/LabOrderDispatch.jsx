@@ -142,6 +142,7 @@ const LabOrderDispatch = () => {
                                         </Box>
                                     </Box>
                                     <Button
+                                        data-testid="lab-dispatch-btn-receipt"
                                         variant="contained"
                                         startIcon={<PrintIcon />}
                                         onClick={() => handlePrintAction('receipt')}
@@ -160,6 +161,7 @@ const LabOrderDispatch = () => {
                                         </Box>
                                     </Box>
                                     <Button
+                                        data-testid="lab-dispatch-btn-labels"
                                         variant="outlined"
                                         startIcon={<PrintIcon />}
                                         onClick={() => handlePrintAction('tube_labels')}

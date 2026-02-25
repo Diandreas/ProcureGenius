@@ -272,3 +272,25 @@ update_*.sql
 # Build mascots/assets (should be in source control if needed)
 build/mascote.zip
 public/mascote.zip
+
+# Fichiers tutoriels et scripts de génération
+TUTORIEL_*.docx
+~$*.docx
+tuto_*.js
+tuto_*.py
+generate_*.js
+generate_*.py
+capture_*.js
+precision_*.js
+assemble_word.py
+correction_script.js
+csj_captures.js
+master_tutorial_generator.js
+run_all_captures.js
+smart_tuto_generator.js
+documentation/
+
+# Fichiers Excel temporaires
+"Liste des médicaments*"
+"Tarifs soins*"
+*.xlsx

@@ -34,4 +34,8 @@ urlpatterns = [
     
     # PDF
     path('<uuid:pk>/summary/', views_pdf.PatientSummaryView.as_view(), name='patient-summary'),
+
+    # Follow-up endpoints
+    path('<uuid:patient_id>/follow-ups/', api.PatientFollowUpListCreateView.as_view(), name='patient-follow-ups'),
+    path('follow-ups/<uuid:pk>/', api.PatientFollowUpDetailView.as_view(), name='follow-up-detail'),
 ]

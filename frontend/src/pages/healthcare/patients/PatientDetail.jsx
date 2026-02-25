@@ -11,8 +11,12 @@ import {
     Science as LabIcon,
     LocalPharmacy as PharmacyIcon,
     Receipt as PrescriptionIcon,
-    Dashboard as SummaryIcon
+    Dashboard as SummaryIcon,
+    TrackChanges as FollowUpIcon,
+    ExpandMore as ExpandMoreIcon,
+    FiberManualRecord as DotIcon,
 } from '@mui/icons-material';
+import { Accordion, AccordionSummary, AccordionDetails, Table, TableBody, TableCell, TableRow, Paper } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
@@ -21,6 +25,7 @@ import PharmacyHistory from './components/PharmacyHistory';
 import MedicalSummaryTab from './components/MedicalSummaryTab';
 import PatientTimeline from './components/PatientTimeline';
 import AdministerCareModal from './components/AdministerCareModal';
+import PatientFollowUpModal from './components/PatientFollowUpModal';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 
@@ -41,9 +46,23 @@ const PatientDetail = () => {
     // Care Modal State
     const [careModalOpen, setCareModalOpen] = useState(false);
 
+    // Follow-up Modal & data
+    const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
+    const [followUps, setFollowUps] = useState([]);
+
     useEffect(() => {
         fetchData();
+        fetchFollowUps();
     }, [id]);
+
+    const fetchFollowUps = async () => {
+        try {
+            const data = await patientAPI.getFollowUps(id);
+            setFollowUps(Array.isArray(data) ? data : data.results || []);
+        } catch (e) {
+            console.error('Error fetching follow-ups', e);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -184,6 +203,15 @@ const PatientDetail = () => {
                             sx={{ borderRadius: 2 }}
                         >
                             Administrer un Soin
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<FollowUpIcon />}
+                            onClick={() => setFollowUpModalOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Suivi
                         </Button>
                     </Box>
                 </CardContent>
@@ -441,8 +469,88 @@ const PatientDetail = () => {
                 patientId={id}
                 onSaved={fetchData}
             />
+
+            {/* ── Bloc Suivis ─────────────────────────────────────────── */}
+            {followUps.length > 0 && (
+                <Accordion sx={{ mt: 3 }} defaultExpanded>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FollowUpIcon color="secondary" fontSize="small" />
+                            <Typography fontWeight={700}>
+                                Suivis du patient ({followUps.length})
+                            </Typography>
+                        </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ p: 0 }}>
+                        {followUps.map((fu, idx) => (
+                            <Paper
+                                key={fu.id}
+                                variant="outlined"
+                                sx={{ m: 2, p: 2, borderLeft: 4, borderColor: 'secondary.main' }}
+                            >
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="subtitle2" fontWeight={700}>
+                                        {formatDate(fu.follow_up_date)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {fu.provided_by_name || '—'}
+                                    </Typography>
+                                </Box>
+
+                                {/* Vitaux résumés */}
+                                {(fu.blood_pressure || fu.temperature || fu.heart_rate || fu.oxygen_saturation) && (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 1 }}>
+                                        {fu.blood_pressure && <VitalBadge label="TA" value={`${fu.blood_pressure} mmHg`} />}
+                                        {fu.temperature && <VitalBadge label="T°" value={`${fu.temperature} °C`} />}
+                                        {fu.heart_rate && <VitalBadge label="FC" value={`${fu.heart_rate} bpm`} />}
+                                        {fu.oxygen_saturation && <VitalBadge label="SpO2" value={`${fu.oxygen_saturation}%`} />}
+                                        {fu.weight && <VitalBadge label="Poids" value={`${fu.weight} kg`} />}
+                                        {fu.blood_glucose && <VitalBadge label="Glycémie" value={`${fu.blood_glucose} mg/dL`} />}
+                                    </Box>
+                                )}
+
+                                <Table size="small">
+                                    <TableBody>
+                                        {fu.chief_complaint && <FuRow label="Plaintes du jour" value={fu.chief_complaint} />}
+                                        {fu.physical_examination && <FuRow label="Examen physique" value={fu.physical_examination} />}
+                                        {fu.diagnosis && <FuRow label="Diagnostic" value={fu.diagnosis} />}
+                                        {fu.evolution && <FuRow label="Évolution" value={fu.evolution} />}
+                                        {fu.treatment && <FuRow label="Traitement / Examens" value={fu.treatment} />}
+                                        {fu.notes && <FuRow label="Notes" value={fu.notes} />}
+                                    </TableBody>
+                                </Table>
+                            </Paper>
+                        ))}
+                    </AccordionDetails>
+                </Accordion>
+            )}
+
+            <PatientFollowUpModal
+                open={followUpModalOpen}
+                onClose={() => setFollowUpModalOpen(false)}
+                patientId={id}
+                patientName={patient?.name}
+                onSaved={(fu) => setFollowUps(prev => [fu, ...prev])}
+            />
         </Box>
     );
 };
+
+// ── Sous-composants affichage ─────────────────────────────────────────────────
+const VitalBadge = ({ label, value }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'grey.100', borderRadius: 1, px: 1, py: 0.25 }}>
+        <Typography variant="caption" color="text.secondary">{label}:</Typography>
+        <Typography variant="caption" fontWeight={700}>{value}</Typography>
+    </Box>
+);
+
+const FuRow = ({ label, value }) => (
+    <TableRow>
+        <TableCell sx={{ fontWeight: 600, width: 160, verticalAlign: 'top', py: 0.5, color: 'text.secondary', fontSize: '0.78rem' }}>
+            {label}
+        </TableCell>
+        <TableCell sx={{ py: 0.5, fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>{value}</TableCell>
+    </TableRow>
+);
 
 export default PatientDetail;

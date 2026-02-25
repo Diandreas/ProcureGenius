@@ -33,6 +33,11 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Delete order (admin only)
+    deleteOrder: async (id) => {
+        await api.delete(`/healthcare/laboratory/orders/${id}/`);
+    },
+
     // Enter results
     enterResults: async (id, resultsData) => {
         // resultsData: { items: [{ item_id, result_value, ... }, ...] }

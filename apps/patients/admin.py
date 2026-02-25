@@ -4,6 +4,7 @@ Admin configuration for Patients app
 from django.contrib import admin
 from .models import PatientVisit
 from .models_care import PatientCareService
+from .models_followup import PatientFollowUp
 
 
 @admin.register(PatientVisit)
@@ -94,3 +95,22 @@ class PatientCareServiceAdmin(admin.ModelAdmin):
     ]
     date_hierarchy = 'provided_at'
     ordering = ['-provided_at']
+
+
+@admin.register(PatientFollowUp)
+class PatientFollowUpAdmin(admin.ModelAdmin):
+    list_display = ['patient', 'follow_up_date', 'provided_by', 'diagnosis', 'organization']
+    list_filter = ['organization', 'follow_up_date', 'provided_by']
+    search_fields = ['patient__name', 'diagnosis', 'chief_complaint']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    date_hierarchy = 'follow_up_date'
+    ordering = ['-follow_up_date']
+    fieldsets = (
+        ('Patient', {'fields': ('id', 'organization', 'patient', 'provided_by', 'visit')}),
+        ('Clinique', {'fields': ('chief_complaint', 'physical_examination', 'diagnosis', 'evolution', 'treatment', 'notes')}),
+        ('Paramètres Vitaux', {'fields': (
+            'temperature', 'blood_pressure_systolic', 'blood_pressure_diastolic',
+            'heart_rate', 'oxygen_saturation', 'respiratory_rate', 'weight', 'blood_glucose',
+        )}),
+        ('Dates', {'fields': ('follow_up_date', 'created_at', 'updated_at')}),
+    )

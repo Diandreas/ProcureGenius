@@ -74,6 +74,7 @@ import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatte
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import PrintModal from '../../components/PrintModal';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 const UNIT_LABELS = {
   'piece': 'Pièce',
@@ -105,6 +106,7 @@ function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useCurrentUser();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -545,6 +547,7 @@ function InvoiceDetail() {
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
+            data-testid="invoice-btn-open-pdf"
             variant="outlined"
             startIcon={<PictureAsPdf />}
             onClick={() => setPdfDialogOpen(true)}
@@ -623,10 +626,12 @@ Cordialement`
               <Add fontSize="small" sx={{ mr: 1 }} />
               {t('invoices:buttons.addItem')}
             </MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-              <Delete fontSize="small" sx={{ mr: 1 }} />
-              {t('invoices:buttons.delete')}
-            </MenuItem>
+            {isAdmin && (
+              <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                <Delete fontSize="small" sx={{ mr: 1 }} />
+                {t('invoices:buttons.delete')}
+              </MenuItem>
+            )}
           </Menu>
         </Box>
       </Box>
@@ -1398,6 +1403,7 @@ Cordialement`
             {t('invoices:buttons.preview')}
           </Button>
           <Button
+            data-testid="invoice-btn-print"
             onClick={() => handleGeneratePDF('print')}
             variant="outlined"
             color="secondary"

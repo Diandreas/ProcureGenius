@@ -69,7 +69,7 @@ export const authAPI = {
     localStorage.removeItem('authToken');
     return Promise.resolve();
   },
-  getProfile: () => api.get('/auth/profile/'),
+  getProfile: () => api.get('/accounts/profile/'),
   googleLogin: (token) => api.post('/auth/google/', { token }),
 };
 

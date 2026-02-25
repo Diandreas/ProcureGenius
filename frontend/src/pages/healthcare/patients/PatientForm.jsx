@@ -242,6 +242,7 @@ const PatientForm = () => {
                     startIcon={<SaveIcon />}
                     disabled={loading}
                     sx={{ borderRadius: 2 }}
+                    data-testid="patient-btn-submit"
                 >
                     {t('common.save', 'Enregistrer')}
                 </Button>
@@ -261,6 +262,7 @@ const PatientForm = () => {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
+                                inputProps={{'data-testid': 'patient-input-name'}}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -288,6 +290,7 @@ const PatientForm = () => {
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
+                                inputProps={{'data-testid': 'patient-select-gender'}}
                             >
                                 <MenuItem value="M">Masculin</MenuItem>
                                 <MenuItem value="F">Féminin</MenuItem>
@@ -308,6 +311,7 @@ const PatientForm = () => {
                                 value={formData.phone}
                                 onChange={handleChange}
                                 helperText="Obligatoire pour les patients"
+                                inputProps={{'data-testid': 'patient-input-phone'}}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -430,6 +434,7 @@ const PatientForm = () => {
                                         label="Sélectionner des services"
                                         placeholder="Choisir un service..."
                                         helperText="Recherchez et sélectionnez les services à facturer"
+                                        inputProps={{...params.inputProps, 'data-testid': 'patient-select-services'}}
                                     />
                                 )}
                                 renderOption={(props, option) => (

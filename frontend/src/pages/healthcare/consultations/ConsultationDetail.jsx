@@ -119,7 +119,7 @@ const ConsultationDetail = () => {
                     <Typography variant="h4" sx={{ fontWeight: 600 }}>Dossier Médical</Typography>
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" startIcon={<PdfIcon />} onClick={() => { setPrintModalType('report'); setPrintModalOpen(true); }}>Rapport</Button>
+                    <Button data-testid="consult-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => { setPrintModalType('report'); setPrintModalOpen(true); }}>Rapport</Button>
                     <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/healthcare/consultations/${id}/edit`)}>Modifier</Button>
                     <Button variant="contained" onClick={async () => {
                         const next = await consultationAPI.getNextPatient();

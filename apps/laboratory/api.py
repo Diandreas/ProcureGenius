@@ -150,15 +150,21 @@ class LabOrderListView(generics.ListAPIView):
         return queryset
 
 
-class LabOrderDetailView(generics.RetrieveAPIView):
-    """Retrieve a single lab order with all items"""
+class LabOrderDetailView(generics.RetrieveDestroyAPIView):
+    """Retrieve or delete a single lab order (DELETE admin only)"""
     serializer_class = LabOrderSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return LabOrder.objects.filter(
             organization=self.request.user.organization
         ).select_related('patient', 'ordered_by').prefetch_related('items__lab_test')
+
+    def destroy(self, request, *args, **kwargs):
+        if request.user.role != 'admin':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Suppression réservée aux administrateurs.")
+        return super().destroy(request, *args, **kwargs)
 
 
 class LabOrderCreateView(APIView):
