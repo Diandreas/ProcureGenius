@@ -130,6 +130,10 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     reference = serializers.CharField(required=False, allow_blank=True)
     default_shelf_life_after_opening = serializers.IntegerField(required=False, allow_null=True)
 
+    # Navigation IDs (for physical products)
+    prev_product_id = serializers.SerializerMethodField()
+    next_product_id = serializers.SerializerMethodField()
+
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
     warehouse_code = serializers.CharField(source='warehouse.code', read_only=True)
@@ -180,15 +184,48 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'expiration_date', 'supply_lead_time_days', 'default_shelf_life_after_opening',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at',
+            'prev_product_id', 'next_product_id'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
             'stock_status', 'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
-            'last_sale_date', 'active_contracts_count'
+            'last_sale_date', 'active_contracts_count',
+            'prev_product_id', 'next_product_id'
         ]
+
+    def get_prev_product_id(self, obj):
+        """Retourne l'ID du produit physique précédent (ordre alphabétique)"""
+        if obj.product_type != 'physical':
+            return None
+        
+        # On cherche le produit avec un nom "plus petit" ou même nom mais ID plus petit
+        prev_prod = Product.objects.filter(
+            organization=obj.organization,
+            product_type='physical',
+            is_active=True
+        ).filter(
+            models.Q(name__lt=obj.name) | models.Q(name=obj.name, id__lt=obj.id)
+        ).order_by('-name', '-id').first()
+        
+        return prev_prod.id if prev_prod else None
+
+    def get_next_product_id(self, obj):
+        """Retourne l'ID du produit physique suivant (ordre alphabétique)"""
+        if obj.product_type != 'physical':
+            return None
+            
+        next_prod = Product.objects.filter(
+            organization=obj.organization,
+            product_type='physical',
+            is_active=True
+        ).filter(
+            models.Q(name__gt=obj.name) | models.Q(name=obj.name, id__gt=obj.id)
+        ).order_by('name', 'id').first()
+        
+        return next_prod.id if next_prod else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  ButtonGroup,
   alpha,
 } from '@mui/material';
 import {
@@ -46,6 +47,8 @@ import {
   Print,
   Download,
   Calculate,
+  ChevronLeft,
+  ChevronRight,
   LocalPharmacy as PharmacyIcon,
 } from '@mui/icons-material';
 import {
@@ -290,9 +293,32 @@ function ProductDetail() {
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <IconButton onClick={() => navigate('/products')} size="medium">
+          <IconButton onClick={() => navigate('/products')} size="medium" sx={{ mr: 1 }}>
             <ArrowBack />
           </IconButton>
+
+          {/* Navigation Précédent/Suivant */}
+          <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
+            <Tooltip title="Produit précédent (physique)">
+              <Button 
+                onClick={() => navigate(`/products/${product.prev_product_id}`)}
+                disabled={!product.prev_product_id}
+                startIcon={<ChevronLeft />}
+              >
+                Précédent
+              </Button>
+            </Tooltip>
+            <Tooltip title="Produit suivant (physique)">
+              <Button 
+                onClick={() => navigate(`/products/${product.next_product_id}`)}
+                disabled={!product.next_product_id}
+                endIcon={<ChevronRight />}
+              >
+                Suivant
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+
           <Typography variant="h4" fontWeight="bold" sx={{ flex: 1 }}>
             {product.name}
           </Typography>
@@ -363,12 +389,46 @@ function ProductDetail() {
       <Box sx={{
         mb: 1.5,
         display: { xs: 'flex', md: 'none' },
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         gap: 0.5,
         px: 2,
         py: 1
       }}>
-        <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+        {/* Navigation Mobile */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            onClick={() => navigate(`/products/${product.prev_product_id}`)}
+            disabled={!product.prev_product_id}
+            size="small"
+            sx={{
+              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+            }}
+          >
+            <ChevronLeft sx={{ fontSize: 20 }} />
+          </IconButton>
+          <IconButton
+            onClick={() => navigate(`/products/${product.next_product_id}`)}
+            disabled={!product.next_product_id}
+            size="small"
+            sx={{
+              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+            }}
+          >
+            <ChevronRight sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
           <IconButton
             onClick={() => setPdfDialogOpen(true)}
             size="small"
