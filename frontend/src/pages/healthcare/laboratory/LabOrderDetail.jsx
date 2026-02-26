@@ -134,6 +134,7 @@ const LabOrderDetail = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [order, setOrder] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
+    const [parameterValues, setParameterValues] = useState({}); // { item_id: { param_id: { result_numeric, result_text } } }
     const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
     const isNewOrder = id === 'new';
 
@@ -204,15 +205,27 @@ const LabOrderDetail = () => {
 
             // Initialize results state
             const initialResults = {};
+            const initialParamValues = {};
             if (data.items) {
                 data.items.forEach(item => {
                     initialResults[item.id] = {
                         result_value: item.result_value || '',
                         technician_notes: item.technician_notes || ''
                     };
+                    // Initialize structured parameter values from existing results
+                    if (item.parameter_results && item.parameter_results.length > 0) {
+                        initialParamValues[item.id] = {};
+                        item.parameter_results.forEach(pv => {
+                            initialParamValues[item.id][pv.parameter] = {
+                                result_numeric: pv.result_numeric !== null ? String(pv.result_numeric) : '',
+                                result_text: pv.result_text || ''
+                            };
+                        });
+                    }
                 });
             }
             setResults(initialResults);
+            setParameterValues(initialParamValues);
 
             // Initialize biologist diagnosis
             setBiologistDiagnosis(data.biologist_diagnosis || '');
@@ -235,12 +248,69 @@ const LabOrderDetail = () => {
         }));
     };
 
+    const handleParameterValueChange = (itemId, paramId, field, value) => {
+        setParameterValues(prev => ({
+            ...prev,
+            [itemId]: {
+                ...prev[itemId],
+                [paramId]: {
+                    ...(prev[itemId]?.[paramId] || {}),
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    /**
+     * Compute H / L / H* / L* / N flag for a numeric value against a parameter's reference ranges.
+     * Returns '' if value is empty.
+     */
+    const computeFlag = (numValue, param, patientGender, patientAge) => {
+        if (numValue === '' || numValue === null || numValue === undefined) return '';
+        const v = parseFloat(numValue);
+        if (isNaN(v)) return '';
+
+        const isChild = patientAge !== null && patientAge !== undefined && v < (param.child_age_max_years || 17);
+
+        let refMin, refMax;
+        if (isChild) {
+            refMin = param.child_ref_min;
+            refMax = param.child_ref_max;
+        } else if (patientGender === 'M') {
+            refMin = param.adult_ref_min_male ?? param.adult_ref_min_general;
+            refMax = param.adult_ref_max_male ?? param.adult_ref_max_general;
+        } else if (patientGender === 'F') {
+            refMin = param.adult_ref_min_female ?? param.adult_ref_min_general;
+            refMax = param.adult_ref_max_female ?? param.adult_ref_max_general;
+        } else {
+            refMin = param.adult_ref_min_general;
+            refMax = param.adult_ref_max_general;
+        }
+
+        if (param.critical_low !== null && param.critical_low !== undefined && v <= parseFloat(param.critical_low)) return 'L*';
+        if (param.critical_high !== null && param.critical_high !== undefined && v >= parseFloat(param.critical_high)) return 'H*';
+        if (refMin !== null && refMin !== undefined && v < parseFloat(refMin)) return 'L';
+        if (refMax !== null && refMax !== undefined && v > parseFloat(refMax)) return 'H';
+        return 'N';
+    };
+
     const saveResults = async () => {
         try {
-            const itemsToUpdate = Object.keys(results).map(itemId => ({
-                item_id: itemId,
-                ...results[itemId]
-            }));
+            const itemsToUpdate = Object.keys(results).map(itemId => {
+                const entry = { item_id: itemId, ...results[itemId] };
+                // Include structured parameter values if this is a compound test
+                const pvMap = parameterValues[itemId];
+                if (pvMap && Object.keys(pvMap).length > 0) {
+                    entry.parameter_values = Object.entries(pvMap)
+                        .filter(([, val]) => val.result_numeric !== '' || val.result_text)
+                        .map(([paramId, val]) => ({
+                            parameter_id: paramId,
+                            result_numeric: val.result_numeric !== '' ? val.result_numeric : null,
+                            result_text: val.result_text || ''
+                        }));
+                }
+                return entry;
+            });
 
             await laboratoryAPI.enterResults(id, {
                 results: itemsToUpdate,
@@ -745,6 +815,11 @@ const LabOrderDetail = () => {
                             Supprimer
                         </Button>
                     )}
+                    {order.status === 'in_progress' && (
+                        <Button data-testid="lab-detail-btn-report-provisional" variant="outlined" color="warning" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
+                            Rapport Provisoire
+                        </Button>
+                    )}
                     {['completed', 'results_ready', 'results_delivered'].includes(order.status) && (
                         <Button data-testid="lab-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
                             Rapport Complet
@@ -951,103 +1026,286 @@ const LabOrderDetail = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {order.items?.map((item) => (
-                            <TableRow key={item.id}>
-                                <TableCell fontWeight="500">{item.test_name}</TableCell>
-                                <TableCell>{item.category_name}</TableCell>
-                                <TableCell>
-                                    {canEdit ? (
-                                        <Box>
-                                            <RichTextEditor
-                                                value={results[item.id]?.result_value || ''}
-                                                onChange={(val) => handleResultChange(item.id, 'result_value', val)}
-                                                placeholder="Entrer valeur"
-                                                minHeight={60}
-                                                onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
-                                            />
-                                            {item.result_template && (
-                                                <Button
-                                                    size="small"
-                                                    variant="outlined"
-                                                    color="secondary"
-                                                    sx={{ mt: 0.5, fontSize: '0.7rem', py: 0.3 }}
-                                                    onClick={() => {
-                                                        const html = item.result_template
-                                                            .split('\n')
-                                                            .map(line => `<p>${line.trim() || '<br>'}</p>`)
-                                                            .join('');
-                                                        handleResultChange(item.id, 'result_value', html);
-                                                    }}
-                                                >
-                                                    Pré-remplir
-                                                </Button>
-                                            )}
-                                        </Box>
-                                    ) : (
-                                        <Typography
-                                            fontWeight="bold"
-                                            component="div"
-                                            dangerouslySetInnerHTML={{ __html: item.result_value || '-' }}
-                                            sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
-                                        />
-                                    )}
-                                </TableCell>
-                                <TableCell>{item.result_unit || item.unit || '-'}</TableCell>
-                                <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'top', maxWidth: 180 }}>
-                                    {(() => {
-                                        const gender = order.patient_gender;
-                                        if (gender === 'M') {
-                                            return item.normal_range_male || item.normal_range_general || '-';
-                                        } else if (gender === 'F') {
-                                            return item.normal_range_female || item.normal_range_general || '-';
-                                        }
-                                        return item.normal_range_general || item.normal_range_male || '-';
-                                    })()}
-                                </TableCell>
-                                <TableCell>
-                                    {canEdit ? (
-                                        <RichTextEditor
-                                            value={results[item.id]?.technician_notes || ''}
-                                            onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                            placeholder="Commentaires du technicien"
-                                            minHeight={60}
-                                            onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
-                                        />
-                                    ) : (
-                                        <Box>
-                                            {item.technician_notes ? (
-                                                <Typography
-                                                    variant="body2"
-                                                    component="div"
-                                                    dangerouslySetInnerHTML={{ __html: item.technician_notes }}
-                                                    sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                        {order.items?.map((item) => {
+                            const patientGender = order.patient_gender;
+                            const patientAge = order.patient?.age ?? null;
+
+                            // ─── COMPOUND TEST (e.g. NFS) ───────────────────────────────────────────
+                            if (item.has_parameters && item.parameters?.length > 0) {
+                                // Group parameters by group_name
+                                const groups = {};
+                                item.parameters.forEach(param => {
+                                    const g = param.group_name || 'Paramètres';
+                                    if (!groups[g]) groups[g] = [];
+                                    groups[g].push(param);
+                                });
+
+                                const getRefDisplay = (param) => {
+                                    let refMin, refMax;
+                                    if (patientGender === 'M') {
+                                        refMin = param.adult_ref_min_male ?? param.adult_ref_min_general;
+                                        refMax = param.adult_ref_max_male ?? param.adult_ref_max_general;
+                                    } else if (patientGender === 'F') {
+                                        refMin = param.adult_ref_min_female ?? param.adult_ref_min_general;
+                                        refMax = param.adult_ref_max_female ?? param.adult_ref_max_general;
+                                    } else {
+                                        refMin = param.adult_ref_min_general;
+                                        refMax = param.adult_ref_max_general;
+                                    }
+                                    if (refMin !== null && refMin !== undefined && refMax !== null && refMax !== undefined)
+                                        return `${parseFloat(refMin)} – ${parseFloat(refMax)}`;
+                                    if (refMin !== null && refMin !== undefined) return `≥ ${parseFloat(refMin)}`;
+                                    if (refMax !== null && refMax !== undefined) return `≤ ${parseFloat(refMax)}`;
+                                    return '—';
+                                };
+
+                                const getFlagStyle = (flag) => {
+                                    if (flag === 'H' || flag === 'H*') return { color: '#dc2626', fontWeight: 700 };
+                                    if (flag === 'L' || flag === 'L*') return { color: '#2563eb', fontWeight: 700 };
+                                    return {};
+                                };
+
+                                return (
+                                    <TableRow key={item.id} sx={{ verticalAlign: 'top' }}>
+                                        <TableCell colSpan={7} sx={{ p: 0 }}>
+                                            <Box sx={{ p: 1.5 }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                    <Typography variant="subtitle2" fontWeight={700}>{item.test_name}</Typography>
+                                                    <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
+                                                        <HistoryIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
+                                                {Object.entries(groups).map(([groupName, params]) => (
+                                                    <Box key={groupName} sx={{ mb: 1 }}>
+                                                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', bgcolor: '#eff6ff', px: 1, py: 0.3, borderRadius: 0.5, mb: 0.5 }}>
+                                                            {groupName}
+                                                        </Typography>
+                                                        <Table size="small" sx={{ '& td': { py: 0.3, px: 0.8 } }}>
+                                                            <TableHead>
+                                                                <TableRow>
+                                                                    <TableCell sx={{ width: '10%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Code</TableCell>
+                                                                    <TableCell sx={{ width: '28%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Paramètre</TableCell>
+                                                                    <TableCell sx={{ width: '18%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Résultat</TableCell>
+                                                                    <TableCell sx={{ width: '6%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Flag</TableCell>
+                                                                    <TableCell sx={{ width: '14%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Unité</TableCell>
+                                                                    <TableCell sx={{ width: '24%', fontWeight: 700, fontSize: '0.7rem', color: '#6b7280' }}>Plage réf.</TableCell>
+                                                                </TableRow>
+                                                            </TableHead>
+                                                            <TableBody>
+                                                                {params.map(param => {
+                                                                    const isNumeric = param.value_type === 'numeric';
+                                                                    const isPosNeg = param.value_type === 'pos_neg';
+
+                                                                    // Read current value from the right field based on value_type
+                                                                    const pvState = parameterValues[item.id]?.[param.id] || {};
+                                                                    const currentVal = isNumeric
+                                                                        ? (pvState.result_numeric ?? '')
+                                                                        : (pvState.result_text ?? '');
+
+                                                                    const existingResult = item.parameter_results?.find(pr => pr.parameter === param.id);
+                                                                    const displayVal = canEdit
+                                                                        ? currentVal
+                                                                        : (isNumeric
+                                                                            ? (existingResult?.result_numeric ?? '')
+                                                                            : (existingResult?.result_text ?? ''));
+
+                                                                    // Flag only makes sense for numeric parameters
+                                                                    const flag = isNumeric
+                                                                        ? (canEdit
+                                                                            ? computeFlag(currentVal, param, patientGender, patientAge)
+                                                                            : (existingResult?.flag || ''))
+                                                                        : '';
+                                                                    const flagStyle = getFlagStyle(flag);
+                                                                    const isCritical = flag === 'H*' || flag === 'L*';
+
+                                                                    // Reference range only shown for numeric params
+                                                                    const refDisplay = isNumeric ? getRefDisplay(param) : '';
+
+                                                                    return (
+                                                                        <TableRow key={param.id} sx={isCritical ? { bgcolor: '#fef9c3' } : {}}>
+                                                                            <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>{param.code}</TableCell>
+                                                                            <TableCell sx={{ fontSize: '0.75rem', color: '#374151' }}>{param.name}</TableCell>
+                                                                            <TableCell>
+                                                                                {canEdit ? (
+                                                                                    isNumeric ? (
+                                                                                        <TextField
+                                                                                            size="small"
+                                                                                            type="number"
+                                                                                            value={currentVal}
+                                                                                            onChange={(e) => handleParameterValueChange(item.id, param.id, 'result_numeric', e.target.value)}
+                                                                                            inputProps={{ step: 'any' }}
+                                                                                            sx={{ width: 90, '& input': { fontSize: '0.8rem', py: 0.4, ...flagStyle } }}
+                                                                                        />
+                                                                                    ) : isPosNeg ? (
+                                                                                        <Select
+                                                                                            size="small"
+                                                                                            value={currentVal}
+                                                                                            onChange={(e) => handleParameterValueChange(item.id, param.id, 'result_text', e.target.value)}
+                                                                                            displayEmpty
+                                                                                            sx={{ fontSize: '0.8rem', minWidth: 120 }}
+                                                                                        >
+                                                                                            <MenuItem value=""><em>—</em></MenuItem>
+                                                                                            <MenuItem value="Négatif">Négatif</MenuItem>
+                                                                                            <MenuItem value="Positif">Positif</MenuItem>
+                                                                                        </Select>
+                                                                                    ) : (
+                                                                                        /* text type — free text input (e.g. stool culture, morphology descriptions) */
+                                                                                        <TextField
+                                                                                            size="small"
+                                                                                            value={currentVal}
+                                                                                            onChange={(e) => handleParameterValueChange(item.id, param.id, 'result_text', e.target.value)}
+                                                                                            placeholder="Résultat"
+                                                                                            sx={{ minWidth: 160, '& input': { fontSize: '0.8rem', py: 0.4 } }}
+                                                                                        />
+                                                                                    )
+                                                                                ) : (
+                                                                                    <Typography variant="body2" fontWeight={isNumeric ? 700 : 400} sx={flagStyle}>
+                                                                                        {displayVal !== '' && displayVal !== null ? String(displayVal) : '—'}
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                {/* Flag arrow only for numeric out-of-range results */}
+                                                                                {flag && flag !== 'N' && (
+                                                                                    <Typography variant="caption" sx={{ ...flagStyle, bgcolor: isCritical ? '#fef9c3' : 'transparent', px: 0.5, borderRadius: 0.5 }}>
+                                                                                        {flag === 'H' ? '↑' : flag === 'L' ? '↓' : flag === 'H*' ? '↑↑' : '↓↓'}
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </TableCell>
+                                                                            {/* Unit — hidden when not applicable */}
+                                                                            <TableCell sx={{ fontSize: '0.72rem', color: '#6b7280' }}>{param.unit || ''}</TableCell>
+                                                                            {/* Ref range — only shown for numeric parameters */}
+                                                                            <TableCell sx={{ fontSize: '0.72rem', color: '#6b7280' }}>{refDisplay}</TableCell>
+                                                                        </TableRow>
+                                                                    );
+                                                                })}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </Box>
+                                                ))}
+                                                {/* Optional notes for compound tests */}
+                                                {canEdit && (
+                                                    <RichTextEditor
+                                                        value={results[item.id]?.technician_notes || ''}
+                                                        onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
+                                                        placeholder="Commentaires du technicien (optionnel)"
+                                                        minHeight={40}
+                                                        onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
+                                                    />
+                                                )}
+                                                {!canEdit && item.technician_notes && (
+                                                    <Typography variant="body2" component="div" dangerouslySetInnerHTML={{ __html: item.technician_notes }} sx={{ mt: 1, fontSize: '0.75rem', color: '#4b5563', '& p': { my: 0 } }} />
+                                                )}
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            }
+
+                            // ─── SIMPLE TEST ─────────────────────────────────────────────────────────
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell fontWeight="500">{item.test_name}</TableCell>
+                                    <TableCell>{item.category_name}</TableCell>
+                                    <TableCell>
+                                        {canEdit ? (
+                                            <Box>
+                                                <RichTextEditor
+                                                    value={results[item.id]?.result_value || ''}
+                                                    onChange={(val) => handleResultChange(item.id, 'result_value', val)}
+                                                    placeholder="Entrer valeur"
+                                                    minHeight={60}
+                                                    onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
                                                 />
-                                            ) : !item.interpretation ? '-' : null}
-                                            {item.interpretation && (
-                                                <Alert severity="info" sx={{ mt: 1, py: 0 }}>
-                                                    <Typography variant="caption">
-                                                        <strong>Interprétation:</strong> {item.interpretation}
-                                                    </Typography>
-                                                </Alert>
-                                            )}
-                                        </Box>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
-                                </TableCell>
-                                <TableCell>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => handleShowHistory(item)}
-                                        title="Afficher l'historique des valeurs"
-                                        color="primary"
-                                    >
-                                        <HistoryIcon fontSize="small" />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                                {item.result_template && (
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        color="secondary"
+                                                        sx={{ mt: 0.5, fontSize: '0.7rem', py: 0.3 }}
+                                                        onClick={() => {
+                                                            const html = item.result_template
+                                                                .split('\n')
+                                                                .map(line => `<p>${line.trim() || '<br>'}</p>`)
+                                                                .join('');
+                                                            handleResultChange(item.id, 'result_value', html);
+                                                        }}
+                                                    >
+                                                        Pré-remplir
+                                                    </Button>
+                                                )}
+                                            </Box>
+                                        ) : (
+                                            <Typography
+                                                fontWeight="bold"
+                                                component="div"
+                                                dangerouslySetInnerHTML={{ __html: item.result_value || '-' }}
+                                                sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                            />
+                                        )}
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#6b7280', fontSize: '0.85rem' }}>
+                                        {item.result_unit || ''}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'top', maxWidth: 180, color: '#6b7280' }}>
+                                        {(() => {
+                                            const gender = order.patient_gender;
+                                            if (gender === 'M') {
+                                                return item.normal_range_male || item.normal_range_general || '';
+                                            } else if (gender === 'F') {
+                                                return item.normal_range_female || item.normal_range_general || '';
+                                            }
+                                            return item.normal_range_general || item.normal_range_male || '';
+                                        })()}
+                                    </TableCell>
+                                    <TableCell>
+                                        {canEdit ? (
+                                            <RichTextEditor
+                                                value={results[item.id]?.technician_notes || ''}
+                                                onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
+                                                placeholder="Commentaires du technicien"
+                                                minHeight={60}
+                                                onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
+                                            />
+                                        ) : (
+                                            <Box>
+                                                {item.technician_notes ? (
+                                                    <Typography
+                                                        variant="body2"
+                                                        component="div"
+                                                        dangerouslySetInnerHTML={{ __html: item.technician_notes }}
+                                                        sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                                    />
+                                                ) : !item.interpretation ? '-' : null}
+                                                {item.interpretation && (
+                                                    <Alert severity="info" sx={{ mt: 1, py: 0 }}>
+                                                        <Typography variant="caption">
+                                                            <strong>Interprétation:</strong> {item.interpretation}
+                                                        </Typography>
+                                                    </Alert>
+                                                )}
+                                            </Box>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleShowHistory(item)}
+                                            title="Afficher l'historique des valeurs"
+                                            color="primary"
+                                        >
+                                            <HistoryIcon fontSize="small" />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>

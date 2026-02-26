@@ -21,7 +21,8 @@ import {
     ArrowBack as ArrowBackIcon,
     ArrowForward as ArrowForwardIcon,
     ExpandMore as ExpandMoreIcon,
-    Medication as MedicationIcon
+    Medication as MedicationIcon,
+    Assignment as AssignmentIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -189,6 +190,38 @@ const ConsultationDetail = () => {
                             ))}
                         </AccordionDetails>
                     </Accordion>
+
+                    {(consultation.prescribed_lab_tests_data?.length > 0 || consultation.complementary_exams || consultation.imaging) && (
+                        <Accordion defaultExpanded elevation={0} sx={{ mt: 2 }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'info.main', color: 'white', borderRadius: 1 }}>
+                                <AssignmentIcon sx={{ mr: 1 }} fontSize="small" /><Typography variant="body2" fontWeight={700}>EXAMENS & ANALYSES</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                {consultation.prescribed_lab_tests_data?.length > 0 && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" fontWeight={700} display="block" gutterBottom>LABORATOIRE</Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {consultation.prescribed_lab_tests_data.map((test, i) => (
+                                                <Chip key={i} label={`${test.test_code} - ${test.name}`} variant="outlined" color="info" size="small" />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                                {consultation.complementary_exams && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" fontWeight={700} display="block">AUTRES EXAMENS</Typography>
+                                        <Typography variant="body2">{consultation.complementary_exams}</Typography>
+                                    </Box>
+                                )}
+                                {consultation.imaging && (
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} display="block">IMAGERIE</Typography>
+                                        <Typography variant="body2">{consultation.imaging}</Typography>
+                                    </Box>
+                                )}
+                            </AccordionDetails>
+                        </Accordion>
+                    )}
                 </Grid>
 
                 <Grid item xs={12} md={3}>

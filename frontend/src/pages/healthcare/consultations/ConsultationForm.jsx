@@ -167,7 +167,7 @@ const ConsultationForm = () => {
                         started_at: data.started_at || null,
                         ended_at: data.ended_at || null,
                         medications: medicationsList,
-                        lab_tests: data.prescribed_lab_tests || []
+                        lab_tests: data.prescribed_lab_tests ? data.prescribed_lab_tests.map(t => typeof t === 'object' ? t.id : t) : []
                     });
                 } else {
                     const prePatientId = searchParams.get('patientId');

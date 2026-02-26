@@ -19,6 +19,58 @@
         color: #059669;
     }
 
+    /* Compound test (NFS-style) parameter table */
+    .compound-param-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.5pt;
+        margin-top: 4px;
+    }
+    .compound-param-table td {
+        padding: 2px 6px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .compound-param-table .param-code {
+        font-weight: 600;
+        width: 14%;
+        color: #1f2937;
+    }
+    .compound-param-table .param-result {
+        width: 18%;
+        font-weight: 700;
+        text-align: right;
+    }
+    .compound-param-table .param-flag {
+        width: 8%;
+        text-align: center;
+        font-size: 7.5pt;
+    }
+    .compound-param-table .param-unit {
+        width: 16%;
+        color: #6b7280;
+    }
+    .compound-param-table .param-ref {
+        width: 24%;
+        color: #6b7280;
+        font-size: 7.5pt;
+    }
+    .compound-group-header td {
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 700;
+        font-size: 8pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 4px 6px;
+    }
+    .flag-critical {
+        color: #dc2626;
+        font-weight: 800;
+        background-color: #fef9c3;
+        padding: 0 3px;
+    }
+
     .category-row td {
         background-color: #f3f4f6;
         font-weight: 700;
@@ -69,8 +121,9 @@
     /* Valeurs de référence : chaque ligne séparée */
     .ref-line {
         display: block;
-        line-height: 1.6;
-        white-space: nowrap;
+        line-height: 1.5;
+        white-space: normal;
+        word-break: break-word;
     }
     .ref-label {
         font-weight: 700;
@@ -83,10 +136,34 @@
         color: #4b5563;
         font-size: 8pt;
     }
+
+    /* Bandeau PROVISOIRE */
+    .provisional-banner {
+        background-color: #fef9c3;
+        border: 2px solid #ca8a04;
+        color: #713f12;
+        text-align: center;
+        font-weight: 800;
+        font-size: 11pt;
+        text-transform: uppercase;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+        border-radius: 4px;
+    }
+    /* Résultat en attente */
+    .result-pending {
+        color: #9ca3af;
+        font-style: italic;
+        font-size: 7.5pt;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+{% if not lab_order.all_results_entered %}
+<div class="provisional-banner">&#9888; Résultats Provisoires — Certains examens sont en attente</div>
+{% endif %}
 <div class="doc-title text-center">RÉSULTATS DE LABORATOIRE</div>
 
 <div class="info-grid">
@@ -147,38 +224,91 @@
             </td>
         </tr>
         {% for item_data in category.list %}
-        {% with item=item_data.item previous=item_data.previous_result prev_date=item_data.previous_date %}
+        {% with item=item_data.item previous=item_data.previous_result prev_date=item_data.previous_date grouped=item_data.parameter_results_grouped %}
+
+        {% if grouped %}
+        {# ─── COMPOUND TEST (e.g. NFS) : structured parameter table ─── #}
         <tr>
-            <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
-            <td class="result-cell">
-                {% if item.result_value %}
-                {{ item.result_value|safe }}
-                {% else %}&nbsp;{% endif %}
+            <td colspan="6" style="padding: 6px 4px 0 15px; font-weight: 700; font-size: 9pt; color: #1f2937;">
+                {{ item.lab_test.name }}
                 {% if item.technician_notes %}
                 <div class="technician-notes">{{ item.technician_notes|safe }}</div>
                 {% endif %}
             </td>
-            <td>{{ item.lab_test.unit_of_measurement|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td colspan="6" style="padding: 0 4px 6px 15px;">
+                <table class="compound-param-table">
+                    {% for group in grouped %}
+                    <tr class="compound-group-header">
+                        <td colspan="5">{{ group.group_name }}</td>
+                    </tr>
+                    {% for p in group.parameters %}
+                    <tr>
+                        <td class="param-code">{{ p.code }}</td>
+                        <td class="param-result
+                            {% if p.flag == 'H' or p.flag == 'H*' %}flag-high
+                            {% elif p.flag == 'L' or p.flag == 'L*' %}flag-low
+                            {% endif %}">
+                            {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"-4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
+                        </td>
+                        <td class="param-flag">
+                            {% if p.flag == 'H' %}<span class="flag-high">↑</span>
+                            {% elif p.flag == 'L' %}<span class="flag-low">↓</span>
+                            {% elif p.flag == 'H*' %}<span class="flag-critical">↑↑</span>
+                            {% elif p.flag == 'L*' %}<span class="flag-critical">↓↓</span>
+                            {% endif %}
+                        </td>
+                        <td class="param-unit">{{ p.unit }}</td>
+                        <td class="param-ref">{{ p.ref_display|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+
+        {% elif item.result_value %}
+        {# ─── SIMPLE TEST : standard single-value row ─── #}
+        <tr>
+            <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
+            <td class="result-cell">
+                {{ item.result_value|safe }}
+                {% if item.technician_notes %}
+                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
+                {% endif %}
+            </td>
+            <td>{{ item.lab_test.unit_of_measurement }}</td>
             <td style="vertical-align: top; padding-top: 6px;">
-                {% if item.lab_test.normal_range_male %}
-                <span class="ref-line">
-                    <span class="ref-label">H :</span>
-                    <span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span>
-                </span>
-                {% endif %}
-                {% if item.lab_test.normal_range_female %}
-                <span class="ref-line">
-                    <span class="ref-label">F :</span>
-                    <span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span>
-                </span>
-                {% endif %}
-                {% if not item.lab_test.normal_range_male and not item.lab_test.normal_range_female %}
-                    {% if item.lab_test.normal_range_general %}
-                    <span class="ref-line">
-                        <span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span>
-                    </span>
+                {% if patient.gender == 'M' %}
+                    {% if item.lab_test.normal_range_male %}
+                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span></span>
+                    {% elif item.lab_test.normal_range_general %}
+                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
                     {% else %}
                     <span class="ref-value">—</span>
+                    {% endif %}
+                {% elif patient.gender == 'F' %}
+                    {% if item.lab_test.normal_range_female %}
+                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span></span>
+                    {% elif item.lab_test.normal_range_general %}
+                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
+                    {% else %}
+                    <span class="ref-value">—</span>
+                    {% endif %}
+                {% else %}
+                    {% if item.lab_test.normal_range_general %}
+                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
+                    {% else %}
+                        {% if item.lab_test.normal_range_male %}
+                        <span class="ref-line"><span class="ref-label">H :</span> <span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span></span>
+                        {% endif %}
+                        {% if item.lab_test.normal_range_female %}
+                        <span class="ref-line"><span class="ref-label">F :</span> <span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span></span>
+                        {% endif %}
+                        {% if not item.lab_test.normal_range_male and not item.lab_test.normal_range_female %}
+                        <span class="ref-value">—</span>
+                        {% endif %}
                     {% endif %}
                 {% endif %}
             </td>
@@ -195,6 +325,7 @@
                 {% endif %}
             </td>
         </tr>
+        {% endif %}
         {% endwith %}
         {% endfor %}
         {% empty %}
@@ -204,6 +335,17 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if pending_items %}
+<div class="notes" style="background-color: #f9fafb; border-color: #9ca3af; color: #374151; margin-top: 10px;">
+    <strong style="font-size: 9pt; text-transform: uppercase; letter-spacing: 1px;">Examens en cours d'analyse (résultats à venir) :</strong>
+    <ul style="margin: 4px 0 0 0; padding-left: 1.2em;">
+        {% for item_data in pending_items %}
+        <li style="font-size: 8.5pt;">{{ item_data.item.lab_test.name }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
 {% if lab_order.clinical_notes %}
 <div class="notes" style="background-color: #eff6ff; border-color: #3b82f6; color: #1e40af;">

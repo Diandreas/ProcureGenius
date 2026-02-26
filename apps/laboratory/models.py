@@ -247,6 +247,11 @@ class LabTest(models.Model):
             return self.normal_range_female
         return self.normal_range_general or self.normal_range_male or self.normal_range_female
         
+    @property
+    def has_parameters(self):
+        """True if this test has structured parameters defined (e.g. NFS sub-values)."""
+        return self.parameters.filter(is_required=True).exists()
+
     def save(self, *args, **kwargs):
         # Auto-create linked product if missing (Consumable tracking)
         if not self.linked_product:
@@ -771,3 +776,179 @@ class LabOrderItem(models.Model):
         ).exclude(
             id=self.id
         ).select_related('lab_order').order_by('-result_entered_at')[:limit]
+
+
+class LabTestParameter(models.Model):
+    """
+    Defines structured sub-parameters for a lab test (e.g. WBC, HGB, PLT for NFS).
+    Tests without parameters work exactly as before (retro-compatible).
+    """
+    VALUE_TYPE_CHOICES = [
+        ('numeric', _('Numérique')),
+        ('text', _('Texte')),
+        ('pos_neg', _('Positif/Négatif')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE,
+        related_name='parameters',
+        verbose_name=_("Test")
+    )
+    code = models.CharField(max_length=20, verbose_name=_("Code"))
+    name = models.CharField(max_length=100, verbose_name=_("Nom"))
+    group_name = models.CharField(max_length=50, blank=True, verbose_name=_("Groupe"))
+    display_order = models.IntegerField(default=0, verbose_name=_("Ordre d'affichage"))
+    unit = models.CharField(max_length=30, blank=True, verbose_name=_("Unité"))
+    value_type = models.CharField(
+        max_length=10,
+        choices=VALUE_TYPE_CHOICES,
+        default='numeric',
+        verbose_name=_("Type de valeur")
+    )
+    decimal_places = models.IntegerField(default=2, verbose_name=_("Décimales"))
+    is_required = models.BooleanField(default=True, verbose_name=_("Obligatoire"))
+
+    # Adult reference ranges (patient age >= child_age_max_years)
+    adult_ref_min_male = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf min H (adulte)"))
+    adult_ref_max_male = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf max H (adulte)"))
+    adult_ref_min_female = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf min F (adulte)"))
+    adult_ref_max_female = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf max F (adulte)"))
+    adult_ref_min_general = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf min général"))
+    adult_ref_max_general = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf max général"))
+
+    # Pediatric reference ranges
+    child_ref_min = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf min enfant"))
+    child_ref_max = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf max enfant"))
+    child_age_max_years = models.IntegerField(default=17, verbose_name=_("Âge max enfant (années)"))
+
+    # Critical values (panic values)
+    critical_low = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Valeur critique basse"))
+    critical_high = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Valeur critique haute"))
+
+    class Meta:
+        verbose_name = _("Paramètre de test")
+        verbose_name_plural = _("Paramètres de test")
+        ordering = ['display_order']
+        unique_together = [('test', 'code')]
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    def get_reference_range(self, patient_age_years=None, patient_sex=None):
+        """Returns (ref_min, ref_max) tuple appropriate for the patient's age and sex."""
+        is_child = patient_age_years is not None and patient_age_years < self.child_age_max_years
+
+        if is_child:
+            return (self.child_ref_min, self.child_ref_max)
+
+        if patient_sex == 'M':
+            if self.adult_ref_min_male is not None or self.adult_ref_max_male is not None:
+                return (self.adult_ref_min_male, self.adult_ref_max_male)
+        elif patient_sex == 'F':
+            if self.adult_ref_min_female is not None or self.adult_ref_max_female is not None:
+                return (self.adult_ref_min_female, self.adult_ref_max_female)
+
+        # Fall back to general range
+        if self.adult_ref_min_general is not None or self.adult_ref_max_general is not None:
+            return (self.adult_ref_min_general, self.adult_ref_max_general)
+
+        # Last resort: return whatever is available
+        if patient_sex == 'M':
+            return (self.adult_ref_min_male, self.adult_ref_max_male)
+        if patient_sex == 'F':
+            return (self.adult_ref_min_female, self.adult_ref_max_female)
+
+        return (None, None)
+
+
+class LabResultValue(models.Model):
+    """
+    Stores a single measured value for a LabTestParameter within a LabOrderItem.
+    Only used when the parent LabTest has structured parameters defined.
+    """
+    FLAG_CHOICES = [
+        ('N', _('Normal')),
+        ('H', _('Élevé')),
+        ('L', _('Bas')),
+        ('H*', _('Critique élevé')),
+        ('L*', _('Critique bas')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order_item = models.ForeignKey(
+        LabOrderItem,
+        on_delete=models.CASCADE,
+        related_name='parameter_results',
+        verbose_name=_("Item de commande")
+    )
+    parameter = models.ForeignKey(
+        LabTestParameter,
+        on_delete=models.CASCADE,
+        related_name='results',
+        verbose_name=_("Paramètre")
+    )
+    result_numeric = models.DecimalField(
+        max_digits=15,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name=_("Valeur numérique")
+    )
+    result_text = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Valeur textuelle")
+    )
+    flag = models.CharField(
+        max_length=2,
+        choices=FLAG_CHOICES,
+        default='N',
+        verbose_name=_("Flag")
+    )
+    entered_at = models.DateTimeField(auto_now_add=True)
+    entered_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='entered_parameter_results',
+        verbose_name=_("Saisi par")
+    )
+
+    class Meta:
+        verbose_name = _("Valeur de paramètre")
+        verbose_name_plural = _("Valeurs de paramètres")
+        unique_together = [('order_item', 'parameter')]
+
+    def __str__(self):
+        return f"{self.parameter.code}: {self.result_numeric or self.result_text} [{self.flag}]"
+
+    def compute_flag(self, patient_age_years=None, patient_sex=None):
+        """Compute and set flag (N/H/L/H*/L*) based on reference ranges. Returns flag string."""
+        if self.result_numeric is None:
+            self.flag = 'N'
+            return 'N'
+
+        parameter = self.parameter
+        ref_min, ref_max = parameter.get_reference_range(patient_age_years, patient_sex)
+
+        # Check critical values first (panic values)
+        if parameter.critical_low is not None and self.result_numeric <= parameter.critical_low:
+            self.flag = 'L*'
+            return 'L*'
+        if parameter.critical_high is not None and self.result_numeric >= parameter.critical_high:
+            self.flag = 'H*'
+            return 'H*'
+
+        # Check reference range
+        if ref_min is not None and self.result_numeric < ref_min:
+            self.flag = 'L'
+            return 'L'
+        if ref_max is not None and self.result_numeric > ref_max:
+            self.flag = 'H'
+            return 'H'
+
+        self.flag = 'N'
+        return 'N'

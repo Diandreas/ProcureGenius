@@ -2,7 +2,40 @@
 Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue
+
+
+class LabTestParameterSerializer(serializers.ModelSerializer):
+    """Serializer for LabTestParameter — sub-parameters of a structured test"""
+
+    class Meta:
+        model = LabTestParameter
+        fields = [
+            'id', 'code', 'name', 'group_name', 'display_order', 'unit',
+            'value_type', 'decimal_places', 'is_required',
+            'adult_ref_min_male', 'adult_ref_max_male',
+            'adult_ref_min_female', 'adult_ref_max_female',
+            'adult_ref_min_general', 'adult_ref_max_general',
+            'child_ref_min', 'child_ref_max', 'child_age_max_years',
+            'critical_low', 'critical_high',
+        ]
+
+
+class LabResultValueSerializer(serializers.ModelSerializer):
+    """Serializer for LabResultValue — measured value for a structured parameter"""
+    parameter_code = serializers.CharField(source='parameter.code', read_only=True)
+    parameter_name = serializers.CharField(source='parameter.name', read_only=True)
+    parameter_unit = serializers.CharField(source='parameter.unit', read_only=True)
+    parameter_group = serializers.CharField(source='parameter.group_name', read_only=True)
+
+    class Meta:
+        model = LabResultValue
+        fields = [
+            'id', 'parameter', 'parameter_code', 'parameter_name',
+            'parameter_unit', 'parameter_group',
+            'result_numeric', 'result_text', 'flag', 'entered_at',
+        ]
+        read_only_fields = ['id', 'entered_at']
 
 
 class LabTestCategorySerializer(serializers.ModelSerializer):
@@ -34,7 +67,9 @@ class LabTestSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     sample_type_display = serializers.CharField(source='get_sample_type_display', read_only=True)
     container_type_display = serializers.CharField(source='get_container_type_display', read_only=True)
-    
+    has_parameters = serializers.BooleanField(read_only=True)
+    parameters = LabTestParameterSerializer(many=True, read_only=True)
+
     class Meta:
         model = LabTest
         fields = [
@@ -65,6 +100,8 @@ class LabTestSerializer(serializers.ModelSerializer):
             'methodology',
             'is_active',
             'requires_approval',
+            'has_parameters',
+            'parameters',
             'created_at',
             'updated_at',
         ]
@@ -74,7 +111,8 @@ class LabTestSerializer(serializers.ModelSerializer):
 class LabTestListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for test lists"""
     category_name = serializers.CharField(source='category.name', read_only=True)
-    
+    has_parameters = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = LabTest
         fields = [
@@ -90,6 +128,7 @@ class LabTestListSerializer(serializers.ModelSerializer):
             'fasting_required',
             'estimated_turnaround_hours',
             'is_active',
+            'has_parameters',
         ]
 
 
@@ -104,6 +143,9 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     normal_range_female = serializers.CharField(source='lab_test.normal_range_female', read_only=True)
     normal_range_general = serializers.CharField(source='lab_test.normal_range_general', read_only=True)
     category_name = serializers.CharField(source='lab_test.category.name', read_only=True, default='')
+    has_parameters = serializers.BooleanField(source='lab_test.has_parameters', read_only=True)
+    parameters = LabTestParameterSerializer(source='lab_test.parameters', many=True, read_only=True)
+    parameter_results = LabResultValueSerializer(many=True, read_only=True)
 
     class Meta:
         model = LabOrderItem
@@ -133,11 +175,14 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'result_entered_at',
             'result_verified_at',
             'verified_by',
+            'has_parameters',
+            'parameters',
+            'parameter_results',
             'created_at',
             'updated_at',
         ]
         read_only_fields = [
-            'id', 'created_at', 'updated_at', 
+            'id', 'created_at', 'updated_at',
             'result_entered_at', 'result_verified_at'
         ]
 
@@ -307,10 +352,17 @@ class LabOrderCreateSerializer(serializers.Serializer):
 
 
 class EnterResultsSerializer(serializers.Serializer):
-    """Serializer for entering lab results"""
+    """Serializer for entering lab results.
+
+    Each result dict may contain:
+    - item_id (required)
+    - result_value (optional text for simple tests or global comment)
+    - parameter_values (optional list of {parameter_id, result_numeric, result_text}
+      for compound/structured tests like NFS)
+    """
     results = serializers.ListField(
         child=serializers.DictField(),
-        help_text="List of result objects with item_id, result_value, etc."
+        help_text="List of result objects with item_id, result_value, and/or parameter_values"
     )
     biologist_diagnosis = serializers.CharField(
         required=False,
@@ -322,6 +374,9 @@ class EnterResultsSerializer(serializers.Serializer):
         for result in value:
             if 'item_id' not in result:
                 raise serializers.ValidationError("Each result must have an item_id")
-            if 'result_value' not in result:
-                raise serializers.ValidationError("Each result must have a result_value")
+            # result_value is now optional — parameter_values can be used instead
+            if 'result_value' not in result and 'parameter_values' not in result:
+                raise serializers.ValidationError(
+                    "Each result must have either result_value or parameter_values"
+                )
         return value

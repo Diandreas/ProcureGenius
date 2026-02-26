@@ -15,7 +15,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -158,7 +158,11 @@ class LabOrderDetailView(generics.RetrieveDestroyAPIView):
     def get_queryset(self):
         return LabOrder.objects.filter(
             organization=self.request.user.organization
-        ).select_related('patient', 'ordered_by').prefetch_related('items__lab_test')
+        ).select_related('patient', 'ordered_by').prefetch_related(
+            'items__lab_test',
+            'items__lab_test__parameters',
+            'items__parameter_results__parameter',
+        )
 
     def destroy(self, request, *args, **kwargs):
         if request.user.role != 'admin':
@@ -401,12 +405,19 @@ class EnterLabResultsView(APIView):
         results_data = serializer.validated_data['results']
         updated_items = []
         
+        # Get patient info for flag computation
+        patient = order.patient
+        patient_age = patient.get_age() if patient else None
+        patient_sex = patient.gender if patient else None
+
         for result in results_data:
             try:
                 item = order.items.get(id=result['item_id'])
-                
-                item.result_value = result['result_value']
-                
+
+                # Always update result_value if provided (global text or comment)
+                if 'result_value' in result:
+                    item.result_value = result['result_value']
+
                 if 'result_numeric' in result:
                     item.result_numeric = result['result_numeric']
                 if 'interpretation' in result:
@@ -419,14 +430,59 @@ class EnterLabResultsView(APIView):
                     item.abnormality_type = result['abnormality_type']
                 if 'is_critical' in result:
                     item.is_critical = result['is_critical']
-                
+
                 # Auto-check for abnormality if numeric value provided
                 if item.result_numeric:
                     item.check_abnormal()
-                
+
+                # Handle structured parameter values (compound tests like NFS)
+                parameter_values = result.get('parameter_values', [])
+                if parameter_values:
+                    any_abnormal = False
+                    any_critical = False
+                    for pv in parameter_values:
+                        try:
+                            parameter = LabTestParameter.objects.get(id=pv['parameter_id'])
+                            lab_result, _ = LabResultValue.objects.get_or_create(
+                                order_item=item,
+                                parameter=parameter,
+                                defaults={'entered_by': request.user}
+                            )
+                            if 'result_numeric' in pv:
+                                from decimal import Decimal, InvalidOperation
+                                try:
+                                    lab_result.result_numeric = Decimal(str(pv['result_numeric'])) if pv['result_numeric'] is not None else None
+                                except InvalidOperation:
+                                    lab_result.result_numeric = None
+                            if 'result_text' in pv:
+                                lab_result.result_text = pv['result_text']
+                            lab_result.entered_by = request.user
+                            # Compute flag based on patient demographics
+                            lab_result.compute_flag(patient_age, patient_sex)
+                            lab_result.save()
+                            if lab_result.flag in ('H', 'L'):
+                                any_abnormal = True
+                            if lab_result.flag in ('H*', 'L*'):
+                                any_critical = True
+                        except LabTestParameter.DoesNotExist:
+                            pass
+
+                    # Auto-mark item as abnormal if any parameter is out of range
+                    if any_critical:
+                        item.is_abnormal = True
+                        item.is_critical = True
+                        item.abnormality_type = 'critical_high'
+                    elif any_abnormal:
+                        item.is_abnormal = True
+                        item.abnormality_type = 'high'
+
+                    # Mark item as having results entered (for workflow)
+                    if not item.result_value:
+                        item.result_value = 'voir paramètres'
+
                 item.save()
                 updated_items.append(item)
-                
+
             except LabOrderItem.DoesNotExist:
                 pass
 
