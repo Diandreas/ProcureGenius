@@ -1,3 +1,4 @@
+
 import os
 import django
 from django.conf import settings
@@ -19,8 +20,7 @@ def analyze_database():
         if not p.batches.exists() and p.stock_quantity > 0:
             products_without_batches.append(p)
     
-    print("
-1. Physical products with stock but NO batches: {}".format(len(products_without_batches)))
+    print("1. Physical products with stock but NO batches: {}".format(len(products_without_batches)))
     for p in products_without_batches[:10]:
         print("   - {} (Ref: {}, Stock: {})".format(p.name, p.reference, p.stock_quantity))
     if len(products_without_batches) > 10:
@@ -49,8 +49,7 @@ def analyze_database():
                 'status': inv.status
             })
 
-    print("
-2. Invoices with inconsistent stock movements: {}".format(len(inconsistent_invoices)))
+    print("\n2. Invoices with inconsistent stock movements: {}".format(len(inconsistent_invoices)))
     for inv in inconsistent_invoices[:10]:
         print("   - {} ({}): Items={}, Movements={}".format(inv['number'], inv['status'], inv['items_total'], inv['movements_total']))
     if len(inconsistent_invoices) > 10:
@@ -67,8 +66,7 @@ def analyze_database():
                 'batch_stock': batch_sum
             })
             
-    print("
-3. Products with stock mismatch (Product vs Batches): {}".format(len(inconsistent_stocks)))
+    print("\n3. Products with stock mismatch (Product vs Batches): {}".format(len(inconsistent_stocks)))
     for p in inconsistent_stocks[:10]:
         print("   - {}: Product={}, Batches={}".format(p['name'], p['product_stock'], p['batch_stock']))
     if len(inconsistent_stocks) > 10:

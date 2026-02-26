@@ -1,3 +1,4 @@
+
 import os
 import django
 from django.conf import settings
@@ -17,8 +18,7 @@ def normalize_database():
     
     with transaction.atomic():
         # 1. Fix missing batches and stock mismatches
-        print("
-1. Fixing batches and stock mismatches...")
+        print("1. Fixing batches and stock mismatches...")
         physical_products = Product.objects.filter(product_type='physical')
         
         for p in physical_products:
@@ -43,8 +43,7 @@ def normalize_database():
                     p.save(update_fields=['stock_quantity'])
 
         # 2. Fix missing stock movements for Invoices
-        print("
-2. Creating missing stock movements for invoices...")
+        print("\n2. Creating missing stock movements for invoices...")
         invoices = Invoice.objects.filter(status__in=['sent', 'paid', 'overdue'])
         
         for inv in invoices:
@@ -66,7 +65,7 @@ def normalize_database():
                     # Try to find a batch to deduct from
                     batch = item.batch
                     if not batch:
-                        batch = item.product.batches.filter(quantity_remaining__gte=needed_qty).first() or 
+                        batch = item.product.batches.filter(quantity_remaining__gte=needed_qty).first() or \
                                 item.product.batches.order_by('-quantity_remaining').first()
                     
                     # Create the movement
@@ -98,8 +97,7 @@ def normalize_database():
                             batch.status = 'available'
                         batch.save(update_fields=['status'])
 
-    print("
---- Normalization Complete ---")
+    print("\n--- Normalization Complete ---")
 
 if __name__ == "__main__":
     normalize_database()
