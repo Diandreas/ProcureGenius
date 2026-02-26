@@ -1,4 +1,3 @@
-
 import os
 import django
 import glob
@@ -18,26 +17,62 @@ from apps.invoicing.models import Product, InvoiceItem, StockMovement, ProductBa
 from apps.purchase_orders.models import PurchaseOrderItem
 from apps.suppliers.models import SupplierProduct
 
-def normalize_all():
-    print("Starting Final Normalization with Manual Adjustments...")
+def normalize_all_strict():
+    print("Starting STRICT Normalization (Excel is the ONLY source of truth)...")
     
     with transaction.atomic():
-        # --- 1. FUSION DES DOUBLONS ---
-        all_prods = Product.objects.all().order_by('created_at')
-        groups = {}
-        for p in all_prods:
-            norm_name = "".join(p.name.lower().split())
-            key = (p.organization_id, norm_name)
-            if key not in groups: groups[key] = []
-            groups[key].append(p)
+        # --- 1. LOAD EXCEL DATA ---
+        excel_files = glob.glob("Liste des*.xlsx")
+        if not excel_files:
+            print("Error: Excel file not found.")
+            return
         
-        for key, products in groups.items():
+        wb = openpyxl.load_workbook(excel_files[0], data_only=True)
+        sheet = wb.active
+        excel_inventory = {}
+        excel_norm_names = set()
+        
+        for i, row in enumerate(sheet.iter_rows(values_only=True)):
+            if i == 0: continue
+            name, stock = row[0], row[1]
+            if name:
+                norm_name = "".join(str(name).lower().split())
+                excel_inventory[norm_name] = {
+                    'original_name': str(name).strip(),
+                    'stock': int(stock) if stock is not None else 0
+                }
+                excel_norm_names.add(norm_name)
+
+        # --- 2. DELETE PRODUCTS NOT IN EXCEL ---
+        print("\nCleaning database from products NOT in Excel...")
+        # We only target physical products (medications/consumables)
+        db_physical_prods = Product.objects.filter(product_type='physical')
+        deleted_count = 0
+        for p in db_physical_prods:
+            norm_name = "".join(p.name.lower().split())
+            if norm_name not in excel_norm_names:
+                print("  - [DELETE] Product not in Excel: {} (Price: {})".format(p.name, p.price))
+                p.delete() # This cascades to items, movements, etc.
+                deleted_count += 1
+        print("Total deleted: {}".format(deleted_count))
+
+        # --- 3. FUSION DES DOUBLONS RESTANTS ---
+        print("\nMerging remaining duplicates...")
+        remaining_prods = Product.objects.filter(product_type='physical').order_by('created_at')
+        groups = {}
+        for p in remaining_prods:
+            norm_name = "".join(p.name.lower().split())
+            if norm_name not in groups: groups[norm_name] = []
+            groups[norm_name].append(p)
+        
+        for norm_name, products in groups.items():
             if len(products) > 1:
                 master = products[0]
                 others = products[1:]
+                print("  Merging duplicate: {}".format(master.name))
                 for other in others:
                     InvoiceItem.objects.filter(product=other).update(product=master)
-                    StockMovement.objects.filter(product=other).update(product=master)
+                    StockMovement.objects.filter(product=other).update(master)
                     ProductBatch.objects.filter(product=other).update(product=master)
                     PurchaseOrderItem.objects.filter(product=other).update(product=master)
                     SupplierProduct.objects.filter(product=other).update(product=master)
@@ -47,25 +82,15 @@ def normalize_all():
                     except: pass
                     other.delete()
 
-        # --- 2. RÉCUPÉRATION STOCK INITIAL EXCEL ---
-        excel_files = glob.glob("Liste des*.xlsx")
-        excel_inventory = {}
-        if excel_files:
-            wb = openpyxl.load_workbook(excel_files[0], data_only=True)
-            sheet = wb.active
-            for i, row in enumerate(sheet.iter_rows(values_only=True)):
-                if i == 0: continue
-                name, stock = row[0], row[1]
-                if name:
-                    norm_name = "".join(str(name).lower().split())
-                    excel_inventory[norm_name] = int(stock) if stock is not None else 0
-
-        # --- 3. CORRECTION DES LOTS ET DÉFALQUAGE ---
-        physical_products = Product.objects.filter(product_type='physical')
-        
-        for p in physical_products:
+        # --- 4. FINAL STOCK CORRECTION ---
+        print("\nFinal stock alignment and sales deduction...")
+        for p in Product.objects.filter(product_type='physical'):
             norm_name = "".join(p.name.lower().split())
-            initial_stock = excel_inventory.get(norm_name, 0)
+            excel_data = excel_inventory.get(norm_name)
+            
+            if not excel_data: continue
+            
+            initial_stock = excel_data['stock']
             
             # Somme des ventes système
             total_sold = InvoiceItem.objects.filter(
@@ -73,39 +98,34 @@ def normalize_all():
                 invoice__status__in=['paid', 'sent', 'overdue']
             ).aggregate(models.Sum('quantity'))['quantity__sum'] or 0
             
-            # --- AJUSTEMENTS MANUELS SPECIFIQUES ---
+            # Ajustements manuels spécifiques
             if "thermometre" in norm_name:
-                print("  [AJUSTEMENT] Thermometres : Forçage à 11 ventes.")
                 total_sold = 11
-                if initial_stock < total_sold:
-                    initial_stock = total_sold + 89 # Supposons un stock initial de 100 s'il était à 0 dans l'excel
+                if initial_stock < total_sold: initial_stock = 100
 
             correct_stock = int(initial_stock) - int(total_sold)
             if correct_stock < 0: correct_stock = 0
             
-            # Nettoyage
+            # Cleanup and recreate clean batch
             p.batches.all().delete()
             StockMovement.objects.filter(product=p, movement_type='sale').delete()
             
-            # Créer le lot maître
             batch = ProductBatch.objects.create(
                 organization=p.organization,
                 product=p,
-                batch_number="INIT-CORRECTED",
+                batch_number="INIT-SYNC",
                 quantity=initial_stock,
                 quantity_remaining=correct_stock,
                 expiry_date=timezone.now().date() + timedelta(days=365),
                 status='available' if correct_stock > 0 else 'depleted'
             )
             
-            # Mettre à jour le stock produit
             p.stock_quantity = correct_stock
             p.save(update_fields=['stock_quantity'])
             
-            if total_sold > 0 or initial_stock > 0:
-                print("  Product: {:<20} | Initial: {:<4} | Sold: {:<4} | Final: {:<4}".format(p.name[:20], initial_stock, total_sold, correct_stock))
+            print("  Product: {:<20} | Excel: {:<4} | Sold: {:<4} | Final: {:<4}".format(p.name[:20], initial_stock, total_sold, correct_stock))
 
-    print("Normalization Complete.")
+    print("\nNormalization Complete. Database is now in sync with Excel.")
 
 if __name__ == "__main__":
-    normalize_all()
+    normalize_all_strict()
