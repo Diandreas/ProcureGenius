@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import models
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
