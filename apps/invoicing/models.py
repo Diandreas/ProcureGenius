@@ -1189,6 +1189,10 @@ class InvoiceItem(models.Model):
             self.product_reference = self.product.reference
             if not self.description or self.description == "":
                 self.description = self.product.name
+            
+            # Auto-assigner un lot si non spécifié pour un produit physique
+            if self.product.product_type == 'physical' and not self.batch:
+                self.batch = self.product.batches.filter(quantity_remaining__gt=0).order_by('expiry_date').first()
         
         # Calcul avec remise (Priorité au montant fixe si défini, sinon pourcentage)
         base_total = self.quantity * self.unit_price
@@ -1203,7 +1207,37 @@ class InvoiceItem(models.Model):
 
         self.total_price = base_total - actual_discount
 
+        # Gérer le mouvement de stock si la facture n'est pas en brouillon
+        # Si c'est une création (pas d'ID) ou si la quantité a changé
+        is_new = self._state.adding
+        old_quantity = 0
+        if not is_new:
+            try:
+                old_instance = InvoiceItem.objects.get(pk=self.pk)
+                old_quantity = old_instance.quantity
+            except InvoiceItem.DoesNotExist:
+                pass
+
         super().save(*args, **kwargs)
+
+        # Si la facture est déjà validée (pas draft), on ajuste le stock
+        if self.invoice.status != 'draft' and self.product and self.product.product_type == 'physical':
+            quantity_diff = self.quantity - old_quantity
+            if quantity_diff != 0:
+                self.product.adjust_stock(
+                    quantity=-quantity_diff, # Négatif pour une vente
+                    movement_type='sale',
+                    reference_type='invoice',
+                    reference_id=self.invoice.id,
+                    notes=f"Facture {self.invoice.invoice_number}",
+                    user=self.invoice.created_by
+                )
+                # Mettre à jour le lot si présent
+                if self.batch:
+                    self.batch.quantity_remaining -= quantity_diff
+                    self.batch.save(update_fields=['quantity_remaining'])
+                    self.batch.update_status()
+
         # Recalculer les totaux de la facture seulement si elle existe déjà
         if self.invoice_id:
             self.invoice.recalculate_totals()

@@ -32,6 +32,62 @@ def cleanup_invoice_items(sender, instance, **kwargs):
     pass
 
 
+@receiver(pre_save, sender=Invoice)
+def track_invoice_status_change(sender, instance, **kwargs):
+    """Stocke le statut précédent pour détecter les changements dans post_save"""
+    if instance.pk:
+        try:
+            instance._old_status = Invoice.objects.get(pk=instance.pk).status
+        except Invoice.DoesNotExist:
+            instance._old_status = None
+    else:
+        instance._old_status = None
+
+
+@receiver(post_save, sender=Invoice)
+def handle_stock_on_invoice_validation(sender, instance, created, **kwargs):
+    """
+    Déclenche les mouvements de stock quand une facture passe de 'draft' à un autre statut.
+    """
+    old_status = getattr(instance, '_old_status', None)
+    
+    # Si passage de draft -> (sent, paid, overdue)
+    if old_status == 'draft' and instance.status in ['sent', 'paid', 'overdue']:
+        for item in instance.items.filter(product__product_type='physical'):
+            # Ajuster le stock global du produit
+            item.product.adjust_stock(
+                quantity=-item.quantity,
+                movement_type='sale',
+                reference_type='invoice',
+                reference_id=instance.id,
+                notes=f"Validation Facture {instance.invoice_number}",
+                user=instance.created_by
+            )
+            # Ajuster le lot si spécifié
+            if item.batch:
+                item.batch.quantity_remaining -= item.quantity
+                item.batch.save(update_fields=['quantity_remaining'])
+                item.batch.update_status()
+    
+    # Si passage de (sent, paid, overdue) -> cancelled
+    elif old_status in ['sent', 'paid', 'overdue'] and instance.status == 'cancelled':
+        for item in instance.items.filter(product__product_type='physical'):
+            # Restaurer le stock (mouvement inverse)
+            item.product.adjust_stock(
+                quantity=item.quantity,
+                movement_type='return',
+                reference_type='invoice',
+                reference_id=instance.id,
+                notes=f"Annulation Facture {instance.invoice_number}",
+                user=instance.created_by
+            )
+            # Restaurer le lot
+            if item.batch:
+                item.batch.quantity_remaining += item.quantity
+                item.batch.save(update_fields=['quantity_remaining'])
+                item.batch.update_status()
+
+
 @receiver(post_save, sender=Invoice)
 def update_invoice_overdue_status(sender, instance, **kwargs):
     """Met à jour automatiquement le statut 'overdue' des factures"""
