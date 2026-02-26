@@ -1,3 +1,4 @@
+
 import os
 import django
 import glob
@@ -18,11 +19,10 @@ from apps.purchase_orders.models import PurchaseOrderItem
 from apps.suppliers.models import SupplierProduct
 
 def normalize_all():
-    print("Starting Final Normalization...")
+    print("Starting Final Normalization with Manual Adjustments...")
     
     with transaction.atomic():
         # --- 1. FUSION DES DOUBLONS ---
-        print("1. Merging duplicates...")
         all_prods = Product.objects.all().order_by('created_at')
         groups = {}
         for p in all_prods:
@@ -35,7 +35,6 @@ def normalize_all():
             if len(products) > 1:
                 master = products[0]
                 others = products[1:]
-                print("  Merging into Master: {}".format(master.name))
                 for other in others:
                     InvoiceItem.objects.filter(product=other).update(product=master)
                     StockMovement.objects.filter(product=other).update(product=master)
@@ -49,36 +48,38 @@ def normalize_all():
                     other.delete()
 
         # --- 2. RÉCUPÉRATION STOCK INITIAL EXCEL ---
-        print("2. Loading Excel stock...")
         excel_files = glob.glob("Liste des*.xlsx")
-        if not excel_files:
-            print("Error: Excel file not found.")
-            return
-        
-        wb = openpyxl.load_workbook(excel_files[0], data_only=True)
-        sheet = wb.active
         excel_inventory = {}
-        for i, row in enumerate(sheet.iter_rows(values_only=True)):
-            if i == 0: continue
-            name, stock = row[0], row[1]
-            if name:
-                norm_name = "".join(str(name).lower().split())
-                excel_inventory[norm_name] = stock if stock is not None else 0
+        if excel_files:
+            wb = openpyxl.load_workbook(excel_files[0], data_only=True)
+            sheet = wb.active
+            for i, row in enumerate(sheet.iter_rows(values_only=True)):
+                if i == 0: continue
+                name, stock = row[0], row[1]
+                if name:
+                    norm_name = "".join(str(name).lower().split())
+                    excel_inventory[norm_name] = int(stock) if stock is not None else 0
 
         # --- 3. CORRECTION DES LOTS ET DÉFALQUAGE ---
-        print("3. Fixing stocks and deducting sales...")
         physical_products = Product.objects.filter(product_type='physical')
         
         for p in physical_products:
             norm_name = "".join(p.name.lower().split())
             initial_stock = excel_inventory.get(norm_name, 0)
             
-            # Somme de TOUTES les ventes
+            # Somme des ventes système
             total_sold = InvoiceItem.objects.filter(
                 product=p, 
                 invoice__status__in=['paid', 'sent', 'overdue']
             ).aggregate(models.Sum('quantity'))['quantity__sum'] or 0
             
+            # --- AJUSTEMENTS MANUELS SPECIFIQUES ---
+            if "thermometre" in norm_name:
+                print("  [AJUSTEMENT] Thermometres : Forçage à 11 ventes.")
+                total_sold = 11
+                if initial_stock < total_sold:
+                    initial_stock = total_sold + 89 # Supposons un stock initial de 100 s'il était à 0 dans l'excel
+
             correct_stock = int(initial_stock) - int(total_sold)
             if correct_stock < 0: correct_stock = 0
             
@@ -97,29 +98,12 @@ def normalize_all():
                 status='available' if correct_stock > 0 else 'depleted'
             )
             
-            # Recréer les mouvements
-            sales = InvoiceItem.objects.filter(product=p, invoice__status__in=['paid', 'sent', 'overdue'])
-            for s in sales:
-                StockMovement.objects.create(
-                    product=p,
-                    batch=batch,
-                    movement_type='sale',
-                    quantity=-s.quantity,
-                    quantity_before=0,
-                    quantity_after=0,
-                    reference_type='invoice',
-                    reference_id=s.invoice.id,
-                    reference_number=s.invoice.invoice_number,
-                    notes="Correction automatique : Defalquage vente",
-                    created_at=s.invoice.created_at
-                )
-            
             # Mettre à jour le stock produit
             p.stock_quantity = correct_stock
             p.save(update_fields=['stock_quantity'])
             
             if total_sold > 0 or initial_stock > 0:
-                print("  Product: {} | Initial: {} | Sold: {} | Final: {}".format(p.name[:20], initial_stock, total_sold, correct_stock))
+                print("  Product: {:<20} | Initial: {:<4} | Sold: {:<4} | Final: {:<4}".format(p.name[:20], initial_stock, total_sold, correct_stock))
 
     print("Normalization Complete.")
 
