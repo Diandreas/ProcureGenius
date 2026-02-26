@@ -25,6 +25,7 @@ from .serializers import (
     LabOrderItemSerializer,
     LabOrderCreateSerializer,
     EnterResultsSerializer,
+    LabTestParameterSerializer,
 )
 
 
@@ -731,3 +732,83 @@ class GenerateLabOrderInvoiceView(APIView):
                 'error': f"Erreur lors de la création de facture: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+class LabTestParameterListCreateView(generics.ListCreateAPIView):
+    """List all parameters for a lab test, or create a new parameter"""
+    serializer_class = LabTestParameterSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LabTestParameter.objects.filter(
+            test__id=self.kwargs['test_id'],
+            test__organization=self.request.user.organization
+        ).order_by('display_order')
+
+    def perform_create(self, serializer):
+        test = LabTest.objects.get(
+            id=self.kwargs['test_id'],
+            organization=self.request.user.organization
+        )
+        serializer.save(test=test)
+
+
+class LabTestParameterDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a lab test parameter"""
+    serializer_class = LabTestParameterSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LabTestParameter.objects.filter(
+            test__organization=self.request.user.organization
+        )
+
+
+class LabTestParameterBulkSaveView(APIView):
+    """
+    POST /healthcare/laboratory/tests/<test_id>/parameters/bulk-save/
+    Replaces all parameters for a test with the provided list.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, test_id):
+        try:
+            test = LabTest.objects.get(id=test_id, organization=request.user.organization)
+        except LabTest.DoesNotExist:
+            return Response({'error': 'Test not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        params_data = request.data.get('parameters', [])
+
+        # Delete all existing parameters
+        test.parameters.all().delete()
+
+        created = []
+        for i, p in enumerate(params_data):
+            p['test'] = str(test.id)
+            p['display_order'] = i
+            serializer = LabTestParameterSerializer(data=p)
+            if serializer.is_valid():
+                param = serializer.save(test=test)
+                created.append(LabTestParameterSerializer(param).data)
+            else:
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'parameters': created, 'count': len(created)}, status=status.HTTP_200_OK)
+
+
+class GenerateTestCodeView(APIView):
+    """
+    GET /healthcare/laboratory/tests/generate-code/
+    Returns a unique test code for the current organization.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.core.services.number_generator import NumberGeneratorService
+        code = NumberGeneratorService.generate_number(
+            prefix='TST',
+            organization=request.user.organization,
+            model_class=LabTest,
+            field_name='test_code',
+        )
+        return Response({'test_code': code})

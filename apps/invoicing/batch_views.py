@@ -7,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db.models import Sum
 from datetime import timedelta, date
 
-from .models import ProductBatch, Product
+from .models import ProductBatch, Product, StockMovement
 from .batch_serializers import ProductBatchSerializer, ProductBatchCreateSerializer
 
 
@@ -37,6 +38,30 @@ class ProductBatchListCreateView(APIView):
                 product=product,
                 created_by=request.user
             )
+
+            # Créer un mouvement de stock "réception" lié au lot
+            if product.product_type == 'physical' and batch.quantity > 0:
+                try:
+                    old_stock = product.stock_quantity or 0
+                    new_stock = old_stock + batch.quantity
+                    product.stock_quantity = new_stock
+                    product.save(update_fields=['stock_quantity'])
+                    StockMovement.objects.create(
+                        product=product,
+                        batch=batch,
+                        movement_type='reception',
+                        quantity=batch.quantity,
+                        quantity_before=old_stock,
+                        quantity_after=new_stock,
+                        reference_type='manual',
+                        notes=f"Réception lot {batch.batch_number} — péremption {batch.expiry_date}",
+                        created_by=request.user,
+                    )
+                except Exception as e:
+                    # Ne pas bloquer la création du lot si le mouvement échoue
+                    import traceback
+                    traceback.print_exc()
+
             return Response(
                 ProductBatchSerializer(batch).data,
                 status=status.HTTP_201_CREATED
@@ -172,4 +197,54 @@ class OpenedReagentsView(APIView):
             'opened_count': sum(1 for b in results if b['status'] == 'opened'),
             'expired_count': sum(1 for b in results if b['is_expired']),
             'expiring_soon_count': sum(1 for b in results if b['days_until_expiry'] is not None and 0 < b['days_until_expiry'] <= 3),
+        })
+
+class BatchDeleteView(APIView):
+    """
+    DELETE /api/batches/<uuid>/delete/
+    Supprime un lot uniquement dans les 30 minutes suivant sa creation.
+    Inverse le mouvement de reception et met a jour le stock.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, batch_id):
+        organization = request.user.organization
+        batch = get_object_or_404(ProductBatch, id=batch_id, organization=organization)
+
+        # Verifier la fenetre de 30 minutes
+        elapsed_seconds = (timezone.now() - batch.received_at).total_seconds()
+        if elapsed_seconds > 1800:
+            minutes_elapsed = int(elapsed_seconds / 60)
+            return Response(
+                {'error': f'Suppression impossible : le lot a ete cree il y a {minutes_elapsed} min (limite : 30 min).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Interdire si des mouvements autres que reception existent (lot deja utilise)
+        non_reception_count = batch.movements.exclude(movement_type='reception').count()
+        if non_reception_count > 0:
+            return Response(
+                {'error': 'Ce lot a des mouvements de sortie. Suppression impossible.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        product = batch.product
+
+        # Calculer la quantite recue via les mouvements de reception
+        reception_qty = batch.movements.filter(
+            movement_type='reception'
+        ).aggregate(total=Sum('quantity'))['total'] or batch.quantity
+
+        # Inverser le stock
+        product.stock_quantity = max(0, (product.stock_quantity or 0) - reception_qty)
+        product.save(update_fields=['stock_quantity'])
+
+        # Supprimer les mouvements puis le lot
+        batch.movements.all().delete()
+        batch_number = batch.batch_number
+        batch.delete()
+
+        return Response({
+            'message': f'Lot {batch_number} supprime. Stock remis a {product.stock_quantity}.',
+            'product_stock': product.stock_quantity,
         })

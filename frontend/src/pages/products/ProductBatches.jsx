@@ -11,7 +11,8 @@ import {
   LockOpen as OpenIcon,
   ArrowBack as ArrowBackIcon,
   Warning as WarningIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  DeleteForever as DeleteIcon,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import batchAPI from '../../services/batchAPI';
@@ -38,6 +39,7 @@ const ProductBatches = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, batch: null });
   const [formData, setFormData] = useState({
     batch_number: '',
     lot_number: '',
@@ -76,6 +78,19 @@ const ProductBatches = () => {
     }
   };
 
+  const generateBatchNumber = () => {
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `LOT-${datePart}-${randomPart}`;
+  };
+
+  const handleOpenNewBatchDialog = () => {
+    const autoNumber = generateBatchNumber();
+    setFormData(prev => ({ ...prev, batch_number: autoNumber }));
+    setOpenDialog(true);
+  };
+
   const handleCreate = async () => {
     try {
       await batchAPI.createBatch(productId, {
@@ -103,6 +118,25 @@ const ProductBatches = () => {
     }
   };
 
+  const handleDeleteBatch = async () => {
+    const batch = deleteDialog.batch;
+    if (!batch) return;
+    try {
+      await batchAPI.deleteBatch(batch.id);
+      setDeleteDialog({ open: false, batch: null });
+      fetchData();
+    } catch (error) {
+      const msg = error?.response?.data?.error || 'Erreur lors de la suppression';
+      alert(msg);
+    }
+  };
+
+  const canDelete = (batch) => {
+    if (!batch.received_at) return false;
+    const elapsed = (Date.now() - new Date(batch.received_at).getTime()) / 1000;
+    return elapsed <= 1800; // 30 minutes
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -126,7 +160,7 @@ const ProductBatches = () => {
           </Typography>
         </Box>
         <Box flexGrow={1} />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenNewBatchDialog}>
           Nouveau Lot
         </Button>
       </Box>
@@ -147,13 +181,14 @@ const ProductBatches = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Lot</TableCell>
-              <TableCell>Qte initiale</TableCell>
-              <TableCell>Qte restante</TableCell>
-              <TableCell>Peremption</TableCell>
-              <TableCell>Peremption effective</TableCell>
+              <TableCell>Lot / Fournisseur</TableCell>
+              <TableCell>Qté initiale</TableCell>
+              <TableCell>Qté restante</TableCell>
+              <TableCell>Péremption</TableCell>
+              <TableCell>Péremption effective</TableCell>
               <TableCell>Jours restants</TableCell>
               <TableCell>Statut</TableCell>
+              <TableCell>Reçu le</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -208,10 +243,26 @@ const ProductBatches = () => {
                     />
                   </TableCell>
                   <TableCell>
+                    <Typography variant="caption" color="text.secondary">
+                      {batch.received_at ? dayjs(batch.received_at).format('DD/MM/YY HH:mm') : '—'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
                     {batch.status === 'available' && (
                       <Tooltip title="Marquer comme ouvert">
                         <IconButton size="small" onClick={() => handleOpenBatch(batch.id)} color="primary">
                           <OpenIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {canDelete(batch) && (
+                      <Tooltip title="Supprimer ce lot (< 30 min)">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteDialog({ open: true, batch })}
+                        >
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
@@ -277,7 +328,30 @@ const ProductBatches = () => {
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
           <Button variant="contained" onClick={handleCreate} disabled={!formData.batch_number || !formData.quantity || !formData.expiry_date}>
-            Creer
+            Créer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog suppression lot */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, batch: null })} maxWidth="xs" fullWidth>
+        <DialogTitle>Supprimer le lot</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mb: 1 }}>
+            Cette action est irréversible. Le stock sera remis à son état avant la réception.
+          </Alert>
+          {deleteDialog.batch && (
+            <Typography variant="body2">
+              Lot : <strong>{deleteDialog.batch.batch_number}</strong><br />
+              Quantité initiale : <strong>{deleteDialog.batch.quantity}</strong><br />
+              Reçu le : <strong>{dayjs(deleteDialog.batch.received_at).format('DD/MM/YYYY HH:mm')}</strong>
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ open: false, batch: null })}>Annuler</Button>
+          <Button variant="contained" color="error" startIcon={<DeleteIcon />} onClick={handleDeleteBatch}>
+            Supprimer
           </Button>
         </DialogActions>
       </Dialog>

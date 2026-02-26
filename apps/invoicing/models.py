@@ -378,19 +378,34 @@ class Product(models.Model):
 
     @property
     def is_expired(self):
-        """Vérifie si le produit est périmé"""
+        """Vérifie si le produit est périmé.
+        En priorité, vérifie si tous les lots actifs sont périmés.
+        Sinon, utilise expiration_date du produit comme fallback."""
         from django.utils import timezone
+        today = timezone.now().date()
+        active_batches = self.batches.filter(quantity_remaining__gt=0)
+        if active_batches.exists():
+            # Périmé si aucun lot actif n'est encore valide
+            return not active_batches.filter(expiry_date__gt=today).exists()
+        # Fallback : date de péremption produit
         if self.expiration_date:
-            return self.expiration_date < timezone.now().date()
+            return self.expiration_date < today
         return False
 
     @property
     def days_until_expiration(self):
-        """Nombre de jours avant péremption (négatif si périmé)"""
+        """Nombre de jours avant péremption du lot le plus proche (négatif si périmé)."""
         from django.utils import timezone
+        today = timezone.now().date()
+        # Chercher le lot actif avec la péremption la plus proche
+        nearest_batch = self.batches.filter(
+            quantity_remaining__gt=0
+        ).order_by('expiry_date').first()
+        if nearest_batch:
+            return (nearest_batch.expiry_date - today).days
+        # Fallback : date de péremption produit
         if self.expiration_date:
-            delta = self.expiration_date - timezone.now().date()
-            return delta.days
+            return (self.expiration_date - today).days
         return None
 
 

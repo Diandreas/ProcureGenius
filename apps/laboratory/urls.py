@@ -15,7 +15,11 @@ urlpatterns = [
 
     # Lab Tests (Catalog) (accessible at /healthcare/laboratory/tests/)
     path('tests/', api.LabTestListCreateView.as_view(), name='test-list'),
+    path('tests/generate-code/', api.GenerateTestCodeView.as_view(), name='generate-test-code'),
     path('tests/<uuid:pk>/', api.LabTestDetailView.as_view(), name='test-detail'),
+    path('tests/<uuid:test_id>/parameters/', api.LabTestParameterListCreateView.as_view(), name='test-parameters'),
+    path('tests/<uuid:test_id>/parameters/bulk-save/', api.LabTestParameterBulkSaveView.as_view(), name='test-parameters-bulk'),
+    path('parameters/<uuid:pk>/', api.LabTestParameterDetailView.as_view(), name='parameter-detail'),
 
     # Lab Orders (accessible at /healthcare/laboratory/orders/)
     path('orders/', api.LabOrderListView.as_view(), name='order-list'),

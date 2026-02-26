@@ -71,7 +71,7 @@ dayjs.locale('fr');
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchProducts } from '../../store/slices/productsSlice';
-import { warehousesAPI } from '../../services/api';
+import { warehousesAPI, productsAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
@@ -147,6 +147,7 @@ function Products() {
 
   const { products, loading, error } = useSelector((state) => state.products);
   const [warehouses, setWarehouses] = useState([]);
+  const [batchStats, setBatchStats] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -180,6 +181,7 @@ function Products() {
   useEffect(() => {
     dispatch(fetchProducts());
     fetchWarehousesData();
+    productsAPI.getBatchStats().then(r => setBatchStats(r.data)).catch(() => {});
   }, [dispatch, fetchWarehousesData]);
 
   // Register report action in top nav
@@ -230,12 +232,18 @@ function Products() {
   };
 
   const getExpirationChip = (product) => {
-    if (!product.expiration_date || product.product_type !== 'physical') return null;
-    const daysUntil = Math.floor((new Date(product.expiration_date) - new Date()) / (1000 * 60 * 60 * 24));
+    if (product.product_type !== 'physical') return null;
+    // Utilise days_until_expiration batch-aware si dispo, sinon expiration_date du produit
+    const daysUntil = product.days_until_expiration !== undefined && product.days_until_expiration !== null
+      ? product.days_until_expiration
+      : (product.expiration_date
+          ? Math.floor((new Date(product.expiration_date) - new Date()) / 86400000)
+          : null);
+    if (daysUntil === null) return null;
     if (daysUntil < 0) return { label: `Périmé (${Math.abs(daysUntil)}j)`, color: 'error', variant: 'filled' };
     if (daysUntil <= 30) return { label: `Expire dans ${daysUntil}j`, color: 'warning', variant: 'filled' };
     if (daysUntil <= 90) return { label: `Expire dans ${daysUntil}j`, color: 'info', variant: 'outlined' };
-    return { label: formatDate(product.expiration_date), color: 'default', variant: 'outlined' };
+    return { label: product.expiration_date ? formatDate(product.expiration_date) : `${daysUntil}j`, color: 'default', variant: 'outlined' };
   };
 
   // Filtered products
@@ -251,32 +259,58 @@ function Products() {
       (statusFilter === 'available' && product.is_active) ||
       (statusFilter === 'unavailable' && !product.is_active);
 
+    // Utilise is_expired/days_until_expiration (batch-aware depuis le backend)
+    const daysUntil = product.days_until_expiration;
+    const isExpiredProduct = product.is_expired;
+
     const matchesStock = !stockFilter || (() => {
       if (stockFilter === 'out_of_stock') return product.product_type === 'physical' && product.stock_quantity <= 0;
       if (stockFilter === 'low_stock') return product.product_type === 'physical' && product.stock_quantity > 0 && product.stock_quantity <= (product.low_stock_threshold || 10);
       if (stockFilter === 'ok') return product.product_type === 'physical' && product.stock_quantity > (product.low_stock_threshold || 10);
       if (stockFilter === 'services') return product.product_type !== 'physical';
+      // expired: utilise is_expired (batch-aware) ou expiration_date si pas de lots
       if (stockFilter === 'expired') {
+        if (product.product_type !== 'physical') return false;
+        if (isExpiredProduct !== undefined && isExpiredProduct !== null) return isExpiredProduct;
         if (!product.expiration_date) return false;
-        return Math.floor((new Date(product.expiration_date) - new Date()) / (1000 * 60 * 60 * 24)) < 0;
+        return Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) < 0;
       }
       if (stockFilter === 'expiring_soon') {
+        if (product.product_type !== 'physical') return false;
+        // Utilise days_until_expiration (batch-aware) si disponible
+        if (daysUntil !== undefined && daysUntil !== null) return daysUntil >= 0 && daysUntil <= 30;
         if (!product.expiration_date) return false;
-        const d = Math.floor((new Date(product.expiration_date) - new Date()) / (1000 * 60 * 60 * 24));
+        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
         return d >= 0 && d <= 30;
+      }
+      if (stockFilter === 'expiring_soon_60') {
+        if (product.product_type !== 'physical') return false;
+        if (daysUntil !== undefined && daysUntil !== null) return daysUntil > 30 && daysUntil <= 60;
+        if (!product.expiration_date) return false;
+        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
+        return d > 30 && d <= 60;
       }
       return true;
     })();
 
     const matchesExpiration = !expirationFilter || (() => {
-      if (product.product_type !== 'physical') return expirationFilter === 'no_date' ? !product.expiration_date : false;
-      const daysUntil = product.expiration_date
-        ? Math.floor((new Date(product.expiration_date) - new Date()) / (1000 * 60 * 60 * 24))
-        : null;
-      if (expirationFilter === 'expired') return daysUntil !== null && daysUntil < 0;
-      if (expirationFilter === 'expiring_soon') return daysUntil !== null && daysUntil >= 0 && daysUntil <= 30;
-      if (expirationFilter === 'valid') return daysUntil !== null && daysUntil > 30;
-      if (expirationFilter === 'no_date') return !product.expiration_date;
+      if (product.product_type !== 'physical') return expirationFilter === 'no_date' ? (!product.expiration_date && daysUntil === null) : false;
+      if (expirationFilter === 'expired') {
+        if (isExpiredProduct !== undefined && isExpiredProduct !== null) return isExpiredProduct;
+        return product.expiration_date && Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) < 0;
+      }
+      if (expirationFilter === 'expiring_soon') {
+        if (daysUntil !== undefined && daysUntil !== null) return daysUntil >= 0 && daysUntil <= 30;
+        if (!product.expiration_date) return false;
+        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
+        return d >= 0 && d <= 30;
+      }
+      if (expirationFilter === 'valid') {
+        if (daysUntil !== undefined && daysUntil !== null) return daysUntil > 30;
+        if (!product.expiration_date) return false;
+        return Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) > 30;
+      }
+      if (expirationFilter === 'no_date') return !product.expiration_date && daysUntil === null;
       return true;
     })();
 
@@ -569,11 +603,17 @@ function Products() {
   const inStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity > (p.low_stock_threshold || 10)).length;
   const lowStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)).length;
   const outStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity <= 0).length;
-  const physicalWithDate = products.filter(p => p.product_type === 'physical' && p.expiration_date);
-  const expiredCount = physicalWithDate.filter(p => Math.floor((new Date(p.expiration_date) - new Date()) / 86400000) < 0).length;
-  const expiringSoonCount = physicalWithDate.filter(p => {
-    const d = Math.floor((new Date(p.expiration_date) - new Date()) / 86400000);
+  // Use batch-level expiry when available (more accurate than product-level expiration_date)
+  const expiredCount = batchStats ? batchStats.expired_batches : products.filter(p => p.product_type === 'physical' && p.expiration_date && Math.floor((new Date(p.expiration_date) - new Date()) / 86400000) < 0).length;
+  const expiringSoonCount = batchStats ? batchStats.expiring_soon_30 : products.filter(p => {
+    if (p.product_type !== 'physical' || (!p.expiration_date && p.days_until_expiration === null)) return false;
+    const d = p.days_until_expiration !== null ? p.days_until_expiration : Math.floor((new Date(p.expiration_date) - new Date()) / 86400000);
     return d >= 0 && d <= 30;
+  }).length;
+  const expiringSoon60Count = batchStats ? batchStats.expiring_soon_60 : products.filter(p => {
+    if (p.product_type !== 'physical' || (!p.expiration_date && p.days_until_expiration === null)) return false;
+    const d = p.days_until_expiration !== null ? p.days_until_expiration : Math.floor((new Date(p.expiration_date) - new Date()) / 86400000);
+    return d > 30 && d <= 60;
   }).length;
   const totalStockValue = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * parseFloat(p.price || p.unit_price || 0)), 0);
 
@@ -672,8 +712,9 @@ function Products() {
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
-            title="Périmés"
+            title="Lots périmés"
             count={expiredCount}
+            subtitle={batchStats ? 'par lots' : 'par produit'}
             icon={ExpiredIcon}
             color="#b71c1c"
             filterKey="expired"
@@ -683,12 +724,24 @@ function Products() {
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
-            title="Expire bientôt"
+            title="Expire < 30j"
             count={expiringSoonCount}
-            subtitle="< 30 jours"
+            subtitle={batchStats ? 'lots actifs' : 'produits'}
             icon={ScheduleIcon}
             color={theme.palette.warning.dark}
             filterKey="expiring_soon"
+            activeFilter={stockFilter}
+            onClick={handleStockFilterClick}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            title="Expire 30-60j"
+            count={expiringSoon60Count}
+            subtitle={batchStats ? 'lots actifs' : 'produits'}
+            icon={ScheduleIcon}
+            color={theme.palette.info.main}
+            filterKey="expiring_soon_60"
             activeFilter={stockFilter}
             onClick={handleStockFilterClick}
           />

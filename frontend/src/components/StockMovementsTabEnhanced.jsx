@@ -33,6 +33,7 @@ import {
   Refresh,
   Edit as EditIcon,
   ReportProblem,
+  DeleteForever,
 } from '@mui/icons-material';
 import { productsAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
@@ -48,12 +49,14 @@ const LOSS_REASONS = [
   { value: 'other', label: 'Autre raison' },
 ];
 
-function StockMovementsTab({ productId, productType }) {
+function StockMovementsTab({ productId, productType, isAdmin }) {
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [movementToCancel, setMovementToCancel] = useState(null);
   const [adjustQuantity, setAdjustQuantity] = useState('');
   const [adjustNotes, setAdjustNotes] = useState('');
   const [lossQuantity, setLossQuantity] = useState('');
@@ -103,6 +106,19 @@ function StockMovementsTab({ productId, productType }) {
       fetchMovements();
     } catch (err) {
       enqueueSnackbar('Erreur lors de l\'ajustement du stock', { variant: 'error' });
+    }
+  };
+
+  const handleCancelMovement = async () => {
+    if (!movementToCancel) return;
+    try {
+      const response = await productsAPI.cancelMovement(movementToCancel.id);
+      enqueueSnackbar(`Mouvement annulé. Stock mis à jour: ${response.data.product_stock}`, { variant: 'success' });
+      setCancelDialogOpen(false);
+      setMovementToCancel(null);
+      fetchMovements();
+    } catch (err) {
+      enqueueSnackbar(err.response?.data?.error || 'Erreur lors de l\'annulation', { variant: 'error' });
     }
   };
 
@@ -230,6 +246,7 @@ function StockMovementsTab({ productId, productType }) {
                 <TableCell>Référence/Raison</TableCell>
                 <TableCell>Utilisateur</TableCell>
                 <TableCell>Notes</TableCell>
+                {isAdmin && <TableCell align="center">Action</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -308,12 +325,56 @@ function StockMovementsTab({ productId, productType }) {
                       </Tooltip>
                     ) : '-'}
                   </TableCell>
+                  {isAdmin && (
+                    <TableCell align="center">
+                      <Tooltip title="Annuler ce mouvement (remet le stock)">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => { setMovementToCancel(movement); setCancelDialogOpen(true); }}
+                        >
+                          <DeleteForever fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       )}
+
+      {/* Dialog d'annulation de mouvement */}
+      <Dialog open={cancelDialogOpen} onClose={() => { setCancelDialogOpen(false); setMovementToCancel(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle>Annuler le mouvement de stock</DialogTitle>
+        <DialogContent>
+          <Box pt={1}>
+            <Alert severity="error">
+              <strong>Attention !</strong> Cette action est irréversible. Le mouvement sera supprimé et le stock sera remis à son état antérieur.
+            </Alert>
+            {movementToCancel && (
+              <Box mt={2}>
+                <Typography variant="body2">
+                  <strong>Type :</strong> {movementToCancel.movement_type_display}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Quantité :</strong> {movementToCancel.quantity > 0 ? '+' : ''}{movementToCancel.quantity}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Date :</strong> {formatDate(movementToCancel.created_at)}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setCancelDialogOpen(false); setMovementToCancel(null); }}>Annuler</Button>
+          <Button onClick={handleCancelMovement} variant="contained" color="error">
+            Confirmer l'annulation
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Dialog d'ajustement de stock */}
       <Dialog open={adjustDialogOpen} onClose={() => setAdjustDialogOpen(false)} maxWidth="sm" fullWidth>

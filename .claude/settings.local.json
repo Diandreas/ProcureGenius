@@ -131,9 +131,14 @@
       "Bash(\"d:/project/BFMa/ProcureGenius/apps/patients/serializers.py\":*)",
       "Bash(\"d:/project/BFMa/ProcureGenius/apps/patients/api.py\":*)",
       "Read(//d/d/**)",
-      "Read(//d/project/BFMa/ProcureGenius/frontend/src/pages/**)"
+      "Read(//d/project/BFMa/ProcureGenius/frontend/src/pages/**)",
+      "Bash(d:/project/BFMa/ProcureGenius/apps/api/views.py:*)",
+      "Bash(d:/project/BFMa/ProcureGenius/apps/laboratory/api.py:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
   }
 }

@@ -149,6 +149,27 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Generate unique test code
+    generateTestCode: async () => {
+        const response = await api.get('/healthcare/laboratory/tests/generate-code/');
+        return response.data;
+    },
+
+    // Test parameters (for compound tests)
+    getTestParameters: async (testId) => {
+        const response = await api.get(`/healthcare/laboratory/tests/${testId}/parameters/`);
+        return response.data;
+    },
+
+    saveTestParameters: async (testId, parameters) => {
+        const response = await api.post(`/healthcare/laboratory/tests/${testId}/parameters/bulk-save/`, { parameters });
+        return response.data;
+    },
+
+    deleteParameter: async (parameterId) => {
+        await api.delete(`/healthcare/laboratory/parameters/${parameterId}/`);
+    },
+
     // PDF catalogue des valeurs de référence
     getReferenceCatalogPDF: async () => {
         const token = localStorage.getItem('access_token');

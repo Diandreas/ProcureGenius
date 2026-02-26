@@ -10,8 +10,9 @@ from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
 from apps.invoicing.batch_views import (
     ProductBatchListCreateView, ProductBatchDetailView,
-    BatchOpenView, ExpiringBatchesView, OpenedReagentsView
+    BatchOpenView, ExpiringBatchesView, OpenedReagentsView, BatchDeleteView
 )
+from .views import StockMovementCancelView
 from . import erpnext_export_views
 
 app_name = 'api'
@@ -108,10 +109,14 @@ urlpatterns = [
     # Healthcare - Consultations
     path('healthcare/consultations/', include('apps.consultations.urls')),
 
+    # Stock movement cancellation (admin only)
+    path('stock-movements/<uuid:movement_id>/cancel/', StockMovementCancelView.as_view(), name='stock-movement-cancel'),
+
     # Batch/Lot management
     path('products/<uuid:product_id>/batches/', ProductBatchListCreateView.as_view(), name='product-batches'),
     path('batches/<uuid:batch_id>/', ProductBatchDetailView.as_view(), name='batch-detail'),
     path('batches/<uuid:batch_id>/open/', BatchOpenView.as_view(), name='batch-open'),
+    path('batches/<uuid:batch_id>/delete/', BatchDeleteView.as_view(), name='batch-delete'),
     path('batches/expiring/', ExpiringBatchesView.as_view(), name='batches-expiring'),
     path('batches/opened-reagents/', OpenedReagentsView.as_view(), name='opened-reagents'),
 

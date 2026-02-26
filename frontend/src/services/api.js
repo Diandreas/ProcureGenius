@@ -126,9 +126,14 @@ export const productsAPI = {
   stockMovements: (id, params) => api.get(`/products/${id}/stock_movements/`, { params }),
   adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
+  cancelMovement: (movementId) => api.delete(`/stock-movements/${movementId}/cancel/`),
+  getBatchStats: () => api.get('/products/batch_stats/'),
+  getExpiredReport: () => api.get('/products/expired_report/'),
   getStatistics: (id) => api.get(`/products/${id}/statistics/`),
   exportCSV: () => api.get('/products/export_csv/', { responseType: 'blob' }),
   quickCreate: (data) => api.post('/quick-create/product/', data),
+  createBatch: (productId, data) => api.post(`/products/${productId}/batches/`, data),
+  getBatches: (productId) => api.get(`/products/${productId}/batches/`),
 };
 
 // Product Categories API

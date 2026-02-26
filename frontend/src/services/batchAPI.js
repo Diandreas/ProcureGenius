@@ -35,7 +35,13 @@ const batchAPI = {
   getOpenedReagents: async (showAll = false) => {
     const response = await api.get(`/batches/opened-reagents/?all=${showAll}`);
     return response.data;
-  }
+  },
+
+  // Delete a batch (only within 30 minutes of creation)
+  deleteBatch: async (batchId) => {
+    const response = await api.delete(`/batches/${batchId}/delete/`);
+    return response.data;
+  },
 };
 
 export default batchAPI;

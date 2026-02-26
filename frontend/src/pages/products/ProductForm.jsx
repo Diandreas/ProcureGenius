@@ -102,6 +102,10 @@ function ProductForm() {
     const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
     const [warehouseFormData, setWarehouseFormData] = useState({ name: '', code: '', city: '' });
 
+    // Lot initial (création uniquement)
+    const [initialBatch, setInitialBatch] = useState({ lot_number: '', expiry_date: '' });
+    const [createInitialBatch, setCreateInitialBatch] = useState(false);
+
     const formikRef = useRef(null);
 
     const [initialValues, setInitialValues] = useState({
@@ -125,7 +129,6 @@ function ProductForm() {
         ordering_cost: 5000,
         holding_cost_percent: 20,
         barcode: '',
-        expiration_date: '',
         supply_lead_time_days: 7,
         default_shelf_life_after_opening: '',
     });
@@ -188,7 +191,6 @@ function ProductForm() {
                         warehouse_id: p.warehouse || '',
                         price: p.price ?? '',
                         cost_price: p.cost_price ?? '',
-                        expiration_date: p.expiration_date || '',
                     });
                 }
             } catch (err) {
@@ -233,7 +235,6 @@ function ProductForm() {
                 conversion_factor: values.conversion_factor === '' ? 1 : parseFloat(values.conversion_factor),
                 category: values.category_id || null,
                 warehouse: values.warehouse_id || null,
-                expiration_date: values.expiration_date || null,
                 barcode: values.barcode || null,
                 reference: values.reference || undefined,
                 ordering_cost: values.ordering_cost === '' ? null : parseFloat(values.ordering_cost),
@@ -263,8 +264,35 @@ function ProductForm() {
                 await productsAPI.update(id, payload);
                 enqueueSnackbar('Produit mis à jour', { variant: 'success' });
             } else {
-                await productsAPI.create(payload);
-                enqueueSnackbar('Produit créé', { variant: 'success' });
+                // Si lot initial → le stock sera géré par la création du lot (évite double-comptage)
+                const productPayload = createInitialBatch && values.product_type === 'physical' && initialBatch.expiry_date
+                    ? { ...payload, stock_quantity: 0 }
+                    : payload;
+
+                const newProduct = await productsAPI.create(productPayload);
+                const productId = newProduct.data?.id;
+
+                // Créer le lot initial automatiquement si demandé
+                if (productId && values.product_type === 'physical' && createInitialBatch && initialBatch.expiry_date) {
+                    try {
+                        const qty = parseInt(values.stock_quantity) || 0;
+                        const batchPayload = {
+                            batch_number: initialBatch.lot_number || `LOT-INIT-${new Date().toISOString().slice(0,7)}`,
+                            lot_number: initialBatch.lot_number || '',
+                            quantity: qty,
+                            quantity_remaining: qty,
+                            expiry_date: initialBatch.expiry_date,
+                            shelf_life_after_opening_days: values.default_shelf_life_after_opening ? parseInt(values.default_shelf_life_after_opening) : null,
+                            notes: 'Lot initial créé à la création du produit',
+                        };
+                        await productsAPI.createBatch(productId, batchPayload);
+                        enqueueSnackbar('Produit et lot initial créés avec succès', { variant: 'success' });
+                    } catch (batchErr) {
+                        enqueueSnackbar('Produit créé, mais erreur lors de la création du lot initial', { variant: 'warning' });
+                    }
+                } else {
+                    enqueueSnackbar('Produit créé', { variant: 'success' });
+                }
             }
             navigate('/products');
         } catch (error) {
@@ -377,9 +405,9 @@ function ProductForm() {
                                                             <TextField fullWidth name="barcode" label="Code-barres" value={values.barcode} onChange={handleChange} />
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField fullWidth type="date" name="expiration_date" label="Péremption (produit global)" value={values.expiration_date} onChange={handleChange} InputLabelProps={{ shrink: true }} helperText="Pour les médicaments, gérez les dates par lot ci-dessous" />
+                                                            <TextField fullWidth type="number" name="default_shelf_life_after_opening" label="Durée vie après ouverture (jours)" value={values.default_shelf_life_after_opening} onChange={handleChange} helperText="Utilisé par défaut pour les nouveaux lots" />
                                                         </Grid>
-                                                        {isEdit && (
+                                                        {isEdit ? (
                                                             <Grid item xs={12}>
                                                                 <Button
                                                                     variant="outlined"
@@ -391,6 +419,46 @@ function ProductForm() {
                                                                 >
                                                                     Gérer les lots & dates de péremption →
                                                                 </Button>
+                                                            </Grid>
+                                                        ) : (
+                                                            <Grid item xs={12}>
+                                                                <Alert severity="info" sx={{ mb: 1 }}>
+                                                                    Les dates de péremption sont gérées par lot. Créez un lot initial maintenant ou depuis la page du produit.
+                                                                </Alert>
+                                                                <FormControlLabel
+                                                                    control={
+                                                                        <Checkbox
+                                                                            checked={createInitialBatch}
+                                                                            onChange={e => setCreateInitialBatch(e.target.checked)}
+                                                                        />
+                                                                    }
+                                                                    label="Créer un lot initial avec date de péremption"
+                                                                />
+                                                                {createInitialBatch && (
+                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                                                                        <Grid item xs={12} sm={6}>
+                                                                            <TextField
+                                                                                fullWidth
+                                                                                label="N° de lot / référence fournisseur"
+                                                                                value={initialBatch.lot_number}
+                                                                                onChange={e => setInitialBatch(p => ({ ...p, lot_number: e.target.value }))}
+                                                                                helperText="Optionnel — généré auto si vide"
+                                                                            />
+                                                                        </Grid>
+                                                                        <Grid item xs={12} sm={6}>
+                                                                            <TextField
+                                                                                fullWidth
+                                                                                type="date"
+                                                                                label="Date de péremption"
+                                                                                value={initialBatch.expiry_date}
+                                                                                onChange={e => setInitialBatch(p => ({ ...p, expiry_date: e.target.value }))}
+                                                                                InputLabelProps={{ shrink: true }}
+                                                                                required
+                                                                                helperText="Obligatoire pour créer le lot"
+                                                                            />
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
                                                             </Grid>
                                                         )}
                                                     </Grid>

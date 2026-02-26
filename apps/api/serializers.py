@@ -124,6 +124,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     stock_status = serializers.CharField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    days_until_expiration = serializers.IntegerField(read_only=True, allow_null=True)
     price_editable = serializers.BooleanField(required=False, default=False)
     reference = serializers.CharField(required=False, allow_blank=True)
     default_shelf_life_after_opening = serializers.IntegerField(required=False, allow_null=True)
@@ -172,7 +174,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
             'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
-            'is_low_stock', 'is_out_of_stock', 'is_active',
+            'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration', 'is_active',
             'base_unit', 'sell_unit', 'conversion_factor',
             'ordering_cost', 'holding_cost_percent',
             'expiration_date', 'supply_lead_time_days', 'default_shelf_life_after_opening',
@@ -182,7 +184,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
-            'stock_status', 'is_low_stock', 'is_out_of_stock',
+            'stock_status', 'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count'
@@ -250,11 +252,20 @@ class StockMovementSerializer(serializers.ModelSerializer):
     is_entry = serializers.BooleanField(read_only=True)
     is_exit = serializers.BooleanField(read_only=True)
     is_loss = serializers.BooleanField(read_only=True)
+    batch_number = serializers.SerializerMethodField()
+    batch_expiry = serializers.SerializerMethodField()
+
+    def get_batch_number(self, obj):
+        return obj.batch.batch_number if obj.batch_id else None
+
+    def get_batch_expiry(self, obj):
+        return str(obj.batch.expiry_date) if obj.batch_id and obj.batch.expiry_date else None
 
     class Meta:
         model = StockMovement
         fields = [
             'id', 'product', 'product_name', 'product_reference',
+            'batch', 'batch_number', 'batch_expiry',
             'movement_type', 'movement_type_display',
             'quantity', 'quantity_before', 'quantity_after',
             'reference_type', 'reference_type_display', 'reference_id', 'reference_number',
@@ -264,6 +275,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id', 'created_at', 'product_name', 'product_reference',
+            'batch_number', 'batch_expiry',
             'created_by_name', 'movement_type_display', 'reference_type_display',
             'loss_reason_display', 'is_entry', 'is_exit', 'is_loss'
         ]

@@ -144,16 +144,10 @@ class DispensingCreateSerializer(serializers.Serializer):
 
 class MedicationSerializer(serializers.ModelSerializer):
     """Serializer for medications (Products with category=Medications)"""
-    stock_status = serializers.CharField(read_only=True)
-    is_low_stock = serializers.BooleanField(read_only=True)
-    is_out_of_stock = serializers.BooleanField(read_only=True)
     unit_price = serializers.DecimalField(source='price', max_digits=10, decimal_places=2, read_only=True)
     current_stock = serializers.IntegerField(source='stock_quantity', read_only=True)
 
     # New computed fields
-    days_since_creation = serializers.IntegerField(read_only=True)
-    is_expired = serializers.BooleanField(read_only=True)
-    days_until_expiration = serializers.IntegerField(read_only=True, allow_null=True)
     category_name = serializers.SerializerMethodField()
     supplier_name = serializers.SerializerMethodField()
     warehouse_name = serializers.SerializerMethodField()

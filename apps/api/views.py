@@ -424,6 +424,55 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         results['summary']['estimated_loss_value'] = total_loss
         return Response(results)
 
+    @action(detail=False, methods=['get'])
+    def batch_stats(self, request):
+        """Stats sur les lots pour les cartes de statistiques de la page produits"""
+        from apps.invoicing.models import ProductBatch
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.now().date()
+        thirty_days = today + timedelta(days=30)
+        sixty_days = today + timedelta(days=60)
+
+        org = request.user.organization
+        active_statuses = ['available', 'opened']
+
+        expired_batches = ProductBatch.objects.filter(
+            organization=org,
+            expiry_date__lt=today,
+            quantity_remaining__gt=0,
+            status__in=active_statuses,
+        ).count()
+
+        expiring_30 = ProductBatch.objects.filter(
+            organization=org,
+            expiry_date__gte=today,
+            expiry_date__lte=thirty_days,
+            quantity_remaining__gt=0,
+            status__in=active_statuses,
+        ).count()
+
+        expiring_60 = ProductBatch.objects.filter(
+            organization=org,
+            expiry_date__gt=thirty_days,
+            expiry_date__lte=sixty_days,
+            quantity_remaining__gt=0,
+            status__in=active_statuses,
+        ).count()
+
+        total_batches = ProductBatch.objects.filter(
+            organization=org,
+            status__in=active_statuses,
+            quantity_remaining__gt=0,
+        ).count()
+
+        return Response({
+            'expired_batches': expired_batches,
+            'expiring_soon_30': expiring_30,
+            'expiring_soon_60': expiring_60,
+            'total_active_batches': total_batches,
+        })
+
     @action(detail=True, methods=['get'])
     def stock_movements(self, request, pk=None):
         """Historique des mouvements de stock pour un produit"""
@@ -582,7 +631,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
-        """Ajustement manuel du stock"""
+        """Ajustement manuel du stock — supporte batch_id pour traçabilité par lot"""
         product = self.get_object()
 
         if product.product_type != 'physical':
@@ -593,6 +642,12 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         quantity = request.data.get('quantity')
         notes = request.data.get('notes', '')
+        batch_id = request.data.get('batch_id')
+        movement_type_param = request.data.get('movement_type', 'adjustment')
+
+        valid_types = ['adjustment', 'reception', 'return', 'loss', 'initial']
+        if movement_type_param not in valid_types:
+            movement_type_param = 'adjustment'
 
         if quantity is None:
             return Response(
@@ -608,14 +663,48 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Ajuster le stock
-        movement = product.adjust_stock(
+        # Résoudre le lot si batch_id fourni
+        from apps.invoicing.models import StockMovement, ProductBatch
+        batch = None
+        if batch_id:
+            try:
+                batch = ProductBatch.objects.get(
+                    id=batch_id, product=product,
+                    organization=request.user.organization
+                )
+            except ProductBatch.DoesNotExist:
+                return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Pour une sortie : vérifier et déduire du lot
+            if quantity < 0:
+                abs_qty = abs(quantity)
+                if batch.quantity_remaining < abs_qty:
+                    return Response(
+                        {'error': f'Stock insuffisant dans ce lot ({batch.quantity_remaining} disponible(s))'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                batch.quantity_remaining -= abs_qty
+                batch.update_status()
+
+        # Ajuster le stock produit
+        old_quantity = product.stock_quantity
+        product.stock_quantity += quantity
+        product.save(update_fields=['stock_quantity'])
+
+        movement = StockMovement.objects.create(
+            product=product,
+            batch=batch,
+            movement_type=movement_type_param,
             quantity=quantity,
-            movement_type='adjustment',
+            quantity_before=old_quantity,
+            quantity_after=product.stock_quantity,
             reference_type='manual',
             notes=notes,
-            user=request.user if request.user.is_authenticated else None
+            created_by=request.user if request.user.is_authenticated else None
         )
+
+        from apps.invoicing.stock_alerts import check_stock_after_movement
+        check_stock_after_movement(product)
 
         from .serializers import StockMovementSerializer
         return Response({
@@ -2369,3 +2458,47 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(organization=self.request.user.organization)
 
         return queryset
+
+class StockMovementCancelView(APIView):
+    """
+    DELETE /api/stock-movements/<uuid>/cancel/
+    Annule (supprime) un mouvement de stock et remet le stock a l'etat anterieur.
+    Reserve aux administrateurs et managers.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, movement_id):
+        from apps.invoicing.models import StockMovement
+
+        user = request.user
+        if not (user.is_staff or getattr(user, 'profile_type', None) in ('admin', 'manager')):
+            return Response(
+                {'error': 'Permission refusee. Seuls les administrateurs peuvent annuler des mouvements.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            movement = StockMovement.objects.select_related('product').get(
+                id=movement_id,
+                product__organization=user.organization
+            )
+        except StockMovement.DoesNotExist:
+            return Response({'error': 'Mouvement introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        product = movement.product
+        product.stock_quantity -= movement.quantity
+        product.save(update_fields=['stock_quantity'])
+
+        movement_info = {
+            'id': str(movement.id),
+            'movement_type': movement.movement_type,
+            'quantity': movement.quantity,
+        }
+
+        movement.delete()
+
+        return Response({
+            'message': 'Mouvement annule et stock mis a jour',
+            'cancelled_movement': movement_info,
+            'product_stock': product.stock_quantity,
+        }, status=status.HTTP_200_OK)

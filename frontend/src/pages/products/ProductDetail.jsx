@@ -1480,7 +1480,7 @@ function ProductDetail() {
       {/* Tab: Mouvements de Stock - Affiché uniquement pour les produits physiques */}
       {product?.product_type === 'physical' && activeTab === 3 && (
         <Box>
-          <StockMovementsTab productId={id} productType={product?.product_type} />
+          <StockMovementsTab productId={id} productType={product?.product_type} isAdmin={isAdmin} />
         </Box>
       )}
 
