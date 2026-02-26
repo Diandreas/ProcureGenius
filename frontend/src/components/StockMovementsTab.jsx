@@ -27,6 +27,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  ButtonGroup,
 } from '@mui/material';
 import {
   Add,
@@ -62,6 +63,8 @@ function StockMovementsTab({ productId, productType, isAdmin }) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [movementToCancel, setMovementToCancel] = useState(null);
   const [movementDirection, setMovementDirection] = useState('add'); // 'add' | 'remove'
+  const [addMode, setAddMode] = useState('new'); // 'new' | 'existing'
+  const [selectedExistingBatchId, setSelectedExistingBatchId] = useState('');
   const [filterType, setFilterType] = useState('all');
   const { enqueueSnackbar } = useSnackbar();
 
@@ -115,6 +118,8 @@ function StockMovementsTab({ productId, productType, isAdmin }) {
   const openDialog = (direction) => {
     setMovementDirection(direction);
     if (direction === 'add') {
+      setAddMode('new');
+      setSelectedExistingBatchId('');
       setAddForm({
         batch_number: generateBatchNumber(),
         lot_number: '',
@@ -141,28 +146,45 @@ function StockMovementsTab({ productId, productType, isAdmin }) {
       enqueueSnackbar('Quantité invalide', { variant: 'error' });
       return;
     }
-    if (!addForm.expiry_date) {
-      enqueueSnackbar('La date de péremption est requise', { variant: 'error' });
-      return;
-    }
+
     try {
-      await batchAPI.createBatch(productId, {
-        batch_number: addForm.batch_number,
-        lot_number: addForm.lot_number,
-        quantity: qty,
-        quantity_remaining: qty,
-        expiry_date: addForm.expiry_date,
-        shelf_life_after_opening_days: addForm.shelf_life_after_opening_days
-          ? parseInt(addForm.shelf_life_after_opening_days) : null,
-        notes: addForm.notes,
-      });
-      enqueueSnackbar('Lot créé et stock mis à jour', { variant: 'success' });
+      if (addMode === 'new') {
+        if (!addForm.expiry_date) {
+          enqueueSnackbar('La date de péremption est requise', { variant: 'error' });
+          return;
+        }
+        await batchAPI.createBatch(productId, {
+          batch_number: addForm.batch_number,
+          lot_number: addForm.lot_number,
+          quantity: qty,
+          quantity_remaining: qty,
+          expiry_date: addForm.expiry_date,
+          shelf_life_after_opening_days: addForm.shelf_life_after_opening_days
+            ? parseInt(addForm.shelf_life_after_opening_days) : null,
+          notes: addForm.notes,
+        });
+        enqueueSnackbar('Nouveau lot créé et stock mis à jour', { variant: 'success' });
+      } else {
+        // Ajouter à un lot existant
+        if (!selectedExistingBatchId) {
+          enqueueSnackbar('Veuillez sélectionner un lot', { variant: 'error' });
+          return;
+        }
+        await productsAPI.adjustStock(productId, {
+          quantity: qty,
+          notes: addForm.notes || 'Ajout de stock sur lot existant',
+          movement_type: 'reception',
+          batch_id: selectedExistingBatchId,
+        });
+        enqueueSnackbar('Stock ajouté au lot existant', { variant: 'success' });
+      }
+      
       setDialogOpen(false);
       fetchMovements();
       fetchBatches();
     } catch (err) {
       const detail = err?.response?.data;
-      const msg = typeof detail === 'object' ? JSON.stringify(detail) : (detail || 'Erreur');
+      const msg = typeof detail === 'object' ? (detail.error || JSON.stringify(detail)) : (detail || 'Erreur');
       enqueueSnackbar(msg, { variant: 'error' });
     }
   };
@@ -531,82 +553,136 @@ function StockMovementsTab({ productId, productType, isAdmin }) {
 
         <DialogContent>
           {movementDirection === 'add' ? (
-            /* ── Formulaire Nouveau Lot ── */
+            /* ── Formulaire Ajout (Nouveau ou Existant) ── */
             <Box pt={1} display="flex" flexDirection="column" gap={2}>
-              <Alert severity="info" sx={{ py: 0.5 }}>
-                La création d'un lot met automatiquement à jour le stock.
-              </Alert>
-
-              <Box display="flex" gap={2}>
-                <TextField
-                  label="Numéro de lot"
-                  value={addForm.batch_number}
-                  onChange={(e) => setAddForm({ ...addForm, batch_number: e.target.value })}
-                  fullWidth
-                  required
-                  size="small"
-                  InputProps={{
-                    endAdornment: (
-                      <Tooltip title="Régénérer">
-                        <IconButton size="small" onClick={() => setAddForm({ ...addForm, batch_number: generateBatchNumber() })}>
-                          <Refresh fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    ),
-                  }}
-                />
-                <TextField
-                  label="Lot fournisseur"
-                  value={addForm.lot_number}
-                  onChange={(e) => setAddForm({ ...addForm, lot_number: e.target.value })}
-                  fullWidth
-                  size="small"
-                />
+              <Box display="flex" flexDirection="column" gap={1}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  Identification du lot
+                </Typography>
+                <ButtonGroup fullWidth size="small">
+                  <Button 
+                    variant={addMode === 'new' ? 'contained' : 'outlined'}
+                    onClick={() => setAddMode('new')}
+                    startIcon={<NewLotIcon />}
+                  >
+                    Nouveau lot
+                  </Button>
+                  <Button 
+                    variant={addMode === 'existing' ? 'contained' : 'outlined'}
+                    onClick={() => setAddMode('existing')}
+                    startIcon={<LotIcon />}
+                    disabled={activeBatches.length === 0}
+                  >
+                    Lot existant
+                  </Button>
+                </ButtonGroup>
               </Box>
 
-              <Box display="flex" gap={2}>
-                <TextField
-                  label="Quantité reçue"
-                  type="number"
-                  value={addForm.quantity}
-                  onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
-                  fullWidth
-                  required
-                  size="small"
-                  inputProps={{ min: 1 }}
-                />
-                <TextField
-                  label="Date de péremption"
-                  type="date"
-                  value={addForm.expiry_date}
-                  onChange={(e) => setAddForm({ ...addForm, expiry_date: e.target.value })}
-                  fullWidth
-                  required
-                  size="small"
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Box>
+              {addMode === 'new' ? (
+                /* Champs pour Nouveau Lot */
+                <>
+                  <Box display="flex" gap={2}>
+                    <TextField
+                      label="Numéro de lot interne"
+                      value={addForm.batch_number}
+                      onChange={(e) => setAddForm({ ...addForm, batch_number: e.target.value })}
+                      fullWidth
+                      required
+                      size="small"
+                      InputProps={{
+                        endAdornment: (
+                          <Tooltip title="Régénérer">
+                            <IconButton size="small" onClick={() => setAddForm({ ...addForm, batch_number: generateBatchNumber() })}>
+                              <Refresh fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        ),
+                      }}
+                    />
+                    <TextField
+                      label="Lot fournisseur (Optionnel)"
+                      value={addForm.lot_number}
+                      onChange={(e) => setAddForm({ ...addForm, lot_number: e.target.value })}
+                      fullWidth
+                      size="small"
+                    />
+                  </Box>
+
+                  <Box display="flex" gap={2}>
+                    <TextField
+                      label="Quantité reçue"
+                      type="number"
+                      value={addForm.quantity}
+                      onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
+                      fullWidth
+                      required
+                      size="small"
+                      inputProps={{ min: 1 }}
+                    />
+                    <TextField
+                      label="Date de péremption"
+                      type="date"
+                      value={addForm.expiry_date}
+                      onChange={(e) => setAddForm({ ...addForm, expiry_date: e.target.value })}
+                      fullWidth
+                      required
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Box>
+
+                  <TextField
+                    label="Durée après ouverture (jours)"
+                    type="number"
+                    value={addForm.shelf_life_after_opening_days}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, shelf_life_after_opening_days: e.target.value })
+                    }
+                    fullWidth
+                    size="small"
+                    helperText="Ex: 14 pour réactifs (optionnel)"
+                  />
+                </>
+              ) : (
+                /* Champs pour Lot Existant */
+                <>
+                  <TextField
+                    select
+                    label="Sélectionner le lot"
+                    value={selectedExistingBatchId}
+                    onChange={(e) => setSelectedExistingBatchId(e.target.value)}
+                    fullWidth
+                    size="small"
+                    required
+                  >
+                    {activeBatches.map((b) => (
+                      <MenuItem key={b.id} value={b.id}>
+                        {b.batch_number} (dispo: {b.quantity_remaining} — exp: {dayjs(b.expiry_date).format('DD/MM/YY')})
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    label="Quantité à ajouter"
+                    type="number"
+                    value={addForm.quantity}
+                    onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
+                    fullWidth
+                    required
+                    size="small"
+                    inputProps={{ min: 1 }}
+                  />
+                </>
+              )}
 
               <TextField
-                label="Durée après ouverture (jours)"
-                type="number"
-                value={addForm.shelf_life_after_opening_days}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, shelf_life_after_opening_days: e.target.value })
-                }
-                fullWidth
-                size="small"
-                helperText="Ex: 14 pour réactifs (optionnel)"
-              />
-
-              <TextField
-                label="Notes"
+                label="Notes / Justification"
                 value={addForm.notes}
                 onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })}
                 multiline
                 rows={2}
                 fullWidth
                 size="small"
+                placeholder="Ex: Réception commande fournisseur #123..."
               />
             </Box>
           ) : (
@@ -704,10 +780,14 @@ function StockMovementsTab({ productId, productType, isAdmin }) {
               onClick={handleAddStock}
               variant="contained"
               color="success"
-              startIcon={<NewLotIcon />}
-              disabled={!addForm.batch_number || !addForm.quantity || !addForm.expiry_date}
+              startIcon={addMode === 'new' ? <NewLotIcon /> : <LotIcon />}
+              disabled={
+                !addForm.quantity || 
+                (addMode === 'new' && (!addForm.batch_number || !addForm.expiry_date)) ||
+                (addMode === 'existing' && !selectedExistingBatchId)
+              }
             >
-              Créer le lot
+              {addMode === 'new' ? 'Créer le lot' : 'Ajouter au lot'}
             </Button>
           ) : (
             <Button

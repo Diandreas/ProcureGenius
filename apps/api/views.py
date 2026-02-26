@@ -675,7 +675,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             except ProductBatch.DoesNotExist:
                 return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
-            # Pour une sortie : vérifier et déduire du lot
+            # Mettre à jour la quantité du lot
             if quantity < 0:
                 abs_qty = abs(quantity)
                 if batch.quantity_remaining < abs_qty:
@@ -684,7 +684,10 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 batch.quantity_remaining -= abs_qty
-                batch.update_status()
+            else:
+                batch.quantity_remaining += quantity
+            
+            batch.update_status()
 
         # Ajuster le stock produit
         old_quantity = product.stock_quantity
