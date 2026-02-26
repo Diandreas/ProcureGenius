@@ -245,8 +245,8 @@ check_*.py
 debug_*.txt
 debug_*.py
 find_*.py
-analyze_*.py
-apply_*.py
+# analyze_*.py  <- Commented out or removed to allow analyze_db.py
+# apply_*.py
 product_*.txt
 results.txt
 g.html
@@ -265,7 +265,7 @@ Thumbs.db
 venv_*/
 
 # Deployment and update scripts (if temporary)
-update_*.py
+# update_*.py <- Commented out to allow update scripts if needed
 update_*.sh
 update_*.sql
 
@@ -273,14 +273,13 @@ update_*.sql
 build/mascote.zip
 public/mascote.zip
 
-# Fichiers tutoriels et scripts de génération
+# Tutoriels et scripts (ajoute tous les trucs de tuto en gitignore)
 TUTORIEL_*.docx
-~$*.docx
-tuto_*.js
-tuto_*.py
+*tuto*
 generate_*.js
 generate_*.py
 capture_*.js
+capture_script.js
 precision_*.js
 assemble_word.py
 correction_script.js
@@ -288,9 +287,23 @@ csj_captures.js
 master_tutorial_generator.js
 run_all_captures.js
 smart_tuto_generator.js
-documentation/
-
-# Fichiers Excel temporaires
-"Liste des médicaments*"
-"Tarifs soins*"
+documentation/tutoriels/
+documentation/tutorials/
 *.xlsx
+*.docx
+capture_*.png
+run_all_captures.js
+*.js.map
+
+# Diagnostic and Analysis files (Except analyze_db.py)
+# diagnostic_*.sh already covered above
+# analysis_*.txt already covered above
+# check_*.txt already covered above
+# check_*.py already covered above
+# debug_*.txt already covered above
+# debug_*.py already covered above
+# find_*.py already covered above
+
+# Specific maintenance scripts that SHOULD be pushed
+!analyze_db.py
+!normalize_db.py
