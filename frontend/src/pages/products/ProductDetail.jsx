@@ -496,6 +496,7 @@ function ProductDetail() {
             </IconButton>
           </Tooltip>
         )}
+        </Box>
       </Box>
 
       {/* Tabs - Style mobile app */}
