@@ -229,10 +229,8 @@
             </div>
         </div>
         <div class="info-column">
-            <div class="info-label">Médecin / Renseignements</div>
-            <div class="info-value" style="font-size: 8pt; line-height: 1.2;">
-                {% if order.ordered_by %}Dr. {{ order.ordered_by.get_full_name }}{% else %}-{% endif %}
-            </div>
+            <div class="info-label">Médecin Prescripteur</div>
+            <div style="margin-top: 4px; border-bottom: 1px solid #9ca3af; width: 160px; height: 16px;"></div>
             {% if order.clinical_notes %}
             <div class="sm-text" style="color: #1e40af; background: #eff6ff; padding: 4px; border-radius: 2px; margin-top: 4px;">
                 <strong>Renseignements :</strong> {{ order.clinical_notes|truncatechars:150 }}
@@ -400,8 +398,7 @@
             <div class="signature-box">
                 <div class="info-label">Validé par</div>
                 <div class="signature-line">
-                    {% if order.results_verified_by %}<strong>{{ order.results_verified_by.get_full_name }}</strong>{%
-                    endif %}
+                    <strong>Lauriane Karelle NJAPOUP KAMDEM</strong>
                 </div>
             </div>
             <div class="signature-box">

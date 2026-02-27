@@ -188,13 +188,7 @@
         </div>
 
         <div class="info-label" style="margin-top: 8px;">Médecin Prescripteur</div>
-        <div class="info-value">
-            {% if lab_order.ordered_by %}
-            Dr. {{ lab_order.ordered_by.get_full_name }}
-            {% else %}
-            -
-            {% endif %}
-        </div>
+        <div style="margin-top: 4px; border-bottom: 1px solid #9ca3af; width: 180px; height: 16px;"></div>
     </div>
     <div class="info-col" style="width: 50%;">
         <div class="info-label">Détails Commande</div>
@@ -394,11 +388,8 @@
 <div style="margin-top: 40px; display: table; width: 100%;">
     <div style="display: table-cell; width: 50%;">
         <div class="info-label">Validé par :</div>
-        {% if lab_order.results_verified_by %}
-        <div style="font-weight: bold; margin-bottom: 5px;">{{ lab_order.results_verified_by.get_full_name }}</div>
-        {% endif %}
-        <div
-            style="margin-top: {% if lab_order.results_verified_by %}5px{% else %}30px{% endif %}; border-top: 1px dotted #9ca3af; width: 180px; padding-top: 4px; font-size: 8pt; color: #6b7280;">
+        <div style="font-weight: bold; margin-bottom: 5px;">Lauriane Karelle NJAPOUP KAMDEM</div>
+        <div style="margin-top: 5px; border-top: 1px dotted #9ca3af; width: 180px; padding-top: 4px; font-size: 8pt; color: #6b7280;">
             Signature Valideur
         </div>
     </div>
