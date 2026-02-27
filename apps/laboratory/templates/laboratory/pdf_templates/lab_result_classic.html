@@ -329,27 +329,27 @@
             {% else %}
             {# ─── SIMPLE TEST ─── #}
             <tr>
-                <td style="padding-left: 10px;">
+                <td style="padding-left: 10px; vertical-align: top; padding-top: 8px;">
                     <strong>{{ item.lab_test.name }}</strong>
                     {% if item.lab_test.methodology %}
                     <div style="font-size: 7pt; color: #888;">{{ item.lab_test.methodology }}</div>
                     {% endif %}
                 </td>
-                <td class="result-value {% if item.is_abnormal %}abnormal{% endif %}">
+                <td class="result-value {% if item.is_abnormal %}abnormal{% endif %}" style="vertical-align: top; padding-top: 8px;">
                     {{ item.result_value|default:"-" }}
                 </td>
-                <td class="unit">{{ item.result_unit|default:item.lab_test.unit_of_measurement|default:"" }}</td>
-                <td class="range">
+                <td class="unit" style="vertical-align: top; padding-top: 8px;">{{ item.result_unit|default:item.lab_test.unit_of_measurement|default:"" }}</td>
+                <td class="range" style="vertical-align: top; padding-top: 8px;">
                     {{ item.reference_range|default:"-" }}
                 </td>
-                <td class="range">
+                <td class="range" style="vertical-align: top; padding-top: 8px;">
                     {% if previous %}
                     <strong>{{ previous }}</strong> <span style="font-size: 6pt;">({{ prev_date }})</span>
                     {% else %}
                     <span style="color: #ccc;">-</span>
                     {% endif %}
                 </td>
-                <td style="text-align: center;">
+                <td style="text-align: center; vertical-align: top; padding-top: 8px;">
                     {% if item.is_abnormal %}
                     <span class="flag-marker">!</span>
                     {% endif %}
@@ -357,7 +357,7 @@
             </tr>
             {% if item.technician_notes or item.interpretation %}
             <tr>
-                <td colspan="6" style="padding-left: 10px; padding-bottom: 10px;">
+                <td colspan="6" style="padding: 0 10px 10px 20px; border-top: none;">
                     <div style="background-color: #f9f9f9; padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
                         {% if item.interpretation %}
                         <strong>Interprétation:</strong> {{ item.interpretation }}<br>
@@ -368,6 +368,7 @@
                     </div>
                 </td>
             </tr>
+            {% endif %}
             {% endif %}
             {% endwith %}
             {% endfor %}

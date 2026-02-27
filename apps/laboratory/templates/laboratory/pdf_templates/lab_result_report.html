@@ -123,7 +123,6 @@
         padding-bottom: 8px;
         min-height: 32px;
         vertical-align: top;
-        white-space: pre-wrap;
     }
 
     /* Valeurs de référence : chaque ligne séparée */
@@ -239,9 +238,6 @@
         <tr>
             <td colspan="6" style="padding: 6px 4px 0 15px; font-weight: 700; font-size: 9pt; color: #1f2937;">
                 {{ item.lab_test.name }}
-                {% if item.technician_notes %}
-                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
-                {% endif %}
             </td>
         </tr>
         <tr>
@@ -284,19 +280,23 @@
                 </table>
             </td>
         </tr>
+        {% if item.technician_notes %}
+        <tr>
+            <td colspan="6" style="padding: 0 6px 8px 20px; border-top: none;">
+                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
+            </td>
+        </tr>
+        {% endif %}
 
         {% elif item.result_value %}
         {# ─── SIMPLE TEST : standard single-value row ─── #}
         <tr>
-            <td style="padding-left: 15px;">{{ item.lab_test.name }}</td>
+            <td style="padding-left: 15px; vertical-align: top; padding-top: 8px;">{{ item.lab_test.name }}</td>
             <td class="result-cell">
                 {{ item.result_value|safe }}
-                {% if item.technician_notes %}
-                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
-                {% endif %}
             </td>
-            <td>{{ item.lab_test.unit_of_measurement }}</td>
-            <td style="vertical-align: top; padding-top: 6px;">
+            <td style="vertical-align: top; padding-top: 8px;">{{ item.lab_test.unit_of_measurement }}</td>
+            <td style="vertical-align: top; padding-top: 8px;">
                 {% if patient.gender == 'M' %}
                     {% if item.lab_test.normal_range_male %}
                     <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span></span>
@@ -329,19 +329,26 @@
                     {% endif %}
                 {% endif %}
             </td>
-            <td>
+            <td style="vertical-align: top; padding-top: 8px;">
                 {% if previous %}
                 {{ previous }} <br><span style="font-size: 6pt; color: #6b7280;">({{ prev_date }})</span>
                 {% else %}
                 /
                 {% endif %}
             </td>
-            <td style="text-align: right;">
+            <td style="text-align: right; vertical-align: top; padding-top: 8px;">
                 {% if item.is_abnormal %}
                 <span class="flag-high">ANORMAL</span>
                 {% endif %}
             </td>
         </tr>
+        {% if item.technician_notes %}
+        <tr>
+            <td colspan="6" style="padding: 0 6px 8px 20px; border-top: none;">
+                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
+            </td>
+        </tr>
+        {% endif %}
         {% endif %}
         {% endwith %}
         {% endfor %}
