@@ -31,7 +31,9 @@ const VALUE_TYPES = [
 ];
 
 const EMPTY_PARAMETER = {
-    code: '', name: '', group_name: '', unit: '', value_type: 'numeric',
+    code: '', name: '', group_name: '', unit: '', 
+    base_unit: '', conversion_factor: 1.0,
+    value_type: 'numeric',
     decimal_places: 2, is_required: true,
     adult_ref_min_male: '', adult_ref_max_male: '',
     adult_ref_min_female: '', adult_ref_max_female: '',
@@ -54,6 +56,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         price: '', discount: '', sample_type: 'blood', container_type: 'serum',
         sample_volume: '', normal_range_general: '', normal_range_male: '',
         normal_range_female: '', normal_range_child: '', unit_of_measurement: '',
+        base_unit: '', conversion_factor: 1.0,
         fasting_required: false, fasting_hours: '', preparation_instructions: '',
         estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
     });
@@ -71,6 +74,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     sample_volume: test.sample_volume || '', normal_range_general: test.normal_range_general || '',
                     normal_range_male: test.normal_range_male || '', normal_range_female: test.normal_range_female || '',
                     normal_range_child: test.normal_range_child || '', unit_of_measurement: test.unit_of_measurement || '',
+                    base_unit: test.base_unit || '', conversion_factor: test.conversion_factor || 1.0,
                     fasting_required: test.fasting_required || false, fasting_hours: test.fasting_hours || '',
                     preparation_instructions: test.preparation_instructions || '',
                     estimated_turnaround_hours: test.estimated_turnaround_hours || '',
@@ -82,7 +86,9 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     setParameters(test.parameters.map(p => ({
                         id: p.id, _key: p.id,
                         code: p.code || '', name: p.name || '', group_name: p.group_name || '',
-                        unit: p.unit || '', value_type: p.value_type || 'numeric',
+                        unit: p.unit || '', 
+                        base_unit: p.base_unit || '', conversion_factor: p.conversion_factor || 1.0,
+                        value_type: p.value_type || 'numeric',
                         decimal_places: p.decimal_places || 2,
                         is_required: p.is_required !== undefined ? p.is_required : true,
                         adult_ref_min_male: p.adult_ref_min_male != null ? p.adult_ref_min_male : '',
@@ -104,6 +110,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     price: '', discount: '', sample_type: 'blood', container_type: 'serum',
                     sample_volume: '', normal_range_general: '', normal_range_male: '',
                     normal_range_female: '', normal_range_child: '', unit_of_measurement: '',
+                    base_unit: '', conversion_factor: 1.0,
                     fasting_required: false, fasting_hours: '', preparation_instructions: '',
                     estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
                 }));
@@ -182,7 +189,10 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             if (testId) {
                 const cleanParams = parameters.map((p, idx) => ({
                     code: p.code, name: p.name, group_name: p.group_name || '',
-                    unit: p.unit || '', value_type: p.value_type || 'numeric',
+                    unit: p.unit || '', 
+                    base_unit: p.base_unit || '', 
+                    conversion_factor: parseFloat(p.conversion_factor) || 1.0,
+                    value_type: p.value_type || 'numeric',
                     decimal_places: parseInt(p.decimal_places) || 2,
                     is_required: p.is_required !== false, display_order: idx,
                     adult_ref_min_male: p.adult_ref_min_male !== '' ? parseFloat(p.adult_ref_min_male) : null,
@@ -304,7 +314,13 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                             <TextField fullWidth label="Enfant" name="normal_range_child" value={formData.normal_range_child} onChange={handleChange} size="small" />
                         </Grid>
                         <Grid item xs={12} sm={4}>
-                            <TextField fullWidth label="Unite de mesure" name="unit_of_measurement" value={formData.unit_of_measurement} onChange={handleChange} size="small" placeholder="ex: g/dL, mmol/L" />
+                            <TextField fullWidth label="Unite d'affichage" name="unit_of_measurement" value={formData.unit_of_measurement} onChange={handleChange} size="small" placeholder="ex: mg/dL" />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField fullWidth label="Unite de base (BD)" name="base_unit" value={formData.base_unit} onChange={handleChange} size="small" placeholder="ex: mmol/L" />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField fullWidth label="Facteur de conversion" name="conversion_factor" value={formData.conversion_factor} onChange={handleChange} size="small" type="number" inputProps={{ step: "0.0001" }} helperText="Affichage = Base * Facteur" />
                         </Grid>
                         <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Preparation Patient</Typography></Grid>
                         <Grid item xs={12} sm={4}>
@@ -353,7 +369,9 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                                             <TableCell>Nom *</TableCell>
                                             <TableCell>Groupe</TableCell>
                                             <TableCell>Type</TableCell>
-                                            <TableCell>Unite</TableCell>
+                                            <TableCell>Unite (Aff.)</TableCell>
+                                            <TableCell>Unite (Base)</TableCell>
+                                            <TableCell>Facteur</TableCell>
                                             <TableCell>Ref H (min-max)</TableCell>
                                             <TableCell>Ref F (min-max)</TableCell>
                                             <TableCell>Ref Gen. (min-max)</TableCell>
@@ -372,7 +390,9 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                                                         {VALUE_TYPES.map(vt => <MenuItem key={vt.value} value={vt.value}>{vt.label}</MenuItem>)}
                                                     </TextField>
                                                 </TableCell>
-                                                <TableCell><TextField size="small" value={param.unit} onChange={e => updateParameter(idx, 'unit', e.target.value)} sx={{ width: 70 }} placeholder="g/L" /></TableCell>
+                                                <TableCell><TextField size="small" value={param.unit} onChange={e => updateParameter(idx, 'unit', e.target.value)} sx={{ width: 70 }} placeholder="mg/dL" /></TableCell>
+                                                <TableCell><TextField size="small" value={param.base_unit} onChange={e => updateParameter(idx, 'base_unit', e.target.value)} sx={{ width: 70 }} placeholder="mmol/L" /></TableCell>
+                                                <TableCell><TextField size="small" type="number" value={param.conversion_factor} onChange={e => updateParameter(idx, 'conversion_factor', e.target.value)} sx={{ width: 80 }} inputProps={{ step: "0.0001" }} /></TableCell>
                                                 <TableCell><RefRangeCell param={param} idx={idx} minField="adult_ref_min_male" maxField="adult_ref_max_male" /></TableCell>
                                                 <TableCell><RefRangeCell param={param} idx={idx} minField="adult_ref_min_female" maxField="adult_ref_max_female" /></TableCell>
                                                 <TableCell><RefRangeCell param={param} idx={idx} minField="adult_ref_min_general" maxField="adult_ref_max_general" /></TableCell>

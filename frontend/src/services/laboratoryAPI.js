@@ -206,6 +206,11 @@ const laboratoryAPI = {
     collectSample: async (orderId) => {
         const response = await api.post(`/healthcare/laboratory/orders/${orderId}/status/`, { action: 'collect_sample' });
         return response.data;
+    },
+
+    quickUpdateUnit: async (data) => {
+        const response = await api.post('/healthcare/laboratory/quick-update-unit/', data);
+        return response.data;
     }
 };
 

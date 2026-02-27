@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone
 from django.http import HttpResponse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
@@ -420,7 +420,17 @@ class EnterLabResultsView(APIView):
                     item.result_value = result['result_value']
 
                 if 'result_numeric' in result:
-                    item.result_numeric = result['result_numeric']
+                    # Convert to base unit using test's conversion factor
+                    try:
+                        val = Decimal(str(result['result_numeric'])) if result['result_numeric'] is not None else None
+                        if val is not None:
+                            factor = item.lab_test.conversion_factor or Decimal('1.0')
+                            item.result_numeric = val / factor
+                        else:
+                            item.result_numeric = None
+                    except (InvalidOperation, TypeError):
+                        item.result_numeric = None
+
                 if 'interpretation' in result:
                     item.interpretation = result['interpretation']
                 if 'technician_notes' in result:
@@ -450,10 +460,14 @@ class EnterLabResultsView(APIView):
                                 defaults={'entered_by': request.user}
                             )
                             if 'result_numeric' in pv:
-                                from decimal import Decimal, InvalidOperation
                                 try:
-                                    lab_result.result_numeric = Decimal(str(pv['result_numeric'])) if pv['result_numeric'] is not None else None
-                                except InvalidOperation:
+                                    val = Decimal(str(pv['result_numeric'])) if pv['result_numeric'] is not None else None
+                                    if val is not None:
+                                        factor = parameter.conversion_factor or Decimal('1.0')
+                                        lab_result.result_numeric = val / factor
+                                    else:
+                                        lab_result.result_numeric = None
+                                except (InvalidOperation, TypeError):
                                     lab_result.result_numeric = None
                             if 'result_text' in pv:
                                 lab_result.result_text = pv['result_text']
@@ -812,3 +826,70 @@ class GenerateTestCodeView(APIView):
             field_name='test_code',
         )
         return Response({'test_code': code})
+
+
+class QuickUpdateConfigView(APIView):
+    """
+    POST /healthcare/laboratory/quick-update-unit/
+    Updates unit, conversion factor, and reference ranges for a test or parameter.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        test_id = request.data.get('test_id')
+        parameter_id = request.data.get('parameter_id')
+        unit = request.data.get('unit')
+        factor = request.data.get('factor')
+        
+        # Reference range fields
+        ref_fields = [
+            'adult_ref_min_male', 'adult_ref_max_male',
+            'adult_ref_min_female', 'adult_ref_max_female',
+            'adult_ref_min_general', 'adult_ref_max_general',
+            'critical_low', 'critical_high'
+        ]
+
+        try:
+            if factor is not None:
+                factor = Decimal(str(factor))
+        except (ValueError, InvalidOperation, TypeError):
+            factor = Decimal('1.0')
+
+        if parameter_id:
+            try:
+                obj = LabTestParameter.objects.get(id=parameter_id, test__organization=request.user.organization)
+                if unit is not None: obj.unit = unit
+                if factor is not None: obj.conversion_factor = factor
+                
+                # Update reference fields if provided
+                for field in ref_fields:
+                    if field in request.data:
+                        val = request.data.get(field)
+                        try:
+                            setattr(obj, field, Decimal(str(val)) if val not in [None, ''] else None)
+                        except (ValueError, InvalidOperation):
+                            pass
+                
+                obj.save()
+                return Response({'status': 'success', 'type': 'parameter'})
+            except LabTestParameter.DoesNotExist:
+                return Response({'error': 'Parameter not found'}, status=404)
+        
+        if test_id:
+            try:
+                obj = LabTest.objects.get(id=test_id, organization=request.user.organization)
+                if unit is not None: obj.unit_of_measurement = unit
+                if factor is not None: obj.conversion_factor = factor
+                
+                # Simple tests have ref ranges as text fields
+                simple_ref_fields = ['normal_range_male', 'normal_range_female', 'normal_range_general', 'normal_range_child']
+                for field in simple_ref_fields:
+                    if field in request.data:
+                        setattr(obj, field, request.data.get(field))
+
+                obj.save()
+                return Response({'status': 'success', 'type': 'test'})
+            except LabTest.DoesNotExist:
+                return Response({'error': 'Test not found'}, status=404)
+
+        return Response({'error': 'Missing test_id or parameter_id'}, status=400)

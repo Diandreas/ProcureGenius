@@ -3,6 +3,7 @@ Vues PDF pour laboratoire: résultats détaillés ET reçus thermal
 """
 from django.views.generic import DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from decimal import Decimal
 from .models import LabOrder, LabTest  # Imports checked
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, TokenAuthMixin, TokenLoginRequiredMixin
 
@@ -92,7 +93,7 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
             prev_value = prev_results[0].result_value if prev_results else None
             prev_date = prev_results[0].lab_order.order_date.strftime('%d/%m/%Y') if prev_results else None
 
-            # Build structured parameter groups for compound tests (e.g. NFS)
+                    # Build structured parameter groups for compound tests (e.g. NFS)
             parameter_results_grouped = None
             param_results = list(item.parameter_results.select_related('parameter').order_by('parameter__display_order'))
             if param_results:
@@ -101,7 +102,14 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
                     group = pv.parameter.group_name or 'Paramètres'
                     if group not in groups:
                         groups[group] = []
+                    
+                    factor = pv.parameter.conversion_factor or Decimal('1.0')
                     ref_min, ref_max = pv.parameter.get_reference_range(patient_age, patient_sex)
+                    
+                    # Apply conversion to reference ranges
+                    if ref_min is not None: ref_min = ref_min * factor
+                    if ref_max is not None: ref_max = ref_max * factor
+                    
                     ref_display = ''
                     if ref_min is not None and ref_max is not None:
                         ref_display = f"{ref_min:g} – {ref_max:g}"
@@ -109,10 +117,16 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
                         ref_display = f"≥ {ref_min:g}"
                     elif ref_max is not None:
                         ref_display = f"≤ {ref_max:g}"
+                    
+                    # Apply conversion to result value
+                    res_num = pv.result_numeric
+                    if res_num is not None:
+                        res_num = res_num * factor
+
                     groups[group].append({
                         'code': pv.parameter.code,
                         'name': pv.parameter.name,
-                        'result_numeric': pv.result_numeric,
+                        'result_numeric': res_num,
                         'result_text': pv.result_text,
                         'flag': pv.flag,
                         'unit': pv.parameter.unit,

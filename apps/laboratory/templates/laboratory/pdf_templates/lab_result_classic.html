@@ -274,7 +274,60 @@
             </tr>
 
             {% for entry in category.list %}
-            {% with item=entry.item previous=entry.previous_result prev_date=entry.previous_date %}
+            {% with item=entry.item previous=entry.previous_result prev_date=entry.previous_date grouped=entry.parameter_results_grouped %}
+            
+            {% if grouped %}
+            {# ─── COMPOUND TEST ─── #}
+            <tr>
+                <td colspan="6" style="padding-left: 10px; padding-top: 10px; background-color: #f8fafc; page-break-after: avoid;">
+                    <strong>{{ item.lab_test.name }}</strong>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6" style="padding: 0 10px 10px 10px; background-color: #f8fafc;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 5px; border: 1px solid #374151;">
+                        <thead>
+                            <tr style="background-color: #374151; text-align: left; color: #ffffff;">
+                                <th style="padding: 4px 6px; border: 1px solid #374151; font-size: 7.5pt;">PARAMÈTRE</th>
+                                <th style="padding: 4px 6px; border: 1px solid #374151; width: 15%; font-size: 7.5pt;">RÉSULTAT</th>
+                                <th style="padding: 4px 6px; border: 1px solid #374151; width: 10%; font-size: 7.5pt;">UNITÉ</th>
+                                <th style="padding: 4px 6px; border: 1px solid #374151; width: 25%; font-size: 7.5pt;">RÉFÉRENCE</th>
+                                <th style="padding: 4px 6px; border: 1px solid #374151; width: 5%; text-align: center; font-size: 7.5pt;">FLAG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in grouped %}
+                            {% if group.group_name and group.group_name != 'Paramètres' %}
+                            <tr style="background-color: #f1f5f9;">
+                                <td colspan="5" style="padding: 2px 4px; font-weight: bold; font-size: 7pt; color: #334155; border: 1px solid #e2e8f0;">
+                                    {{ group.group_name }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% for p in group.parameters %}
+                            <tr>
+                                <td style="padding: 3px 4px; border: 1px solid #e2e8f0;">{{ p.name }}</td>
+                                <td style="padding: 3px 4px; border: 1px solid #e2e8f0; font-weight: bold; {% if p.flag != 'N' %}color: #dc2626;{% endif %}">
+                                    {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"-4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
+                                </td>
+                                <td style="padding: 3px 4px; border: 1px solid #e2e8f0; color: #64748b;">{{ p.unit }}</td>
+                                <td style="padding: 3px 4px; border: 1px solid #e2e8f0; color: #64748b;">{{ p.ref_display|default:"—" }}</td>
+                                <td style="padding: 3px 4px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">
+                                    {% if p.flag == 'H' %}↑
+                                    {% elif p.flag == 'L' %}↓
+                                    {% elif p.flag == 'H*' %}↑↑
+                                    {% elif p.flag == 'L*' %}↓↓
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            {% else %}
+            {# ─── SIMPLE TEST ─── #}
             <tr>
                 <td style="padding-left: 10px;">
                     <strong>{{ item.lab_test.name }}</strong>

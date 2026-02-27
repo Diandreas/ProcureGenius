@@ -23,6 +23,7 @@ import {
     Select,
     MenuItem,
     IconButton,
+    Tooltip,
     Checkbox,
     Stack,
     Dialog,
@@ -32,7 +33,12 @@ import {
     CircularProgress,
     Stepper,
     Step,
-    StepLabel
+    StepLabel,
+    Popover,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemButton
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -49,7 +55,9 @@ import {
     Science as ScienceIcon,
     Colorize as ColorizeIcon,
     Send as SendIcon,
-    Check as CheckIcon
+    Check as CheckIcon,
+    Settings as SettingsIcon,
+    Edit as EditIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -58,6 +66,7 @@ import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import { invoicesAPI } from '../../../services/api';
 import PrintModal from '../../../components/PrintModal';
+import LabTestFormModal from './LabTestFormModal';
 import RichTextEditor from '../../../components/RichTextEditor';
 import { formatDate, formatTime } from '../../../utils/formatters';
 import useCurrentUser from '../../../hooks/useCurrentUser';
@@ -123,6 +132,132 @@ const getActiveStep = (status) => {
     return idx >= 0 ? idx : 0;
 };
 
+/**
+ * Quick Configuration Selector Component (Carte Blanche for Biologists)
+ */
+const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, currentValues, updateValue, patientGender }) => {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const { enqueueSnackbar } = useSnackbar();
+
+    // Local state for the quick edit form
+    const [localUnit, setLocalUnit] = useState('');
+    const [localMin, setLocalMin] = useState('');
+    const [localMax, setLocalMax] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if (anchorEl) {
+            setLocalUnit(parameter ? parameter.unit : item.result_unit);
+            // Get relevant ref range based on patient gender
+            if (parameter) {
+                if (patientGender === 'M') {
+                    setLocalMin(parameter.adult_ref_min_male ?? parameter.adult_ref_min_general ?? '');
+                    setLocalMax(parameter.adult_ref_max_male ?? parameter.adult_ref_max_general ?? '');
+                } else if (patientGender === 'F') {
+                    setLocalMin(parameter.adult_ref_min_female ?? parameter.adult_ref_min_general ?? '');
+                    setLocalMax(parameter.adult_ref_max_female ?? parameter.adult_ref_max_general ?? '');
+                } else {
+                    setLocalMin(parameter.adult_ref_min_general ?? '');
+                    setLocalMax(parameter.adult_ref_max_general ?? '');
+                }
+            } else {
+                setLocalMin(item.reference_range || '');
+            }
+        }
+    }, [anchorEl, parameter, item, patientGender]);
+
+    const handleClick = (event) => {
+        if (!canEdit) return;
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => setAnchorEl(null);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const payload = {
+                test_id: parameter ? null : item.lab_test,
+                parameter_id: parameter ? parameter.id : null,
+                unit: localUnit,
+            };
+
+            if (parameter) {
+                if (patientGender === 'M') {
+                    payload.adult_ref_min_male = localMin;
+                    payload.adult_ref_max_male = localMax;
+                } else if (patientGender === 'F') {
+                    payload.adult_ref_min_female = localMin;
+                    payload.adult_ref_max_female = localMax;
+                }
+                payload.adult_ref_min_general = localMin;
+                payload.adult_ref_max_general = localMax;
+            } else {
+                if (patientGender === 'M') payload.normal_range_male = localMin;
+                else if (patientGender === 'F') payload.normal_range_female = localMin;
+                payload.normal_range_general = localMin;
+            }
+
+            await laboratoryAPI.quickUpdateUnit(payload);
+            enqueueSnackbar('Configuration enregistree', { variant: 'success' });
+            handleClose();
+            onConfigChanged(); 
+        } catch (error) {
+            enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const open = Boolean(anchorEl);
+
+    return (
+        <>
+            <Tooltip title="Cliquer pour modifier l'unite ou la reference">
+                <Chip 
+                    label={parameter ? (parameter.unit || '—') : (item.result_unit || '—')} 
+                    size="small" 
+                    onClick={handleClick}
+                    variant="outlined"
+                    sx={{ 
+                        cursor: canEdit ? 'pointer' : 'default',
+                        fontSize: '0.7rem',
+                        height: 20,
+                        borderColor: 'primary.light',
+                        '&:hover': { bgcolor: 'primary.50' }
+                    }}
+                />
+            </Tooltip>
+            <Popover
+                open={open}
+                anchorEl={anchorEl}
+                onClose={handleClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                PaperProps={{ sx: { p: 2, width: 220 } }}
+            >
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>Modif. Rapide</Typography>
+                <Stack spacing={2}>
+                    <TextField label="Unite" size="small" value={localUnit} onChange={(e) => setLocalUnit(e.target.value)} fullWidth />
+                    {parameter ? (
+                        <>
+                            <TextField label="Ref. Min" size="small" type="number" value={localMin} onChange={(e) => setLocalMin(e.target.value)} fullWidth />
+                            <TextField label="Ref. Max" size="small" type="number" value={localMax} onChange={(e) => setLocalMax(e.target.value)} fullWidth />
+                        </>
+                    ) : (
+                        <TextField label="Plage de reference" size="small" value={localMin} onChange={(e) => setLocalMin(e.target.value)} fullWidth placeholder="ex: 4.5 - 11.0" />
+                    )}
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+                        <Button size="small" onClick={handleClose}>Annuler</Button>
+                        <Button size="small" variant="contained" onClick={handleSave} disabled={saving}>
+                            {saving ? <CircularProgress size={16} /> : 'OK'}
+                        </Button>
+                    </Box>
+                </Stack>
+            </Popover>
+        </>
+    );
+};
+
 const LabOrderDetail = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -166,6 +301,77 @@ const LabOrderDetail = () => {
     // Tube Labels Quantity Modal
     const [tubeLabelsModalOpen, setTubeLabelsModalOpen] = useState(false);
     const [tubeLabelsQuantity, setTubeLabelsQuantity] = useState(1);
+
+    // Test Configuration Modal State
+    const [testModalOpen, setTestModalOpen] = useState(false);
+    const [selectedTestForEdit, setSelectedTestForEdit] = useState(null);
+
+    const handleEditTest = async (testId) => {
+        try {
+            const testData = await laboratoryAPI.getTest(testId);
+            setSelectedTestForEdit(testData);
+            setTestModalOpen(true);
+        } catch (error) {
+            enqueueSnackbar('Erreur lors du chargement des donnees du test', { variant: 'error' });
+        }
+    };
+
+    const onTestSaved = (updatedData) => {
+        // SURGICAL UPDATE: Update only the specific test/parameter in the local state
+        if (updatedData && order) {
+            setOrder(prevOrder => {
+                const newItems = prevOrder.items.map(item => {
+                    // If it's a test update
+                    if (updatedData.type === 'test' && item.lab_test === updatedData.id) {
+                        return { 
+                            ...item, 
+                            result_unit: updatedData.unit,
+                            lab_test_data: { ...item.lab_test_data, unit_of_measurement: updatedData.unit, conversion_factor: updatedData.factor }
+                        };
+                    }
+                    // If it's a parameter update
+                    if (updatedData.type === 'parameter' && item.parameters) {
+                        const newParams = item.parameters.map(p => {
+                            if (p.id === updatedData.id) {
+                                const oldFactor = p.conversion_factor || 1.0;
+                                const newFactor = updatedData.factor;
+                                
+                                // Helper to convert a single numeric field
+                                const convertField = (val) => {
+                                    if (val === null || val === undefined || val === '') return val;
+                                    return (parseFloat(val) / oldFactor) * newFactor;
+                                };
+
+                                return { 
+                                    ...p, 
+                                    unit: updatedData.unit, 
+                                    conversion_factor: newFactor,
+                                    // Recalculate all numeric reference fields
+                                    adult_ref_min_male: convertField(p.adult_ref_min_male),
+                                    adult_ref_max_male: convertField(p.adult_ref_max_male),
+                                    adult_ref_min_female: convertField(p.adult_ref_min_female),
+                                    adult_ref_max_female: convertField(p.adult_ref_max_female),
+                                    adult_ref_min_general: convertField(p.adult_ref_min_general),
+                                    adult_ref_max_general: convertField(p.adult_ref_max_general),
+                                    child_ref_min: convertField(p.child_ref_min),
+                                    child_ref_max: convertField(p.child_ref_max),
+                                    critical_low: convertField(p.critical_low),
+                                    critical_high: convertField(p.critical_high),
+                                };
+                            }
+                            return p;
+                        });
+                        return { ...item, parameters: newParams };
+                    }
+                    return item;
+                });
+                return { ...prevOrder, items: newItems };
+            });
+        } else {
+            fetchOrder(); // Fallback for complex modal saves
+        }
+        enqueueSnackbar('Configuration mise a jour', { variant: 'success' });
+    };
 
     // WYSIWYG Expand Modal
     const [wysiwygModal, setWysiwygModal] = useState({
@@ -1015,14 +1221,13 @@ const LabOrderDetail = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Test / Examen</TableCell>
-                            <TableCell>Catégorie</TableCell>
-                            <TableCell width="20%">Résultat</TableCell>
-                            <TableCell>Unités</TableCell>
-                            <TableCell>Valeurs de Référence</TableCell>
-                            <TableCell>Commentaires / Notes</TableCell>
-                            <TableCell>Flag</TableCell>
-                            <TableCell width="80px">Actions</TableCell>
+                            <TableCell>EXAMEN / TEST</TableCell>
+                            <TableCell width="25%">RÉSULTAT</TableCell>
+                            <TableCell>UNITÉS</TableCell>
+                            <TableCell>VALEURS DE RÉFÉRENCE</TableCell>
+                            <TableCell>ANTÉRIEUR</TableCell>
+                            <TableCell>FLAG</TableCell>
+                            <TableCell width="80px">ACTIONS</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1070,7 +1275,14 @@ const LabOrderDetail = () => {
                                         <TableCell colSpan={7} sx={{ p: 0 }}>
                                             <Box sx={{ p: 1.5 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                    <Typography variant="subtitle2" fontWeight={700}>{item.test_name}</Typography>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ mr: 1 }}>{item.test_name}</Typography>
+                                                        <Tooltip title="Configurer l'unite et le facteur de conversion">
+                                                            <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
+                                                                <SettingsIcon sx={{ fontSize: 16 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
                                                     <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
                                                         <HistoryIcon fontSize="small" />
                                                     </IconButton>
@@ -1173,7 +1385,17 @@ const LabOrderDetail = () => {
                                                                                 )}
                                                                             </TableCell>
                                                                             {/* Unit — hidden when not applicable */}
-                                                                            <TableCell sx={{ fontSize: '0.72rem', color: '#6b7280' }}>{param.unit || ''}</TableCell>
+                                                                            <TableCell sx={{ py: 0.3 }}>
+                                                                                <QuickConfigSelector 
+                                                                                    item={item} 
+                                                                                    parameter={param} 
+                                                                                    onConfigChanged={() => fetchOrder()} 
+                                                                                    canEdit={canEdit}
+                                                                                    currentValues={parameterValues}
+                                                                                    updateValue={handleParameterValueChange}
+                                                                                    patientGender={order.patient_gender}
+                                                                                />
+                                                                            </TableCell>
                                                                             {/* Ref range — only shown for numeric parameters */}
                                                                             <TableCell sx={{ fontSize: '0.72rem', color: '#6b7280' }}>{refDisplay}</TableCell>
                                                                         </TableRow>
@@ -1208,7 +1430,16 @@ const LabOrderDetail = () => {
                             // ─── SIMPLE TEST ─────────────────────────────────────────────────────────
                             return (
                                 <TableRow key={item.id}>
-                                    <TableCell fontWeight="500">{item.test_name}</TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Typography variant="body2" fontWeight="bold" sx={{ mr: 1 }}>{item.test_name}</Typography>
+                                            <Tooltip title="Configurer l'unite et le facteur de conversion">
+                                                <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
+                                                    <SettingsIcon sx={{ fontSize: 16 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </TableCell>
                                     <TableCell>{item.category_name}</TableCell>
                                     <TableCell>
                                         {canEdit ? (
@@ -1247,8 +1478,15 @@ const LabOrderDetail = () => {
                                             />
                                         )}
                                     </TableCell>
-                                    <TableCell sx={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                                        {item.result_unit || ''}
+                                    <TableCell>
+                                        <QuickConfigSelector 
+                                            item={item} 
+                                            onConfigChanged={() => fetchOrder()} 
+                                            canEdit={canEdit}
+                                            currentValues={results}
+                                            updateValue={handleResultChange}
+                                            patientGender={order.patient_gender}
+                                        />
                                     </TableCell>
                                     <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'top', maxWidth: 180, color: '#6b7280' }}>
                                         {(() => {
@@ -1587,6 +1825,13 @@ const LabOrderDetail = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <LabTestFormModal
+                open={testModalOpen}
+                onClose={() => setTestModalOpen(false)}
+                test={selectedTestForEdit}
+                onSaved={onTestSaved}
+            />
         </Box>
     );
 };

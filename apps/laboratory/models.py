@@ -4,7 +4,7 @@ Laboratory Information Management System (LIMS) Models
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import uuid
 from apps.core.services.number_generator import NumberGeneratorService
 
@@ -160,6 +160,19 @@ class LabTest(models.Model):
         blank=True,
         verbose_name=_("Unité de mesure"),
         help_text=_("Ex: g/dL, cells/mcL, mg/dL")
+    )
+    base_unit = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("Unité de base"),
+        help_text=_("Unité d'origine stockée en base de données")
+    )
+    conversion_factor = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=Decimal('1.0'),
+        verbose_name=_("Facteur de conversion"),
+        help_text=_("Multiplicateur pour passer de l'unité de base à l'unité d'affichage")
     )
     
     # Sample requirements
@@ -743,6 +756,10 @@ class LabOrderItem(models.Model):
             return
         
         try:
+            # Convert result_numeric to display unit for comparison with reference_range string
+            factor = self.lab_test.conversion_factor or Decimal('1.0')
+            display_value = self.result_numeric * factor
+
             # Try to parse reference range like "70-110" or "< 200"
             ref = self.reference_range.strip()
             
@@ -751,17 +768,33 @@ class LabOrderItem(models.Model):
                 low = Decimal(low.strip())
                 high = Decimal(high.strip())
                 
-                if self.result_numeric < low:
+                if display_value < low:
                     self.is_abnormal = True
                     self.abnormality_type = 'low'
-                elif self.result_numeric > high:
+                elif display_value > high:
                     self.is_abnormal = True
                     self.abnormality_type = 'high'
                 else:
                     self.is_abnormal = False
                     self.abnormality_type = 'normal'
+            elif '<' in ref:
+                limit = Decimal(ref.replace('<', '').strip())
+                if display_value >= limit:
+                    self.is_abnormal = True
+                    self.abnormality_type = 'high'
+                else:
+                    self.is_abnormal = False
+                    self.abnormality_type = 'normal'
+            elif '>' in ref:
+                limit = Decimal(ref.replace('>', '').strip())
+                if display_value <= limit:
+                    self.is_abnormal = True
+                    self.abnormality_type = 'low'
+                else:
+                    self.is_abnormal = False
+                    self.abnormality_type = 'normal'
                     
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, InvalidOperation):
             pass  # Cannot parse, leave as is
 
     def get_previous_results(self, limit=5):
@@ -801,6 +834,13 @@ class LabTestParameter(models.Model):
     group_name = models.CharField(max_length=50, blank=True, verbose_name=_("Groupe"))
     display_order = models.IntegerField(default=0, verbose_name=_("Ordre d'affichage"))
     unit = models.CharField(max_length=30, blank=True, verbose_name=_("Unité"))
+    base_unit = models.CharField(max_length=30, blank=True, verbose_name=_("Unité de base"))
+    conversion_factor = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=Decimal('1.0'),
+        verbose_name=_("Facteur de conversion")
+    )
     value_type = models.CharField(
         max_length=10,
         choices=VALUE_TYPE_CHOICES,

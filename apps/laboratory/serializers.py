@@ -236,6 +236,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     normal_range_general = serializers.CharField(source='lab_test.normal_range_general', read_only=True)
     category_name = serializers.CharField(source='lab_test.category.name', read_only=True, default='')
     has_parameters = serializers.BooleanField(source='lab_test.has_parameters', read_only=True)
+    lab_test_data = LabTestSerializer(source='lab_test', read_only=True)
     parameters = LabTestParameterSerializer(source='lab_test.parameters', many=True, read_only=True)
     parameter_results = LabResultValueSerializer(many=True, read_only=True)
 
@@ -245,6 +246,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'id',
             'lab_order',
             'lab_test',
+            'lab_test_data',
             'test_name',
             'test_code',
             'price',

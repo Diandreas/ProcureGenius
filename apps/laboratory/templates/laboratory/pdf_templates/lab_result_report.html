@@ -56,8 +56,8 @@
         font-size: 7.5pt;
     }
     .compound-group-header td {
-        background-color: #eff6ff;
-        color: #1d4ed8;
+        background-color: {{ organization.brand_color|default:"#1d4ed8" }};
+        color: #ffffff;
         font-weight: 700;
         font-size: 8pt;
         text-transform: uppercase;
@@ -72,11 +72,19 @@
     }
 
     .category-row td {
-        background-color: #f3f4f6;
+        background-color: #4b5563;
         font-weight: 700;
-        color: #374151;
+        color: #ffffff;
         padding-top: 8px;
         padding-bottom: 8px;
+    }
+
+    /* Prevent orphan headers on new pages */
+    thead {
+        display: table-header-group;
+    }
+    tr {
+        page-break-inside: avoid;
     }
 
     .notes {
@@ -239,6 +247,15 @@
         <tr>
             <td colspan="6" style="padding: 0 4px 6px 15px;">
                 <table class="compound-param-table">
+                    <thead>
+                        <tr style="background-color: #374151; color: #ffffff;">
+                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">PARAMÈTRE</th>
+                            <th style="text-align: right; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">RÉSULTAT</th>
+                            <th style="text-align: center; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">FLAG</th>
+                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">UNITÉ</th>
+                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">RÉFÉRENCE</th>
+                        </tr>
+                    </thead>
                     {% for group in grouped %}
                     <tr class="compound-group-header">
                         <td colspan="5">{{ group.group_name }}</td>

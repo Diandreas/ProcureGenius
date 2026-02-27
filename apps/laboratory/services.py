@@ -4,6 +4,7 @@ PDF generation service for Laboratory
 from io import BytesIO
 from django.template.loader import render_to_string
 from django.conf import settings
+from decimal import Decimal
 import base64
 import os
 import qrcode
@@ -30,21 +31,72 @@ class LabResultPDFGenerator:
         from django.utils import translation
         translation.activate(language)
         
-        # Prepare items with history
+        # Prepare patient age and sex
+        patient = order.patient
+        patient_age = patient.get_age() if patient else None
+        patient_sex = patient.gender if patient else None
+
+        # Prepare items with history and structured parameters
         items_with_history = []
         for item in order.items.all().select_related('lab_test'):
             prev = item.get_previous_results(limit=1).first()
+            
+            # Build structured parameter groups for compound tests (e.g. NFS)
+            parameter_results_grouped = None
+            param_results = list(item.parameter_results.select_related('parameter').order_by('parameter__display_order'))
+            if param_results:
+                groups = {}
+                for pv in param_results:
+                    group = pv.parameter.group_name or 'Paramètres'
+                    if group not in groups:
+                        groups[group] = []
+                    
+                    factor = pv.parameter.conversion_factor or Decimal('1.0')
+                    ref_min, ref_max = pv.parameter.get_reference_range(patient_age, patient_sex)
+                    
+                    # Apply conversion to reference ranges
+                    if ref_min is not None: ref_min = ref_min * factor
+                    if ref_max is not None: ref_max = ref_max * factor
+                    
+                    ref_display = ''
+                    if ref_min is not None and ref_max is not None:
+                        ref_display = f"{ref_min:g} – {ref_max:g}"
+                    elif ref_min is not None:
+                        ref_display = f"≥ {ref_min:g}"
+                    elif ref_max is not None:
+                        ref_display = f"≤ {ref_max:g}"
+                    
+                    # Apply conversion to result value
+                    res_num = pv.result_numeric
+                    if res_num is not None:
+                        res_num = res_num * factor
+
+                    groups[group].append({
+                        'code': pv.parameter.code,
+                        'name': pv.parameter.name,
+                        'result_numeric': res_num,
+                        'result_text': pv.result_text,
+                        'flag': pv.flag,
+                        'unit': pv.parameter.unit,
+                        'ref_display': ref_display,
+                    })
+                parameter_results_grouped = [
+                    {'group_name': g, 'parameters': rows}
+                    for g, rows in groups.items()
+                ]
+
             items_with_history.append({
                 'item': item,
                 'previous_result': prev.result_value if prev else None,
-                'previous_date': prev.result_entered_at.strftime('%d/%m/%Y') if prev and prev.result_entered_at else None
+                'previous_date': prev.result_entered_at.strftime('%d/%m/%Y') if prev and prev.result_entered_at else None,
+                'parameter_results_grouped': parameter_results_grouped
             })
 
         # Context
         context = {
             'order': order,
             'items': items_with_history, # Use wrapper list
-            'patient': order.patient,
+            'patient': patient,
             'organization': org_data,
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': self._generate_qr_code(order),
