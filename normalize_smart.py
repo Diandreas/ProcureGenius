@@ -97,6 +97,19 @@ MANUAL_MAPPING = {
         None,
 }
 
+# ── Produits hors Excel avec stock connu ──────────────────────────────────────
+# Pour les produits absents de l'Excel mais dont on connaît le stock réel
+# Format : norm(nom_db) → {'initial': int, 'sold': int, 'expiry': date|None}
+
+from datetime import date as _date
+STOCK_OVERRIDES = {
+    norm("THERMOMETRES"): {
+        'initial': 100,   # stock original
+        'sold': 11,       # vendus réellement
+        'expiry': _date(2028, 12, 31),
+    },
+}
+
 
 # ── Gestion des FK protégées ───────────────────────────────────────────────────
 
@@ -309,6 +322,47 @@ def normalize_smart():
         kept_count = 0
 
         for p in no_match_products:
+            p_norm = norm(p.name)
+
+            # Produit avec stock override connu (ex: THERMOMETRES)
+            if p_norm in STOCK_OVERRIDES:
+                override = STOCK_OVERRIDES[p_norm]
+                initial  = override['initial']
+                sold     = override['sold']
+                remaining = max(0, initial - sold)
+                print(f"  [OVERRIDE]  '{p.name}'  — initial:{initial} vendu:{sold} → reste:{remaining}")
+                if not DRY_RUN:
+                    p.batches.all().delete()
+                    StockMovement.objects.filter(
+                        product=p, movement_type__in=['initial', 'sale']
+                    ).delete()
+                    expiry = override.get('expiry') or today + timedelta(days=365)
+                    batch = ProductBatch.objects.create(
+                        organization=p.organization,
+                        product=p,
+                        batch_number=f"INIT-{today.strftime('%Y%m')}-01",
+                        quantity=initial,
+                        quantity_remaining=remaining,
+                        expiry_date=expiry,
+                        status='available' if remaining > 0 else 'depleted',
+                        notes=f"Sync initial {today} — override manuel",
+                    )
+                    StockMovement.objects.create(
+                        product=p,
+                        batch=batch,
+                        movement_type='initial',
+                        quantity=initial,
+                        quantity_before=0,
+                        quantity_after=initial,
+                        reference_type='manual',
+                        reference_number=f"INIT-SYNC-{today}",
+                        notes="Stock initial — override manuel",
+                    )
+                    p.stock_quantity = remaining
+                    p.save(update_fields=['stock_quantity'])
+                kept_count += 1
+                continue
+
             has_pi  = PrescriptionItem.objects.filter(medication=p).exists()
             has_di  = HAS_DISPENSING and DispensingItem.objects.filter(medication=p).exists()
             has_inv = InvoiceItem.objects.filter(product=p).exists()
