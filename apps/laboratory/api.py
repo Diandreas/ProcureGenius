@@ -846,6 +846,7 @@ class QuickUpdateConfigView(APIView):
             'adult_ref_min_male', 'adult_ref_max_male',
             'adult_ref_min_female', 'adult_ref_max_female',
             'adult_ref_min_general', 'adult_ref_max_general',
+            'child_ref_min', 'child_ref_max',
             'critical_low', 'critical_high'
         ]
 

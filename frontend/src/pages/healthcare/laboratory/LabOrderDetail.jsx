@@ -35,6 +35,8 @@ import {
     Step,
     StepLabel,
     Popover,
+    Tabs,
+    Tab,
     List,
     ListItem,
     ListItemText,
@@ -133,45 +135,46 @@ const getActiveStep = (status) => {
 };
 
 /**
- * Quick Configuration Selector Component (Carte Blanche for Biologists)
+ * Quick Configuration Selector Component (Complete demographic control)
  */
-const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, currentValues, updateValue, patientGender }) => {
+const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, patientGender }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const { enqueueSnackbar } = useSnackbar();
+    const [activeTab, setActiveTab] = useState(0);
 
-    // Local state for the quick edit form
-    const [localUnit, setLocalUnit] = useState('');
-    const [localMin, setLocalMin] = useState('');
-    const [localMax, setLocalMax] = useState('');
+    // Full state for all demographic fields
+    const [config, setConfig] = useState({
+        unit: '',
+        h_min: '', h_max: '',
+        f_min: '', f_max: '',
+        c_min: '', c_max: '',
+        g_min: '', g_max: '',
+        simple_ref: '' // For non-structured tests
+    });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (anchorEl) {
-            setLocalUnit(parameter ? parameter.unit : item.result_unit);
-            // Get relevant ref range based on patient gender
             if (parameter) {
-                if (patientGender === 'M') {
-                    setLocalMin(parameter.adult_ref_min_male ?? parameter.adult_ref_min_general ?? '');
-                    setLocalMax(parameter.adult_ref_max_male ?? parameter.adult_ref_max_general ?? '');
-                } else if (patientGender === 'F') {
-                    setLocalMin(parameter.adult_ref_min_female ?? parameter.adult_ref_min_general ?? '');
-                    setLocalMax(parameter.adult_ref_max_female ?? parameter.adult_ref_max_general ?? '');
-                } else {
-                    setLocalMin(parameter.adult_ref_min_general ?? '');
-                    setLocalMax(parameter.adult_ref_max_general ?? '');
-                }
+                setConfig({
+                    unit: parameter.unit || '',
+                    h_min: parameter.adult_ref_min_male ?? '', h_max: parameter.adult_ref_max_male ?? '',
+                    f_min: parameter.adult_ref_min_female ?? '', f_max: parameter.adult_ref_max_female ?? '',
+                    c_min: parameter.child_ref_min ?? '', c_max: parameter.child_ref_max ?? '',
+                    g_min: parameter.adult_ref_min_general ?? '', g_max: parameter.adult_ref_max_general ?? '',
+                });
+                // Default tab based on current patient
+                if (patientGender === 'M') setActiveTab(0);
+                else if (patientGender === 'F') setActiveTab(1);
+                else setActiveTab(3); // General
             } else {
-                setLocalMin(item.reference_range || '');
+                setConfig({
+                    unit: item.result_unit || '',
+                    simple_ref: item.reference_range || ''
+                });
             }
         }
     }, [anchorEl, parameter, item, patientGender]);
-
-    const handleClick = (event) => {
-        if (!canEdit) return;
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => setAnchorEl(null);
 
     const handleSave = async () => {
         setSaving(true);
@@ -179,29 +182,29 @@ const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, curren
             const payload = {
                 test_id: parameter ? null : item.lab_test,
                 parameter_id: parameter ? parameter.id : null,
-                unit: localUnit,
+                unit: config.unit,
             };
 
             if (parameter) {
-                if (patientGender === 'M') {
-                    payload.adult_ref_min_male = localMin;
-                    payload.adult_ref_max_male = localMax;
-                } else if (patientGender === 'F') {
-                    payload.adult_ref_min_female = localMin;
-                    payload.adult_ref_max_female = localMax;
-                }
-                payload.adult_ref_min_general = localMin;
-                payload.adult_ref_max_general = localMax;
+                payload.adult_ref_min_male = config.h_min; payload.adult_ref_max_male = config.h_max;
+                payload.adult_ref_min_female = config.f_min; payload.adult_ref_max_female = config.f_max;
+                payload.child_ref_min = config.c_min; payload.child_ref_max = config.c_max;
+                payload.adult_ref_min_general = config.g_min; payload.adult_ref_max_general = config.g_max;
             } else {
-                if (patientGender === 'M') payload.normal_range_male = localMin;
-                else if (patientGender === 'F') payload.normal_range_female = localMin;
-                payload.normal_range_general = localMin;
+                payload.normal_range_general = config.simple_ref;
+                // Update all simple ranges to keep consistency
+                payload.normal_range_male = config.simple_ref;
+                payload.normal_range_female = config.simple_ref;
             }
 
             await laboratoryAPI.quickUpdateUnit(payload);
-            enqueueSnackbar('Configuration enregistree', { variant: 'success' });
+            enqueueSnackbar('Configuration globale mise a jour', { variant: 'success' });
             handleClose();
-            onConfigChanged(); 
+            onConfigChanged({
+                type: parameter ? 'parameter' : 'test',
+                id: parameter ? parameter.id : item.lab_test,
+                ...config
+            }); 
         } catch (error) {
             enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
         } finally {
@@ -209,50 +212,46 @@ const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, curren
         }
     };
 
+    const handleClose = () => setAnchorEl(null);
+    const handleClick = (e) => canEdit && setAnchorEl(e.currentTarget);
     const open = Boolean(anchorEl);
 
     return (
         <>
-            <Tooltip title="Cliquer pour modifier l'unite ou la reference">
+            <Tooltip title="Changer l'unite ou les references (tous genres)">
                 <Chip 
                     label={parameter ? (parameter.unit || '—') : (item.result_unit || '—')} 
-                    size="small" 
-                    onClick={handleClick}
-                    variant="outlined"
-                    sx={{ 
-                        cursor: canEdit ? 'pointer' : 'default',
-                        fontSize: '0.7rem',
-                        height: 20,
-                        borderColor: 'primary.light',
-                        '&:hover': { bgcolor: 'primary.50' }
-                    }}
+                    size="small" onClick={handleClick} variant="outlined"
+                    sx={{ cursor: canEdit ? 'pointer' : 'default', fontSize: '0.7rem', height: 20, borderColor: 'primary.light' }}
                 />
             </Tooltip>
-            <Popover
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handleClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                PaperProps={{ sx: { p: 2, width: 220 } }}
-            >
-                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>Modif. Rapide</Typography>
-                <Stack spacing={2}>
-                    <TextField label="Unite" size="small" value={localUnit} onChange={(e) => setLocalUnit(e.target.value)} fullWidth />
-                    {parameter ? (
-                        <>
-                            <TextField label="Ref. Min" size="small" type="number" value={localMin} onChange={(e) => setLocalMin(e.target.value)} fullWidth />
-                            <TextField label="Ref. Max" size="small" type="number" value={localMax} onChange={(e) => setLocalMax(e.target.value)} fullWidth />
-                        </>
-                    ) : (
-                        <TextField label="Plage de reference" size="small" value={localMin} onChange={(e) => setLocalMin(e.target.value)} fullWidth placeholder="ex: 4.5 - 11.0" />
-                    )}
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                        <Button size="small" onClick={handleClose}>Annuler</Button>
-                        <Button size="small" variant="contained" onClick={handleSave} disabled={saving}>
-                            {saving ? <CircularProgress size={16} /> : 'OK'}
-                        </Button>
-                    </Box>
-                </Stack>
+            <Popover open={open} anchorEl={anchorEl} onClose={handleClose} PaperProps={{ sx: { p: 2, width: 280 } }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Configuration Rapide</Typography>
+                <TextField label="Unite" size="small" value={config.unit} onChange={e => setConfig({...config, unit: e.target.value})} fullWidth sx={{ mb: 2 }} />
+                
+                {parameter ? (
+                    <>
+                        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} size="small" sx={{ minHeight: 30, mb: 1 }}>
+                            <Tab label="H" sx={{ minWidth: 50, p: 0 }} />
+                            <Tab label="F" sx={{ minWidth: 50, p: 0 }} />
+                            <Tab label="Enf" sx={{ minWidth: 50, p: 0 }} />
+                            <Tab label="Gen" sx={{ minWidth: 50, p: 0 }} />
+                        </Tabs>
+                        <Box sx={{ py: 1 }}>
+                            {activeTab === 0 && <Stack direction="row" spacing={1}><TextField label="Min H" type="number" size="small" value={config.h_min} onChange={e => setConfig({...config, h_min: e.target.value})} /><TextField label="Max H" type="number" size="small" value={config.h_max} onChange={e => setConfig({...config, h_max: e.target.value})} /></Stack>}
+                            {activeTab === 1 && <Stack direction="row" spacing={1}><TextField label="Min F" type="number" size="small" value={config.f_min} onChange={e => setConfig({...config, f_min: e.target.value})} /><TextField label="Max F" type="number" size="small" value={config.f_max} onChange={e => setConfig({...config, f_max: e.target.value})} /></Stack>}
+                            {activeTab === 2 && <Stack direction="row" spacing={1}><TextField label="Min Enf" type="number" size="small" value={config.c_min} onChange={e => setConfig({...config, c_min: e.target.value})} /><TextField label="Max Enf" type="number" size="small" value={config.c_max} onChange={e => setConfig({...config, c_max: e.target.value})} /></Stack>}
+                            {activeTab === 3 && <Stack direction="row" spacing={1}><TextField label="Min Gen" type="number" size="small" value={config.g_min} onChange={e => setConfig({...config, g_min: e.target.value})} /><TextField label="Max Gen" type="number" size="small" value={config.g_max} onChange={e => setConfig({...config, g_max: e.target.value})} /></Stack>}
+                        </Box>
+                    </>
+                ) : (
+                    <TextField label="Plage de reference" size="small" value={config.simple_ref} onChange={e => setConfig({...config, simple_ref: e.target.value})} fullWidth placeholder="ex: 4.5 - 11.0" />
+                )}
+                
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
+                    <Button size="small" onClick={handleClose}>Annuler</Button>
+                    <Button size="small" variant="contained" onClick={handleSave} disabled={saving}>{saving ? <CircularProgress size={16} /> : 'Enregistrer Tout'}</Button>
+                </Box>
             </Popover>
         </>
     );
@@ -321,42 +320,34 @@ const LabOrderDetail = () => {
         if (updatedData && order) {
             setOrder(prevOrder => {
                 const newItems = prevOrder.items.map(item => {
-                    // If it's a test update
+                    // If it's a test update (Simple Test)
                     if (updatedData.type === 'test' && item.lab_test === updatedData.id) {
                         return { 
                             ...item, 
                             result_unit: updatedData.unit,
-                            lab_test_data: { ...item.lab_test_data, unit_of_measurement: updatedData.unit, conversion_factor: updatedData.factor }
+                            reference_range: updatedData.simple_ref || item.reference_range,
+                            lab_test_data: { 
+                                ...item.lab_test_data, 
+                                unit_of_measurement: updatedData.unit, 
+                                normal_range_general: updatedData.simple_ref || item.lab_test_data.normal_range_general,
+                                normal_range_male: updatedData.simple_ref || item.lab_test_data.normal_range_male,
+                                normal_range_female: updatedData.simple_ref || item.lab_test_data.normal_range_female
+                            }
                         };
                     }
-                    // If it's a parameter update
+                    // If it's a parameter update (Compound Test)
                     if (updatedData.type === 'parameter' && item.parameters) {
                         const newParams = item.parameters.map(p => {
                             if (p.id === updatedData.id) {
-                                const oldFactor = p.conversion_factor || 1.0;
-                                const newFactor = updatedData.factor;
-                                
-                                // Helper to convert a single numeric field
-                                const convertField = (val) => {
-                                    if (val === null || val === undefined || val === '') return val;
-                                    return (parseFloat(val) / oldFactor) * newFactor;
-                                };
-
+                                // Normalize empty strings to null
+                                const norm = (v) => (v === '' || v === undefined) ? null : v;
                                 return { 
                                     ...p, 
-                                    unit: updatedData.unit, 
-                                    conversion_factor: newFactor,
-                                    // Recalculate all numeric reference fields
-                                    adult_ref_min_male: convertField(p.adult_ref_min_male),
-                                    adult_ref_max_male: convertField(p.adult_ref_max_male),
-                                    adult_ref_min_female: convertField(p.adult_ref_min_female),
-                                    adult_ref_max_female: convertField(p.adult_ref_max_female),
-                                    adult_ref_min_general: convertField(p.adult_ref_min_general),
-                                    adult_ref_max_general: convertField(p.adult_ref_max_general),
-                                    child_ref_min: convertField(p.child_ref_min),
-                                    child_ref_max: convertField(p.child_ref_max),
-                                    critical_low: convertField(p.critical_low),
-                                    critical_high: convertField(p.critical_high),
+                                    unit: updatedData.unit,
+                                    adult_ref_min_male: norm(updatedData.h_min), adult_ref_max_male: norm(updatedData.h_max),
+                                    adult_ref_min_female: norm(updatedData.f_min), adult_ref_max_female: norm(updatedData.f_max),
+                                    child_ref_min: norm(updatedData.c_min), child_ref_max: norm(updatedData.c_max),
+                                    adult_ref_min_general: norm(updatedData.g_min), adult_ref_max_general: norm(updatedData.g_max)
                                 };
                             }
                             return p;
@@ -368,7 +359,7 @@ const LabOrderDetail = () => {
                 return { ...prevOrder, items: newItems };
             });
         } else {
-            fetchOrder(); // Fallback for complex modal saves
+            fetchOrder(); 
         }
         enqueueSnackbar('Configuration mise a jour', { variant: 'success' });
     };
@@ -1257,10 +1248,13 @@ const LabOrderDetail = () => {
                                         refMin = param.adult_ref_min_general;
                                         refMax = param.adult_ref_max_general;
                                     }
-                                    if (refMin !== null && refMin !== undefined && refMax !== null && refMax !== undefined)
-                                        return `${parseFloat(refMin)} – ${parseFloat(refMax)}`;
-                                    if (refMin !== null && refMin !== undefined) return `≥ ${parseFloat(refMin)}`;
-                                    if (refMax !== null && refMax !== undefined) return `≤ ${parseFloat(refMax)}`;
+
+                                    const minVal = (refMin !== null && refMin !== undefined && refMin !== '') ? parseFloat(refMin) : null;
+                                    const maxVal = (refMax !== null && refMax !== undefined && refMax !== '') ? parseFloat(refMax) : null;
+
+                                    if (minVal !== null && maxVal !== null) return `${minVal} – ${maxVal}`;
+                                    if (minVal !== null) return `≥ ${minVal}`;
+                                    if (maxVal !== null) return `≤ ${maxVal}`;
                                     return '—';
                                 };
 
@@ -1389,7 +1383,7 @@ const LabOrderDetail = () => {
                                                                                 <QuickConfigSelector 
                                                                                     item={item} 
                                                                                     parameter={param} 
-                                                                                    onConfigChanged={() => fetchOrder()} 
+                                                                                    onConfigChanged={onTestSaved} 
                                                                                     canEdit={canEdit}
                                                                                     currentValues={parameterValues}
                                                                                     updateValue={handleParameterValueChange}
@@ -1481,7 +1475,7 @@ const LabOrderDetail = () => {
                                     <TableCell>
                                         <QuickConfigSelector 
                                             item={item} 
-                                            onConfigChanged={() => fetchOrder()} 
+                                            onConfigChanged={onTestSaved} 
                                             canEdit={canEdit}
                                             currentValues={results}
                                             updateValue={handleResultChange}

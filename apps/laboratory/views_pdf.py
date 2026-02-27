@@ -112,16 +112,16 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
                     
                     ref_display = ''
                     if ref_min is not None and ref_max is not None:
-                        ref_display = f"{ref_min:g} – {ref_max:g}"
+                        ref_display = f"{ref_min.normalize():f} – {ref_max.normalize():f}"
                     elif ref_min is not None:
-                        ref_display = f"≥ {ref_min:g}"
+                        ref_display = f"≥ {ref_min.normalize():f}"
                     elif ref_max is not None:
-                        ref_display = f"≤ {ref_max:g}"
+                        ref_display = f"≤ {ref_max.normalize():f}"
                     
                     # Apply conversion to result value
                     res_num = pv.result_numeric
                     if res_num is not None:
-                        res_num = res_num * factor
+                        res_num = (res_num * factor).normalize()
 
                     groups[group].append({
                         'code': pv.parameter.code,
