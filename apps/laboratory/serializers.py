@@ -2,6 +2,7 @@
 Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
+from decimal import Decimal, InvalidOperation
 from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue
 
 
@@ -12,6 +13,7 @@ class LabTestParameterSerializer(serializers.ModelSerializer):
         model = LabTestParameter
         fields = [
             'id', 'code', 'name', 'group_name', 'display_order', 'unit',
+            'base_unit', 'conversion_factor',
             'value_type', 'decimal_places', 'is_required',
             'adult_ref_min_male', 'adult_ref_max_male',
             'adult_ref_min_female', 'adult_ref_max_female',
@@ -19,6 +21,60 @@ class LabTestParameterSerializer(serializers.ModelSerializer):
             'child_ref_min', 'child_ref_max', 'child_age_max_years',
             'critical_low', 'critical_high',
         ]
+
+    def to_representation(self, instance):
+        """Convert base unit values to display unit values for output"""
+        data = super().to_representation(instance)
+        factor = instance.conversion_factor or Decimal('1.0')
+        
+        if factor != Decimal('1.0'):
+            numeric_fields = [
+                'adult_ref_min_male', 'adult_ref_max_male',
+                'adult_ref_min_female', 'adult_ref_max_female',
+                'adult_ref_min_general', 'adult_ref_max_general',
+                'child_ref_min', 'child_ref_max',
+                'critical_low', 'critical_high',
+            ]
+            for field in numeric_fields:
+                if data.get(field) is not None:
+                    # Convert to display unit
+                    try:
+                        val = Decimal(str(data[field]))
+                        data[field] = val * factor
+                    except (InvalidOperation, TypeError):
+                        pass
+        return data
+
+    def to_internal_value(self, data):
+        """Convert display unit values back to base unit values for storage"""
+        # We need the factor from the data if it's being updated, 
+        # or from the instance if it exists.
+        factor = Decimal('1.0')
+        if 'conversion_factor' in data:
+            try:
+                factor = Decimal(str(data['conversion_factor']))
+            except (ValueError, InvalidOperation):
+                pass
+        elif self.instance:
+            factor = self.instance.conversion_factor or Decimal('1.0')
+
+        # First get the internal values normally
+        internal_data = super().to_internal_value(data)
+
+        if factor != Decimal('1.0'):
+            numeric_fields = [
+                'adult_ref_min_male', 'adult_ref_max_male',
+                'adult_ref_min_female', 'adult_ref_max_female',
+                'adult_ref_min_general', 'adult_ref_max_general',
+                'child_ref_min', 'child_ref_max',
+                'critical_low', 'critical_high',
+            ]
+            for field in numeric_fields:
+                if internal_data.get(field) is not None:
+                    # Convert back to base unit
+                    internal_data[field] = internal_data[field] / factor
+                    
+        return internal_data
 
 
 class LabResultValueSerializer(serializers.ModelSerializer):
@@ -36,6 +92,40 @@ class LabResultValueSerializer(serializers.ModelSerializer):
             'result_numeric', 'result_text', 'flag', 'entered_at',
         ]
         read_only_fields = ['id', 'entered_at']
+
+    def to_representation(self, instance):
+        """Convert base unit value to display unit value for output"""
+        data = super().to_representation(instance)
+        # Apply conversion from parameter
+        factor = instance.parameter.conversion_factor or Decimal('1.0')
+        if factor != Decimal('1.0') and data.get('result_numeric') is not None:
+            try:
+                val = Decimal(str(data['result_numeric']))
+                data['result_numeric'] = val * factor
+            except (InvalidOperation, TypeError):
+                pass
+        return data
+
+    def to_internal_value(self, data):
+        """Convert display unit value back to base unit value for storage"""
+        # We need the parameter's conversion factor
+        parameter_id = data.get('parameter')
+        factor = Decimal('1.0')
+        if parameter_id:
+            try:
+                param = LabTestParameter.objects.get(id=parameter_id)
+                factor = param.conversion_factor or Decimal('1.0')
+            except (LabTestParameter.DoesNotExist, ValueError):
+                pass
+        elif self.instance:
+            factor = self.instance.parameter.conversion_factor or Decimal('1.0')
+
+        internal_data = super().to_internal_value(data)
+
+        if factor != Decimal('1.0') and internal_data.get('result_numeric') is not None:
+            internal_data['result_numeric'] = internal_data['result_numeric'] / factor
+                    
+        return internal_data
 
 
 class LabTestCategorySerializer(serializers.ModelSerializer):
@@ -88,6 +178,8 @@ class LabTestSerializer(serializers.ModelSerializer):
             'normal_range_child',
             'normal_range_general',
             'unit_of_measurement',
+            'base_unit',
+            'conversion_factor',
             'sample_type',
             'sample_type_display',
             'sample_volume',
@@ -185,6 +277,34 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'id', 'created_at', 'updated_at',
             'result_entered_at', 'result_verified_at'
         ]
+
+    def to_representation(self, instance):
+        """Convert base unit value to display unit value for output"""
+        data = super().to_representation(instance)
+        # Apply conversion from test
+        factor = instance.lab_test.conversion_factor or Decimal('1.0')
+        if factor != Decimal('1.0') and data.get('result_numeric') is not None:
+            try:
+                val = Decimal(str(data['result_numeric']))
+                data['result_numeric'] = val * factor
+            except (InvalidOperation, TypeError):
+                pass
+        return data
+
+    def to_internal_value(self, data):
+        """Convert display unit value back to base unit value for storage"""
+        # Note: If updating LabOrderItem directly, we might need back-conversion.
+        # But results are mostly updated via EnterLabResultsView.
+        # Still good to have for completeness.
+        internal_data = super().to_internal_value(data)
+        
+        # We need the factor from the instance
+        if self.instance and internal_data.get('result_numeric') is not None:
+            factor = self.instance.lab_test.conversion_factor or Decimal('1.0')
+            if factor != Decimal('1.0'):
+                internal_data['result_numeric'] = internal_data['result_numeric'] / factor
+                    
+        return internal_data
 
 
 class LabOrderSerializer(serializers.ModelSerializer):
