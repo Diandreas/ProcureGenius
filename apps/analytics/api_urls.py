@@ -11,7 +11,8 @@ from .healthcare_analytics import (
     HealthcareDashboardStatsView,
     ActivityIndicatorsView,
     EnhancedRevenueAnalyticsView,
-    ServiceRevenueAnalyticsView
+    ServiceRevenueAnalyticsView,
+    LabOrdersStatusWidgetView,
 )
 from .report_views import ReportConfigView, ReportTestView
 from .inventory_analytics import (
@@ -41,6 +42,7 @@ urlpatterns = [
     path('healthcare/dashboard-stats/', HealthcareDashboardStatsView.as_view(), name='healthcare_dashboard_stats'),
     path('healthcare/activity-indicators/', ActivityIndicatorsView.as_view(), name='healthcare_activity_indicators'),
     path('healthcare/service-revenue/', ServiceRevenueAnalyticsView.as_view(), name='healthcare_service_revenue'),
+    path('healthcare/lab-orders-status/', LabOrdersStatusWidgetView.as_view(), name='healthcare_lab_orders_status'),
 
     # Inventory Analytics
     path('inventory/reorder/', ReorderQuantitiesView.as_view(), name='inventory_reorder'),

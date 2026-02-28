@@ -269,8 +269,10 @@ function ProductDetail() {
     );
   }
 
-  const stockStatus = product.stock_quantity === 0 ? 'error' :
-    product.stock_quantity <= 10 ? 'warning' : 'success';
+  // Stock = cumul des lots (quantity_remaining)
+  const computedStock = productBatches.reduce((sum, b) => sum + (b.quantity_remaining || 0), 0);
+  const stockStatus = computedStock === 0 ? 'error' :
+    computedStock <= (product.low_stock_threshold || 10) ? 'warning' : 'success';
 
   // Configuration du type de produit
   const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
@@ -1221,7 +1223,7 @@ function ProductDetail() {
             {/* Sidebar */}
             <Grid item xs={12} md={4}>
               {/* Stock - Style mobile app */}
-              {product.stock_quantity !== null && product.stock_quantity !== undefined && (
+              {product.product_type === 'physical' && (
                 <Card sx={{
                   borderRadius: isMobile ? 2.5 : 2,
                   mb: isMobile ? 1.5 : 3,
@@ -1276,7 +1278,7 @@ function ProductDetail() {
                         fontWeight="bold"
                         sx={{ fontSize: isMobile ? '1.5rem' : undefined }}
                       >
-                        {product.stock_quantity}
+                        {computedStock}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -1286,8 +1288,8 @@ function ProductDetail() {
                           fontSize: isMobile ? '0.75rem' : undefined
                         }}
                       >
-                        {product.stock_quantity === 0 ? t('products:stockStatus.outOfStock') :
-                          product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
+                        {computedStock === 0 ? t('products:stockStatus.outOfStock') :
+                          computedStock <= (product.low_stock_threshold || 10) ? t('products:stockStatus.low') : t('products:filters.inStock')}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -1432,7 +1434,7 @@ function ProductDetail() {
                         })}
                     </Stack>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                      {productBatches.filter(b => b.quantity_remaining > 0).length} lot(s) actif(s) — Total : {product.stock_quantity} {product.sell_unit || 'u.'}
+                      {productBatches.filter(b => b.quantity_remaining > 0).length} lot(s) actif(s) — Total : {computedStock} {product.sell_unit || 'u.'}
                     </Typography>
                   </CardContent>
                 </Card>

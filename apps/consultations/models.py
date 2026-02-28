@@ -453,6 +453,11 @@ class Consultation(models.Model):
         self.status = 'in_consultation'
         if not self.started_at:
             self.started_at = timezone.now()
+        
+        # Sync with PatientVisit if linked
+        if self.visit:
+            self.visit.start_consultation(doctor=doctor_user)
+            
         self.save()
 
     def complete_consultation(self, user=None):

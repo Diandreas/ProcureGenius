@@ -94,12 +94,14 @@ const ProductBatches = () => {
   const handleCreate = async () => {
     try {
       await batchAPI.createBatch(productId, {
-        ...formData,
-        product: productId,
+        batch_number: formData.batch_number,
+        lot_number: formData.lot_number || '',
         quantity: parseInt(formData.quantity),
         quantity_remaining: parseInt(formData.quantity),
+        expiry_date: formData.expiry_date,
         shelf_life_after_opening_days: formData.shelf_life_after_opening_days
-          ? parseInt(formData.shelf_life_after_opening_days) : null
+          ? parseInt(formData.shelf_life_after_opening_days) : null,
+        notes: formData.notes || '',
       });
       setOpenDialog(false);
       setFormData({ batch_number: '', lot_number: '', quantity: '', expiry_date: '', shelf_life_after_opening_days: '', notes: '' });

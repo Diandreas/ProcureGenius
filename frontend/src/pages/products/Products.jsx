@@ -369,6 +369,24 @@ function Products() {
     setReportDialogOpen(false);
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const response = await productsAPI.exportCSV();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `produits-${dayjs().format('YYYY-MM-DD')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Export téléchargé avec succès', { variant: 'success' });
+    } catch (error) {
+      console.error('Export error:', error);
+      enqueueSnackbar('Erreur lors de l\'export', { variant: 'error' });
+    }
+  };
+
   // ─── ProductCard ───────────────────────────────────────────────────────────
   const ProductCard = ({ product, index }) => {
     const stockColor = getStockColor(product);
@@ -645,23 +663,34 @@ function Products() {
             Gestion des produits, stocks et péremptions
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/products/new')}
-          sx={{
-            borderRadius: 3,
-            px: 3,
-            py: 1.5,
-            fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            boxShadow: `0 8px 20px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
-            '&:hover': { boxShadow: `0 12px 28px -6px ${alpha(theme.palette.primary.main, 0.6)}` }
-          }}
-        >
-          {t('products:newProduct')}
-        </Button>
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<Download />}
+            onClick={handleExportExcel}
+            sx={{ borderRadius: 3, px: 2.5, py: 1.5, fontWeight: 600 }}
+          >
+            Export Excel
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/products/new')}
+            sx={{
+              borderRadius: 3,
+              px: 3,
+              py: 1.5,
+              fontWeight: 700,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              boxShadow: `0 8px 20px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
+              '&:hover': { boxShadow: `0 12px 28px -6px ${alpha(theme.palette.primary.main, 0.6)}` }
+            }}
+          >
+            {t('products:newProduct')}
+          </Button>
+        </Stack>
       </Stack>
 
       {/* 6 Stat Cards */}

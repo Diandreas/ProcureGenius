@@ -57,7 +57,20 @@ const ConsultationList = () => {
     const [showCompleted, setShowCompleted] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+    // Local date helpers (avoid UTC timezone bugs)
+    const toLocalDateStr = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+    const parseLocalDate = (str) => {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+    const getTodayStr = () => toLocalDateStr(new Date());
+
     const search = searchParams.get('search') || '';
     const statusFilter = searchParams.get('status') || 'all';
     const startDate = searchParams.get('startDate') || getTodayStr();
@@ -73,8 +86,17 @@ const ConsultationList = () => {
     };
     const setSearch = (v) => updateParam('search', v);
     const setStatusFilter = (v) => updateParam('status', v);
-    const setStartDate = (v) => updateParam('startDate', v);
-    const setEndDate = (v) => updateParam('endDate', v);
+
+    // Atomic date range update (avoids race condition with two separate setSearchParams)
+    const setDateRange = (start, end) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            if (start) next.set('startDate', start); else next.delete('startDate');
+            if (end) next.set('endDate', end); else next.delete('endDate');
+            next.delete('status');
+            return next;
+        }, { replace: true });
+    };
 
     // Compute stats (using real backend statuses)
     const stats = {
@@ -110,33 +132,23 @@ const ConsultationList = () => {
     useAutoRefresh('consultations', fetchConsultations);
 
     // Date navigation helpers
-    const formatISODate = (date) => {
-        return date.toISOString().split('T')[0];
-    };
-
     const goToPreviousDay = () => {
-        const currentDate = startDate ? new Date(startDate) : new Date();
+        const currentDate = startDate ? parseLocalDate(startDate) : new Date();
         currentDate.setDate(currentDate.getDate() - 1);
-        const newDate = formatISODate(currentDate);
-        setStartDate(newDate);
-        setEndDate(newDate);
-        setStatusFilter('all');
+        const newDate = toLocalDateStr(currentDate);
+        setDateRange(newDate, newDate);
     };
 
     const goToToday = () => {
-        const today = formatISODate(new Date());
-        setStartDate(today);
-        setEndDate(today);
-        setStatusFilter('all');
+        const today = getTodayStr();
+        setDateRange(today, today);
     };
 
     const goToNextDay = () => {
-        const currentDate = startDate ? new Date(startDate) : new Date();
+        const currentDate = startDate ? parseLocalDate(startDate) : new Date();
         currentDate.setDate(currentDate.getDate() + 1);
-        const newDate = formatISODate(currentDate);
-        setStartDate(newDate);
-        setEndDate(newDate);
-        setStatusFilter('all');
+        const newDate = toLocalDateStr(currentDate);
+        setDateRange(newDate, newDate);
     };
 
     const getStatusChip = (status) => {
@@ -597,8 +609,8 @@ const ConsultationList = () => {
                                     label="Date de début"
                                     value={startDate ? dayjs(startDate) : null}
                                     onChange={(date) => {
-                                        setStartDate(date ? date.format('YYYY-MM-DD') : '');
-                                        setStatusFilter('all');
+                                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                                        setDateRange(dateStr, endDate);
                                     }}
                                     slotProps={{
                                         textField: {
@@ -617,8 +629,8 @@ const ConsultationList = () => {
                                     label="Date de fin"
                                     value={endDate ? dayjs(endDate) : null}
                                     onChange={(date) => {
-                                        setEndDate(date ? date.format('YYYY-MM-DD') : '');
-                                        setStatusFilter('all');
+                                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                                        setDateRange(startDate, dateStr);
                                     }}
                                     slotProps={{
                                         textField: {
@@ -644,7 +656,7 @@ const ConsultationList = () => {
                             </Button>
                             <Button
                                 size="small"
-                                variant={startDate === formatISODate(new Date()) && endDate === formatISODate(new Date()) ? 'contained' : 'outlined'}
+                                variant={startDate === getTodayStr() && endDate === getTodayStr() ? 'contained' : 'outlined'}
                                 startIcon={<TodayIcon />}
                                 onClick={goToToday}
                             >
@@ -663,8 +675,7 @@ const ConsultationList = () => {
                             <Chip
                                 label={`Période: ${startDate || '...'} → ${endDate || '...'}`}
                                 onDelete={() => {
-                                    setStartDate('');
-                                    setEndDate('');
+                                    setDateRange('', '');
                                 }}
                                 color="primary"
                                 size="small"

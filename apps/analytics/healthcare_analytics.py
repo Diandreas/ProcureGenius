@@ -5,8 +5,9 @@ Provides detailed analytics for laboratory exams, consultations, and healthcare 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField, DecimalField, F
+from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField, DecimalField, F, ExpressionWrapper, DurationField
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
+from django.utils import timezone
 from datetime import date, timedelta, datetime
 from apps.laboratory.models import LabOrder, LabOrderItem
 from apps.consultations.models import Consultation
@@ -551,17 +552,28 @@ class ActivityIndicatorsView(APIView):
 
         # ===== INDICATEURS DE PERFORMANCE ET D'EFFICIENCE =====
 
-        # N°4: Temps d'attente moyen avant consultation (facture → début consultation)
-        # Use Consultation model with started_at and invoice creation time
-        consultations_with_wait = consultations_queryset.filter(
-            started_at__isnull=False,
-            consultation_invoice__isnull=False
-        )
+        # N°4: Temps d'attente moyen avant consultation (arrivée/création → début consultation)
+        # Calculate from Consultation records. Fallback to created_at if visit is missing.
+        consults_with_wait = Consultation.objects.filter(
+            organization=organization,
+            consultation_date__date__gte=start_date,
+            consultation_date__date__lte=end_date,
+            started_at__isnull=False
+        ).select_related('visit')
 
         wait_times = []
-        for consult in consultations_with_wait:
-            if consult.wait_time_minutes is not None:
-                wait_times.append(consult.wait_time_minutes)
+        for c in consults_with_wait:
+            # Point de départ: Arrivée (si visite liée) ou Création (si pas de visite)
+            start_point = None
+            if c.visit and c.visit.arrived_at:
+                start_point = c.visit.arrived_at
+            else:
+                start_point = c.created_at
+                
+            if start_point and c.started_at:
+                delta = c.started_at - start_point
+                # On s'assure que le délai est positif (en minutes)
+                wait_times.append(max(0, int(delta.total_seconds() / 60)))
 
         avg_wait_time = sum(wait_times) / len(wait_times) if wait_times else 0
 
@@ -915,5 +927,143 @@ class ServiceRevenueAnalyticsView(APIView):
                 'categories': [{'id': str(c['id']), 'name': c['name']} for c in available_categories],
                 'selected_service_id': service_id,
                 'selected_category_id': category_id,
+            }
+        })
+
+
+class LabOrdersStatusWidgetView(APIView):
+    """
+    Widget data for Lab Orders Status dashboard widget.
+    Returns totals, revenue, critical results, avg turnaround, and status breakdown.
+    Query params: period (last_7_days | last_30_days | last_90_days)
+    Read-only — does not modify any data.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        period = request.GET.get('period', 'last_30_days')
+
+        period_days = {'last_7_days': 7, 'last_30_days': 30, 'last_90_days': 90}
+        days = period_days.get(period, 30)
+        start_dt = timezone.now() - timedelta(days=days)
+
+        orders = LabOrder.objects.filter(
+            organization=organization,
+            order_date__gte=start_dt
+        )
+
+        total_orders = orders.count()
+        revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
+
+        # Critical: items flagged is_critical
+        critical_results = LabOrderItem.objects.filter(
+            lab_order__organization=organization,
+            lab_order__order_date__gte=start_dt,
+            is_critical=True
+        ).count()
+
+        # Avg turnaround: (result_entered_at - order_date) in hours for completed items
+        avg_turnaround_hours = None
+        try:
+            avg_result = LabOrderItem.objects.filter(
+                lab_order__organization=organization,
+                lab_order__order_date__gte=start_dt,
+                result_entered_at__isnull=False
+            ).annotate(
+                turnaround=ExpressionWrapper(
+                    F('result_entered_at') - F('lab_order__order_date'),
+                    output_field=DurationField()
+                )
+            ).aggregate(avg=Avg('turnaround'))
+
+            if avg_result['avg']:
+                avg_turnaround_hours = round(avg_result['avg'].total_seconds() / 3600, 1)
+        except Exception:
+            # Fallback: calculate in Python (compatible with all DB backends)
+            items = LabOrderItem.objects.filter(
+                lab_order__organization=organization,
+                lab_order__order_date__gte=start_dt,
+                result_entered_at__isnull=False
+            ).select_related('lab_order').values_list('result_entered_at', 'lab_order__order_date')
+            durations = [
+                (r - o).total_seconds() / 3600
+                for r, o in items if r and o and r >= o
+            ]
+            if durations:
+                avg_turnaround_hours = round(sum(durations) / len(durations), 1)
+
+        # Status breakdown
+        status_list = ['pending', 'sample_collected', 'in_progress', 'completed',
+                       'results_ready', 'results_delivered', 'cancelled']
+        by_status = {s: orders.filter(status=s).count() for s in status_list}
+
+        # === Per-test-type turnaround breakdown ===
+        by_test_type = []
+        try:
+            items_qs = LabOrderItem.objects.filter(
+                lab_order__organization=organization,
+                lab_order__order_date__gte=start_dt,
+            ).select_related('lab_test', 'lab_test__category')
+
+            # Group by test
+            from django.db.models import Subquery, OuterRef
+            test_groups = items_qs.values(
+                'lab_test__name', 'lab_test__test_code', 'lab_test__category__name',
+                'lab_test__estimated_turnaround_hours'
+            ).annotate(
+                count=Count('id'),
+            ).order_by('-count')
+
+            for tg in test_groups:
+                test_name = tg['lab_test__name']
+                test_code = tg['lab_test__test_code']
+                category = tg['lab_test__category__name'] or 'Non classé'
+                estimated = tg['lab_test__estimated_turnaround_hours'] or 24
+                count = tg['count']
+
+                # Calculate avg turnaround in Python (SQLite-compatible)
+                completed_items = items_qs.filter(
+                    lab_test__name=test_name,
+                    lab_test__test_code=test_code,
+                    result_entered_at__isnull=False,
+                ).values_list('result_entered_at', 'lab_order__order_date')
+
+                durations = [
+                    (r - o).total_seconds() / 3600
+                    for r, o in completed_items if r and o and r >= o
+                ]
+                avg_hours = round(sum(durations) / len(durations), 1) if durations else None
+
+                # Overdue = items where actual turnaround > estimated
+                overdue_count = sum(1 for d in durations if d > estimated)
+
+                variance = round(avg_hours - estimated, 1) if avg_hours is not None else None
+
+                by_test_type.append({
+                    'test_name': test_name,
+                    'test_code': test_code,
+                    'category': category,
+                    'count': count,
+                    'completed_count': len(durations),
+                    'avg_turnaround_hours': avg_hours,
+                    'estimated_turnaround_hours': estimated,
+                    'overdue_count': overdue_count,
+                    'variance_hours': variance,
+                })
+        except Exception:
+            pass  # Graceful fallback — by_test_type stays empty
+
+        return Response({
+            'success': True,
+            'data': {
+                'laboratory': {
+                    'total_orders': total_orders,
+                    'revenue': float(revenue),
+                    'critical_results': critical_results,
+                    'avg_turnaround_hours': avg_turnaround_hours,
+                    'by_status': by_status,
+                    'by_test_type': by_test_type,
+                }
             }
         })

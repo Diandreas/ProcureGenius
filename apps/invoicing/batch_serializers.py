@@ -23,9 +23,15 @@ class ProductBatchCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductBatch
         fields = [
-            'product', 'batch_number', 'lot_number', 'quantity',
+            'batch_number', 'lot_number', 'quantity',
             'quantity_remaining', 'expiry_date', 'shelf_life_after_opening_days', 'notes'
         ]
+        extra_kwargs = {
+            'lot_number': {'required': False, 'allow_blank': True},
+            'notes': {'required': False, 'allow_blank': True},
+            'shelf_life_after_opening_days': {'required': False, 'allow_null': True},
+            'quantity_remaining': {'required': False},
+        }
 
     def validate(self, data):
         if 'quantity_remaining' not in data:

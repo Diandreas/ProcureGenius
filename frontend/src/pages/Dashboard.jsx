@@ -25,6 +25,7 @@ import {
 import StatCard from '../components/analytics/StatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
 import BatchAlertCard from '../components/inventory/BatchAlertCard';
+import { LabOrdersStatusWidget, LabTurnaroundWidget } from '../components/widgets/healthcare';
 import healthcareAnalyticsAPI from '../services/healthcareAnalyticsAPI';
 import inventoryAnalyticsAPI from '../services/inventoryAnalyticsAPI';
 import api from '../services/api';
@@ -392,33 +393,6 @@ const Dashboard = () => {
                   loading={loading}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <StatCard
-                  title="Examens Termines (Mois)"
-                  value={loading ? '...' : healthcareStats.completed_month || 0}
-                  icon={<CheckCircleIcon />} color="#10b981"
-                  onClick={() => navigate('/healthcare/analytics')}
-                  loading={loading}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <StatCard
-                  title="Montant Moyen Examen"
-                  value={loading ? '...' : formatCurrency(healthcareStats.avg_exam_amount)}
-                  icon={<MoneyIcon />} color="#2563eb"
-                  onClick={() => navigate('/healthcare/analytics')}
-                  loading={loading}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <StatCard
-                  title="Examens Semaine"
-                  value={loading ? '...' : healthcareStats.exams_week || 0}
-                  icon={<TrendingUpIcon />} color="#f59e0b"
-                  onClick={() => navigate('/healthcare/laboratory')}
-                  loading={loading}
-                />
-              </Grid>
             </Grid>
 
             <Typography variant="h6" fontWeight="700" mb={2}>Analyses detaillees</Typography>
@@ -445,18 +419,6 @@ const Dashboard = () => {
                 <QuickLink
                   title="Demographiques" description="Analyse patients"
                   icon={<PeopleIcon />} color="#8b5cf6" to="/healthcare/analytics/demographics" navigate={navigate}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <QuickLink
-                  title="Revenus Sante" description="Analyse financiere"
-                  icon={<MoneyIcon />} color="#2563eb" to="/healthcare/analytics/revenue" navigate={navigate}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <QuickLink
-                  title="Revenus par Service" description="Detail par service"
-                  icon={<MoneyIcon />} color="#10b981" to="/healthcare/analytics/services" navigate={navigate}
                 />
               </Grid>
             </Grid>

@@ -6,6 +6,7 @@ import {
   CircularProgress, Alert, Divider, IconButton, Tooltip as MuiTooltip,
   LinearProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ArrowBack as BackIcon,
   AccessTime as WaitIcon,
@@ -25,6 +26,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import FilterPanel from '../../../components/analytics/FilterPanel';
+import StatCard from '../../../components/analytics/StatCard';
+import { LabTurnaroundWidget, LabOrdersStatusWidget } from '../../../components/widgets/healthcare';
 import healthcareAnalyticsAPI from '../../../services/healthcareAnalyticsAPI';
 import { formatDate } from '../../../utils/formatters';
 import Breadcrumbs from '../../../components/navigation/Breadcrumbs';
@@ -38,39 +41,18 @@ const formatCurrency = (val) => {
 
 const formatFullDate = (val) => formatDate(val);
 
-// Indicator card with number, title, value, subtitle, color
-const IndicatorCard = ({ number, title, value, subtitle, icon: Icon, color = 'primary.main', extra }) => (
-  <Card sx={{ height: '100%', borderLeft: 4, borderColor: color }}>
-    <CardContent>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-        <Box>
-          <Chip label={`N\u00B0${number}`} size="small" sx={{ mb: 1, bgcolor: color, color: '#fff', fontWeight: 700 }} />
-          <Typography variant="body2" color="text.secondary" fontWeight="600" gutterBottom>
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight="800" sx={{ color }}>
-            {value}
-          </Typography>
-          {subtitle && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-              {subtitle}
-            </Typography>
-          )}
-          {extra}
-        </Box>
-        {Icon && (
-          <Box sx={{ bgcolor: `${typeof color === 'string' && color.includes('.') ? color.split('.')[0] : 'primary'}.50`, p: 1.5, borderRadius: 2 }}>
-            <Icon sx={{ fontSize: 32, color }} />
-          </Box>
-        )}
-      </Stack>
-    </CardContent>
-  </Card>
-);
-
 const SectionHeader = ({ title, subtitle, icon: Icon }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, mt: 3 }}>
-    {Icon && <Icon sx={{ fontSize: 28, color: 'primary.main' }} />}
+    <Box sx={{ 
+      p: 1, 
+      borderRadius: '12px', 
+      bgcolor: 'primary.main', 
+      color: 'white',
+      display: 'flex',
+      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+    }}>
+      {Icon && <Icon sx={{ fontSize: 24 }} />}
+    </Box>
     <Box>
       <Typography variant="h6" fontWeight="700">{title}</Typography>
       {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
@@ -155,15 +137,13 @@ const ActivityIndicatorsPage = () => {
     { name: 'Laboratoire', value: labRevenue, color: COLORS[1] }
   ].filter(d => d.value > 0);
 
-  // Build revenue timeline with consultation/lab split
-  // (we only have combined, so use single line)
-
   const periodLabel = period === 'day' ? "Aujourd'hui" : period === 'week' ? 'les 7 derniers jours' : 'les 30 derniers jours';
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 3 }}>
       <Container maxWidth="xl">
         <Breadcrumbs />
+        
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center">
@@ -175,13 +155,13 @@ const ActivityIndicatorsPage = () => {
                 Indicateurs de Suivi d'Activite
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Vue complete des performances de votre etablissement
+                Vue complète des performances de votre établissement
               </Typography>
             </Box>
           </Stack>
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Periode</InputLabel>
-            <Select value={period} label="Periode" onChange={(e) => setPeriod(e.target.value)}>
+            <InputLabel>Période</InputLabel>
+            <Select value={period} label="Période" onChange={(e) => setPeriod(e.target.value)}>
               <MenuItem value="day">Aujourd'hui</MenuItem>
               <MenuItem value="week">7 derniers jours</MenuItem>
               <MenuItem value="month">30 derniers jours</MenuItem>
@@ -194,8 +174,8 @@ const ActivityIndicatorsPage = () => {
 
         {/* Period info */}
         {data && !loading && (
-          <Alert severity="info" sx={{ mb: 3 }} icon={<InfoIcon />}>
-            Periode analysee : du <strong>{formatFullDate(data.start_date)}</strong> au <strong>{formatFullDate(data.end_date)}</strong>
+          <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }} icon={<InfoIcon />}>
+            Période analysée : du <strong>{formatFullDate(data.start_date)}</strong> au <strong>{formatFullDate(data.end_date)}</strong>
           </Alert>
         )}
 
@@ -210,40 +190,37 @@ const ActivityIndicatorsPage = () => {
           <>
             {/* ========== SECTION 1: ACTIVITE ET VOLUME ========== */}
             <SectionHeader
-              title="Indicateurs d'Activite et de Volume"
-              subtitle="Suivi des volumes de consultations, patients et actes medicaux"
+              title="Indicateurs d'Activité et de Volume"
+              subtitle="Suivi des volumes de consultations, patients et actes médicaux"
               icon={AssessmentIcon}
             />
 
             <Grid container spacing={2} mb={3}>
               <Grid item xs={12} md={4}>
-                <IndicatorCard
-                  number={1}
-                  title="Consultations / Periode"
+                <StatCard
+                  title="Consultations"
                   value={numConsultations}
-                  subtitle={`Sur ${periodLabel}`}
-                  icon={ConsultIcon}
-                  color="primary.main"
+                  icon={<ConsultIcon />}
+                  color="#2563eb"
+                  subtitle={`Total sur la période`}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <IndicatorCard
-                  number={2}
-                  title="Nouveaux Patients / Periode"
+                <StatCard
+                  title="Nouveaux Patients"
                   value={newPatients}
-                  subtitle="Premiere visite dans la periode"
-                  icon={PeopleIcon}
-                  color="warning.main"
+                  icon={<PeopleIcon />}
+                  color="#f59e0b"
+                  subtitle="Première visite enregistrée"
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <IndicatorCard
-                  number={3}
-                  title="Actes Medicaux et Paramedicaux"
+                <StatCard
+                  title="Total Actes Médicaux"
                   value={totalActs}
-                  subtitle={`${actsConsult} consultations + ${actsLab} labos + ${actsCare} soins`}
-                  icon={MedicalIcon}
-                  color="info.main"
+                  icon={<MedicalIcon />}
+                  color="#06b6d4"
+                  subtitle={`${actsConsult} consult. | ${actsLab} labo | ${actsCare} soins`}
                 />
               </Grid>
             </Grid>
@@ -251,38 +228,47 @@ const ActivityIndicatorsPage = () => {
             {/* Activity timeline chart */}
             <Grid container spacing={3} mb={3}>
               <Grid item xs={12} md={8}>
-                <Paper sx={{ p: 3 }}>
+                <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: t => t.palette.mode === 'light' ? '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff' : '8px 8px 16px #0f1419, -8px -8px 16px #2d3340' }}>
                   <Typography variant="subtitle1" fontWeight="700" mb={2}>
-                    Evolution quotidienne - Consultations & Nouveaux Patients
+                    Évolution quotidienne - Consultations & Patients
                   </Typography>
                   {combinedActivityTimeline.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={combinedActivityTimeline}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip labelFormatter={formatFullDate} />
-                        <Legend />
-                        <Area type="monotone" dataKey="consultations" name="Consultations" stroke="#2563eb" fill="#2563eb" fillOpacity={0.15} strokeWidth={2} />
-                        <Area type="monotone" dataKey="nouveaux_patients" name="Nouveaux patients" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.15} strokeWidth={2} />
+                        <defs>
+                          <linearGradient id="colorConsult" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="colorPatients" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={alpha('#94a3b8', 0.1)} />
+                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} labelFormatter={formatFullDate} />
+                        <Legend iconType="circle" />
+                        <Area type="monotone" dataKey="consultations" name="Consultations" stroke="#2563eb" fillOpacity={1} fill="url(#colorConsult)" strokeWidth={3} />
+                        <Area type="monotone" dataKey="nouveaux_patients" name="Nouveaux patients" stroke="#f59e0b" fillOpacity={1} fill="url(#colorPatients)" strokeWidth={3} />
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucune donnee pour cette periode</Typography>
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucune donnée disponible</Typography>
                   )}
                 </Paper>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 3, height: '100%' }}>
+                <Paper sx={{ p: 3, height: '100%', borderRadius: '16px', boxShadow: t => t.palette.mode === 'light' ? '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff' : '8px 8px 16px #0f1419, -8px -8px 16px #2d3340' }}>
                   <Typography variant="subtitle1" fontWeight="700" mb={2}>
-                    Repartition des Actes Medicaux
+                    Répartition des Actes
                   </Typography>
                   {actsBreakdown.length > 0 ? (
                     <>
                       <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
-                          <Pie data={actsBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70}
-                            label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}>
+                          <Pie data={actsBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
                             {actsBreakdown.map((entry, idx) => (
                               <Cell key={idx} fill={entry.color} />
                             ))}
@@ -290,25 +276,25 @@ const ActivityIndicatorsPage = () => {
                           <Tooltip />
                         </PieChart>
                       </ResponsiveContainer>
-                      <Stack spacing={1} mt={1}>
+                      <Stack spacing={1.5} mt={2}>
                         {actsBreakdown.map((item, idx) => (
-                          <Box key={`act-${idx}-${item.name}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-                              <Typography variant="body2">{item.name}</Typography>
+                          <Box key={`act-${idx}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              <Box sx={{ width: 12, height: 12, borderRadius: '4px', bgcolor: item.color }} />
+                              <Typography variant="body2" fontWeight="500">{item.name}</Typography>
                             </Stack>
                             <Typography variant="body2" fontWeight="700">{item.value}</Typography>
                           </Box>
                         ))}
-                        <Divider />
+                        <Divider sx={{ my: 1 }} />
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" fontWeight="700">Total</Typography>
-                          <Typography variant="body2" fontWeight="700">{totalActs}</Typography>
+                          <Typography variant="body2" fontWeight="700">Total cumulé</Typography>
+                          <Typography variant="body2" fontWeight="800" color="primary.main">{totalActs}</Typography>
                         </Box>
                       </Stack>
                     </>
                   ) : (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucun acte</Typography>
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucun acte enregistré</Typography>
                   )}
                 </Paper>
               </Grid>
@@ -316,169 +302,122 @@ const ActivityIndicatorsPage = () => {
 
             {/* ========== SECTION 2: PERFORMANCE ET EFFICIENCE ========== */}
             <SectionHeader
-              title="Indicateurs de Performance et d'Efficience"
-              subtitle="Mesure de la qualite et rapidite de prise en charge"
+              title="Performance et Efficience"
+              subtitle="Mesure de la qualité et rapidité de prise en charge"
               icon={TimerIcon}
             />
 
             <Grid container spacing={2} mb={3}>
               <Grid item xs={12} md={6}>
-                <Card sx={{ borderLeft: 4, borderColor: 'error.main' }}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Box sx={{ flex: 1 }}>
-                        <Chip label="N°4" size="small" sx={{ mb: 1, bgcolor: 'error.main', color: '#fff', fontWeight: 700 }} />
-                        <Typography variant="body2" color="text.secondary" fontWeight="600" gutterBottom>
-                          Temps d'Attente Moyen
-                        </Typography>
-                        <Typography variant="h3" fontWeight="800" color="error.main">
-                          {avgWait > 0 ? `${Math.round(avgWait)} min` : '0 min'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                          Base sur {visitsTracked} visite{visitsTracked !== 1 ? 's' : ''} suivie{visitsTracked !== 1 ? 's' : ''}
-                        </Typography>
-                        {avgWait > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary">Objectif recommande : 15 min</Typography>
-                            <LinearProgress
-                              variant="determinate"
-                              value={Math.min((avgWait / 60) * 100, 100)}
-                              color={avgWait <= 15 ? 'success' : avgWait <= 30 ? 'warning' : 'error'}
-                              sx={{ mt: 0.5, height: 8, borderRadius: 4 }}
-                            />
-                            <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary">0 min</Typography>
-                              <Typography variant="caption" color="text.secondary">60 min</Typography>
-                            </Stack>
-                          </Box>
-                        )}
-                      </Box>
-                      <Box sx={{ bgcolor: 'error.50', p: 1.5, borderRadius: 2 }}>
-                        <WaitIcon sx={{ fontSize: 32, color: 'error.main' }} />
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                <StatCard
+                  title="Temps d'Attente Moyen"
+                  value={avgWait > 0 ? `${Math.round(avgWait)} min` : '0 min'}
+                  icon={<WaitIcon />}
+                  color="#ef4444"
+                  subtitle={`Basé sur ${visitsTracked} visites suivies`}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
-                <Card sx={{ borderLeft: 4, borderColor: 'secondary.main' }}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Box sx={{ flex: 1 }}>
-                        <Chip label="N°5" size="small" sx={{ mb: 1, bgcolor: 'secondary.main', color: '#fff', fontWeight: 700 }} />
-                        <Typography variant="body2" color="text.secondary" fontWeight="600" gutterBottom>
-                          Duree Moyenne de Consultation
-                        </Typography>
-                        <Typography variant="h3" fontWeight="800" color="secondary.main">
-                          {avgDuration > 0 ? `${Math.round(avgDuration)} min` : '0 min'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                          Duree entre debut et fin de consultation
-                        </Typography>
-                        {avgDuration > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary">Plage normale : 10-30 min</Typography>
-                            <LinearProgress
-                              variant="determinate"
-                              value={Math.min((avgDuration / 60) * 100, 100)}
-                              color={avgDuration >= 10 && avgDuration <= 30 ? 'success' : 'warning'}
-                              sx={{ mt: 0.5, height: 8, borderRadius: 4 }}
-                            />
-                            <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary">0 min</Typography>
-                              <Typography variant="caption" color="text.secondary">60 min</Typography>
-                            </Stack>
-                          </Box>
-                        )}
-                      </Box>
-                      <Box sx={{ bgcolor: 'secondary.50', p: 1.5, borderRadius: 2 }}>
-                        <TimerIcon sx={{ fontSize: 32, color: 'secondary.main' }} />
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                <StatCard
+                  title="Durée Moyenne Consultation"
+                  value={avgDuration > 0 ? `${Math.round(avgDuration)} min` : '0 min'}
+                  icon={<TimerIcon />}
+                  color="#6366f1"
+                  subtitle="Temps moyen effectif avec le médecin"
+                />
+              </Grid>
+            </Grid>
+
+            {/* ========== SECTION 2b: LABORATOIRE - DELAIS PAR TEST ========== */}
+            <SectionHeader
+              title="Laboratoire - Délais par Test"
+              subtitle="Temps de traitement réel vs estimé pour chaque type d'examen"
+              icon={LabIcon}
+            />
+
+            <Grid container spacing={3} mb={3}>
+              <Grid item xs={12} md={5}>
+                <LabOrdersStatusWidget period={period === 'day' ? 'last_7_days' : period === 'week' ? 'last_7_days' : 'last_30_days'} />
+              </Grid>
+              <Grid item xs={12} md={7}>
+                <LabTurnaroundWidget period={period === 'day' ? 'last_7_days' : period === 'week' ? 'last_7_days' : 'last_30_days'} />
               </Grid>
             </Grid>
 
             {/* ========== SECTION 3: INDICATEURS FINANCIERS ========== */}
             <SectionHeader
               title="Indicateurs Financiers"
-              subtitle="Suivi du chiffre d'affaires et des couts moyens"
+              subtitle="Suivi du chiffre d'affaires et des coûts moyens"
               icon={MoneyIcon}
             />
 
             <Grid container spacing={2} mb={3}>
               <Grid item xs={12} md={4}>
-                <IndicatorCard
-                  number={6}
+                <StatCard
                   title="Chiffre d'Affaires"
                   value={formatCurrency(totalRevenue)}
+                  icon={<MoneyIcon />}
+                  color="#10b981"
                   subtitle={`Consultations: ${formatCurrency(consultRevenue)} | Labo: ${formatCurrency(labRevenue)}`}
-                  icon={MoneyIcon}
-                  color="success.main"
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <IndicatorCard
-                  number={7}
-                  title="Cout Moyen par Consultation"
+                <StatCard
+                  title="Coût Moyen / Consultation"
                   value={formatCurrency(avgConsultCost)}
-                  subtitle={`Cout moyen labo: ${formatCurrency(avgLabCost)}`}
-                  icon={ConsultIcon}
+                  icon={<ConsultIcon />}
                   color="#8b5cf6"
+                  subtitle={`Coût moyen labo: ${formatCurrency(avgLabCost)}`}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <Card sx={{ height: '100%', borderLeft: 4, borderColor: '#ec4899' }}>
-                  <CardContent>
-                    <Chip label="Synth." size="small" sx={{ mb: 1, bgcolor: '#ec4899', color: '#fff', fontWeight: 700 }} />
-                    <Typography variant="body2" color="text.secondary" fontWeight="600" gutterBottom>
-                      Cout Moyen par Acte
-                    </Typography>
-                    <Typography variant="h4" fontWeight="800" sx={{ color: '#ec4899' }}>
-                      {formatCurrency(avgCostPerAct)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                      Moyenne globale (consultations + examens)
-                    </Typography>
-                  </CardContent>
-                </Card>
+                <StatCard
+                  title="Coût Moyen / Acte"
+                  value={formatCurrency(avgCostPerAct)}
+                  icon={<MedicalIcon />}
+                  color="#ec4899"
+                  subtitle="Moyenne globale (consultations + examens)"
+                />
               </Grid>
             </Grid>
 
             {/* Revenue charts */}
             <Grid container spacing={3} mb={3}>
               <Grid item xs={12} md={8}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="subtitle1" fontWeight="700" mb={2}>
-                    Evolution du Chiffre d'Affaires
-                  </Typography>
+                <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: t => t.palette.mode === 'light' ? '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff' : '8px 8px 16px #0f1419, -8px -8px 16px #2d3340' }}>
+                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                    <TrendingUpIcon sx={{ color: 'success.main' }} />
+                    <Typography variant="subtitle1" fontWeight="700">Évolution des Revenus</Typography>
+                  </Stack>
                   {revenueTimeline.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={revenueTimeline}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} />
-                        <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                        <Tooltip labelFormatter={formatFullDate} formatter={(val) => [formatCurrency(val), 'Revenu']} />
-                        <Area type="monotone" dataKey="revenue" name="Revenu" stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} />
+                        <defs>
+                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={alpha('#94a3b8', 0.1)} />
+                        <XAxis dataKey="date" tickFormatter={(val) => formatDate(val)} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} labelFormatter={formatFullDate} formatter={(val) => [formatCurrency(val), 'Revenu']} />
+                        <Area type="monotone" dataKey="revenue" name="Revenu" stroke="#10b981" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucune donnee de revenu</Typography>
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucune donnée de revenu disponible</Typography>
                   )}
                 </Paper>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 3, height: '100%' }}>
-                  <Typography variant="subtitle1" fontWeight="700" mb={2}>
-                    Repartition du CA par Module
-                  </Typography>
+                <Paper sx={{ p: 3, height: '100%', borderRadius: '16px', boxShadow: t => t.palette.mode === 'light' ? '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff' : '8px 8px 16px #0f1419, -8px -8px 16px #2d3340' }}>
+                  <Typography variant="subtitle1" fontWeight="700" mb={2}>Répartition par Module</Typography>
                   {revenuePie.length > 0 ? (
                     <>
                       <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
-                          <Pie data={revenuePie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70}
-                            label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}>
+                          <Pie data={revenuePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
                             {revenuePie.map((entry, idx) => (
                               <Cell key={idx} fill={entry.color} />
                             ))}
@@ -486,96 +425,62 @@ const ActivityIndicatorsPage = () => {
                           <Tooltip formatter={(val) => formatCurrency(val)} />
                         </PieChart>
                       </ResponsiveContainer>
-                      <Stack spacing={1} mt={1}>
+                      <Stack spacing={2} mt={2}>
                         {revenuePie.map((item, idx) => (
-                          <Box key={`rev-${idx}-${item.name}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-                              <Typography variant="body2">{item.name}</Typography>
+                          <Box key={`rev-${idx}`} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              <Box sx={{ width: 12, height: 12, borderRadius: '4px', bgcolor: item.color, boxShadow: `0 2px 4px ${alpha(item.color, 0.4)}` }} />
+                              <Typography variant="body2" fontWeight="500">{item.name}</Typography>
                             </Stack>
                             <Typography variant="body2" fontWeight="700">{formatCurrency(item.value)}</Typography>
                           </Box>
                         ))}
-                        <Divider />
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, borderRadius: '12px', bgcolor: alpha('#10b981', 0.05) }}>
                           <Typography variant="body2" fontWeight="700">Total CA</Typography>
-                          <Typography variant="body2" fontWeight="700" color="success.main">{formatCurrency(totalRevenue)}</Typography>
+                          <Typography variant="body2" fontWeight="800" color="success.main">{formatCurrency(totalRevenue)}</Typography>
                         </Box>
                       </Stack>
                     </>
                   ) : (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucun revenu</Typography>
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>Aucune donnée financière</Typography>
                   )}
                 </Paper>
               </Grid>
             </Grid>
 
-            {/* Summary table */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="subtitle1" fontWeight="700" mb={2}>
-                Recapitulatif des Indicateurs
-              </Typography>
+            {/* Summary Table */}
+            <Paper sx={{ p: 3, mb: 3, borderRadius: '16px', boxShadow: t => t.palette.mode === 'light' ? '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff' : '8px 8px 16px #0f1419, -8px -8px 16px #2d3340' }}>
+              <Typography variant="subtitle1" fontWeight="700" mb={2}>Récapitulatif des Indicateurs</Typography>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
                       <TableCell sx={{ fontWeight: 700 }}>N°</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Indicateur</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Categorie</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Catégorie</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>Valeur</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Detail</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Détail</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    <TableRow hover>
-                      <TableCell><Chip label="1" size="small" color="primary" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Consultations / Periode</Typography></TableCell>
-                      <TableCell><Chip label="Volume" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{numConsultations}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Sur {periodLabel}</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="2" size="small" color="warning" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Nouveaux Patients</Typography></TableCell>
-                      <TableCell><Chip label="Volume" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{newPatients}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Premiere visite dans la periode</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="3" size="small" color="info" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Actes Medicaux</Typography></TableCell>
-                      <TableCell><Chip label="Volume" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{totalActs}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">{actsConsult} consult. + {actsLab} labos + {actsCare} soins</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="4" size="small" color="error" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Temps d'Attente Moyen</Typography></TableCell>
-                      <TableCell><Chip label="Performance" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{avgWait > 0 ? `${Math.round(avgWait)} min` : '0 min'}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Base sur {visitsTracked} visites</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="5" size="small" color="secondary" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Duree Moy. Consultation</Typography></TableCell>
-                      <TableCell><Chip label="Performance" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{avgDuration > 0 ? `${Math.round(avgDuration)} min` : '0 min'}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Debut a fin de consultation</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="6" size="small" color="success" /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Chiffre d'Affaires</Typography></TableCell>
-                      <TableCell><Chip label="Financier" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700" color="success.main">{formatCurrency(totalRevenue)}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Consult: {formatCurrency(consultRevenue)} | Labo: {formatCurrency(labRevenue)}</Typography></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="7" size="small" sx={{ bgcolor: '#8b5cf6', color: '#fff' }} /></TableCell>
-                      <TableCell><Typography variant="body2" fontWeight="600">Cout Moyen par Acte</Typography></TableCell>
-                      <TableCell><Chip label="Financier" size="small" variant="outlined" /></TableCell>
-                      <TableCell align="right"><Typography fontWeight="700">{formatCurrency(avgCostPerAct)}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">Consult: {formatCurrency(avgConsultCost)} | Labo: {formatCurrency(avgLabCost)}</Typography></TableCell>
-                    </TableRow>
+                    {[
+                      { id: 1, color: 'primary', label: 'Consultations', cat: 'Volume', val: numConsultations, detail: `Sur ${periodLabel}` },
+                      { id: 2, color: 'warning', label: 'Nouveaux Patients', cat: 'Volume', val: newPatients, detail: 'Première visite' },
+                      { id: 3, color: 'info', label: 'Actes Médicaux', cat: 'Volume', val: totalActs, detail: `${actsConsult} consult | ${actsLab} labo` },
+                      { id: 4, color: 'error', label: "Temps d'Attente", cat: 'Performance', val: `${Math.round(avgWait)} min`, detail: `Basé sur ${visitsTracked} visites` },
+                      { id: 5, color: 'secondary', label: 'Durée Consultation', cat: 'Performance', val: `${Math.round(avgDuration)} min`, detail: 'Temps effectif' },
+                      { id: 6, color: 'success', label: "Chiffre d'Affaires", cat: 'Financier', val: formatCurrency(totalRevenue), detail: `Consult: ${formatCurrency(consultRevenue)}` },
+                      { id: 7, color: 'purple', label: 'Coût Moyen / Acte', cat: 'Financier', val: formatCurrency(avgCostPerAct), detail: 'Moyenne globale' },
+                    ].map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell><Chip label={row.id} size="small" color={row.color === 'purple' ? 'default' : row.color} sx={row.color === 'purple' ? { bgcolor: '#8b5cf6', color: '#fff' } : {}} /></TableCell>
+                        <TableCell><Typography variant="body2" fontWeight="600">{row.label}</Typography></TableCell>
+                        <TableCell><Chip label={row.cat} size="small" variant="outlined" /></TableCell>
+                        <TableCell align="right"><Typography fontWeight="700">{row.val}</Typography></TableCell>
+                        <TableCell><Typography variant="caption" color="text.secondary">{row.detail}</Typography></TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>

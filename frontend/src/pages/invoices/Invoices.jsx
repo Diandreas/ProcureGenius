@@ -77,7 +77,16 @@ function Invoices() {
   const [quickFilter, setQuickFilter] = useState('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+  const toLocalDateStr = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+  const parseLocalDate = (str) => { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); };
+  const getTodayStr = () => toLocalDateStr(new Date());
+
   const searchTerm = searchParams.get('search') || '';
   const statusFilter = searchParams.get('status') || '';
   const startDate = searchParams.get('startDate') || getTodayStr();
@@ -88,6 +97,14 @@ function Invoices() {
       const next = new URLSearchParams(prev);
       if (value) next.set(key, value);
       else next.delete(key);
+      return next;
+    }, { replace: true });
+  };
+  const setDateRange = (start, end) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (start) next.set('startDate', start); else next.delete('startDate');
+      if (end) next.set('endDate', end); else next.delete('endDate');
       return next;
     }, { replace: true });
   };
@@ -547,10 +564,10 @@ function Invoices() {
                         size="small"
                         variant="outlined"
                         onClick={() => {
-                          const d = new Date(startDate);
+                          const d = parseLocalDate(startDate);
                           d.setDate(d.getDate() - 1);
-                          const s = d.toISOString().split('T')[0];
-                          setStartDate(s); setEndDate(s);
+                          const s = toLocalDateStr(d);
+                          setDateRange(s, s);
                         }}
                         sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem', textTransform: 'none' }}
                       >
@@ -559,7 +576,7 @@ function Invoices() {
                       <Button
                         size="small"
                         variant={startDate === getTodayStr() && endDate === getTodayStr() ? 'contained' : 'outlined'}
-                        onClick={() => { const t = getTodayStr(); setStartDate(t); setEndDate(t); }}
+                        onClick={() => { const t = getTodayStr(); setDateRange(t, t); }}
                         sx={{ minWidth: 'auto', px: 1.5, fontSize: '0.7rem', textTransform: 'none' }}
                       >
                         Aujourd'hui
@@ -568,10 +585,10 @@ function Invoices() {
                         size="small"
                         variant="outlined"
                         onClick={() => {
-                          const d = new Date(endDate);
+                          const d = parseLocalDate(endDate);
                           d.setDate(d.getDate() + 1);
-                          const s = d.toISOString().split('T')[0];
-                          setStartDate(s); setEndDate(s);
+                          const s = toLocalDateStr(d);
+                          setDateRange(s, s);
                         }}
                         sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem', textTransform: 'none' }}
                       >
@@ -679,35 +696,6 @@ function Invoices() {
               </IconButton>
             </Box>
 
-            {/* Date range quick indicator */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <TextField
-                size="small"
-                type="date"
-                label="Du"
-                value={startDate}
-                onChange={(e) => { setStartDate(e.target.value); if (e.target.value > endDate) setEndDate(e.target.value); }}
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: 150 }}
-              />
-              <TextField
-                size="small"
-                type="date"
-                label="Au"
-                value={endDate}
-                onChange={(e) => { setEndDate(e.target.value); if (e.target.value < startDate) setStartDate(e.target.value); }}
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: 150 }}
-              />
-              <Button size="small" variant="outlined" onClick={() => {
-                const d = new Date(); const wd = d.getDay();
-                const mon = new Date(d); mon.setDate(d.getDate() - (wd === 0 ? 6 : wd - 1));
-                const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-                setStartDate(mon.toISOString().split('T')[0]);
-                setEndDate(sun.toISOString().split('T')[0]);
-              }} sx={{ fontSize: '0.7rem', textTransform: 'none' }}>Cette semaine</Button>
-            </Box>
-
             {showFilters && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
@@ -739,6 +727,34 @@ function Invoices() {
                         <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
                       </Select>
                     </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <TextField
+                        size="small"
+                        type="date"
+                        label="Du"
+                        value={startDate}
+                        onChange={(e) => { setStartDate(e.target.value); if (e.target.value > endDate) setEndDate(e.target.value); }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ width: 150 }}
+                      />
+                      <TextField
+                        size="small"
+                        type="date"
+                        label="Au"
+                        value={endDate}
+                        onChange={(e) => { setEndDate(e.target.value); if (e.target.value < startDate) setStartDate(e.target.value); }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ width: 150 }}
+                      />
+                      <Button size="small" variant="outlined" onClick={() => {
+                        const d = new Date(); const wd = d.getDay();
+                        const mon = new Date(d); mon.setDate(d.getDate() - (wd === 0 ? 6 : wd - 1));
+                        const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+                        setDateRange(toLocalDateStr(mon), toLocalDateStr(sun));
+                      }} sx={{ fontSize: '0.7rem', textTransform: 'none' }}>Cette semaine</Button>
+                    </Box>
                   </Grid>
                 </Grid>
               </motion.div>

@@ -8,9 +8,9 @@ import {
   ToggleButton,
   CircularProgress,
   Divider,
-  Chip,
-  alpha
+  Chip
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   CalendarToday as CalendarIcon,
   People as PeopleIcon,
