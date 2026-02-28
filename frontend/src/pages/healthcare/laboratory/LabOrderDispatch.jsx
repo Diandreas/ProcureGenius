@@ -66,7 +66,8 @@ const LabOrderDispatch = () => {
             if (type === 'receipt') {
                 // Prioritize invoice receipt (includes discounts and correct kit price)
                 if (order.lab_invoice) {
-                    blob = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+                    const res = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+                    blob = res.data;
                     filename = `recu_facture_${order.lab_invoice.invoice_number}.pdf`;
                 } else {
                     blob = await laboratoryAPI.getReceiptPDF(id);
@@ -74,7 +75,8 @@ const LabOrderDispatch = () => {
                 }
             } else if (type === 'invoice_a4') {
                 if (order.lab_invoice) {
-                    blob = await invoicesAPI.getPDF(order.lab_invoice.id);
+                    const res = await invoicesAPI.getPDF(order.lab_invoice.id);
+                    blob = res.data;
                     filename = `facture_${order.lab_invoice.invoice_number}.pdf`;
                 } else {
                     enqueueSnackbar('Aucune facture associée pour le format A4', { variant: 'warning' });
@@ -120,7 +122,8 @@ const LabOrderDispatch = () => {
         try {
             let blob;
             if (order.lab_invoice) {
-                blob = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+                const response = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+                blob = response.data;
             } else {
                 blob = await laboratoryAPI.getReceiptPDF(id);
             }
@@ -158,7 +161,8 @@ const LabOrderDispatch = () => {
         }
         setGeneratingPdf(true);
         try {
-            const blob = await invoicesAPI.getPDF(order.lab_invoice.id);
+            const response = await invoicesAPI.getPDF(order.lab_invoice.id);
+            const blob = response.data;
             const filename = `facture_${order.lab_invoice.invoice_number}.pdf`;
             const url = window.URL.createObjectURL(blob);
             if (action === 'download') {
