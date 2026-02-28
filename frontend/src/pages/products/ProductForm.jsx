@@ -263,6 +263,7 @@ function ProductForm() {
             if (isEdit) {
                 await productsAPI.update(id, payload);
                 enqueueSnackbar('Produit mis à jour', { variant: 'success' });
+                navigate(`/products/${id}`);
             } else {
                 // Si lot initial → le stock sera géré par la création du lot (évite double-comptage)
                 const productPayload = createInitialBatch && values.product_type === 'physical' && initialBatch.expiry_date
@@ -293,8 +294,8 @@ function ProductForm() {
                 } else {
                     enqueueSnackbar('Produit créé', { variant: 'success' });
                 }
+                navigate('/products');
             }
-            navigate('/products');
         } catch (error) {
             console.error(error);
             const msg = error.response?.data ? JSON.stringify(error.response.data) : 'Erreur';

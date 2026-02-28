@@ -28,6 +28,7 @@ import {
   PlayArrow,
   SkipNext,
 } from '@mui/icons-material';
+import { authAPI } from '../../services/api';
 
 // Contexte du tutoriel
 const TutorialContext = createContext();
@@ -313,23 +314,17 @@ export const TutorialProvider = ({ children }) => {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) return;
 
-        const response = await fetch('/api/v1/accounts/profile/', {
-          headers: { 'Authorization': `Token ${authToken}` },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const modules = data.preferences?.enabled_modules || data.accessible_modules || [];
-          setUserModules(modules);
-          
-          // Filtrer les étapes selon les modules activés
-          const filteredSteps = DEFAULT_TUTORIAL_STEPS.filter(step => {
-            if (!step.module) return true; // Étapes générales
-            return modules.includes(step.module);
-          });
-          setTutorialSteps(filteredSteps);
-        }
-      } catch (error) {
+                const response = await authAPI.getProfile();
+                const data = response.data;
+                const modules = data.preferences?.enabled_modules || data.accessible_modules || [];
+                setUserModules(modules);
+        
+                // Filtrer les étapes selon les modules activés
+                const filteredSteps = DEFAULT_TUTORIAL_STEPS.filter(step => {
+                  if (!step.module) return true; // Étapes générales
+                  return modules.includes(step.module);
+                });
+                setTutorialSteps(filteredSteps);      } catch (error) {
         console.error('Error loading user modules for tutorial:', error);
       }
     };

@@ -253,17 +253,33 @@ class LabOrderHistorySerializer(serializers.Serializer):
         return obj.items.count() if hasattr(obj, 'items') else 0
 
     def get_items(self, obj):
-        """Return simplified test items"""
+        """Return simplified test items with descriptive results"""
         try:
             if not hasattr(obj, 'items'):
                 return []
             items_list = []
+            # Prefetch parameters if possible, though here it might be handled by caller
             for item in obj.items.all():
                 try:
+                    display_value = item.result_value
+                    
+                    # If numeric result exists but no text value
+                    if not display_value and item.result_numeric is not None:
+                        display_value = str(item.result_numeric)
+                    
+                    # Handle compound tests (voir paramètres)
+                    if (display_value == 'voir paramètres' or not display_value) and hasattr(item, 'parameter_results') and item.parameter_results.exists():
+                        abnormal_params = item.parameter_results.exclude(flag='N')
+                        if abnormal_params.exists():
+                            param_details = [f"{ap.parameter.name}: {ap.result_numeric if ap.result_numeric is not None else ap.result_text}" for ap in abnormal_params]
+                            display_value = f"Anormal: {', '.join(param_details)}"
+                        else:
+                            display_value = "Résultats normaux"
+
                     items_list.append({
                         'id': str(item.id),
                         'test_name': item.lab_test.name if item.lab_test else '',
-                        'result_value': item.result_value or '',
+                        'result_value': display_value or '',
                         'is_abnormal': item.is_abnormal,
                     })
                 except Exception:

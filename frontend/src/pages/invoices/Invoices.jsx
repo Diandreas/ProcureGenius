@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -73,11 +73,28 @@ function Invoices() {
   const { invoices, loading, error } = useSelector((state) => state.invoices);
 
   // Local UI state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const getTodayStr = () => new Date().toISOString().split('T')[0];
+  const searchTerm = searchParams.get('search') || '';
+  const statusFilter = searchParams.get('status') || '';
+  const startDate = searchParams.get('startDate') || getTodayStr();
+  const endDate = searchParams.get('endDate') || getTodayStr();
+
+  const updateParam = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set(key, value);
+      else next.delete(key);
+      return next;
+    }, { replace: true });
+  };
+  const setSearchTerm = (v) => updateParam('search', v);
+  const setStatusFilter = (v) => updateParam('status', v);
+  const setStartDate = (v) => updateParam('startDate', v);
+  const setEndDate = (v) => updateParam('endDate', v);
   const [reportConfigOpen, setReportConfigOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -187,10 +204,12 @@ function Invoices() {
       return true;
     })();
 
-    const matchesDate = !selectedDate || (() => {
-      // Filtrer par date de création
+    const matchesDate = (() => {
       const createdAt = invoice.created_at ? invoice.created_at.split('T')[0] : null;
-      return createdAt === selectedDate;
+      if (!createdAt) return true;
+      if (startDate && createdAt < startDate) return false;
+      if (endDate && createdAt > endDate) return false;
+      return true;
     })();
 
     return matchesSearch && matchesStatus && matchesQuick && matchesDate;
@@ -517,7 +536,7 @@ function Invoices() {
                       {filteredInvoices.length}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 500, mt: 0.5 }}>
-                      {selectedDate ? 'Factures du jour' : 'Factures totales'}
+                      {startDate === endDate ? 'Factures du jour' : 'Factures de la période'}
                     </Typography>
                   </Box>
 
@@ -528,29 +547,20 @@ function Invoices() {
                         size="small"
                         variant="outlined"
                         onClick={() => {
-                          const currentDate = selectedDate ? new Date(selectedDate) : new Date();
-                          currentDate.setDate(currentDate.getDate() - 1);
-                          setSelectedDate(currentDate.toISOString().split('T')[0]);
+                          const d = new Date(startDate);
+                          d.setDate(d.getDate() - 1);
+                          const s = d.toISOString().split('T')[0];
+                          setStartDate(s); setEndDate(s);
                         }}
-                        sx={{
-                          minWidth: 'auto',
-                          px: 1,
-                          fontSize: '0.7rem',
-                          textTransform: 'none'
-                        }}
+                        sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem', textTransform: 'none' }}
                       >
-                        Jour précédent
+                        ‹ Préc.
                       </Button>
                       <Button
                         size="small"
-                        variant={selectedDate === new Date().toISOString().split('T')[0] || !selectedDate ? 'contained' : 'outlined'}
-                        onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                        sx={{
-                          minWidth: 'auto',
-                          px: 1.5,
-                          fontSize: '0.7rem',
-                          textTransform: 'none'
-                        }}
+                        variant={startDate === getTodayStr() && endDate === getTodayStr() ? 'contained' : 'outlined'}
+                        onClick={() => { const t = getTodayStr(); setStartDate(t); setEndDate(t); }}
+                        sx={{ minWidth: 'auto', px: 1.5, fontSize: '0.7rem', textTransform: 'none' }}
                       >
                         Aujourd'hui
                       </Button>
@@ -558,25 +568,19 @@ function Invoices() {
                         size="small"
                         variant="outlined"
                         onClick={() => {
-                          const currentDate = selectedDate ? new Date(selectedDate) : new Date();
-                          currentDate.setDate(currentDate.getDate() + 1);
-                          setSelectedDate(currentDate.toISOString().split('T')[0]);
+                          const d = new Date(endDate);
+                          d.setDate(d.getDate() + 1);
+                          const s = d.toISOString().split('T')[0];
+                          setStartDate(s); setEndDate(s);
                         }}
-                        sx={{
-                          minWidth: 'auto',
-                          px: 1,
-                          fontSize: '0.7rem',
-                          textTransform: 'none'
-                        }}
+                        sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem', textTransform: 'none' }}
                       >
-                        Jour suivant
+                        Suiv. ›
                       </Button>
                     </Stack>
-                    {selectedDate && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1, fontSize: '0.7rem' }}>
-                        {formatDate(selectedDate)}
-                      </Typography>
-                    )}
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1, fontSize: '0.7rem' }}>
+                      {startDate === endDate ? formatDate(startDate) : `${formatDate(startDate)} → ${formatDate(endDate)}`}
+                    </Typography>
                   </Box>
                 </Stack>
               </CardContent>
@@ -675,20 +679,34 @@ function Invoices() {
               </IconButton>
             </Box>
 
-            {/* Date filter indicator */}
-            {selectedDate && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('invoices:filters.dateFilter', 'Filtre par date')}:
-                </Typography>
-                <Chip
-                  label={formatDate(selectedDate)}
-                  onDelete={() => setSelectedDate('')}
-                  color="primary"
-                  size="small"
-                />
-              </Box>
-            )}
+            {/* Date range quick indicator */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <TextField
+                size="small"
+                type="date"
+                label="Du"
+                value={startDate}
+                onChange={(e) => { setStartDate(e.target.value); if (e.target.value > endDate) setEndDate(e.target.value); }}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: 150 }}
+              />
+              <TextField
+                size="small"
+                type="date"
+                label="Au"
+                value={endDate}
+                onChange={(e) => { setEndDate(e.target.value); if (e.target.value < startDate) setStartDate(e.target.value); }}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: 150 }}
+              />
+              <Button size="small" variant="outlined" onClick={() => {
+                const d = new Date(); const wd = d.getDay();
+                const mon = new Date(d); mon.setDate(d.getDate() - (wd === 0 ? 6 : wd - 1));
+                const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+                setStartDate(mon.toISOString().split('T')[0]);
+                setEndDate(sun.toISOString().split('T')[0]);
+              }} sx={{ fontSize: '0.7rem', textTransform: 'none' }}>Cette semaine</Button>
+            </Box>
 
             {showFilters && (
               <motion.div

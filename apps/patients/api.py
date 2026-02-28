@@ -615,17 +615,34 @@ class PatientMedicalSummaryView(APIView):
         summary['abnormal_results'] = []
         if LabOrder:
             from apps.laboratory.models import LabOrderItem
+            # Get latest abnormal items, prefetching parameters for compound tests
             abnormal_items = LabOrderItem.objects.filter(
                 lab_order__patient=patient,
                 is_abnormal=True,
-                result_value__isnull=False,
-            ).select_related('lab_test', 'lab_order').order_by('-result_entered_at')[:5]
+            ).select_related('lab_test', 'lab_order').prefetch_related(
+                'parameter_results__parameter'
+            ).order_by('-result_entered_at', '-lab_order__order_date')[:5]
 
             for item in abnormal_items:
+                # Better handling of compound tests (e.g. NFS)
+                display_value = item.result_value
+                if (item.result_value == 'voir paramètres' or not item.result_value) and item.parameter_results.exists():
+                    abnormal_params = item.parameter_results.exclude(flag='N')
+                    if abnormal_params.exists():
+                        param_details = []
+                        for ap in abnormal_params:
+                            val = ap.result_numeric if ap.result_numeric is not None else ap.result_text
+                            param_details.append(f"{ap.parameter.name}: {val}")
+                        display_value = f"Paramètres: {', '.join(param_details)}"
+                    elif item.result_numeric is not None:
+                        display_value = str(item.result_numeric)
+                elif not item.result_value and item.result_numeric is not None:
+                    display_value = str(item.result_numeric)
+
                 summary['abnormal_results'].append({
                     'test_name': item.lab_test.name if item.lab_test else '',
                     'test_code': item.lab_test.test_code if item.lab_test else '',
-                    'result_value': item.result_value,
+                    'result_value': display_value or 'N/A',
                     'reference_range': item.reference_range or '',
                     'is_critical': item.is_critical,
                     'date': item.result_entered_at or item.lab_order.order_date,

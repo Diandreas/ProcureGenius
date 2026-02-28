@@ -52,6 +52,7 @@ import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
+import QuickClientCreateModal from '../healthcare/laboratory/components/QuickClientCreateModal';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 import dayjs from 'dayjs';
@@ -211,11 +212,13 @@ function InvoiceForm() {
 
   // Quick Create handlers
   const handleClientCreated = (result) => {
-    enqueueSnackbar(result.message || t('common:messages.clientCreatedSuccess'), { variant: 'success' });
+    // result est soit l'objet data directement (depuis QuickClientCreateModal), soit {data, message} (depuis QuickCreateDialog)
+    const newClient = result.data || result;
+    
     // Ajouter le nouveau client à la liste
-    setClients(prev => [...prev, result.data]);
+    setClients(prev => [...prev, newClient]);
     // Sélectionner automatiquement le nouveau client
-    setFormData(prev => ({ ...prev, client: result.data }));
+    setFormData(prev => ({ ...prev, client: newClient }));
     fetchClients(); // Rafraîchir la liste complète
   };
 
@@ -282,10 +285,15 @@ function InvoiceForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (!formData.title.trim()) {
       enqueueSnackbar(t('invoices:messages.enterTitleRequired'), { variant: 'error' });
+      return;
+    }
+
+    if (!formData.client) {
+      enqueueSnackbar('Veuillez sélectionner un client ou créer un patient (obligatoire)', { variant: 'warning' });
       return;
     }
 
@@ -560,7 +568,7 @@ function InvoiceForm() {
                 <CardContent sx={{ p: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                      {t('invoices:labels.client')}
+                      Patient / Client
                     </Typography>
                     <IconButton
                       size="small"
@@ -586,7 +594,8 @@ function InvoiceForm() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Sélectionner un client"
+                        label="Sélectionner un client/patient *"
+                        required
                         size="small"
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
@@ -892,7 +901,7 @@ function InvoiceForm() {
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Client
+                        Client / Patient
                       </Typography>
                       <IconButton
                         size="small"
@@ -916,7 +925,8 @@ function InvoiceForm() {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label={t('invoices:fields.selectClient')}
+                          label={`${t('invoices:fields.selectClient')} *`}
+                          required
                           sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                           InputProps={{
                             ...params.InputProps,
@@ -1003,14 +1013,10 @@ function InvoiceForm() {
         />
 
         {/* Quick Create Dialogs */}
-        <QuickCreateDialog
+        <QuickClientCreateModal
           open={clientDialogOpen}
           onClose={() => setClientDialogOpen(false)}
           onSuccess={handleClientCreated}
-          entityType="client"
-          fields={clientFields}
-          createFunction={clientsAPI.quickCreate}
-          title={t('invoices:dialogs.quickCreateClient')}
         />
 
         <QuickCreateDialog

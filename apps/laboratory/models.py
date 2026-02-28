@@ -736,8 +736,8 @@ class LabOrderItem(models.Model):
                     is_child=is_child
                 )
         
-        # Set result_entered_at when result is first entered
-        if self.result_value and not self.result_entered_at:
+        # Set result_entered_at when result is first entered (either text or numeric)
+        if (self.result_value or self.result_numeric is not None) and not self.result_entered_at:
             self.result_entered_at = timezone.now()
         
         super().save(*args, **kwargs)

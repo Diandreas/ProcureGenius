@@ -71,6 +71,29 @@ export const authAPI = {
   },
   getProfile: () => api.get('/accounts/profile/'),
   googleLogin: (token) => api.post('/auth/google/', { token }),
+  // User & Permission Management
+  getUsers: () => api.get('/accounts/organization/users/'),
+  createUser: (data) => api.post('/accounts/organization/users/', data),
+  updateUser: (id, data) => api.put(`/accounts/organization/users/${id}/`, data),
+  deleteUser: (id) => api.delete(`/accounts/organization/users/${id}/`),
+  getUserPermissions: (id) => api.get(`/accounts/organization/users/${id}/permissions/`),
+  updateUserPermissions: (id, data) => api.put(`/accounts/organization/users/${id}/permissions/`, data),
+  // Preferences
+  updatePreferences: (data) => api.put('/accounts/preferences/', data),
+  // Email Configuration
+  getEmailConfig: () => api.get('/accounts/email-config/'),
+  saveEmailConfig: (data, isNew = false) => isNew ? api.post('/accounts/email-config/', data) : api.patch('/accounts/email-config/', data),
+  testEmailConfig: (data) => api.post('/accounts/email-config/test/', data),
+  verifyEmailConfig: () => api.post('/accounts/email-config/verify/'),
+  // Organization Settings
+  getOrganizationSettings: () => api.get('/accounts/organization/settings/'),
+  updateOrganizationSettings: (data) => {
+    // Check if it's FormData for logo upload
+    if (data instanceof FormData) {
+      return api.post('/accounts/organization/settings/', data);
+    }
+    return api.put('/accounts/organization/settings/', data);
+  },
 };
 
 // Suppliers API
@@ -112,6 +135,7 @@ export const invoicesAPI = {
   sendEmail: (id, data) => api.post(`/invoices/${id}/send/`, data),
   markPaid: (id, data) => api.post(`/invoices/${id}/mark_paid/`, data),
   getReceiptPDF: (id) => api.get(`/invoices/${id}/receipt/`, { responseType: 'blob' }),
+  getPDF: (id) => api.get(`/invoices/${id}/pdf/`, { responseType: 'blob' }),
 };
 
 // Products API
@@ -202,6 +226,11 @@ export const aiChatAPI = {
   getProactiveConversations: () => api.get('/ai/proactive-conversations/'),
   acceptProactiveConversation: (id) => api.post(`/ai/proactive-conversations/${id}/accept/`),
   dismissProactiveConversation: (id) => api.post(`/ai/proactive-conversations/${id}/dismiss/`),
+};
+
+// Core API
+export const coreAPI = {
+  getModuleCounts: () => api.get('/core/module-counts/'),
 };
 
 // Contracts API

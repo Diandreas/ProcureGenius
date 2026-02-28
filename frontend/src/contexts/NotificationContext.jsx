@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { coreAPI } from '../services/api';
 
 const NotificationContext = createContext({
   counts: null,
@@ -46,12 +47,8 @@ export function NotificationProvider({ children }) {
     if (!token) return;
 
     try {
-      const response = await fetch('/api/v1/core/module-counts/', {
-        headers: { 'Authorization': `Token ${token}` },
-      });
-      if (!response.ok) return;
-
-      const data = await response.json();
+      const response = await coreAPI.getModuleCounts();
+      const data = response.data;
       const prev = previousCountsRef.current;
 
       // Detect increases and fire events / desktop notifications

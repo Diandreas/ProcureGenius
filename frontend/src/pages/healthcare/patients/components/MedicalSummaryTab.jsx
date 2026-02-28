@@ -232,7 +232,7 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
 
             {/* Résultats Labo Anormaux */}
             <Grid item xs={12} md={4}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
+                <Card variant="outlined" sx={{ height: '100%', borderColor: summary.abnormal_results?.some(r => r.is_critical) ? 'error.light' : 'warning.light' }}>
                     <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             <LabIcon color="warning" fontSize="small" />
@@ -241,19 +241,37 @@ const MedicalSummaryTab = ({ patientId, patient }) => {
                         {summary.abnormal_results?.length > 0 ? (
                             <List dense disablePadding>
                                 {summary.abnormal_results.map((result, idx) => (
-                                    <ListItem key={idx} disablePadding sx={{ mb: 1 }}>
+                                    <ListItem key={idx} disablePadding sx={{ mb: 2, alignItems: 'flex-start' }}>
                                         <ListItemText
                                             primary={
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <Typography variant="body2" fontWeight="500">{result.test_name}</Typography>
-                                                    {result.is_critical && <Chip label="Critique" size="small" color="error" />}
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                                    <Typography variant="body2" fontWeight="bold" color={result.is_critical ? "error.main" : "text.primary"}>
+                                                        {result.test_name}
+                                                    </Typography>
+                                                    {result.is_critical && (
+                                                        <Chip 
+                                                            label="CRITIQUE" 
+                                                            size="small" 
+                                                            color="error" 
+                                                            sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }} 
+                                                        />
+                                                    )}
                                                 </Box>
                                             }
                                             secondary={
-                                                <Typography variant="caption">
-                                                    Résultat: <strong>{result.result_value}</strong> (Réf: {result.reference_range || 'N/A'})
-                                                    {result.date && ` - ${formatDate(result.date)}`}
-                                                </Typography>
+                                                <Box>
+                                                    <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500, mb: 0.5, lineHeight: 1.4 }}>
+                                                        {result.result_value}
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Réf: {result.reference_range || 'N/A'}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary" fontWeight="medium">
+                                                            {result.date ? formatDate(result.date) : ''}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
                                             }
                                         />
                                     </ListItem>

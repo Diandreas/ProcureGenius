@@ -39,7 +39,7 @@ import {
     Warning as WarningIcon,
     CheckCircle as CheckIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import consultationAPI from '../../../services/consultationAPI';
@@ -54,11 +54,27 @@ const ConsultationList = () => {
 
     const [loading, setLoading] = useState(false);
     const [consultations, setConsultations] = useState([]);
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
     const [showCompleted, setShowCompleted] = useState(false);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const getTodayStr = () => new Date().toISOString().split('T')[0];
+    const search = searchParams.get('search') || '';
+    const statusFilter = searchParams.get('status') || 'all';
+    const startDate = searchParams.get('startDate') || getTodayStr();
+    const endDate = searchParams.get('endDate') || getTodayStr();
+
+    const updateParam = (key, value) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            if (value && value !== 'all') next.set(key, value);
+            else next.delete(key);
+            return next;
+        }, { replace: true });
+    };
+    const setSearch = (v) => updateParam('search', v);
+    const setStatusFilter = (v) => updateParam('status', v);
+    const setStartDate = (v) => updateParam('startDate', v);
+    const setEndDate = (v) => updateParam('endDate', v);
 
     // Compute stats (using real backend statuses)
     const stats = {

@@ -10,6 +10,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { fetchSettings } from './store/slices/settingsSlice';
+import { authAPI } from './services/api';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -676,20 +677,15 @@ function App() {
         return;
       }
 
-      const response = await fetch('/api/v1/accounts/profile/', {
-        headers: { 'Authorization': `Token ${authToken}` },
-      });
+      const response = await authAPI.getProfile();
+      const data = response.data;
 
-      if (response.ok) {
-        const data = await response.json();
+      // Vérifier si l'onboarding est nécessaire
+      const needsOnboarding = checkIfOnboardingNeeded(data);
 
-        // Vérifier si l'onboarding est nécessaire
-        const needsOnboarding = checkIfOnboardingNeeded(data);
-
-        if (needsOnboarding && window.location.pathname !== '/onboarding') {
-          window.location.href = '/onboarding';
-          return;
-        }
+      if (needsOnboarding && window.location.pathname !== '/onboarding') {
+        window.location.href = '/onboarding';
+        return;
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);

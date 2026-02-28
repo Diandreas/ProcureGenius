@@ -29,6 +29,7 @@ import {
     CheckCircle,
 } from '@mui/icons-material';
 import Mascot from '../Mascot';
+import { authAPI, dashboardAPI } from '../../services/api';
 
 // Étapes du tutoriel
 const TUTORIAL_STEPS = [
@@ -136,39 +137,31 @@ const SimpleTutorial = () => {
                     return;
                 }
 
-                const profileUrl = '/api/v1/accounts/profile/';
-                const statsUrl = '/api/v1/dashboard/stats/';
-
-                // Charger depuis plusieurs sources pour être sûr
-                const [profileResponse, statsResponse] = await Promise.allSettled([
-                    fetch(profileUrl, {
-                        headers: { 'Authorization': `Token ${authToken}` },
-                    }),
-                    fetch(statsUrl, {
-                        headers: { 'Authorization': `Token ${authToken}` },
-                    }),
-                ]);
-
-                let modules = [];
-
-                // Extraire depuis profile
-                if (profileResponse.status === 'fulfilled' && profileResponse.value.ok) {
-                    const profileData = await profileResponse.value.json();
-                    modules = profileData.accessible_modules ||
-                        profileData.preferences?.enabled_modules ||
-                        profileData.enabled_modules ||
-                        [];
-                }
-
-                // Extraire depuis stats (plus fiable)
-                if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
-                    const statsData = await statsResponse.value.json();
-                    if (statsData.enabled_modules && Array.isArray(statsData.enabled_modules)) {
-                        // Fusionner les modules (union)
-                        modules = [...new Set([...modules, ...statsData.enabled_modules])];
-                    }
-                }
-
+                                // Charger depuis plusieurs sources
+                                const [profileResponse, statsResponse] = await Promise.allSettled([
+                                    authAPI.getProfile(),
+                                    dashboardAPI.getStats()
+                                ]);
+                
+                                let modules = [];
+                
+                                // Extraire depuis profile
+                                if (profileResponse.status === 'fulfilled') {
+                                    const profileData = profileResponse.value.data;
+                                    modules = profileData.accessible_modules ||
+                                        profileData.preferences?.enabled_modules ||
+                                        profileData.enabled_modules ||
+                                        [];
+                                }
+                
+                                // Extraire depuis stats (plus fiable)
+                                if (statsResponse.status === 'fulfilled') {
+                                    const statsData = statsResponse.value.data;
+                                    if (statsData.enabled_modules && Array.isArray(statsData.enabled_modules)) {
+                                        // Fusionner les modules (union)
+                                        modules = [...new Set([...modules, ...statsData.enabled_modules])];
+                                    }
+                                }
                 console.log('[Tutorial] Modules actifs détectés:', modules);
 
                 // Filtrer les étapes selon les modules

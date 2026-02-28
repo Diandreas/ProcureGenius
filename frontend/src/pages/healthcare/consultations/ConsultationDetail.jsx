@@ -117,7 +117,14 @@ const ConsultationDetail = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')}>Retour</Button>
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>Dossier Médical</Typography>
+                    <Box>
+                        <Typography variant="h4" sx={{ fontWeight: 600 }}>{consultation.patient_name}</Typography>
+                        {consultation.doctor_name && (
+                            <Typography variant="body2" color="text.secondary">
+                                Terminé par : <strong>{consultation.doctor_name}</strong>
+                            </Typography>
+                        )}
+                    </Box>
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button data-testid="consult-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => { setPrintModalType('report'); setPrintModalOpen(true); }}>Rapport</Button>

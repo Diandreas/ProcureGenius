@@ -41,6 +41,7 @@ import {
   Assignment,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
+import { authAPI } from '../services/api';
 import { useModules } from '../contexts/ModuleContext';
 import { useColorMode } from '../App';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -174,14 +175,10 @@ function MainLayout() {
 
   const fetchUserPermissions = async () => {
     try {
-      const response = await fetch('/api/v1/accounts/profile/', {
-        headers: { 'Authorization': `Token ${localStorage.getItem('authToken')}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        setUserPermissions(data.permissions);
-      }
+      const response = await authAPI.getProfile();
+      const data = response.data;
+      setUser(data);
+      setUserPermissions(data.permissions);
     } catch (error) {
       console.error('Error fetching user permissions:', error);
     }

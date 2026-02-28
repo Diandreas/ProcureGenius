@@ -18,11 +18,15 @@ import {
     Receipt as ReceiptIcon,
     Label as LabelIcon,
     QrCode as QrCodeIcon,
-    CheckCircle as CheckCircleIcon
+    CheckCircle as CheckCircleIcon,
+    PictureAsPdf as PdfIcon,
+    Description as InvoiceIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import { invoicesAPI } from '../../../services/api';
+import PrintModal from '../../../components/PrintModal';
 
 const LabOrderDispatch = () => {
     const { id } = useParams();
@@ -32,6 +36,9 @@ const LabOrderDispatch = () => {
     const [loading, setLoading] = useState(true);
     const [order, setOrder] = useState(null);
     const [generatingPdf, setGeneratingPdf] = useState(false);
+    const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+    const [generatingReceipt, setGeneratingReceipt] = useState(false);
+    const [invoicePdfModalOpen, setInvoicePdfModalOpen] = useState(false);
 
     useEffect(() => {
         fetchOrder();
@@ -57,8 +64,23 @@ const LabOrderDispatch = () => {
             let filename;
 
             if (type === 'receipt') {
-                blob = await laboratoryAPI.getReceiptPDF(id);
-                filename = `recu_labo_${order.order_number}.pdf`;
+                // Prioritize invoice receipt (includes discounts and correct kit price)
+                if (order.lab_invoice) {
+                    blob = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+                    filename = `recu_facture_${order.lab_invoice.invoice_number}.pdf`;
+                } else {
+                    blob = await laboratoryAPI.getReceiptPDF(id);
+                    filename = `recu_labo_${order.order_number}.pdf`;
+                }
+            } else if (type === 'invoice_a4') {
+                if (order.lab_invoice) {
+                    blob = await invoicesAPI.getPDF(order.lab_invoice.id);
+                    filename = `facture_${order.lab_invoice.invoice_number}.pdf`;
+                } else {
+                    enqueueSnackbar('Aucune facture associée pour le format A4', { variant: 'warning' });
+                    setGeneratingPdf(false);
+                    return;
+                }
             } else if (type === 'barcodes') {
                 blob = await laboratoryAPI.getBarcodesPDF(id, { quantity: 1 });
                 filename = `barcodes_${order.order_number}.pdf`;
@@ -93,6 +115,75 @@ const LabOrderDispatch = () => {
         }
     };
 
+    const handleReceiptAction = async (action) => {
+        setGeneratingReceipt(true);
+        try {
+            let blob;
+            if (order.lab_invoice) {
+                blob = await invoicesAPI.getReceiptPDF(order.lab_invoice.id);
+            } else {
+                blob = await laboratoryAPI.getReceiptPDF(id);
+            }
+            const filename = order.lab_invoice
+                ? `recu_facture_${order.lab_invoice.invoice_number}.pdf`
+                : `recu_labo_${order.order_number}.pdf`;
+            const url = window.URL.createObjectURL(blob);
+            if (action === 'download') {
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else {
+                const printWindow = window.open(url, '_blank');
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => printWindow.print();
+                }
+            }
+            setReceiptModalOpen(false);
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            enqueueSnackbar('Erreur lors de la génération du reçu', { variant: 'error' });
+        } finally {
+            setGeneratingReceipt(false);
+        }
+    };
+
+    const handleInvoicePDFAction = async (action) => {
+        if (!order.lab_invoice) {
+            enqueueSnackbar('Aucune facture associée pour le format A4', { variant: 'warning' });
+            return;
+        }
+        setGeneratingPdf(true);
+        try {
+            const blob = await invoicesAPI.getPDF(order.lab_invoice.id);
+            const filename = `facture_${order.lab_invoice.invoice_number}.pdf`;
+            const url = window.URL.createObjectURL(blob);
+            if (action === 'download') {
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else {
+                const printWindow = window.open(url, '_blank');
+                if (printWindow && action === 'print') {
+                    printWindow.onload = () => printWindow.print();
+                }
+            }
+            setInvoicePdfModalOpen(false);
+        } catch (error) {
+            console.error('Error generating invoice PDF:', error);
+            enqueueSnackbar('Erreur lors de la génération de la facture', { variant: 'error' });
+        } finally {
+            setGeneratingPdf(false);
+        }
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -113,6 +204,7 @@ const LabOrderDispatch = () => {
     }
 
     return (
+        <>
         <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
             <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 1 }} />
@@ -133,12 +225,12 @@ const LabOrderDispatch = () => {
                             </Typography>
 
                             <Stack spacing={2}>
-                                <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'primary.light' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <ReceiptIcon color="primary" />
                                         <Box>
-                                            <Typography variant="subtitle1" fontWeight="bold">Reçu de Caisse / Bon d'Examen</Typography>
-                                            <Typography variant="caption" color="text.secondary">Preuve de paiement et liste des examens</Typography>
+                                            <Typography variant="subtitle1" fontWeight="bold">Reçu de Caisse (Petit Format)</Typography>
+                                            <Typography variant="caption" color="text.secondary">Format ticket thermique 80mm avec détails et réductions</Typography>
                                         </Box>
                                     </Box>
                                     <Button
@@ -148,7 +240,25 @@ const LabOrderDispatch = () => {
                                         onClick={() => handlePrintAction('receipt')}
                                         disabled={generatingPdf}
                                     >
-                                        Imprimer
+                                        Imprimer Ticket
+                                    </Button>
+                                </Paper>
+
+                                <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <PdfIcon color="primary" />
+                                        <Box>
+                                            <Typography variant="subtitle1" fontWeight="bold">Facture Détaillée (Format A4)</Typography>
+                                            <Typography variant="caption" color="text.secondary">Facture officielle grand format pour assurance ou dossier</Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PrintIcon />}
+                                        onClick={() => handlePrintAction('invoice_a4')}
+                                        disabled={generatingPdf || !order.lab_invoice}
+                                    >
+                                        Générer PDF A4
                                     </Button>
                                 </Paper>
 
@@ -167,7 +277,7 @@ const LabOrderDispatch = () => {
                                         onClick={() => handlePrintAction('tube_labels')}
                                         disabled={generatingPdf}
                                     >
-                                        Imprimer
+                                        Imprimer Étiquettes
                                     </Button>
                                 </Paper>
 
@@ -175,7 +285,7 @@ const LabOrderDispatch = () => {
 
                             <Divider sx={{ my: 4 }} />
 
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
                                 <Button
                                     startIcon={<ArrowBackIcon />}
                                     onClick={() => navigate('/healthcare/laboratory')}
@@ -189,6 +299,26 @@ const LabOrderDispatch = () => {
                                     size="large"
                                 >
                                     Voir Détails de la Commande
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<PdfIcon />}
+                                    onClick={() => setInvoicePdfModalOpen(true)}
+                                    disabled={!order.lab_invoice}
+                                    size="large"
+                                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    Facture Détaillée
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    startIcon={<ReceiptIcon />}
+                                    onClick={() => setReceiptModalOpen(true)}
+                                    size="large"
+                                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    Imprimer Reçu
                                 </Button>
                             </Box>
                         </CardContent>
@@ -211,6 +341,29 @@ const LabOrderDispatch = () => {
                 )}
             </Grid>
         </Box>
+
+        <PrintModal
+            open={receiptModalOpen}
+            onClose={() => setReceiptModalOpen(false)}
+            title="Reçu de Caisse"
+            loading={generatingReceipt}
+            onPreview={() => handleReceiptAction('preview')}
+            onPrint={() => handleReceiptAction('print')}
+            onDownload={() => handleReceiptAction('download')}
+            helpText="Choisissez une action pour générer le reçu thermique"
+        />
+
+        <PrintModal
+            open={invoicePdfModalOpen}
+            onClose={() => setInvoicePdfModalOpen(false)}
+            title="Facture Détaillée (A4)"
+            loading={generatingPdf}
+            onPreview={() => handleInvoicePDFAction('preview')}
+            onPrint={() => handleInvoicePDFAction('print')}
+            onDownload={() => handleInvoicePDFAction('download')}
+            helpText="Choisissez une action pour générer la facture A4"
+        />
+        </>
     );
 };
 

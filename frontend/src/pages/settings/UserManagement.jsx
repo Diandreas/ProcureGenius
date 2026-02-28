@@ -55,6 +55,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { authAPI } from '../../services/api';
 import Mascot from '../../components/Mascot';
 
 function UserManagement() {
@@ -225,21 +226,16 @@ function UserManagement() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/accounts/organization/users/', {
-                headers: {
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setUsers(data.users || []);
-            } else if (response.status === 403) {
-                enqueueSnackbar(t('settings:userManagement.permissionDenied'), { variant: 'error' });
-            }
+            const response = await authAPI.getUsers();
+            const data = response.data;
+            setUsers(data.users || []);
         } catch (error) {
             console.error('Error fetching users:', error);
-            enqueueSnackbar(t('settings:userManagement.loadingError'), { variant: 'error' });
+            if (error.response?.status === 403) {
+                enqueueSnackbar(t('settings:userManagement.permissionDenied'), { variant: 'error' });
+            } else {
+                enqueueSnackbar(t('settings:userManagement.loadingError'), { variant: 'error' });
+            }
         } finally {
             setLoading(false);
         }

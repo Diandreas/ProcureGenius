@@ -196,11 +196,10 @@
     </div>
 
     <!-- Verification Info -->
-    {% if lab_order.results_verified_by %}
     <div class="section">
         <div class="info-row">
             <span>Vérifié par:</span>
-            <span>{{ lab_order.results_verified_by.get_full_name }}</span>
+            <span>Lauriane Karelle NJAPOUP KAMDEM</span>
         </div>
         {% if lab_order.results_completed_at %}
         <div class="info-row">
@@ -209,7 +208,6 @@
         </div>
         {% endif %}
     </div>
-    {% endif %}
 
     <!-- QR Code -->
     {% if qr_code_base64 %}

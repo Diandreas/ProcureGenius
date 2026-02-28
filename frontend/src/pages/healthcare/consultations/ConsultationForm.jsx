@@ -21,7 +21,8 @@ import {
     Chip,
     Tabs,
     Tab,
-    CircularProgress
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -33,9 +34,11 @@ import {
     Person as PersonIcon,
     HealthAndSafety as VitalsIcon,
     Assignment as ExamIcon,
-    Medication as RxIcon
+    Medication as RxIcon,
+    Visibility as ViewIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
@@ -60,10 +63,13 @@ const ConsultationForm = () => {
     const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
 
+    const { user } = useCurrentUser();
     const isNew = !id;
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
+    const [consultationStatus, setConsultationStatus] = useState(null);
+    const [completedByName, setCompletedByName] = useState('');
 
     const [patients, setPatients] = useState([]);
     const [medications, setMedications] = useState([]);
@@ -137,6 +143,8 @@ const ConsultationForm = () => {
                         }));
                     }
 
+                    setConsultationStatus(data.status);
+                    setCompletedByName(data.doctor_name || '');
                     setFormData({
                         patient: { id: data.patient, name: data.patient_name },
                         consultation_date: data.consultation_date?.split('T')[0] || new Date().toISOString().split('T')[0],
@@ -297,18 +305,52 @@ const ConsultationForm = () => {
 
     if (initializing) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5, alignItems: 'center', minHeight: '50vh' }}><CircularProgress /><Typography sx={{ ml: 2 }}>Initialisation du dossier...</Typography></Box>;
 
+    const isCompleted = consultationStatus === 'completed';
+    const currentUserDisplay = user
+        ? (user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '')
+        : '';
+
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/consultations')}>Retour</Button>
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>Consultation</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                        {formData.patient?.name || 'Consultation'}
+                    </Typography>
+                    {consultationStatus && (
+                        <Chip
+                            label={isCompleted ? 'Terminée' : consultationStatus === 'in_consultation' ? 'En cours' : 'En attente'}
+                            color={isCompleted ? 'success' : 'warning'}
+                            size="small"
+                        />
+                    )}
                 </Stack>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button data-testid="consult-btn-save" variant="outlined" startIcon={<SaveIcon />} onClick={() => handleSubmit('in_consultation')} disabled={loading}>Enregistrer</Button>
-                    <Button data-testid="consult-btn-terminate" variant="contained" startIcon={<CompleteIcon />} color="success" onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    {currentUserDisplay && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                            <PersonIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                            {currentUserDisplay}
+                        </Typography>
+                    )}
+                    {isCompleted ? (
+                        <Button variant="contained" startIcon={<ViewIcon />} onClick={() => navigate(`/healthcare/consultations/${id}`)}>
+                            Voir Dossier
+                        </Button>
+                    ) : (
+                        <>
+                            <Button data-testid="consult-btn-save" variant="outlined" startIcon={<SaveIcon />} onClick={() => handleSubmit('in_consultation')} disabled={loading}>Enregistrer</Button>
+                            <Button data-testid="consult-btn-terminate" variant="contained" startIcon={<CompleteIcon />} color="success" onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
+                        </>
+                    )}
                 </Box>
             </Box>
+
+            {isCompleted && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    Consultation terminée{completedByName ? ` — par : ${completedByName}` : ''}
+                </Alert>
+            )}
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
@@ -319,6 +361,7 @@ const ConsultationForm = () => {
                 </Tabs>
             </Box>
 
+            <Box sx={{ opacity: isCompleted ? 0.72 : 1, pointerEvents: isCompleted ? 'none' : 'auto' }}>
             <TabPanel value={tabValue} index={0}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={4}>
@@ -450,6 +493,7 @@ const ConsultationForm = () => {
                     </Card>
                 </Stack>
             </TabPanel>
+            </Box>
         </Box>
     );
 };
