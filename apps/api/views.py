@@ -317,17 +317,23 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                     _effective_stock__gt=F('low_stock_threshold')
                 )
         
-        # Exclure les produits liés à un test de laboratoire (consommables)
-        # On utilise une exclusion basée sur les slugs de catégorie et la présence de tests liés
-        try:
-            queryset = queryset.exclude(
-                Q(category__slug__in=['lab_consumables', 'lab-consumables', 'laboratory', 'lab-tests', 'lab_tests']) |
-                Q(linked_lab_tests__isnull=False)
-            )
-        except Exception as e:
-            # En cas d'erreur (ex: relation non chargée), on continue sans ce filtre spécifique
-            print(f"Erreur lors de l'exclusion des consommables labo: {e}")
-            pass
+        # Exclure les consommables labo UNIQUEMENT sur le listing
+        # (list, export_csv, low_stock…) — jamais sur retrieve/update/destroy
+        # pour éviter que des produits soient inaccessibles après création.
+        list_only_actions = {'list', 'low_stock', 'export_csv', 'expired_report',
+                             'batch_stats', 'by_supplier', 'by_product'}
+        action = getattr(self, 'action', None)
+        if action in list_only_actions:
+            try:
+                queryset = queryset.exclude(
+                    Q(category__slug__in=[
+                        'lab_consumables', 'lab-consumables',
+                        'laboratory', 'lab-tests', 'lab_tests'
+                    ]) |
+                    Q(linked_lab_tests__isnull=False)
+                )
+            except Exception:
+                pass
 
         return queryset.distinct()
 
