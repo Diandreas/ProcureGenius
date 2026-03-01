@@ -923,131 +923,340 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         top_svc = sorted(svc_top_sales, key=lambda x: x[1], reverse=True)[:10]
         n_svc = _write_block(ws_d, 22, ['Service', 'CA 30j'], top_svc)
 
+        # Col Y-Z : Jours de couverture stock (produits à risque, < 90 jours)
+        couv_data = []
+        for p in physical:
+            pid  = str(p.id)
+            stk  = stock_cache[pid]
+            qty30 = int((sales_map.get(pid, {}).get('qty') or 0))
+            if stk > 0 and qty30 > 0:
+                jours = round(stk / (qty30 / 30))
+                if jours <= 90:
+                    couv_data.append(((p.name or '')[:32], jours))
+        couv_data.sort(key=lambda x: x[1])          # du plus critique au moins critique
+        top10_couv = couv_data[:10]
+        n_couv = _write_block(ws_d, 25, ['Produit', 'Jours couverture'], top10_couv)
+
+        # Col AB-AC : Top pertes 30j (valeur XAF)
+        pertes_data = [
+            ((p.name or '')[:32], round(float(loss_map[str(p.id)].get('val') or 0)))
+            for p in physical
+            if str(p.id) in loss_map
+            and float(loss_map[str(p.id)].get('val') or 0) > 0
+        ]
+        pertes_data.sort(key=lambda x: x[1], reverse=True)
+        top10_pertes = pertes_data[:10]
+        n_pertes = _write_block(ws_d, 28, ['Produit', 'Pertes (XAF)'], top10_pertes)
+
         # ─────────────────────────────────────────────────────────────────────
-        # ONGLET 5 : GRAPHIQUES
+        # ONGLET 5 : GRAPHIQUES — layout calculé précisément
         # ─────────────────────────────────────────────────────────────────────
         ws_g = wb.create_sheet("Graphiques")
         ws_g.sheet_view.showGridLines = False
         ws_g.sheet_view.showRowColHeaders = False
 
-        # Titre dashboard
-        ws_g.merge_cells('B1:AD1')
-        tc = ws_g['B1']
-        tc.value = f"TABLEAU DE BORD INVENTAIRE  —  {today.strftime('%d/%m/%Y')}"
-        tc.font = Font(bold=True, size=20, color=C['white'])
-        tc.fill = PatternFill(start_color=C['navy'], end_color=C['navy'], fill_type='solid')
+        # ── Calibration colonnes ─────────────────────────────────────────────
+        # 1 unité de largeur Excel ≈ 0.185 cm (Calibri 11pt, 96 DPI)
+        # On utilise COL_W=4 → ~0.74 cm/colonne
+        COL_W     = 4
+        CM_COL    = COL_W * 0.185        # ≈ 0.74 cm par colonne
+        # 1 pt de hauteur de ligne ≈ 0.0353 cm → 15pt ≈ 0.529 cm/ligne
+        CM_ROW    = 15 * 0.0353          # ≈ 0.529 cm par ligne (hauteur standard)
+
+        # Toutes les colonnes uniformes (A inclus) pour positions reproductibles
+        for c_i in range(1, 90):
+            ws_g.column_dimensions[get_column_letter(c_i)].width = COL_W
+
+        def _anchor(col_idx, row_idx):
+            """Retourne la référence cellule ex. 'B5' pour col_idx=2, row_idx=5"""
+            return f"{get_column_letter(col_idx)}{row_idx}"
+
+        def _chart_col_span(width_cm):
+            """Nombre de colonnes occupées par un graphique de width_cm cm"""
+            return int(width_cm / CM_COL) + 1
+
+        def _chart_row_span(height_cm):
+            """Nombre de lignes occupées par un graphique de height_cm cm"""
+            return int(height_cm / CM_ROW) + 1
+
+        GAP_COLS = 3   # colonnes de séparation entre 2 graphiques côte à côte
+        GAP_ROWS = 4   # lignes de séparation entre 2 rangées de graphiques
+
+        def _section_banner(ws, row, col_end, text, bg, size=12):
+            ws.merge_cells(start_row=row, start_column=1,
+                           end_row=row, end_column=col_end)
+            c = ws.cell(row, 1, text)
+            c.font = Font(bold=True, size=size, color=C['white'])
+            c.fill = PatternFill(start_color=bg, end_color=bg, fill_type='solid')
+            c.alignment = Alignment(horizontal='left', vertical='center', indent=2)
+            ws.row_dimensions[row].height = 26
+
+        def _spacer(ws, row, height_pt=10):
+            ws.row_dimensions[row].height = height_pt
+
+        # ── Builders graphiques ───────────────────────────────────────────────
+        from openpyxl.chart.label import DataLabelList
+
+        def _labels(val_fmt='#,##0', show_pct=False, show_cat=False):
+            """Crée un DataLabelList configuré"""
+            dls = DataLabelList()
+            dls.showVal      = not show_pct          # valeur brute sauf si camembert %
+            dls.showPercent  = show_pct
+            dls.showCatName  = show_cat
+            dls.showSerName  = False
+            dls.showLegendKey = False
+            dls.numFmt       = val_fmt
+            return dls
+
+        def _style_series(series, color):
+            """Applique couleur de remplissage + contour sur une série"""
+            series.graphicalProperties.solidFill = color
+            series.graphicalProperties.line.solidFill = color
+
+        def _make_bar_h(title, data_col, cat_col, n, w=22, h=17,
+                        color=None, val_fmt='#,##0'):
+            """Barres horizontales avec étiquettes de valeurs"""
+            ch = BarChart()
+            ch.type    = 'bar'
+            ch.style   = 10
+            ch.title   = title
+            ch.width   = w
+            ch.height  = h
+            ch.legend  = None
+            # Grille légère uniquement sur l'axe des valeurs (x pour barres h)
+            ch.y_axis.majorGridlines = None
+            ch.x_axis.numFmt         = val_fmt
+            ch.x_axis.majorGridlines = None
+            ch.y_axis.tickLblPos     = 'low'    # labels catégories à gauche
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            ch.add_data(dr, titles_from_data=True)
+            ch.set_categories(cr)
+            if ch.series:
+                if color:
+                    _style_series(ch.series[0], color)
+                ch.series[0].dLbls = _labels(val_fmt)
+            return ch
+
+        def _make_bar_v(title, data_col, cat_col, n, w=22, h=17,
+                        color=None, val_fmt='#,##0'):
+            """Barres verticales avec étiquettes de valeurs"""
+            ch = BarChart()
+            ch.type    = 'col'
+            ch.style   = 10
+            ch.title   = title
+            ch.width   = w
+            ch.height  = h
+            ch.legend  = None
+            ch.x_axis.majorGridlines = None
+            ch.y_axis.numFmt         = val_fmt
+            ch.y_axis.majorGridlines = None
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            ch.add_data(dr, titles_from_data=True)
+            ch.set_categories(cr)
+            if ch.series:
+                if color:
+                    _style_series(ch.series[0], color)
+                ch.series[0].dLbls = _labels(val_fmt)
+            return ch
+
+        def _make_pie(title, data_col, cat_col, n, colors=None, w=18, h=17):
+            """Camembert avec % + nom de catégorie sur chaque tranche"""
+            ch = PieChart()
+            ch.style  = 10
+            ch.title  = title
+            ch.width  = w
+            ch.height = h
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            ch.add_data(dr, titles_from_data=True)
+            ch.set_categories(cr)
+            if ch.series:
+                if colors:
+                    for idx, fill_color in enumerate(colors[:n]):
+                        pt = DataPoint(idx=idx)
+                        pt.graphicalProperties.solidFill = fill_color
+                        ch.series[0].data_points.append(pt)
+                # Étiquettes : nom + pourcentage sur chaque tranche
+                dls = DataLabelList()
+                dls.showPercent   = True
+                dls.showCatName   = True
+                dls.showVal       = False
+                dls.showSerName   = False
+                dls.showLegendKey = False
+                dls.separator     = '\n'
+                ch.series[0].dLbls = dls
+            return ch
+
+        # ── Dimensions des graphiques ─────────────────────────────────────────
+        # Section 1 : 2 grands graphiques côte à côte  — 22cm × 15cm chacun
+        W_BIG, H_BIG     = 22, 15
+        # Section 2 : 2 graphiques côte à côte         — 22cm × 15cm
+        # Section 3 : 1 camembert + 2 barres           — 16cm × 15cm / 22cm × 15cm
+        W_PIE, H_PIE     = 16, 15
+        W_MED, H_MED     = 22, 15
+        # Section 4 : 1 graphique seul                 — 22cm × 15cm
+
+        SPAN_BIG  = _chart_col_span(W_BIG)    # colonnes occupées par un grand graphique
+        SPAN_PIE  = _chart_col_span(W_PIE)    # camembert
+        SPAN_MED  = _chart_col_span(W_MED)    # moyen
+        ROWS_BIG  = _chart_row_span(H_BIG)    # lignes occupées (≈ 29)
+
+        START_COL = 1   # graphiques démarrent en colonne A
+
+        # Positions colonne (0-based depuis START_COL)
+        col_g1 = START_COL
+        col_g2 = START_COL + SPAN_BIG + GAP_COLS
+
+        col_g4 = START_COL
+        col_g5 = START_COL + SPAN_BIG + GAP_COLS
+
+        col_g3  = START_COL
+        col_g6  = START_COL + SPAN_PIE + GAP_COLS
+        col_g7  = START_COL + SPAN_PIE + GAP_COLS + SPAN_MED + GAP_COLS
+
+        col_g8  = START_COL
+
+        # Largeur totale du tableau de bord (pour les bandeaux)
+        max_col = max(col_g2 + SPAN_BIG, col_g7 + SPAN_MED) + 2
+
+        # ── Bandeau titre ────────────────────────────────────────────────────
+        ws_g.merge_cells(start_row=1, start_column=1,
+                         end_row=1, end_column=max_col)
+        tc = ws_g.cell(1, 1,
+            f"TABLEAU DE BORD INVENTAIRE  \u2014  {today.strftime('%d %B %Y').upper()}")
+        tc.font      = Font(bold=True, size=22, color=C['white'])
+        tc.fill      = PatternFill(start_color=C['navy'],
+                                   end_color=C['navy'], fill_type='solid')
         tc.alignment = Alignment(horizontal='center', vertical='center')
-        ws_g.row_dimensions[1].height = 46
+        ws_g.row_dimensions[1].height = 54
 
-        # Largeurs colonnes (pour espacement entre graphiques)
-        for col_i in range(2, 60):
-            ws_g.column_dimensions[get_column_letter(col_i)].width = 2.2
+        ws_g.merge_cells(start_row=2, start_column=1,
+                         end_row=2, end_column=max_col)
+        sc = ws_g.cell(2, 1,
+            f"Centre Julianna  |  Exporté le {today.strftime('%d/%m/%Y')}  "
+            f"|  {len(physical)} produits physiques  |  {len(services)} services")
+        sc.font      = Font(italic=True, size=10, color=C['text_lt'])
+        sc.alignment = Alignment(horizontal='center', vertical='center')
+        ws_g.row_dimensions[2].height = 20
 
-        # Helper chart builder
-        def _bar_h(title, data_col, cat_col, n, width=22, height=13, color=None):
-            c = BarChart()
-            c.type = 'bar'
-            c.title = title
-            c.style = 2
-            c.width = width
-            c.height = height
-            c.legend = None
-            c.y_axis.majorGridlines = None
-            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
-            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
-            c.add_data(dr, titles_from_data=True)
-            c.set_categories(cr)
-            if color and c.series:
-                c.series[0].graphicalProperties.solidFill = color
-                c.series[0].graphicalProperties.line.solidFill = color
-            return c
+        # ════════════════════════════════════════════════════════════════════
+        # SECTION 1 — ANALYSE DU STOCK
+        # ════════════════════════════════════════════════════════════════════
+        row_s1 = 4
+        _section_banner(ws_g, row_s1, max_col, "  SECTION 1  —  ANALYSE DU STOCK", C['navy'])
+        _spacer(ws_g, row_s1 + 1, 12)
+        row_charts_s1 = row_s1 + 2    # ligne de départ des graphiques section 1
 
-        def _bar_v(title, data_col, cat_col, n, width=22, height=12, color=None):
-            c = BarChart()
-            c.type = 'col'
-            c.title = title
-            c.style = 2
-            c.width = width
-            c.height = height
-            c.legend = None
-            c.y_axis.majorGridlines = None
-            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
-            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
-            c.add_data(dr, titles_from_data=True)
-            c.set_categories(cr)
-            if color and c.series:
-                c.series[0].graphicalProperties.solidFill = color
-                c.series[0].graphicalProperties.line.solidFill = color
-            return c
-
-        def _pie(title, data_col, cat_col, n, colors=None, width=14, height=12):
-            c = PieChart()
-            c.title = title
-            c.style = 2
-            c.width = width
-            c.height = height
-            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
-            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
-            c.add_data(dr, titles_from_data=True)
-            c.set_categories(cr)
-            if colors and c.series:
-                for idx, col in enumerate(colors[:n]):
-                    pt = DataPoint(idx=idx)
-                    pt.graphicalProperties.solidFill = col
-                    c.series[0].data_points.append(pt)
-            return c
-
-        # ── Rangée 1 (ancre B3) ─────────────────────────────────────────────
-        # G1 : Top 15 stock — barres horizontales
         if n_ts > 0:
-            ch = _bar_h(f"Top {n_ts} produits — stock disponible",
-                        2, 1, n_ts, width=26, height=15, color=C['blue'])
-            ws_g.add_chart(ch, 'B3')
+            ch_g1 = _make_bar_h(
+                f"Top {n_ts} produits  —  Stock disponible (unités)",
+                2, 1, n_ts, w=W_BIG, h=H_BIG, color=C['blue'])
+            ws_g.add_chart(ch_g1, _anchor(col_g1, row_charts_s1))
 
-        # G2 : Top 15 valeur stock — barres horizontales
         if n_tv > 0:
-            ch2 = _bar_h(f"Top {n_tv} produits — valeur du stock (XAF)",
-                         5, 4, n_tv, width=26, height=15, color=C['teal'])
-            ws_g.add_chart(ch2, 'R3')
+            ch_g2 = _make_bar_h(
+                f"Top {n_tv} produits  —  Valeur du stock (XAF)",
+                5, 4, n_tv, w=W_BIG, h=H_BIG, color=C['teal'])
+            ws_g.add_chart(ch_g2, _anchor(col_g2, row_charts_s1))
 
-        # ── Rangée 2 (ancre B35) ────────────────────────────────────────────
-        # G3 : Statut stock — camembert
-        ch3 = _pie("Répartition statut stock",
-                   14, 13, 3,
-                   colors=[C['green'], C['orange'], C['red']],
-                   width=16, height=13)
-        ws_g.add_chart(ch3, 'B35')
+        # ════════════════════════════════════════════════════════════════════
+        # SECTION 2 — PERFORMANCE COMMERCIALE
+        # ════════════════════════════════════════════════════════════════════
+        row_s2 = row_charts_s1 + ROWS_BIG + GAP_ROWS
+        _section_banner(ws_g, row_s2, max_col,
+                        "  SECTION 2  —  PERFORMANCE COMMERCIALE (30 DERNIERS JOURS)",
+                        C['purple'])
+        _spacer(ws_g, row_s2 + 1, 12)
+        row_charts_s2 = row_s2 + 2
 
-        # G4 : Top 10 CA 30j — barres horizontales
         if n_ca > 0:
-            ch4 = _bar_h(f"Top {n_ca} produits — CA 30 jours (XAF)",
-                         8, 7, n_ca, width=24, height=13, color=C['purple'])
-            ws_g.add_chart(ch4, 'L35')
+            ch_g4 = _make_bar_h(
+                f"Top {n_ca} produits  —  Chiffre d'affaires 30j (XAF)",
+                8, 7, n_ca, w=W_BIG, h=H_BIG, color=C['purple'])
+            ws_g.add_chart(ch_g4, _anchor(col_g4, row_charts_s2))
 
-        # G5 : Top 10 marge % — barres horizontales
         if n_mg > 0:
-            ch5 = _bar_h(f"Top {n_mg} produits — marge brute (%)",
-                         11, 10, n_mg, width=24, height=13, color=C['gold'])
-            ws_g.add_chart(ch5, 'AD35')
+            ch_g5 = _make_bar_h(
+                f"Top {n_mg} produits  —  Marge brute (%)",
+                11, 10, n_mg, w=W_BIG, h=H_BIG, color=C['gold'])
+            ws_g.add_chart(ch_g5, _anchor(col_g5, row_charts_s2))
 
-        # ── Rangée 3 (ancre B65) ────────────────────────────────────────────
-        # G6 : Top catégories par valeur stock — barres verticales
+        # ════════════════════════════════════════════════════════════════════
+        # SECTION 3 — RÉPARTITION & ALERTES
+        # ════════════════════════════════════════════════════════════════════
+        row_s3 = row_charts_s2 + ROWS_BIG + GAP_ROWS
+        _section_banner(ws_g, row_s3, max_col,
+                        "  SECTION 3  —  RÉPARTITION PAR CATÉGORIE & ALERTES STOCK",
+                        C['teal'])
+        _spacer(ws_g, row_s3 + 1, 12)
+        row_charts_s3 = row_s3 + 2
+
+        ch_g3 = _make_pie(
+            "Statut stock  —  OK / Bas / Rupture",
+            14, 13, 3,
+            colors=[C['green'], C['orange'], C['red']],
+            w=W_PIE, h=H_PIE)
+        ws_g.add_chart(ch_g3, _anchor(col_g3, row_charts_s3))
+
         if n_catv > 0:
-            ch6 = _bar_v(f"Top {n_catv} catégories — valeur stock (XAF)",
-                         17, 16, n_catv, width=24, height=13, color=C['navy'])
-            ws_g.add_chart(ch6, 'B65')
+            ch_g6 = _make_bar_v(
+                f"Top {n_catv} catégories  —  Valeur du stock (XAF)",
+                17, 16, n_catv, w=W_MED, h=H_MED, color=C['navy'])
+            ws_g.add_chart(ch_g6, _anchor(col_g6, row_charts_s3))
 
-        # G7 : Top fournisseurs par valeur stock — barres verticales
         if n_supv > 0:
-            ch7 = _bar_v(f"Top {n_supv} fournisseurs — valeur stock (XAF)",
-                         20, 19, n_supv, width=24, height=13, color=C['blue'])
-            ws_g.add_chart(ch7, 'R65')
+            ch_g7 = _make_bar_v(
+                f"Top {n_supv} fournisseurs  —  Valeur du stock (XAF)",
+                20, 19, n_supv, w=W_MED, h=H_MED, color=C['blue'])
+            ws_g.add_chart(ch_g7, _anchor(col_g7, row_charts_s3))
 
-        # G8 : Top services CA — barres horizontales
+        # ════════════════════════════════════════════════════════════════════
+        # SECTION 4 — SERVICES
+        # ════════════════════════════════════════════════════════════════════
+        row_s4 = row_charts_s3 + ROWS_BIG + GAP_ROWS
+        _section_banner(ws_g, row_s4, max_col,
+                        "  SECTION 4  —  SERVICES  —  CHIFFRE D'AFFAIRES 30 JOURS",
+                        C['green'])
+        _spacer(ws_g, row_s4 + 1, 12)
+        row_charts_s4 = row_s4 + 2
+
         if n_svc > 0:
-            ch8 = _bar_h(f"Top {n_svc} services — CA 30 jours (XAF)",
-                         23, 22, n_svc, width=22, height=13, color=C['teal'])
-            ws_g.add_chart(ch8, 'AH65')
+            ch_g8 = _make_bar_h(
+                f"Top {n_svc} services  —  CA 30 jours (XAF)",
+                23, 22, n_svc, w=W_BIG, h=H_BIG, color=C['teal'])
+            ws_g.add_chart(ch_g8, _anchor(col_g8, row_charts_s4))
+
+        # ════════════════════════════════════════════════════════════════════
+        # SECTION 5 — RISQUES : COUVERTURE STOCK & PERTES
+        # ════════════════════════════════════════════════════════════════════
+        row_s5 = row_charts_s4 + ROWS_BIG + GAP_ROWS
+        _section_banner(ws_g, row_s5, max_col,
+                        "  SECTION 5  —  GESTION DES RISQUES  —  "
+                        "COUVERTURE STOCK & PERTES 30 JOURS",
+                        C['red'])
+        _spacer(ws_g, row_s5 + 1, 12)
+        row_charts_s5 = row_s5 + 2
+
+        col_g9  = START_COL
+        col_g10 = START_COL + SPAN_BIG + GAP_COLS
+
+        if n_couv > 0:
+            ch_g9 = _make_bar_h(
+                f"Jours de couverture stock  —  Top {n_couv} produits les + critiques",
+                26, 25, n_couv, w=W_BIG, h=H_BIG,
+                color=C['orange'], val_fmt='#,##0')
+            ws_g.add_chart(ch_g9, _anchor(col_g9, row_charts_s5))
+
+        if n_pertes > 0:
+            ch_g10 = _make_bar_h(
+                f"Top {n_pertes} produits  —  Valeur des pertes déclarées 30j (XAF)",
+                29, 28, n_pertes, w=W_BIG, h=H_BIG, color=C['red'])
+            ws_g.add_chart(ch_g10, _anchor(col_g10, row_charts_s5))
+
+        # Ligne de fin (espace blanc après le dernier graphique)
+        _spacer(ws_g, row_charts_s5 + ROWS_BIG + 2, 20)
 
         # ── Mise en ordre ────────────────────────────────────────────────────
         wb.active = wb['Résumé Exécutif']
