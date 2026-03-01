@@ -49,8 +49,12 @@ def handle_stock_on_invoice_validation(sender, instance, created, **kwargs):
     """
     Déclenche les mouvements de stock quand une facture passe de 'draft' à un autre statut.
     """
+    # Ne pas interférer pendant une modification d'items (gérée dans update())
+    if getattr(instance, '_skip_stock_adjustment', False):
+        return
+
     old_status = getattr(instance, '_old_status', None)
-    
+
     # Si passage de draft -> (sent, paid, overdue)
     if old_status == 'draft' and instance.status in ['sent', 'paid', 'overdue']:
         for item in instance.items.filter(product__product_type='physical'):

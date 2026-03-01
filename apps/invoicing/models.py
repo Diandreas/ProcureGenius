@@ -1230,7 +1230,9 @@ class InvoiceItem(models.Model):
         super().save(*args, **kwargs)
 
         # Si la facture est déjà validée (pas draft), on ajuste le stock
-        if self.invoice.status != 'draft' and self.product and self.product.product_type == 'physical':
+        # Sauf si le flag _skip_stock_adjustment est posé (modification via update())
+        skip = getattr(self.invoice, '_skip_stock_adjustment', False)
+        if not skip and self.invoice.status != 'draft' and self.product and self.product.product_type == 'physical':
             quantity_diff = self.quantity - old_quantity
             if quantity_diff != 0:
                 self.product.adjust_stock(

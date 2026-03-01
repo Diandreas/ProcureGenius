@@ -531,10 +531,11 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoiceItem
         fields = [
-            'id', 'product', 'product_reference', 'product_name', 
+            'id', 'product', 'product_reference', 'product_name',
             'batch', 'batch_number',
             'description', 'quantity',
-            'unit_price', 'discount_percent', 'total_price'
+            'unit_price', 'discount_percent', 'discount_amount', 'total_price',
+            'notes',
         ]
         read_only_fields = ['id', 'total_price', 'product_name', 'batch_number']
     
@@ -646,6 +647,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         return invoice
 
     def update(self, instance, validated_data):
+        from django.db import transaction
         items_data = validated_data.pop('items', None)
 
         # Mettre à jour la facture
@@ -653,17 +655,62 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             setattr(instance, attr, value)
         instance.save()
 
-        # Mettre à jour les items si fournis
         if items_data is not None:
-            # Supprimer les anciens items
-            instance.items.all().delete()
+            with transaction.atomic():
+                invoice_is_active = instance.status in ['paid', 'sent', 'overdue']
 
-            # Créer les nouveaux items
-            for item_data in items_data:
-                InvoiceItem.objects.create(invoice=instance, **item_data)
+                # 1. Restaurer le stock des anciens items avant de les supprimer
+                if invoice_is_active:
+                    for old_item in instance.items.filter(
+                        product__isnull=False,
+                        product__product_type='physical'
+                    ).select_related('product', 'batch'):
+                        old_item.product.adjust_stock(
+                            quantity=old_item.quantity,  # positif = restauration
+                            movement_type='return',
+                            reference_type='invoice',
+                            reference_id=instance.id,
+                            notes=f"Modification Facture {instance.invoice_number}",
+                            user=instance.created_by
+                        )
+                        if old_item.batch:
+                            old_item.batch.quantity_remaining += old_item.quantity
+                            old_item.batch.save(update_fields=['quantity_remaining'])
+                            old_item.batch.update_status()
 
-            # Recalculer les totaux
-            instance.recalculate_totals()
+                # 2. Supprimer les anciens items (sans déclencher la déduction via save)
+                #    Le signal post_delete va recalculate_totals → total = 0, c'est OK
+                instance.items.all().delete()
+
+                # 3. Créer les nouveaux items
+                #    On pose un flag pour éviter la DOUBLE déduction dans InvoiceItem.save()
+                #    (la déduction sera faite manuellement ci-dessous pour les factures actives)
+                instance._skip_stock_adjustment = True
+                for item_data in items_data:
+                    InvoiceItem.objects.create(invoice=instance, **item_data)
+                del instance._skip_stock_adjustment
+
+                # 4. Déduire le stock des nouveaux items (une seule fois, proprement)
+                if invoice_is_active:
+                    for new_item in instance.items.filter(
+                        product__isnull=False,
+                        product__product_type='physical'
+                    ).select_related('product', 'batch'):
+                        new_item.product.adjust_stock(
+                            quantity=-new_item.quantity,
+                            movement_type='sale',
+                            reference_type='invoice',
+                            reference_id=instance.id,
+                            notes=f"Facture {instance.invoice_number}",
+                            user=instance.created_by
+                        )
+                        if new_item.batch:
+                            new_item.batch.quantity_remaining -= new_item.quantity
+                            new_item.batch.save(update_fields=['quantity_remaining'])
+                            new_item.batch.update_status()
+
+                # 5. Recalculer les totaux une seule fois à la fin
+                instance.recalculate_totals()
 
         return instance
 
