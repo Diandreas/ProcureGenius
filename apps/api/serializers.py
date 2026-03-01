@@ -121,7 +121,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     """Serializer pour les produits"""
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     margin = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    margin_percent = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    margin_percent = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     stock_status = serializers.CharField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)

@@ -356,16 +356,16 @@ class Product(models.Model):
     @property
     def margin(self):
         """Calcule la marge bénéficiaire"""
-        if self.cost_price > 0:
+        if self.cost_price and self.cost_price > 0:
             return self.price - self.cost_price
-        return 0
+        return Decimal('0')
 
     @property
     def margin_percent(self):
         """Calcule le pourcentage de marge"""
-        if self.cost_price > 0:
+        if self.cost_price and self.cost_price > 0:
             return ((self.price - self.cost_price) / self.cost_price) * 100
-        return 0
+        return Decimal('0')
 
     @property
     def days_since_creation(self):
