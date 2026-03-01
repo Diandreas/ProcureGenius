@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When
 from django.db.models.functions import TruncDate, Coalesce
 from datetime import date, timedelta, datetime
-from apps.invoicing.models import Product, StockMovement, ProductCategory
+from apps.invoicing.models import Product, ProductBatch, StockMovement, ProductCategory
 from apps.analytics.wilson_service import get_wilson_analysis, calculate_eoq, calculate_reorder_point, calculate_product_score
 from apps.analytics.predictive_restock import get_all_predictions
 
@@ -109,51 +109,51 @@ class StockoutRiskAnalysisView(APIView):
             organization=organization,
             product_type='physical',
             is_active=True,
-            stock_quantity__gt=0
-        )
+        ).prefetch_related('batches')
 
         high_risk = []
         medium_risk = []
         low_risk = []
 
         for product in products:
+            current_stock = product.total_stock
+            if current_stock <= 0:
+                continue
+
             # Calculate average daily usage (last 30 days)
             thirty_days_ago = date.today() - timedelta(days=30)
-            # Use 'sale' movement_type (sales reduce stock)
             usage = StockMovement.objects.filter(
                 product=product,
                 movement_type='sale',
                 created_at__gte=thirty_days_ago
             ).aggregate(total=Sum('quantity'))['total'] or 0
-            # Quantity is negative for sales, so use absolute value
             usage = abs(usage) if usage else 0
 
             avg_daily_usage = usage / 30 if usage > 0 else 0
-            days_until_stockout = (product.stock_quantity / avg_daily_usage) if avg_daily_usage > 0 else 999
+            days_until_stockout = (current_stock / avg_daily_usage) if avg_daily_usage > 0 else 999
 
             # Calculate risk score (0-100)
-            # Factors: days until stockout, current vs threshold ratio
             if days_until_stockout < 999:
-                days_score = max(0, 100 - (days_until_stockout * 10))  # Max score when days < 10
+                days_score = max(0, 100 - (days_until_stockout * 10))
             else:
                 days_score = 0
 
-            threshold_ratio = (product.stock_quantity / product.low_stock_threshold) if product.low_stock_threshold else 1
+            threshold_ratio = (current_stock / product.low_stock_threshold) if product.low_stock_threshold else 1
             threshold_score = max(0, 100 - (threshold_ratio * 100))
 
             risk_score = int((days_score * 0.7) + (threshold_score * 0.3))
 
+            unit_label = product.get_base_unit_display() if product.base_unit else 'unité'
             product_data = {
                 'product_name': product.name,
-                'product_code': product.code or 'N/A',
-                'current_stock': float(product.stock_quantity),
+                'product_code': product.reference or 'N/A',
+                'current_stock': float(current_stock),
                 'days_until_stockout': int(days_until_stockout) if days_until_stockout < 999 else None,
                 'avg_daily_usage': round(avg_daily_usage, 2),
                 'risk_score': risk_score,
-                'unit': product.unit or 'unité'
+                'unit': unit_label
             }
 
-            # Categorize by risk
             if risk_score >= 70:
                 high_risk.append(product_data)
             elif risk_score >= 40:
@@ -181,69 +181,98 @@ class StockoutRiskAnalysisView(APIView):
 class AtRiskProductsView(APIView):
     """
     Identify at-risk products:
-    - Expiring soon
+    - Expiring soon (via Product.expiration_date OR ProductBatch.expiry_date)
     - Slow-moving (no movement in 60 days)
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         organization = request.user.organization
-
-        # Expiring products (within 60 days)
-        sixty_days = date.today() + timedelta(days=60)
-        expiring = Product.objects.filter(
-            organization=organization,
-            expiry_date__lte=sixty_days,
-            expiry_date__gte=date.today(),
-            stock_quantity__gt=0
-        ).values(
-            'id', 'name', 'code', 'expiry_date', 'stock_quantity', 'cost_price', 'unit'
-        )
+        today = date.today()
+        sixty_days = today + timedelta(days=60)
+        sixty_days_ago = today - timedelta(days=60)
 
         expiring_data = []
-        for product in expiring:
-            days_until_expiry = (product['expiry_date'] - date.today()).days
-            estimated_value = product['stock_quantity'] * (product['cost_price'] or 0)
+        seen_product_ids = set()
 
+        # 1) Products with batches expiring within 60 days
+        expiring_batches = ProductBatch.objects.filter(
+            organization=organization,
+            status__in=['available', 'opened'],
+            quantity_remaining__gt=0,
+            expiry_date__lte=sixty_days,
+            expiry_date__gte=today,
+        ).select_related('product')
+
+        for batch in expiring_batches:
+            product = batch.product
+            days_until_expiry = (batch.expiry_date - today).days
+            estimated_value = batch.quantity_remaining * float(product.cost_price or 0)
             expiring_data.append({
-                'product_id': str(product['id']),
-                'product_name': product['name'],
-                'product_code': product['code'] or 'N/A',
-                'expiry_date': product['expiry_date'].strftime('%Y-%m-%d'),
+                'product_id': str(product.id),
+                'product_name': f"{product.name} (Lot {batch.batch_number})",
+                'product_code': product.reference or 'N/A',
+                'expiry_date': batch.expiry_date.strftime('%Y-%m-%d'),
                 'days_until_expiry': days_until_expiry,
-                'stock_quantity': float(product['stock_quantity']),
+                'stock_quantity': float(batch.quantity_remaining),
                 'estimated_value': float(estimated_value),
-                'unit': product['unit'] or 'unité'
+                'unit': product.get_base_unit_display() if product.base_unit else 'unité'
+            })
+            seen_product_ids.add(product.id)
+
+        # 2) Products without batches, using Product.expiration_date (ancien système)
+        expiring_products = Product.objects.filter(
+            organization=organization,
+            product_type='physical',
+            is_active=True,
+            expiration_date__lte=sixty_days,
+            expiration_date__gte=today,
+            stock_quantity__gt=0,
+        ).exclude(id__in=seen_product_ids)
+
+        for product in expiring_products:
+            days_until_expiry = (product.expiration_date - today).days
+            estimated_value = product.stock_quantity * float(product.cost_price or 0)
+            expiring_data.append({
+                'product_id': str(product.id),
+                'product_name': product.name,
+                'product_code': product.reference or 'N/A',
+                'expiry_date': product.expiration_date.strftime('%Y-%m-%d'),
+                'days_until_expiry': days_until_expiry,
+                'stock_quantity': float(product.stock_quantity),
+                'estimated_value': float(estimated_value),
+                'unit': product.get_base_unit_display() if product.base_unit else 'unité'
             })
 
         # Sort by days until expiry
         expiring_data.sort(key=lambda x: x['days_until_expiry'])
 
-        # Slow moving products (no movement in 60 days)
-        sixty_days_ago = date.today() - timedelta(days=60)
+        # 3) Slow moving products (no movement in 60 days)
         all_products = Product.objects.filter(
             organization=organization,
             product_type='physical',
-            stock_quantity__gt=0,
             is_active=True
         )
 
         slow_moving = []
         for product in all_products:
+            if product.total_stock <= 0:
+                continue
             last_movement = StockMovement.objects.filter(
                 product=product
             ).aggregate(last_date=Max('created_at'))['last_date']
 
-            if not last_movement or last_movement < sixty_days_ago:
-                days_since = (date.today() - last_movement).days if last_movement else None
+            if not last_movement or last_movement.date() < sixty_days_ago:
+                last_date = last_movement.date() if last_movement else None
+                days_since = (today - last_date).days if last_date else None
                 slow_moving.append({
                     'product_id': str(product.id),
                     'product_name': product.name,
-                    'product_code': product.code or 'N/A',
-                    'last_created_at': last_movement.strftime('%Y-%m-%d') if last_movement else 'Jamais',
+                    'product_code': product.reference or 'N/A',
+                    'last_movement_date': last_date.strftime('%Y-%m-%d') if last_date else 'Jamais',
                     'days_since_movement': days_since,
-                    'stock_quantity': float(product.stock_quantity),
-                    'unit': product.unit or 'unité'
+                    'stock_quantity': float(product.total_stock),
+                    'unit': product.get_base_unit_display() if product.base_unit else 'unité'
                 })
 
         # Sort by days since movement
@@ -251,7 +280,7 @@ class AtRiskProductsView(APIView):
 
         return Response({
             'expired_or_expiring': expiring_data,
-            'slow_moving': slow_moving[:50],  # Limit to 50
+            'slow_moving': slow_moving[:50],
             'summary': {
                 'total_expiring': len(expiring_data),
                 'total_slow_moving': len(slow_moving)

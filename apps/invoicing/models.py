@@ -293,10 +293,11 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def get_stock_in_sell_units(self):
-        """Retourne le stock dans l'unité de vente"""
+        """Retourne le stock dans l'unité de vente (inclut lots)"""
+        stock = self.total_stock
         if self.conversion_factor and self.conversion_factor > 0:
-            return float(self.stock_quantity) / float(self.conversion_factor)
-        return float(self.stock_quantity)
+            return float(stock) / float(self.conversion_factor)
+        return float(stock)
 
     def set_stock_from_sell_units(self, quantity_in_sell_units):
         """Définit le stock depuis l'unité de vente"""
@@ -332,15 +333,23 @@ class Product(models.Model):
         return float(quantity_in_base)
 
     @property
+    def total_stock(self):
+        """Stock total = stock produit + stock des lots disponibles/ouverts"""
+        batch_stock = self.batches.filter(
+            status__in=['available', 'opened']
+        ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
+        return max(self.stock_quantity, batch_stock)
+
+    @property
     def is_low_stock(self):
         """Vérifie si le stock est bas"""
-        return self.product_type == 'physical' and self.stock_quantity <= self.low_stock_threshold
-    
+        return self.product_type == 'physical' and self.total_stock <= self.low_stock_threshold
+
     @property
     def is_out_of_stock(self):
         """Vérifie si le produit est en rupture"""
-        return self.product_type == 'physical' and self.stock_quantity == 0
-    
+        return self.product_type == 'physical' and self.total_stock == 0
+
     @property
     def stock_status(self):
         """Retourne le statut du stock"""

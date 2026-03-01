@@ -2,7 +2,8 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q, Sum, Count, F
+from django.db.models import Q, Sum, Count, F, Value
+from django.db.models.functions import Greatest, Coalesce
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
@@ -293,21 +294,28 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         if supplier_id:
             queryset = queryset.filter(supplier_products__supplier_id=supplier_id).distinct()
 
-        # Filtre par statut de stock
+        # Filtre par statut de stock (inclut stock des lots disponibles/ouverts)
         stock_status = self.request.query_params.get('stock_status')
-        if stock_status == 'out_of_stock':
-            queryset = queryset.filter(product_type='physical', stock_quantity=0)
-        elif stock_status == 'low_stock':
-            queryset = queryset.filter(
-                product_type='physical',
-                stock_quantity__gt=0,
-                stock_quantity__lte=F('low_stock_threshold')
+        if stock_status:
+            queryset = queryset.filter(product_type='physical').annotate(
+                _batch_stock=Coalesce(
+                    Sum('batches__quantity_remaining',
+                        filter=Q(batches__status__in=['available', 'opened'])),
+                    Value(0)
+                ),
+                _effective_stock=Greatest(F('stock_quantity'), F('_batch_stock'))
             )
-        elif stock_status == 'ok':
-            queryset = queryset.filter(
-                product_type='physical',
-                stock_quantity__gt=F('low_stock_threshold')
-            )
+            if stock_status == 'out_of_stock':
+                queryset = queryset.filter(_effective_stock=0)
+            elif stock_status == 'low_stock':
+                queryset = queryset.filter(
+                    _effective_stock__gt=0,
+                    _effective_stock__lte=F('low_stock_threshold')
+                )
+            elif stock_status == 'ok':
+                queryset = queryset.filter(
+                    _effective_stock__gt=F('low_stock_threshold')
+                )
         
         # Exclure les produits liés à un test de laboratoire (consommables)
         # On utilise une exclusion basée sur les slugs de catégorie et la présence de tests liés
@@ -1634,7 +1642,7 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         if result['success']:
             # La date d'envoi est déjà sauvegardée dans le service email
-            # On vérifie juste que le statut est bien à jour
+            # Les factures ne sont plus en brouillon, mais on garde la vérification par sécurité
             if invoice.status == 'draft':
                 invoice.status = 'sent'
                 invoice.save(update_fields=['status'])

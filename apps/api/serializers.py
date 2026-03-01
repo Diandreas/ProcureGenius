@@ -230,6 +230,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        # Renvoyer le stock total (incluant lots) au lieu du stock_quantity brut
+        if instance.product_type == 'physical':
+            data['stock_quantity'] = instance.total_stock
         # Return category as nested object for frontend compatibility
         if instance.category_id:
             data['category'] = {
@@ -560,9 +563,9 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                         'quantity': f"Stock de lot insuffisant ({batch.batch_number}). Disponible: {batch.quantity_remaining}, Demandé: {stock_needed}"
                     })
             # Sinon, vérifier le stock global
-            elif stock_needed > 0 and product.stock_quantity < stock_needed:
+            elif stock_needed > 0 and product.total_stock < stock_needed:
                 raise serializers.ValidationError({
-                    'quantity': f"Stock global insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
+                    'quantity': f"Stock global insuffisant. Disponible: {product.total_stock}, Demandé: {stock_needed}"
                 })
         
         return attrs
@@ -627,10 +630,13 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         validated_data.setdefault('subtotal', 0)
         validated_data.setdefault('total_amount', 0)
 
+        # Les factures sont créées directement en statut 'paid'
+        validated_data['status'] = 'paid'
+
         # Créer la facture
         invoice = Invoice.objects.create(**validated_data)
 
-        # Créer les items
+        # Créer les items (le stock sera déduit dans InvoiceItem.save() car status != 'draft')
         for item_data in items_data:
             InvoiceItem.objects.create(invoice=invoice, **item_data)
 
