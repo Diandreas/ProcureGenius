@@ -371,11 +371,15 @@ function Products() {
 
   const handleExportExcel = async () => {
     try {
-      const response = await productsAPI.exportCSV();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const response = await productsAPI.exportExcel();
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+      );
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `produits-${dayjs().format('YYYY-MM-DD')}.csv`);
+      link.setAttribute('download', `inventaire-${dayjs().format('YYYY-MM-DD')}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -383,7 +387,7 @@ function Products() {
       enqueueSnackbar('Export téléchargé avec succès', { variant: 'success' });
     } catch (error) {
       console.error('Export error:', error);
-      enqueueSnackbar('Erreur lors de l\'export', { variant: 'error' });
+      enqueueSnackbar("Erreur lors de l'export", { variant: 'error' });
     }
   };
 

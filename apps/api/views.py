@@ -343,33 +343,724 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
-        """Export des produits en CSV"""
-        import csv
+        """Export inventaire complet : 5 onglets + graphiques manager"""
+        import io
+        from collections import defaultdict
+        from decimal import Decimal
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.chart import BarChart, PieChart, LineChart, Reference
+        from openpyxl.chart.series import DataPoint
+        from openpyxl.utils import get_column_letter
         from django.http import HttpResponse
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="products.csv"'
-        
-        writer = csv.writer(response)
-        writer.writerow(['Name', 'Reference', 'Type', 'Price', 'Cost Price', 'Stock Quantity', 'Description', 'Active'])
-        
-        for product in self.get_queryset():
-            try:
-                product_type_display = product.get_product_type_display() if hasattr(product, 'get_product_type_display') else product.product_type
-            except:
-                product_type_display = product.product_type or ''
-            
-            writer.writerow([
-                product.name or '',
-                product.reference or '',
-                product_type_display,
-                str(product.price) if product.price else '',
-                str(product.cost_price) if hasattr(product, 'cost_price') and product.cost_price else '',
-                str(product.stock_quantity) if hasattr(product, 'stock_quantity') else '0',
-                product.description or '',
-                'Oui' if product.is_active else 'Non'
-            ])
-        
+        from django.utils import timezone
+        from django.db.models import Sum, Count, Q
+
+        today = timezone.now().date()
+        org = getattr(request.user, 'organization', None)
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # PALETTE & HELPERS
+        # ═══════════════════════════════════════════════════════════════════════
+        C = {
+            'navy':      '1E3A5F',
+            'blue':      '2980B9',
+            'blue_lt':   'AED6F1',
+            'teal':      '1ABC9C',
+            'green':     '27AE60',
+            'green_lt':  'A9DFBF',
+            'orange':    'E67E22',
+            'orange_lt': 'FAD7A0',
+            'red':       'C0392B',
+            'red_lt':    'F1948A',
+            'purple':    '8E44AD',
+            'gold':      'F1C40F',
+            'grey_hdr':  'ECF0F1',
+            'grey_row':  'F8FAFB',
+            'white':     'FFFFFF',
+            'text':      '2C3E50',
+            'text_lt':   '7F8C8D',
+        }
+
+        PRICE_FMT  = '#,##0'
+        PRICE2_FMT = '#,##0.00'
+        PCT_FMT    = '0.0"%"'
+        INT_FMT    = '#,##0'
+
+        def _side(color='D5D8DC'):
+            return Side(style='thin', color=color)
+
+        def _border(color='D5D8DC'):
+            s = _side(color)
+            return Border(left=s, right=s, top=s, bottom=s)
+
+        def _hdr(cell, text, bg=None, fg=None, size=10, wrap=False):
+            cell.value = text
+            cell.fill = PatternFill(start_color=bg or C['navy'],
+                                    end_color=bg or C['navy'], fill_type='solid')
+            cell.font = Font(bold=True, color=fg or C['white'], size=size)
+            cell.alignment = Alignment(horizontal='center', vertical='center',
+                                       wrap_text=wrap)
+            cell.border = _border('BDC3C7')
+
+        def _cell(cell, value, row_i, fmt=None, bold=False, fg=None,
+                  bg=None, align='center', wrap=False):
+            cell.value = value
+            _bg = bg or (C['grey_row'] if row_i % 2 == 0 else C['white'])
+            cell.fill = PatternFill(start_color=_bg, end_color=_bg, fill_type='solid')
+            cell.font = Font(bold=bold, color=fg or C['text'], size=10)
+            cell.alignment = Alignment(horizontal=align, vertical='center',
+                                       wrap_text=wrap)
+            cell.border = _border()
+            if fmt:
+                cell.number_format = fmt
+
+        def _kpi_block(ws, row, col, label, value, bg, fg=None):
+            """Bloc KPI 2 lignes : label (petit) + valeur (grand)"""
+            lc = ws.cell(row, col, label)
+            lc.font = Font(bold=False, size=9, color=fg or C['white'])
+            lc.fill = PatternFill(start_color=bg, end_color=bg, fill_type='solid')
+            lc.alignment = Alignment(horizontal='center', vertical='bottom')
+
+            vc = ws.cell(row + 1, col, value)
+            vc.font = Font(bold=True, size=14, color=fg or C['white'])
+            vc.fill = PatternFill(start_color=bg, end_color=bg, fill_type='solid')
+            vc.alignment = Alignment(horizontal='center', vertical='top')
+
+        def _title_row(ws, row, text, col_span_end, bg=None, size=12):
+            c = ws.cell(row, 1, text)
+            c.font = Font(bold=True, size=size, color=C['white'])
+            c.fill = PatternFill(start_color=bg or C['navy'],
+                                 end_color=bg or C['navy'], fill_type='solid')
+            c.alignment = Alignment(horizontal='left', vertical='center',
+                                    indent=1)
+            ws.merge_cells(start_row=row, start_column=1,
+                           end_row=row, end_column=col_span_end)
+            ws.row_dimensions[row].height = 24
+
+        def _section_hdr(ws, row, text, col_end, bg=None):
+            c = ws.cell(row, 1, text)
+            c.font = Font(bold=True, size=10, color=C['white'])
+            c.fill = PatternFill(start_color=bg or C['blue'],
+                                 end_color=bg or C['blue'], fill_type='solid')
+            c.alignment = Alignment(horizontal='left', vertical='center', indent=1)
+            ws.merge_cells(start_row=row, start_column=1,
+                           end_row=row, end_column=col_end)
+            ws.row_dimensions[row].height = 18
+
+        def _add_chart(ws_charts, chart, anchor, title, title_size=11):
+            chart.title = title
+            chart.style  = 2
+            chart.title  = title
+            ws_charts.add_chart(chart, anchor)
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # DONNÉES SOURCES
+        # ═══════════════════════════════════════════════════════════════════════
+        from apps.invoicing.models import ProductBatch, StockMovement, InvoiceItem
+
+        all_products = list(
+            self.get_queryset()
+            .select_related('category', 'supplier')
+            .prefetch_related('batches')
+        )
+        physical = [p for p in all_products if p.product_type == 'physical']
+        services = [p for p in all_products if p.product_type != 'physical']
+
+        def _stock(product):
+            """
+            Calcule le stock réel en utilisant les lots déjà préchargés (pas de requête DB).
+            Utilise product.batches.all() — compatible avec prefetch_related('batches').
+            Retourne max(stock_quantity, somme lots available/opened).
+            """
+            batch_total = sum(
+                (b.quantity_remaining or 0)
+                for b in product.batches.all()
+                if b.status in ('available', 'opened')
+            )
+            return max(product.stock_quantity or 0, batch_total)
+
+        # Ventes 30 derniers jours par produit
+        since_30 = today - __import__('datetime').timedelta(days=30)
+        sales_30 = (
+            InvoiceItem.objects
+            .filter(
+                invoice__status__in=['paid', 'sent', 'overdue'],
+                invoice__created_at__date__gte=since_30,
+                product__isnull=False,
+            )
+            .values('product_id')
+            .annotate(qty=Sum('quantity'), revenue=Sum('total_price'))
+        )
+        sales_map = {str(r['product_id']): r for r in sales_30}
+
+        # Pertes 30j
+        losses_30 = (
+            StockMovement.objects
+            .filter(movement_type='loss', created_at__date__gte=since_30)
+            .values('product_id')
+            .annotate(qty=Sum('quantity'), val=Sum('loss_value'))
+        )
+        loss_map = {str(r['product_id']): r for r in losses_30}
+
+        # Pré-calcul du stock réel pour chaque produit physique (1 seul passage)
+        stock_cache = {str(p.id): _stock(p) for p in physical}
+
+        # Stats globales
+        total_stock_value   = sum(stock_cache[str(p.id)] * float(p.cost_price or 0) for p in physical)
+        total_retail_value  = sum(stock_cache[str(p.id)] * float(p.price or 0)      for p in physical)
+        total_potential_margin = total_retail_value - total_stock_value
+
+        ok_count  = sum(1 for p in physical if stock_cache[str(p.id)] > (p.low_stock_threshold or 0))
+        low_count = sum(1 for p in physical if 0 < stock_cache[str(p.id)] <= (p.low_stock_threshold or 0))
+        out_count = sum(1 for p in physical if stock_cache[str(p.id)] <= 0)
+
+        expiring_30 = sum(
+            1 for p in physical
+            if p.expiration_date and p.expiration_date <= today + __import__('datetime').timedelta(days=30)
+        )
+        batch_expiring = 0
+        try:
+            batch_expiring = ProductBatch.objects.filter(
+                product__in=physical,
+                expiry_date__lte=today + __import__('datetime').timedelta(days=30),
+                expiry_date__gte=today,
+                quantity_remaining__gt=0,
+            ).count()
+        except Exception:
+            pass
+
+        total_loss_value = sum(float(r.get('val') or 0) for r in loss_map.values())
+        total_revenue_30 = sum(float(r.get('revenue') or 0) for r in sales_map.values())
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # WORKBOOK
+        # ═══════════════════════════════════════════════════════════════════════
+        wb = openpyxl.Workbook()
+
+        # ─────────────────────────────────────────────────────────────────────
+        # ONGLET 1 : RÉSUMÉ EXÉCUTIF (Dashboard KPI)
+        # ─────────────────────────────────────────────────────────────────────
+        ws_sum = wb.active
+        ws_sum.title = "Résumé Exécutif"
+        ws_sum.sheet_view.showGridLines = False
+        ws_sum.column_dimensions['A'].width = 3
+        for col in ['B','C','D','E','F','G','H','I','J','K','L','M','N']:
+            ws_sum.column_dimensions[col].width = 14
+
+        # Bandeau titre
+        ws_sum.merge_cells('B2:N2')
+        title_c = ws_sum['B2']
+        title_c.value = f"RAPPORT INVENTAIRE  —  {today.strftime('%d/%m/%Y')}"
+        title_c.font = Font(bold=True, size=18, color=C['white'])
+        title_c.fill = PatternFill(start_color=C['navy'], end_color=C['navy'], fill_type='solid')
+        title_c.alignment = Alignment(horizontal='center', vertical='center')
+        ws_sum.row_dimensions[2].height = 38
+
+        # Sous-titre
+        ws_sum.merge_cells('B3:N3')
+        st = ws_sum['B3']
+        st.value = "Centre Julianna  |  Vue manager  |  30 derniers jours"
+        st.font = Font(italic=True, size=10, color=C['text_lt'])
+        st.alignment = Alignment(horizontal='center')
+        ws_sum.row_dimensions[3].height = 16
+
+        # KPI Row 1 — Finances
+        _section_hdr(ws_sum, 5, "VALORISATION DU STOCK", 14, C['navy'])
+
+        kpi1 = [
+            ("Valeur d'achat stock",    f"{total_stock_value:,.0f} XAF",   C['blue']),
+            ("Valeur de vente stock",   f"{total_retail_value:,.0f} XAF",  C['teal']),
+            ("Marge potentielle",       f"{total_potential_margin:,.0f} XAF", C['green']),
+            ("CA réalisé (30j)",        f"{total_revenue_30:,.0f} XAF",    C['purple']),
+            ("Pertes 30j",              f"{total_loss_value:,.0f} XAF",    C['red']),
+        ]
+        cols_kpi = [2, 5, 8, 11, 14]
+        for (lbl, val, bg), col in zip(kpi1, cols_kpi):
+            ws_sum.merge_cells(start_row=6, start_column=col, end_row=6, end_column=col+2)
+            ws_sum.merge_cells(start_row=7, start_column=col, end_row=7, end_column=col+2)
+            _kpi_block(ws_sum, 6, col, lbl, val, bg)
+        ws_sum.row_dimensions[6].height = 20
+        ws_sum.row_dimensions[7].height = 26
+
+        # KPI Row 2 — Stock
+        _section_hdr(ws_sum, 9, "ÉTAT DU STOCK PHYSIQUE", 14, C['teal'])
+        kpi2 = [
+            ("Produits physiques",  str(len(physical)),   C['navy']),
+            ("Stock OK",            str(ok_count),         C['green']),
+            ("Stock bas",           str(low_count),        C['orange']),
+            ("Ruptures",            str(out_count),        C['red']),
+            ("Péremptions < 30j",   str(expiring_30 + batch_expiring), C['purple']),
+        ]
+        for (lbl, val, bg), col in zip(kpi2, cols_kpi):
+            ws_sum.merge_cells(start_row=10, start_column=col, end_row=10, end_column=col+2)
+            ws_sum.merge_cells(start_row=11, start_column=col, end_row=11, end_column=col+2)
+            _kpi_block(ws_sum, 10, col, lbl, val, bg)
+        ws_sum.row_dimensions[10].height = 20
+        ws_sum.row_dimensions[11].height = 26
+
+        # KPI Row 3 — Catalogue
+        _section_hdr(ws_sum, 13, "CATALOGUE", 14, C['purple'])
+        kpi3 = [
+            ("Total produits",      str(len(all_products)),  C['navy']),
+            ("Services",            str(len(services)),      C['blue']),
+            ("Avec lots actifs",    str(sum(1 for p in physical if any(b.status in ('available','opened') for b in p.batches.all()))), C['teal']),
+            ("Inactifs",            str(sum(1 for p in all_products if not p.is_active)), C['orange']),
+            ("Produits vendus 30j", str(len(sales_map)),     C['green']),
+        ]
+        for (lbl, val, bg), col in zip(kpi3, cols_kpi):
+            ws_sum.merge_cells(start_row=14, start_column=col, end_row=14, end_column=col+2)
+            ws_sum.merge_cells(start_row=15, start_column=col, end_row=15, end_column=col+2)
+            _kpi_block(ws_sum, 14, col, lbl, val, bg)
+        ws_sum.row_dimensions[14].height = 20
+        ws_sum.row_dimensions[15].height = 26
+
+        # ─────────────────────────────────────────────────────────────────────
+        # ONGLET 2 : PRODUITS PHYSIQUES
+        # ─────────────────────────────────────────────────────────────────────
+        ws_ph = wb.create_sheet("Produits Physiques")
+        ws_ph.freeze_panes = 'A3'
+        ws_ph.sheet_view.showGridLines = False
+
+        PH_COLS = [
+            ('Nom du produit',    38, 'left'),
+            ('Référence',         16, 'center'),
+            ('Catégorie',         20, 'center'),
+            ('Fournisseur',       22, 'center'),
+            ('Prix vente',        14, 'center'),
+            ("Prix achat",        14, 'center'),
+            ('Marge (XAF)',       14, 'center'),
+            ('Marge %',           10, 'center'),
+            ('Stock actuel',      13, 'center'),
+            ('Valeur stock',      14, 'center'),
+            ('Seuil bas',         10, 'center'),
+            ('Statut',            12, 'center'),
+            ('Ventes 30j (qté)',  14, 'center'),
+            ('CA 30j (XAF)',      14, 'center'),
+            ('Pertes 30j',        12, 'center'),
+            ('Unité',             10, 'center'),
+            ('Date péremption',   16, 'center'),
+            ('Actif',              7, 'center'),
+        ]
+
+        _title_row(ws_ph, 1, f"PRODUITS PHYSIQUES  —  {today.strftime('%d/%m/%Y')}", len(PH_COLS))
+        ws_ph.row_dimensions[1].height = 22
+
+        for ci, (lbl, w, _) in enumerate(PH_COLS, 1):
+            _hdr(ws_ph.cell(2, ci), lbl)
+            ws_ph.column_dimensions[get_column_letter(ci)].width = w
+        ws_ph.row_dimensions[2].height = 22
+
+        # Données pour graphiques
+        top_stock  = []   # (nom, stock)
+        top_value  = []   # (nom, valeur_stock)
+        top_margin = []   # (nom, marge%)
+        top_sales  = []   # (nom, ca_30j)
+        cat_value  = defaultdict(float)
+        supplier_value = defaultdict(float)
+
+        for ri, p in enumerate(physical, 3):
+            pid   = str(p.id)
+            stock = stock_cache[pid]
+            thr   = p.low_stock_threshold or 0
+            price = float(p.price or 0)
+            cost  = float(p.cost_price or 0)
+            margin_xaf = price - cost
+            margin_pct = ((margin_xaf / cost) * 100) if cost > 0 else 0
+            stock_val  = stock * cost
+            s30 = sales_map.get(pid, {})
+            l30 = loss_map.get(pid, {})
+            qty_sold  = int(s30.get('qty') or 0)
+            ca_30     = float(s30.get('revenue') or 0)
+            loss_qty  = int(l30.get('qty') or 0)
+
+            if stock <= 0:
+                status, sc = 'RUPTURE',   C['red']
+            elif stock <= thr:
+                status, sc = 'STOCK BAS', C['orange']
+            else:
+                status, sc = 'OK',        C['green']
+
+            name = p.name or ''
+            cat  = p.category.name if p.category else 'Sans catégorie'
+            sup  = p.supplier.name if p.supplier else ''
+            row  = [
+                name, p.reference or '', cat, sup,
+                price, cost, margin_xaf, margin_pct / 100,
+                stock, stock_val, thr, status,
+                qty_sold, ca_30, loss_qty,
+                p.get_base_unit_display() if hasattr(p, 'get_base_unit_display') else '',
+                str(p.expiration_date) if p.expiration_date else '',
+                'Oui' if p.is_active else 'Non',
+            ]
+            FMTS = [
+                None, None, None, None,
+                PRICE_FMT, PRICE_FMT, PRICE_FMT, '0.0%',
+                INT_FMT, PRICE_FMT, INT_FMT, None,
+                INT_FMT, PRICE_FMT, INT_FMT,
+                None, None, None,
+            ]
+            for ci, (val, fmt, (_, _, align)) in enumerate(zip(row, FMTS, PH_COLS), 1):
+                extra = {}
+                if ci == 12:
+                    extra = {'fg': sc, 'bold': True}
+                elif ci == 7 and margin_xaf < 0:
+                    extra = {'fg': C['red']}
+                _cell(ws_ph.cell(ri, ci), val, ri, fmt=fmt, align=align, **extra)
+
+            # Collecte graphiques
+            if stock > 0:
+                top_stock.append((name[:30], stock))
+            top_value.append((name[:30], round(stock_val)))
+            if margin_pct > 0:
+                top_margin.append((name[:30], round(margin_pct, 1)))
+            if ca_30 > 0:
+                top_sales.append((name[:30], round(ca_30)))
+            cat_value[cat] += stock_val
+            supplier_value[sup or 'Inconnu'] += stock_val
+
+        ws_ph.auto_filter.ref = f"A2:{get_column_letter(len(PH_COLS))}2"
+
+        # ─────────────────────────────────────────────────────────────────────
+        # ONGLET 3 : SERVICES
+        # ─────────────────────────────────────────────────────────────────────
+        ws_svc = wb.create_sheet("Services")
+        ws_svc.freeze_panes = 'A3'
+        ws_svc.sheet_view.showGridLines = False
+
+        SVC_COLS = [
+            ('Nom du service',   38, 'left'),
+            ('Référence',        16, 'center'),
+            ('Catégorie',        22, 'center'),
+            ('Prix de vente',    16, 'center'),
+            ("Prix d'achat",     16, 'center'),
+            ('Marge (XAF)',      14, 'center'),
+            ('Marge %',          10, 'center'),
+            ('CA 30j (XAF)',     16, 'center'),
+            ('Ventes 30j',       12, 'center'),
+            ('Actif',             7, 'center'),
+            ('Description',      40, 'left'),
+        ]
+        _title_row(ws_svc, 1, f"SERVICES  —  {today.strftime('%d/%m/%Y')}", len(SVC_COLS), C['teal'])
+        ws_svc.row_dimensions[1].height = 22
+
+        for ci, (lbl, w, _) in enumerate(SVC_COLS, 1):
+            _hdr(ws_svc.cell(2, ci), lbl, bg=C['teal'])
+            ws_svc.column_dimensions[get_column_letter(ci)].width = w
+        ws_svc.row_dimensions[2].height = 22
+
+        svc_top_sales = []
+        for ri, p in enumerate(services, 3):
+            pid   = str(p.id)
+            price = float(p.price or 0)
+            cost  = float(p.cost_price or 0)
+            mg    = price - cost
+            mgp   = ((mg / cost) * 100) if cost > 0 else 0
+            s30   = sales_map.get(pid, {})
+            ca_30 = float(s30.get('revenue') or 0)
+            qty_s = int(s30.get('qty') or 0)
+
+            row = [
+                p.name or '', p.reference or '',
+                p.category.name if p.category else '',
+                price, cost, mg, mgp / 100,
+                ca_30, qty_s,
+                'Oui' if p.is_active else 'Non',
+                p.description or '',
+            ]
+            FMTS_S = [None, None, None, PRICE_FMT, PRICE_FMT, PRICE_FMT, '0.0%',
+                      PRICE_FMT, INT_FMT, None, None]
+            for ci, (val, fmt, (_, _, align)) in enumerate(zip(row, FMTS_S, SVC_COLS), 1):
+                extra = {}
+                if ci == 6 and mg < 0:
+                    extra = {'fg': C['red']}
+                _cell(ws_svc.cell(ri, ci), val, ri, fmt=fmt, align=align, **extra)
+
+            if ca_30 > 0:
+                svc_top_sales.append(((p.name or '')[:30], round(ca_30)))
+
+        ws_svc.auto_filter.ref = f"A2:{get_column_letter(len(SVC_COLS))}2"
+
+        # ─────────────────────────────────────────────────────────────────────
+        # ONGLET 4 : ALERTES
+        # ─────────────────────────────────────────────────────────────────────
+        ws_al = wb.create_sheet("Alertes")
+        ws_al.sheet_view.showGridLines = False
+        ws_al.column_dimensions['A'].width = 3
+
+        _title_row(ws_al, 1, f"ALERTES CRITIQUES  —  {today.strftime('%d/%m/%Y')}", 10, C['red'])
+
+        row_cur = 3
+
+        # --- Ruptures ---
+        ruptures = [p for p in physical if stock_cache[str(p.id)] <= 0]
+        _section_hdr(ws_al, row_cur, f"RUPTURES DE STOCK ({len(ruptures)} produits)", 10, C['red'])
+        row_cur += 1
+        AL_HEADS = ['Produit', 'Référence', 'Catégorie', 'Fournisseur', 'Prix vente',
+                    'Délai livraison (j)', 'Dernière vente 30j']
+        ALWS = [35, 16, 20, 22, 14, 18, 18]
+        for ci, (h, w) in enumerate(zip(AL_HEADS, ALWS), 2):
+            _hdr(ws_al.cell(row_cur, ci), h, bg=C['red'])
+            ws_al.column_dimensions[get_column_letter(ci)].width = w
+        row_cur += 1
+        for ri_off, p in enumerate(ruptures):
+            pid = str(p.id)
+            s30 = sales_map.get(pid, {})
+            row = [p.name or '', p.reference or '',
+                   p.category.name if p.category else '',
+                   p.supplier.name if p.supplier else '',
+                   float(p.price or 0),
+                   p.supply_lead_time_days or '',
+                   int(s30.get('qty') or 0)]
+            for ci, v in enumerate(row, 2):
+                fmt = PRICE_FMT if ci == 6 else (INT_FMT if ci in (7, 9) else None)
+                _cell(ws_al.cell(row_cur, ci), v, row_cur, fmt=fmt,
+                      bg=C['red_lt'])
+            row_cur += 1
+
+        row_cur += 1
+
+        # --- Stock bas ---
+        low_list = [p for p in physical
+                    if 0 < stock_cache[str(p.id)] <= (p.low_stock_threshold or 0)]
+        _section_hdr(ws_al, row_cur, f"STOCK BAS ({len(low_list)} produits)", 10, C['orange'])
+        row_cur += 1
+        SB_HEADS = ['Produit', 'Référence', 'Stock actuel', 'Seuil', 'Valeur restante',
+                    'Ventes 30j', 'Jours restants estimés']
+        SBW = [35, 16, 14, 10, 16, 12, 20]
+        for ci, (h, w) in enumerate(zip(SB_HEADS, SBW), 2):
+            _hdr(ws_al.cell(row_cur, ci), h, bg=C['orange'])
+            ws_al.column_dimensions[get_column_letter(ci)].width = w
+        row_cur += 1
+        for p in low_list:
+            pid   = str(p.id)
+            stock = stock_cache[pid]
+            s30   = sales_map.get(pid, {})
+            qty30 = int(s30.get('qty') or 0)
+            daily = qty30 / 30 if qty30 > 0 else 0
+            days_left = round(stock / daily) if daily > 0 else '—'
+            row = [p.name or '', p.reference or '',
+                   stock, p.low_stock_threshold or 0,
+                   stock * float(p.cost_price or 0),
+                   qty30, days_left]
+            for ci, v in enumerate(row, 2):
+                fmt = PRICE_FMT if ci == 6 else (INT_FMT if ci in (4, 5, 7) else None)
+                _cell(ws_al.cell(row_cur, ci), v, row_cur, fmt=fmt,
+                      bg=C['orange_lt'])
+            row_cur += 1
+
+        row_cur += 1
+
+        # --- Péremptions proches ---
+        expiring = [p for p in physical
+                    if p.expiration_date and p.expiration_date <= today + __import__('datetime').timedelta(days=60)]
+        expiring.sort(key=lambda x: x.expiration_date)
+        _section_hdr(ws_al, row_cur, f"PEREMPTIONS PROCHAINES — 60 jours ({len(expiring)} produits)", 10, C['purple'])
+        row_cur += 1
+        EX_HEADS = ['Produit', 'Référence', 'Date péremption', 'Jours restants',
+                    'Stock', 'Valeur à risque']
+        EXW = [35, 16, 18, 16, 12, 16]
+        for ci, (h, w) in enumerate(zip(EX_HEADS, EXW), 2):
+            _hdr(ws_al.cell(row_cur, ci), h, bg=C['purple'])
+            ws_al.column_dimensions[get_column_letter(ci)].width = w
+        row_cur += 1
+        for p in expiring:
+            stock = stock_cache[str(p.id)]
+            days_r = (p.expiration_date - today).days
+            val_risk = stock * float(p.cost_price or 0)
+            bg_ex = C['red_lt'] if days_r <= 15 else C['orange_lt']
+            row = [p.name or '', p.reference or '',
+                   str(p.expiration_date), days_r, stock, val_risk]
+            for ci, v in enumerate(row, 2):
+                fmt = PRICE_FMT if ci == 7 else (INT_FMT if ci in (5, 6) else None)
+                _cell(ws_al.cell(row_cur, ci), v, row_cur, fmt=fmt, bg=bg_ex)
+            row_cur += 1
+
+        # ─────────────────────────────────────────────────────────────────────
+        # DONNÉES GRAPHIQUES (onglet caché)
+        # ─────────────────────────────────────────────────────────────────────
+        ws_d = wb.create_sheet("_Data")
+        ws_d.sheet_state = 'hidden'
+
+        def _write_block(ws, start_col, headers, rows):
+            """Écrit un bloc (headers + data) à partir de start_col, retourne nb lignes"""
+            for ci, h in enumerate(headers, start_col):
+                ws.cell(1, ci, h)
+            for ri, row in enumerate(rows, 2):
+                for ci, v in enumerate(row, start_col):
+                    ws.cell(ri, ci, v)
+            return len(rows)
+
+        # Col A-B : Top 15 stock
+        top15s = sorted(top_stock, key=lambda x: x[1], reverse=True)[:15]
+        n_ts = _write_block(ws_d, 1, ['Produit', 'Stock'], top15s)
+
+        # Col D-E : Top 15 valeur stock
+        top15v = sorted(top_value, key=lambda x: x[1], reverse=True)[:15]
+        n_tv = _write_block(ws_d, 4, ['Produit', 'Valeur stock'], top15v)
+
+        # Col G-H : Top 10 CA 30j (physiques)
+        top10ca = sorted(top_sales, key=lambda x: x[1], reverse=True)[:10]
+        n_ca = _write_block(ws_d, 7, ['Produit', 'CA 30j'], top10ca)
+
+        # Col J-K : Top 10 marge %
+        top10mg = sorted(top_margin, key=lambda x: x[1], reverse=True)[:10]
+        n_mg = _write_block(ws_d, 10, ['Produit', 'Marge %'], top10mg)
+
+        # Col M-N : Statut stock
+        _write_block(ws_d, 13, ['Statut', 'Nb'],
+                     [['OK', ok_count], ['Stock bas', low_count], ['Rupture', out_count]])
+
+        # Col P-Q : Top 8 catégories par valeur
+        top_cat_v = sorted(cat_value.items(), key=lambda x: x[1], reverse=True)[:8]
+        n_catv = _write_block(ws_d, 16, ['Catégorie', 'Valeur stock'], top_cat_v)
+
+        # Col S-T : Top 8 fournisseurs par valeur
+        top_sup_v = sorted(supplier_value.items(), key=lambda x: x[1], reverse=True)[:8]
+        n_supv = _write_block(ws_d, 19, ['Fournisseur', 'Valeur stock'], top_sup_v)
+
+        # Col V-W : Top 10 CA services
+        top_svc = sorted(svc_top_sales, key=lambda x: x[1], reverse=True)[:10]
+        n_svc = _write_block(ws_d, 22, ['Service', 'CA 30j'], top_svc)
+
+        # ─────────────────────────────────────────────────────────────────────
+        # ONGLET 5 : GRAPHIQUES
+        # ─────────────────────────────────────────────────────────────────────
+        ws_g = wb.create_sheet("Graphiques")
+        ws_g.sheet_view.showGridLines = False
+        ws_g.sheet_view.showRowColHeaders = False
+
+        # Titre dashboard
+        ws_g.merge_cells('B1:AD1')
+        tc = ws_g['B1']
+        tc.value = f"TABLEAU DE BORD INVENTAIRE  —  {today.strftime('%d/%m/%Y')}"
+        tc.font = Font(bold=True, size=20, color=C['white'])
+        tc.fill = PatternFill(start_color=C['navy'], end_color=C['navy'], fill_type='solid')
+        tc.alignment = Alignment(horizontal='center', vertical='center')
+        ws_g.row_dimensions[1].height = 46
+
+        # Largeurs colonnes (pour espacement entre graphiques)
+        for col_i in range(2, 60):
+            ws_g.column_dimensions[get_column_letter(col_i)].width = 2.2
+
+        # Helper chart builder
+        def _bar_h(title, data_col, cat_col, n, width=22, height=13, color=None):
+            c = BarChart()
+            c.type = 'bar'
+            c.title = title
+            c.style = 2
+            c.width = width
+            c.height = height
+            c.legend = None
+            c.y_axis.majorGridlines = None
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            c.add_data(dr, titles_from_data=True)
+            c.set_categories(cr)
+            if color and c.series:
+                c.series[0].graphicalProperties.solidFill = color
+                c.series[0].graphicalProperties.line.solidFill = color
+            return c
+
+        def _bar_v(title, data_col, cat_col, n, width=22, height=12, color=None):
+            c = BarChart()
+            c.type = 'col'
+            c.title = title
+            c.style = 2
+            c.width = width
+            c.height = height
+            c.legend = None
+            c.y_axis.majorGridlines = None
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            c.add_data(dr, titles_from_data=True)
+            c.set_categories(cr)
+            if color and c.series:
+                c.series[0].graphicalProperties.solidFill = color
+                c.series[0].graphicalProperties.line.solidFill = color
+            return c
+
+        def _pie(title, data_col, cat_col, n, colors=None, width=14, height=12):
+            c = PieChart()
+            c.title = title
+            c.style = 2
+            c.width = width
+            c.height = height
+            dr = Reference(ws_d, min_col=data_col, min_row=1, max_row=n + 1)
+            cr = Reference(ws_d, min_col=cat_col,  min_row=2, max_row=n + 1)
+            c.add_data(dr, titles_from_data=True)
+            c.set_categories(cr)
+            if colors and c.series:
+                for idx, col in enumerate(colors[:n]):
+                    pt = DataPoint(idx=idx)
+                    pt.graphicalProperties.solidFill = col
+                    c.series[0].data_points.append(pt)
+            return c
+
+        # ── Rangée 1 (ancre B3) ─────────────────────────────────────────────
+        # G1 : Top 15 stock — barres horizontales
+        if n_ts > 0:
+            ch = _bar_h(f"Top {n_ts} produits — stock disponible",
+                        2, 1, n_ts, width=26, height=15, color=C['blue'])
+            ws_g.add_chart(ch, 'B3')
+
+        # G2 : Top 15 valeur stock — barres horizontales
+        if n_tv > 0:
+            ch2 = _bar_h(f"Top {n_tv} produits — valeur du stock (XAF)",
+                         5, 4, n_tv, width=26, height=15, color=C['teal'])
+            ws_g.add_chart(ch2, 'R3')
+
+        # ── Rangée 2 (ancre B35) ────────────────────────────────────────────
+        # G3 : Statut stock — camembert
+        ch3 = _pie("Répartition statut stock",
+                   14, 13, 3,
+                   colors=[C['green'], C['orange'], C['red']],
+                   width=16, height=13)
+        ws_g.add_chart(ch3, 'B35')
+
+        # G4 : Top 10 CA 30j — barres horizontales
+        if n_ca > 0:
+            ch4 = _bar_h(f"Top {n_ca} produits — CA 30 jours (XAF)",
+                         8, 7, n_ca, width=24, height=13, color=C['purple'])
+            ws_g.add_chart(ch4, 'L35')
+
+        # G5 : Top 10 marge % — barres horizontales
+        if n_mg > 0:
+            ch5 = _bar_h(f"Top {n_mg} produits — marge brute (%)",
+                         11, 10, n_mg, width=24, height=13, color=C['gold'])
+            ws_g.add_chart(ch5, 'AD35')
+
+        # ── Rangée 3 (ancre B65) ────────────────────────────────────────────
+        # G6 : Top catégories par valeur stock — barres verticales
+        if n_catv > 0:
+            ch6 = _bar_v(f"Top {n_catv} catégories — valeur stock (XAF)",
+                         17, 16, n_catv, width=24, height=13, color=C['navy'])
+            ws_g.add_chart(ch6, 'B65')
+
+        # G7 : Top fournisseurs par valeur stock — barres verticales
+        if n_supv > 0:
+            ch7 = _bar_v(f"Top {n_supv} fournisseurs — valeur stock (XAF)",
+                         20, 19, n_supv, width=24, height=13, color=C['blue'])
+            ws_g.add_chart(ch7, 'R65')
+
+        # G8 : Top services CA — barres horizontales
+        if n_svc > 0:
+            ch8 = _bar_h(f"Top {n_svc} services — CA 30 jours (XAF)",
+                         23, 22, n_svc, width=22, height=13, color=C['teal'])
+            ws_g.add_chart(ch8, 'AH65')
+
+        # ── Mise en ordre ────────────────────────────────────────────────────
+        wb.active = wb['Résumé Exécutif']
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="inventaire.xlsx"'
         return response
 
     @action(detail=False, methods=['get'])

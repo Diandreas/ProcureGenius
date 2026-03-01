@@ -155,6 +155,7 @@ export const productsAPI = {
   getExpiredReport: () => api.get('/products/expired_report/'),
   getStatistics: (id) => api.get(`/products/${id}/statistics/`),
   exportCSV: () => api.get('/products/export_csv/', { responseType: 'blob' }),
+  exportExcel: () => api.get('/products/export_csv/', { responseType: 'blob' }),
   quickCreate: (data) => api.post('/quick-create/product/', data),
   createBatch: (productId, data) => api.post(`/products/${productId}/batches/`, data),
   getBatches: (productId) => api.get(`/products/${productId}/batches/`),
