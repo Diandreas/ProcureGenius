@@ -573,6 +573,17 @@ function Products() {
                   />
                 </Box>
               )}
+
+              {/* Lab consumable badge */}
+              {product.is_lab_consumable && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip
+                    label="Consommable Labo"
+                    size="small"
+                    sx={{ bgcolor: '#7c3aed', color: 'white', fontSize: '0.65rem', height: 20, fontWeight: 700 }}
+                  />
+                </Box>
+              )}
             </Stack>
 
             {/* Stock Level Bar for physical */}

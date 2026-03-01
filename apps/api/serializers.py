@@ -135,6 +135,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     prev_product_id = serializers.SerializerMethodField()
     next_product_id = serializers.SerializerMethodField()
 
+    # Lab consumable flag
+    is_lab_consumable = serializers.SerializerMethodField()
+
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
     warehouse_code = serializers.CharField(source='warehouse.code', read_only=True)
@@ -186,7 +189,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at',
-            'prev_product_id', 'next_product_id'
+            'prev_product_id', 'next_product_id',
+            'is_lab_consumable'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
@@ -227,6 +231,10 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         ).order_by('name', 'id').first()
         
         return next_prod.id if next_prod else None
+
+    def get_is_lab_consumable(self, obj):
+        """True si ce produit est lié à au moins un test de laboratoire."""
+        return obj.linked_lab_tests.exists()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

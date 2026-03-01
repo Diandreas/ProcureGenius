@@ -159,6 +159,9 @@ class LabTestSerializer(serializers.ModelSerializer):
     container_type_display = serializers.CharField(source='get_container_type_display', read_only=True)
     has_parameters = serializers.BooleanField(read_only=True)
     parameters = LabTestParameterSerializer(many=True, read_only=True)
+    # Consommable lié : nom + stock actuel (read-only, calculé)
+    linked_product_name = serializers.SerializerMethodField()
+    linked_product_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = LabTest
@@ -194,10 +197,29 @@ class LabTestSerializer(serializers.ModelSerializer):
             'requires_approval',
             'has_parameters',
             'parameters',
+            'linked_product',
+            'linked_product_name',
+            'linked_product_stock',
             'created_at',
             'updated_at',
         ]
         read_only_fields = ['id', 'organization', 'created_at', 'updated_at']
+
+    def get_linked_product_name(self, obj):
+        if obj.linked_product:
+            return obj.linked_product.name
+        return None
+
+    def get_linked_product_stock(self, obj):
+        from django.db.models import Sum
+        p = obj.linked_product
+        if not p:
+            return None
+        batch_stock = (
+            p.batches.filter(status__in=['available', 'opened'])
+            .aggregate(total=Sum('quantity_remaining'))['total'] or 0
+        )
+        return max(p.stock_quantity or 0, batch_stock)
 
 
 class LabTestListSerializer(serializers.ModelSerializer):

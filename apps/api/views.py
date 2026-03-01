@@ -317,19 +317,14 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                     _effective_stock__gt=F('low_stock_threshold')
                 )
         
-        # Exclure les consommables labo UNIQUEMENT sur le listing
-        # (list, export_csv, low_stock…) — jamais sur retrieve/update/destroy
-        # pour éviter que des produits soient inaccessibles après création.
-        list_only_actions = {'list', 'low_stock', 'export_csv', 'expired_report',
-                             'batch_stats', 'by_supplier', 'by_product'}
+        # Exclure les consommables labo UNIQUEMENT sur les exports/rapports
+        # (jamais sur list/retrieve/update/destroy) pour que les consommables
+        # liés aux tests de labo restent visibles dans la liste des produits.
+        export_only_actions = {'export_csv', 'expired_report', 'batch_stats', 'by_supplier', 'by_product'}
         action = getattr(self, 'action', None)
-        if action in list_only_actions:
+        if action in export_only_actions:
             try:
                 queryset = queryset.exclude(
-                    Q(category__slug__in=[
-                        'lab_consumables', 'lab-consumables',
-                        'laboratory', 'lab-tests', 'lab_tests'
-                    ]) |
                     Q(linked_lab_tests__isnull=False)
                 )
             except Exception:
