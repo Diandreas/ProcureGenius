@@ -31,7 +31,8 @@ import {
     Restaurant as FastingIcon,
     CheckCircle as ActiveIcon,
     Cancel as InactiveIcon,
-    PictureAsPdf as PdfIcon
+    PictureAsPdf as PdfIcon,
+    Inventory2 as InventoryIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -222,14 +223,15 @@ const LabTestCatalog = () => {
                             <TableCell align="center">Jeûne</TableCell>
                             <TableCell align="center">Statut</TableCell>
                             <TableCell>Délai</TableCell>
+                            <TableCell>Consommable / Stock</TableCell>
                             <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={9} align="center">Chargement...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={10} align="center">Chargement...</TableCell></TableRow>
                         ) : tests.length === 0 ? (
-                            <TableRow><TableCell colSpan={9} align="center">Aucun examen trouvé</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={10} align="center">Aucun examen trouvé</TableCell></TableRow>
                         ) : (
                             tests.map((test) => (
                                 <TableRow key={test.id} hover>
@@ -268,6 +270,27 @@ const LabTestCatalog = () => {
                                         )}
                                     </TableCell>
                                     <TableCell>{test.estimated_turnaround_hours ? `${test.estimated_turnaround_hours}h` : '-'}</TableCell>
+                                    <TableCell>
+                                        {test.linked_product_name ? (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7 }} />
+                                                <Box>
+                                                    <Typography variant="caption" display="block" noWrap sx={{ maxWidth: 130 }}>
+                                                        {test.linked_product_name}
+                                                    </Typography>
+                                                    <Chip
+                                                        label={`Stock: ${test.linked_product_stock ?? 0}`}
+                                                        size="small"
+                                                        color={test.linked_product_stock > 0 ? 'success' : 'error'}
+                                                        variant="outlined"
+                                                        sx={{ fontSize: '0.6rem', height: 16 }}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        ) : (
+                                            <Typography variant="caption" color="text.disabled">—</Typography>
+                                        )}
+                                    </TableCell>
                                     <TableCell align="right">
                                         {isAdmin && (
                                             <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">

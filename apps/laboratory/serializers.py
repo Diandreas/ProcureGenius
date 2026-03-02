@@ -226,6 +226,8 @@ class LabTestListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for test lists"""
     category_name = serializers.CharField(source='category.name', read_only=True)
     has_parameters = serializers.BooleanField(read_only=True)
+    linked_product_name = serializers.CharField(source='linked_product.name', read_only=True, default=None)
+    linked_product_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = LabTest
@@ -243,7 +245,21 @@ class LabTestListSerializer(serializers.ModelSerializer):
             'estimated_turnaround_hours',
             'is_active',
             'has_parameters',
+            'linked_product',
+            'linked_product_name',
+            'linked_product_stock',
         ]
+
+    def get_linked_product_stock(self, obj):
+        p = obj.linked_product
+        if not p:
+            return None
+        from django.db.models import Sum
+        batch_stock = (
+            p.batches.filter(status__in=['available', 'opened'])
+            .aggregate(total=Sum('quantity_remaining'))['total'] or 0
+        )
+        return max(p.stock_quantity or 0, batch_stock)
 
 
 class LabOrderItemSerializer(serializers.ModelSerializer):

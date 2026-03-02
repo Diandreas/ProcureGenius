@@ -736,6 +736,7 @@ class PrescriptionItem(models.Model):
     # Dosage
     dosage = models.CharField(
         max_length=100,
+        blank=True,
         verbose_name=_("Dosage"),
         help_text=_("Ex: 500mg, 1 comprimé, 5ml")
     )

@@ -271,6 +271,19 @@ const PatientDetail = () => {
                                     <Typography variant="caption" color="text.secondary">Téléphone</Typography>
                                     <Typography variant="body2" fontWeight="500">{patient.phone || '-'}</Typography>
                                 </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Situation Matrimoniale</Typography>
+                                    <Typography variant="body2" fontWeight="500">
+                                        {patient.marital_status === 'single' ? 'Célibataire' :
+                                         patient.marital_status === 'married' ? 'Marié(e)' :
+                                         patient.marital_status === 'divorced' ? 'Divorcé(e)' :
+                                         patient.marital_status === 'widowed' ? 'Veuf/Veuve' : '-'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Profession</Typography>
+                                    <Typography variant="body2" fontWeight="500">{patient.profession || '-'}</Typography>
+                                </Grid>
                                 <Grid item xs={12} sx={{ mt: 1 }}>
                                     <Typography variant="caption" color="text.secondary">Adresse</Typography>
                                     <Typography variant="body2">{patient.address || '-'}</Typography>

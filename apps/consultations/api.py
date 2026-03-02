@@ -80,15 +80,34 @@ class ConsultationListCreateView(generics.ListCreateAPIView):
         )
 
 
+_ANTECEDENT_FIELDS = [
+    'antecedents_medical', 'antecedents_surgical',
+    'antecedents_immuno_allergies', 'antecedents_gyneco_obs',
+    'antecedents_lifestyle', 'antecedents_family',
+]
+
+
 class ConsultationDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a consultation"""
     serializer_class = ConsultationSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return Consultation.objects.filter(
             organization=self.request.user.organization
         ).select_related('patient', 'doctor').prefetch_related('prescriptions')
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        # Sync non-empty antecedents back to the patient record (bypass Client.save() validation)
+        update_data = {
+            f: getattr(instance, f)
+            for f in _ANTECEDENT_FIELDS
+            if getattr(instance, f)
+        }
+        if update_data:
+            from apps.accounts.models import Client
+            Client.objects.filter(pk=instance.patient_id).update(**update_data)
 
 
 class UpdateVitalSignsView(APIView):

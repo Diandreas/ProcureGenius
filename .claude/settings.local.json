@@ -133,7 +133,8 @@
       "Read(//d/d/**)",
       "Read(//d/project/BFMa/ProcureGenius/frontend/src/pages/**)",
       "Bash(d:/project/BFMa/ProcureGenius/apps/api/views.py:*)",
-      "Bash(d:/project/BFMa/ProcureGenius/apps/laboratory/api.py:*)"
+      "Bash(d:/project/BFMa/ProcureGenius/apps/laboratory/api.py:*)",
+      "Read(//d:/project/BFMa/**)"
     ],
     "deny": [],
     "ask": [],

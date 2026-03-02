@@ -158,6 +158,14 @@ class Client(models.Model):
         ('external', _('Externe (autre hôpital)')),
         ('emergency', _('Urgence')),
     ]
+
+    # Marital status choices
+    MARITAL_STATUS_CHOICES = [
+        ('single', _('Célibataire')),
+        ('married', _('Marié(e)')),
+        ('divorced', _('Divorcé(e)')),
+        ('widowed', _('Veuf/Veuve')),
+    ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
@@ -227,6 +235,26 @@ class Client(models.Model):
         help_text=_("Maladies chroniques ou conditions permanentes")
     )
     
+    marital_status = models.CharField(
+        max_length=20,
+        choices=MARITAL_STATUS_CHOICES,
+        blank=True,
+        verbose_name=_("Situation matrimoniale")
+    )
+    profession = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Profession")
+    )
+
+    # === Antécédents médicaux (stockés sur le patient, pré-remplis en consultation) ===
+    antecedents_medical = models.TextField(blank=True, verbose_name=_("Antécédents médicaux"))
+    antecedents_surgical = models.TextField(blank=True, verbose_name=_("Antécédents chirurgicaux"))
+    antecedents_immuno_allergies = models.TextField(blank=True, verbose_name=_("Antécédents immuno-allergies"))
+    antecedents_gyneco_obs = models.TextField(blank=True, verbose_name=_("Antécédents gynéco-obstétrique"))
+    antecedents_lifestyle = models.TextField(blank=True, verbose_name=_("Mode de vie (Toxicologie/alcool)"))
+    antecedents_family = models.TextField(blank=True, verbose_name=_("Antécédents familiaux"))
+
     # === Emergency Contact ===
     emergency_contact_name = models.CharField(
         max_length=200,

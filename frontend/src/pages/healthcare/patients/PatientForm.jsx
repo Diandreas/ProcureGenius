@@ -67,6 +67,8 @@ const PatientForm = () => {
         phone: '',
         email: '',
         address: '',
+        marital_status: '',
+        profession: '',
         blood_type: '',
         allergies: '',
         chronic_conditions: '',
@@ -122,6 +124,8 @@ const PatientForm = () => {
                 blood_type: data.blood_type || '',
                 allergies: data.allergies || '',
                 chronic_conditions: data.chronic_conditions || '',
+                marital_status: data.marital_status || '',
+                profession: data.profession || '',
                 emergency_contact_name: data.emergency_contact_name || '',
                 emergency_contact_phone: data.emergency_contact_phone || '',
             });
@@ -295,6 +299,32 @@ const PatientForm = () => {
                                 <MenuItem value="M">Masculin</MenuItem>
                                 <MenuItem value="F">Féminin</MenuItem>
                             </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                select
+                                fullWidth
+                                label="Situation Matrimoniale"
+                                name="marital_status"
+                                value={formData.marital_status}
+                                onChange={handleChange}
+                            >
+                                <MenuItem value="">Non renseigné</MenuItem>
+                                <MenuItem value="single">Célibataire</MenuItem>
+                                <MenuItem value="married">Marié(e)</MenuItem>
+                                <MenuItem value="divorced">Divorcé(e)</MenuItem>
+                                <MenuItem value="widowed">Veuf/Veuve</MenuItem>
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Profession"
+                                name="profession"
+                                value={formData.profession}
+                                onChange={handleChange}
+                                placeholder="Ex: Enseignant, Médecin, Commerçant..."
+                            />
                         </Grid>
                     </Grid>
 

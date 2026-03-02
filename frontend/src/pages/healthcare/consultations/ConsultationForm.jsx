@@ -46,6 +46,21 @@ import patientAPI from '../../../services/patientAPI';
 import pharmacyAPI from '../../../services/pharmacyAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
+import QuickTemplate from '../../../components/healthcare/QuickTemplate';
+import {
+    CHIEF_COMPLAINT_TEMPLATES,
+    HISTORY_TEMPLATES,
+    ANTECEDENTS_MEDICAL_TEMPLATES,
+    ANTECEDENTS_SURGICAL_TEMPLATES,
+    ANTECEDENTS_ALLERGIES_TEMPLATES,
+    ANTECEDENTS_GYNECO_TEMPLATES,
+    ANTECEDENTS_LIFESTYLE_TEMPLATES,
+    ANTECEDENTS_FAMILY_TEMPLATES,
+    ENQUETES_SYSTEME_TEMPLATES,
+    PHYSICAL_EXAM_TEMPLATES,
+    DIAGNOSIS_TEMPLATES,
+    TREATMENT_TEMPLATES,
+} from '../../../constants/clinicalTemplates';
 
 const TabPanel = (props) => {
     const { children, value, index, ...other } = props;
@@ -181,7 +196,16 @@ const ConsultationForm = () => {
                     const prePatientId = searchParams.get('patientId');
                     if (prePatientId) {
                         const pat = await patientAPI.getPatient(prePatientId);
-                        setFormData(prev => ({ ...prev, patient: { id: pat.id, name: pat.name } }));
+                        setFormData(prev => ({
+                            ...prev,
+                            patient: { id: pat.id, name: pat.name },
+                            antecedents_medical: pat.antecedents_medical || '',
+                            antecedents_surgical: pat.antecedents_surgical || '',
+                            antecedents_immuno_allergies: pat.antecedents_immuno_allergies || '',
+                            antecedents_gyneco_obs: pat.antecedents_gyneco_obs || '',
+                            antecedents_lifestyle: pat.antecedents_lifestyle || '',
+                            antecedents_family: pat.antecedents_family || '',
+                        }));
                     }
                 }
             } catch (error) {
@@ -212,10 +236,27 @@ const ConsultationForm = () => {
         setFormData(prev => ({ ...prev, [name]: value.replace(',', '.') }));
     };
 
-    const handlePatientSelect = (event, newPatient) => {
+    const handlePatientSelect = async (event, newPatient) => {
         setFormData(prev => ({ ...prev, patient: newPatient }));
         if (newPatient && isNew && !formData.started_at) {
             setFormData(prev => ({ ...prev, started_at: new Date().toISOString() }));
+        }
+        // Pré-remplir les antécédents depuis le dossier patient
+        if (newPatient && isNew) {
+            try {
+                const patData = await patientAPI.getPatient(newPatient.id);
+                setFormData(prev => ({
+                    ...prev,
+                    antecedents_medical: patData.antecedents_medical || prev.antecedents_medical,
+                    antecedents_surgical: patData.antecedents_surgical || prev.antecedents_surgical,
+                    antecedents_immuno_allergies: patData.antecedents_immuno_allergies || prev.antecedents_immuno_allergies,
+                    antecedents_gyneco_obs: patData.antecedents_gyneco_obs || prev.antecedents_gyneco_obs,
+                    antecedents_lifestyle: patData.antecedents_lifestyle || prev.antecedents_lifestyle,
+                    antecedents_family: patData.antecedents_family || prev.antecedents_family,
+                }));
+            } catch (err) {
+                console.warn('Impossible de charger les antécédents du patient:', err);
+            }
         }
     };
 
@@ -223,6 +264,14 @@ const ConsultationForm = () => {
         const newMeds = [...formData.medications];
         newMeds[index][field] = value;
         setFormData(prev => ({ ...prev, medications: newMeds }));
+    };
+
+    const handleTemplateSelect = (fieldName, value) => {
+        setFormData(prev => {
+            const current = prev[fieldName];
+            const separator = current && !current.endsWith('\n') ? '\n' : '';
+            return { ...prev, [fieldName]: current ? `${current}${separator}${value}` : value };
+        });
     };
 
     const handleSubmit = async (statusArg = 'in_consultation') => {
@@ -419,15 +468,39 @@ const ConsultationForm = () => {
                 <Card>
                     <CardContent>
                         <Grid container spacing={2}>
-                            <Grid item xs={12}><TextField label="Motif de Consultation" name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} multiline rows={2} fullWidth required /></Grid>
-                            <Grid item xs={12}><TextField label="Histoire de la Maladie" name="history_of_present_illness" value={formData.history_of_present_illness} onChange={handleInputChange} multiline rows={3} fullWidth /></Grid>
+                            <Grid item xs={12}>
+                                <TextField label="Motif de Consultation" name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} multiline rows={2} fullWidth required />
+                                <QuickTemplate label="Raccourcis motif" templates={CHIEF_COMPLAINT_TEMPLATES} onSelect={(v) => handleTemplateSelect('chief_complaint', v)} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField label="Histoire de la Maladie" name="history_of_present_illness" value={formData.history_of_present_illness} onChange={handleInputChange} multiline rows={3} fullWidth />
+                                <QuickTemplate label="Raccourcis histoire" templates={HISTORY_TEMPLATES} onSelect={(v) => handleTemplateSelect('history_of_present_illness', v)} />
+                            </Grid>
                             <Grid item xs={12}><Divider sx={{ my: 1 }}>Antécédents</Divider></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Médicaux" name="antecedents_medical" value={formData.antecedents_medical} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Chirurgicaux" name="antecedents_surgical" value={formData.antecedents_surgical} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Immuno-allergies" name="antecedents_immuno_allergies" value={formData.antecedents_immuno_allergies} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Gynéco-obstétrique" name="antecedents_gyneco_obs" value={formData.antecedents_gyneco_obs} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Mode de vie" name="antecedents_lifestyle" value={formData.antecedents_lifestyle} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Familiaux" name="antecedents_family" value={formData.antecedents_family} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Médicaux" name="antecedents_medical" value={formData.antecedents_medical} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_MEDICAL_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_medical', v)} />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Chirurgicaux" name="antecedents_surgical" value={formData.antecedents_surgical} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_SURGICAL_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_surgical', v)} />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Immuno-allergies" name="antecedents_immuno_allergies" value={formData.antecedents_immuno_allergies} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_ALLERGIES_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_immuno_allergies', v)} />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Gynéco-obstétrique" name="antecedents_gyneco_obs" value={formData.antecedents_gyneco_obs} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_GYNECO_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_gyneco_obs', v)} />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Mode de vie" name="antecedents_lifestyle" value={formData.antecedents_lifestyle} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_LIFESTYLE_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_lifestyle', v)} />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField label="Familiaux" name="antecedents_family" value={formData.antecedents_family} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ANTECEDENTS_FAMILY_TEMPLATES} onSelect={(v) => handleTemplateSelect('antecedents_family', v)} />
+                            </Grid>
                         </Grid>
                     </CardContent>
                 </Card>
@@ -437,11 +510,23 @@ const ConsultationForm = () => {
                 <Card>
                     <CardContent>
                         <Grid container spacing={2}>
-                            <Grid item xs={12}><TextField label="Enquêtes & Systèmes" name="enquetes_systeme" value={formData.enquetes_systeme} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
-                            <Grid item xs={12}><TextField label="Examens Physiques" name="physical_examination" value={formData.physical_examination} onChange={handleInputChange} multiline rows={3} fullWidth /></Grid>
-                            <Grid item xs={12}><TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline rows={2} fullWidth color="error" inputProps={{'data-testid':'consult-input-diagnosis'}} /></Grid>
-                            <Grid item xs={12} md={6}><TextField label="Examens Complémentaires" name="complementary_exams" value={formData.complementary_exams} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12}>
+                                <TextField label="Enquêtes & Systèmes" name="enquetes_systeme" value={formData.enquetes_systeme} onChange={handleInputChange} multiline rows={2} fullWidth />
+                                <QuickTemplate label="Suggestions" templates={ENQUETES_SYSTEME_TEMPLATES} onSelect={(v) => handleTemplateSelect('enquetes_systeme', v)} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField label="Examens Physiques" name="physical_examination" value={formData.physical_examination} onChange={handleInputChange} multiline rows={3} fullWidth />
+                                <QuickTemplate label="Raccourcis examen physique" templates={PHYSICAL_EXAM_TEMPLATES} onSelect={(v) => handleTemplateSelect('physical_examination', v)} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline rows={2} fullWidth color="error" inputProps={{'data-testid':'consult-input-diagnosis'}} />
+                                <QuickTemplate label="Raccourcis diagnostic" templates={DIAGNOSIS_TEMPLATES} onSelect={(v) => handleTemplateSelect('diagnosis', v)} />
+                            </Grid>
                             <Grid item xs={12} md={6}><TextField label="Imagerie" name="imaging" value={formData.imaging} onChange={handleInputChange} multiline rows={2} fullWidth /></Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" gutterBottom sx={{ mt: 1 }}>Examens Complémentaires (Biologie)</Typography>
+                                <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens biologiques" inputProps={{...p.inputProps, 'data-testid': 'consult-input-lab-tests'}} />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
+                            </Grid>
                         </Grid>
                     </CardContent>
                 </Card>
@@ -453,6 +538,7 @@ const ConsultationForm = () => {
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Traitement Recommandé</Typography>
                             <TextField label="Instructions & Plan de traitement" name="treatment_plan" value={formData.treatment_plan} onChange={handleInputChange} multiline rows={3} fullWidth />
+                            <QuickTemplate label="Raccourcis traitement" templates={TREATMENT_TEMPLATES} onSelect={(v) => handleTemplateSelect('treatment_plan', v)} />
                         </CardContent>
                     </Card>
                     <Card>
@@ -475,7 +561,7 @@ const ConsultationForm = () => {
                                                     {m.is_external ? <TextField fullWidth size="small" value={m.medication_name} onChange={(e) => handleMedicationChange(i, 'medication_name', e.target.value)} placeholder="Nom du médicament" /> : 
                                                         <Autocomplete options={medications} getOptionLabel={(o) => o.name || ''} value={m.medication} onChange={(e, v) => handleMedicationChange(i, 'medication', v)} renderInput={(p) => <TextField {...p} size="small" placeholder="Rechercher..." />} />}
                                                 </TableCell>
-                                                <TableCell><TextField size="small" value={m.dosage} onChange={(e) => handleMedicationChange(i, 'dosage', e.target.value)} placeholder="500mg" /></TableCell>
+                                                <TableCell><TextField size="small" value={m.dosage} onChange={(e) => handleMedicationChange(i, 'dosage', e.target.value)} placeholder="500mg (optionnel)" /></TableCell>
                                                 <TableCell><TextField size="small" value={m.frequency} onChange={(e) => handleMedicationChange(i, 'frequency', e.target.value)} placeholder="3x/j" /></TableCell>
                                                 <TableCell><IconButton color="error" onClick={() => setFormData(p => ({ ...p, medications: p.medications.filter((_, idx) => idx !== i) }))}><DeleteIcon /></IconButton></TableCell>
                                             </TableRow>
@@ -483,12 +569,6 @@ const ConsultationForm = () => {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>Examens de Laboratoire à Prescrire</Typography>
-                            <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens" inputProps={{...p.inputProps, 'data-testid': 'consult-input-lab-tests'}} />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
                         </CardContent>
                     </Card>
                 </Stack>

@@ -3,11 +3,12 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
     Grid, MenuItem, FormControlLabel, Checkbox, Typography, Box,
     IconButton, CircularProgress, Divider, Tabs, Tab, Table, TableHead,
-    TableBody, TableRow, TableCell, Tooltip, Alert,
+    TableBody, TableRow, TableCell, Tooltip, Alert, Chip, InputAdornment,
 } from '@mui/material';
-import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon, AutoAwesome as AutoIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon, AutoAwesome as AutoIcon, Inventory2 as InventoryIcon, LinkOff as LinkOffIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import { productsAPI } from '../../../services/api';
 
 const SAMPLE_TYPES = [
     { value: 'blood', label: 'Sang' }, { value: 'urine', label: 'Urine' },
@@ -50,6 +51,8 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
     const [creatingCategory, setCreatingCategory] = useState(false);
     const [activeTab, setActiveTab] = useState(0);
     const [parameters, setParameters] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [productSearch, setProductSearch] = useState('');
 
     const [formData, setFormData] = useState({
         test_code: '', name: '', short_name: '', category: '', description: '',
@@ -59,11 +62,13 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         base_unit: '', conversion_factor: 1.0,
         fasting_required: false, fasting_hours: '', preparation_instructions: '',
         estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
+        linked_product: '',
     });
 
     useEffect(() => {
         if (open) {
             fetchCategories();
+            fetchProducts();
             setActiveTab(0);
             if (test) {
                 setFormData({
@@ -81,6 +86,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     methodology: test.methodology || '',
                     is_active: test.is_active !== undefined ? test.is_active : true,
                     requires_approval: test.requires_approval || false,
+                    linked_product: test.linked_product || '',
                 });
                 if (test.parameters && test.parameters.length > 0) {
                     setParameters(test.parameters.map(p => ({
@@ -113,6 +119,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     base_unit: '', conversion_factor: 1.0,
                     fasting_required: false, fasting_hours: '', preparation_instructions: '',
                     estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
+                    linked_product: '',
                 }));
                 setParameters([]);
             }
@@ -134,6 +141,14 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             const data = await laboratoryAPI.getCategories();
             setCategories(Array.isArray(data) ? data : data.results || []);
         } catch (error) { console.error('Error fetching categories:', error); }
+    };
+
+    const fetchProducts = async () => {
+        try {
+            const resp = await productsAPI.list({ product_type: 'physical', page_size: 200 });
+            const items = Array.isArray(resp.data) ? resp.data : resp.data?.results || [];
+            setProducts(items);
+        } catch (error) { console.error('Error fetching products:', error); }
     };
 
     const handleChange = (e) => {
@@ -172,6 +187,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             payload.fasting_hours = (payload.fasting_hours === '' || payload.fasting_hours === null) ? null : parseInt(payload.fasting_hours);
             payload.estimated_turnaround_hours = (payload.estimated_turnaround_hours === '' || payload.estimated_turnaround_hours === null) ? 24 : parseInt(payload.estimated_turnaround_hours);
             if (!payload.category || payload.category === '') payload.category = null;
+            if (!payload.linked_product || payload.linked_product === '') payload.linked_product = null;
             ['short_name','description','sample_volume','normal_range_general','normal_range_male',
              'normal_range_female','normal_range_child','unit_of_measurement','preparation_instructions','methodology'
             ].forEach(f => { if (payload[f] === null || payload[f] === undefined) payload[f] = ''; });
@@ -334,6 +350,81 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                         <Grid item xs={12}>
                             <TextField fullWidth multiline rows={2} label="Instructions de preparation" name="preparation_instructions" value={formData.preparation_instructions} onChange={handleChange} size="small" />
                         </Grid>
+                        <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Stock consommable (test rapide)</Typography></Grid>
+                        <Grid item xs={12}>
+                            <Alert severity="info" sx={{ mb: 1, py: 0.5 }} icon={<InventoryIcon fontSize="small" />}>
+                                Liez ce test à un produit du stock pour déduire automatiquement 1 unité à chaque collecte d'échantillon (tests rapides, bandelettes, kits…).
+                            </Alert>
+                        </Grid>
+                        <Grid item xs={12} sm={8}>
+                            <TextField
+                                fullWidth select
+                                label="Produit stock lié (consommable)"
+                                name="linked_product"
+                                value={formData.linked_product}
+                                onChange={handleChange}
+                                size="small"
+                                SelectProps={{ displayEmpty: true }}
+                                InputProps={{
+                                    startAdornment: formData.linked_product ? (
+                                        <InputAdornment position="start">
+                                            <InventoryIcon fontSize="small" color="primary" />
+                                        </InputAdornment>
+                                    ) : null,
+                                }}
+                            >
+                                <MenuItem value=""><em>Aucun produit lié</em></MenuItem>
+                                {products
+                                    .filter(p => !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                                    .map(p => (
+                                        <MenuItem key={p.id} value={p.id}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 2 }}>
+                                                <span>{p.name}</span>
+                                                <Chip
+                                                    label={`Stock: ${p.stock_quantity ?? 0}`}
+                                                    size="small"
+                                                    color={p.stock_quantity > 0 ? 'success' : 'error'}
+                                                    variant="outlined"
+                                                    sx={{ fontSize: '0.65rem', height: 18 }}
+                                                />
+                                            </Box>
+                                        </MenuItem>
+                                    ))
+                                }
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                fullWidth
+                                label="Rechercher un produit"
+                                value={productSearch}
+                                onChange={e => setProductSearch(e.target.value)}
+                                size="small"
+                                placeholder="Filtrer la liste..."
+                            />
+                        </Grid>
+                        {formData.linked_product && (() => {
+                            const p = products.find(x => x.id === formData.linked_product);
+                            return p ? (
+                                <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderRadius: 1, bgcolor: 'action.hover' }}>
+                                        <InventoryIcon fontSize="small" color="primary" />
+                                        <Typography variant="body2"><strong>{p.name}</strong></Typography>
+                                        {p.reference && <Typography variant="caption" color="text.secondary">({p.reference})</Typography>}
+                                        <Chip label={`Stock actuel: ${p.stock_quantity ?? 0}`} size="small" color={p.stock_quantity > 0 ? 'success' : 'error'} />
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            startIcon={<LinkOffIcon fontSize="small" />}
+                                            onClick={() => setFormData(prev => ({ ...prev, linked_product: '' }))}
+                                            sx={{ ml: 'auto' }}
+                                        >
+                                            Délier
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            ) : null;
+                        })()}
                         <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Traitement</Typography></Grid>
                         <Grid item xs={12} sm={4}>
                             <TextField fullWidth label="Delai execution (heures)" name="estimated_turnaround_hours" value={formData.estimated_turnaround_hours} onChange={handleChange} size="small" type="number" />

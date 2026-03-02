@@ -313,7 +313,7 @@ class PrescriptionItemCreateSerializer(serializers.Serializer):
     """Serializer for creating prescription items"""
     medication_id = serializers.UUIDField(required=False, allow_null=True)
     medication_name = serializers.CharField(required=False, allow_blank=True)
-    dosage = serializers.CharField()
+    dosage = serializers.CharField(required=False, allow_blank=True, default='')
     frequency = serializers.CharField()
     duration = serializers.CharField(required=False, allow_blank=True)
     route = serializers.ChoiceField(choices=PrescriptionItem.ROUTE_CHOICES, default='oral')
