@@ -521,7 +521,8 @@ class EnterLabResultsView(APIView):
 class SaveTestTemplateView(APIView):
     """
     POST /healthcare/laboratory/items/<item_id>/save-as-template/
-    Saves the current result_value of a LabOrderItem as the default result_template for its LabTest.
+    Saves the result_value as the default result_template for its LabTest.
+    Allows passing result_value in body, falls back to item.result_value.
     """
     permission_classes = [IsAuthenticated]
 
@@ -534,12 +535,15 @@ class SaveTestTemplateView(APIView):
         except LabOrderItem.DoesNotExist:
             return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not item.result_value:
+        # Get result from request body or database
+        result_value = request.data.get('result_value') or item.result_value
+
+        if not result_value:
             return Response({'error': 'Le résultat est vide, impossible de créer un modèle.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Update the parent test's template
         test = item.lab_test
-        test.result_template = item.result_value
+        test.result_template = result_value
         test.save(update_fields=['result_template'])
 
         return Response({

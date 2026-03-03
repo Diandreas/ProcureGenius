@@ -110,8 +110,10 @@ const laboratoryAPI = {
     },
 
     // Save current result as template for the test
-    saveTestAsTemplate: async (itemId) => {
-        const response = await api.post(`/healthcare/laboratory/items/${itemId}/save-as-template/`);
+    saveTestAsTemplate: async (itemId, resultValue) => {
+        const response = await api.post(`/healthcare/laboratory/items/${itemId}/save-as-template/`, {
+            result_value: resultValue
+        });
         return response.data;
     },
 

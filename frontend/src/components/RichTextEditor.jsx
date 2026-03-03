@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useCallback } from 'react';
-import { Box, IconButton, Tooltip, Divider, Paper } from '@mui/material';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { Box, IconButton, Tooltip, Divider, Paper, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import {
     FormatBold,
     FormatItalic,
@@ -8,30 +8,58 @@ import {
     FormatListBulleted,
     FormatListNumbered,
     OpenInFull,
+    FormatAlignLeft,
+    FormatAlignCenter,
+    FormatAlignRight,
+    FormatAlignJustify,
+    FormatIndentIncrease,
+    FormatIndentDecrease,
+    FormatSize,
+    Palette,
 } from '@mui/icons-material';
 
-const TOOLBAR_ITEMS = [
+const BASIC_TOOLBAR = [
+    { cmd: 'bold', icon: <FormatBold />, title: 'Gras' },
+    { cmd: 'italic', icon: <FormatItalic />, title: 'Italique' },
+    { cmd: 'underline', icon: <FormatUnderlined />, title: 'Souligné' },
+    'divider',
+    { cmd: 'insertUnorderedList', icon: <FormatListBulleted />, title: 'Liste à puces' },
+];
+
+const FULL_TOOLBAR = [
     { cmd: 'bold', icon: <FormatBold />, title: 'Gras' },
     { cmd: 'italic', icon: <FormatItalic />, title: 'Italique' },
     { cmd: 'underline', icon: <FormatUnderlined />, title: 'Souligné' },
     { cmd: 'strikeThrough', icon: <FormatStrikethrough />, title: 'Barré' },
     'divider',
+    { cmd: 'justifyLeft', icon: <FormatAlignLeft />, title: 'Aligner à gauche' },
+    { cmd: 'justifyCenter', icon: <FormatAlignCenter />, title: 'Centrer' },
+    { cmd: 'justifyRight', icon: <FormatAlignRight />, title: 'Aligner à droite' },
+    { cmd: 'justifyFull', icon: <FormatAlignJustify />, title: 'Justifier' },
+    'divider',
     { cmd: 'insertUnorderedList', icon: <FormatListBulleted />, title: 'Liste à puces' },
     { cmd: 'insertOrderedList', icon: <FormatListNumbered />, title: 'Liste numérotée' },
+    'divider',
+    { cmd: 'outdent', icon: <FormatIndentDecrease />, title: 'Diminuer le retrait' },
+    { cmd: 'indent', icon: <FormatIndentIncrease />, title: 'Augmenter le retrait' },
 ];
 
-/**
- * Éditeur de texte enrichi (WYSIWYG) basé sur contentEditable.
- * Stocke le contenu en HTML.
- *
- * Props :
- *   value      : string HTML (valeur contrôlée)
- *   onChange   : (html: string) => void
- *   placeholder: string
- *   disabled   : bool  (affichage lecture seule)
- *   onExpand   : () => void  (si fourni, affiche le bouton Agrandir)
- *   minHeight  : number (px)
- */
+const FONT_SIZES = [
+    { label: 'Petit', value: '1' },
+    { label: 'Normal', value: '3' },
+    { label: 'Moyen', value: '4' },
+    { label: 'Grand', value: '5' },
+    { label: 'Très grand', value: '6' },
+];
+
+const COLORS = [
+    { label: 'Noir', value: '#000000' },
+    { label: 'Gris', value: '#666666' },
+    { label: 'Rouge', value: '#d32f2f' },
+    { label: 'Bleu', value: '#1976d2' },
+    { label: 'Vert', value: '#2e7d32' },
+];
+
 const RichTextEditor = ({
     value = '',
     onChange,
@@ -39,30 +67,30 @@ const RichTextEditor = ({
     disabled = false,
     onExpand = null,
     minHeight = 80,
+    simple = false, // Nouveau paramètre
 }) => {
     const editorRef = useRef(null);
+    const [sizeAnchor, setSizeAnchor] = useState(null);
+    const [colorAnchor, setColorAnchor] = useState(null);
 
-    // Sync externe → DOM uniquement si l'éditeur n'est pas focalisé
     useEffect(() => {
         const el = editorRef.current;
-        if (!el) return;
-        if (document.activeElement === el) return; // L'utilisateur est en train d'écrire
+        if (!el || document.activeElement === el) return;
         const html = value || '';
-        if (el.innerHTML !== html) {
-            el.innerHTML = html;
-        }
+        if (el.innerHTML !== html) el.innerHTML = html;
     }, [value]);
 
-    const execCmd = (cmd) => {
+    const execCmd = (cmd, val = null) => {
         editorRef.current?.focus();
-        // eslint-disable-next-line no-restricted-globals
-        document.execCommand(cmd, false, null);
+        document.execCommand(cmd, false, val);
         if (onChange) onChange(editorRef.current?.innerHTML || '');
     };
 
     const handleInput = useCallback(() => {
         if (onChange) onChange(editorRef.current?.innerHTML || '');
     }, [onChange]);
+
+    const toolbar = simple ? BASIC_TOOLBAR : FULL_TOOLBAR;
 
     return (
         <Paper
@@ -74,52 +102,59 @@ const RichTextEditor = ({
                 overflow: 'hidden',
             }}
         >
-            {/* Barre d'outils – masquée en mode lecture */}
             {!disabled && (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        px: 0.5,
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                        bgcolor: 'grey.50',
-                        flexWrap: 'nowrap',
-                    }}
-                >
-                    {TOOLBAR_ITEMS.map((item, i) =>
+                <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'grey.50', flexWrap: 'wrap' }}>
+                    {toolbar.map((item, i) =>
                         item === 'divider' ? (
                             <Divider key={i} orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
                         ) : (
                             <Tooltip key={i} title={item.title}>
-                                <IconButton
-                                    size="small"
-                                    onMouseDown={(e) => {
-                                        e.preventDefault(); // Empêche la perte du focus
-                                        execCmd(item.cmd);
-                                    }}
-                                >
+                                <IconButton size="small" onMouseDown={(e) => { e.preventDefault(); execCmd(item.cmd); }}>
                                     {item.icon}
                                 </IconButton>
                             </Tooltip>
                         )
                     )}
 
-                    {/* Bouton Agrandir – à droite */}
+                    {!simple && (
+                        <>
+                            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+                            <Tooltip title="Taille">
+                                <IconButton size="small" onClick={(e) => setSizeAnchor(e.currentTarget)}><FormatSize fontSize="small" /></IconButton>
+                            </Tooltip>
+                            <Menu anchorEl={sizeAnchor} open={Boolean(sizeAnchor)} onClose={() => setSizeAnchor(null)}>
+                                {FONT_SIZES.map((s) => (
+                                    <MenuItem key={s.value} onClick={() => { execCmd('fontSize', s.value); setSizeAnchor(null); }}>
+                                        <ListItemText primary={s.label} />
+                                    </MenuItem>
+                                ))}
+                            </Menu>
+
+                            <Tooltip title="Couleur">
+                                <IconButton size="small" onClick={(e) => setColorAnchor(e.currentTarget)}><Palette fontSize="small" /></IconButton>
+                            </Tooltip>
+                            <Menu anchorEl={colorAnchor} open={Boolean(colorAnchor)} onClose={() => setColorAnchor(null)}>
+                                {COLORS.map((c) => (
+                                    <MenuItem key={c.value} onClick={() => { execCmd('foreColor', c.value); setColorAnchor(null); }}>
+                                        <ListItemIcon><Box sx={{ width: 16, height: 16, bgcolor: c.value, borderRadius: '50%', border: '1px solid #ddd' }} /></ListItemIcon>
+                                        <ListItemText primary={c.label} />
+                                    </MenuItem>
+                                ))}
+                            </Menu>
+                        </>
+                    )}
+
                     {onExpand && (
                         <>
                             <Box sx={{ flex: 1 }} />
-                            <Tooltip title="Agrandir l'éditeur">
-                                <IconButton size="small" onClick={onExpand} color="primary">
-                                    <OpenInFull fontSize="small" />
-                                </IconButton>
+                            <Tooltip title="Agrandir">
+                                <IconButton size="small" onClick={onExpand} color="primary"><OpenInFull fontSize="small" /></IconButton>
                             </Tooltip>
                         </>
                     )}
                 </Box>
             )}
 
-            {/* Zone de saisie */}
             <Box
                 ref={editorRef}
                 contentEditable={!disabled}
@@ -127,29 +162,14 @@ const RichTextEditor = ({
                 onInput={handleInput}
                 data-placeholder={placeholder}
                 sx={{
-                    minHeight,
-                    p: 1,
-                    outline: 'none',
-                    fontSize: '0.875rem',
-                    lineHeight: 1.6,
+                    minHeight, p: 2, outline: 'none', fontSize: '1rem', lineHeight: 1.6,
                     color: disabled ? 'text.secondary' : 'text.primary',
                     bgcolor: disabled ? 'action.hover' : 'white',
                     cursor: disabled ? 'default' : 'text',
-                    userSelect: disabled ? 'text' : undefined,
-                    // Style du contenu HTML interne
-                    '& ul, & ol': { paddingLeft: '1.5em', margin: '4px 0' },
-                    '& li': { marginBottom: '2px' },
-                    '& p': { margin: '2px 0' },
+                    '& ul, & ol': { paddingLeft: '2em', margin: '8px 0' },
+                    '& p': { margin: '4px 0', minHeight: '1em' },
                     '& strong': { fontWeight: 700 },
-                    '& em': { fontStyle: 'italic' },
-                    '& u': { textDecoration: 'underline' },
-                    '& s': { textDecoration: 'line-through' },
-                    // Placeholder via CSS
-                    '&:empty:before': {
-                        content: 'attr(data-placeholder)',
-                        color: 'text.disabled',
-                        pointerEvents: 'none',
-                    },
+                    '&:empty:before': { content: 'attr(data-placeholder)', color: 'text.disabled', pointerEvents: 'none' },
                 }}
             />
         </Paper>

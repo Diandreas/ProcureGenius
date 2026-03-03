@@ -289,10 +289,15 @@ const LabOrderDetail = () => {
 
     const handleSaveAsTemplate = async (itemId) => {
         try {
-            await laboratoryAPI.saveTestAsTemplate(itemId);
+            // Get current value from state
+            const currentValue = results[itemId]?.result_value;
+            if (!currentValue) {
+                enqueueSnackbar('Le résultat est vide', { variant: 'warning' });
+                return;
+            }
+            await laboratoryAPI.saveTestAsTemplate(itemId, currentValue);
             enqueueSnackbar('Modèle de résultat enregistré pour ce test', { variant: 'success' });
-            // Pas besoin de recharger toute la commande car le modèle est pour le test catalogue, 
-            // pas forcément pour l'item actuel déjà en cours, mais on peut le faire pour être sûr.
+            // Refresh order to get updated template for display
             fetchOrder();
         } catch (error) {
             enqueueSnackbar('Erreur lors de l\'enregistrement du modèle', { variant: 'error' });
@@ -899,7 +904,6 @@ const LabOrderDetail = () => {
                                                 <TableCell>Code</TableCell>
                                                 <TableCell>Nom du Test</TableCell>
                                                 <TableCell>Catégorie</TableCell>
-                                                <TableCell>Prix</TableCell>
                                                 <TableCell>Réduction</TableCell>
                                                 <TableCell>À jeun requis</TableCell>
                                                 <TableCell>Délai estimé</TableCell>
@@ -1418,6 +1422,7 @@ const LabOrderDetail = () => {
                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
                                                         placeholder="Commentaires du technicien (optionnel)"
                                                         minHeight={40}
+                                                        simple={true}
                                                         onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
                                                     />
                                                 )}
@@ -1434,94 +1439,105 @@ const LabOrderDetail = () => {
                             }
 
                             // ─── SIMPLE TEST ─────────────────────────────────────────────────────────
-                            const useLargeLayout = item.lab_test_data?.use_large_layout;
+                            const useLargeLayout = item.lab_test_data?.use_large_layout || item.lab_test?.use_large_layout;
 
                             if (useLargeLayout) {
                                 return (
                                     <TableRow key={item.id}>
-                                        <TableCell colSpan={7} sx={{ p: 2 }}>
-                                            <Box sx={{ border: '1px solid #e5e7eb', borderRadius: 2, p: 2, bgcolor: '#f9fafb' }}>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                        <TableCell colSpan={7} sx={{ p: 0, borderBottom: '2px solid #3b82f6' }}>
+                                            <Box sx={{ 
+                                                p: 3, 
+                                                bgcolor: '#ffffff',
+                                                borderLeft: '10px solid #3b82f6',
+                                                m: 1,
+                                                borderRadius: '0 8px 8px 0',
+                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                            }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, borderBottom: '1px solid #e5e7eb', pb: 1 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mr: 1, color: '#111827' }}>
+                                                        <Typography variant="h6" fontWeight="800" sx={{ mr: 2, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: 1 }}>
                                                             {item.test_name}
                                                         </Typography>
-                                                        <Chip label={item.category_name} size="small" variant="outlined" sx={{ mr: 1 }} />
-                                                        <Tooltip title="Configurer l'unite et le facteur de conversion">
-                                                            <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
-                                                                <SettingsIcon sx={{ fontSize: 16 }} />
-                                                            </IconButton>
-                                                        </Tooltip>
+                                                        <Chip 
+                                                            label={item.category_name} 
+                                                            size="small" 
+                                                            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 700 }} 
+                                                        />
                                                     </Box>
-                                                    <Box>
-                                                        <IconButton
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <Button
+                                                            startIcon={<HistoryIcon />}
                                                             size="small"
                                                             onClick={() => handleShowHistory(item)}
-                                                            title="Historique"
-                                                            color="primary"
-                                                            sx={{ mr: 1 }}
+                                                            variant="outlined"
                                                         >
-                                                            <HistoryIcon fontSize="small" />
-                                                        </IconButton>
-                                                        {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
+                                                            Historique
+                                                        </Button>
+                                                        <Tooltip title="Configuration">
+                                                            <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
+                                                                <SettingsIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        {item.is_abnormal && <Chip label="RÉSULTAT ANORMAL" color="error" variant="filled" sx={{ fontWeight: 900 }} />}
                                                     </Box>
                                                 </Box>
 
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={12} md={9}>
-                                                        <Typography variant="caption" sx={{ fontWeight: 700, mb: 0.5, display: 'block' }}>RÉSULTAT</Typography>
+                                                <Grid container spacing={4}>
+                                                    <Grid item xs={12} md={8}>
+                                                        <Typography variant="overline" sx={{ fontWeight: 900, color: '#64748b', mb: 1, display: 'block' }}>RAPPORT D'ANALYSE DÉTAILLÉ</Typography>
                                                         {canEdit ? (
                                                             <Box>
                                                                 <RichTextEditor
                                                                     value={results[item.id]?.result_value || ''}
                                                                     onChange={(val) => handleResultChange(item.id, 'result_value', val)}
-                                                                    placeholder="Saisir le rapport détaillé..."
-                                                                    minHeight={250}
-                                                                    onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
+                                                                    placeholder="Saisissez ici le compte-rendu complet (style Word)..."
+                                                                    minHeight={350}
+                                                                    onExpand={() => openWysiwygModal(item.id, 'result_value', `Rapport — ${item.test_name}`)}
                                                                 />
-                                                                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                                                                    {item.result_template && (
-                                                                        <Button
-                                                                            size="small"
-                                                                            variant="outlined"
-                                                                            color="secondary"
-                                                                            onClick={() => {
-                                                                                const html = item.result_template
-                                                                                    .split('\n')
-                                                                                    .map(line => `<p>${line.trim() || '<br>'}</p>`)
-                                                                                    .join('');
-                                                                                handleResultChange(item.id, 'result_value', html);
-                                                                            }}
-                                                                        >
-                                                                            Charger le modèle
-                                                                        </Button>
-                                                                    )}
+                                                                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                                                                     <Button
-                                                                        size="small"
+                                                                        variant="contained"
+                                                                        color="secondary"
+                                                                        onClick={() => {
+                                                                            const html = (item.result_template || '')
+                                                                                .split('\n')
+                                                                                .map(line => `<p>${line.trim() || '<br>'}</p>`)
+                                                                                .join('');
+                                                                            handleResultChange(item.id, 'result_value', html);
+                                                                        }}
+                                                                        disabled={!item.result_template}
+                                                                    >
+                                                                        Charger le modèle type
+                                                                    </Button>
+                                                                    <Button
                                                                         variant="outlined"
-                                                                        color="primary"
                                                                         onClick={() => handleSaveAsTemplate(item.id)}
                                                                         disabled={!results[item.id]?.result_value}
                                                                     >
-                                                                        Définir comme modèle par défaut
+                                                                        Enregistrer comme nouveau modèle
                                                                     </Button>
                                                                 </Box>
                                                             </Box>
                                                         ) : (
-                                                            <Paper variant="outlined" sx={{ p: 2, minHeight: 100, bgcolor: 'white' }}>
+                                                            <Paper elevation={0} sx={{ p: 3, minHeight: 150, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 2 }}>
                                                                 <Typography
                                                                     component="div"
-                                                                    dangerouslySetInnerHTML={{ __html: item.result_value || '<em style="color:#9ca3af">Aucun résultat saisi</em>' }}
-                                                                    sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                                                    dangerouslySetInnerHTML={{ __html: item.result_value || '<em style="color:#9ca3af">Aucun rapport saisi pour le moment.</em>' }}
+                                                                    sx={{ 
+                                                                        fontSize: '1.05rem',
+                                                                        lineHeight: 1.7,
+                                                                        '& ul, & ol': { pl: 3 },
+                                                                        '& p': { my: 1 } 
+                                                                    }}
                                                                 />
                                                             </Paper>
                                                         )}
                                                     </Grid>
-                                                    <Grid item xs={12} md={3}>
-                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                            <Box>
-                                                                <Typography variant="caption" sx={{ fontWeight: 700, mb: 0.5, display: 'block' }}>UNITÉ & RÉFÉRENCE</Typography>
-                                                                <Box sx={{ mb: 1 }}>
+                                                    <Grid item xs={12} md={4}>
+                                                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f1f5f9' }}>
+                                                                <Typography variant="overline" sx={{ fontWeight: 900, color: '#475569', mb: 1, display: 'block' }}>PARAMÈTRES DE RÉFÉRENCE</Typography>
+                                                                <Box sx={{ mb: 2 }}>
                                                                     <QuickConfigSelector 
                                                                         item={item} 
                                                                         onConfigChanged={onTestSaved} 
@@ -1531,31 +1547,38 @@ const LabOrderDetail = () => {
                                                                         patientGender={order.patient_gender}
                                                                     />
                                                                 </Box>
-                                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                                                                    Ref: {(() => {
-                                                                        const gender = order.patient_gender;
-                                                                        if (gender === 'M') return item.normal_range_male || item.normal_range_general || 'N/A';
-                                                                        if (gender === 'F') return item.normal_range_female || item.normal_range_general || 'N/A';
-                                                                        return item.normal_range_general || 'N/A';
-                                                                    })()}
-                                                                </Typography>
-                                                            </Box>
+                                                                <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e2e8f0' }}>
+                                                                    <Typography variant="caption" color="text.secondary" display="block">NORMES :</Typography>
+                                                                    <Typography variant="body2" fontWeight="700">
+                                                                        {(() => {
+                                                                            const gender = order.patient_gender;
+                                                                            if (gender === 'M') return item.normal_range_male || item.normal_range_general || 'N/A';
+                                                                            if (gender === 'F') return item.normal_range_female || item.normal_range_general || 'N/A';
+                                                                            return item.normal_range_general || 'N/A';
+                                                                        })()}
+                                                                    </Typography>
+                                                                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>UNITÉ :</Typography>
+                                                                    <Typography variant="body2" fontWeight="700">{item.result_unit || item.lab_test_data?.unit_of_measurement || 'N/A'}</Typography>
+                                                                </Box>
+                                                            </Paper>
 
                                                             <Box>
-                                                                <Typography variant="caption" sx={{ fontWeight: 700, mb: 0.5, display: 'block' }}>NOTES TECHNIQUES</Typography>
+                                                                <Typography variant="overline" sx={{ fontWeight: 900, color: '#64748b', mb: 1, display: 'block' }}>NOTES TECHNIQUES</Typography>
                                                                 {canEdit ? (
                                                                     <RichTextEditor
                                                                         value={results[item.id]?.technician_notes || ''}
                                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                                                        placeholder="Notes..."
-                                                                        minHeight={80}
+                                                                        placeholder="Notes internes..."
+                                                                        minHeight={100}
                                                                     />
                                                                 ) : (
-                                                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                                                    <Box sx={{ p: 2, bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 1 }}>
                                                                         {item.technician_notes ? (
-                                                                            <div dangerouslySetInnerHTML={{ __html: item.technician_notes }} />
-                                                                        ) : 'Aucune note'}
-                                                                    </Typography>
+                                                                            <div dangerouslySetInnerHTML={{ __html: item.technician_notes }} style={{ fontSize: '0.85rem' }} />
+                                                                        ) : (
+                                                                            <Typography variant="caption" color="text.disabled">Aucune note technique.</Typography>
+                                                                        )}
+                                                                    </Box>
                                                                 )}
                                                             </Box>
                                                         </Box>
@@ -1588,6 +1611,7 @@ const LabOrderDetail = () => {
                                                     onChange={(val) => handleResultChange(item.id, 'result_value', val)}
                                                     placeholder="Entrer valeur"
                                                     minHeight={60}
+                                                    simple={true}
                                                     onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
                                                 />
                                                 <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>

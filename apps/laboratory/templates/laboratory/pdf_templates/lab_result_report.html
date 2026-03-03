@@ -5,442 +5,226 @@
 
 {% block extra_css %}
 <style>
-    .flag-high {
-        color: #dc2626;
-        font-weight: 700;
+    .flag-high { color: #dc2626; font-weight: 700; }
+    .flag-low { color: #2563eb; font-weight: 700; }
+    
+    /* Compound test (NFS) parameter table */
+    .compound-header {
+        background-color: #f3f4f6;
+        border-top: 1.5px solid #374151;
+        border-bottom: 1px solid #374151;
+        margin-top: 10px;
+    }
+    .compound-header th {
+        padding: 4px 8px;
+        font-size: 8pt;
+        text-transform: uppercase;
+        color: #111827;
+        text-align: left;
     }
 
-    .flag-low {
-        color: #2563eb;
-        font-weight: 700;
-    }
-
-    .flag-normal {
-        color: #059669;
-    }
-
-    /* Compound test (NFS-style) parameter table */
     .compound-param-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 8.5pt;
-        margin-top: 4px;
+        margin-bottom: 10px;
     }
     .compound-param-table td {
-        padding: 2px 6px;
-        vertical-align: middle;
+        padding: 2px 8px;
         border-bottom: 1px solid #f3f4f6;
     }
-    .compound-param-table .param-code {
-        font-weight: 600;
-        width: 14%;
-        color: #1f2937;
-    }
-    .compound-param-table .param-result {
-        width: 18%;
-        font-weight: 700;
-        text-align: right;
-    }
-    .compound-param-table .param-flag {
-        width: 8%;
-        text-align: center;
-        font-size: 7.5pt;
-    }
-    .compound-param-table .param-unit {
-        width: 16%;
-        color: #6b7280;
-    }
-    .compound-param-table .param-ref {
-        width: 24%;
-        color: #6b7280;
-        font-size: 7.5pt;
-    }
-    .compound-group-header td {
-        background-color: {{ organization.brand_color|default:"#1d4ed8" }};
-        color: #ffffff;
-        font-weight: 700;
+    .compound-group-title {
+        background-color: #f9fafb;
+        font-weight: 800;
         font-size: 8pt;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 4px 6px;
-    }
-    .flag-critical {
-        color: #dc2626;
-        font-weight: 800;
-        background-color: #fef9c3;
-        padding: 0 3px;
+        padding: 3px 8px !important;
+        border-bottom: 1px solid #e5e7eb !important;
     }
 
-    .category-row td {
-        background-color: #4b5563;
-        font-weight: 700;
+    .category-section { margin-bottom: 15px; }
+    .category-header {
+        background-color: {{ organization.brand_color|default:"#4b5563" }};
         color: #ffffff;
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding: 4px 10px;
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-radius: 2px;
+        margin-bottom: 2px;
     }
 
-    /* Prevent orphan headers on new pages */
-    thead {
-        display: table-header-group;
+    .compact-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
     }
-    tr {
-        page-break-inside: avoid;
-    }
-
-    .notes {
-        margin-top: 15px;
-        padding: 8px;
-        background-color: #fffbeb;
-        border: 1px solid #fcd34d;
-        border-radius: 4px;
-        font-size: 8pt;
-        color: #92400e;
-    }
-
-    /* Contenu HTML riche (WYSIWYG) dans les cellules et blocs */
-    td ul, td ol, .rich-content ul, .rich-content ol {
-        padding-left: 1.2em;
-        margin: 2px 0;
-    }
-    td li, .rich-content li { margin-bottom: 1px; }
-    td p, .rich-content p  { margin: 0; }
-    td strong, .rich-content strong { font-weight: 700; }
-    td em, .rich-content em { font-style: italic; }
-    td u, .rich-content u  { text-decoration: underline; }
-    td s, .rich-content s  { text-decoration: line-through; }
-
-    .technician-notes {
-        margin-top: 4px;
-        padding-top: 4px;
-        border-top: 1px solid #e5e7eb;
-        font-size: 7.5pt;
+    .compact-table th {
+        background-color: #f9fafb;
         color: #4b5563;
+        font-weight: 700;
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-bottom: 1.5px solid {{ organization.brand_color|default:"#d1d5db" }};
+        text-align: left;
     }
-
-    /* Cellule résultat : hauteur minimale pour laisser de l'espace */
-    td.result-cell {
-        padding-top: 8px;
-        padding-bottom: 8px;
-        min-height: 32px;
+    .compact-table td {
+        padding: 4px 8px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 8.5pt;
         vertical-align: top;
     }
 
-    /* Valeurs de référence : chaque ligne séparée */
-    .ref-line {
-        display: block;
-        line-height: 1.5;
-        white-space: normal;
-        word-break: break-word;
-    }
-    .ref-label {
-        font-weight: 700;
-        color: #374151;
-        font-size: 7pt;
-        text-transform: uppercase;
-        margin-right: 2px;
-    }
-    .ref-value {
-        color: #4b5563;
-        font-size: 8pt;
-    }
-
-    /* Bandeau PROVISOIRE */
-    .provisional-banner {
-        background-color: #fef9c3;
-        border: 2px solid #ca8a04;
-        color: #713f12;
-        text-align: center;
-        font-weight: 800;
-        font-size: 11pt;
-        text-transform: uppercase;
-        padding: 6px 12px;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
+    .standalone-box {
+        border: 1.5px solid {{ organization.brand_color|default:"#334155" }};
         border-radius: 4px;
+        margin: 10px 0;
     }
-    /* Résultat en attente */
-    .result-pending {
-        color: #9ca3af;
-        font-style: italic;
-        font-size: 7.5pt;
+    .box-header {
+        background-color: {{ organization.brand_color|default:"#334155" }};
+        color: #ffffff;
+        padding: 6px 12px;
+        font-weight: 700;
+        font-size: 10pt;
+        text-transform: uppercase;
     }
+    .box-content { padding: 12px 15px; background-color: #ffffff; }
+    
+    .signature-section { margin-top: 30px; display: table; width: 100%; }
+    .sig-block { display: table-cell; width: 50%; vertical-align: top; }
 </style>
 {% endblock %}
 
 {% block content %}
-{% if not lab_order.all_results_entered %}
-<div class="provisional-banner">&#9888; Résultats Provisoires — Certains examens sont en attente</div>
-{% endif %}
-<div class="doc-title text-center">RÉSULTATS DE LABORATOIRE</div>
+<div class="doc-title text-center" style="margin-bottom: 5px;">RÉSULTATS DE LABORATOIRE</div>
 
-<div class="info-grid">
+<div class="info-grid" style="padding: 6px; margin-bottom: 10px;">
     <div class="info-col" style="width: 50%;">
         <div class="info-label">Patient</div>
         <div class="info-value">
-            <span class="text-bold" style="font-size: 10pt;">{{ patient.name }}</span><br>
-            {{ patient.gender|default:"" }} |
-            {% if patient.date_of_birth %}
-            {{ patient.get_age }} ans
-            {% else %}
-            N/A
-            {% endif %}<br>
-            ID: {{ patient.patient_number|default:"-" }}
+            <span style="font-size: 10pt;">{{ patient.name }}</span><br>
+            <span style="font-weight: 400; font-size: 8pt;">{{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% endif %} | ID: {{ patient.patient_number|default:"-" }}</span>
         </div>
-
-        <div class="info-label" style="margin-top: 8px;">Médecin Prescripteur</div>
-        <div style="margin-top: 4px; border-bottom: 1px solid #9ca3af; width: 180px; height: 16px;"></div>
     </div>
-    <div class="info-col" style="width: 50%;">
+    <div class="info-col" style="width: 50%; text-align: right;">
         <div class="info-label">Détails Commande</div>
         <div class="info-value">
             N°: {{ lab_order.order_number }}<br>
-            Date: {{ lab_order.order_date|date:"d/m/Y H:i" }}<br>
-            Priorité: {{ lab_order.get_priority_display }}
+            <span style="font-weight: 400; font-size: 8pt;">Date: {{ lab_order.order_date|date:"d/m/Y H:i" }}</span>
         </div>
     </div>
 </div>
 
-<table class="compact-table">
-    <thead>
-        <tr>
-            <th style="width: 30%">Examen / Test</th>
-            <th style="width: 25%">Résultat</th>
-            <th style="width: 8%">Unités</th>
-            <th style="width: 24%">Valeurs de Référence</th>
-            <th style="width: 9%">Antérieur</th>
-            <th style="width: 4%; text-align: right;">Flag</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% regroup items by item.lab_test.category as category_list %}
+{% for category in categories %}
+<div class="category-section">
+    <div class="category-header">{{ category.name }}</div>
 
-        {% for category in category_list %}
-        <tr class="category-row">
-            <td colspan="6">
-                {% if category.grouper %}
-                {{ category.grouper.name }}
-                {% else %}
-                {% trans "Other Tests" %}
-                {% endif %}
-            </td>
-        </tr>
-        {% for item_data in category.list %}
-        {% with item=item_data.item previous=item_data.previous_result prev_date=item_data.previous_date grouped=item_data.parameter_results_grouped %}
-
-        {% if grouped %}
-        {# ─── COMPOUND TEST (e.g. NFS) : structured parameter table ─── #}
-        <tr>
-            <td colspan="6" style="padding: 6px 4px 0 15px; font-weight: 700; font-size: 9pt; color: #1f2937;">
-                {{ item.lab_test.name }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="6" style="padding: 0 4px 6px 15px;">
-                <table class="compound-param-table">
-                    <thead>
-                        <tr style="background-color: #374151; color: #ffffff;">
-                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">PARAMÈTRE</th>
-                            <th style="text-align: right; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">RÉSULTAT</th>
-                            <th style="text-align: center; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">FLAG</th>
-                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">UNITÉ</th>
-                            <th style="text-align: left; font-size: 7.5pt; padding: 4px 6px; border: 1px solid #374151;">RÉFÉRENCE</th>
-                        </tr>
-                    </thead>
-                    {% for group in grouped %}
-                    <tr class="compound-group-header">
-                        <td colspan="5">{{ group.group_name }}</td>
-                    </tr>
-                    {% for p in group.parameters %}
-                    <tr>
-                        <td class="param-code">{{ p.code }}</td>
-                        <td class="param-result
-                            {% if p.flag == 'H' or p.flag == 'H*' %}flag-high
-                            {% elif p.flag == 'L' or p.flag == 'L*' %}flag-low
-                            {% endif %}">
-                            {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"-4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
-                        </td>
-                        <td class="param-flag">
-                            {% if p.flag == 'H' %}<span class="flag-high">↑</span>
-                            {% elif p.flag == 'L' %}<span class="flag-low">↓</span>
-                            {% elif p.flag == 'H*' %}<span class="flag-critical">↑↑</span>
-                            {% elif p.flag == 'L*' %}<span class="flag-critical">↓↓</span>
-                            {% endif %}
-                        </td>
-                        <td class="param-unit">{{ p.unit }}</td>
-                        <td class="param-ref">{{ p.ref_display|default:"—" }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% endfor %}
-                </table>
-            </td>
-        </tr>
-        {% if item.technician_notes %}
-        <tr>
-            <td colspan="6" style="padding: 0 6px 8px 20px; border-top: none;">
-                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
-            </td>
-        </tr>
-        {% endif %}
-
-        {% elif item.lab_test.use_large_layout %}
-        {# ─── LARGE LAYOUT TEST (e.g. Bacteriology) ─── #}
-        <tr>
-            <td colspan="6" style="padding-left: 15px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
-                <div style="display: table; width: 100%; margin-top: 8px;">
-                    <div style="display: table-cell; width: 60%;">
-                        <strong style="font-size: 10pt; color: #111827;">{{ item.lab_test.name }}</strong>
-                    </div>
-                    <div style="display: table-cell; width: 40%; text-align: right; padding-right: 10px;">
-                        {% if item.is_abnormal %}
-                        <span class="flag-high" style="font-size: 8pt; border: 1px solid #dc2626; padding: 1px 4px; border-radius: 2px;">ANORMAL</span>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div style="margin: 10px 0 15px 15px; padding: 10px; border-left: 3px solid {{ organization.brand_color|default:"#1d4ed8" }}; background-color: #ffffff;">
-                    <div class="rich-content" style="font-size: 10pt; line-height: 1.5;">
-                        {{ item.result_value|safe }}
-                    </div>
-                </div>
-
-                <div style="display: table; width: 100%; font-size: 8pt; color: #6b7280; margin-bottom: 8px;">
-                    <div style="display: table-cell; width: 33%;">
-                        <strong>UNITÉ:</strong> {{ item.lab_test.unit_of_measurement|default:"—" }}
-                    </div>
-                    <div style="display: table-cell; width: 33%;">
-                        <strong>RÉFÉRENCE:</strong> 
+    {# 1. EXAMENS SIMPLES (TABLEAU COMPACT) #}
+    {% if category.simple_items %}
+    <table class="compact-table">
+        <thead>
+            <tr>
+                <th style="width: 30%">Examen</th>
+                <th style="width: 20%">Résultat</th>
+                <th style="width: 10%">Unités</th>
+                <th style="width: 25%">Référence</th>
+                <th style="width: 15%">Antérieur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in category.simple_items %}
+                {% with item=entry.item %}
+                <tr>
+                    <td>{{ item.lab_test.name }}</td>
+                    <td style="font-weight: 700;">{{ item.result_value|safe }}</td>
+                    <td>{{ item.lab_test.unit_of_measurement|default:"—" }}</td>
+                    <td style="font-size: 7.5pt; color: #6b7280;">
                         {% if patient.gender == 'M' %}{{ item.lab_test.normal_range_male|default:item.lab_test.normal_range_general|default:"—" }}
                         {% elif patient.gender == 'F' %}{{ item.lab_test.normal_range_female|default:item.lab_test.normal_range_general|default:"—" }}
                         {% else %}{{ item.lab_test.normal_range_general|default:"—" }}{% endif %}
-                    </div>
-                    <div style="display: table-cell; width: 34%; text-align: right; padding-right: 10px;">
-                        {% if previous %}<strong>ANTÉRIEUR:</strong> {{ previous }} <span style="font-size: 6pt;">({{ prev_date }})</span>{% endif %}
+                    </td>
+                    <td style="font-size: 7.5pt;">{{ entry.previous_result|default:"/" }}</td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {# 2. EXAMENS À PARAMÈTRES (NFS, etc.) - EN-TÊTE SPÉCIFIQUE #}
+    {% if category.compound_items %}
+        {% for entry in category.compound_items %}
+            {% with item=entry.item grouped=entry.parameter_results_grouped %}
+            <div style="margin-top: 10px; font-weight: 800; font-size: 10pt; text-transform: uppercase; color: #111827; border-left: 4px solid {{ organization.brand_color|default:"#374151" }}; padding-left: 8px; margin-bottom: 5px;">
+                {{ item.lab_test.name }}
+            </div>
+            <table class="compound-param-table">
+                <thead>
+                    <tr class="compound-header">
+                        <th style="width: 35%">Paramètre</th>
+                        <th style="width: 20%">Résultat</th>
+                        <th style="width: 15%">Unités</th>
+                        <th style="width: 30%">Valeurs de Référence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in grouped %}
+                        {% if group.group_name != 'Paramètres' %}
+                        <tr><td colspan="4" class="compound-group-title">{{ group.group_name }}</td></tr>
+                        {% endif %}
+                        {% for p in group.parameters %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ p.name }}</td>
+                            <td style="font-weight: 700; text-align: left; {% if 'H' in p.flag or 'L' in p.flag %}color: #dc2626;{% endif %}">
+                                {{ p.result_numeric|default:p.result_text|default:"—" }}
+                                {% if 'H' in p.flag %} (H){% elif 'L' in p.flag %} (L){% endif %}
+                            </td>
+                            <td style="color: #4b5563;">{{ p.unit|default:"—" }}</td>
+                            <td style="font-size: 7.5pt; color: #6b7280;">{{ p.ref_display|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endwith %}
+        {% endfor %}
+    {% endif %}
+
+    {# 3. EXAMENS LARGE (BACTÉRIO) #}
+    {% if category.large_items %}
+        {% for entry in category.large_items %}
+            {% with item=entry.item %}
+            <div class="standalone-box">
+                <div class="box-header">{{ item.lab_test.name }}</div>
+                <div class="box-content">
+                    <div class="rich-content" style="font-size: 9.5pt; line-height: 1.4;">
+                        {{ item.result_value|safe }}
                     </div>
                 </div>
-            </td>
-        </tr>
-        {% if item.technician_notes %}
-        <tr>
-            <td colspan="6" style="padding: 0 6px 8px 20px; border-top: none; background-color: #f9fafb;">
-                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
-            </td>
-        </tr>
-        {% endif %}
-
-        {% elif item.result_value %}
-        {# ─── SIMPLE TEST : standard single-value row ─── #}
-        <tr>
-            <td style="padding-left: 15px; vertical-align: top; padding-top: 8px;">{{ item.lab_test.name }}</td>
-            <td class="result-cell">
-                {{ item.result_value|safe }}
-            </td>
-            <td style="vertical-align: top; padding-top: 8px;">{{ item.lab_test.unit_of_measurement }}</td>
-            <td style="vertical-align: top; padding-top: 8px;">
-                {% if patient.gender == 'M' %}
-                    {% if item.lab_test.normal_range_male %}
-                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span></span>
-                    {% elif item.lab_test.normal_range_general %}
-                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
-                    {% else %}
-                    <span class="ref-value">—</span>
-                    {% endif %}
-                {% elif patient.gender == 'F' %}
-                    {% if item.lab_test.normal_range_female %}
-                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span></span>
-                    {% elif item.lab_test.normal_range_general %}
-                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
-                    {% else %}
-                    <span class="ref-value">—</span>
-                    {% endif %}
-                {% else %}
-                    {% if item.lab_test.normal_range_general %}
-                    <span class="ref-line"><span class="ref-value">{{ item.lab_test.normal_range_general|linebreaksbr }}</span></span>
-                    {% else %}
-                        {% if item.lab_test.normal_range_male %}
-                        <span class="ref-line"><span class="ref-label">H :</span> <span class="ref-value">{{ item.lab_test.normal_range_male|linebreaksbr }}</span></span>
-                        {% endif %}
-                        {% if item.lab_test.normal_range_female %}
-                        <span class="ref-line"><span class="ref-label">F :</span> <span class="ref-value">{{ item.lab_test.normal_range_female|linebreaksbr }}</span></span>
-                        {% endif %}
-                        {% if not item.lab_test.normal_range_male and not item.lab_test.normal_range_female %}
-                        <span class="ref-value">—</span>
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-            </td>
-            <td style="vertical-align: top; padding-top: 8px;">
-                {% if previous %}
-                {{ previous }} <br><span style="font-size: 6pt; color: #6b7280;">({{ prev_date }})</span>
-                {% else %}
-                /
-                {% endif %}
-            </td>
-            <td style="text-align: right; vertical-align: top; padding-top: 8px;">
-                {% if item.is_abnormal %}
-                <span class="flag-high">ANORMAL</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% if item.technician_notes %}
-        <tr>
-            <td colspan="6" style="padding: 0 6px 8px 20px; border-top: none;">
-                <div class="technician-notes">{{ item.technician_notes|safe }}</div>
-            </td>
-        </tr>
-        {% endif %}
-        {% endif %}
-        {% endwith %}
+            </div>
+            {% endwith %}
         {% endfor %}
-        {% empty %}
-        <tr>
-            <td colspan="6" class="text-center" style="padding: 15px; color: #6b7280;">Aucun résultat disponible</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-{% if pending_items %}
-<div class="notes" style="background-color: #f9fafb; border-color: #9ca3af; color: #374151; margin-top: 10px;">
-    <strong style="font-size: 9pt; text-transform: uppercase; letter-spacing: 1px;">Examens en cours d'analyse (résultats à venir) :</strong>
-    <ul style="margin: 4px 0 0 0; padding-left: 1.2em;">
-        {% for item_data in pending_items %}
-        <li style="font-size: 8.5pt;">{{ item_data.item.lab_test.name }}</li>
-        {% endfor %}
-    </ul>
+    {% endif %}
 </div>
-{% endif %}
-
-{% if lab_order.clinical_notes %}
-<div class="notes" style="background-color: #eff6ff; border-color: #3b82f6; color: #1e40af;">
-    <strong>Diagnostic du Médecin / Renseignements Cliniques :</strong><br>
-    <div class="rich-content">{{ lab_order.clinical_notes|safe }}</div>
-</div>
-{% endif %}
+{% endfor %}
 
 {% if lab_order.biologist_diagnosis %}
-<div class="notes"
-    style="background-color: #f0fdf4; border: 2px solid #22c55e; color: #166534; margin-top: 15px; padding: 12px;">
-    <div
-        style="font-size: 10pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #22c55e; padding-bottom: 3px;">
-        Conclusion / Diagnostic du Biologiste :
-    </div>
-    <div class="rich-content" style="font-size: 11pt; line-height: 1.5; font-weight: 500;">
-        {{ lab_order.biologist_diagnosis|safe }}
-    </div>
+<div style="margin-top: 10px; padding: 8px; border: 1px solid #22c55e; background-color: #f0fdf4; border-radius: 4px;">
+    <strong style="color: #166534; font-size: 8.5pt; text-transform: uppercase;">Conclusion du Biologiste :</strong>
+    <div class="rich-content" style="font-size: 9pt; margin-top: 2px;">{{ lab_order.biologist_diagnosis|safe }}</div>
 </div>
 {% endif %}
 
-<div style="margin-top: 40px; display: table; width: 100%;">
-    <div style="display: table-cell; width: 50%;">
-        <div class="info-label">Validé par :</div>
-        <div style="font-weight: bold; margin-bottom: 5px;">Lauriane Karelle NJAPOUP KAMDEM</div>
-        <div style="margin-top: 5px; border-top: 1px dotted #9ca3af; width: 180px; padding-top: 4px; font-size: 8pt; color: #6b7280;">
-            Signature Valideur
-        </div>
+<div class="signature-section">
+    <div class="sig-block">
+        <div class="info-label">Le Technicien :</div>
+        <div style="font-weight: bold; font-size: 9pt; margin-top: 2px;">Lauriane Karelle NJAPOUP KAMDEM</div>
     </div>
-    <div style="display: table-cell; width: 50%; text-align: right;">
-        <div class="info-label">Date d'édition:</div>
-        <div class="info-value">{% now "d/m/Y H:i" %}</div>
+    <div class="sig-block" style="text-align: right;">
+        <div class="info-label">Le Biologiste :</div>
+        <div style="font-weight: bold; font-size: 9pt; margin-top: 2px;">KELL MAHOP Emmanuel Philippe</div>
+        <div style="margin-top: 30px; border-top: 1px dotted #9ca3af; width: 180px; font-size: 7pt; margin-left: auto; padding-top: 2px;">Signature & Cachet</div>
     </div>
 </div>
 {% endblock %}

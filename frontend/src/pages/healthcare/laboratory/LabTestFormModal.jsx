@@ -10,6 +10,8 @@ import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import { productsAPI } from '../../../services/api';
 
+import useCurrentUser from '../../../hooks/useCurrentUser';
+
 const SAMPLE_TYPES = [
     { value: 'blood', label: 'Sang' }, { value: 'urine', label: 'Urine' },
     { value: 'stool', label: 'Selles' }, { value: 'csf', label: 'LCR' },
@@ -43,6 +45,7 @@ const EMPTY_PARAMETER = {
 };
 
 const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
+    const { isAdmin } = useCurrentUser();
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
@@ -295,12 +298,16 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                                 </Box>
                             )}
                         </Grid>
-                        <Grid item xs={12} sm={2}>
-                            <TextField fullWidth label="Prix (XAF)" name="price" value={formData.price} onChange={handleChange} size="small" type="number" />
-                        </Grid>
-                        <Grid item xs={12} sm={2}>
-                            <TextField fullWidth label="Reduction (XAF)" name="discount" value={formData.discount} onChange={handleChange} size="small" type="number" />
-                        </Grid>
+                        {isAdmin && (
+                            <>
+                                <Grid item xs={12} sm={2}>
+                                    <TextField fullWidth label="Prix (XAF)" name="price" value={formData.price} onChange={handleChange} size="small" type="number" />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <TextField fullWidth label="Reduction (XAF)" name="discount" value={formData.discount} onChange={handleChange} size="small" type="number" />
+                                </Grid>
+                            </>
+                        )}
                         <Grid item xs={12}>
                             <TextField fullWidth multiline rows={2} label="Description" name="description" value={formData.description} onChange={handleChange} size="small" />
                         </Grid>

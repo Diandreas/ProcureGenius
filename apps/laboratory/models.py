@@ -455,6 +455,11 @@ class LabOrder(models.Model):
         related_name='verified_lab_results',
         verbose_name=_("Résultats validés par")
     )
+    results_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Résultats validés le")
+    )
     
     # Notification tracking (for future SMS integration)
     notification_sent = models.BooleanField(
@@ -585,6 +590,7 @@ class LabOrder(models.Model):
     def verify_results(self, verified_by=None):
         """Verify/validate results and mark as ready"""
         self.status = 'results_ready'
+        self.results_verified_at = timezone.now()
         if verified_by:
             self.results_verified_by = verified_by
         self.save()

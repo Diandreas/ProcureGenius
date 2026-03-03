@@ -150,7 +150,29 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
             else:
                 pending_items.append(entry)
 
-        context['items'] = enriched_items
+        # PREPARE CATEGORIZED DATA
+        categories_data = {}
+        for entry in enriched_items:
+            cat = entry['item'].lab_test.category
+            cat_id = cat.id if cat else 'other'
+            cat_name = cat.name if cat else 'Autres Examens'
+            
+            if cat_id not in categories_data:
+                categories_data[cat_id] = {
+                    'name': cat_name,
+                    'simple_items': [],
+                    'compound_items': [],
+                    'large_items': []
+                }
+            
+            if entry['item'].lab_test.use_large_layout:
+                categories_data[cat_id]['large_items'].append(entry)
+            elif entry['parameter_results_grouped']:
+                categories_data[cat_id]['compound_items'].append(entry)
+            else:
+                categories_data[cat_id]['simple_items'].append(entry)
+
+        context['categories'] = categories_data.values()
         context['pending_items'] = pending_items
         return context
 

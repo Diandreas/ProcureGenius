@@ -387,6 +387,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'results_completed_at',
             'results_entered_by',
             'results_verified_by',
+            'results_verified_at',
             'notification_sent',
             'notification_sent_at',
             'lab_invoice',
