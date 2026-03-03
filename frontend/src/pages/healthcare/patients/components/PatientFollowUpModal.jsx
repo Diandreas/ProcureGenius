@@ -19,6 +19,40 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
+import QuickTemplate from '../../../../components/healthcare/QuickTemplate';
+import {
+    CHIEF_COMPLAINT_TEMPLATES,
+    PHYSICAL_EXAM_TEMPLATES,
+    DIAGNOSIS_TEMPLATES,
+    TREATMENT_TEMPLATES,
+} from '../../../../constants/clinicalTemplates';
+
+// Templates spécifiques à l'évolution du suivi
+const EVOLUTION_TEMPLATES = [
+    'Amélioration nette des symptômes',
+    'Amélioration partielle',
+    'Stabilisation, pas d\'amélioration notable',
+    'Aggravation des symptômes',
+    'Apparition de nouveaux symptômes',
+    'Patient asymptomatique à ce jour',
+    'Observance thérapeutique bonne',
+    'Observance thérapeutique insuffisante',
+    'Effets secondaires signalés',
+    'Guérison clinique complète',
+];
+
+const NOTES_TEMPLATES = [
+    'Régime alimentaire équilibré conseillé',
+    'Activité physique modérée recommandée',
+    'Contrôle à J7 si pas d\'amélioration',
+    'Prendre les médicaments aux repas',
+    'Éviter l\'alcool pendant le traitement',
+    'Ne pas arrêter le traitement sans avis médical',
+    'Hydratation abondante recommandée',
+    'Repos recommandé pendant 48h',
+    'Surveillance glycémique quotidienne',
+    'Contrôle tensionnel à domicile conseillé',
+];
 
 const EMPTY = {
     chief_complaint: '',
@@ -84,6 +118,14 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
         setForm(prev => ({ ...prev, [field]: e.target.value }));
     };
 
+    const handleTemplateSelect = (field, value) => {
+        setForm(prev => {
+            const current = prev[field] || '';
+            const separator = current.trim() === '' ? '' : '\n';
+            return { ...prev, [field]: current + separator + value };
+        });
+    };
+
     const handleClose = () => {
         setForm(EMPTY);
         onClose();
@@ -142,8 +184,14 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
                     placeholder="Motif de consultation, plaintes actuelles..."
                     value={form.chief_complaint}
                     onChange={handleChange('chief_complaint')}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 0.5 }}
                 />
+                <QuickTemplate
+                    label="Raccourcis motif"
+                    templates={CHIEF_COMPLAINT_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('chief_complaint', v)}
+                />
+                <Box sx={{ mb: 2 }} />
 
                 {/* ── Paramètres Vitaux ─────────────────────────────────── */}
                 <SectionTitle icon={<VitalsIcon fontSize="small" />} label="Paramètres Vitaux" />
@@ -229,8 +277,14 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
                     placeholder="Résultats de l'examen clinique..."
                     value={form.physical_examination}
                     onChange={handleChange('physical_examination')}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 0.5 }}
                 />
+                <QuickTemplate
+                    label="Raccourcis examen"
+                    templates={PHYSICAL_EXAM_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('physical_examination', v)}
+                />
+                <Box sx={{ mb: 2 }} />
 
                 {/* ── Diagnostic ────────────────────────────────────────── */}
                 <SectionTitle icon={<ClinicalIcon fontSize="small" />} label="Diagnostic" />
@@ -239,8 +293,14 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
                     placeholder="Diagnostic ou hypothèse diagnostique..."
                     value={form.diagnosis}
                     onChange={handleChange('diagnosis')}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 0.5 }}
                 />
+                <QuickTemplate
+                    label="Raccourcis diagnostic"
+                    templates={DIAGNOSIS_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('diagnosis', v)}
+                />
+                <Box sx={{ mb: 2 }} />
 
                 {/* ── Évolution ─────────────────────────────────────────── */}
                 <SectionTitle icon={<ClinicalIcon fontSize="small" />} label="Évolution" />
@@ -249,8 +309,14 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
                     placeholder="Évolution par rapport à la dernière visite..."
                     value={form.evolution}
                     onChange={handleChange('evolution')}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 0.5 }}
                 />
+                <QuickTemplate
+                    label="Raccourcis évolution"
+                    templates={EVOLUTION_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('evolution', v)}
+                />
+                <Box sx={{ mb: 2 }} />
 
                 {/* ── Traitement / Examens ──────────────────────────────── */}
                 <SectionTitle icon={<ClinicalIcon fontSize="small" />} label="Traitement / Examens prescrits" />
@@ -259,14 +325,26 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
                     placeholder="Traitement prescrit, examens demandés, conseils..."
                     value={form.treatment}
                     onChange={handleChange('treatment')}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 0.5 }}
                 />
+                <QuickTemplate
+                    label="Raccourcis traitement"
+                    templates={TREATMENT_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('treatment', v)}
+                />
+                <Box sx={{ mb: 2 }} />
 
                 {/* ── Notes ────────────────────────────────────────────── */}
                 <TextField
-                    fullWidth multiline rows={2} label="Notes complémentaires (optionnel)"
+                    fullWidth multiline rows={2} label="Notes complémentaires / Conseils (optionnel)"
                     value={form.notes}
                     onChange={handleChange('notes')}
+                    sx={{ mb: 0.5 }}
+                />
+                <QuickTemplate
+                    label="Raccourcis conseils"
+                    templates={NOTES_TEMPLATES}
+                    onSelect={(v) => handleTemplateSelect('notes', v)}
                 />
             </DialogContent>
 

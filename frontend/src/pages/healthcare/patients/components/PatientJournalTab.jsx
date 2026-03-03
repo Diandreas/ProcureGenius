@@ -10,6 +10,7 @@ import {
     IconButton,
     Tooltip,
     Grid,
+    Button,
 } from '@mui/material';
 import {
     TrackChanges as FollowUpIcon,
@@ -18,6 +19,7 @@ import {
     Delete as DeleteIcon,
     MonitorHeart as VitalsIcon,
     MedicalInformation as ClinicalIcon,
+    Print as PrintIcon,
 } from '@mui/icons-material';
 import patientAPI from '../../../../services/patientAPI';
 import PatientFollowUpModal from './PatientFollowUpModal';
@@ -130,6 +132,93 @@ const PatientJournalTab = ({ patientId, patientName }) => {
         }
     };
 
+    const handlePrint = () => {
+        const fmtTime = (d) => d ? new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+        const fmtDay = (d) => new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const esc = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+        const field = (label, val, cls = '') => val ? `<div class="field ${cls}"><b>${label} :</b> ${esc(val)}</div>` : '';
+
+        let body = '';
+        sortedDays.forEach(day => {
+            body += `<div class="day-header">${fmtDay(day)}</div>`;
+            days[day].followUps.forEach(fu => {
+                const vitals = [
+                    fu.blood_pressure ? `<span class="vital">TA <b>${esc(fu.blood_pressure)} mmHg</b></span>` : '',
+                    fu.temperature    ? `<span class="vital">T° <b>${esc(fu.temperature)}°C</b></span>` : '',
+                    fu.heart_rate     ? `<span class="vital">FC <b>${esc(String(fu.heart_rate))} bpm</b></span>` : '',
+                    fu.oxygen_saturation ? `<span class="vital">SpO2 <b>${esc(String(fu.oxygen_saturation))}%</b></span>` : '',
+                    fu.respiratory_rate  ? `<span class="vital">FR <b>${esc(String(fu.respiratory_rate))} c/min</b></span>` : '',
+                    fu.weight            ? `<span class="vital">Poids <b>${esc(String(fu.weight))} kg</b></span>` : '',
+                    fu.blood_glucose     ? `<span class="vital">Glycémie <b>${esc(String(fu.blood_glucose))} mg/dL</b></span>` : '',
+                ].filter(Boolean).join(' &nbsp;|&nbsp; ');
+
+                body += `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Suivi infirmier / médical${fu.provided_by_name ? ' — ' + esc(fu.provided_by_name) : ''}</span>
+                        <span class="card-time">${fmtTime(fu.follow_up_date)}</span>
+                    </div>
+                    ${vitals ? `<div class="vitals">${vitals}</div>` : ''}
+                    <div class="fields">
+                        ${field('Plaintes du jour', fu.chief_complaint)}
+                        ${field('Examen physique', fu.physical_examination)}
+                        ${field('Diagnostic', fu.diagnosis, 'diag')}
+                        ${field('Évolution', fu.evolution)}
+                        ${field('Traitement / Examens', fu.treatment, 'traitement')}
+                        ${field('Notes / Conseils', fu.notes)}
+                    </div>
+                </div>`;
+            });
+            days[day].cares.forEach(care => {
+                body += `
+                <div class="card card-care">
+                    <div class="card-header">
+                        <span class="card-title">${esc(SERVICE_LABELS[care.service_type] || care.service_type)} — ${esc(care.service_name)}${care.provided_by_name ? ' (' + esc(care.provided_by_name) + ')' : ''}</span>
+                        <span class="card-time">${fmtTime(care.provided_at)}</span>
+                    </div>
+                    ${care.notes ? `<div class="field">${esc(care.notes)}</div>` : ''}
+                </div>`;
+            });
+        });
+
+        const win = window.open('', '_blank', 'width=900,height=700');
+        win.document.write(`
+            <html>
+            <head>
+                <title>Carnet de Suivi — ${patientName || 'Patient'}</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }
+                    h1 { font-size: 17px; margin-bottom: 2px; }
+                    .subtitle { font-size: 11px; color: #555; margin-bottom: 18px; }
+                    .day-header { font-size: 13px; font-weight: bold; color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 4px; margin: 18px 0 8px 0; text-transform: capitalize; }
+                    .card { border: 1px solid #ddd; border-left: 4px solid #8e44ad; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; page-break-inside: avoid; }
+                    .card-care { border-left-color: #2980b9; }
+                    .card-header { display: flex; justify-content: space-between; margin-bottom: 7px; }
+                    .card-title { font-weight: bold; font-size: 12px; }
+                    .card-time { font-size: 11px; color: #555; }
+                    .vitals { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; font-size: 11px; background: #f7f7f7; padding: 5px 8px; border-radius: 3px; color: #333; }
+                    .vital b { color: #111; }
+                    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; }
+                    .field { font-size: 11px; line-height: 1.5; }
+                    .field b { color: #666; font-weight: 600; }
+                    .field.diag { color: #c0392b; font-weight: 600; grid-column: 1 / -1; }
+                    .field.traitement { color: #1a6b1a; grid-column: 1 / -1; }
+                    @media print { @page { margin: 15mm; } body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <h1>Carnet de Suivi — ${patientName || 'Patient'}</h1>
+                <p class="subtitle">Imprimé le ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                ${body}
+            </body>
+            </html>
+        `);
+        win.document.close();
+        win.focus();
+        setTimeout(() => { win.print(); win.close(); }, 400);
+    };
+
     if (sortedDays.length === 0) {
         return (
             <Alert severity="info" sx={{ mt: 2 }}>
@@ -140,6 +229,20 @@ const PatientJournalTab = ({ patientId, patientName }) => {
 
     return (
         <Box>
+            {/* Bouton Imprimer */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PrintIcon />}
+                    onClick={handlePrint}
+                >
+                    Imprimer le carnet
+                </Button>
+            </Box>
+
+            {/* Zone imprimable */}
+            <Box id="journal-print-area">
             {sortedDays.map(day => (
                 <Box key={day} sx={{ mb: 4 }}>
                     {/* ── En-tête du jour ─────────────────────────────── */}
@@ -279,6 +382,8 @@ const PatientJournalTab = ({ patientId, patientName }) => {
                     ))}
                 </Box>
             ))}
+
+            </Box> {/* fin journal-print-area */}
 
             {/* ── Modals édition ─────────────────────────────────────────── */}
             <PatientFollowUpModal

@@ -95,6 +95,16 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
         except Exception:
             context['all_documents'] = []
 
+        # ── 7b. Follow-ups (fiches de suivi) ──
+        try:
+            from apps.patients.models_followup import PatientFollowUp
+            follow_ups = PatientFollowUp.objects.filter(
+                patient=patient
+            ).select_related('provided_by').order_by('-follow_up_date')
+            context['all_follow_ups'] = follow_ups
+        except Exception:
+            context['all_follow_ups'] = []
+
         # ── 8. Statistics summary ──
         context['stats'] = {
             'total_consultations': consultations.count(),
@@ -103,6 +113,7 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
             'total_dispensings': len(context['all_dispensings']) if context['all_dispensings'] else 0,
             'total_care_services': len(context['all_care_services']) if context['all_care_services'] else 0,
             'total_visits': len(context['all_visits']) if context['all_visits'] else 0,
+            'total_follow_ups': context['all_follow_ups'].count() if hasattr(context['all_follow_ups'], 'count') else len(context['all_follow_ups']),
         }
 
         return context

@@ -108,7 +108,7 @@ const LabOrderHistory = ({ labOrders }) => {
                                 variant="outlined"
                                 size="small"
                                 startIcon={<ViewIcon />}
-                                onClick={() => window.open(`/healthcare/laboratory/orders/${order.id}`, '_blank')}
+                                onClick={() => window.open(`/healthcare/laboratory/${order.id}`, '_blank')}
                             >
                                 Voir Détails Complets
                             </Button>

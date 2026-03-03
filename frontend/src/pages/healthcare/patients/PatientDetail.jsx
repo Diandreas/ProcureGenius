@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, Tabs, Divider, List, Avatar } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, Tabs, Divider, List, Avatar, CircularProgress } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import {
     Edit as EditIcon,
@@ -39,9 +39,13 @@ const PatientDetail = () => {
     const { id } = useParams();
 
     const [patient, setPatient] = useState(null);
+    const [summary, setSummary] = useState(null);
     const [history, setHistory] = useState(null);
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(true);
+    // Ref to pass summary to MedicalSummaryTab only once (avoids re-render loop)
+    const summaryRef = useRef(null);
+    const historyLoadedRef = useRef(false);
 
     // Print Modal State
     const [printModalOpen, setPrintModalOpen] = useState(false);
@@ -53,21 +57,21 @@ const PatientDetail = () => {
     // Follow-up Modal & data
     const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
     const [followUps, setFollowUps] = useState([]);
-    const [editingFollowUp, setEditingFollowUp] = useState(null); // { id, ...data } pour édition
+    const [editingFollowUp, setEditingFollowUp] = useState(null);
 
     useEffect(() => {
         fetchData();
-        fetchFollowUps();
     }, [id]);
 
-    const fetchFollowUps = async () => {
-        try {
-            const data = await patientAPI.getFollowUps(id);
-            setFollowUps(Array.isArray(data) ? data : data.results || []);
-        } catch (e) {
-            console.error('Error fetching follow-ups', e);
+    // Lazy-load history only when tabs 3/4/5 are opened
+    useEffect(() => {
+        if ((tabValue === 3 || tabValue === 4 || tabValue === 5) && !historyLoadedRef.current && patient) {
+            historyLoadedRef.current = true;
+            patientAPI.getPatientCompleteHistory(id)
+                .then(data => setHistory(data))
+                .catch(err => console.error('Error fetching history:', err));
         }
-    };
+    }, [tabValue, patient, id]);
 
     const canEditOrDelete = (createdAt) => {
         if (!createdAt) return false;
@@ -93,12 +97,16 @@ const PatientDetail = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [patientData, historyData] = await Promise.all([
+            historyLoadedRef.current = false;
+            // Two parallel lightweight calls
+            const [patientData, summaryData] = await Promise.all([
                 patientAPI.getPatient(id),
-                patientAPI.getPatientCompleteHistory(id)
+                patientAPI.getMedicalSummary(id),
             ]);
             setPatient(patientData);
-            setHistory(historyData);
+            summaryRef.current = summaryData;
+            setSummary(summaryData);
+            setFollowUps(summaryData.recent_follow_ups || []);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -194,15 +202,6 @@ const PatientDetail = () => {
                             sx={{ borderRadius: 2 }}
                         >
                             Ordonnance Labo
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            startIcon={<PharmacyIcon />}
-                            onClick={() => navigate(`/healthcare/pharmacy/dispense/new?patientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Dispensation
                         </Button>
                         <Button
                             variant="contained"
@@ -336,7 +335,7 @@ const PatientDetail = () => {
 
                 {/* Tab 0: Medical Summary (default) */}
                 <Box role="tabpanel" hidden={tabValue !== 0} sx={{ p: 3 }}>
-                    {tabValue === 0 && <MedicalSummaryTab patientId={id} patient={patient} />}
+                    {tabValue === 0 && <MedicalSummaryTab patientId={id} initialSummary={summaryRef.current} />}
                 </Box>
 
                 {/* Tab 1: Carnet de Suivi (follow-ups + soins par jour) */}
@@ -353,7 +352,11 @@ const PatientDetail = () => {
                 <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
                     {tabValue === 3 && (
                         <Box>
-                            {history?.consultations && history.consultations.length > 0 ? (
+                            {!history ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                    <CircularProgress size={28} />
+                                </Box>
+                            ) : history.consultations && history.consultations.length > 0 ? (
                                 history.consultations.map((consult) => (
                                     <Card key={consult.id} variant="outlined" sx={{ mb: 3, borderLeft: 4, borderColor: consult.status === 'completed' ? 'success.main' : 'warning.main' }}>
                                         <CardContent sx={{ pb: '12px !important' }}>
@@ -512,7 +515,7 @@ const PatientDetail = () => {
                 open={careModalOpen}
                 onClose={() => setCareModalOpen(false)}
                 patientId={id}
-                onSaved={fetchData}
+                onSaved={() => fetchData()}
             />
 
             {/* ── Bloc Suivis ─────────────────────────────────────────── */}

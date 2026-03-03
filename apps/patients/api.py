@@ -691,6 +691,46 @@ class PatientMedicalSummaryView(APIView):
                     'status_display': last_consult.get_status_display(),
                 }
 
+        # Recent follow-ups (last 5)
+        summary['recent_follow_ups'] = []
+        try:
+            from .models_followup import PatientFollowUp
+            follow_ups = PatientFollowUp.objects.filter(
+                patient=patient,
+                organization=request.user.organization,
+            ).select_related('provided_by').order_by('-follow_up_date')[:5]
+
+            for fu in follow_ups:
+                bp = None
+                if fu.blood_pressure_systolic and fu.blood_pressure_diastolic:
+                    bp = f"{fu.blood_pressure_systolic}/{fu.blood_pressure_diastolic}"
+                provider_name = None
+                if fu.provided_by:
+                    provider_name = fu.provided_by.get_full_name() or fu.provided_by.username
+
+                summary['recent_follow_ups'].append({
+                    'id': str(fu.id),
+                    'follow_up_date': fu.follow_up_date,
+                    'provided_by_name': provider_name,
+                    'chief_complaint': fu.chief_complaint or '',
+                    'physical_examination': fu.physical_examination or '',
+                    'diagnosis': fu.diagnosis or '',
+                    'evolution': fu.evolution or '',
+                    'treatment': fu.treatment or '',
+                    'notes': fu.notes or '',
+                    'temperature': str(fu.temperature) if fu.temperature else None,
+                    'blood_pressure': bp,
+                    'blood_pressure_systolic': fu.blood_pressure_systolic,
+                    'blood_pressure_diastolic': fu.blood_pressure_diastolic,
+                    'heart_rate': fu.heart_rate,
+                    'oxygen_saturation': fu.oxygen_saturation,
+                    'respiratory_rate': fu.respiratory_rate,
+                    'weight': str(fu.weight) if fu.weight else None,
+                    'blood_glucose': str(fu.blood_glucose) if fu.blood_glucose else None,
+                })
+        except Exception:
+            pass
+
         return Response(summary)
 
 
