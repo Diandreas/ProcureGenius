@@ -518,6 +518,36 @@ class EnterLabResultsView(APIView):
         })
 
 
+class SaveTestTemplateView(APIView):
+    """
+    POST /healthcare/laboratory/items/<item_id>/save-as-template/
+    Saves the current result_value of a LabOrderItem as the default result_template for its LabTest.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, item_id):
+        try:
+            item = LabOrderItem.objects.get(
+                id=item_id,
+                lab_order__organization=request.user.organization
+            )
+        except LabOrderItem.DoesNotExist:
+            return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not item.result_value:
+            return Response({'error': 'Le résultat est vide, impossible de créer un modèle.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the parent test's template
+        test = item.lab_test
+        test.result_template = item.result_value
+        test.save(update_fields=['result_template'])
+
+        return Response({
+            'message': 'Modèle mis à jour avec succès',
+            'result_template': test.result_template
+        })
+
+
 class TodayLabOrdersView(APIView):
     """Get lab orders dashboard: active orders + today's stats"""
     permission_classes = [IsAuthenticated]

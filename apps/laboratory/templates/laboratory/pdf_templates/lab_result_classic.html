@@ -324,6 +324,38 @@
                     </table>
                 </td>
             </tr>
+            {% elif item.lab_test.use_large_layout %}
+            {# ─── LARGE LAYOUT TEST (e.g. Bacteriology) ─── #}
+            <tr>
+                <td colspan="6" style="padding-left: 10px; background-color: #f9fafb; border-bottom: 1px solid #eee;">
+                    <div style="margin-top: 8px; font-weight: bold; font-size: 10pt;">{{ item.lab_test.name }}</div>
+                    <div style="margin: 10px 0 15px 10px; padding: 10px; border-left: 3px solid #000; background-color: #fff;">
+                        <div style="font-size: 10pt; line-height: 1.4;">
+                            {{ item.result_value|safe }}
+                        </div>
+                    </div>
+                    <div style="font-size: 8pt; color: #666; margin-bottom: 8px;">
+                        <span><strong>UNITÉ:</strong> {{ item.result_unit|default:item.lab_test.unit_of_measurement|default:"—" }}</span>
+                        <span style="margin-left: 20px;"><strong>RÉFÉRENCE:</strong> {{ item.reference_range|default:"—" }}</span>
+                        {% if previous %}<span style="margin-left: 20px;"><strong>ANTÉRIEUR:</strong> {{ previous }} ({{ prev_date }})</span>{% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% if item.technician_notes or item.interpretation %}
+            <tr>
+                <td colspan="6" style="padding: 0 10px 10px 20px; border-top: none; background-color: #f9f9f9;">
+                    <div style="padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
+                        {% if item.interpretation %}
+                        <strong>Interprétation:</strong> {{ item.interpretation }}<br>
+                        {% endif %}
+                        {% if item.technician_notes %}
+                        <em>Note: {{ item.technician_notes }}</em>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
+
             {% else %}
             {# ─── SIMPLE TEST ─── #}
             <tr>

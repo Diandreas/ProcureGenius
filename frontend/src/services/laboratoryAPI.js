@@ -109,6 +109,12 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Save current result as template for the test
+    saveTestAsTemplate: async (itemId) => {
+        const response = await api.post(`/healthcare/laboratory/items/${itemId}/save-as-template/`);
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

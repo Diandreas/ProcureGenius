@@ -62,6 +62,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         base_unit: '', conversion_factor: 1.0,
         fasting_required: false, fasting_hours: '', preparation_instructions: '',
         estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
+        use_large_layout: false,
         linked_product: '',
     });
 
@@ -86,6 +87,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     methodology: test.methodology || '',
                     is_active: test.is_active !== undefined ? test.is_active : true,
                     requires_approval: test.requires_approval || false,
+                    use_large_layout: test.use_large_layout || false,
                     linked_product: test.linked_product || '',
                 });
                 if (test.parameters && test.parameters.length > 0) {
@@ -438,6 +440,12 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                         </Grid>
                         <Grid item xs={12} sm={4}>
                             <FormControlLabel control={<Checkbox checked={formData.requires_approval} onChange={handleChange} name="requires_approval" />} label="Necessite approbation" />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControlLabel 
+                                control={<Checkbox checked={formData.use_large_layout} onChange={handleChange} name="use_large_layout" />} 
+                                label="Affichage large (Bactériologie)" 
+                            />
                         </Grid>
                     </Grid>
                 )}

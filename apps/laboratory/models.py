@@ -232,6 +232,11 @@ class LabTest(models.Model):
         verbose_name=_("Nécessite approbation"),
         help_text=_("Les résultats doivent être validés par un superviseur")
     )
+    use_large_layout = models.BooleanField(
+        default=False,
+        verbose_name=_("Utiliser un affichage large"),
+        help_text=_("Affiche le résultat sur toute la largeur (recommandé pour la bactériologie)")
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
