@@ -1,4 +1,3 @@
-
 import os
 import django
 import json
@@ -17,13 +16,13 @@ def smart_repair(json_file):
         print(f"Erreur : Le fichier {json_file} est introuvable.")
         return
 
-    print(f"--- REPARATION ULTIME VIA {json_file} ---")
+    print(f"--- REPARATION ULTIME V3 VIA {json_file} ---")
     
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     with transaction.atomic():
-        # 1. Restaurer les catégories avec gestion des Slugs
+        # 1. Synchronisation des categories
         print("-> Synchronisation des categories...")
         cat_map = {} 
         for entry in data:
@@ -33,30 +32,23 @@ def smart_repair(json_file):
                 s_slug = slugify(s_name)
                 org_id = fields['organization']
                 
-                # On cherche si une catégorie avec ce slug existe déjà pour cette organisation
                 obj = LabTestCategory.objects.filter(organization_id=org_id, slug=s_slug).first()
                 if not obj:
-                    # Sinon on cherche par nom exact
                     obj = LabTestCategory.objects.filter(organization_id=org_id, name=s_name).first()
                 
                 if obj:
-                    # Mise à jour
                     obj.description = fields.get('description', obj.description)
                     obj.save()
                 else:
-                    # Création
                     obj = LabTestCategory.objects.create(
-                        name=s_name,
-                        slug=s_slug,
-                        organization_id=org_id,
+                        name=s_name, slug=s_slug, organization_id=org_id,
                         description=fields.get('description', '')
                     )
                     print(f"   + Categorie creee : {obj.name}")
-                
                 cat_map[entry['pk']] = obj
 
-        # 2. Restaurer les Tests (Fusion par Code + Organisation)
-        print("-> Fusion des tests...")
+        # 2. Fusion des Tests
+        print("-> Fusion des tests (par Code)...")
         test_map = {}
         for entry in data:
             if entry['model'] == 'laboratory.labtest':
@@ -80,30 +72,26 @@ def smart_repair(json_file):
                 }
 
                 if obj:
-                    for key, value in defaults.items():
-                        setattr(obj, key, value)
+                    for key, value in defaults.items(): setattr(obj, key, value)
                     obj.save()
                 else:
-                    obj = LabTest.objects.create(
-                        test_code=t_code,
-                        organization_id=org_id,
-                        **defaults
-                    )
+                    obj = LabTest.objects.create(test_code=t_code, organization_id=org_id, **defaults)
                     print(f"   + Test ajoute : {obj.name}")
-                
                 test_map[entry['pk']] = obj
 
-        # 3. Restaurer les Parametres (Le coeur de la reparation)
+        # 3. Restauration des Parametres (Correction du KeyError 'lab_test')
         print("-> Restauration des parametres (normes/unites)...")
         param_count = 0
         for entry in data:
             if entry['model'] == 'laboratory.labtestparameter':
                 fields = entry['fields']
-                test_obj = test_map.get(fields['lab_test'])
+                # Le champ dans le JSON s'appelle 'test' et non 'lab_test'
+                test_key = fields.get('test') 
+                test_obj = test_map.get(test_key)
+                
                 if test_obj:
-                    # On evite les doublons de parametres dans le meme test
                     LabTestParameter.objects.update_or_create(
-                        lab_test=test_obj,
+                        test=test_obj,
                         code=fields['code'],
                         defaults={
                             'name': fields['name'],
@@ -126,11 +114,11 @@ def smart_repair(json_file):
         for k in bact_keys:
             LabTest.objects.filter(name__icontains=k).update(use_large_layout=True)
 
-        # 5. Nettoyage des categories vides
+        # 5. Nettoyage
         empty_cats = LabTestCategory.objects.annotate(test_count=Count('tests')).filter(test_count=0)
         empty_cats.delete()
 
-    print("\n--- REPARATION REUSSIE ---")
+    print("\n--- REPARATION REUSSIE V3 ---")
 
 if __name__ == "__main__":
     smart_repair('REPARATION_FINALE_LABO.json')
