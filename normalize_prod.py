@@ -1,6 +1,8 @@
+
 import os
 import django
 import json
+from django.utils.text import slugify
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings')
@@ -15,61 +17,92 @@ def smart_repair(json_file):
         print(f"Erreur : Le fichier {json_file} est introuvable.")
         return
 
-    print(f"--- DEMARRAGE DE LA REPARATION INTELLIGENTE VIA {json_file} ---")
+    print(f"--- REPARATION ULTIME VIA {json_file} ---")
     
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     with transaction.atomic():
-        # 1. Restaurer les catégories d'abord
-        print("-> Restauration des categories...")
-        cat_map = {} # Pour lier les tests aux bonnes categories
+        # 1. Restaurer les catégories avec gestion des Slugs
+        print("-> Synchronisation des categories...")
+        cat_map = {} 
         for entry in data:
             if entry['model'] == 'laboratory.labtestcategory':
                 fields = entry['fields']
-                obj, created = LabTestCategory.objects.update_or_create(
-                    name=fields['name'],
-                    organization_id=fields['organization'],
-                    defaults={'description': fields.get('description', '')}
-                )
+                s_name = fields['name']
+                s_slug = slugify(s_name)
+                org_id = fields['organization']
+                
+                # On cherche si une catégorie avec ce slug existe déjà pour cette organisation
+                obj = LabTestCategory.objects.filter(organization_id=org_id, slug=s_slug).first()
+                if not obj:
+                    # Sinon on cherche par nom exact
+                    obj = LabTestCategory.objects.filter(organization_id=org_id, name=s_name).first()
+                
+                if obj:
+                    # Mise à jour
+                    obj.description = fields.get('description', obj.description)
+                    obj.save()
+                else:
+                    # Création
+                    obj = LabTestCategory.objects.create(
+                        name=s_name,
+                        slug=s_slug,
+                        organization_id=org_id,
+                        description=fields.get('description', '')
+                    )
+                    print(f"   + Categorie creee : {obj.name}")
+                
                 cat_map[entry['pk']] = obj
-                if created: print(f"   + Categorie creee : {obj.name}")
 
-        # 2. Restaurer les Tests (Fusion par Code)
-        print("-> Fusion des tests (evite les conflits de doublons)...")
+        # 2. Restaurer les Tests (Fusion par Code + Organisation)
+        print("-> Fusion des tests...")
         test_map = {}
         for entry in data:
             if entry['model'] == 'laboratory.labtest':
                 fields = entry['fields']
-                # On cherche par Code + Organisation (la contrainte qui bloquait)
-                obj, created = LabTest.objects.update_or_create(
-                    test_code=fields['test_code'],
-                    organization_id=fields['organization'],
-                    defaults={
-                        'name': fields['name'],
-                        'short_name': fields.get('short_name', ''),
-                        'price': fields.get('price', 0),
-                        'unit_of_measurement': fields.get('unit_of_measurement', ''),
-                        'normal_range_general': fields.get('normal_range_general', ''),
-                        'normal_range_male': fields.get('normal_range_male', ''),
-                        'normal_range_female': fields.get('normal_range_female', ''),
-                        'category': cat_map.get(fields['category']),
-                        'use_large_layout': fields.get('use_large_layout', False),
-                        'is_active': fields.get('is_active', True),
-                    }
-                )
-                test_map[entry['pk']] = obj
-                if created: print(f"   + Nouveau test ajoute : {obj.name}")
+                org_id = fields['organization']
+                t_code = fields['test_code']
+                
+                obj = LabTest.objects.filter(organization_id=org_id, test_code=t_code).first()
+                
+                defaults = {
+                    'name': fields['name'],
+                    'short_name': fields.get('short_name', ''),
+                    'price': fields.get('price', 0),
+                    'unit_of_measurement': fields.get('unit_of_measurement', ''),
+                    'normal_range_general': fields.get('normal_range_general', ''),
+                    'normal_range_male': fields.get('normal_range_male', ''),
+                    'normal_range_female': fields.get('normal_range_female', ''),
+                    'category': cat_map.get(fields['category']),
+                    'use_large_layout': fields.get('use_large_layout', False),
+                    'is_active': fields.get('is_active', True),
+                }
 
-        # 3. Restaurer les Parametres (Ce qui manquait chez Boris)
-        print("-> Restauration des parametres et des normes...")
+                if obj:
+                    for key, value in defaults.items():
+                        setattr(obj, key, value)
+                    obj.save()
+                else:
+                    obj = LabTest.objects.create(
+                        test_code=t_code,
+                        organization_id=org_id,
+                        **defaults
+                    )
+                    print(f"   + Test ajoute : {obj.name}")
+                
+                test_map[entry['pk']] = obj
+
+        # 3. Restaurer les Parametres (Le coeur de la reparation)
+        print("-> Restauration des parametres (normes/unites)...")
         param_count = 0
         for entry in data:
             if entry['model'] == 'laboratory.labtestparameter':
                 fields = entry['fields']
                 test_obj = test_map.get(fields['lab_test'])
                 if test_obj:
-                    obj, created = LabTestParameter.objects.update_or_create(
+                    # On evite les doublons de parametres dans le meme test
+                    LabTestParameter.objects.update_or_create(
                         lab_test=test_obj,
                         code=fields['code'],
                         defaults={
@@ -87,13 +120,17 @@ def smart_repair(json_file):
                     param_count += 1
         print(f"-> {param_count} parametres de tests synchronises.")
 
-        # 4. Nettoyage final des categories vides
-        empty_cats = LabTestCategory.objects.annotate(test_count=Count('tests')).filter(test_count=0)
-        c_del = empty_cats.count()
-        empty_cats.delete()
-        print(f"-> {c_del} categories vides supprimees.")
+        # 4. Activation finale de la Bacteriologie
+        print("-> Finalisation de l'affichage large...")
+        bact_keys = ['BACTÉRIOLOGIQUE', 'BACTERIO', 'CULTURE', 'COPROLOGIE', 'ECBU', 'PCV']
+        for k in bact_keys:
+            LabTest.objects.filter(name__icontains=k).update(use_large_layout=True)
 
-    print("\n--- REPARATION REUSSIE : TOUTES LES DONNEES SONT RESTAUREES ---")
+        # 5. Nettoyage des categories vides
+        empty_cats = LabTestCategory.objects.annotate(test_count=Count('tests')).filter(test_count=0)
+        empty_cats.delete()
+
+    print("\n--- REPARATION REUSSIE ---")
 
 if __name__ == "__main__":
     smart_repair('REPARATION_FINALE_LABO.json')
