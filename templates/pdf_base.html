@@ -8,9 +8,8 @@
     <style>
         @page {
             size: A4;
-            margin: 10mm 7mm 35mm 7mm; /* Marges réduites sur les cotés pour gagner de la largeur */
+            margin: 15mm 10mm; /* Marges standards propres */
 
-            /* Compact margin */
             @bottom-center {
                 content: "Page " counter(page) " / " counter(pages);
                 font-family: 'Helvetica', 'Arial', sans-serif;
@@ -22,7 +21,6 @@
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 9pt;
-            /* Compact font size */
             line-height: 1.3;
             color: #1f2937;
             margin: 0;
@@ -35,7 +33,6 @@
             width: 100%;
             margin-bottom: 10px;
             padding-bottom: 8px;
-
             border-bottom: 2px solid #2563eb;
         }
 
@@ -60,7 +57,6 @@
         .company-name {
             font-size: 14pt;
             font-weight: 800;
-
             color: #2563eb;
             margin-bottom: 0;
         }
@@ -71,82 +67,21 @@
             line-height: 1.25;
         }
 
-        /* Common Utilities */
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .text-right {
-            text-align: right;
-        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-bold { font-weight: 700; }
+        .uppercase { text-transform: uppercase; }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .text-bold {
-            font-weight: 700;
-        }
-
-        .uppercase {
-            text-transform: uppercase;
-        }
-
-        .text-brand {
-            color: #2563eb;
-        }
-
-        /* Unified Footer */
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 8px 0;
-            border-top: 1px solid #e5e7eb;
-            display: table;
-            width: 100%;
-            background: white;
-        }
-
-        .footer-left {
-            display: table-cell;
-            width: 80%;
-            font-size: 7pt;
-            color: #9ca3af;
-            line-height: 1.2;
-        }
-
-        .footer-right {
-            display: table-cell;
-            width: 20%;
-            text-align: right;
-            vertical-align: bottom;
-        }
-
-        /* Compact Tables */
-        .compact-table th {
-            background-color: #2563eb;
-            color: white;
-            padding: 6px 8px;
-            font-size: 8pt;
-            text-transform: uppercase;
-            text-align: left;
-        }
-
-        .compact-table td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #f3f4f6;
-            font-size: 9pt;
-        }
-
-        /* Content Blocks */
+        /* Document Title */
         .doc-title {
             font-size: 12pt;
             font-weight: 800;
             text-transform: uppercase;
-
             color: #2563eb;
             margin-bottom: 10px;
             letter-spacing: 0.5px;
@@ -211,25 +146,7 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Unified Footer -->
-    <div class="footer">
-        <div class="footer-left">
-            {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
-            NIU: {{ organization.niu|default:"-" }} | RC: {{
-            organization.rc_number|default:organization.rccm_number|default:"-" }}
-            {% elif organization.tax_region == 'canada' %}
-            NEQ: {{ organization.neq|default:"-" }} | GST: {{ organization.gst_number|default:"-" }} | QST: {{
-            organization.qst_number|default:"-" }}
-            {% endif %}
-            <br>
-            {{ organization.name }} - {{ organization.tagline|default:"" }}
-        </div>
-        <div class="footer-right">
-            {% if qr_code_base64 %}
-            <img src="{{ qr_code_base64 }}" style="width: 40px; height: 40px;" alt="QR">
-            {% endif %}
-        </div>
-    </div>
+    <!-- Footer supprimé comme demandé -->
 </body>
 
 </html>
