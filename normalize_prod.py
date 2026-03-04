@@ -1,4 +1,3 @@
-
 import os
 import django
 import json
@@ -9,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saas_procurement.settings')
 django.setup()
 
 from apps.laboratory.models import LabTest, LabTestCategory, LabTestParameter, LabOrder, LabOrderItem, LabResultValue
-from apps.patients.models import Patient
+from apps.accounts.models import Client, Organization
 from django.db import transaction
 from django.db.models import Count
 
@@ -18,7 +17,7 @@ def smart_repair(json_file):
         print(f"Erreur : Le fichier {json_file} est introuvable.")
         return
 
-    print(f"--- RESTAURATION TOTALE (STRUCTURE + RESULTATS) VIA {json_file} ---")
+    print(f"--- RESTAURATION TOTALE V5 VIA {json_file} ---")
     
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -63,7 +62,9 @@ def smart_repair(json_file):
         for entry in data:
             if entry['model'] == 'laboratory.labtestparameter':
                 fields = entry['fields']
-                test_obj = test_map.get(fields.get('test'))
+                # Utilisation de 'test' au lieu de 'lab_test' (vu dans models.py)
+                test_key = fields.get('test')
+                test_obj = test_map.get(test_key)
                 if test_obj:
                     obj, created = LabTestParameter.objects.update_or_create(
                         test=test_obj,
@@ -84,17 +85,19 @@ def smart_repair(json_file):
         for entry in data:
             if entry['model'] == 'laboratory.laborder':
                 fields = entry['fields']
-                obj, created = LabOrder.objects.update_or_create(
-                    order_number=fields['order_number'],
-                    organization_id=fields['organization'],
-                    defaults={
-                        'patient_id': fields['patient'],
-                        'order_date': fields['order_date'],
-                        'status': fields['status'],
-                        'biologist_diagnosis': fields.get('biologist_diagnosis', ''),
-                    }
-                )
-                order_map[entry['pk']] = obj
+                # Verifier si le patient existe, sinon on ne peut pas creer la commande
+                if Client.objects.filter(id=fields['patient']).exists():
+                    obj, created = LabOrder.objects.update_or_create(
+                        order_number=fields['order_number'],
+                        organization_id=fields['organization'],
+                        defaults={
+                            'patient_id': fields['patient'],
+                            'order_date': fields['order_date'],
+                            'status': fields['status'],
+                            'biologist_diagnosis': fields.get('biologist_diagnosis', ''),
+                        }
+                    )
+                    order_map[entry['pk']] = obj
             
             if entry['model'] == 'laboratory.laborderitem':
                 fields = entry['fields']
@@ -133,7 +136,7 @@ def smart_repair(json_file):
                     val_count += 1
         print(f"-> {val_count} valeurs detaillees restaurees.")
 
-    print("\n--- RESTAURATION TERMINEE : TOUT EST REPARE ---")
+    print("\n--- RESTAURATION TERMINEE AVEC SUCCES ---")
 
 if __name__ == "__main__":
     smart_repair('REPARATION_FINALE_LABO.json')
