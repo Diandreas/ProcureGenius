@@ -110,7 +110,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     doctor_name = serializers.SerializerMethodField()
     blood_pressure = serializers.CharField(read_only=True)
-    bmi = serializers.DecimalField(max_digits=4, decimal_places=1, read_only=True)
+    bmi = serializers.DecimalField(max_digits=10, decimal_places=1, read_only=True)
     bmi_category = serializers.CharField(read_only=True)
     duration_minutes = serializers.IntegerField(read_only=True)
     wait_time_minutes = serializers.IntegerField(read_only=True)
@@ -285,6 +285,7 @@ class ConsultationListSerializer(serializers.ModelSerializer):
             'consultation_date',
             'status',
             'status_display',
+            'completed_by',
             'queue_position',
             'chief_complaint',
             'diagnosis',
