@@ -14,35 +14,35 @@ from apps.laboratory.models import LabTest, LabTestParameter
 # Full NFS parameter definitions with adult M/F reference ranges
 NFS_PARAMETERS = [
     # (code, name, group, unit, ord, min_M, max_M, min_F, max_F, crit_low, crit_high)
-    ("WBC",  "Leucocytes totaux",          "Leucocytes",   "10^9/L", 1,  4.00,  10.00,  4.00,  10.00, 2.0,   30.0),
-    ("LYM#", "Lymphocytes (valeur abs.)",  "Leucocytes",   "10^9/L", 2,  1.00,   4.00,  1.00,   4.00, None,  None),
-    ("MID#", "Monocytes/Basophiles (abs)","Leucocytes",   "10^9/L", 3,  0.10,   1.00,  0.10,   1.00, None,  None),
-    ("GRA#", "Granulocytes (valeur abs.)", "Leucocytes",   "10^9/L", 4,  2.00,   7.00,  2.00,   7.00, None,  None),
-    ("LYM%", "Lymphocytes (%)",           "Leucocytes",   "%",      5, 20.0,   40.0,  20.0,   40.0, None,  None),
-    ("MID%", "Monocytes/Baso (%)",        "Leucocytes",   "%",      6,  2.0,   12.0,   2.0,   12.0, None,  None),
-    ("GRA%", "Granulocytes (%)",          "Leucocytes",   "%",      7, 50.0,   70.0,  50.0,   70.0, None,  None),
+    ("WBC",  "WBC",  "Hématologie – Numération formule sanguine", "10^9/L", 1,  4.00,  10.00,  4.00,  10.00, 2.0,   30.0),
+    ("LYM#", "LYM#", "Hématologie – Numération formule sanguine", "10^9/L", 2,  1.00,   5.00,  1.00,   5.00, None,  None),
+    ("MID#", "MID#", "Hématologie – Numération formule sanguine", "10^9/L", 3,  0.10,   1.00,  0.10,   1.00, None,  None),
+    ("GRA#", "GRA#", "Hématologie – Numération formule sanguine", "10^9/L", 4,  2.00,   7.00,  2.00,   7.00, None,  None),
+    ("LYM%", "LYM%", "Hématologie – Numération formule sanguine", "%",      5, 20.0,   50.0,  20.0,   50.0, None,  None),
+    ("MID%", "MID%", "Hématologie – Numération formule sanguine", "%",      6,  3.0,   10.0,   3.0,   10.0, None,  None),
+    ("GRA%", "GRA%", "Hématologie – Numération formule sanguine", "%",      7, 40.0,   70.0,  40.0,   70.0, None,  None),
 
-    ("RBC",  "Globules rouges",           "Erythrocytes", "10^12/L",8,  4.50,   6.00,  4.00,   5.50, 2.0,   7.0),
-    ("HGB",  "Hémoglobine",               "Erythrocytes", "g/L",    9,130.0,  170.0,120.0,  160.0, 70.0, 200.0),
-    ("HCT",  "Hématocrite",               "Erythrocytes", "%",      10, 40.0,  52.0,  36.0,  47.0, None,  None),
-    ("MCV",  "Volume corpusculaire moyen","Erythrocytes", "fL",     11, 80.0, 100.0,  80.0, 100.0, None,  None),
-    ("MCH",  "Hémoglobine corpusculaire", "Erythrocytes", "pg",     12, 26.0,  34.0,  26.0,  34.0, None,  None),
-    ("MCHC", "Concentration CGMH",        "Erythrocytes", "g/L",    13,310.0, 360.0,310.0, 360.0, None,  None),
-    ("RDWc", "Distribution ér. (CV)",     "Erythrocytes", "%",      14, 11.7,  14.4,  11.7,  14.4, None,  None),
-    ("RDWs", "Distribution ér. (SD)",     "Erythrocytes", "fL",     15, 36.4,  46.3,  36.4,  46.3, None,  None),
+    ("RBC",  "RBC",  "Globules rouges", "10^12/L", 8,  4.00,   6.00,  4.00,   6.00, 2.0,   7.0),
+    ("HGB",  "HGB",  "Globules rouges", "g/L",    9, 130.0,  175.0, 130.0,  175.0, 70.0, 200.0),
+    ("HCT",  "HCT",  "Globules rouges", "%",      10, 40.0,  50.0,  40.0,  50.0, None,  None),
+    ("MCV",  "MCV",  "Globules rouges", "fL",     11, 80.0, 100.0,  80.0, 100.0, None,  None),
+    ("MCH",  "MCH",  "Globules rouges", "pg",     12, 26.0,  34.0,  26.0,  34.0, None,  None),
+    ("MCHC", "MCHC", "Globules rouges", "g/L",    13, 310.0, 550.0, 310.0, 550.0, None,  None),
+    ("RDWc", "RDW-CV", "Globules rouges", "%",    14, 11.6,  14.4,  11.6,  14.4, None,  None),
+    ("RDWs", "RDW-SD", "Globules rouges", "fL",   15, 35.1,  43.9,  35.1,  43.9, None,  None),
 
-    ("PLT",  "Plaquettes",                "Plaquettes",   "10^9/L", 16,150.0, 400.0,150.0, 400.0, 50.0, 1000.0),
-    ("MPV",  "Volume plaquettaire moyen", "Plaquettes",   "fL",     17,  7.6,  13.2,   7.6,  13.2, None,  None),
-    ("PDW",  "Distribution plaquettaire","Plaquettes",   "%",      18,  9.0,  17.0,   9.0,  17.0, None,  None),
-    ("PCT",  "Plaquettocrite",            "Plaquettes",   "%",      19,  0.120, 0.212, 0.120, 0.212, None, None),
-    ("PLCC", "Grandes plaquettes (abs.)", "Plaquettes",   "10^9/L", 20, 30.0,  90.0,  30.0,  90.0, None,  None),
-    ("PLCR", "Grandes plaquettes (%)",   "Plaquettes",   "%",      21, 13.0,  43.0,  13.0,  43.0, None,  None),
+    ("PLT",  "PLT",  "Plaquettes", "10^9/L", 16, 150.0, 400.0, 150.0, 400.0, 50.0, 1000.0),
+    ("MPV",  "MPV",  "Plaquettes", "fL",     17,  7.6,  13.2,   7.6,  13.2, None,  None),
+    ("PDW",  "PDW",  "Plaquettes", "%",      18,  9.0,  17.0,   9.0,  17.0, None,  None),
+    ("PCT",  "PCT",  "Plaquettes", "%",      19,  0.120, 0.212, 0.120, 0.212, None, None),
+    ("PLCC", "PLCC", "Plaquettes", "10^9/L", 20, 30.0,  90.0,  30.0,  90.0, None,  None),
+    ("PLCR", "PLCR", "Plaquettes", "%",      21, 13.0,  43.0,  13.0,  43.0, None,  None),
 ]
 
 
 class Command(BaseCommand):
     help = (
-        "Seed NFS (CBC) sub-parameters for LabTest objects matching 'NFS' or 'CBC'. "
+        "Seed or Update NFS (CBC) sub-parameters for LabTest objects matching 'NFS' or 'CBC'. "
         "Use --test-code to target a specific test."
     )
 
@@ -58,7 +58,7 @@ class Command(BaseCommand):
             '--overwrite',
             action='store_true',
             default=False,
-            help="Delete existing parameters before re-creating them.",
+            help="Delete existing parameters before re-creating them (Warning: breaks existing results).",
         )
 
     def handle(self, *args, **options):
@@ -85,10 +85,10 @@ class Command(BaseCommand):
                 deleted_count, _ = test.parameters.all().delete()
                 self.stdout.write(f"  Deleted {deleted_count} existing parameters.")
 
-            created = 0
-            skipped = 0
+            created_count = 0
+            updated_count = 0
             for (code, name, group, unit, order, min_m, max_m, min_f, max_f, crit_low, crit_high) in NFS_PARAMETERS:
-                _, was_created = LabTestParameter.objects.get_or_create(
+                obj, was_created = LabTestParameter.objects.update_or_create(
                     test=test,
                     code=code,
                     defaults={
@@ -108,12 +108,13 @@ class Command(BaseCommand):
                     }
                 )
                 if was_created:
-                    created += 1
+                    created_count += 1
                 else:
-                    skipped += 1
+                    updated_count += 1
 
             self.stdout.write(self.style.SUCCESS(
-                f"  OK: {created} parameter(s) created, {skipped} already existed."
+                f"  OK: {created_count} parameter(s) created, {updated_count} updated."
             ))
 
-        self.stdout.write(self.style.SUCCESS("\nDone. Run with --overwrite to replace existing parameters."))
+        self.stdout.write(self.style.SUCCESS("\nDone. Parameters have been synchronized."))
+
