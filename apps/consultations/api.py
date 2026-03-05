@@ -10,6 +10,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse
 from .services import ConsultationPDFGenerator
+from .permissions import CanModifyConsultation
 import logging
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ _ANTECEDENT_FIELDS = [
 class ConsultationDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a consultation"""
     serializer_class = ConsultationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanModifyConsultation]
 
     def get_queryset(self):
         return Consultation.objects.filter(
@@ -124,6 +125,13 @@ class UpdateVitalSignsView(APIView):
             return Response(
                 {'error': 'Consultation not found'},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check permission if completed
+        if consultation.status == 'completed' and consultation.completed_by != request.user:
+            return Response(
+                {'error': 'Seul la personne qui a terminé cette consultation peut la modifier.'},
+                status=status.HTTP_403_FORBIDDEN
             )
         
         serializer = VitalSignsSerializer(data=request.data)
@@ -337,6 +345,13 @@ class TakeVitalsView(APIView):
             return Response(
                 {'error': 'Consultation not found'},
                 status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check permission if completed
+        if consultation.status == 'completed' and consultation.completed_by != request.user:
+            return Response(
+                {'error': 'Seul la personne qui a terminé cette consultation peut la modifier.'},
+                status=status.HTTP_403_FORBIDDEN
             )
 
         # Validate user role
@@ -561,6 +576,13 @@ class PrescriptionCreateView(APIView):
             except Consultation.DoesNotExist:
                 pass
         
+        # Check permission if consultation is completed
+        if consultation and consultation.status == 'completed' and consultation.completed_by != request.user:
+            return Response(
+                {'error': 'La consultation est terminée. Seul celui qui l\'a terminée peut y ajouter une ordonnance.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         # Calculate valid_until
         valid_until = (timezone.now() + timedelta(days=data.get('valid_days', 30))).date()
         
@@ -625,6 +647,14 @@ class PrescriptionCancelView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # Check permission if consultation is completed
+        consultation = prescription.consultation
+        if consultation and consultation.status == 'completed' and consultation.completed_by != request.user:
+            return Response(
+                {'error': 'La consultation est terminée. Seul celui qui l\'a terminée peut annuler cette ordonnance.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         if prescription.status not in ['pending', 'partially_filled']:
             return Response(
                 {'error': 'Cannot cancel prescription in current status'},
@@ -678,6 +708,13 @@ class CreateLabOrderView(APIView):
                 consultation = Consultation.objects.get(
                     id=consultation_id,
                     organization=request.user.organization
+                )
+
+            # Check permission if consultation is completed
+            if consultation and consultation.status == 'completed' and consultation.completed_by != request.user:
+                return Response(
+                    {'error': 'La consultation est terminée. Seul celui qui l\'a terminée peut y ajouter des examens.'},
+                    status=status.HTTP_403_FORBIDDEN
                 )
 
             # Create lab order
