@@ -464,13 +464,9 @@ class EnterLabResultsView(APIView):
                         item.result_numeric = None
 
                 if 'interpretation' in result:
-                    import re as _re
-                    raw = result['interpretation'] or ''
-                    item.interpretation = _re.sub(r'<[^>]+>', '', raw).replace('&nbsp;', ' ').strip()
+                    item.interpretation = result['interpretation']
                 if 'technician_notes' in result:
-                    import re as _re
-                    raw = result['technician_notes'] or ''
-                    item.technician_notes = _re.sub(r'<[^>]+>', '', raw).replace('&nbsp;', ' ').strip()
+                    item.technician_notes = result['technician_notes']
                 if 'is_abnormal' in result:
                     item.is_abnormal = result['is_abnormal']
                 if 'abnormality_type' in result:
