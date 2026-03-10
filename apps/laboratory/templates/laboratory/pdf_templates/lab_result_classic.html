@@ -346,10 +346,10 @@
                 <td colspan="6" style="padding: 0 10px 10px 20px; border-top: none; background-color: #f9f9f9;">
                     <div style="padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
                         {% if item.interpretation %}
-                        <strong>Interprétation:</strong> {{ item.interpretation }}<br>
+                        <strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>
                         {% endif %}
                         {% if item.technician_notes %}
-                        <em>Note: {{ item.technician_notes }}</em>
+                        <em>Note: {{ item.technician_notes|striptags }}</em>
                         {% endif %}
                     </div>
                 </td>
@@ -390,10 +390,10 @@
                 <td colspan="6" style="padding: 0 10px 10px 20px; border-top: none;">
                     <div style="background-color: #f9f9f9; padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
                         {% if item.interpretation %}
-                        <strong>Interprétation:</strong> {{ item.interpretation }}<br>
+                        <strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>
                         {% endif %}
                         {% if item.technician_notes %}
-                        <em>Note: {{ item.technician_notes }}</em>
+                        <em>Note: {{ item.technician_notes|striptags }}</em>
                         {% endif %}
                     </div>
                 </td>
