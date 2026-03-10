@@ -33,6 +33,7 @@ import {
     Cancel as InactiveIcon,
     PictureAsPdf as PdfIcon,
     Inventory2 as InventoryIcon,
+    Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -55,6 +56,7 @@ const LabTestCatalog = () => {
     // Form modal state
     const [formOpen, setFormOpen] = useState(false);
     const [editingTest, setEditingTest] = useState(null);
+    const [openOnParamsTab, setOpenOnParamsTab] = useState(false);
 
     // Delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -96,8 +98,26 @@ const LabTestCatalog = () => {
         setFormOpen(true);
     };
 
-    const handleEditTest = (test) => {
-        setEditingTest(test);
+    const handleEditTest = async (test) => {
+        setOpenOnParamsTab(false);
+        try {
+            const fullTest = await laboratoryAPI.getTest(test.id);
+            setEditingTest(fullTest);
+        } catch {
+            setEditingTest(test);
+        }
+        setFormOpen(true);
+    };
+
+    const handleConfigParams = async (test) => {
+        // Open modal directly on the "Paramètres" tab
+        setOpenOnParamsTab(true);
+        try {
+            const fullTest = await laboratoryAPI.getTest(test.id);
+            setEditingTest(fullTest);
+        } catch {
+            setEditingTest(test);
+        }
         setFormOpen(true);
     };
 
@@ -292,6 +312,9 @@ const LabTestCatalog = () => {
                                         )}
                                     </TableCell>
                                     <TableCell align="right">
+                                        <IconButton size="small" onClick={() => handleConfigParams(test)} title="Configurer les paramètres" color="primary">
+                                            <SettingsIcon fontSize="small" />
+                                        </IconButton>
                                         {isAdmin && (
                                             <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">
                                                 <EditIcon fontSize="small" />
@@ -313,9 +336,10 @@ const LabTestCatalog = () => {
             {/* Form Modal */}
             <LabTestFormModal
                 open={formOpen}
-                onClose={() => setFormOpen(false)}
+                onClose={() => { setFormOpen(false); setOpenOnParamsTab(false); }}
                 test={editingTest}
                 onSaved={handleFormSaved}
+                initialTab={openOnParamsTab ? 'params' : 'info'}
             />
 
             {/* Delete Confirmation */}

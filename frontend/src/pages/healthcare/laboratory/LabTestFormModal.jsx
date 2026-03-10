@@ -44,7 +44,7 @@ const EMPTY_PARAMETER = {
     critical_low: '', critical_high: '',
 };
 
-const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
+const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
     const { isAdmin } = useCurrentUser();
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
     const [showNewCategory, setShowNewCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [creatingCategory, setCreatingCategory] = useState(false);
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState(initialTab === 'params' ? 1 : 0);
     const [parameters, setParameters] = useState([]);
     const [products, setProducts] = useState([]);
     const [productSearch, setProductSearch] = useState('');
@@ -67,13 +67,14 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
         estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
         use_large_layout: false,
         linked_product: '',
+        result_template: '',
     });
 
     useEffect(() => {
         if (open) {
             fetchCategories();
             fetchProducts();
-            setActiveTab(0);
+            setActiveTab(initialTab === 'params' ? 1 : 0);
             if (test) {
                 setFormData({
                     test_code: test.test_code || '', name: test.name || '', short_name: test.short_name || '',
@@ -92,6 +93,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     requires_approval: test.requires_approval || false,
                     use_large_layout: test.use_large_layout || false,
                     linked_product: test.linked_product || '',
+                    result_template: test.result_template || '',
                 });
                 if (test.parameters && test.parameters.length > 0) {
                     setParameters(test.parameters.map(p => ({
@@ -477,6 +479,24 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                         <Alert severity="info" sx={{ mb: 2 }}>
                             Parametres structures pour tests complexes (ex: NFS, Bilan lipidique...). Laissez vide pour un test simple avec une seule valeur.
                         </Alert>
+
+                        {/* Template de résultat pour tests simples */}
+                        <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>Template de résultat (tests simples)</Typography>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                size="small"
+                                placeholder="Ex: Positif / Negatif&#10;Sensible / Résistant&#10;Présence / Absence"
+                                value={formData.result_template || ''}
+                                onChange={e => setFormData(prev => ({ ...prev, result_template: e.target.value }))}
+                                helperText="Guide de saisie affiché au technicien lors de la saisie du résultat (laisser vide si test structuré avec paramètres ci-dessous)"
+                            />
+                        </Box>
+
+                        <Divider sx={{ mb: 2 }} />
+
                         <Box display="flex" justifyContent="flex-end" mb={1}>
                             <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={addParameter}>Ajouter un parametre</Button>
                         </Box>
