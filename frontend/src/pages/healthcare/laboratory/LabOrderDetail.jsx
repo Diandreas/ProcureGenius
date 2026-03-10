@@ -67,6 +67,8 @@ import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import { invoicesAPI } from '../../../services/api';
+import { buildLabResultsGroup, enqueueGroup } from '../../../db/offlineDb';
+import { isOfflineError } from '../../../services/syncEngine';
 import PrintModal from '../../../components/PrintModal';
 import LabTestFormModal from './LabTestFormModal';
 import RichTextEditor from '../../../components/RichTextEditor';
@@ -509,30 +511,38 @@ const LabOrderDetail = () => {
     };
 
     const saveResults = async () => {
-        try {
-            const itemsToUpdate = Object.keys(results).map(itemId => {
-                const entry = { item_id: itemId, ...results[itemId] };
-                // Include structured parameter values if this is a compound test
-                const pvMap = parameterValues[itemId];
-                if (pvMap && Object.keys(pvMap).length > 0) {
-                    entry.parameter_values = Object.entries(pvMap)
-                        .filter(([, val]) => val.result_numeric !== '' || val.result_text)
-                        .map(([paramId, val]) => ({
-                            parameter_id: paramId,
-                            result_numeric: val.result_numeric !== '' ? val.result_numeric : null,
-                            result_text: val.result_text || ''
-                        }));
-                }
-                return entry;
-            });
+        const itemsToUpdate = Object.keys(results).map(itemId => {
+            const entry = { item_id: itemId, ...results[itemId] };
+            // Include structured parameter values if this is a compound test
+            const pvMap = parameterValues[itemId];
+            if (pvMap && Object.keys(pvMap).length > 0) {
+                entry.parameter_values = Object.entries(pvMap)
+                    .filter(([, val]) => val.result_numeric !== '' || val.result_text)
+                    .map(([paramId, val]) => ({
+                        parameter_id: paramId,
+                        result_numeric: val.result_numeric !== '' ? val.result_numeric : null,
+                        result_text: val.result_text || ''
+                    }));
+            }
+            return entry;
+        });
 
-            await laboratoryAPI.enterResults(id, {
-                results: itemsToUpdate,
-                biologist_diagnosis: biologistDiagnosis
-            });
+        const resultsData = {
+            results: itemsToUpdate,
+            biologist_diagnosis: biologistDiagnosis
+        };
+
+        try {
+            await laboratoryAPI.enterResults(id, resultsData);
             enqueueSnackbar('Résultats enregistrés', { variant: 'success' });
             fetchOrder(); // Refresh to update status/flags
         } catch (error) {
+            if (isOfflineError(error)) {
+                const group = buildLabResultsGroup({ orderId: id, resultsData });
+                await enqueueGroup(group);
+                enqueueSnackbar('Résultats sauvegardés hors ligne. Synchronisation automatique dès reconnexion.', { variant: 'info' });
+                return;
+            }
             console.error('Error saving results:', error);
             enqueueSnackbar('Erreur de sauvegarde', { variant: 'error' });
         }

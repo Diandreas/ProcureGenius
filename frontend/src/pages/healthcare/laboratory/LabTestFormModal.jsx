@@ -97,8 +97,8 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     setParameters(test.parameters.map(p => ({
                         id: p.id, _key: p.id,
                         code: p.code || '', name: p.name || '', group_name: p.group_name || '',
-                        unit: p.unit || '', 
-                        base_unit: p.base_unit || '', conversion_factor: p.conversion_factor || 1.0,
+                        unit: p.unit || '',
+                        base_unit: p.base_unit || '', conversion_factor: p.conversion_factor != null ? parseFloat(p.conversion_factor) : 1.0,
                         value_type: p.value_type || 'numeric',
                         decimal_places: p.decimal_places || 2,
                         is_required: p.is_required !== undefined ? p.is_required : true,
@@ -212,7 +212,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
                     code: p.code, name: p.name, group_name: p.group_name || '',
                     unit: p.unit || '', 
                     base_unit: p.base_unit || '', 
-                    conversion_factor: parseFloat(p.conversion_factor) || 1.0,
+                    conversion_factor: p.conversion_factor !== '' && p.conversion_factor != null ? parseFloat(p.conversion_factor) : 1.0,
                     value_type: p.value_type || 'numeric',
                     decimal_places: parseInt(p.decimal_places) || 2,
                     is_required: p.is_required !== false, display_order: idx,
@@ -232,11 +232,27 @@ const LabTestFormModal = ({ open, onClose, test, onSaved }) => {
             let errorMsg = "Erreur lors de l'enregistrement";
             if (error?.response?.data) {
                 const data = error.response.data;
-                errorMsg = typeof data === 'object'
-                    ? Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v)?v.join(', '):v}`).join(' | ')
-                    : String(data);
+                if (typeof data === 'object') {
+                    const parts = [];
+                    // Handle parameter-level errors
+                    if (data.parameter_code) parts.push(`Paramètre '${data.parameter_code}'`);
+                    if (data.error && typeof data.error === 'object') {
+                        Object.entries(data.error).forEach(([k, v]) => {
+                            parts.push(`${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
+                        });
+                    } else {
+                        Object.entries(data).forEach(([k, v]) => {
+                            if (k !== 'parameter_code') {
+                                parts.push(`${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`);
+                            }
+                        });
+                    }
+                    errorMsg = parts.join(' | ') || errorMsg;
+                } else {
+                    errorMsg = String(data);
+                }
             }
-            enqueueSnackbar(errorMsg, { variant: 'error', autoHideDuration: 6000 });
+            enqueueSnackbar(errorMsg, { variant: 'error', autoHideDuration: 8000 });
         } finally { setLoading(false); }
     };
 

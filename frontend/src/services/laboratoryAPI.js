@@ -219,7 +219,33 @@ const laboratoryAPI = {
     quickUpdateUnit: async (data) => {
         const response = await api.post('/healthcare/laboratory/quick-update-unit/', data);
         return response.data;
-    }
+    },
+
+    // --- Bilans (Lab Test Panels) ---
+
+    getPanels: async (params = {}) => {
+        const response = await api.get('/healthcare/laboratory/panels/', { params });
+        return response.data;
+    },
+
+    getPanel: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/panels/${id}/`);
+        return response.data;
+    },
+
+    createPanel: async (data) => {
+        const response = await api.post('/healthcare/laboratory/panels/', data);
+        return response.data;
+    },
+
+    updatePanel: async (id, data) => {
+        const response = await api.patch(`/healthcare/laboratory/panels/${id}/`, data);
+        return response.data;
+    },
+
+    deletePanel: async (id) => {
+        await api.delete(`/healthcare/laboratory/panels/${id}/`);
+    },
 };
 
 export default laboratoryAPI;

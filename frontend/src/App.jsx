@@ -87,6 +87,7 @@ import LabOrderDetail from './pages/healthcare/laboratory/LabOrderDetail';
 import LabOrderForm from './pages/healthcare/laboratory/LabOrderForm';
 import LabOrderDispatch from './pages/healthcare/laboratory/LabOrderDispatch';
 import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
+import LabPanelCatalog from './pages/healthcare/laboratory/LabPanelCatalog';
 import LabQueueDashboard from './pages/healthcare/laboratory/LabQueueDashboard';
 import OpenedReagents from './pages/healthcare/laboratory/OpenedReagents';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
@@ -824,6 +825,7 @@ function App() {
                               <Route path="/healthcare/laboratory/new" element={<ModuleRoute module="laboratory"><LabOrderForm /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id/dispatch" element={<ModuleRoute module="laboratory"><LabOrderDispatch /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/panels" element={<ModuleRoute module="laboratory"><LabPanelCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 

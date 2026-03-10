@@ -21,12 +21,37 @@ export function usePWA() {
     };
 
     // Écouter les changements de connexion
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Déclencher la synchronisation des données en attente
+      import('../services/syncEngine').then(({ syncEngine, startPeriodicSync }) => {
+        syncEngine.sync();
+        startPeriodicSync();
+      });
+    };
     const handleOffline = () => setIsOffline(true);
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Écouter les messages du Service Worker (ex: TRIGGER_SYNC depuis background sync)
+    const handleSWMessage = (event) => {
+      if (event.data?.type === 'TRIGGER_SYNC') {
+        import('../services/syncEngine').then(({ syncEngine }) => syncEngine.sync());
+      }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    }
+
+    // Démarrer la sync périodique si déjà en ligne
+    if (navigator.onLine) {
+      import('../services/syncEngine').then(({ syncEngine, startPeriodicSync }) => {
+        syncEngine.sync();
+        startPeriodicSync();
+      });
+    }
 
     // Enregistrer le Service Worker
     if ('serviceWorker' in navigator) {
@@ -53,6 +78,10 @@ export function usePWA() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      }
+      import('../services/syncEngine').then(({ stopPeriodicSync }) => stopPeriodicSync());
     };
   }, []);
 

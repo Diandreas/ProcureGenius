@@ -268,7 +268,12 @@ class LabTest(models.Model):
     @property
     def has_parameters(self):
         """True if this test has structured parameters defined (e.g. NFS sub-values)."""
-        return self.parameters.filter(is_required=True).exists()
+        return self.parameters.filter(is_required=True, is_active=True).exists()
+
+    @property
+    def active_parameters(self):
+        """Returns only active parameters (excludes soft-deleted ones)."""
+        return self.parameters.filter(is_active=True)
 
     def save(self, *args, **kwargs):
         # Auto-create linked product if missing (Consumable tracking)
@@ -631,7 +636,24 @@ class LabOrderItem(models.Model):
         related_name='order_items',
         verbose_name=_("Test")
     )
-    
+    # Bilan (panel) link — set when this item was added as part of a bundle
+    panel = models.ForeignKey(
+        'LabTestPanel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='order_items',
+        verbose_name=_("Bilan")
+    )
+    # Price paid for the whole panel (stored only on the first item of the panel)
+    panel_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Prix du bilan")
+    )
+
     # Result fields
     result_value = models.TextField(
         blank=True,
@@ -860,6 +882,7 @@ class LabTestParameter(models.Model):
     )
     decimal_places = models.IntegerField(default=2, verbose_name=_("Décimales"))
     is_required = models.BooleanField(default=True, verbose_name=_("Obligatoire"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
 
     # Adult reference ranges (patient age >= child_age_max_years)
     adult_ref_min_male = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name=_("Réf min H (adulte)"))
@@ -1003,3 +1026,53 @@ class LabResultValue(models.Model):
 
         self.flag = 'N'
         return 'N'
+
+
+class LabTestPanel(models.Model):
+    """
+    A configurable bundle (bilan) grouping multiple lab tests under a single forfait price.
+    Example: "Bilan de Santé Complet" = NFS + Bilan Lipidique + Ionogramme → 15 000 XAF forfait.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='lab_panels',
+        verbose_name=_("Organisation")
+    )
+    code = models.CharField(max_length=50, verbose_name=_("Code"))
+    name = models.CharField(max_length=200, verbose_name=_("Nom"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix forfaitaire")
+    )
+    discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Réduction")
+    )
+    tests = models.ManyToManyField(
+        LabTest,
+        related_name='panels',
+        blank=True,
+        verbose_name=_("Examens inclus")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Bilan")
+        verbose_name_plural = _("Bilans")
+        ordering = ['name']
+        unique_together = [('organization', 'code')]
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    @property
+    def net_price(self):
+        return self.price - self.discount

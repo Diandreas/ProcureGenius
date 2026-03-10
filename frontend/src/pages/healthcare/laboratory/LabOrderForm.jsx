@@ -19,7 +19,9 @@ import {
     Divider,
     Stack,
     Chip,
-    InputAdornment
+    InputAdornment,
+    Tabs,
+    Tab,
 } from '@mui/material';
 import {
     Search as SearchIcon
@@ -36,6 +38,8 @@ import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
+import { buildLabOrderGroup, enqueueGroup } from '../../../db/offlineDb';
+import { isOfflineError } from '../../../services/syncEngine';
 
 const LabOrderForm = () => {
     const { t } = useTranslation();
@@ -46,10 +50,12 @@ const LabOrderForm = () => {
     const [loading, setLoading] = useState(false);
     const [patients, setPatients] = useState([]);
     const [tests, setTests] = useState([]);
+    const [panels, setPanels] = useState([]);
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
+    const [selectionTab, setSelectionTab] = useState(0); // 0=examens, 1=bilans
 
     // Import needs to be added at the top, but I can't do it in this chunk easily if I stick to single contiguous block rules strictly without seeing the imports.
     // I will add the handleClientCreated function here though.
@@ -62,9 +68,10 @@ const LabOrderForm = () => {
     const [formData, setFormData] = useState({
         patient: null,
         priority: 'routine',
-        tests: [], // Array of test IDs
+        tests: [], // Array of test objects
+        panels: [], // Array of panel objects (bilans)
         clinical_notes: '',
-        payment_method: 'cash' // Default to cash
+        payment_method: 'cash'
     });
 
     useEffect(() => {
@@ -91,14 +98,16 @@ const LabOrderForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, testData, catData] = await Promise.all([
+            const [patData, testData, catData, panelData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 1000 }),
                 laboratoryAPI.getTests({ page_size: 1000 }),
-                laboratoryAPI.getCategories()
+                laboratoryAPI.getCategories(),
+                laboratoryAPI.getPanels({ active_only: true }),
             ]);
             setPatients(patData.results || patData || []);
             setTests(testData.results || testData || []);
             setCategories(catData.results || catData || []);
+            setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -140,14 +149,25 @@ const LabOrderForm = () => {
         }));
     };
 
+    const handlePanelToggle = (panel) => {
+        const isSelected = formData.panels.some(p => p.id === panel.id);
+        if (isSelected) {
+            setFormData(prev => ({ ...prev, panels: prev.panels.filter(p => p.id !== panel.id) }));
+        } else {
+            setFormData(prev => ({ ...prev, panels: [...prev.panels, panel] }));
+        }
+    };
+
     const calculateTotal = () => {
-        // Includes the 500 XAF lab kit that is automatically added on backend
         const testsTotal = formData.tests.reduce((sum, test) => {
             const price = parseFloat(test.price) || 0;
             const discount = parseFloat(test.discount) || 0;
             return sum + (price - discount);
         }, 0);
-        return testsTotal + 500; // Always add 500 for the kit
+        const panelsTotal = formData.panels.reduce((sum, panel) => {
+            return sum + (parseFloat(panel.net_price || panel.price) || 0);
+        }, 0);
+        return testsTotal + panelsTotal + 500; // 500 XAF kit
     };
 
     const handleSubmit = async () => {
@@ -155,40 +175,45 @@ const LabOrderForm = () => {
             enqueueSnackbar('Veuillez sélectionner un patient', { variant: 'warning' });
             return;
         }
-        if (formData.tests.length === 0) {
-            enqueueSnackbar('Veuillez sélectionner au moins un test', { variant: 'warning' });
+        if (formData.tests.length === 0 && formData.panels.length === 0) {
+            enqueueSnackbar('Veuillez sélectionner au moins un examen ou un bilan', { variant: 'warning' });
             return;
         }
 
         setLoading(true);
         try {
-            // Validate that all required fields have proper values
-            const testIds = formData.tests.map(test => test.id).filter(id => id); // Filter out any undefined/null IDs
-
-            if (testIds.length === 0) {
-                enqueueSnackbar('Aucun ID de test valide trouvé', { variant: 'error' });
-                setLoading(false);
-                return;
-            }
-
             const payload = {
                 patient_id: formData.patient.id,
-                tests_data: formData.tests.map(test => ({
-                    test_id: test.id,
-                    discount: parseFloat(test.discount) || 0
-                })),
                 priority: formData.priority,
                 clinical_notes: formData.clinical_notes || '',
-                payment_method: formData.payment_method || 'cash'
+                payment_method: formData.payment_method || 'cash',
             };
 
-            console.log('Sending lab order payload:', payload); // Debug log
+            if (formData.tests.length > 0) {
+                payload.tests_data = formData.tests.map(test => ({
+                    test_id: test.id,
+                    discount: parseFloat(test.discount) || 0,
+                }));
+            }
+
+            if (formData.panels.length > 0) {
+                payload.panels_data = formData.panels.map(panel => ({
+                    panel_id: panel.id,
+                }));
+            }
 
             const newOrder = await laboratoryAPI.createOrder(payload);
             enqueueSnackbar('Ordre de laboratoire créé avec succès', { variant: 'success' });
             navigate(`/healthcare/laboratory/${newOrder.id}/dispatch`);
 
         } catch (error) {
+            if (isOfflineError(error)) {
+                const group = buildLabOrderGroup({ payload });
+                await enqueueGroup(group);
+                enqueueSnackbar('Ordre enregistré hors ligne. Synchronisation automatique dès reconnexion.', { variant: 'info' });
+                navigate('/healthcare/laboratory');
+                return;
+            }
             console.error('Error creating lab order:', error);
             const errorMessage = error?.response?.data?.detail || error?.response?.data?.message ||
                 error?.response?.data?.error || 'Erreur lors de la création de l\'ordre de laboratoire';
@@ -294,8 +319,12 @@ const LabOrderForm = () => {
 
                             <Typography variant="h6" gutterBottom>Résumé</Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography>Tests sélectionnés:</Typography>
+                                <Typography>Examens sélectionnés:</Typography>
                                 <Typography fontWeight="bold">{formData.tests.length}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography>Bilans sélectionnés:</Typography>
+                                <Typography fontWeight="bold">{formData.panels.length}</Typography>
                             </Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                 <Typography variant="body2">Kit de prélèvement:</Typography>
@@ -329,129 +358,168 @@ const LabOrderForm = () => {
 
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Tests Disponibles</Typography>
+                            <Tabs value={selectionTab} onChange={(_, v) => setSelectionTab(v)} sx={{ mb: 2 }}>
+                                <Tab label={`Examens (${formData.tests.length} sélectionnés)`} />
+                                <Tab label={`Bilans (${formData.panels.length} sélectionnés)`} />
+                            </Tabs>
 
-                            {/* Filters */}
-                            <Grid container spacing={2} sx={{ mb: 2 }}>
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        placeholder="Rechercher un test..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <SearchIcon />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
+                            {/* Tab 0: Examens individuels */}
+                            {selectionTab === 0 && (<>
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Rechercher un test..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start"><SearchIcon /></InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            select
+                                            value={categoryFilter}
+                                            onChange={(e) => setCategoryFilter(e.target.value)}
+                                            label="Catégorie"
+                                        >
+                                            <MenuItem value="">Toutes les catégories</MenuItem>
+                                            {categories.map((cat) => (
+                                                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        select
-                                        value={categoryFilter}
-                                        onChange={(e) => setCategoryFilter(e.target.value)}
-                                        label="Catégorie"
-                                    >
-                                        <MenuItem value="">Toutes les catégories</MenuItem>
-                                        {categories.map((cat) => (
-                                            <MenuItem key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                            </Grid>
 
-                            <TableContainer sx={{ maxHeight: 400 }}>
-                                <Table stickyHeader size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell>Nom du Test</TableCell>
-                                            <TableCell>Catégorie</TableCell>
-                                            <TableCell>Prix</TableCell>
-                                            <TableCell>Réduction</TableCell>
-                                            <TableCell align="center">Sélection</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {filteredTests.map((test) => {
-                                            const isSelected = formData.tests.some(t => t.id === test.id);
-                                            return (
-                                                <TableRow
-                                                    key={test.id}
-                                                    hover
-                                                    onClick={() => handleTestToggle(test)}
-                                                    sx={{
-                                                        cursor: 'pointer',
-                                                        backgroundColor: isSelected ? 'action.selected' : 'inherit'
-                                                    }}
-                                                >
-                                                    <TableCell>
-                                                        <Typography fontWeight={isSelected ? 'bold' : 'normal'}>
-                                                            {test.name}
-                                                        </Typography>
-                                                        {test.test_code && (
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                {test.test_code}
-                                                            </Typography>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            label={test.category_name || 'N/A'}
-                                                            size="small"
-                                                            variant="outlined"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>{test.price || 0} XAF</TableCell>
-                                                    <TableCell onClick={(e) => e.stopPropagation()}>
-                                                        {isSelected ? (
-                                                            <TextField
-                                                                size="small"
-                                                                type="number"
-                                                                value={formData.tests.find(t => t.id === test.id).discount || 0}
-                                                                onChange={(e) => handleDiscountChange(test.id, e.target.value)}
-                                                                sx={{ width: 100 }}
-                                                                InputProps={{
-                                                                    endAdornment: <InputAdornment position="end">XAF</InputAdornment>,
-                                                                }}
-                                                            />
-                                                        ) : (
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {test.discount || 0} XAF
-                                                            </Typography>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell align="center">
-                                                        {isSelected ? (
-                                                            <Chip label="✓" color="primary" size="small" />
-                                                        ) : (
-                                                            <Chip label="+" variant="outlined" size="small" />
-                                                        )}
+                                <TableContainer sx={{ maxHeight: 400 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Nom du Test</TableCell>
+                                                <TableCell>Catégorie</TableCell>
+                                                <TableCell>Prix</TableCell>
+                                                <TableCell>Réduction</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredTests.map((test) => {
+                                                const isSelected = formData.tests.some(t => t.id === test.id);
+                                                return (
+                                                    <TableRow
+                                                        key={test.id}
+                                                        hover
+                                                        onClick={() => handleTestToggle(test)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{test.name}</Typography>
+                                                            {test.test_code && (
+                                                                <Typography variant="caption" color="text.secondary">{test.test_code}</Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Chip label={test.category_name || 'N/A'} size="small" variant="outlined" />
+                                                        </TableCell>
+                                                        <TableCell>{test.price || 0} XAF</TableCell>
+                                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                                            {isSelected ? (
+                                                                <TextField
+                                                                    size="small"
+                                                                    type="number"
+                                                                    value={formData.tests.find(t => t.id === test.id).discount || 0}
+                                                                    onChange={(e) => handleDiscountChange(test.id, e.target.value)}
+                                                                    sx={{ width: 100 }}
+                                                                    InputProps={{ endAdornment: <InputAdornment position="end">XAF</InputAdornment> }}
+                                                                />
+                                                            ) : (
+                                                                <Typography variant="body2" color="text.secondary">{test.discount || 0} XAF</Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                {filteredTests.length === 0 && (
+                                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                                        <Typography color="text.secondary">
+                                            {tests.length === 0
+                                                ? "Aucun test disponible."
+                                                : "Aucun test ne correspond aux critères."}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </>)}
+
+                            {/* Tab 1: Bilans */}
+                            {selectionTab === 1 && (<>
+                                <TableContainer sx={{ maxHeight: 400 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Bilan</TableCell>
+                                                <TableCell>Examens inclus</TableCell>
+                                                <TableCell align="right">Prix forfaitaire</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {panels.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                                        Aucun bilan configuré. Créez des bilans dans le Catalogue Bilans.
                                                     </TableCell>
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-
-                            {filteredTests.length === 0 && (
-                                <Box sx={{ textAlign: 'center', py: 4 }}>
-                                    <Typography color="text.secondary">
-                                        {tests.length === 0
-                                            ? "Aucun test disponible. Veuillez d'abord créer des tests dans le catalogue."
-                                            : "Aucun test ne correspond aux critères de recherche."
-                                        }
-                                    </Typography>
-                                </Box>
-                            )}
+                                            ) : panels.map((panel) => {
+                                                const isSelected = formData.panels.some(p => p.id === panel.id);
+                                                const netPrice = parseFloat(panel.net_price || panel.price) || 0;
+                                                return (
+                                                    <TableRow
+                                                        key={panel.id}
+                                                        hover
+                                                        onClick={() => handlePanelToggle(panel)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{panel.name}</Typography>
+                                                            <Typography variant="caption" color="text.secondary">{panel.code}</Typography>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                                                {(panel.tests_detail || []).slice(0, 3).map(t => (
+                                                                    <Chip key={t.id} label={t.test_code} size="small" variant="outlined" />
+                                                                ))}
+                                                                {(panel.tests_detail || []).length > 3 && (
+                                                                    <Chip label={`+${panel.tests_detail.length - 3}`} size="small" />
+                                                                )}
+                                                            </Box>
+                                                        </TableCell>
+                                                        <TableCell align="right">
+                                                            <Typography fontWeight={600} color="primary">
+                                                                {netPrice.toLocaleString()} XAF
+                                                            </Typography>
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </>)}
                         </CardContent>
                     </Card>
                 </Grid>

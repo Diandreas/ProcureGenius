@@ -50,4 +50,8 @@ urlpatterns = [
 
     # Quick unit update
     path('quick-update-unit/', api.QuickUpdateConfigView.as_view(), name='quick-update-unit'),
+
+    # Bilans (Lab Test Panels)
+    path('panels/', api.LabTestPanelListCreateView.as_view(), name='panel-list'),
+    path('panels/<uuid:pk>/', api.LabTestPanelDetailView.as_view(), name='panel-detail'),
 ]

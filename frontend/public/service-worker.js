@@ -219,7 +219,17 @@ self.addEventListener('sync', (event) => {
 
 async function syncData() {
   if (DEBUG) console.log('Synchronisation des données...');
+  // Notifier tous les onglets ouverts de déclencher la sync
+  const allClients = await self.clients.matchAll({ type: 'window' });
+  allClients.forEach(client => client.postMessage({ type: 'TRIGGER_SYNC' }));
 }
+
+// Réception des messages depuis le thread principal
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 // Fonction pour gérer le partage de fichiers
 async function handleShare(request) {

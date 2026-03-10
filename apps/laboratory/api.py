@@ -15,7 +15,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -26,6 +26,7 @@ from .serializers import (
     LabOrderCreateSerializer,
     EnterResultsSerializer,
     LabTestParameterSerializer,
+    LabTestPanelSerializer,
 )
 
 
@@ -217,7 +218,7 @@ class LabOrderCreateView(APIView):
             is_active=True
         )
         
-        if not tests.exists():
+        if not tests.exists() and not data.get('panels_data'):
             return Response(
                 {'error': 'No valid tests found'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -237,7 +238,38 @@ class LabOrderCreateView(APIView):
         # Create order items for each test
         total_order_price = 0
         total_order_discount = 0
-        
+
+        # Handle panels_data (bilans with forfait price)
+        if data.get('panels_data'):
+            for panel_data in data['panels_data']:
+                try:
+                    panel = LabTestPanel.objects.get(
+                        id=panel_data['panel_id'],
+                        organization=request.user.organization,
+                        is_active=True,
+                    )
+                    panel_tests = list(panel.tests.filter(is_active=True))
+                    panel_net_price = panel.price - (panel.discount or Decimal('0'))
+                    panel_discount_override = panel_data.get('discount')
+                    if panel_discount_override is not None:
+                        panel_net_price = panel.price - Decimal(str(panel_discount_override))
+
+                    for i, test in enumerate(panel_tests):
+                        # First item carries the panel_price; others have price=0
+                        LabOrderItem.objects.create(
+                            lab_order=order,
+                            lab_test=test,
+                            price=Decimal('0'),
+                            discount=Decimal('0'),
+                            panel=panel,
+                            panel_price=panel_net_price if i == 0 else None,
+                        )
+
+                    total_order_price += panel_net_price
+                    # panel discount already factored into net price
+                except (LabTestPanel.DoesNotExist, KeyError):
+                    continue
+
         # Handle tests_data (new format with individual discounts)
         if data.get('tests_data'):
             for item_data in data['tests_data']:
@@ -247,7 +279,7 @@ class LabOrderCreateView(APIView):
                         organization=request.user.organization
                     )
                     item_discount = Decimal(str(item_data.get('discount', test.discount or 0)))
-                    
+
                     LabOrderItem.objects.create(
                         lab_order=order,
                         lab_test=test,
@@ -258,13 +290,13 @@ class LabOrderCreateView(APIView):
                     total_order_discount += item_discount
                 except (LabTest.DoesNotExist, KeyError):
                     continue
-        
+
         # Handle legacy test_ids (simple list)
-        elif data.get('test_ids'):
+        elif data.get('test_ids') and not data.get('panels_data'):
             for test in tests:
                 item_price = test.price
                 item_discount = test.discount or 0
-                
+
                 LabOrderItem.objects.create(
                     lab_order=order,
                     lab_test=test,
@@ -815,7 +847,8 @@ class LabTestParameterDetailView(generics.RetrieveUpdateDestroyAPIView):
 class LabTestParameterBulkSaveView(APIView):
     """
     POST /healthcare/laboratory/tests/<test_id>/parameters/bulk-save/
-    Replaces all parameters for a test with the provided list.
+    Updates parameters for a test using UPDATE/CREATE/soft-delete to preserve result history.
+    Parameters with existing results are never deleted — they are marked is_active=False instead.
     """
     permission_classes = [IsAuthenticated]
 
@@ -827,21 +860,45 @@ class LabTestParameterBulkSaveView(APIView):
 
         params_data = request.data.get('parameters', [])
 
-        # Delete all existing parameters
-        test.parameters.all().delete()
+        # Build a map of submitted codes → data
+        submitted_codes = {p['code']: p for p in params_data if p.get('code')}
 
-        created = []
-        for i, p in enumerate(params_data):
-            p['test'] = str(test.id)
-            p['display_order'] = i
-            serializer = LabTestParameterSerializer(data=p)
-            if serializer.is_valid():
-                param = serializer.save(test=test)
-                created.append(LabTestParameterSerializer(param).data)
+        # Build a map of existing parameters by code
+        existing_params = {p.code: p for p in test.parameters.filter(is_active=True)}
+
+        # Determine codes to remove (in existing but not in submitted)
+        codes_to_remove = set(existing_params.keys()) - set(submitted_codes.keys())
+
+        # Soft-delete or hard-delete parameters no longer in the list
+        for code in codes_to_remove:
+            param = existing_params[code]
+            if param.results.exists():
+                # Has historical results: soft-delete only
+                param.is_active = False
+                param.save(update_fields=['is_active'])
             else:
-                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                param.delete()
 
-        return Response({'parameters': created, 'count': len(created)}, status=status.HTTP_200_OK)
+        saved = []
+        for i, p in enumerate(params_data):
+            code = p.get('code', '')
+            p['display_order'] = i
+
+            if code in existing_params:
+                # UPDATE existing parameter
+                instance = existing_params[code]
+                serializer = LabTestParameterSerializer(instance, data=p, partial=True)
+            else:
+                # CREATE new parameter
+                serializer = LabTestParameterSerializer(data=p)
+
+            if serializer.is_valid():
+                param = serializer.save(test=test, is_active=True)
+                saved.append(LabTestParameterSerializer(param).data)
+            else:
+                return Response({'error': serializer.errors, 'parameter_code': code}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'parameters': saved, 'count': len(saved)}, status=status.HTTP_200_OK)
 
 
 class GenerateTestCodeView(APIView):
@@ -928,3 +985,45 @@ class QuickUpdateConfigView(APIView):
                 return Response({'error': 'Test not found'}, status=404)
 
         return Response({'error': 'Missing test_id or parameter_id'}, status=400)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bilans (Lab Test Panels)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class LabTestPanelListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/laboratory/panels/       — List all bilans for the organization
+    POST /healthcare/laboratory/panels/       — Create a new bilan
+    """
+    serializer_class = LabTestPanelSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'code', 'description']
+
+    def get_queryset(self):
+        qs = LabTestPanel.objects.filter(
+            organization=self.request.user.organization
+        ).prefetch_related('tests')
+        active_only = self.request.query_params.get('active_only', 'false').lower() == 'true'
+        if active_only:
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization)
+
+
+class LabTestPanelDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /healthcare/laboratory/panels/<uuid>/   — Get bilan details
+    PATCH  /healthcare/laboratory/panels/<uuid>/   — Update bilan
+    DELETE /healthcare/laboratory/panels/<uuid>/   — Delete bilan
+    """
+    serializer_class = LabTestPanelSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LabTestPanel.objects.filter(
+            organization=self.request.user.organization
+        ).prefetch_related('tests')

@@ -84,6 +84,7 @@ const ConsultationForm = () => {
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [consultationStatus, setConsultationStatus] = useState(null);
+    const [completedById, setCompletedById] = useState(null);
     const [completedByName, setCompletedByName] = useState('');
 
     const [patients, setPatients] = useState([]);
@@ -159,6 +160,7 @@ const ConsultationForm = () => {
                     }
 
                     setConsultationStatus(data.status);
+                    setCompletedById(data.completed_by);
                     setCompletedByName(data.doctor_name || '');
                     setFormData({
                         patient: { id: data.patient, name: data.patient_name },
@@ -355,6 +357,7 @@ const ConsultationForm = () => {
     if (initializing) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5, alignItems: 'center', minHeight: '50vh' }}><CircularProgress /><Typography sx={{ ml: 2 }}>Initialisation du dossier...</Typography></Box>;
 
     const isCompleted = consultationStatus === 'completed';
+    const canEdit = !isCompleted || (completedById === user?.id);
     const currentUserDisplay = user
         ? (user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '')
         : '';
@@ -382,7 +385,7 @@ const ConsultationForm = () => {
                             {currentUserDisplay}
                         </Typography>
                     )}
-                    {isCompleted ? (
+                    {isCompleted && !canEdit ? (
                         <Button variant="contained" startIcon={<ViewIcon />} onClick={() => navigate(`/healthcare/consultations/${id}`)}>
                             Voir Dossier
                         </Button>
@@ -398,6 +401,7 @@ const ConsultationForm = () => {
             {isCompleted && (
                 <Alert severity="success" sx={{ mb: 2 }}>
                     Consultation terminée{completedByName ? ` — par : ${completedByName}` : ''}
+                    {canEdit && " (Mode modification activé pour vous)"}
                 </Alert>
             )}
 
@@ -410,7 +414,7 @@ const ConsultationForm = () => {
                 </Tabs>
             </Box>
 
-            <Box sx={{ opacity: isCompleted ? 0.72 : 1, pointerEvents: isCompleted ? 'none' : 'auto' }}>
+            <Box sx={{ opacity: canEdit ? 1 : 0.72, pointerEvents: canEdit ? 'auto' : 'none' }}>
             <TabPanel value={tabValue} index={0}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={4}>

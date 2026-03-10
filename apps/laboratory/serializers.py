@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -158,7 +158,7 @@ class LabTestSerializer(serializers.ModelSerializer):
     sample_type_display = serializers.CharField(source='get_sample_type_display', read_only=True)
     container_type_display = serializers.CharField(source='get_container_type_display', read_only=True)
     has_parameters = serializers.BooleanField(read_only=True)
-    parameters = LabTestParameterSerializer(many=True, read_only=True)
+    parameters = LabTestParameterSerializer(source='active_parameters', many=True, read_only=True)
     # Consommable lié : nom + stock actuel (read-only, calculé)
     linked_product_name = serializers.SerializerMethodField()
     linked_product_stock = serializers.SerializerMethodField()
@@ -276,7 +276,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='lab_test.category.name', read_only=True, default='')
     has_parameters = serializers.BooleanField(source='lab_test.has_parameters', read_only=True)
     lab_test_data = LabTestSerializer(source='lab_test', read_only=True)
-    parameters = LabTestParameterSerializer(source='lab_test.parameters', many=True, read_only=True)
+    parameters = LabTestParameterSerializer(source='lab_test.active_parameters', many=True, read_only=True)
     parameter_results = LabResultValueSerializer(many=True, read_only=True)
 
     class Meta:
@@ -489,7 +489,13 @@ class LabOrderCreateSerializer(serializers.Serializer):
         child=serializers.DictField(),
         required=False
     )
-    
+
+    # Bilans (panels): [{panel_id: uuid, discount: decimal (optional)}]
+    panels_data = serializers.ListField(
+        child=serializers.DictField(),
+        required=False
+    )
+
     priority = serializers.ChoiceField(
         choices=LabOrder.PRIORITY_CHOICES,
         default='routine'
@@ -508,8 +514,8 @@ class LabOrderCreateSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        if not data.get('test_ids') and not data.get('tests_data'):
-            raise serializers.ValidationError("Either test_ids or tests_data is required")
+        if not data.get('test_ids') and not data.get('tests_data') and not data.get('panels_data'):
+            raise serializers.ValidationError("Either test_ids, tests_data, or panels_data is required")
         return data
 
 
@@ -542,3 +548,23 @@ class EnterResultsSerializer(serializers.Serializer):
                     "Each result must have either result_value or parameter_values"
                 )
         return value
+
+
+class LabTestPanelSerializer(serializers.ModelSerializer):
+    """Serializer for LabTestPanel (bilans)"""
+    tests_detail = LabTestListSerializer(source='tests', many=True, read_only=True)
+    tests_count = serializers.SerializerMethodField()
+    net_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = LabTestPanel
+        fields = [
+            'id', 'code', 'name', 'description',
+            'price', 'discount', 'net_price',
+            'tests', 'tests_detail', 'tests_count',
+            'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_tests_count(self, obj):
+        return obj.tests.count()

@@ -42,6 +42,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 import consultationAPI from '../../../services/consultationAPI';
 import { formatDate as formatDisplayDate, formatTime } from '../../../utils/formatters';
 import useAutoRefresh from '../../../hooks/useAutoRefresh';
@@ -49,6 +50,7 @@ import useAutoRefresh from '../../../hooks/useAutoRefresh';
 const ConsultationList = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { user } = useCurrentUser();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -807,10 +809,13 @@ const ConsultationList = () => {
 
     // Helper function to render consultation card
     function renderConsultationCard(consult, index) {
+        const isValidator = consult.completed_by === user?.id;
+        const canEdit = consult.status !== 'completed' || isValidator;
+
         return (
             <Card
                 onClick={() => {
-                    if (['waiting', 'vitals_pending', 'ready_for_doctor', 'in_consultation'].includes(consult.status)) {
+                    if (canEdit) {
                         navigate(`/healthcare/consultations/${consult.id}/edit`);
                     } else {
                         navigate(`/healthcare/consultations/${consult.id}`);

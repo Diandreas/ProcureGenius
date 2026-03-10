@@ -27,6 +27,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 import consultationAPI from '../../../services/consultationAPI';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
@@ -35,6 +36,7 @@ import ConsultationTimer from '../../../components/healthcare/ConsultationTimer'
 const ConsultationDetail = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { user } = useCurrentUser();
     const { id } = useParams();
     const { enqueueSnackbar } = useSnackbar();
 
@@ -128,7 +130,9 @@ const ConsultationDetail = () => {
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button data-testid="consult-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => { setPrintModalType('report'); setPrintModalOpen(true); }}>Rapport</Button>
-                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/healthcare/consultations/${id}/edit`)}>Modifier</Button>
+                    {(!consultation.status || consultation.status !== 'completed' || (consultation.completed_by === user?.id)) && (
+                        <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/healthcare/consultations/${id}/edit`)}>Modifier</Button>
+                    )}
                     <Button variant="contained" onClick={async () => {
                         const next = await consultationAPI.getNextPatient();
                         if (next?.id) navigate(`/healthcare/consultations/${next.id}/edit`);

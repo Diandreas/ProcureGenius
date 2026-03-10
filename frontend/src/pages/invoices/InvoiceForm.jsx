@@ -49,6 +49,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
+import { buildInvoiceGroup, enqueueGroup } from '../../db/offlineDb';
+import { isOfflineError } from '../../services/syncEngine';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -336,6 +338,13 @@ function InvoiceForm() {
         navigate(`/invoices/${invoiceId}`);
       }
     } catch (error) {
+      if (isOfflineError(error)) {
+        const group = buildInvoiceGroup({ isNew: !isEdit, id, payload });
+        await enqueueGroup(group);
+        enqueueSnackbar('Facture enregistrée hors ligne. Synchronisation automatique dès reconnexion.', { variant: 'info' });
+        navigate('/invoices');
+        return;
+      }
       console.error('Erreur API:', error);
       console.error('Response data:', error.response?.data);
 

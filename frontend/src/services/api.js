@@ -1,4 +1,24 @@
 import axios from 'axios';
+import { storeReadCache } from '../db/offlineDb';
+
+// TTL du cache par préfixe d'URL (en secondes)
+const CACHE_TTL_MAP = [
+  { prefix: '/healthcare/patients', ttl: 7200 },
+  { prefix: '/pharmacy/medications', ttl: 7200 },
+  { prefix: '/laboratory/tests', ttl: 7200 },
+  { prefix: '/laboratory/orders', ttl: 300 },
+  { prefix: '/laboratory/categories', ttl: 7200 },
+  { prefix: '/healthcare/consultations', ttl: 300 },
+  { prefix: '/invoices', ttl: 300 },
+  { prefix: '/clients', ttl: 3600 },
+];
+
+function getCacheTTL(url) {
+  for (const { prefix, ttl } of CACHE_TTL_MAP) {
+    if (url.includes(prefix)) return ttl;
+  }
+  return null; // ne pas mettre en cache
+}
 
 // Configuration de l'URL de base de l'API
 // L'URL du backend est définie dans vite.config.js (VITE_BACKEND_URL)
@@ -51,7 +71,21 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Mise en cache des réponses GET pour les modules prioritaires
+    if (response.config.method === 'get') {
+      const url = response.config.url || '';
+      const ttl = getCacheTTL(url);
+      if (ttl) {
+        const params = response.config.params
+          ? '?' + new URLSearchParams(response.config.params).toString()
+          : '';
+        const cacheKey = url + params;
+        storeReadCache(cacheKey, response.data, ttl).catch(() => {});
+      }
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Redirect to login if unauthorized

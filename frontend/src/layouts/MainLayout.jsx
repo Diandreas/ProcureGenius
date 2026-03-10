@@ -51,6 +51,7 @@ import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
+import OfflineIndicator from '../components/OfflineIndicator';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -131,6 +132,7 @@ function MainLayout() {
     { text: 'Visites', iconSrc: '/icon/support.png', path: '/healthcare/visits', moduleId: 'visits', isCore: false },
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
     { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },
+    { text: 'Bilans', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/panels', moduleId: 'laboratory', isCore: false },
     { text: 'Réactifs Ouverts', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/opened-reagents', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
@@ -1159,6 +1161,9 @@ function MainLayout() {
 
         {/* PWA Installation Prompt */}
         <InstallPWAPrompt />
+
+        {/* Offline / Sync indicator */}
+        <OfflineIndicator />
       </Box>
     </AINotificationProvider>
   );
