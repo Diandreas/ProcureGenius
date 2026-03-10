@@ -126,25 +126,57 @@ class LabOrderInvoiceService:
             )
 
         # 2. Ajouter les tests de laboratoire avec réductions
-        for lab_item in lab_order.items.all():
-            test_price = lab_item.price or lab_item.lab_test.price
-            test_discount = lab_item.discount or 0
-            final_price = test_price - test_discount
-            
-            notes = f"Code: {lab_item.lab_test.test_code}"
-            if test_discount > 0:
-                notes += f" (Réduction de {test_discount} XAF appliquée sur ce test)"
+        # Bilans (panels) : une seule ligne forfaitaire par bilan
+        billed_panels = set()
 
-            InvoiceItem.objects.create(
-                invoice=invoice,
-                product=None,
-                description=lab_item.lab_test.name,
-                quantity=1,
-                unit_price=test_price,
-                discount_amount=test_discount,
-                total_price=final_price,
-                notes=notes
-            )
+        for lab_item in lab_order.items.all().select_related('panel', 'lab_test'):
+            if lab_item.panel_id:
+                # Cet item fait partie d'un bilan
+                if lab_item.panel_id in billed_panels:
+                    # Déjà facturé via le premier item du bilan → ignorer
+                    continue
+
+                if lab_item.panel_price is not None:
+                    # Premier item du bilan : créer une ligne forfaitaire
+                    billed_panels.add(lab_item.panel_id)
+                    panel = lab_item.panel
+                    test_list = ", ".join(
+                        lab_order.items.filter(panel=panel)
+                        .values_list('lab_test__test_code', flat=True)
+                    )
+                    InvoiceItem.objects.create(
+                        invoice=invoice,
+                        product=None,
+                        description=f"Bilan : {panel.name}",
+                        quantity=1,
+                        unit_price=lab_item.panel_price,
+                        discount_amount=0,
+                        total_price=lab_item.panel_price,
+                        notes=f"Forfait bilan — Examens inclus : {test_list}"
+                    )
+                else:
+                    # Item de bilan sans panel_price (ne devrait pas arriver) → marquer comme traité
+                    billed_panels.add(lab_item.panel_id)
+            else:
+                # Test individuel (hors bilan)
+                test_price = lab_item.price or lab_item.lab_test.price
+                test_discount = lab_item.discount or 0
+                final_price = test_price - test_discount
+
+                notes = f"Code: {lab_item.lab_test.test_code}"
+                if test_discount > 0:
+                    notes += f" (Réduction de {test_discount} XAF appliquée sur ce test)"
+
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=None,
+                    description=lab_item.lab_test.name,
+                    quantity=1,
+                    unit_price=test_price,
+                    discount_amount=test_discount,
+                    total_price=final_price,
+                    notes=notes
+                )
 
         # Recalculer totaux
         invoice.recalculate_totals()
