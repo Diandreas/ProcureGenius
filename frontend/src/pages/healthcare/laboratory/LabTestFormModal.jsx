@@ -9,6 +9,7 @@ import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon, AutoAwesome a
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import { productsAPI } from '../../../services/api';
+import RichTextEditor from '../../../components/RichTextEditor';
 
 import useCurrentUser from '../../../hooks/useCurrentUser';
 
@@ -480,19 +481,39 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                             Parametres structures pour tests complexes (ex: NFS, Bilan lipidique...). Laissez vide pour un test simple avec une seule valeur.
                         </Alert>
 
-                        {/* Template de résultat pour tests simples */}
+                        {/* Template de résultat */}
                         <Box sx={{ mb: 2 }}>
-                            <Typography variant="subtitle2" gutterBottom>Template de résultat (tests simples)</Typography>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={3}
-                                size="small"
-                                placeholder="Ex: Positif / Negatif&#10;Sensible / Résistant&#10;Présence / Absence"
-                                value={formData.result_template || ''}
-                                onChange={e => setFormData(prev => ({ ...prev, result_template: e.target.value }))}
-                                helperText="Guide de saisie affiché au technicien lors de la saisie du résultat (laisser vide si test structuré avec paramètres ci-dessous)"
-                            />
+                            {formData.use_large_layout ? (
+                                <>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Template de résultat — <strong>Affichage large (Bactériologie)</strong>
+                                    </Typography>
+                                    <Alert severity="success" sx={{ mb: 1, py: 0.5 }} icon={false}>
+                                        Éditeur enrichi actif. Vous pouvez insérer des tableaux ou <strong>coller directement depuis Word / Excel</strong> (Ctrl+V) — la mise en forme sera préservée.
+                                    </Alert>
+                                    <RichTextEditor
+                                        value={formData.result_template || ''}
+                                        onChange={val => setFormData(prev => ({ ...prev, result_template: val }))}
+                                        placeholder="Saisissez ou collez le template de résultat depuis Word..."
+                                        minHeight={200}
+                                        withTable
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <Typography variant="subtitle2" gutterBottom>Template de résultat (tests simples)</Typography>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        size="small"
+                                        placeholder="Ex: Positif / Negatif&#10;Sensible / Résistant&#10;Présence / Absence"
+                                        value={formData.result_template || ''}
+                                        onChange={e => setFormData(prev => ({ ...prev, result_template: e.target.value }))}
+                                        helperText="Guide de saisie affiché au technicien lors de la saisie du résultat (laisser vide si test structuré avec paramètres ci-dessous)"
+                                    />
+                                </>
+                            )}
                         </Box>
 
                         <Divider sx={{ mb: 2 }} />

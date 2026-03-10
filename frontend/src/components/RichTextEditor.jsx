@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { Box, IconButton, Tooltip, Divider, Paper, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, IconButton, Tooltip, Divider, Paper, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material';
 import {
     FormatBold,
     FormatItalic,
@@ -16,6 +16,8 @@ import {
     FormatIndentDecrease,
     FormatSize,
     Palette,
+    TableChart,
+    ContentPaste,
 } from '@mui/icons-material';
 
 const BASIC_TOOLBAR = [
@@ -60,6 +62,79 @@ const COLORS = [
     { label: 'Vert', value: '#2e7d32' },
 ];
 
+// Clean Word/LibreOffice paste — keep structure, strip junk styles
+function cleanWordHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+
+    // Remove Word-specific tags entirely
+    div.querySelectorAll('o\\:p, w\\:sdt, w\\:sdtContent, xml, style, script, meta').forEach(el => el.remove());
+
+    // Clean all elements: strip class/id/lang, keep only border/width on td/th
+    div.querySelectorAll('*').forEach(el => {
+        el.removeAttribute('class');
+        el.removeAttribute('id');
+        el.removeAttribute('lang');
+        el.removeAttribute('xml:lang');
+
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'td' || tag === 'th') {
+            // Keep colspan/rowspan, border from inline style
+            const style = el.getAttribute('style') || '';
+            const border = style.match(/border[^;]*/g) || [];
+            const width = style.match(/width[^;]*/g) || [];
+            const bg = style.match(/background[^;]*/g) || [];
+            const align = style.match(/text-align[^;]*/g) || [];
+            const kept = [...border, ...width, ...bg, ...align].join(';');
+            if (kept) el.setAttribute('style', kept);
+            else el.removeAttribute('style');
+        } else if (tag === 'table') {
+            el.setAttribute('style', 'border-collapse:collapse;width:100%;margin:8px 0;');
+            el.removeAttribute('class');
+        } else if (tag === 'span') {
+            // Keep bold/italic via span style if present, else unwrap
+            const style = el.getAttribute('style') || '';
+            if (style.includes('font-weight') || style.includes('font-style') || style.includes('color')) {
+                const kept = (style.match(/(font-weight|font-style|color)[^;]*/g) || []).join(';');
+                if (kept) el.setAttribute('style', kept);
+                else el.removeAttribute('style');
+            } else {
+                el.removeAttribute('style');
+            }
+        } else {
+            el.removeAttribute('style');
+        }
+    });
+
+    // Remove empty paragraphs left by Word
+    div.querySelectorAll('p').forEach(p => {
+        if (!p.textContent.trim() && !p.querySelector('img,table')) p.remove();
+    });
+
+    return div.innerHTML;
+}
+
+// Insert a blank table at cursor
+function insertTable(rows, cols) {
+    const borderStyle = 'border:1px solid #9ca3af;padding:6px 10px;';
+    let html = `<table style="border-collapse:collapse;width:100%;margin:8px 0;">`;
+    // Header row
+    html += '<thead><tr>';
+    for (let c = 0; c < cols; c++) {
+        html += `<th style="${borderStyle}background:#f3f4f6;font-weight:600;">En-tête ${c + 1}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+    for (let r = 0; r < rows - 1; r++) {
+        html += '<tr>';
+        for (let c = 0; c < cols; c++) {
+            html += `<td style="${borderStyle}"> </td>`;
+        }
+        html += '</tr>';
+    }
+    html += '</tbody></table><p></p>';
+    document.execCommand('insertHTML', false, html);
+}
+
 const RichTextEditor = ({
     value = '',
     onChange,
@@ -67,11 +142,15 @@ const RichTextEditor = ({
     disabled = false,
     onExpand = null,
     minHeight = 80,
-    simple = false, // Nouveau paramètre
+    simple = false,
+    withTable = false, // Enable table toolbar
 }) => {
     const editorRef = useRef(null);
     const [sizeAnchor, setSizeAnchor] = useState(null);
     const [colorAnchor, setColorAnchor] = useState(null);
+    const [tableDialog, setTableDialog] = useState(false);
+    const [tableRows, setTableRows] = useState(3);
+    const [tableCols, setTableCols] = useState(3);
 
     useEffect(() => {
         const el = editorRef.current;
@@ -90,9 +169,33 @@ const RichTextEditor = ({
         if (onChange) onChange(editorRef.current?.innerHTML || '');
     }, [onChange]);
 
+    // Handle paste: intercept and clean Word HTML
+    const handlePaste = useCallback((e) => {
+        e.preventDefault();
+        const clipData = e.clipboardData;
+        // Prefer HTML over plain text to preserve tables
+        let html = clipData.getData('text/html');
+        if (html) {
+            const cleaned = cleanWordHtml(html);
+            document.execCommand('insertHTML', false, cleaned);
+        } else {
+            const text = clipData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        }
+        if (onChange) onChange(editorRef.current?.innerHTML || '');
+    }, [onChange]);
+
+    const handleInsertTable = () => {
+        editorRef.current?.focus();
+        insertTable(Number(tableRows), Number(tableCols));
+        if (onChange) onChange(editorRef.current?.innerHTML || '');
+        setTableDialog(false);
+    };
+
     const toolbar = simple ? BASIC_TOOLBAR : FULL_TOOLBAR;
 
     return (
+        <>
         <Paper
             variant="outlined"
             sx={{
@@ -144,6 +247,22 @@ const RichTextEditor = ({
                         </>
                     )}
 
+                    {withTable && !simple && (
+                        <>
+                            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+                            <Tooltip title="Insérer un tableau">
+                                <IconButton size="small" onMouseDown={(e) => { e.preventDefault(); setTableDialog(true); }} color="primary">
+                                    <TableChart fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Coller depuis Word/Excel (Ctrl+V)">
+                                <IconButton size="small" color="secondary" onClick={() => editorRef.current?.focus()}>
+                                    <ContentPaste fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </>
+                    )}
+
                     {onExpand && (
                         <>
                             <Box sx={{ flex: 1 }} />
@@ -160,6 +279,7 @@ const RichTextEditor = ({
                 contentEditable={!disabled}
                 suppressContentEditableWarning
                 onInput={handleInput}
+                onPaste={handlePaste}
                 data-placeholder={placeholder}
                 sx={{
                     minHeight, p: 2, outline: 'none', fontSize: '1rem', lineHeight: 1.6,
@@ -170,9 +290,49 @@ const RichTextEditor = ({
                     '& p': { margin: '4px 0', minHeight: '1em' },
                     '& strong': { fontWeight: 700 },
                     '&:empty:before': { content: 'attr(data-placeholder)', color: 'text.disabled', pointerEvents: 'none' },
+                    // Table styles
+                    '& table': { borderCollapse: 'collapse', width: '100%', margin: '8px 0' },
+                    '& td, & th': { border: '1px solid #9ca3af', padding: '6px 10px', minWidth: 60 },
+                    '& th': { bgcolor: '#f3f4f6', fontWeight: 600 },
+                    '& tr:nth-of-type(even) td': { bgcolor: '#fafafa' },
                 }}
             />
         </Paper>
+
+        {/* Table insertion dialog */}
+        <Dialog open={tableDialog} onClose={() => setTableDialog(false)} maxWidth="xs" fullWidth>
+            <DialogTitle>Insérer un tableau</DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Vous pouvez aussi coller directement un tableau depuis Word ou Excel avec <strong>Ctrl+V</strong>.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                        label="Lignes"
+                        type="number"
+                        size="small"
+                        value={tableRows}
+                        onChange={e => setTableRows(Math.max(1, Number(e.target.value)))}
+                        inputProps={{ min: 1, max: 20 }}
+                        fullWidth
+                    />
+                    <TextField
+                        label="Colonnes"
+                        type="number"
+                        size="small"
+                        value={tableCols}
+                        onChange={e => setTableCols(Math.max(1, Number(e.target.value)))}
+                        inputProps={{ min: 1, max: 10 }}
+                        fullWidth
+                    />
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setTableDialog(false)}>Annuler</Button>
+                <Button variant="contained" onClick={handleInsertTable} startIcon={<TableChart />}>Insérer</Button>
+            </DialogActions>
+        </Dialog>
+        </>
     );
 };
 

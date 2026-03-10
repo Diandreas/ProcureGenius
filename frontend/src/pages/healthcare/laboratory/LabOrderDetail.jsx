@@ -1502,6 +1502,7 @@ const LabOrderDetail = () => {
                                                                     onChange={(val) => handleResultChange(item.id, 'result_value', val)}
                                                                     placeholder="Saisissez ici le compte-rendu complet (style Word)..."
                                                                     minHeight={350}
+                                                                    withTable
                                                                     onExpand={() => openWysiwygModal(item.id, 'result_value', `Rapport — ${item.test_name}`)}
                                                                 />
                                                                 <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
@@ -1509,10 +1510,11 @@ const LabOrderDetail = () => {
                                                                         variant="contained"
                                                                         color="secondary"
                                                                         onClick={() => {
-                                                                            const html = (item.result_template || '')
-                                                                                .split('\n')
-                                                                                .map(line => `<p>${line.trim() || '<br>'}</p>`)
-                                                                                .join('');
+                                                                            // result_template may be HTML (large layout) or plain text
+                                                                            const tpl = item.result_template || '';
+                                                                            const html = tpl.trim().startsWith('<')
+                                                                                ? tpl
+                                                                                : tpl.split('\n').map(line => `<p>${line.trim() || '<br>'}</p>`).join('');
                                                                             handleResultChange(item.id, 'result_value', html);
                                                                         }}
                                                                         disabled={!item.result_template}
