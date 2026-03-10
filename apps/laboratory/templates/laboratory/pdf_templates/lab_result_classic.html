@@ -224,7 +224,7 @@
                 {{ patient.name }}
             </div>
             <div class="sm-text">
-                {{ patient.gender }}, {% if patient.date_of_birth %}{{ patient.get_age }} Ans{% else %}-{% endif %}<br>
+                {% if patient.gender == 'M' %}Masculin{% elif patient.gender == 'F' %}Féminin{% else %}{{ patient.gender }}{% endif %}, {% if patient.date_of_birth %}{{ patient.get_age }} Ans{% else %}-{% endif %}<br>
                 ID: {{ patient.patient_number|default:"-" }}
             </div>
         </div>
@@ -324,6 +324,20 @@
                     </table>
                 </td>
             </tr>
+            {% if item.technician_notes or item.interpretation %}
+            <tr>
+                <td colspan="6" style="padding: 0 10px 10px 20px; border-top: none; background-color: #f9f9f9;">
+                    <div style="padding: 5px; font-size: 8pt; border-left: 2px solid #ccc;">
+                        {% if item.interpretation %}
+                        <strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>
+                        {% endif %}
+                        {% if item.technician_notes %}
+                        <em>Note technicien: {{ item.technician_notes|striptags }}</em>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
             {% elif item.lab_test.use_large_layout %}
             {# ─── LARGE LAYOUT TEST (e.g. Bacteriology) ─── #}
             <tr>
