@@ -35,6 +35,7 @@ import {
   Collapse,
   Tooltip,
   LinearProgress,
+  Pagination,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -118,9 +119,11 @@ const StatCard = ({ title, count, subtitle, icon: Icon, color, filterKey, active
       >
         <CardContent sx={{ p: 2, textAlign: 'center', '&:last-child': { pb: 2 } }}>
           <Icon sx={{ fontSize: 30, color, mb: 0.5, opacity: 0.9 }} />
-          <Typography variant="h4" fontWeight="800" sx={{ color, mb: 0.3, fontSize: { xs: '1.5rem', md: '1.8rem' } }}>
-            {count}
-          </Typography>
+          {count !== undefined && (
+            <Typography variant="h4" fontWeight="800" sx={{ color, mb: 0.3, fontSize: { xs: '1.5rem', md: '1.8rem' } }}>
+              {count}
+            </Typography>
+          )}
           <Typography variant="body2" color="text.secondary" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
             {title}
           </Typography>
@@ -145,12 +148,17 @@ function Products() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { products, loading, error } = useSelector((state) => state.products);
+  const { products, loading, error, totalCount } = useSelector((state) => state.products);
   const [warehouses, setWarehouses] = useState([]);
   const [batchStats, setBatchStats] = useState(null);
+  
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState('');   // quick filter (stat cards)
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -178,11 +186,64 @@ function Products() {
     }
   }, []);
 
+  // Initialization
   useEffect(() => {
-    dispatch(fetchProducts());
     fetchWarehousesData();
     productsAPI.getBatchStats().then(r => setBatchStats(r.data)).catch(() => {});
-  }, [dispatch, fetchWarehousesData]);
+  }, [fetchWarehousesData]);
+
+  // Debounce search term (minimum 2 characters)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchTerm.length >= 2) {
+        setDebouncedSearchTerm(searchTerm);
+      } else if (searchTerm.length === 0) {
+        setDebouncedSearchTerm('');
+      }
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, categoryFilter, statusFilter, warehouseFilter, stockFilter, expirationFilter, registeredAfter, registeredBefore, expirationAfter, expirationBefore]);
+
+  // Fetch products when params change
+  useEffect(() => {
+    const params = {
+      page,
+      page_size: pageSize,
+    };
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm;
+    if (categoryFilter) params.category = categoryFilter;
+    if (statusFilter) params.status = statusFilter;
+    if (warehouseFilter) params.warehouse = warehouseFilter;
+    
+    // Map frontend stat cards stock filter to backend stock_status
+    if (stockFilter === 'out_of_stock') params.stock_status = 'out_of_stock';
+    if (stockFilter === 'low_stock') params.stock_status = 'low_stock';
+    if (stockFilter === 'ok') params.stock_status = 'ok';
+    if (stockFilter === 'services') params.product_type = 'service';
+
+    // Map frontend stat cards expiration filter to backend expiration_status
+    if (stockFilter === 'expired') params.expiration_status = 'expired';
+    if (stockFilter === 'expiring_soon' || stockFilter === 'expiring_soon_60') {
+        params.expiration_status = 'expiring_soon';
+    }
+
+    if (expirationFilter) params.expiration_status = expirationFilter;
+    if (registeredAfter) params.registered_after = registeredAfter;
+    if (registeredBefore) params.registered_before = registeredBefore;
+    if (expirationAfter) params.expiration_after = expirationAfter;
+    if (expirationBefore) params.expiration_before = expirationBefore;
+
+    dispatch(fetchProducts(params));
+  }, [
+    dispatch, page, pageSize, debouncedSearchTerm, categoryFilter, statusFilter,
+    warehouseFilter, stockFilter, expirationFilter, registeredAfter, registeredBefore,
+    expirationAfter, expirationBefore
+  ]);
 
   // Register report action in top nav
   const handleGenerateReportClick = useCallback(() => setReportConfigOpen(true), []);
@@ -193,7 +254,8 @@ function Products() {
     return () => window.dispatchEvent(new CustomEvent('clear-report-action'));
   }, [handleGenerateReportClick, t]);
 
-  // Derive categories from products
+  // Derive categories from current page products (since we paginate, this is just for reference or we could fetch all categories)
+  // For the advanced filter, it's better to use a dedicated categories API call if possible, but we'll keep this simple.
   const categories = useMemo(() => {
     const map = new Map();
     products.forEach(p => { if (p.category) map.set(p.category.id, p.category); });
@@ -213,10 +275,16 @@ function Products() {
     setRegisteredBefore('');
     setExpirationAfter('');
     setExpirationBefore('');
+    setSearchTerm('');
   };
 
   const handleStockFilterClick = (filterKey) => {
     setStockFilter(prev => prev === filterKey ? '' : filterKey);
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Helper: get stock color for a product
@@ -245,91 +313,6 @@ function Products() {
     if (daysUntil <= 90) return { label: `Expire dans ${daysUntil}j`, color: 'info', variant: 'outlined' };
     return { label: product.expiration_date ? formatDate(product.expiration_date) : `${daysUntil}j`, color: 'default', variant: 'outlined' };
   };
-
-  // Filtered products
-  const filteredProducts = useMemo(() => products.filter(product => {
-    const matchesSearch = !searchTerm ||
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.reference?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory = !categoryFilter || product.category?.id === categoryFilter;
-    const matchesWarehouse = !warehouseFilter || product.warehouse === warehouseFilter;
-    const matchesStatus = !statusFilter ||
-      (statusFilter === 'available' && product.is_active) ||
-      (statusFilter === 'unavailable' && !product.is_active);
-
-    // Utilise is_expired/days_until_expiration (batch-aware depuis le backend)
-    const daysUntil = product.days_until_expiration;
-    const isExpiredProduct = product.is_expired;
-
-    const matchesStock = !stockFilter || (() => {
-      if (stockFilter === 'out_of_stock') return product.product_type === 'physical' && product.stock_quantity <= 0;
-      if (stockFilter === 'low_stock') return product.product_type === 'physical' && product.stock_quantity > 0 && product.stock_quantity <= (product.low_stock_threshold || 10);
-      if (stockFilter === 'ok') return product.product_type === 'physical' && product.stock_quantity > (product.low_stock_threshold || 10);
-      if (stockFilter === 'services') return product.product_type !== 'physical';
-      // expired: utilise is_expired (batch-aware) ou expiration_date si pas de lots
-      if (stockFilter === 'expired') {
-        if (product.product_type !== 'physical') return false;
-        if (isExpiredProduct !== undefined && isExpiredProduct !== null) return isExpiredProduct;
-        if (!product.expiration_date) return false;
-        return Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) < 0;
-      }
-      if (stockFilter === 'expiring_soon') {
-        if (product.product_type !== 'physical') return false;
-        // Utilise days_until_expiration (batch-aware) si disponible
-        if (daysUntil !== undefined && daysUntil !== null) return daysUntil >= 0 && daysUntil <= 30;
-        if (!product.expiration_date) return false;
-        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
-        return d >= 0 && d <= 30;
-      }
-      if (stockFilter === 'expiring_soon_60') {
-        if (product.product_type !== 'physical') return false;
-        if (daysUntil !== undefined && daysUntil !== null) return daysUntil > 30 && daysUntil <= 60;
-        if (!product.expiration_date) return false;
-        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
-        return d > 30 && d <= 60;
-      }
-      return true;
-    })();
-
-    const matchesExpiration = !expirationFilter || (() => {
-      if (product.product_type !== 'physical') return expirationFilter === 'no_date' ? (!product.expiration_date && daysUntil === null) : false;
-      if (expirationFilter === 'expired') {
-        if (isExpiredProduct !== undefined && isExpiredProduct !== null) return isExpiredProduct;
-        return product.expiration_date && Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) < 0;
-      }
-      if (expirationFilter === 'expiring_soon') {
-        if (daysUntil !== undefined && daysUntil !== null) return daysUntil >= 0 && daysUntil <= 30;
-        if (!product.expiration_date) return false;
-        const d = Math.floor((new Date(product.expiration_date) - new Date()) / 86400000);
-        return d >= 0 && d <= 30;
-      }
-      if (expirationFilter === 'valid') {
-        if (daysUntil !== undefined && daysUntil !== null) return daysUntil > 30;
-        if (!product.expiration_date) return false;
-        return Math.floor((new Date(product.expiration_date) - new Date()) / 86400000) > 30;
-      }
-      if (expirationFilter === 'no_date') return !product.expiration_date && daysUntil === null;
-      return true;
-    })();
-
-    // Date range filters
-    if (registeredAfter && product.created_at) {
-      if (new Date(product.created_at) < new Date(registeredAfter)) return false;
-    }
-    if (registeredBefore && product.created_at) {
-      if (new Date(product.created_at) > new Date(registeredBefore + 'T23:59:59')) return false;
-    }
-    if (expirationAfter && product.expiration_date) {
-      if (new Date(product.expiration_date) < new Date(expirationAfter)) return false;
-    }
-    if (expirationBefore && product.expiration_date) {
-      if (new Date(product.expiration_date) > new Date(expirationBefore)) return false;
-    }
-
-    return matchesSearch && matchesCategory && matchesWarehouse && matchesStatus && matchesStock && matchesExpiration;
-  }), [products, searchTerm, categoryFilter, warehouseFilter, statusFilter, stockFilter, expirationFilter, registeredAfter, registeredBefore, expirationAfter, expirationBefore]);
 
   // ─── Report handlers ───────────────────────────────────────────────────────
   const handleConfigureReport = async () => {
@@ -632,23 +615,13 @@ function Products() {
   }
 
   // ─── Stats ────────────────────────────────────────────────────────────────
-  const totalProducts = products.length;
-  const inStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity > (p.low_stock_threshold || 10)).length;
-  const lowStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)).length;
-  const outStockCount = products.filter(p => p.product_type === 'physical' && p.stock_quantity <= 0).length;
-  // Use batch-level expiry when available (more accurate than product-level expiration_date)
-  const expiredCount = batchStats ? batchStats.expired_batches : products.filter(p => p.product_type === 'physical' && p.expiration_date && Math.floor((new Date(p.expiration_date) - new Date()) / 86400000) < 0).length;
-  const expiringSoonCount = batchStats ? batchStats.expiring_soon_30 : products.filter(p => {
-    if (p.product_type !== 'physical' || (!p.expiration_date && p.days_until_expiration === null)) return false;
-    const d = p.days_until_expiration !== null ? p.days_until_expiration : Math.floor((new Date(p.expiration_date) - new Date()) / 86400000);
-    return d >= 0 && d <= 30;
-  }).length;
-  const expiringSoon60Count = batchStats ? batchStats.expiring_soon_60 : products.filter(p => {
-    if (p.product_type !== 'physical' || (!p.expiration_date && p.days_until_expiration === null)) return false;
-    const d = p.days_until_expiration !== null ? p.days_until_expiration : Math.floor((new Date(p.expiration_date) - new Date()) / 86400000);
-    return d > 30 && d <= 60;
-  }).length;
-  const totalStockValue = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * parseFloat(p.price || p.unit_price || 0)), 0);
+  // We use batchStats if available, otherwise just hide counts for paginated items to avoid confusion, 
+  // except for totalCount which is accurate.
+  const expiredCount = batchStats ? batchStats.expired_batches : undefined;
+  const expiringSoonCount = batchStats ? batchStats.expiring_soon_30 : undefined;
+  const expiringSoon60Count = batchStats ? batchStats.expiring_soon_60 : undefined;
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
@@ -713,7 +686,7 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title="Total"
-            count={totalProducts}
+            count={totalCount}
             icon={InventoryIcon}
             color={theme.palette.primary.main}
             filterKey=""
@@ -724,7 +697,6 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.inStock')}
-            count={inStockCount}
             icon={InStockIcon}
             color={theme.palette.success.main}
             filterKey="ok"
@@ -735,7 +707,6 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.lowStock')}
-            count={lowStockCount}
             icon={WarningIcon}
             color={theme.palette.warning.main}
             filterKey="low_stock"
@@ -746,7 +717,6 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.outOfStock')}
-            count={outStockCount}
             icon={ErrorIcon}
             color={theme.palette.error.main}
             filterKey="out_of_stock"
@@ -758,7 +728,7 @@ function Products() {
           <StatCard
             title="Lots périmés"
             count={expiredCount}
-            subtitle={batchStats ? 'par lots' : 'par produit'}
+            subtitle={batchStats ? 'par lots' : undefined}
             icon={ExpiredIcon}
             color="#b71c1c"
             filterKey="expired"
@@ -770,22 +740,10 @@ function Products() {
           <StatCard
             title="Expire < 30j"
             count={expiringSoonCount}
-            subtitle={batchStats ? 'lots actifs' : 'produits'}
+            subtitle={batchStats ? 'lots actifs' : undefined}
             icon={ScheduleIcon}
             color={theme.palette.warning.dark}
             filterKey="expiring_soon"
-            activeFilter={stockFilter}
-            onClick={handleStockFilterClick}
-          />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard
-            title="Expire 30-60j"
-            count={expiringSoon60Count}
-            subtitle={batchStats ? 'lots actifs' : 'produits'}
-            icon={ScheduleIcon}
-            color={theme.palette.info.main}
-            filterKey="expiring_soon_60"
             activeFilter={stockFilter}
             onClick={handleStockFilterClick}
           />
@@ -813,7 +771,7 @@ function Products() {
         <TextField
           fullWidth
           variant="standard"
-          placeholder={t('products:search.placeholder')}
+          placeholder={t('products:search.placeholder') + " (min. 2 caractères)"}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{ disableUnderline: true }}
@@ -895,7 +853,6 @@ function Products() {
                   <MenuItem value="expired">Périmés</MenuItem>
                   <MenuItem value="expiring_soon">Expire bientôt (&lt;30j)</MenuItem>
                   <MenuItem value="valid">Valide (&gt;30j)</MenuItem>
-                  <MenuItem value="no_date">Sans date de péremption</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -987,14 +944,11 @@ function Products() {
           {expirationBefore && <Chip label={`Exp. avant: ${expirationBefore}`} onDelete={() => setExpirationBefore('')} size="small" />}
           {registeredAfter && <Chip label={`Créé après: ${registeredAfter}`} onDelete={() => setRegisteredAfter('')} size="small" />}
           {registeredBefore && <Chip label={`Créé avant: ${registeredBefore}`} onDelete={() => setRegisteredBefore('')} size="small" />}
-          <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center', ml: 1 }}>
-            {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''}
-          </Typography>
         </Stack>
       )}
 
       {/* Products Grid */}
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
         <EmptyState
           title={t('products:messages.noProducts')}
           description={t('products:messages.noProductsDescription')}
@@ -1004,7 +958,7 @@ function Products() {
       ) : (
         <AnimatePresence mode="popLayout">
           <Grid container spacing={2.5}>
-            {filteredProducts.map((product, index) => (
+            {products.map((product, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
                 <ProductCard product={product} index={index} />
               </Grid>
@@ -1013,8 +967,24 @@ function Products() {
         </AnimatePresence>
       )}
 
+      {/* Pagination component */}
+      {totalPages > 1 && (
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+            shape="rounded"
+          />
+        </Box>
+      )}
+
       {/* Footer Summary */}
-      {filteredProducts.length > 0 && (
+      {products.length > 0 && (
         <Paper
           elevation={0}
           sx={{
@@ -1031,10 +1001,7 @@ function Products() {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            <strong>{filteredProducts.length}</strong> produit{filteredProducts.length !== 1 ? 's' : ''} affiché{filteredProducts.length !== 1 ? 's' : ''}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Valeur totale du stock: <strong style={{ color: theme.palette.success.main }}>{formatCurrency(totalStockValue)}</strong>
+            Affichage de <strong>{products.length}</strong> sur <strong>{totalCount}</strong> produit{totalCount !== 1 ? 's' : ''}
           </Typography>
         </Paper>
       )}
@@ -1067,12 +1034,12 @@ function Products() {
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
               {reportFilters.selectedProducts.length > 0
                 ? `${reportFilters.selectedProducts.length} produit(s) sélectionné(s)`
-                : 'Tous les produits filtrés seront inclus'}
+                : 'Tous les produits affichés seront inclus'}
             </Typography>
             <Box sx={{ maxHeight: 250, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
               <FormControl component="fieldset" fullWidth>
                 <FormGroup>
-                  {filteredProducts.map((product) => (
+                  {products.map((product) => (
                     <FormControlLabel
                       key={product.id}
                       control={
@@ -1096,9 +1063,9 @@ function Products() {
                 </FormGroup>
               </FormControl>
             </Box>
-            {filteredProducts.length > 0 && (
+            {products.length > 0 && (
               <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                <Button size="small" onClick={() => setReportFilters({ ...reportFilters, selectedProducts: filteredProducts.map(p => p.id) })}>Tout sélectionner</Button>
+                <Button size="small" onClick={() => setReportFilters({ ...reportFilters, selectedProducts: products.map(p => p.id) })}>Tout sélectionner</Button>
                 <Button size="small" onClick={() => setReportFilters({ ...reportFilters, selectedProducts: [] })}>Tout désélectionner</Button>
               </Box>
             )}
@@ -1106,7 +1073,7 @@ function Products() {
               <Typography variant="caption">
                 {reportFilters.selectedProducts.length > 0
                   ? `Rapport avec ${reportFilters.selectedProducts.length} produit(s)`
-                  : `Rapport avec tous les produits (${filteredProducts.length})`}
+                  : `Rapport avec tous les produits de la page (${products.length})`}
               </Typography>
             </Alert>
           </Box>
