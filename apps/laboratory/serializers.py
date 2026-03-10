@@ -354,6 +354,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     patient_gender = serializers.CharField(source='patient.gender', read_only=True)
+    patient_age = serializers.SerializerMethodField()
     ordered_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
@@ -373,6 +374,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'patient_name',
             'patient_number',
             'patient_gender',
+            'patient_age',
             'visit',
             'order_date',
             'status',
@@ -410,6 +412,11 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'diagnosed_at'
         ]
     
+    def get_patient_age(self, obj):
+        if obj.patient:
+            return obj.patient.get_age()
+        return None
+
     def get_diagnosed_by_name(self, obj):
         if obj.diagnosed_by:
             return obj.diagnosed_by.get_full_name() or obj.diagnosed_by.username

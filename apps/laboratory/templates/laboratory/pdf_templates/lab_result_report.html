@@ -146,6 +146,14 @@
                     </td>
                     <td style="font-size: 7.5pt;">{{ entry.previous_result|default:"/" }}</td>
                 </tr>
+                {% if item.technician_notes or item.interpretation %}
+                <tr>
+                    <td colspan="5" style="padding: 3px 8px 6px 16px; background-color: #f9fafb; border-top: none; font-size: 7.5pt; color: #374151;">
+                        {% if item.interpretation %}<strong>Interprétation :</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                        {% if item.technician_notes %}<em>Note technicien : {{ item.technician_notes|striptags }}</em>{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
                 {% endwith %}
             {% endfor %}
         </tbody>
@@ -187,6 +195,12 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% if item.technician_notes or item.interpretation %}
+            <div style="margin: 2px 0 8px 4px; padding: 4px 8px; background-color: #f9fafb; border-left: 2px solid #d1d5db; font-size: 7.5pt; color: #374151;">
+                {% if item.interpretation %}<strong>Interprétation :</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                {% if item.technician_notes %}<em>Note technicien : {{ item.technician_notes|striptags }}</em>{% endif %}
+            </div>
+            {% endif %}
             {% endwith %}
         {% endfor %}
     {% endif %}
@@ -201,6 +215,12 @@
                     <div class="rich-content" style="font-size: 9.5pt; line-height: 1.4;">
                         {{ item.result_value|safe }}
                     </div>
+                    {% if item.technician_notes or item.interpretation %}
+                    <div style="margin-top: 6px; padding: 4px 8px; background-color: #f3f4f6; border-left: 2px solid #d1d5db; font-size: 7.5pt; color: #374151;">
+                        {% if item.interpretation %}<strong>Interprétation :</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                        {% if item.technician_notes %}<em>Note technicien : {{ item.technician_notes|striptags }}</em>{% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endwith %}

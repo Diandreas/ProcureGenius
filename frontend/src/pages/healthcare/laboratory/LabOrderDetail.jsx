@@ -1146,7 +1146,7 @@ const LabOrderDetail = () => {
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Patient</Typography>
                             <Typography variant="body1" fontWeight="bold">{order.patient_name}</Typography>
-                            <Typography variant="body2">{order.patient?.age} ans / {order.patient?.gender}</Typography>
+                            <Typography variant="body2">{order.patient_age != null ? `${order.patient_age} ans` : ''}{order.patient_age != null && order.patient_gender ? ' / ' : ''}{order.patient_gender || ''}</Typography>
                             <Divider sx={{ my: 1 }} />
                             <Typography variant="caption" color="text.secondary">Prescripteur</Typography>
                             <Typography variant="body2">{order.ordered_by_name || '-'}</Typography>
@@ -1426,21 +1426,18 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                 ))}
                                                 {/* Optional notes for compound tests */}
-                                                {item.technician_notes && (
-                                                    <Box sx={{ mt: 1, mb: 0.5, p: 1, bgcolor: '#f9fafb', borderLeft: '3px solid #d1d5db', borderRadius: '0 4px 4px 0' }}>
-                                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Note technicien :</Typography>
-                                                        <Typography variant="body2" component="div" dangerouslySetInnerHTML={{ __html: item.technician_notes }} sx={{ fontSize: '0.75rem', color: '#374151', '& p': { my: 0 } }} />
-                                                    </Box>
-                                                )}
                                                 {canEdit && (
                                                     <RichTextEditor
                                                         value={results[item.id]?.technician_notes || ''}
                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                                        placeholder="Ajouter/modifier commentaire technicien..."
+                                                        placeholder="Commentaires du technicien (optionnel)"
                                                         minHeight={40}
                                                         simple={true}
                                                         onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
                                                     />
+                                                )}
+                                                {!canEdit && item.technician_notes && (
+                                                    <Typography variant="body2" component="div" dangerouslySetInnerHTML={{ __html: item.technician_notes }} sx={{ mt: 1, fontSize: '0.75rem', color: '#4b5563', '& p': { my: 0 } }} />
                                                 )}
                                             </Box>
                                         </TableCell>
@@ -1577,20 +1574,21 @@ const LabOrderDetail = () => {
 
                                                             <Box>
                                                                 <Typography variant="overline" sx={{ fontWeight: 900, color: '#64748b', mb: 1, display: 'block' }}>NOTES TECHNIQUES</Typography>
-                                                                {item.technician_notes && (
-                                                                    <Box sx={{ p: 1.5, mb: 1, bgcolor: '#f9fafb', border: '1px solid #e5e7eb', borderLeft: '3px solid #6b7280', borderRadius: '0 4px 4px 0' }}>
-                                                                        <div dangerouslySetInnerHTML={{ __html: item.technician_notes }} style={{ fontSize: '0.85rem' }} />
-                                                                    </Box>
-                                                                )}
                                                                 {canEdit ? (
                                                                     <RichTextEditor
                                                                         value={results[item.id]?.technician_notes || ''}
                                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                                                        placeholder="Ajouter/modifier note technique..."
+                                                                        placeholder="Notes internes..."
                                                                         minHeight={100}
                                                                     />
-                                                                ) : !item.technician_notes && (
-                                                                    <Typography variant="caption" color="text.disabled">Aucune note technique.</Typography>
+                                                                ) : (
+                                                                    <Box sx={{ p: 2, bgcolor: '#fff', border: '1px solid #e5e7eb', borderRadius: 1 }}>
+                                                                        {item.technician_notes ? (
+                                                                            <div dangerouslySetInnerHTML={{ __html: item.technician_notes }} style={{ fontSize: '0.85rem' }} />
+                                                                        ) : (
+                                                                            <Typography variant="caption" color="text.disabled">Aucune note technique.</Typography>
+                                                                        )}
+                                                                    </Box>
                                                                 )}
                                                             </Box>
                                                         </Box>
@@ -1687,33 +1685,33 @@ const LabOrderDetail = () => {
                                         })()}
                                     </TableCell>
                                     <TableCell>
-                                        <Box>
-                                            {item.technician_notes && (
-                                                <Typography
-                                                    variant="body2"
-                                                    component="div"
-                                                    dangerouslySetInnerHTML={{ __html: item.technician_notes }}
-                                                    sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
-                                                />
-                                            )}
-                                            {item.interpretation && (
-                                                <Alert severity="info" sx={{ mt: 1, py: 0 }}>
-                                                    <Typography variant="caption">
-                                                        <strong>Interprétation:</strong> {item.interpretation}
-                                                    </Typography>
-                                                </Alert>
-                                            )}
-                                            {!item.technician_notes && !item.interpretation && !canEdit && '-'}
-                                            {canEdit && (
-                                                <RichTextEditor
-                                                    value={results[item.id]?.technician_notes || ''}
-                                                    onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                                    placeholder="Ajouter/modifier commentaire..."
-                                                    minHeight={60}
-                                                    onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
-                                                />
-                                            )}
-                                        </Box>
+                                        {canEdit ? (
+                                            <RichTextEditor
+                                                value={results[item.id]?.technician_notes || ''}
+                                                onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
+                                                placeholder="Commentaires du technicien"
+                                                minHeight={60}
+                                                onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
+                                            />
+                                        ) : (
+                                            <Box>
+                                                {item.technician_notes ? (
+                                                    <Typography
+                                                        variant="body2"
+                                                        component="div"
+                                                        dangerouslySetInnerHTML={{ __html: item.technician_notes }}
+                                                        sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                                    />
+                                                ) : !item.interpretation ? '-' : null}
+                                                {item.interpretation && (
+                                                    <Alert severity="info" sx={{ mt: 1, py: 0 }}>
+                                                        <Typography variant="caption">
+                                                            <strong>Interprétation:</strong> {item.interpretation}
+                                                        </Typography>
+                                                    </Alert>
+                                                )}
+                                            </Box>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
