@@ -272,6 +272,8 @@ class SupplierProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+from .filters import ProductFilter
+
 class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
@@ -279,7 +281,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     # required_module removed - products/services should be accessible regardless of module activation
     organization_field = 'organization'  # Product has organization FK
-    filterset_fields = ['is_active', 'product_type']
+    filterset_class = ProductFilter
     search_fields = ['name', 'reference', 'description']
     ordering_fields = ['name', 'price', 'stock_quantity']
     ordering = ['name']
