@@ -242,6 +242,11 @@ class WeeklyReportConfig(models.Model):
     include_inventory = models.BooleanField(default=True, verbose_name=_("Inclure inventaire"))
     include_finance = models.BooleanField(default=True, verbose_name=_("Inclure finances"))
     include_stock_alerts = models.BooleanField(default=True, verbose_name=_("Inclure alertes stock"))
+    recipient_emails = models.TextField(
+        blank=True, default='',
+        verbose_name=_("Emails destinataires"),
+        help_text=_("Emails supplémentaires séparés par virgule (en plus du user)")
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

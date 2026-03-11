@@ -36,7 +36,7 @@ class Command(BaseCommand):
             '--email',
             type=str,
             default=None,
-            help='Adresse email destinataire (défaut: admins actifs de l\'organisation)'
+            help='Adresse(s) email destinataire(s) séparées par virgule (défaut: admins actifs de l\'organisation)'
         )
         parser.add_argument(
             '--dry-run',
@@ -269,7 +269,7 @@ class Command(BaseCommand):
 
     def _get_recipients(self, org, email_override):
         if email_override:
-            return [email_override]
+            return [e.strip() for e in email_override.split(',') if e.strip()]
         recipients = list(
             org.users.filter(
                 is_active=True,

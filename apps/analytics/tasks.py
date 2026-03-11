@@ -400,15 +400,18 @@ def _send_report_for_config(config, today):
     subject = f"[{org.name}] Rapport {config.get_frequency_display()} — {period_start.strftime('%d/%m')} au {today.strftime('%d/%m/%Y')}"
     html = render_to_string('emails/weekly_report.html', context)
 
-    # Destinataire : email de l'org (EmailConfiguration) en priorité, sinon user.email
-    try:
-        from apps.accounts.models import EmailConfiguration
-        org_email_config = EmailConfiguration.objects.filter(organization=org).first()
-        recipient = org_email_config.default_from_email if org_email_config else user.email
-    except Exception:
-        recipient = user.email
+    # Destinataires : user.email + recipient_emails du config
+    recipients = set()
+    if user.email:
+        recipients.add(user.email)
+    if config.recipient_emails:
+        for em in config.recipient_emails.split(','):
+            em = em.strip()
+            if em:
+                recipients.add(em)
 
-    _send_via_org_smtp(org, recipient, subject, html)
+    for recipient in recipients:
+        _send_via_org_smtp(org, recipient, subject, html)
 
 
 def _send_via_org_smtp(org, recipient_email, subject, html_content):
