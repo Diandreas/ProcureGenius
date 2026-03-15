@@ -202,34 +202,36 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         ]
 
     def get_prev_product_id(self, obj):
-        """Retourne l'ID du produit physique précédent (ordre alphabétique)"""
+        """Retourne l'ID du produit physique précédent — seulement en retrieve (détail)"""
+        request = self.context.get('request')
+        # Sur la liste, on évite les 2 requêtes SQL par produit
+        if request and request.parser_context.get('kwargs', {}).get('pk') is None:
+            return None
         if obj.product_type != 'physical':
             return None
-        
-        # On cherche le produit avec un nom "plus petit" ou même nom mais ID plus petit
         prev_prod = Product.objects.filter(
             organization=obj.organization,
             product_type='physical',
             is_active=True
         ).filter(
             models.Q(name__lt=obj.name) | models.Q(name=obj.name, id__lt=obj.id)
-        ).order_by('-name', '-id').first()
-        
+        ).order_by('-name', '-id').only('id').first()
         return prev_prod.id if prev_prod else None
 
     def get_next_product_id(self, obj):
-        """Retourne l'ID du produit physique suivant (ordre alphabétique)"""
+        """Retourne l'ID du produit physique suivant — seulement en retrieve (détail)"""
+        request = self.context.get('request')
+        if request and request.parser_context.get('kwargs', {}).get('pk') is None:
+            return None
         if obj.product_type != 'physical':
             return None
-            
         next_prod = Product.objects.filter(
             organization=obj.organization,
             product_type='physical',
             is_active=True
         ).filter(
             models.Q(name__gt=obj.name) | models.Q(name=obj.name, id__gt=obj.id)
-        ).order_by('name', 'id').first()
-        
+        ).order_by('name', 'id').only('id').first()
         return next_prod.id if next_prod else None
 
     def get_is_lab_consumable(self, obj):
@@ -272,21 +274,31 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         return None
         
     def get_total_invoices(self, obj):
+        if hasattr(obj, '_total_invoices'):
+            return obj._total_invoices
         return obj.invoice_items.values('invoice').distinct().count()
-        
+
     def get_total_sales_amount(self, obj):
+        if hasattr(obj, '_total_sales_amount'):
+            return float(obj._total_sales_amount)
         from django.db.models import Sum
         total = obj.invoice_items.aggregate(Sum('total_price'))['total_price__sum']
         return float(total) if total else 0
-        
+
     def get_unique_clients_count(self, obj):
+        if hasattr(obj, '_unique_clients_count'):
+            return obj._unique_clients_count
         return obj.invoice_items.values('invoice__client').distinct().count()
-        
+
     def get_last_sale_date(self, obj):
-        last_item = obj.invoice_items.order_by('-created_at').first()
+        # Pas d'annotation pour last_sale_date (sous-requête complexe) — on garde la requête
+        # mais on la rend légère avec only()
+        last_item = obj.invoice_items.only('created_at').order_by('-created_at').first()
         return last_item.created_at if last_item else None
-        
+
     def get_active_contracts_count(self, obj):
+        if hasattr(obj, '_active_contracts_count'):
+            return obj._active_contracts_count
         return obj.contract_items.filter(contract__status='active').count()
 
 
@@ -667,57 +679,87 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             with transaction.atomic():
                 invoice_is_active = instance.status in ['paid', 'sent', 'overdue']
 
-                # 1. Restaurer le stock des anciens items avant de les supprimer
                 if invoice_is_active:
-                    for old_item in instance.items.filter(
+                    # Calculer le diff de stock par produit (et par lot) avant de modifier
+                    # old_stock_map : {(product_id, batch_id) -> quantité actuelle}
+                    old_stock_map = {}
+                    old_items_qs = instance.items.filter(
                         product__isnull=False,
                         product__product_type='physical'
-                    ).select_related('product', 'batch'):
-                        old_item.product.adjust_stock(
-                            quantity=old_item.quantity,  # positif = restauration
-                            movement_type='return',
-                            reference_type='invoice',
-                            reference_id=instance.id,
-                            notes=f"Modification Facture {instance.invoice_number}",
-                            user=instance.created_by
-                        )
-                        if old_item.batch:
-                            old_item.batch.quantity_remaining += old_item.quantity
-                            old_item.batch.save(update_fields=['quantity_remaining'])
-                            old_item.batch.update_status()
+                    ).select_related('product', 'batch')
+                    for old_item in old_items_qs:
+                        key = (old_item.product_id, old_item.batch_id)
+                        old_stock_map[key] = old_stock_map.get(key, 0) + old_item.quantity
 
-                # 2. Supprimer les anciens items (sans déclencher la déduction via save)
-                #    Le signal post_delete va recalculate_totals → total = 0, c'est OK
-                instance.items.all().delete()
-
-                # 3. Créer les nouveaux items
-                #    On pose un flag pour éviter la DOUBLE déduction dans InvoiceItem.save()
-                #    (la déduction sera faite manuellement ci-dessous pour les factures actives)
+                # Supprimer les anciens items et créer les nouveaux
                 instance._skip_stock_adjustment = True
+                instance.items.all().delete()
                 for item_data in items_data:
                     InvoiceItem.objects.create(invoice=instance, **item_data)
                 del instance._skip_stock_adjustment
 
-                # 4. Déduire le stock des nouveaux items (une seule fois, proprement)
                 if invoice_is_active:
-                    for new_item in instance.items.filter(
+                    # Calculer le nouveau stock par produit
+                    new_stock_map = {}
+                    new_items_qs = instance.items.filter(
                         product__isnull=False,
                         product__product_type='physical'
-                    ).select_related('product', 'batch'):
-                        new_item.product.adjust_stock(
-                            quantity=-new_item.quantity,
-                            movement_type='sale',
-                            reference_type='invoice',
-                            reference_id=instance.id,
-                            notes=f"Facture {instance.invoice_number}",
-                            user=instance.created_by
-                        )
-                        if new_item.batch:
-                            new_item.batch.quantity_remaining -= new_item.quantity
-                            new_item.batch.save(update_fields=['quantity_remaining'])
-                            new_item.batch.update_status()
+                    ).select_related('product', 'batch')
+                    for new_item in new_items_qs:
+                        key = (new_item.product_id, new_item.batch_id)
+                        new_stock_map[key] = new_stock_map.get(key, 0) + new_item.quantity
 
-                # 5. Recalculer les totaux une seule fois à la fin
+                    # Collecter toutes les clés concernées
+                    all_keys = set(old_stock_map.keys()) | set(new_stock_map.keys())
+
+                    for key in all_keys:
+                        product_id, batch_id = key
+                        old_qty = old_stock_map.get(key, 0)
+                        new_qty = new_stock_map.get(key, 0)
+                        diff = new_qty - old_qty  # positif = plus de vente, négatif = retour
+
+                        if diff == 0:
+                            continue  # Aucun changement pour ce produit, on ne touche pas au stock
+
+                        # Récupérer le produit (depuis old ou new)
+                        item_ref = next(
+                            (i for i in list(old_items_qs) + list(new_items_qs) if i.product_id == product_id),
+                            None
+                        )
+                        if not item_ref:
+                            continue
+
+                        product = item_ref.product
+                        if diff > 0:
+                            # Plus de quantité vendue → déduire du stock
+                            product.adjust_stock(
+                                quantity=-diff,
+                                movement_type='sale',
+                                reference_type='invoice',
+                                reference_id=instance.id,
+                                notes=f"Modification Facture {instance.invoice_number}",
+                                user=instance.created_by
+                            )
+                        else:
+                            # Moins de quantité → retourner au stock
+                            product.adjust_stock(
+                                quantity=-diff,  # diff est négatif, donc -diff est positif
+                                movement_type='return',
+                                reference_type='invoice',
+                                reference_id=instance.id,
+                                notes=f"Modification Facture {instance.invoice_number}",
+                                user=instance.created_by
+                            )
+
+                        # Ajuster le lot si concerné
+                        if batch_id:
+                            batch_ref = item_ref.batch
+                            if batch_ref:
+                                batch_ref.quantity_remaining -= diff
+                                batch_ref.save(update_fields=['quantity_remaining'])
+                                batch_ref.update_status()
+
+                # Recalculer les totaux une seule fois à la fin
                 instance.recalculate_totals()
 
         return instance

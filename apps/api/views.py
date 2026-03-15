@@ -8,6 +8,8 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 
+from .pagination import ProductPagination
+
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
@@ -279,49 +281,23 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # required_module removed - products/services should be accessible regardless of module activation
-    organization_field = 'organization'  # Product has organization FK
+    organization_field = 'organization'
     filterset_class = ProductFilter
     search_fields = ['name', 'reference', 'description']
     ordering_fields = ['name', 'price', 'stock_quantity']
     ordering = ['name']
+    pagination_class = ProductPagination
 
     def get_queryset(self):
         # First apply organization filter
         queryset = super().get_queryset()
-        
 
         # Filtre par fournisseur (via la relation SupplierProduct)
         supplier_id = self.request.query_params.get('supplier')
         if supplier_id:
             queryset = queryset.filter(supplier_products__supplier_id=supplier_id).distinct()
 
-        # Filtre par statut de stock (inclut stock des lots disponibles/ouverts)
-        stock_status = self.request.query_params.get('stock_status')
-        if stock_status:
-            queryset = queryset.filter(product_type='physical').annotate(
-                _batch_stock=Coalesce(
-                    Sum('batches__quantity_remaining',
-                        filter=Q(batches__status__in=['available', 'opened'])),
-                    Value(0)
-                ),
-                _effective_stock=Greatest(F('stock_quantity'), F('_batch_stock'))
-            )
-            if stock_status == 'out_of_stock':
-                queryset = queryset.filter(_effective_stock=0)
-            elif stock_status == 'low_stock':
-                queryset = queryset.filter(
-                    _effective_stock__gt=0,
-                    _effective_stock__lte=F('low_stock_threshold')
-                )
-            elif stock_status == 'ok':
-                queryset = queryset.filter(
-                    _effective_stock__gt=F('low_stock_threshold')
-                )
-        
         # Exclure les consommables labo UNIQUEMENT sur les exports/rapports
-        # (jamais sur list/retrieve/update/destroy) pour que les consommables
-        # liés aux tests de labo restent visibles dans la liste des produits.
         export_only_actions = {'export_csv', 'expired_report', 'batch_stats', 'by_supplier', 'by_product'}
         action = getattr(self, 'action', None)
         if action in export_only_actions:
@@ -331,6 +307,44 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 )
             except Exception:
                 pass
+
+        # Optimisation N+1 : précharger relations et annoter stats en SQL sur list/retrieve
+        if action in ('list', 'retrieve', None):
+            from apps.invoicing.models import InvoiceItem as _InvoiceItem
+            from apps.contracts.models import ContractItem as _ContractItem
+            from django.db.models import OuterRef, Subquery
+
+            # Sous-requêtes pour éviter les doublons avec les agrégats batches
+            _invoices_sq = _InvoiceItem.objects.filter(
+                product=OuterRef('pk')
+            ).values('product').annotate(n=Count('invoice', distinct=True)).values('n')
+
+            _sales_sq = _InvoiceItem.objects.filter(
+                product=OuterRef('pk')
+            ).values('product').annotate(s=Sum('total_price')).values('s')
+
+            _clients_sq = _InvoiceItem.objects.filter(
+                product=OuterRef('pk')
+            ).values('product').annotate(n=Count('invoice__client', distinct=True)).values('n')
+
+            _contracts_sq = _ContractItem.objects.filter(
+                product=OuterRef('pk'),
+                contract__status='active'
+            ).values('product').annotate(n=Count('id')).values('n')
+
+            queryset = queryset.select_related(
+                'supplier', 'category', 'warehouse'
+            ).prefetch_related(
+                'batches', 'linked_lab_tests'
+            ).annotate(
+                _total_invoices=Coalesce(Subquery(_invoices_sq), Value(0)),
+                _total_sales_amount=Coalesce(
+                    Subquery(_sales_sq),
+                    Value(0, output_field=models.DecimalField())
+                ),
+                _unique_clients_count=Coalesce(Subquery(_clients_sq), Value(0)),
+                _active_contracts_count=Coalesce(Subquery(_contracts_sq), Value(0)),
+            )
 
         return queryset.distinct()
 
@@ -1382,6 +1396,65 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'expiring_soon_30': expiring_30,
             'expiring_soon_60': expiring_60,
             'total_active_batches': total_batches,
+        })
+
+    @action(detail=False, methods=['get'])
+    def stock_summary(self, request):
+        """Counts globaux pour les cartes de la page stock (1 seule requête)"""
+        from apps.invoicing.models import ProductBatch
+        from django.utils import timezone
+        from datetime import timedelta
+
+        org = request.user.organization
+        today = timezone.now().date()
+        thirty_days = today + timedelta(days=30)
+        active_batch_statuses = ['available', 'opened']
+
+        base_qs = Product.objects.filter(organization=org, is_active=True, product_type='physical')
+
+        # Annoter chaque produit avec son stock effectif (lots inclus)
+        annotated = base_qs.annotate(
+            _batch_stock=Coalesce(
+                Sum(
+                    'batches__quantity_remaining',
+                    filter=Q(batches__status__in=active_batch_statuses)
+                ),
+                Value(0)
+            ),
+            _effective_stock=Greatest(F('stock_quantity'), F('_batch_stock'))
+        )
+
+        total_physical = base_qs.count()
+        out_of_stock = annotated.filter(_effective_stock=0).count()
+        low_stock = annotated.filter(
+            _effective_stock__gt=0,
+            _effective_stock__lte=F('low_stock_threshold')
+        ).count()
+        in_stock = annotated.filter(_effective_stock__gt=F('low_stock_threshold')).count()
+        total_services = Product.objects.filter(
+            organization=org, is_active=True, product_type='service'
+        ).count()
+
+        # Lots
+        batch_qs = ProductBatch.objects.filter(
+            organization=org,
+            status__in=active_batch_statuses,
+            quantity_remaining__gt=0
+        )
+        expired_batches = batch_qs.filter(expiry_date__lt=today).count()
+        expiring_soon = batch_qs.filter(
+            expiry_date__gte=today, expiry_date__lte=thirty_days
+        ).count()
+
+        return Response({
+            'total': total_physical + total_services,
+            'total_physical': total_physical,
+            'total_services': total_services,
+            'in_stock': in_stock,
+            'low_stock': low_stock,
+            'out_of_stock': out_of_stock,
+            'expired_batches': expired_batches,
+            'expiring_soon_30': expiring_soon,
         })
 
     @action(detail=True, methods=['get'])

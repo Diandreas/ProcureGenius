@@ -186,6 +186,7 @@ export const productsAPI = {
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
   cancelMovement: (movementId) => api.delete(`/stock-movements/${movementId}/cancel/`),
   getBatchStats: () => api.get('/products/batch_stats/'),
+  getStockSummary: () => api.get('/products/stock_summary/'),
   getExpiredReport: () => api.get('/products/expired_report/'),
   getStatistics: (id) => api.get(`/products/${id}/statistics/`),
   exportCSV: () => api.get('/products/export_csv/', { responseType: 'blob' }),

@@ -23,6 +23,7 @@ import {
   Avatar,
   Stack,
   CircularProgress,
+  Skeleton,
   useMediaQuery,
   useTheme,
   Alert,
@@ -119,10 +120,12 @@ const StatCard = ({ title, count, subtitle, icon: Icon, color, filterKey, active
       >
         <CardContent sx={{ p: 2, textAlign: 'center', '&:last-child': { pb: 2 } }}>
           <Icon sx={{ fontSize: 30, color, mb: 0.5, opacity: 0.9 }} />
-          {count !== undefined && (
+          {count !== undefined ? (
             <Typography variant="h4" fontWeight="800" sx={{ color, mb: 0.3, fontSize: { xs: '1.5rem', md: '1.8rem' } }}>
               {count}
             </Typography>
+          ) : (
+            <Skeleton variant="text" width={40} height={36} sx={{ mx: 'auto', mb: 0.3 }} />
           )}
           <Typography variant="body2" color="text.secondary" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
             {title}
@@ -150,8 +153,10 @@ function Products() {
 
   const { products, loading, error, totalCount } = useSelector((state) => state.products);
   const [warehouses, setWarehouses] = useState([]);
-  const [batchStats, setBatchStats] = useState(null);
-  
+  // Stats globales (cartes) — chargées une seule fois, indépendamment de la grille
+  const [stockSummary, setStockSummary] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
   // Pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -186,11 +191,24 @@ function Products() {
     }
   }, []);
 
+  // Charger les stats globales une seule fois (indépendantes des filtres/pagination)
+  const fetchStockSummary = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const r = await productsAPI.getStockSummary();
+      setStockSummary(r.data);
+    } catch {
+      setStockSummary(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
   // Initialization
   useEffect(() => {
     fetchWarehousesData();
-    productsAPI.getBatchStats().then(r => setBatchStats(r.data)).catch(() => {});
-  }, [fetchWarehousesData]);
+    fetchStockSummary();
+  }, [fetchWarehousesData, fetchStockSummary]);
 
   // Debounce search term (minimum 2 characters)
   useEffect(() => {
@@ -599,28 +617,7 @@ function Products() {
     );
   };
 
-  // ─── Early returns ─────────────────────────────────────────────────────────
-  if (loading && products.length === 0) {
-    return <LoadingState message={t('products:messages.loading', 'Chargement des produits...')} />;
-  }
-  if (error) {
-    return (
-      <ErrorState
-        title={t('products:messages.loadingError')}
-        message={t('products:messages.loadingErrorDescription', 'Impossible de charger les produits.')}
-        showHome={false}
-        onRetry={() => window.location.reload()}
-      />
-    );
-  }
-
   // ─── Stats ────────────────────────────────────────────────────────────────
-  // We use batchStats if available, otherwise just hide counts for paginated items to avoid confusion, 
-  // except for totalCount which is accurate.
-  const expiredCount = batchStats ? batchStats.expired_batches : undefined;
-  const expiringSoonCount = batchStats ? batchStats.expiring_soon_30 : undefined;
-  const expiringSoon60Count = batchStats ? batchStats.expiring_soon_60 : undefined;
-
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -681,12 +678,12 @@ function Products() {
         </Stack>
       </Stack>
 
-      {/* 6 Stat Cards */}
+      {/* 6 Stat Cards — données globales indépendantes des filtres */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title="Total"
-            count={totalCount}
+            count={stockSummary ? stockSummary.total : undefined}
             icon={InventoryIcon}
             color={theme.palette.primary.main}
             filterKey=""
@@ -697,6 +694,7 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.inStock')}
+            count={stockSummary ? stockSummary.in_stock : undefined}
             icon={InStockIcon}
             color={theme.palette.success.main}
             filterKey="ok"
@@ -707,6 +705,7 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.lowStock')}
+            count={stockSummary ? stockSummary.low_stock : undefined}
             icon={WarningIcon}
             color={theme.palette.warning.main}
             filterKey="low_stock"
@@ -717,6 +716,7 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title={t('products:filters.outOfStock')}
+            count={stockSummary ? stockSummary.out_of_stock : undefined}
             icon={ErrorIcon}
             color={theme.palette.error.main}
             filterKey="out_of_stock"
@@ -727,8 +727,8 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title="Lots périmés"
-            count={expiredCount}
-            subtitle={batchStats ? 'par lots' : undefined}
+            count={stockSummary ? stockSummary.expired_batches : undefined}
+            subtitle={stockSummary ? 'par lots' : undefined}
             icon={ExpiredIcon}
             color="#b71c1c"
             filterKey="expired"
@@ -739,8 +739,8 @@ function Products() {
         <Grid item xs={6} sm={4} md={2}>
           <StatCard
             title="Expire < 30j"
-            count={expiringSoonCount}
-            subtitle={batchStats ? 'lots actifs' : undefined}
+            count={stockSummary ? stockSummary.expiring_soon_30 : undefined}
+            subtitle={stockSummary ? 'lots actifs' : undefined}
             icon={ScheduleIcon}
             color={theme.palette.warning.dark}
             filterKey="expiring_soon"
@@ -947,8 +947,24 @@ function Products() {
         </Stack>
       )}
 
+      {/* Barre de progression fine pendant chargement grille (ne bloque pas la page) */}
+      {loading && (
+        <LinearProgress sx={{ borderRadius: 1, mb: 1, height: 3 }} />
+      )}
+
+      {/* Erreur chargement grille */}
+      {error && !loading && (
+        <Alert severity="error" sx={{ mb: 2 }} action={
+          <Button size="small" onClick={() => dispatch(fetchProducts({ page, page_size: pageSize }))}>
+            Réessayer
+          </Button>
+        }>
+          Impossible de charger les produits. Veuillez réessayer.
+        </Alert>
+      )}
+
       {/* Products Grid */}
-      {products.length === 0 ? (
+      {!loading && products.length === 0 ? (
         <EmptyState
           title={t('products:messages.noProducts')}
           description={t('products:messages.noProductsDescription')}
@@ -957,7 +973,7 @@ function Products() {
         />
       ) : (
         <AnimatePresence mode="popLayout">
-          <Grid container spacing={2.5}>
+          <Grid container spacing={2.5} sx={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
             {products.map((product, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
                 <ProductCard product={product} index={index} />
@@ -967,9 +983,12 @@ function Products() {
         </AnimatePresence>
       )}
 
-      {/* Pagination component */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            Page {page} sur {totalPages} — {totalCount} produit{totalCount !== 1 ? 's' : ''}
+          </Typography>
           <Pagination
             count={totalPages}
             page={page}
@@ -979,12 +998,13 @@ function Products() {
             showFirstButton
             showLastButton
             shape="rounded"
+            disabled={loading}
           />
         </Box>
       )}
 
       {/* Footer Summary */}
-      {products.length > 0 && (
+      {products.length > 0 && totalPages <= 1 && (
         <Paper
           elevation={0}
           sx={{

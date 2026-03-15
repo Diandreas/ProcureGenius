@@ -14,6 +14,8 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+PATIENTS_REPORT_EMAILS = 'contact@centrejulianna.com,centrejulianna@gmail.com'
+
 
 @shared_task(name='analytics.send_weekly_reports')
 def send_weekly_reports():
@@ -458,6 +460,31 @@ def _send_via_org_smtp(org, recipient_email, subject, html_content):
         logger.info(f"Weekly report sent to {recipient_email} via org SMTP")
     except Exception as e:
         logger.error(f"Failed to send weekly report to {recipient_email}: {e}")
+
+
+@shared_task(name='analytics.export_weekly_patients_sheet')
+def export_weekly_patients_sheet():
+    """Export la liste patients en Excel et l'envoie chaque lundi à 7h30."""
+    import subprocess
+    import sys
+    from apps.accounts.models import Organization
+
+    org = Organization.objects.first()
+    if not org:
+        logger.error("export_weekly_patients_sheet: aucune organisation trouvée")
+        return
+
+    try:
+        result = subprocess.run(
+            [sys.executable, 'manage.py', 'export_patients_sheet', '--email', PATIENTS_REPORT_EMAILS],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            logger.info(f"export_weekly_patients_sheet: succès — {result.stdout.strip().splitlines()[-1]}")
+        else:
+            logger.error(f"export_weekly_patients_sheet: erreur — {result.stderr}")
+    except Exception as e:
+        logger.error(f"export_weekly_patients_sheet: exception — {e}")
 
 
 # Lazy imports for aggregate functions

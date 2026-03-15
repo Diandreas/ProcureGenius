@@ -21,6 +21,11 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=7, minute=0, day_of_week=1),  # Monday 7h
         'options': {'queue': 'reports'},
     },
+    'export-weekly-patients-sheet': {
+        'task': 'analytics.export_weekly_patients_sheet',
+        'schedule': crontab(hour=7, minute=30, day_of_week=1),  # Monday 7h30
+        'options': {'queue': 'reports'},
+    },
     'check-batch-expiry-alerts': {
         'task': 'analytics.check_batch_expiry_alerts',
         'schedule': crontab(hour=8, minute=0),  # Daily 8h

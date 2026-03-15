@@ -108,6 +108,21 @@ function InvoiceForm() {
     payment_method: 'cash' // Default to cash
   });
 
+  // Génère titre et description automatiquement à partir des items (seulement en création)
+  const autoUpdateTitleDescription = (updatedItems) => {
+    if (isEdit) return;
+    if (updatedItems.length === 0) {
+      setFormData(prev => ({ ...prev, title: '', description: '' }));
+      return;
+    }
+    const names = [...new Set(updatedItems.map(i => i.description).filter(Boolean))];
+    const title = names.slice(0, 3).join(', ') + (names.length > 3 ? ` (+${names.length - 3})` : '');
+    const description = updatedItems
+      .map(i => `${i.quantity} × ${i.description}`)
+      .join('\n');
+    setFormData(prev => ({ ...prev, title, description }));
+  };
+
   const PAYMENT_METHODS = [
     { value: 'cash', label: 'Espèces' },
     { value: 'mobile_money', label: 'Mobile Money' }
@@ -250,14 +265,17 @@ function InvoiceForm() {
       total_price: newItem.quantity * newItem.unit_price,
     };
 
+    let updatedItems;
     if (editingItemIndex >= 0) {
-      const updatedItems = [...items];
+      updatedItems = [...items];
       updatedItems[editingItemIndex] = item;
       setItems(updatedItems);
       setEditingItemIndex(-1);
     } else {
-      setItems(prev => [...prev, item]);
+      updatedItems = [...items, item];
+      setItems(updatedItems);
     }
+    autoUpdateTitleDescription(updatedItems);
 
     setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, unit_of_measure: 'piece' });
     setItemDialogOpen(false);
@@ -271,7 +289,9 @@ function InvoiceForm() {
   };
 
   const handleDeleteItem = (index) => {
-    setItems(prev => prev.filter((_, i) => i !== index));
+    const updatedItems = items.filter((_, i) => i !== index);
+    setItems(updatedItems);
+    autoUpdateTitleDescription(updatedItems);
   };
 
   const handleProductSelect = (product) => {

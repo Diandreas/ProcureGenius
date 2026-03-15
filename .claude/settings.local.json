@@ -138,7 +138,9 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__fill",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages"
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
+      "Read(//d/project/BFMa/ProcureGenius/apps/invoicing/**)",
+      "Read(//d/project/BFMa/ProcureGenius/apps/api/**)"
     ],
     "deny": [],
     "ask": [],
