@@ -338,7 +338,7 @@ class Product(models.Model):
         batch_stock = self.batches.filter(
             status__in=['available', 'opened']
         ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
-        return max(self.stock_quantity, batch_stock)
+        return self.stock_quantity + batch_stock
 
     @property
     def is_low_stock(self):

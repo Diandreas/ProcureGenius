@@ -5,12 +5,38 @@ Provides detailed analytics for stock management, reorder quantities, and risk a
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When
+from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When, OuterRef, Subquery, IntegerField, ExpressionWrapper
 from django.db.models.functions import TruncDate, Coalesce
 from datetime import date, timedelta, datetime
 from apps.invoicing.models import Product, ProductBatch, StockMovement, ProductCategory
 from apps.analytics.wilson_service import get_wilson_analysis, calculate_eoq, calculate_reorder_point, calculate_product_score
 from apps.analytics.predictive_restock import get_all_predictions
+
+
+def _batch_stock_subquery():
+    """
+    Subquery: somme des quantity_remaining des lots actifs (available/opened) pour chaque produit.
+    Utiliser avec Coalesce(..., 0) pour éviter NULL.
+    """
+    return ProductBatch.objects.filter(
+        product=OuterRef('pk'),
+        status__in=['available', 'opened'],
+        quantity_remaining__gt=0
+    ).values('product').annotate(
+        total=Sum('quantity_remaining')
+    ).values('total')
+
+
+def annotate_effective_stock(queryset):
+    """
+    Annote un queryset Product avec effective_stock = stock_quantity + stock dans les lots actifs.
+    Source de vérité pour les stats de stock.
+    """
+    return queryset.annotate(
+        effective_stock=F('stock_quantity') + Coalesce(
+            Subquery(_batch_stock_subquery(), output_field=IntegerField()), 0
+        )
+    )
 
 
 class ReorderQuantitiesView(APIView):
@@ -23,13 +49,15 @@ class ReorderQuantitiesView(APIView):
     def get(self, request):
         organization = request.user.organization
 
-        # Get products below threshold (PHYSICAL ONLY)
-        low_stock_products = Product.objects.filter(
-            organization=organization,
-            product_type='physical',
-            stock_quantity__lte=F('low_stock_threshold'),
-            is_active=True
-        )
+        # Get products below threshold using effective stock (stock_quantity + lots actifs)
+        low_stock_products = annotate_effective_stock(
+            Product.objects.filter(
+                organization=organization,
+                product_type='physical',
+                is_active=True,
+                low_stock_threshold__gt=0
+            )
+        ).filter(effective_stock__lte=F('low_stock_threshold'))
 
         results = []
         total_recommended_value = 0
@@ -47,7 +75,8 @@ class ReorderQuantitiesView(APIView):
             usage = abs(usage) if usage else 0
 
             avg_daily_usage = usage / 30 if usage > 0 else 0
-            days_until_stockout = (product.stock_quantity / avg_daily_usage) if avg_daily_usage > 0 else 999
+            effective_stock = product.effective_stock
+            days_until_stockout = (effective_stock / avg_daily_usage) if avg_daily_usage > 0 else 999
 
             # Recommended order: 60 days supply (2 months)
             recommended_qty = int(avg_daily_usage * 60) if avg_daily_usage > 0 else product.low_stock_threshold * 2
@@ -65,7 +94,7 @@ class ReorderQuantitiesView(APIView):
                 'product_id': str(product.id),
                 'product_name': product.name,
                 'product_code': product.code or 'N/A',
-                'current_stock': float(product.stock_quantity),
+                'current_stock': float(effective_stock),
                 'low_stock_threshold': float(product.low_stock_threshold) if product.low_stock_threshold else 0,
                 'avg_daily_usage': round(avg_daily_usage, 2),
                 'days_until_stockout': int(days_until_stockout) if days_until_stockout < 999 else None,
@@ -410,20 +439,26 @@ class InventoryDashboardStatsView(APIView):
             start_date = today - timedelta(days=30)
             end_date = today
 
-        # Low stock products count (current state - not affected by date)
-        low_stock_count = Product.objects.filter(
-            organization=organization,
-            product_type='physical',
-            stock_quantity__lte=F('low_stock_threshold'),
-            is_active=True
+        # Base queryset annotated with effective stock (stock_quantity + lots actifs)
+        base_products = annotate_effective_stock(
+            Product.objects.filter(
+                organization=organization,
+                product_type='physical',
+                is_active=True
+            )
+        )
+
+        # Low stock products (effective_stock > 0 ET <= threshold, threshold > 0)
+        low_stock_count = base_products.filter(
+            effective_stock__gt=0,
+            effective_stock__lte=F('low_stock_threshold'),
+            low_stock_threshold__gt=0
         ).count()
 
-        # Products needing reorder (very low stock)
-        reorder_count = Product.objects.filter(
-            organization=organization,
-            product_type='physical',
-            stock_quantity__lte=F('low_stock_threshold') * 0.5,  # Half of threshold
-            is_active=True
+        # Products needing reorder (effective_stock <= half threshold)
+        reorder_count = base_products.filter(
+            effective_stock__lte=F('low_stock_threshold') * 0.5,
+            low_stock_threshold__gt=0
         ).count()
 
         # Stock movements in period
@@ -439,22 +474,13 @@ class InventoryDashboardStatsView(APIView):
             created_at__date=today
         ).count()
 
-        # Total inventory value (current state)
-        inventory_value = Product.objects.filter(
-            organization=organization,
-            product_type='physical',
-            is_active=True
-        ).aggregate(
-            value=Sum(F('stock_quantity') * F('cost_price'))
+        # Total inventory value using effective stock
+        inventory_value = base_products.aggregate(
+            value=Sum(F('effective_stock') * F('cost_price'))
         )['value'] or 0
 
-        # Out of stock products (current state)
-        out_of_stock = Product.objects.filter(
-            organization=organization,
-            product_type='physical',
-            stock_quantity=0,
-            is_active=True
-        ).count()
+        # Out of stock products (effective_stock == 0)
+        out_of_stock = base_products.filter(effective_stock=0).count()
 
         return Response({
             'low_stock_count': low_stock_count,
@@ -857,7 +883,7 @@ class ConsumptionStatsView(APIView):
             'avg_per_period': round(avg_consumption, 1),
             'consumption_trend': trend,
             'breakdown': breakdown_data[-periods_count:],
-            'current_stock': product.stock_quantity,
+            'current_stock': product.total_stock,
         })
 
 
@@ -879,21 +905,23 @@ class UnifiedDashboardView(APIView):
             start_date = today - timedelta(days=30)
             end_date = today
 
-        # Inventory stats
-        low_stock_count = Product.objects.filter(
-            organization=organization, product_type='physical',
-            stock_quantity__lte=F('low_stock_threshold'), is_active=True
+        # Inventory stats (using effective stock = stock_quantity + lots actifs)
+        base_products = annotate_effective_stock(
+            Product.objects.filter(
+                organization=organization, product_type='physical', is_active=True
+            )
+        )
+
+        low_stock_count = base_products.filter(
+            effective_stock__gt=0,
+            effective_stock__lte=F('low_stock_threshold'),
+            low_stock_threshold__gt=0
         ).count()
 
-        out_of_stock = Product.objects.filter(
-            organization=organization, product_type='physical',
-            stock_quantity=0, is_active=True
-        ).count()
+        out_of_stock = base_products.filter(effective_stock=0).count()
 
-        inventory_value = Product.objects.filter(
-            organization=organization, product_type='physical', is_active=True
-        ).aggregate(
-            value=Sum(F('stock_quantity') * F('cost_price'))
+        inventory_value = base_products.aggregate(
+            value=Sum(F('effective_stock') * F('cost_price'))
         )['value'] or 0
 
         movements_today = StockMovement.objects.filter(
