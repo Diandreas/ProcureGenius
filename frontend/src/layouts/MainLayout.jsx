@@ -133,6 +133,7 @@ function MainLayout() {
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
     { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },
     { text: 'Bilans', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/panels', moduleId: 'laboratory', isCore: false },
+    { text: 'Prescripteurs', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/prescribers', moduleId: 'laboratory', isCore: false },
     { text: 'Réactifs Ouverts', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/opened-reagents', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },

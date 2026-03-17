@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -348,6 +348,35 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
         return internal_data
 
 
+class PrescriberSerializer(serializers.ModelSerializer):
+    """Full serializer for Prescriber (admin CRUD)"""
+    full_name = serializers.CharField(read_only=True)
+    orders_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Prescriber
+        fields = [
+            'id', 'first_name', 'last_name', 'full_name', 'specialty',
+            'phone', 'email', 'clinic_name', 'address',
+            'commission_rate', 'is_active', 'notes',
+            'orders_count', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_orders_count(self, obj):
+        return obj.lab_orders.count()
+
+
+class PrescriberListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for dropdowns and lists"""
+    full_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Prescriber
+        fields = ['id', 'full_name', 'first_name', 'last_name',
+                  'specialty', 'clinic_name', 'commission_rate', 'is_active']
+
+
 class LabOrderSerializer(serializers.ModelSerializer):
     """Full serializer for LabOrder"""
     items = LabOrderItemSerializer(many=True, read_only=True)
@@ -363,6 +392,11 @@ class LabOrderSerializer(serializers.ModelSerializer):
     all_results_entered = serializers.BooleanField(read_only=True)
     lab_invoice = serializers.SerializerMethodField()
     diagnosed_by_name = serializers.SerializerMethodField()
+    prescriber_name = serializers.SerializerMethodField()
+    prescriber_commission_rate = serializers.DecimalField(
+        source='prescriber.commission_rate', max_digits=5, decimal_places=2,
+        read_only=True, default=None
+    )
 
     class Meta:
         model = LabOrder
@@ -384,6 +418,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'clinical_notes',
             'ordered_by',
             'ordered_by_name',
+            'prescriber',
+            'prescriber_name',
+            'prescriber_commission_rate',
             'sample_collected_at',
             'sample_collected_by',
             'results_completed_at',
@@ -436,6 +473,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
                 'total_amount': str(obj.lab_invoice.total_amount)
             }
         return None
+
+    def get_prescriber_name(self, obj):
+        return str(obj.prescriber) if obj.prescriber else None
 
 
 class LabOrderListItemSerializer(serializers.ModelSerializer):
@@ -502,6 +542,8 @@ class LabOrderCreateSerializer(serializers.Serializer):
         child=serializers.DictField(),
         required=False
     )
+
+    prescriber_id = serializers.UUIDField(required=False, allow_null=True)
 
     priority = serializers.ChoiceField(
         choices=LabOrder.PRIORITY_CHOICES,

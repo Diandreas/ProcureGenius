@@ -422,7 +422,15 @@ class LabOrder(models.Model):
         related_name='ordered_lab_tests',
         verbose_name=_("Prescrit par")
     )
-    
+    prescriber = models.ForeignKey(
+        'Prescriber',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lab_orders',
+        verbose_name=_("Prescripteur externe")
+    )
+
     # Sample collection tracking
     sample_collected_at = models.DateTimeField(
         null=True,
@@ -1076,3 +1084,48 @@ class LabTestPanel(models.Model):
     @property
     def net_price(self):
         return self.price - self.discount
+
+
+class Prescriber(models.Model):
+    """
+    External prescriber (doctor/referrer) who sends patients to the lab.
+    Earns a commission percentage on lab invoices.
+    Only admin can create/modify. Others can only view.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='prescribers',
+        verbose_name=_("Organisation")
+    )
+    first_name = models.CharField(max_length=100, verbose_name=_("Prénom"))
+    last_name = models.CharField(max_length=100, verbose_name=_("Nom"))
+    specialty = models.CharField(max_length=100, blank=True, verbose_name=_("Spécialité"))
+    phone = models.CharField(max_length=20, blank=True, verbose_name=_("Téléphone"))
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    clinic_name = models.CharField(max_length=200, blank=True, verbose_name=_("Cabinet / Structure"))
+    address = models.TextField(blank=True, verbose_name=_("Adresse"))
+    commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Taux de commission (%)"),
+        help_text=_("Pourcentage appliqué sur les factures de labo")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Prescripteur")
+        verbose_name_plural = _("Prescripteurs")
+        ordering = ['last_name', 'first_name']
+
+    def __str__(self):
+        return self.full_name
+
+    @property
+    def full_name(self):
+        return f"Dr {self.last_name} {self.first_name}"

@@ -9,7 +9,7 @@ from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, Ch
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.utils import timezone
 from datetime import date, timedelta, datetime
-from apps.laboratory.models import LabOrder, LabOrderItem
+from apps.laboratory.models import LabOrder, LabOrderItem, Prescriber
 from apps.consultations.models import Consultation
 from apps.accounts.models import Client
 from apps.invoicing.models import Invoice, InvoiceItem
@@ -389,42 +389,49 @@ class HealthcareDashboardStatsView(APIView):
             order_date__date__lte=end_date
         )
 
-        # Today's exams
+        # Today's exams (using order_date__date)
         exams_today = LabOrder.objects.filter(
             organization=organization,
             order_date__date=today
         ).count()
 
-        # This week's exams
+        # This week's exams (using __date__gte to compare dates correctly)
         week_ago = today - timedelta(days=7)
         exams_week = LabOrder.objects.filter(
             organization=organization,
-            order_date__gte=week_ago
+            order_date__date__gte=week_ago
         ).count()
 
         # Exams in selected period
         exams_period = range_queryset.count()
 
-        # Pending results (all time)
-        pending_results = LabOrder.objects.filter(
-            organization=organization,
+        # Pending results DANS la période (pas all-time)
+        pending_results = range_queryset.filter(
             status__in=['pending', 'sample_collected', 'received', 'analyzing']
         ).count()
 
         # Completed exams in period
         completed_period = range_queryset.filter(
-            status__in=['results_entered', 'verified', 'results_delivered']
+            status__in=['completed', 'results_entered', 'verified', 'results_delivered', 'results_ready']
         ).count()
 
-        # Average exam amount in period
-        avg_amount = range_queryset.aggregate(avg=Avg('total_price'))['avg']
+        # Average exam amount — basé sur les factures labo payées dans la période
+        from apps.invoicing.models import Invoice as InvoiceModel
+        avg_amount_agg = InvoiceModel.objects.filter(
+            created_by__organization=organization,
+            invoice_type='healthcare_laboratory',
+            status='paid',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        ).aggregate(avg=Avg('total_amount'))
+        avg_amount = avg_amount_agg['avg']
 
         return Response({
             'exams_today': exams_today,
             'exams_week': exams_week,
-            'exams_month': exams_period,  # Renamed but kept for compatibility
+            'exams_month': exams_period,
             'pending_results': pending_results,
-            'completed_month': completed_period,  # Renamed but kept for compatibility
+            'completed_month': completed_period,
             'avg_exam_amount': float(avg_amount) if avg_amount else 0,
             'period_start': start_date.isoformat(),
             'period_end': end_date.isoformat()
@@ -466,247 +473,221 @@ class ActivityIndicatorsView(APIView):
         if end_date_str:
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-        # Import PatientVisit for new patient counting
         from apps.patients.models import PatientVisit
-        from apps.accounts.models import Client
+        from apps.invoicing.models import InvoiceItem, Invoice as InvoiceModel
 
         # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
 
-        # N°1: Nombre de consultations par période
+        # N°1: Consultations TERMINÉES sur la période (status='completed' uniquement)
         consultations_queryset = Consultation.objects.filter(
             organization=organization,
             consultation_date__date__gte=start_date,
-            consultation_date__date__lte=end_date
+            consultation_date__date__lte=end_date,
+            status='completed'
         )
         num_consultations = consultations_queryset.count()
 
-        # Timeline of consultations
-        if period == 'day':
-            trunc_func = TruncDate
-        elif period == 'week':
-            trunc_func = TruncDate  # Daily within week
-        else:
-            trunc_func = TruncDate  # Daily within month
-
+        # Timeline des consultations terminées
         consultations_timeline = consultations_queryset.annotate(
-            period_date=trunc_func('consultation_date')
+            period_date=TruncDate('consultation_date')
         ).values('period_date').annotate(
             count=Count('id')
         ).order_by('period_date')
 
-        # N°2: Nombre de nouveaux patients (première visite dans la période)
-        # Get patients who had their first visit in this period
-        new_patients_ids = PatientVisit.objects.filter(
+        # N°2: Nouveaux patients = patients dont la TOUTE PREMIÈRE visite (all-time) tombe dans la période
+        # On cherche les patients dont la date de 1ère visite est dans [start_date, end_date]
+        from django.db.models import Subquery, OuterRef
+        first_visit_dates = PatientVisit.objects.filter(
+            organization=organization,
+            patient=OuterRef('patient')
+        ).order_by('arrived_at').values('arrived_at')[:1]
+
+        new_patients_qs = PatientVisit.objects.filter(
             organization=organization,
             arrived_at__date__gte=start_date,
-            arrived_at__date__lte=end_date
-        ).values('patient').annotate(
-            first_visit=Min('arrived_at')
-        ).filter(
-            first_visit__date__gte=start_date,
-            first_visit__date__lte=end_date
-        ).values_list('patient', flat=True)
-
-        new_patients_count = len(new_patients_ids)
-
-        # Timeline of new patients by their first visit date
-        new_patients_timeline = PatientVisit.objects.filter(
-            organization=organization,
-            patient__in=new_patients_ids,
-            arrived_at__date__gte=start_date,
-            arrived_at__date__lte=end_date
+            arrived_at__date__lte=end_date,
         ).annotate(
+            first_ever=Subquery(first_visit_dates)
+        ).filter(
+            arrived_at=F('first_ever')
+        ).values('patient').distinct()
+
+        new_patients_count = new_patients_qs.count()
+
+        # Timeline des nouveaux patients
+        new_patients_timeline = new_patients_qs.annotate(
             period_date=TruncDate('arrived_at')
         ).values('period_date').annotate(
             count=Count('patient', distinct=True)
         ).order_by('period_date')
 
-        # N°3: Nombre d'actes médicaux et paramédicaux
-        # Count lab orders (not individual items to avoid inflating numbers)
+        # N°3: Actes de laboratoire sur la période
         lab_orders_count = LabOrder.objects.filter(
             organization=organization,
             order_date__date__gte=start_date,
             order_date__date__lte=end_date
         ).count()
 
-        # Count nursing care/procedures from invoice items with care category
-        from apps.invoicing.models import InvoiceItem, ProductCategory
+        # Actes pharmacie (dispensings) sur la période
+        try:
+            from apps.pharmacy.models import PharmacyDispensing
+            pharmacy_count = PharmacyDispensing.objects.filter(
+                organization=organization,
+                dispensed_at__date__gte=start_date,
+                dispensed_at__date__lte=end_date,
+                status='dispensed'
+            ).count()
+        except Exception:
+            pharmacy_count = 0
 
-        # Get categories that represent nursing care
-        care_categories = ProductCategory.objects.filter(
-            organization=organization,
-            name__iregex=r'(soin|pansement|vaccination|injection|perfusion)'
-        ).values_list('id', flat=True)
+        total_medical_acts = num_consultations + lab_orders_count + pharmacy_count
 
-        # Count care services from invoices
-        nursing_care_count = InvoiceItem.objects.filter(
-            invoice__organization=organization,
-            invoice__created_at__date__gte=start_date,
-            invoice__created_at__date__lte=end_date,
-            invoice__invoice_type='healthcare_consultation',
-            product__category__in=care_categories
-        ).count()
+        # ===== INDICATEURS DE PERFORMANCE =====
 
-        # Total medical acts: consultations + lab orders + nursing care
-        total_medical_acts = num_consultations + lab_orders_count + nursing_care_count
-
-        # ===== INDICATEURS DE PERFORMANCE ET D'EFFICIENCE =====
-
-        # N°4: Temps d'attente moyen avant consultation (arrivée/création → début consultation)
-        # Calculate from Consultation records. Fallback to created_at if visit is missing.
+        # N°4: Temps d'attente moyen — UNIQUEMENT consultations avec visite liée ayant arrived_at
+        # (pas de fallback biaisé sur created_at)
         consults_with_wait = Consultation.objects.filter(
             organization=organization,
             consultation_date__date__gte=start_date,
             consultation_date__date__lte=end_date,
-            started_at__isnull=False
-        ).select_related('visit')
+            status='completed',
+            started_at__isnull=False,
+            visit__arrived_at__isnull=False
+        ).select_related('visit').only('started_at', 'visit__arrived_at')
 
         wait_times = []
         for c in consults_with_wait:
-            # Point de départ: Arrivée (si visite liée) ou Création (si pas de visite)
-            start_point = None
-            if c.visit and c.visit.arrived_at:
-                start_point = c.visit.arrived_at
-            else:
-                start_point = c.created_at
-                
-            if start_point and c.started_at:
-                delta = c.started_at - start_point
-                # On s'assure que le délai est positif (en minutes)
-                wait_times.append(max(0, int(delta.total_seconds() / 60)))
+            if c.visit and c.visit.arrived_at and c.started_at:
+                delta_minutes = (c.started_at - c.visit.arrived_at).total_seconds() / 60
+                if 0 <= delta_minutes <= 480:  # garde-fou: max 8h, ignore valeurs aberrantes
+                    wait_times.append(delta_minutes)
 
         avg_wait_time = sum(wait_times) / len(wait_times) if wait_times else 0
 
-        # N°5: Durée moyenne d'une consultation (started_at → ended_at)
+        # N°5: Durée moyenne de consultation (started_at → ended_at) — consultations terminées
         consultations_with_duration = consultations_queryset.filter(
             started_at__isnull=False,
             ended_at__isnull=False
         )
-
         consultation_durations = []
         for consult in consultations_with_duration:
-            if consult.duration_minutes is not None:
+            if consult.duration_minutes is not None and 0 < consult.duration_minutes <= 300:
                 consultation_durations.append(consult.duration_minutes)
 
         avg_consultation_duration = sum(consultation_durations) / len(consultation_durations) if consultation_durations else 0
 
-        # ===== INDICATEURS FINANCIERS =====
+        # ===== INDICATEURS FINANCIERS — SOURCE UNIQUE : factures PAYÉES =====
+        # Le CA est toujours calculé depuis Invoice.status='paid' pour cohérence
 
-        # N°6: Chiffre d'affaires mensuel
-        # Revenue from consultations
-        consultation_revenue = consultations_queryset.aggregate(
-            total=Sum('fee')
-        )['total'] or 0
+        paid_invoices = InvoiceModel.objects.filter(
+            created_by__organization=organization,
+            status='paid',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        ).exclude(invoice_type='credit_note')
 
-        # Revenue from lab tests
-        lab_revenue = LabOrder.objects.filter(
-            organization=organization,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date
-        ).aggregate(
-            total=Sum('total_price')
-        )['total'] or 0
+        # CA total toutes activités confondues
+        total_revenue_agg = paid_invoices.aggregate(total=Sum('total_amount'))
+        total_revenue = float(total_revenue_agg['total'] or 0)
 
-        total_revenue = float(consultation_revenue) + float(lab_revenue)
+        # CA consultation (factures healthcare_consultation payées)
+        consultation_revenue = float(paid_invoices.filter(
+            invoice_type='healthcare_consultation'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # Revenue timeline
-        consultation_revenue_timeline = consultations_queryset.annotate(
-            period_date=TruncDate('consultation_date')
-        ).values('period_date').annotate(
-            revenue=Sum('fee')
-        ).order_by('period_date')
+        # CA laboratoire (factures healthcare_laboratory payées)
+        lab_revenue = float(paid_invoices.filter(
+            invoice_type='healthcare_laboratory'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        lab_revenue_timeline = LabOrder.objects.filter(
-            organization=organization,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date
-        ).annotate(
-            period_date=TruncDate('order_date')
-        ).values('period_date').annotate(
-            revenue=Sum('total_price')
-        ).order_by('period_date')
+        # CA pharmacie (factures healthcare_pharmacy payées)
+        pharmacy_revenue = float(paid_invoices.filter(
+            invoice_type='healthcare_pharmacy'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # Combine revenue timelines
-        revenue_by_date = {}
-        for item in consultation_revenue_timeline:
-            date_key = item['period_date']
-            revenue_by_date[date_key] = revenue_by_date.get(date_key, 0) + float(item['revenue'] or 0)
+        # CA autres (standard) — soins, chirurgie, hospitalisation
+        other_revenue = float(paid_invoices.filter(
+            invoice_type='standard'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        for item in lab_revenue_timeline:
-            date_key = item['period_date']
-            revenue_by_date[date_key] = revenue_by_date.get(date_key, 0) + float(item['revenue'] or 0)
+        # Moyennes par acte
+        avg_consultation_cost = consultation_revenue / num_consultations if num_consultations > 0 else 0
+        avg_lab_cost = lab_revenue / lab_orders_count if lab_orders_count > 0 else 0
 
-        revenue_timeline = [
-            {'date': date_key.strftime('%Y-%m-%d'), 'revenue': revenue}
-            for date_key, revenue in sorted(revenue_by_date.items())
-        ]
-
-        # N°7: Coût moyen par consultation/acte
-        avg_consultation_cost = consultations_queryset.aggregate(
-            avg=Avg('fee')
-        )['avg'] or 0
-
-        avg_lab_cost = LabOrder.objects.filter(
-            organization=organization,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date
-        ).aggregate(
-            avg=Avg('total_price')
-        )['avg'] or 0
-
-        # Overall average cost per act
         total_acts_count = num_consultations + lab_orders_count
         avg_cost_per_act = total_revenue / total_acts_count if total_acts_count > 0 else 0
+
+        # Timeline du CA (basée sur les factures payées)
+        revenue_timeline_qs = paid_invoices.annotate(
+            period_date=TruncDate('created_at')
+        ).values('period_date').annotate(
+            revenue=Sum('total_amount')
+        ).order_by('period_date')
+
+        revenue_timeline = [
+            {'date': item['period_date'].strftime('%Y-%m-%d'), 'revenue': float(item['revenue'] or 0)}
+            for item in revenue_timeline_qs
+        ]
+
+        # Patients uniques sur la période (avec consultation ou examen)
+        consult_patient_ids = set(consultations_queryset.values_list('patient_id', flat=True))
+        lab_patient_ids = set(LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date
+        ).values_list('patient_id', flat=True))
+        total_patients = len(consult_patient_ids | lab_patient_ids)
+        avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
 
         return Response({
             'period': period,
             'start_date': start_date.isoformat(),
             'end_date': end_date.isoformat(),
 
-            # Indicateurs d'Activité et de Volume
             'activity_volume': {
                 'consultations': {
                     'total': num_consultations,
                     'timeline': [
-                        {
-                            'date': item['period_date'].strftime('%Y-%m-%d'),
-                            'count': item['count']
-                        } for item in consultations_timeline
+                        {'date': item['period_date'].strftime('%Y-%m-%d'), 'count': item['count']}
+                        for item in consultations_timeline
                     ]
                 },
                 'new_patients': {
                     'total': new_patients_count,
                     'timeline': [
-                        {
-                            'date': item['period_date'].strftime('%Y-%m-%d'),
-                            'count': item['count']
-                        } for item in new_patients_timeline
+                        {'date': item['period_date'].strftime('%Y-%m-%d'), 'count': item['count']}
+                        for item in new_patients_timeline
                     ]
                 },
                 'medical_acts': {
                     'total': total_medical_acts,
                     'consultations': num_consultations,
                     'lab_orders': lab_orders_count,
-                    'nursing_care': nursing_care_count
+                    'pharmacy': pharmacy_count,
                 }
             },
 
-            # Indicateurs de Performance et d'Efficience
             'performance': {
                 'avg_wait_time_minutes': round(avg_wait_time, 1),
                 'avg_consultation_duration_minutes': round(avg_consultation_duration, 1),
                 'total_visits_tracked': len(wait_times)
             },
 
-            # Indicateurs Financiers
             'financial': {
                 'total_revenue': round(total_revenue, 2),
-                'consultation_revenue': round(float(consultation_revenue), 2),
-                'lab_revenue': round(float(lab_revenue), 2),
-                'avg_consultation_cost': round(float(avg_consultation_cost), 2),
-                'avg_lab_cost': round(float(avg_lab_cost), 2),
+                'consultation_revenue': round(consultation_revenue, 2),
+                'lab_revenue': round(lab_revenue, 2),
+                'pharmacy_revenue': round(pharmacy_revenue, 2),
+                'other_revenue': round(other_revenue, 2),
+                'avg_consultation_cost': round(avg_consultation_cost, 2),
+                'avg_lab_cost': round(avg_lab_cost, 2),
                 'avg_cost_per_act': round(avg_cost_per_act, 2),
+                'avg_cost_per_patient': avg_cost_per_patient,
                 'revenue_timeline': revenue_timeline
+            },
+
+            'patients': {
+                'total': total_patients,
             }
         })
 
@@ -726,16 +707,16 @@ class EnhancedRevenueAnalyticsView(APIView):
         end_date = request.GET.get('end_date')
         invoice_type = request.GET.get('invoice_type')  # optional filter
 
-        # Base queryset: ONLY paid invoices
+        # Base queryset: ONLY paid invoices — exclude credit notes
         invoices = Invoice.objects.filter(
             created_by__organization=organization,
             status='paid'
-        )
+        ).exclude(invoice_type='credit_note')
 
         if start_date:
-            invoices = invoices.filter(created_at__gte=start_date)
+            invoices = invoices.filter(created_at__date__gte=start_date)
         if end_date:
-            invoices = invoices.filter(created_at__lte=end_date)
+            invoices = invoices.filter(created_at__date__lte=end_date)
         if invoice_type:
             invoices = invoices.filter(invoice_type=invoice_type)
 
@@ -811,12 +792,13 @@ class ServiceRevenueAnalyticsView(APIView):
         period = request.GET.get('period', 'month')
         service_id = request.GET.get('service_id')
         category_id = request.GET.get('category_id')
+        invoice_type_filter = request.GET.get('invoice_type')  # ex: 'healthcare_laboratory'
 
-        # Base queryset: invoice items from paid invoices
+        # Base queryset: invoice items from paid invoices (hors avoirs)
         queryset = InvoiceItem.objects.filter(
             invoice__created_by__organization=organization,
             invoice__status='paid'
-        )
+        ).exclude(invoice__invoice_type='credit_note')
 
         if start_date:
             queryset = queryset.filter(invoice__created_at__date__gte=start_date)
@@ -826,6 +808,8 @@ class ServiceRevenueAnalyticsView(APIView):
             queryset = queryset.filter(product_id=service_id)
         if category_id:
             queryset = queryset.filter(product__category_id=category_id)
+        if invoice_type_filter:
+            queryset = queryset.filter(invoice__invoice_type=invoice_type_filter)
 
         # === Revenue by service/product ===
         by_service = queryset.values(
@@ -1066,4 +1050,178 @@ class LabOrdersStatusWidgetView(APIView):
                     'by_test_type': by_test_type,
                 }
             }
+        })
+
+
+class LabStageTimingView(APIView):
+    """
+    Average time spent at each stage of a lab order lifecycle:
+      - En attente  : order_date → sample_collected_at
+      - Prélevé     : sample_collected_at → results_completed_at
+      - Résultats   : results_completed_at → results_verified_at
+      - Total       : order_date → results_verified_at  (fully completed orders only)
+    Query params: start_date, end_date
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _avg_hours(self, queryset, field_start, field_end):
+        """Return average hours between two DateTimeField columns."""
+        durations = []
+        for obj in queryset:
+            t_start = getattr(obj, field_start)
+            t_end = getattr(obj, field_end)
+            if t_start and t_end and t_end >= t_start:
+                durations.append((t_end - t_start).total_seconds() / 3600)
+        if not durations:
+            return None, 0
+        return round(sum(durations) / len(durations), 2), len(durations)
+
+    def get(self, request):
+        organization = request.user.organization
+        today = date.today()
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else today - timedelta(days=30)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+
+        base_qs = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+        )
+
+        # Stage 1: En attente → Prélevé (order_date → sample_collected_at)
+        stage1_qs = base_qs.filter(sample_collected_at__isnull=False)
+        avg_pending_to_collected, count1 = self._avg_hours(stage1_qs, 'order_date', 'sample_collected_at')
+
+        # Stage 2: Prélevé → Résultats saisis (sample_collected_at → results_completed_at)
+        stage2_qs = base_qs.filter(sample_collected_at__isnull=False, results_completed_at__isnull=False)
+        avg_collected_to_results, count2 = self._avg_hours(stage2_qs, 'sample_collected_at', 'results_completed_at')
+
+        # Stage 3: Résultats saisis → Validé (results_completed_at → results_verified_at)
+        stage3_qs = base_qs.filter(results_completed_at__isnull=False, results_verified_at__isnull=False)
+        avg_results_to_validated, count3 = self._avg_hours(stage3_qs, 'results_completed_at', 'results_verified_at')
+
+        # Total turnaround: order_date → results_verified_at (fully completed orders)
+        fully_done_qs = base_qs.filter(results_verified_at__isnull=False)
+        avg_total_turnaround, count_total = self._avg_hours(fully_done_qs, 'order_date', 'results_verified_at')
+
+        return Response({
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'total_orders': base_qs.count(),
+            'stages': [
+                {
+                    'key': 'pending_to_collected',
+                    'label': 'En attente → Prélevé',
+                    'avg_hours': avg_pending_to_collected,
+                    'count': count1,
+                },
+                {
+                    'key': 'collected_to_results',
+                    'label': 'Prélevé → Résultats saisis',
+                    'avg_hours': avg_collected_to_results,
+                    'count': count2,
+                },
+                {
+                    'key': 'results_to_validated',
+                    'label': 'Résultats saisis → Validé',
+                    'avg_hours': avg_results_to_validated,
+                    'count': count3,
+                },
+                {
+                    'key': 'total_turnaround',
+                    'label': 'Délai total (En attente → Validé)',
+                    'avg_hours': avg_total_turnaround,
+                    'count': count_total,
+                },
+            ]
+        })
+
+
+class PrescriberAnalyticsView(APIView):
+    """
+    GET /analytics/healthcare/prescribers/
+    Query params: start_date, end_date, period (day/week/month), prescriber_id
+    Returns per-prescriber stats: patient count, revenue, % share, commission amount
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from decimal import Decimal
+        organization = request.user.organization
+        period = request.GET.get('period', 'month')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        prescriber_id = request.GET.get('prescriber_id')
+
+        queryset = LabOrder.objects.filter(
+            organization=organization,
+            prescriber__isnull=False,
+        ).exclude(status='cancelled')
+
+        if start_date:
+            queryset = queryset.filter(order_date__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(order_date__date__lte=end_date)
+        if prescriber_id:
+            queryset = queryset.filter(prescriber_id=prescriber_id)
+
+        # Per-prescriber aggregation
+        by_prescriber_qs = queryset.values(
+            'prescriber__id',
+            'prescriber__first_name',
+            'prescriber__last_name',
+            'prescriber__clinic_name',
+            'prescriber__commission_rate',
+        ).annotate(
+            patient_count=Count('patient', distinct=True),
+            orders_count=Count('id'),
+            total_revenue=Sum('total_price'),
+        ).order_by('-orders_count')
+
+        # Grand total revenue for % share calculation
+        grand_total = queryset.aggregate(t=Sum('total_price'))['t'] or Decimal('0')
+
+        rows = []
+        for row in by_prescriber_qs:
+            revenue = row['total_revenue'] or Decimal('0')
+            rate = row['prescriber__commission_rate'] or Decimal('0')
+            commission_amount = (revenue * rate / Decimal('100')).quantize(Decimal('0.01'))
+            share_pct = float(revenue / grand_total * 100) if grand_total else 0
+            rows.append({
+                'prescriber_id': str(row['prescriber__id']),
+                'prescriber_name': f"Dr {row['prescriber__last_name']} {row['prescriber__first_name']}",
+                'clinic_name': row['prescriber__clinic_name'],
+                'commission_rate': float(row['prescriber__commission_rate'] or 0),
+                'patient_count': row['patient_count'],
+                'orders_count': row['orders_count'],
+                'total_revenue': float(revenue),
+                'commission_amount': float(commission_amount),
+                'revenue_share_pct': round(share_pct, 2),
+            })
+
+        # Timeline aggregated by period
+        trunc_map = {'day': TruncDate, 'week': TruncWeek, 'month': TruncMonth}
+        trunc_func = trunc_map.get(period, TruncMonth)
+        timeline = (
+            queryset
+            .annotate(period_date=trunc_func('order_date'))
+            .values('period_date')
+            .annotate(orders_count=Count('id'), revenue=Sum('total_price'))
+            .order_by('period_date')
+        )
+
+        return Response({
+            'period': period,
+            'grand_total_revenue': float(grand_total),
+            'by_prescriber': rows,
+            'timeline': [
+                {
+                    'date': t['period_date'].strftime('%Y-%m-%d') if t['period_date'] else None,
+                    'orders_count': t['orders_count'],
+                    'revenue': float(t['revenue'] or 0),
+                }
+                for t in timeline
+            ],
         })

@@ -917,36 +917,41 @@ class UnifiedDashboardView(APIView):
         # Healthcare stats
         try:
             from apps.laboratory.models import LabOrder
+            # Examens créés aujourd'hui (order_date, pas created_at)
             exams_today = LabOrder.objects.filter(
                 organization=organization,
-                created_at__date=today
+                order_date__date=today
             ).count()
+            # Résultats en attente sur la période sélectionnée uniquement
             pending_results = LabOrder.objects.filter(
                 organization=organization,
-                status='pending'
+                order_date__date__gte=start_date,
+                order_date__date__lte=end_date,
+                status__in=['pending', 'sample_collected', 'analyzing']
             ).count()
         except Exception:
             exams_today = 0
             pending_results = 0
 
-        # Consultation stats
+        # Consultation stats — consultations TERMINÉES aujourd'hui
         try:
             from apps.consultations.models import Consultation
             consultations_today = Consultation.objects.filter(
                 organization=organization,
-                created_at__date=today
+                consultation_date__date=today,
+                status='completed'
             ).count()
         except Exception:
             consultations_today = 0
 
-        # Revenue
+        # Revenue — factures payées (hors avoirs), toutes activités confondues
         from apps.invoicing.models import Invoice
         revenue = Invoice.objects.filter(
-            organization=organization,
+            created_by__organization=organization,
             status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date
-        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        ).exclude(invoice_type='credit_note').aggregate(total=Sum('total_amount'))['total'] or 0
 
         return Response({
             'overview': {

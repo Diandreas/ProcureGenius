@@ -54,4 +54,8 @@ urlpatterns = [
     # Bilans (Lab Test Panels)
     path('panels/', api.LabTestPanelListCreateView.as_view(), name='panel-list'),
     path('panels/<uuid:pk>/', api.LabTestPanelDetailView.as_view(), name='panel-detail'),
+
+    # Prescribers
+    path('prescribers/', api.PrescriberListCreateView.as_view(), name='prescriber-list'),
+    path('prescribers/<uuid:pk>/', api.PrescriberDetailView.as_view(), name='prescriber-detail'),
 ]

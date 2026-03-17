@@ -246,6 +246,32 @@ const laboratoryAPI = {
     deletePanel: async (id) => {
         await api.delete(`/healthcare/laboratory/panels/${id}/`);
     },
+
+    // --- Prescribers ---
+
+    getPrescribers: async (params = {}) => {
+        const response = await api.get('/healthcare/laboratory/prescribers/', { params });
+        return response.data;
+    },
+
+    getPrescriber: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/prescribers/${id}/`);
+        return response.data;
+    },
+
+    createPrescriber: async (data) => {
+        const response = await api.post('/healthcare/laboratory/prescribers/', data);
+        return response.data;
+    },
+
+    updatePrescriber: async (id, data) => {
+        const response = await api.patch(`/healthcare/laboratory/prescribers/${id}/`, data);
+        return response.data;
+    },
+
+    deletePrescriber: async (id) => {
+        await api.delete(`/healthcare/laboratory/prescribers/${id}/`);
+    },
 };
 
 export default laboratoryAPI;

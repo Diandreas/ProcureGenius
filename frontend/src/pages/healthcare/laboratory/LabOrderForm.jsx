@@ -51,6 +51,7 @@ const LabOrderForm = () => {
     const [patients, setPatients] = useState([]);
     const [tests, setTests] = useState([]);
     const [panels, setPanels] = useState([]);
+    const [prescribers, setPrescribers] = useState([]);
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -67,6 +68,7 @@ const LabOrderForm = () => {
 
     const [formData, setFormData] = useState({
         patient: null,
+        prescriber: null,
         priority: 'routine',
         tests: [], // Array of test objects
         panels: [], // Array of panel objects (bilans)
@@ -98,16 +100,18 @@ const LabOrderForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, testData, catData, panelData] = await Promise.all([
+            const [patData, testData, catData, panelData, prescriberData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 1000 }),
                 laboratoryAPI.getTests({ page_size: 1000 }),
                 laboratoryAPI.getCategories(),
                 laboratoryAPI.getPanels({ active_only: true }),
+                laboratoryAPI.getPrescribers({ active_only: true }),
             ]);
             setPatients(patData.results || patData || []);
             setTests(testData.results || testData || []);
             setCategories(catData.results || catData || []);
             setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
+            setPrescribers(Array.isArray(prescriberData) ? prescriberData : prescriberData.results || []);
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -184,6 +188,7 @@ const LabOrderForm = () => {
         try {
             const payload = {
                 patient_id: formData.patient.id,
+                prescriber_id: formData.prescriber?.id || null,
                 priority: formData.priority,
                 clinical_notes: formData.clinical_notes || '',
                 payment_method: formData.payment_method || 'cash',
@@ -287,6 +292,22 @@ const LabOrderForm = () => {
 
                     <Card>
                         <CardContent>
+                            <Typography variant="h6" gutterBottom>Prescripteur</Typography>
+                            <Autocomplete
+                                options={prescribers}
+                                getOptionLabel={(option) =>
+                                    `${option.full_name || `Dr ${option.last_name} ${option.first_name}`}${option.clinic_name ? ` – ${option.clinic_name}` : ''}`
+                                }
+                                value={formData.prescriber}
+                                onChange={(_, v) => setFormData(prev => ({ ...prev, prescriber: v }))}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Prescripteur (optionnel)" size="small" fullWidth />
+                                )}
+                                isOptionEqualToValue={(a, b) => a.id === b.id}
+                            />
+
+                            <Divider sx={{ my: 2 }} />
+
                             <Typography variant="h6" gutterBottom>Priorité</Typography>
                             <TextField
                                 fullWidth

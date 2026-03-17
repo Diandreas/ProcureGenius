@@ -75,7 +75,7 @@ const ExamTypesAnalytics = () => {
         <Breadcrumbs />
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <BackButton />
+          <BackButton to="/dashboard?tab=2" />
           <TrendingUpIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
           <Box>
             <Typography variant="h4" fontWeight="700" color="error.main">

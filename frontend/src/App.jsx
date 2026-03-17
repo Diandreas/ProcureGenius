@@ -20,14 +20,12 @@ import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
 
-// Healthcare Analytics
+// Healthcare Analytics (kept pages - have unique content)
 import ExamStatusAnalytics from './pages/healthcare/analytics/ExamStatusAnalytics';
 import ExamTypesAnalytics from './pages/healthcare/analytics/ExamTypesAnalytics';
-import DemographicAnalytics from './pages/healthcare/analytics/DemographicAnalytics';
-import RevenueAnalytics from './pages/healthcare/analytics/RevenueAnalytics';
-import HealthcareAnalyticsDashboard from './pages/healthcare/analytics/HealthcareAnalyticsDashboard';
-import ServiceRevenueAnalytics from './pages/healthcare/analytics/ServiceRevenueAnalytics';
-import ActivityIndicatorsPage from './pages/healthcare/analytics/ActivityIndicatorsPage';
+import RevenueAnalyticsDashboard from './pages/healthcare/analytics/RevenueAnalyticsDashboard';
+import PrescriberAnalyticsPage from './pages/healthcare/analytics/PrescriberAnalyticsPage';
+import PrescriberList from './pages/healthcare/laboratory/PrescriberList';
 
 // Inventory Analytics
 import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
@@ -734,14 +732,11 @@ function App() {
                               <Route path="/" element={<HomeRedirect />} />
                               <Route path="/dashboard" element={<ModuleRoute module="dashboard"><Dashboard /></ModuleRoute>} />
 
-                              {/* Healthcare Analytics */}
-                              <Route path="/healthcare/analytics" element={<HealthcareAnalyticsDashboard />} />
+                              {/* Healthcare Analytics - detail pages only (overview is in /dashboard tabs) */}
                               <Route path="/healthcare/analytics/exam-status" element={<ExamStatusAnalytics />} />
                               <Route path="/healthcare/analytics/exam-types" element={<ExamTypesAnalytics />} />
-                              <Route path="/healthcare/analytics/demographics" element={<DemographicAnalytics />} />
-                              <Route path="/healthcare/analytics/revenue" element={<RevenueAnalytics />} />
-                              <Route path="/healthcare/analytics/services" element={<ServiceRevenueAnalytics />} />
-                              <Route path="/healthcare/analytics/activity-indicators" element={<ActivityIndicatorsPage />} />
+                              <Route path="/healthcare/analytics/revenue" element={<RevenueAnalyticsDashboard />} />
+                              <Route path="/healthcare/analytics/prescribers" element={<PrescriberAnalyticsPage />} />
 
                               {/* Inventory Analytics */}
                               <Route path="/inventory/analytics" element={<StockAnalytics />} />
@@ -826,6 +821,7 @@ function App() {
                               <Route path="/healthcare/laboratory/:id/dispatch" element={<ModuleRoute module="laboratory"><LabOrderDispatch /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/panels" element={<ModuleRoute module="laboratory"><LabPanelCatalog /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/prescribers" element={<ModuleRoute module="laboratory"><PrescriberList /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 

@@ -3,7 +3,7 @@ API Views for Laboratory (LIMS) app
 """
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +15,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -27,7 +27,17 @@ from .serializers import (
     EnterResultsSerializer,
     LabTestParameterSerializer,
     LabTestPanelSerializer,
+    PrescriberSerializer,
+    PrescriberListSerializer,
 )
+
+
+class IsAdminOrReadOnly(BasePermission):
+    """Admin can write; any authenticated user can read."""
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated and request.user.role == 'admin'
 
 
 # =============================================================================
@@ -224,6 +234,18 @@ class LabOrderCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Get prescriber if provided
+        prescriber = None
+        if data.get('prescriber_id'):
+            try:
+                prescriber = Prescriber.objects.get(
+                    id=data['prescriber_id'],
+                    organization=request.user.organization,
+                    is_active=True
+                )
+            except Prescriber.DoesNotExist:
+                pass
+
         # Create order
         order = LabOrder.objects.create(
             organization=request.user.organization,
@@ -233,6 +255,7 @@ class LabOrderCreateView(APIView):
             clinical_notes=data.get('clinical_notes', ''),
             ordered_by=request.user,
             payment_method=data.get('payment_method', 'cash'),
+            prescriber=prescriber,
         )
         
         # Create order items for each test
@@ -1027,3 +1050,42 @@ class LabTestPanelDetailView(generics.RetrieveUpdateDestroyAPIView):
         return LabTestPanel.objects.filter(
             organization=self.request.user.organization
         ).prefetch_related('tests')
+
+
+class PrescriberListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/laboratory/prescribers/  — List prescribers (all authenticated)
+    POST /healthcare/laboratory/prescribers/  — Create prescriber (admin only)
+    """
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name', 'last_name', 'clinic_name', 'specialty']
+    ordering_fields = ['last_name', 'commission_rate', 'created_at']
+    ordering = ['last_name']
+
+    def get_queryset(self):
+        qs = Prescriber.objects.filter(organization=self.request.user.organization)
+        if self.request.query_params.get('active_only', '').lower() == 'true':
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return PrescriberListSerializer
+        return PrescriberSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization)
+
+
+class PrescriberDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /healthcare/laboratory/prescribers/<uuid>/  — all authenticated
+    PATCH  /healthcare/laboratory/prescribers/<uuid>/  — admin only
+    DELETE /healthcare/laboratory/prescribers/<uuid>/  — admin only
+    """
+    serializer_class = PrescriberSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        return Prescriber.objects.filter(organization=self.request.user.organization)

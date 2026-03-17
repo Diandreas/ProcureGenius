@@ -19,6 +19,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import DateNavigator from '../../../components/common/DateNavigator';
 import useCurrency from '../../../hooks/useCurrency';
 import api from '../../../services/api';
+import BackButton from '../../../components/navigation/BackButton';
 
 const RevenueAnalyticsDashboard = () => {
     const { t } = useTranslation();
@@ -116,9 +117,12 @@ const RevenueAnalyticsDashboard = () => {
         <Box sx={{ p: { xs: 2, md: 3 } }}>
             {/* Header */}
             <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" fontWeight={700} gutterBottom>
-                    Tableau de Bord - Chiffre d'Affaires
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <BackButton to="/dashboard?tab=1" />
+                    <Typography variant="h4" fontWeight={700}>
+                        Tableau de Bord - Chiffre d'Affaires
+                    </Typography>
+                </Box>
                 <Typography variant="body2" color="text.secondary">
                     Analyse du chiffre d'affaires par jour, semaine et mois
                 </Typography>
