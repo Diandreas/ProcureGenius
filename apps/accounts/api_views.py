@@ -9,12 +9,23 @@ from django.db import transaction
 from .models import CustomUser, UserPreferences, UserPermissions, Organization, EmailConfiguration
 from apps.core.encryption import encrypt_value, decrypt_value
 from apps.core.modules import (
-    get_user_accessible_modules, 
-    MODULE_METADATA, 
+    get_user_accessible_modules,
+    MODULE_METADATA,
     PROFILE_METADATA,
     ProfileTypes,
     get_modules_for_profile
 )
+import secrets
+import string
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def _generate_temp_password(length=12):
+    """Génère un mot de passe temporaire sécurisé."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
 @api_view(['GET'])
@@ -165,23 +176,41 @@ def api_organization_users(request):
             data = request.data
             
             with transaction.atomic():
+                # Générer un mot de passe temporaire sécurisé
+                temp_password = _generate_temp_password()
+
                 # Créer l'utilisateur
                 user = CustomUser.objects.create_user(
                     username=data.get('email'),  # Utiliser email comme username
                     email=data['email'],
                     first_name=data.get('first_name', ''),
                     last_name=data.get('last_name', ''),
-                    password=data.get('password', 'temp_password_123'),  # Mot de passe temporaire
+                    password=temp_password,
                     role=data.get('role', 'buyer'),
                     organization=request.user.organization
                 )
-                
+
                 # Les préférences et permissions seront créées automatiquement par le signal
-                
+
+                # Envoyer l'email d'invitation
+                try:
+                    from apps.core.email_utils import send_user_invitation_email
+                    send_user_invitation_email(
+                        invited_user=user,
+                        temp_password=temp_password,
+                        invited_by_user=request.user,
+                        organization=request.user.organization,
+                    )
+                    email_sent = True
+                except Exception as email_err:
+                    logger.warning(f"Could not send invitation email: {email_err}")
+                    email_sent = False
+
                 return Response({
                     'success': True,
                     'message': 'Utilisateur créé avec succès',
-                    'user_id': str(user.id)
+                    'user_id': str(user.id),
+                    'email_sent': email_sent,
                 })
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

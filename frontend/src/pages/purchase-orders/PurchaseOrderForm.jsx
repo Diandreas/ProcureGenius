@@ -112,8 +112,8 @@ function PurchaseOrderForm() {
       Si le fournisseur n'est pas clair, laisse vide. 
       Réponds UNIQUEMENT avec le JSON pur.`;
 
-      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
-      const content = response.data.message.content;
+      const response = await aiChatAPI.generateText(prompt, 500);
+      const content = response.data.content;
       
       // Nettoyer le contenu pour extraire le JSON
       const jsonMatch = content.match(/\{[\s\S]*\}/);

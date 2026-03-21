@@ -127,8 +127,13 @@ def api_register(request):
             # Generate auth token
             token, created = Token.objects.get_or_create(user=user)
 
-            # TODO: Send email verification email
-            # send_email_verification(user)
+            # Envoyer email de bienvenue
+            try:
+                from apps.core.email_utils import send_welcome_registration_email
+                send_welcome_registration_email(user, organization)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Could not send welcome email: {e}")
 
             return Response({
                 'message': _('Inscription réussie! Configurons votre espace de travail.'),

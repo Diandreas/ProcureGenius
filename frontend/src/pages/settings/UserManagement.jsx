@@ -184,12 +184,17 @@ function UserManagement() {
             });
 
             if (response.ok) {
-                enqueueSnackbar(t('settings:userManagement.inviteDialog.inviteSuccess'), { variant: 'success' });
+                const data = await response.json();
+                const msg = data.email_sent
+                    ? t('settings:userManagement.inviteDialog.inviteSuccessWithEmail', 'Utilisateur créé — un email avec ses identifiants a été envoyé.')
+                    : t('settings:userManagement.inviteDialog.inviteSuccess');
+                enqueueSnackbar(msg, { variant: 'success' });
                 setInviteDialogOpen(false);
                 setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer' });
                 fetchUsers();
             } else {
-                throw new Error('Failed to invite user');
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to invite user');
             }
         } catch (error) {
             console.error('Error inviting user:', error);

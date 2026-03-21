@@ -2,7 +2,8 @@
 Utilitaires pour la configuration et l'envoi d'emails via SMTP organisation
 """
 from django.conf import settings
-from django.core.mail import get_connection
+from django.core.mail import get_connection, send_mail
+from django.core.mail import EmailMultiAlternatives
 from apps.accounts.models import EmailConfiguration
 import logging
 
@@ -108,13 +109,13 @@ def configure_django_email_settings(organization):
 def restore_django_email_settings(original_settings):
     """
     Restaure les settings Django EMAIL_* originaux
-    
+
     Args:
         original_settings: Dictionnaire des settings originaux retourné par configure_django_email_settings
     """
     if not original_settings:
         return
-    
+
     try:
         for key, value in original_settings.items():
             if value is not None:
@@ -125,4 +126,138 @@ def restore_django_email_settings(original_settings):
                     delattr(settings, key)
     except Exception as e:
         logger.error(f"Error restoring Django email settings: {e}")
+
+
+def send_user_invitation_email(invited_user, temp_password, invited_by_user, organization):
+    """
+    Envoie un email d'invitation à un nouvel utilisateur ajouté à l'organisation.
+    """
+    try:
+        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        from_email = settings.DEFAULT_FROM_EMAIL
+        org_name = organization.name if organization else 'Procura'
+
+        subject = f"Invitation à rejoindre {org_name} sur Procura"
+
+        text_body = f"""Bonjour {invited_user.first_name or invited_user.email},
+
+{invited_by_user.get_full_name() or invited_by_user.email} vous a invité(e) à rejoindre l'espace de travail "{org_name}" sur Procura.
+
+Vos identifiants de connexion temporaires :
+  Email : {invited_user.email}
+  Mot de passe temporaire : {temp_password}
+
+Connectez-vous ici : {app_url}/login
+
+Veuillez changer votre mot de passe dès votre première connexion.
+
+Cordialement,
+L'équipe Procura
+"""
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Vous êtes invité(e) !</h2>
+      <p style="color:#555;">Bonjour <strong>{invited_user.first_name or invited_user.email}</strong>,</p>
+      <p style="color:#555;"><strong>{invited_by_user.get_full_name() or invited_by_user.email}</strong> vous a invité(e) à rejoindre l'espace de travail <strong>"{org_name}"</strong> sur Procura.</p>
+
+      <div style="background:#f0f4ff;border-radius:8px;padding:20px;margin:24px 0;">
+        <h3 style="color:#1976d2;margin:0 0 12px 0;">Vos identifiants temporaires</h3>
+        <p style="margin:4px 0;color:#333;"><strong>Email :</strong> {invited_user.email}</p>
+        <p style="margin:4px 0;color:#333;"><strong>Mot de passe :</strong> <code style="background:#e8eaf6;padding:2px 8px;border-radius:4px;">{temp_password}</code></p>
+      </div>
+
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{app_url}/login" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Se connecter maintenant
+        </a>
+      </p>
+
+      <p style="color:#888;font-size:13px;">⚠️ Pour votre sécurité, changez votre mot de passe dès la première connexion.</p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=from_email,
+            to=[invited_user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f"Invitation email sent to {invited_user.email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send invitation email to {invited_user.email}: {e}")
+        return False
+
+
+def send_welcome_registration_email(user, organization):
+    """
+    Envoie un email de bienvenue lors de l'inscription.
+    """
+    try:
+        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        subject = "Bienvenue sur Procura !"
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Bienvenue, {user.first_name or user.email} !</h2>
+      <p style="color:#555;">Votre espace de travail <strong>"{organization.name}"</strong> a été créé avec succès.</p>
+      <p style="color:#555;">Commencez par configurer les informations de votre entreprise dans les Paramètres.</p>
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{app_url}" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Accéder à Procura
+        </a>
+      </p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=f"Bienvenue {user.first_name or user.email} ! Votre espace {organization.name} est prêt.",
+            from_email=from_email,
+            to=[user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=True)
+
+        logger.info(f"Welcome email sent to {user.email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {user.email}: {e}")
+        return False
 
