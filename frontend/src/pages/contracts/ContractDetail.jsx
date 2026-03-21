@@ -30,6 +30,8 @@ import {
   AccordionDetails,
   IconButton,
   Tooltip,
+  FormControl,
+  MenuItem
 } from '@mui/material';
 import {
   ArrowBack,
@@ -44,9 +46,16 @@ import {
   Warning,
   Info,
   Error as ErrorIcon,
+  Description,
+  Download,
+  PictureAsPdf,
+  Receipt,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
+import { contractsAPI } from '../../services/api';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   fetchContract,
   approveContract,
@@ -72,6 +81,14 @@ function ContractDetail() {
   const [extractDialogOpen, setExtractDialogOpen] = useState(false);
   const [contractText, setContractText] = useState('');
   const [extracting, setExtracting] = useState(false);
+
+  // States pour la génération de document
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [contextData, setContextData] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState('');
 
   useEffect(() => {
     dispatch(fetchContract(id));
@@ -134,6 +151,121 @@ function ContractDetail() {
       dispatch(fetchContract(id));
     } catch (error) {
       enqueueSnackbar(t('contracts:messages.verifyError'), { variant: 'error' });
+    }
+  };
+
+  const handleOpenGenerateDialog = async () => {
+    try {
+      const response = await contractsAPI.templates.list({ is_active: true });
+      setTemplates(response.data.results || response.data);
+      setGenerateDialogOpen(true);
+    } catch (err) {
+      enqueueSnackbar("Erreur lors du chargement des modèles", { variant: 'error' });
+    }
+  };
+
+  const handleGenerateDocument = async () => {
+    if (!selectedTemplate) {
+      enqueueSnackbar("Veuillez sélectionner un modèle", { variant: 'warning' });
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      let parsedContext = {};
+      if (contextData.trim()) {
+        try {
+          parsedContext = JSON.parse(contextData);
+        } catch (e) {
+          enqueueSnackbar("Le contexte JSON est invalide", { variant: 'error' });
+          setGenerating(false);
+          return;
+        }
+      }
+      const response = await contractsAPI.templates.generateDocument(selectedTemplate, {
+        contract_id: id,
+        context_data: parsedContext,
+      });
+      
+      setGeneratedContent(response.data?.data?.generated_content || '');
+      enqueueSnackbar("Document généré avec succès", { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar("Erreur lors de la génération", { variant: 'error' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleDownloadGenerated = () => {
+    if (!generatedContent) return;
+    const blob = new Blob([generatedContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `document_genere_${currentContract.contract_number}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = async (templateType = 'contract') => {
+    if (!generatedContent) {
+      enqueueSnackbar("Veuillez d'abord générer le document", { variant: 'warning' });
+      return;
+    }
+    try {
+      setGenerating(true);
+      const payload = {
+        template_type: templateType,
+        generated_content: generatedContent
+      };
+      const response = await contractsAPI.exportPDF(id, payload);
+      // Construct blob from response data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rapport-${templateType}-${currentContract.contract_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Export PDF réussi', { variant: 'success' });
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Erreur lors de l\'export PDF', { variant: 'error' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleExportWord = async (templateType = 'contract') => {
+    if (!generatedContent) {
+      enqueueSnackbar("Veuillez d'abord générer le document", { variant: 'warning' });
+      return;
+    }
+    try {
+      setGenerating(true);
+      const payload = {
+        template_type: templateType,
+        generated_content: generatedContent
+      };
+      const response = await contractsAPI.exportWord(id, payload);
+      const blob = new Blob([response.data], { type: 'application/msword' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rapport-${templateType}-${currentContract.contract_number}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Export Word réussi', { variant: 'success' });
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Erreur lors de l\'export Word', { variant: 'error' });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -247,6 +379,14 @@ function ContractDetail() {
                     >
                       {t('contracts:detail.actions.approve')}
                     </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      startIcon={<Description />}
+                      onClick={handleOpenGenerateDialog}
+                    >
+                      Générer depuis un modèle
+                    </Button>
                   </>
                 )}
 
@@ -281,6 +421,15 @@ function ContractDetail() {
                 )}
 
                 <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<Receipt />}
+                  onClick={() => navigate(`/invoices/new?contractId=${id}`)}
+                >
+                  {t('contracts:detail.actions.createInvoice', 'Créer une facture')}
+                </Button>
+
+                <Button
                   variant="contained"
                   color="secondary"
                   startIcon={<Psychology />}
@@ -309,9 +458,11 @@ function ContractDetail() {
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                     {t('contracts:detail.sections.terms')}
                   </Typography>
-                  <Typography variant="body1" paragraph style={{ whiteSpace: 'pre-line' }}>
-                    {currentContract.terms_and_conditions}
-                  </Typography>
+                  <Box 
+                    className="ql-editor-view"
+                    sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
+                    dangerouslySetInnerHTML={{ __html: currentContract.terms_and_conditions }} 
+                  />
                 </>
               )}
 
@@ -320,9 +471,11 @@ function ContractDetail() {
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                     {t('contracts:detail.sections.paymentTerms')}
                   </Typography>
-                  <Typography variant="body1" paragraph>
-                    {currentContract.payment_terms}
-                  </Typography>
+                  <Box 
+                    className="ql-editor-view"
+                    sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
+                    dangerouslySetInnerHTML={{ __html: currentContract.payment_terms }} 
+                  />
                 </>
               )}
             </CardContent>
@@ -605,6 +758,119 @@ function ContractDetail() {
             startIcon={<Psychology />}
           >
             {extracting ? t('contracts:extraction.extracting_button') : t('contracts:extraction.extract')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog génération de document */}
+      <Dialog
+        open={generateDialogOpen}
+        onClose={() => !generating && setGenerateDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Générer un document depuis un modèle</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <TextField
+                select
+                label="Sélectionner un modèle"
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                disabled={generating}
+              >
+                {templates.map(tpl => (
+                  <MenuItem key={tpl.id} value={tpl.id}>
+                    {tpl.name} ({tpl.template_type})
+                  </MenuItem>
+                ))}
+              </TextField>
+            </FormControl>
+
+            <TextField
+              label="Contexte additionnel (JSON optionnel)"
+              multiline
+              rows={4}
+              value={contextData}
+              onChange={(e) => setContextData(e.target.value)}
+              disabled={generating}
+              placeholder='{"champ_supplementaire": "valeur"}'
+              helperText="Les données du contrat seront automatiquement incluses."
+            />
+
+            {generating && (
+              <Box sx={{ mt: 2 }}>
+                <LinearProgress />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                  Génération du document en cours par l'IA...
+                </Typography>
+              </Box>
+            )}
+
+            {generatedContent && !generating && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>Résultat :</Typography>
+                <Box sx={{ p: 0, bgcolor: 'background.paper', borderRadius: 1 }}>
+                  <Box sx={{ 
+                    '.ql-editor': { minHeight: 400, fontSize: '1rem', fontFamily: 'inherit' },
+                    '.ql-container': { borderRadius: '0 0 8px 8px', borderColor: 'divider' },
+                    '.ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: 'divider' }
+                  }}>
+                    <ReactQuill
+                      theme="snow"
+                      value={generatedContent}
+                      onChange={setGeneratedContent}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button 
+                    startIcon={<Download />} 
+                    onClick={handleDownloadGenerated}
+                    variant="outlined"
+                  >
+                    HTML
+                  </Button>
+                  <Button 
+                    startIcon={<Description />} 
+                    onClick={() => {
+                        const tpl = templates.find(t => t.id === selectedTemplate);
+                        handleExportWord(tpl ? tpl.template_type : 'contract');
+                    }}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Exporter en Word
+                  </Button>
+                  <Button 
+                    startIcon={<PictureAsPdf />} 
+                    onClick={() => {
+                        const tpl = templates.find(t => t.id === selectedTemplate);
+                        handleExportPDF(tpl ? tpl.template_type : 'contract');
+                    }}
+                    variant="contained"
+                    color="error"
+                  >
+                    Exporter en PDF
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setGenerateDialogOpen(false)} disabled={generating}>
+            Fermer
+          </Button>
+          <Button
+            onClick={handleGenerateDocument}
+            variant="contained"
+            color="primary"
+            disabled={generating || !selectedTemplate}
+            startIcon={<Psychology />}
+          >
+            {generating ? 'Génération...' : 'Générer'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -62,9 +62,10 @@ export const getStockStatusLabel = (stockStatus, stockQuantity) => {
  * Vérifie si un produit peut être ajouté à une facture
  * @param {object} product - Objet produit
  * @param {number} requestedQuantity - Quantité demandée
+ * @param {object} [batch] - Objet lot sélectionné (optionnel)
  * @returns {object} { canAdd: boolean, reason: string }
  */
-export const canAddProductToInvoice = (product, requestedQuantity) => {
+export const canAddProductToInvoice = (product, requestedQuantity, batch = null) => {
   // Les services et produits digitaux sont toujours disponibles
   if (product.product_type === 'service' || product.product_type === 'digital') {
     return { canAdd: true, reason: '' };
@@ -72,14 +73,26 @@ export const canAddProductToInvoice = (product, requestedQuantity) => {
 
   // Pour les produits physiques, vérifier le stock
   if (product.product_type === 'physical') {
-    if (product.stock_quantity === 0) {
-      return { canAdd: false, reason: 'Produit en rupture de stock' };
-    }
-    if (product.stock_quantity < requestedQuantity) {
-      return {
-        canAdd: false,
-        reason: `Stock insuffisant. Disponible: ${product.stock_quantity}`,
-      };
+    if (batch) {
+      if (batch.current_quantity === 0) {
+        return { canAdd: false, reason: `Le lot ${batch.batch_number} est en rupture de stock` };
+      }
+      if (batch.current_quantity < requestedQuantity) {
+        return {
+          canAdd: false,
+          reason: `Stock insuffisant dans le lot ${batch.batch_number}. Disponible: ${batch.current_quantity}`,
+        };
+      }
+    } else {
+      if (product.stock_quantity === 0) {
+        return { canAdd: false, reason: 'Produit en rupture de stock' };
+      }
+      if (product.stock_quantity < requestedQuantity) {
+        return {
+          canAdd: false,
+          reason: `Stock insuffisant. Disponible: ${product.stock_quantity}`,
+        };
+      }
     }
   }
 

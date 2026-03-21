@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
+from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse, ProductBatch
 from apps.accounts.models import Client
 from apps.core.serializer_mixins import ModuleAwareSerializerMixin
 from django.contrib.auth import get_user_model
@@ -116,6 +116,22 @@ class SupplierProductSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class ProductBatchSerializer(serializers.ModelSerializer):
+    """Serializer pour les lots de produits"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    is_expiring_soon = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ProductBatch
+        fields = [
+            'id', 'product', 'product_name', 'batch_number', 'expiration_date',
+            'initial_quantity', 'current_quantity', 'created_at', 'updated_at',
+            'is_active', 'notes', 'is_expired', 'is_expiring_soon'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'current_quantity', 'is_expired', 'is_expiring_soon']
+
+
 class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les produits"""
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
@@ -137,6 +153,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     unique_clients_count = serializers.SerializerMethodField()
     last_sale_date = serializers.SerializerMethodField()
     active_contracts_count = serializers.SerializerMethodField()
+    batches = ProductBatchSerializer(many=True, read_only=True)
+    ai_insights = serializers.SerializerMethodField()
     
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
@@ -153,16 +171,53 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_active',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
-            'last_sale_date', 'active_contracts_count',
-            'created_at', 'updated_at'
+            'last_sale_date', 'active_contracts_count', 'batches',
+            'ai_insights', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
             'stock_status', 'is_low_stock', 'is_out_of_stock',
             'warehouse_name', 'warehouse_code', 'warehouse_location',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
-            'last_sale_date', 'active_contracts_count', 'price_editable'
+            'last_sale_date', 'active_contracts_count', 'ai_insights', 'price_editable'
         ]
+
+    def get_ai_insights(self, obj):
+        """Génère des insights rapides pour ce produit"""
+        insights = []
+        
+        # Insight de marge
+        if obj.cost_price and obj.cost_price > 0 and obj.price > 0:
+            margin_pct = (obj.price - obj.cost_price) / obj.price * 100
+            if margin_pct < 15:
+                insights.append({
+                    'type': 'warning',
+                    'label': 'Marge Faible',
+                    'text': f'Marge faible ({margin_pct:.1f}%). Revoyez le prix.'
+                })
+            elif margin_pct > 40:
+                insights.append({
+                    'type': 'success',
+                    'label': 'Produit Star',
+                    'text': f'Excellente marge ({margin_pct:.1f}%).'
+                })
+        
+        # Insight de stock
+        if obj.product_type == 'physical':
+            if obj.stock_quantity == 0:
+                insights.append({
+                    'type': 'error',
+                    'label': 'Rupture',
+                    'text': 'Stock épuisé.'
+                })
+            elif obj.is_low_stock:
+                insights.append({
+                    'type': 'warning',
+                    'label': 'Stock Bas',
+                    'text': f'Plus que {obj.stock_quantity} unités.'
+                })
+                
+        return insights
     
     def to_representation(self, instance):
         """Surcharger pour gérer price_editable de manière sécurisée"""
@@ -240,6 +295,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
     """Serializer pour les mouvements de stock"""
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_reference = serializers.CharField(source='product.reference', read_only=True)
+    batch_number = serializers.CharField(source='batch.batch_number', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     movement_type_display = serializers.CharField(source='get_movement_type_display', read_only=True)
     reference_type_display = serializers.CharField(source='get_reference_type_display', read_only=True)
@@ -252,6 +308,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
         model = StockMovement
         fields = [
             'id', 'product', 'product_name', 'product_reference',
+            'batch', 'batch_number',
             'movement_type', 'movement_type_display',
             'quantity', 'quantity_before', 'quantity_after',
             'reference_type', 'reference_type_display', 'reference_id', 'reference_number',
@@ -260,7 +317,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
             'is_entry', 'is_exit', 'is_loss'
         ]
         read_only_fields = [
-            'id', 'created_at', 'product_name', 'product_reference',
+            'id', 'created_at', 'product_name', 'product_reference', 'batch_number',
             'created_by_name', 'movement_type_display', 'reference_type_display',
             'loss_reason_display', 'is_entry', 'is_exit', 'is_loss'
         ]
@@ -470,18 +527,20 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de facture"""
     product_name = serializers.CharField(source='product.name', read_only=True)
+    batch_number = serializers.CharField(source='batch.batch_number', read_only=True)
 
     class Meta:
         model = InvoiceItem
         fields = [
-            'id', 'product', 'product_reference', 'product_name', 'description', 'quantity',
+            'id', 'product', 'product_reference', 'product_name', 'batch', 'batch_number', 'description', 'quantity',
             'unit_price', 'discount_percent', 'total_price'
         ]
-        read_only_fields = ['id', 'total_price', 'product_name']
+        read_only_fields = ['id', 'total_price', 'product_name', 'batch_number']
     
     def validate(self, attrs):
         """Valider la disponibilité du stock pour les produits physiques"""
         product = attrs.get('product')
+        batch = attrs.get('batch')
         quantity = attrs.get('quantity', 1)
         
         # Vérifier le stock uniquement si un produit est lié
@@ -493,11 +552,18 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             else:
                 stock_needed = quantity
             
-            # Vérifier si le stock est suffisant
-            if stock_needed > 0 and product.stock_quantity < stock_needed:
-                raise serializers.ValidationError({
-                    'quantity': f"Stock insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
-                })
+            # Vérifier si le stock est suffisant (au niveau du lot ou du produit)
+            if stock_needed > 0:
+                if batch:
+                    if batch.current_quantity < stock_needed:
+                        raise serializers.ValidationError({
+                            'quantity': f"Stock insuffisant dans le lot {batch.batch_number}. Disponible: {batch.current_quantity}, Demandé: {stock_needed}"
+                        })
+                else:
+                    if product.stock_quantity < stock_needed:
+                        raise serializers.ValidationError({
+                            'quantity': f"Stock insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
+                        })
         
         return attrs
 
@@ -526,6 +592,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         fields = [
             'id', 'invoice_number', 'title', 'description', 
             'client', 'client_name', 'client_detail',
+            'contract',
             'status', 'currency', 'subtotal', 'tax_amount',
             'total_amount', 'due_date', 'payment_method',
             'billing_address', 'payment_terms', 

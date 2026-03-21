@@ -54,19 +54,19 @@ class Command(BaseCommand):
             code='standard',
             defaults={
                 'name': 'Standard',
-                'description': 'Plan professionnel pour PME. Inclut bons de commande, fournisseurs, assistant IA et quotas étendus. Sans publicité.',
-                'price_monthly': 12,
-                'price_yearly': 120,  # ~17% de réduction
+                'description': 'Plan professionnel idéal pour entrepreneurs. Inclut facturation, produits, bons de commande, fournisseurs, contrats et assistant IA. Sans publicité.',
+                'price_monthly': 10,
+                'price_yearly': 100,  # ~17% de réduction
                 'currency': 'EUR',
 
                 # Quotas STANDARD
-                'max_invoices_per_month': 100,
-                'max_clients': 100,
-                'max_products': 500,
-                'max_purchase_orders_per_month': 50,
-                'max_suppliers': 50,
-                'max_storage_mb': 2048,  # 2 GB
-                'max_ai_requests_per_month': 50,
+                'max_invoices_per_month': 200,  # Augmenté
+                'max_clients': 200,  # Augmenté
+                'max_products': 1000,  # Augmenté
+                'max_purchase_orders_per_month': 100,  # Augmenté
+                'max_suppliers': 100,  # Augmenté
+                'max_storage_mb': 5120,  # 5 GB (Augmenté)
+                'max_ai_requests_per_month': 200,  # Augmenté significativement
 
                 # Features STANDARD
                 'has_ads': False,  # Sans publicité
@@ -74,10 +74,10 @@ class Command(BaseCommand):
                 'has_purchase_orders': True,
                 'has_suppliers': True,
                 'has_e_sourcing': False,
-                'has_contracts': False,
-                'has_analytics': False,
+                'has_contracts': True,  # Activé pour entrepreneurs
+                'has_analytics': True,  # Activé pour entrepreneurs
 
-                'trial_days': 3,
+                'trial_days': 7,  # Étendu à 7 jours
                 'is_active': True,
                 'sort_order': 2,
             }

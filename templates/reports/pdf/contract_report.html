@@ -1,0 +1,157 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Contrat {{ contract.contract_number }}{% endblock %}
+
+{% block report_title %}{{ contract.title }}{% endblock %}
+{% block report_subtitle %}Contrat N° {{ contract.contract_number }} | Statut: {{ contract.get_status_display }} {% endblock %}
+
+{% block extra_styles %}
+<style>
+    .contract-meta {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid #e2e8f0;
+    }
+    .contract-party {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #cbd5e1;
+    }
+    .contract-party h3 {
+        color: #1e293b;
+        font-size: 14pt;
+        margin-bottom: 10px;
+    }
+    .contract-body {
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #334155;
+        text-align: justify;
+    }
+    .contract-body h2 {
+        color: #0f172a;
+        font-size: 16pt;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 5px;
+    }
+    .signatures {
+        margin-top: 60px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .signature-box {
+        width: 45%;
+        border-top: 1px solid #94a3b8;
+        padding-top: 10px;
+    }
+    .signature-box p {
+        margin: 5px 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contract-meta">
+    <div class="info-grid">
+        <div class="info-box">
+            <h3>Informations Générales</h3>
+            <div class="content">
+                <span class="label">Numéro:</span> <span class="value">{{ contract.contract_number }}</span><br>
+                <span class="label">Type:</span> <span class="value">{{ contract.get_contract_type_display }}</span><br>
+                <span class="label">Date de début:</span> <span class="value">{{ contract.start_date|date:"d/m/Y" }}</span><br>
+                <span class="label">Date de fin:</span> <span class="value">{{ contract.end_date|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+        <div class="info-box">
+            <h3>Détails Financiers</h3>
+            <div class="content">
+                <span class="label">Valeur Totale:</span> <span class="value">{{ contract.total_value }} {{ contract.currency }}</span><br>
+                <span class="label">Conditions de paiement:</span> <span class="value">{{ contract.payment_terms|default:"Non spécifié" }}</span><br>
+                {% if contract.auto_renewal %}
+                <span class="label">Renouvellement:</span> <span class="value">Automatique ({{ contract.renewal_notice_days }} jours de préavis)</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="contract-party">
+    <h3>Entre les soussignés :</h3>
+    <p>
+        <strong>L'Organisation :</strong> {% if organization %}{{ organization.name }}{% else %}______________{% endif %} <br>
+        {% if organization.address %}Adresse : {{ organization.address|striptags }} <br>{% endif %}
+        Ci-après désigné "Le Client"<br><br>
+        
+        <strong>Et</strong><br><br>
+        
+        <strong>Le Fournisseur :</strong> {{ contract.supplier.name }} <br>
+        Adresse : {{ contract.supplier.address|default:"Non spécifiée" }} <br>
+        Contact : {{ contract.supplier.contact_email|default:contract.supplier.email }} <br>
+        Ci-après désigné "Le Prestataire"
+    </p>
+</div>
+
+<div class="contract-body">
+    <h2>1. Objet du Contrat</h2>
+    <p>{{ contract.description|linebreaksbr }}</p>
+
+    {% if contract.terms_and_conditions %}
+    <h2>2. Conditions et Modalités</h2>
+    <div>
+        {{ contract.terms_and_conditions|safe }}
+    </div>
+    {% endif %}
+
+    {% if contract.items.exists %}
+    <h2>3. Articles et Prestations</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Produit / Service</th>
+                <th class="text-right">Prix Contractuel</th>
+                <th class="text-right">Quantité Min.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in contract.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td class="text-right">{{ item.contracted_price }} {{ contract.currency }}</td>
+                <td class="text-right">{{ item.min_quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    {% if generated_content %}
+    <h2>Dispositions Complémentaires</h2>
+    <div>
+        {{ generated_content|safe }}
+    </div>
+    {% endif %}
+</div>
+
+<div class="signatures">
+    <div class="signature-box">
+        <p>Pour le Client</p>
+        <p style="font-size: 9pt; font-weight: normal;">Nom et Fonction :</p>
+        <p style="font-size: 9pt; font-weight: normal;">Date :</p>
+        <p style="height: 60px;"></p>
+        <p style="font-size: 8pt; font-style: italic;">Signature et Cachet</p>
+    </div>
+    <div class="signature-box">
+        <p>Pour le Prestataire</p>
+        <p style="font-size: 9pt; font-weight: normal;">{{ contract.supplier.name }}</p>
+        <p style="font-size: 9pt; font-weight: normal;">Date :</p>
+        <p style="height: 60px;"></p>
+        <p style="font-size: 8pt; font-style: italic;">Signature et Cachet</p>
+    </div>
+</div>
+{% endblock %}

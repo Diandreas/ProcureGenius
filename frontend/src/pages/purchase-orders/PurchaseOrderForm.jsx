@@ -41,10 +41,12 @@ import {
   Save,
   Cancel,
   Business,
+  AutoAwesome,
+  AutoFixHigh,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI } from '../../services/api';
+import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI, aiChatAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields, getProductFields } from '../../config/quickCreateFields';
@@ -88,11 +90,72 @@ function PurchaseOrderForm() {
   // UI state
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiPrompt, setAiAiPrompt] = useState('');
+  const [showAiInput, setShowAiAiInput] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(-1);
+
+  const handleAiAssist = async () => {
+    if (!aiPrompt.trim()) {
+      enqueueSnackbar('Veuillez décrire ce que vous souhaitez commander', { variant: 'info' });
+      return;
+    }
+
+    setIsAiProcessing(true);
+    try {
+      const prompt = `Extraire les informations de bon de commande depuis ce texte: "${aiPrompt}". 
+      Retourne un JSON avec: supplier_name, title, items (array avec description, quantity, unit_price). 
+      Si le fournisseur n'est pas clair, laisse vide. 
+      Réponds UNIQUEMENT avec le JSON pur.`;
+
+      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
+      const content = response.data.message.content;
+      
+      // Nettoyer le contenu pour extraire le JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const data = JSON.parse(jsonMatch[0]);
+        
+        // 1. Chercher le fournisseur
+        if (data.supplier_name) {
+          const foundSupplier = suppliers.find(s => 
+            s.name.toLowerCase().includes(data.supplier_name.toLowerCase())
+          );
+          if (foundSupplier) {
+            setFormData(prev => ({ ...prev, supplier: foundSupplier, title: data.title || prev.title }));
+          } else {
+            setFormData(prev => ({ ...prev, title: data.title || `Commande ${data.supplier_name}` }));
+            enqueueSnackbar(`Fournisseur "${data.supplier_name}" non trouvé, veuillez le sélectionner manuellement.`, { variant: 'warning' });
+          }
+        }
+
+        // 2. Ajouter les articles
+        if (data.items && data.items.length > 0) {
+          const newItems = data.items.map(item => ({
+            product: null, // On pourra faire du matching plus tard
+            product_reference: '',
+            description: item.description || 'Article sans description',
+            quantity: item.quantity || 1,
+            unit_price: item.unit_price || 0
+          }));
+          setItems(prev => [...prev, ...newItems]);
+        }
+
+        setShowAiAiInput(false);
+        setAiAiPrompt('');
+        enqueueSnackbar('Bon de commande pré-rempli par l\'IA !', { variant: 'success' });
+      }
+    } catch (error) {
+      console.error('AI Assist error:', error);
+      enqueueSnackbar('Erreur lors de l\'analyse par l\'IA', { variant: 'error' });
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
 
   // Quick Create states
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
@@ -344,21 +407,35 @@ function PurchaseOrderForm() {
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
+      {/* Header */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton onClick={() => navigate('/purchase-orders')}>
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h4" fontWeight="800" sx={{
+            background: theme => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
             {isEdit ? t('purchaseOrders:editPO') : t('purchaseOrders:newPO')}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<AutoAwesome />}
+            onClick={() => setShowAiAiInput(!showAiInput)}
+            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}
+          >
+            {showAiInput ? 'Fermer Assistant' : 'Assistant IA'}
+          </Button>
           <Button
             variant="outlined"
             startIcon={<Cancel />}
             onClick={() => navigate('/purchase-orders')}
+            sx={{ borderRadius: 2.5, textTransform: 'none' }}
           >
             {t('purchaseOrders:buttons.cancel')}
           </Button>
@@ -367,13 +444,75 @@ function PurchaseOrderForm() {
             startIcon={<Save />}
             onClick={handleSubmit}
             disabled={saving}
+            sx={{ 
+              borderRadius: 2.5, 
+              textTransform: 'none', 
+              fontWeight: 600,
+              boxShadow: theme => `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+            }}
           >
             {saving ? t('purchaseOrders:labels.saving') : t('purchaseOrders:buttons.save')}
           </Button>
-        </Box>
+        </Stack>
       </Box>
 
-      {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
+      {/* AI Assistant Input Section */}
+      <AnimatePresence>
+        {showAiInput && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            sx={{ mb: 3 }}
+          >
+            <Card sx={{ 
+              mb: 3, 
+              borderRadius: 3, 
+              border: '2px solid',
+              borderColor: 'secondary.light',
+              bgcolor: alpha(theme.palette.secondary.main, 0.02)
+            }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                    <AutoFixHigh />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="600">Assistant de Commande Intelligent</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Décrivez votre commande (fournisseur, articles, quantités) et l'IA remplira le formulaire pour vous.
+                    </Typography>
+                  </Box>
+                </Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="Ex: Commande 50 ordinateurs portables et 20 souris sans fil chez le fournisseur Dell Canada pour le projet de bureau."
+                  value={aiPrompt}
+                  onChange={(e) => setAiAiPrompt(e.target.value)}
+                  disabled={isAiProcessing}
+                  sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleAiAssist}
+                    disabled={isAiProcessing || !aiPrompt.trim()}
+                    startIcon={isAiProcessing ? <CircularProgress size={20} color="inherit" /> : <AutoFixHigh />}
+                    sx={{ borderRadius: 2, px: 4 }}
+                  >
+                    {isAiProcessing ? 'Analyse en cours...' : 'Remplir le formulaire'}
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Actions Mobile */}
       <Box sx={{
         mb: 1.5,
         display: { xs: 'flex', md: 'none' },

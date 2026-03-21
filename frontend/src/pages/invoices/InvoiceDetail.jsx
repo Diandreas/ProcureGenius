@@ -677,6 +677,47 @@ Cordialement`
               </CardContent>
             </Card>
           )}
+          
+          {/* Contract Info Mobile */}
+          {invoice.contract && (
+            <Card sx={{
+              mb: 2,
+              borderRadius: 3,
+              boxShadow: theme => theme.palette.mode === 'dark'
+                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+              border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+              transition: 'all 0.3s ease'
+            }}>
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                  {t('invoices:labels.contract', 'Contrat')}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                  <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+                    <Description fontSize="small" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                      {invoice.contract_title || t('invoices:labels.contractAssociated', 'Contrat associé')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                      {invoice.contract_number}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate(`/contracts/${invoice.contract}`)}
+                  sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.875rem' }}
+                >
+                  {t('invoices:buttons.viewContract', 'Voir le contrat')}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Financial Summary Mobile - Ultra Compact */}
           <Card sx={{
@@ -1083,6 +1124,39 @@ Cordialement`
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
                     {t('invoices:buttons.linkClient')}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Contract Info */}
+            {invoice.contract && (
+              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                    {t('invoices:labels.contract', 'Contrat')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Avatar sx={{ bgcolor: 'primary.light' }}>
+                      <Description />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {invoice.contract_title || t('invoices:labels.contractAssociated', 'Contrat associé')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {invoice.contract_number || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => navigate(`/contracts/${invoice.contract}`)}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    startIcon={<Description />}
+                  >
+                    {t('invoices:buttons.viewContract', 'Voir le contrat')}
                   </Button>
                 </CardContent>
               </Card>

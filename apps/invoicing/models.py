@@ -171,8 +171,11 @@ class Product(models.Model):
                 )
 
     def save(self, *args, **kwargs):
-        # Validation avant sauvegarde
-        self.full_clean()
+        # Convertir les chaînes vides en None pour éviter les erreurs d'unicité (barcode, reference)
+        if self.barcode == '':
+            self.barcode = None
+        if self.reference == '':
+            self.reference = None
 
         if not self.reference:
             # Générer une référence automatique selon le type
@@ -192,6 +195,9 @@ class Product(models.Model):
                     self.reference = f"{prefix}0001"
             else:
                 self.reference = f"{prefix}0001"
+        
+        # Validation avant sauvegarde
+        self.full_clean()
         super().save(*args, **kwargs)
     
     @property
@@ -234,7 +240,7 @@ class Product(models.Model):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
 
-    def adjust_stock(self, quantity, movement_type, reference_type=None, reference_id=None, notes="", user=None):
+    def adjust_stock(self, quantity, movement_type, reference_type=None, reference_id=None, notes="", user=None, batch=None):
         """
         Ajuste le stock et crée un mouvement
 
@@ -245,6 +251,7 @@ class Product(models.Model):
             reference_id: ID de la référence
             notes: Notes du mouvement
             user: Utilisateur qui effectue le mouvement
+            batch: Lot de produit (optionnel)
         """
         if self.product_type != 'physical':
             return None
@@ -253,9 +260,14 @@ class Product(models.Model):
         self.stock_quantity += quantity
         self.save(update_fields=['stock_quantity'])
 
+        if batch:
+            batch.current_quantity += quantity
+            batch.save(update_fields=['current_quantity'])
+
         # Créer le mouvement
         movement = StockMovement.objects.create(
             product=self,
+            batch=batch,
             movement_type=movement_type,
             quantity=quantity,
             quantity_before=old_quantity,
@@ -271,6 +283,48 @@ class Product(models.Model):
         check_stock_after_movement(self)
 
         return movement
+
+
+class ProductBatch(models.Model):
+    """Lot de produit avec date de péremption"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='batches', verbose_name="Produit")
+    batch_number = models.CharField(max_length=100, verbose_name="Numéro de lot")
+    expiration_date = models.DateField(null=True, blank=True, verbose_name="Date de péremption")
+    initial_quantity = models.IntegerField(default=0, verbose_name="Quantité initiale")
+    current_quantity = models.IntegerField(default=0, verbose_name="Quantité actuelle")
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Date de modification")
+    is_active = models.BooleanField(default=True, verbose_name="Actif")
+    notes = models.TextField(blank=True, verbose_name="Notes")
+
+    class Meta:
+        verbose_name = "Lot de produit"
+        verbose_name_plural = "Lots de produits"
+        ordering = ['expiration_date', 'created_at']
+        unique_together = [['product', 'batch_number']]
+
+    def __str__(self):
+        return f"{self.product.name} - Lot {self.batch_number}"
+
+    @property
+    def is_expired(self):
+        """Vérifie si le lot est périmé"""
+        from django.utils import timezone
+        if not self.expiration_date:
+            return False
+        return self.expiration_date < timezone.now().date()
+        
+    @property
+    def is_expiring_soon(self):
+        """Vérifie si le lot expire dans moins de 30 jours"""
+        from django.utils import timezone
+        from datetime import timedelta
+        if not self.expiration_date:
+            return False
+        today = timezone.now().date()
+        return today <= self.expiration_date <= today + timedelta(days=30)
 
 
 class StockMovement(models.Model):
@@ -302,6 +356,7 @@ class StockMovement(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements', verbose_name="Produit")
+    batch = models.ForeignKey(ProductBatch, on_delete=models.SET_NULL, null=True, blank=True, related_name='movements', verbose_name="Lot")
 
     # Détails du mouvement
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES, verbose_name="Type de mouvement")
@@ -391,6 +446,7 @@ class Invoice(models.Model):
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
     client = models.ForeignKey('accounts.Client', on_delete=models.CASCADE, related_name='invoices', null=True, blank=True, verbose_name=_("Client"))
+    contract = models.ForeignKey('contracts.Contract', on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices', verbose_name=_("Contrat associé"))
     purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, related_name='invoices', null=True, blank=True, verbose_name=_("Bon de commande associé"))
 
     # Informations de facturation
@@ -407,10 +463,56 @@ class Invoice(models.Model):
     def __str__(self):
         return f"{self.invoice_number} - {self.title}"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._old_status = self.status
+
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
+            
+        is_new = self.pk is None
         super().save(*args, **kwargs)
+        
+        # Gestion des stocks (Batch/Lots)
+        if not is_new and self._old_status != self.status:
+            # Brouillon -> Envoyée/Payée/En retard
+            if self._old_status == 'draft' and self.status in ['sent', 'paid', 'overdue']:
+                self._deduct_stock()
+            
+            # Envoyée/Payée -> Annulée/Brouillon
+            elif self._old_status in ['sent', 'paid', 'overdue'] and self.status in ['cancelled', 'draft']:
+                self._restore_stock()
+                
+        self._old_status = self.status
+
+    def _deduct_stock(self):
+        """Déduit le stock pour les articles liés à des produits physiques"""
+        for item in self.items.all():
+            if item.product and item.product.product_type == 'physical':
+                item.product.adjust_stock(
+                    quantity=-item.quantity,
+                    movement_type='sale',
+                    reference_type='invoice',
+                    reference_id=self.id,
+                    notes=f"Facture validée {self.invoice_number}",
+                    user=self.created_by,
+                    batch=item.batch
+                )
+
+    def _restore_stock(self):
+        """Restaure le stock pour une facture annulée/brouillon"""
+        for item in self.items.all():
+            if item.product and item.product.product_type == 'physical':
+                item.product.adjust_stock(
+                    quantity=item.quantity,
+                    movement_type='return',
+                    reference_type='invoice',
+                    reference_id=self.id,
+                    notes=f"Facture annulée/révoquée {self.invoice_number}",
+                    user=self.created_by,
+                    batch=item.batch
+                )
 
     def clean(self):
         """Validation de la facture"""
@@ -750,6 +852,15 @@ class InvoiceItem(models.Model):
         verbose_name=_("Produit"),
         help_text=_("Produit facturé (si applicable)")
     )
+    batch = models.ForeignKey(
+        'invoicing.ProductBatch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoice_items',
+        verbose_name=_("Lot"),
+        help_text=_("Lot du produit (si géré par lots)")
+    )
     
     # Informations service/produit
     service_code = models.CharField(max_length=100, verbose_name=_("Code service"), default="SVC-001")
@@ -777,6 +888,11 @@ class InvoiceItem(models.Model):
     def __str__(self):
         return f"{self.service_code} - {self.description}"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._old_quantity = self.quantity if self.pk else 0
+        self._old_batch = self.batch if self.pk else None
+        
     def save(self, *args, **kwargs):
         from decimal import Decimal
         
@@ -791,10 +907,81 @@ class InvoiceItem(models.Model):
         discount_amount = base_total * (self.discount_percent / Decimal('100'))
         self.total_price = base_total - discount_amount
 
+        is_new = self.pk is None
+        
+        # Check if invoice is already in a finalized state
+        is_finalized = False
+        if hasattr(self, 'invoice') and getattr(self, 'invoice_id', None):
+            try:
+                is_finalized = self.invoice.status in ['sent', 'paid', 'overdue']
+            except Exception:
+                pass
+
         super().save(*args, **kwargs)
         # Recalculer les totaux de la facture seulement si elle existe déjà
         if self.invoice_id:
             self.invoice.recalculate_totals()
+            
+        # Ajustement de stock si la facture est DÉJÀ finalisée
+        if is_finalized and self.product and self.product.product_type == 'physical':
+            # Si le lot a changé
+            if getattr(self, '_old_batch', None) != self.batch and not is_new:
+                # Restaurer sur l'ancien lot
+                self.product.adjust_stock(
+                    quantity=self._old_quantity,
+                    movement_type='adjustment',
+                    reference_type='invoice',
+                    reference_id=self.invoice_id,
+                    notes=f"Changement de lot ligne facture",
+                    user=getattr(self.invoice, 'created_by', None),
+                    batch=self._old_batch
+                )
+                # Déduire du nouveau lot
+                self.product.adjust_stock(
+                    quantity=-self.quantity,
+                    movement_type='sale',
+                    reference_type='invoice',
+                    reference_id=self.invoice_id,
+                    notes=f"Ligne facture modifiée",
+                    user=getattr(self.invoice, 'created_by', None),
+                    batch=self.batch
+                )
+            else:
+                diff = self.quantity - self._old_quantity
+                if diff != 0:
+                    self.product.adjust_stock(
+                        quantity=-diff,
+                        movement_type='sale',
+                        reference_type='invoice',
+                        reference_id=self.invoice_id,
+                        notes=f"Ajustement ligne facture",
+                        user=getattr(self.invoice, 'created_by', None),
+                        batch=self.batch
+                    )
+
+        self._old_quantity = self.quantity
+        self._old_batch = self.batch
+
+    def delete(self, *args, **kwargs):
+        is_finalized = False
+        if hasattr(self, 'invoice') and getattr(self, 'invoice_id', None):
+            try:
+                is_finalized = self.invoice.status in ['sent', 'paid', 'overdue']
+            except Exception:
+                pass
+                
+        if is_finalized and self.product and self.product.product_type == 'physical':
+            self.product.adjust_stock(
+                quantity=self.quantity,
+                movement_type='return',
+                reference_type='invoice',
+                reference_id=self.invoice_id,
+                notes=f"Ligne facture supprimée",
+                user=getattr(self.invoice, 'created_by', None),
+                batch=self.batch
+            )
+            
+        super().delete(*args, **kwargs)
 
     @property
     def total_before_discount(self):

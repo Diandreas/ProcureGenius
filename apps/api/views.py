@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
+from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse, ProductBatch
 from apps.accounts.models import Client
 from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules
@@ -19,7 +19,7 @@ from .serializers import (
     SupplierSerializer, SupplierCategorySerializer, SupplierProductSerializer,
     PurchaseOrderSerializer, PurchaseOrderItemSerializer,
     InvoiceSerializer, InvoiceItemSerializer,
-    ProductSerializer, ClientSerializer,
+    ProductSerializer, ClientSerializer, ProductBatchSerializer,
     ProductCategorySerializer, WarehouseSerializer,
     DashboardStatsSerializer
 )
@@ -269,6 +269,19 @@ class SupplierProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         product_suppliers = self.get_queryset().filter(product_id=product_id)
         serializer = self.get_serializer(product_suppliers, many=True)
         return Response(serializer.data)
+
+
+class ProductBatchViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+    """ViewSet pour les lots de produits"""
+    queryset = ProductBatch.objects.all()
+    serializer_class = ProductBatchSerializer
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
+    required_module = Modules.PRODUCTS
+    organization_field = 'product__organization'
+    filterset_fields = ['product', 'is_active']
+    search_fields = ['batch_number', 'product__name']
+    ordering_fields = ['expiration_date', 'created_at']
+    ordering = ['expiration_date']
 
 
 class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
@@ -532,6 +545,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         quantity = request.data.get('quantity')
         notes = request.data.get('notes', '')
+        batch_id = request.data.get('batch_id')
 
         if quantity is None:
             return Response(
@@ -547,13 +561,24 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        batch = None
+        if batch_id:
+            try:
+                batch = ProductBatch.objects.get(id=batch_id, product=product)
+            except ProductBatch.DoesNotExist:
+                return Response(
+                    {'error': 'Lot introuvable pour ce produit'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
         # Ajuster le stock
         movement = product.adjust_stock(
             quantity=quantity,
             movement_type='adjustment',
             reference_type='manual',
             notes=notes,
-            user=request.user if request.user.is_authenticated else None
+            user=request.user if request.user.is_authenticated else None,
+            batch=batch
         )
 
         from .serializers import StockMovementSerializer
@@ -580,6 +605,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         loss_reason = request.data.get('loss_reason')
         loss_description = request.data.get('loss_description', '')
         notes = request.data.get('notes', '')
+        batch_id = request.data.get('batch_id')
 
         if not quantity:
             return Response({'error': 'La quantité est requise'}, status=status.HTTP_400_BAD_REQUEST)
@@ -603,8 +629,18 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         product.stock_quantity -= quantity_lost
         product.save(update_fields=['stock_quantity'])
 
+        batch = None
+        if batch_id:
+            try:
+                batch = ProductBatch.objects.get(id=batch_id, product=product)
+                batch.current_quantity -= quantity_lost
+                batch.save(update_fields=['current_quantity'])
+            except ProductBatch.DoesNotExist:
+                return Response({'error': 'Lot introuvable'}, status=status.HTTP_400_BAD_REQUEST)
+
         movement = StockMovement.objects.create(
             product=product,
+            batch=batch,
             movement_type='loss',
             quantity=-quantity_lost,
             quantity_before=old_quantity,

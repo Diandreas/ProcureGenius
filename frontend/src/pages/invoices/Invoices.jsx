@@ -49,6 +49,8 @@ import {
   PictureAsPdf,
   Print,
   Download,
+  AutoAwesome,
+  CloudUpload,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -59,6 +61,8 @@ import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import DateNavigator from '../../components/common/DateNavigator';
+import SmartInvoiceUpload from '../../components/SmartInvoiceUpload';
+import Mascot from '../../components/Mascot';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 function Invoices() {
@@ -83,6 +87,7 @@ function Invoices() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
+  const [showSmartUpload, setShowSmartUpload] = useState(false);
   const [reportFilters, setReportFilters] = useState({
     dateStart: '',
     dateEnd: '',
@@ -410,6 +415,99 @@ function Invoices() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+
+      {/* Header with Title and Smart Action */}
+      <Box sx={{
+        mb: 3,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: 2
+      }}>
+        <Box>
+          <Typography variant="h4" fontWeight="800" gutterBottom sx={{
+            background: theme => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.5px'
+          }}>
+            {t('invoices:title')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Gérez vos factures et encaissements en toute simplicité
+          </Typography>
+        </Box>
+
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AutoAwesome />}
+            onClick={() => setShowSmartUpload(!showSmartUpload)}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 2,
+              borderWidth: 2,
+              '&:hover': { borderWidth: 2 }
+            }}
+          >
+            {showSmartUpload ? 'Fermer' : 'Smart Upload IA'}
+          </Button>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Receipt />}
+            onClick={() => navigate('/invoices/new')}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              boxShadow: theme => `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+            }}
+          >
+            {t('invoices:newInvoice')}
+          </Button>
+        </Stack>
+      </Box>
+
+      {/* Smart Upload Section */}
+      <AnimatePresence>
+        {showSmartUpload && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.4, ease: "circOut" }}
+          >
+            <Card sx={{
+              borderRadius: 4,
+              overflow: 'hidden',
+              border: '2px solid',
+              borderColor: 'primary.light',
+              boxShadow: theme => `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+              position: 'relative'
+            }}>
+              <Box sx={{
+                position: 'absolute',
+                top: -10,
+                right: 20,
+                zIndex: 1,
+                display: { xs: 'none', md: 'block' }
+              }}>
+                <Mascot pose="happy" animation="float" size={100} />
+              </Box>
+              <Box sx={{ p: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                <SmartInvoiceUpload />
+              </Box>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

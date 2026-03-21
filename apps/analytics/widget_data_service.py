@@ -105,9 +105,10 @@ class WidgetDataService:
 
     def get_alerts_notifications(self, **kwargs):
         """Consolidated alerts"""
-        from apps.invoicing.models import Invoice, Product
+        from apps.invoicing.models import Invoice, Product, ProductBatch
         from apps.purchase_orders.models import PurchaseOrder
         from django.utils import timezone
+        import datetime
 
         alerts = []
 
@@ -152,6 +153,22 @@ class WidgetDataService:
                 'module': 'products',
                 'message': f'{out_of_stock} produit(s) en rupture',
                 'count': out_of_stock
+            })
+
+        # Batches expiring soon (within 30 days)
+        thirty_days = timezone.now().date() + datetime.timedelta(days=30)
+        expiring_batches = ProductBatch.objects.filter(
+            product__organization=self.stats_service.organization,
+            is_active=True,
+            current_quantity__gt=0,
+            expiration_date__lte=thirty_days
+        ).count()
+        if expiring_batches > 0:
+            alerts.append({
+                'type': 'warning',
+                'module': 'products',
+                'message': f'{expiring_batches} lot(s) expirant dans moins de 30 jours',
+                'count': expiring_batches
             })
 
         # Pending approvals

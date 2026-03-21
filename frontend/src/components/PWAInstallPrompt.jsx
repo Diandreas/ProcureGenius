@@ -32,8 +32,20 @@ function PWAInstallPrompt() {
     updatePWA,
   } = usePWA();
 
-  const [showInstallPrompt, setShowInstallPrompt] = useState(true);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(() => {
+    return sessionStorage.getItem('pwaPromptDismissed') !== 'true';
+  });
   const [showInstallDialog, setShowInstallDialog] = useState(false);
+
+  const handleDismiss = () => {
+    setShowInstallPrompt(false);
+    sessionStorage.setItem('pwaPromptDismissed', 'true');
+  };
+
+  const handleCloseDialog = () => {
+    setShowInstallDialog(false);
+    sessionStorage.setItem('pwaPromptDismissed', 'true');
+  };
 
   const handleInstall = async () => {
     const installed = await installPWA();
@@ -67,7 +79,7 @@ function PWAInstallPrompt() {
                 <IconButton
                   size="small"
                   color="inherit"
-                  onClick={() => setShowInstallPrompt(false)}
+                  onClick={handleDismiss}
                 >
                   <Close />
                 </IconButton>
@@ -78,7 +90,7 @@ function PWAInstallPrompt() {
           </Alert>
         </Snackbar>
 
-        <Dialog open={showInstallDialog} onClose={() => setShowInstallDialog(false)}>
+        <Dialog open={showInstallDialog} onClose={handleCloseDialog}>
           <DialogTitle>Installer l'application</DialogTitle>
           <DialogContent>
             <Box sx={{ textAlign: 'center', py: 2 }}>
@@ -108,7 +120,7 @@ function PWAInstallPrompt() {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowInstallDialog(false)}>
+            <Button onClick={handleCloseDialog}>
               Plus tard
             </Button>
             <Button variant="contained" onClick={handleInstall} startIcon={<GetApp />}>

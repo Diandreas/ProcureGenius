@@ -374,10 +374,45 @@ class ChatView(APIView):
                             if isinstance(data, dict) and data.get('url'):
                                 message += f" [Voir les détails]({data['url']})"
                             final_response += f"\n\n✓ {message}"
+                        elif action_result.get('needs_confirmation'):
+                            # C'est une demande de confirmation, ne pas afficher d'erreur
+                            # Le frontend affichera les boutons appropriés via action_results metadata
+                            
+                            # On s'assure que le message de confirmation est dans la réponse finale
+                            conf_message = action_result.get('message', 'Veuillez confirmer cette action')
+                            if conf_message not in final_response:
+                                final_response += f"\n\n{conf_message}"
+                                
+                            # Préparer les boutons pour le frontend
+                            entity_type = action_result.get('entity_type', 'entité')
+                            draft_data = action_result.get('draft_data', {})
+                            
+                            action_results[-1]['action_buttons'] = [
+                                {
+                                    'label': "✓ Confirmer",
+                                    'action': 'force_create',
+                                    'style': 'primary',
+                                    'params': {
+                                        'force_create': True,
+                                        'entity_type': entity_type,
+                                        **draft_data
+                                    }
+                                },
+                                {
+                                    'label': "Modifier",
+                                    'action': 'edit',
+                                    'style': 'secondary'
+                                },
+                                {
+                                    'label': "Annuler",
+                                    'action': 'cancel',
+                                    'style': 'danger'
+                                }
+                            ]
                         else:
-                            error = action_result.get('error', 'Erreur inconnue')
+                            error = action_result.get('error')
                             # Gestion améliorée des entités similaires trouvées
-                            if 'similar_entities_found' in str(error):
+                            if error and 'similar_entities_found' in str(error):
                                 similar = action_result.get('similar_entities', [])
                                 entity_type = action_result.get('entity_type', 'entité')
 
@@ -446,8 +481,10 @@ class ChatView(APIView):
                                         'cancel': None
                                     }
                                 }
-                            else:
+                            elif error:
                                 final_response += f"\n\n✗ Désolé, une erreur s'est produite : {error}"
+                            else:
+                                final_response += f"\n\n✗ L'action a échoué (erreur non spécifiée)."
 
                     except Exception as e:
                         logger.error(f"Tool call execution error: {e}")
@@ -470,32 +507,8 @@ class ChatView(APIView):
                 metadata={'action_results': action_results} if action_results else None
             )
 
-            # Exécuter l'action legacy si nécessaire (compatibilité)
-            action_result = None
-            if result.get('action'):
-                from .services import ActionExecutor, AsyncSafeUserContext
-                executor = ActionExecutor()
+            # Message enregistré et contenu mis à jour
 
-                # IMPORTANT: Convert user to safe dict BEFORE entering async context
-                user_context = AsyncSafeUserContext.from_user(request.user)
-
-                # Utiliser async_to_sync au lieu de créer un event loop
-                action_result = async_to_sync(executor.execute)(
-                    action=result['action']['action'],
-                    params=result['action']['params'],
-                    user=user_context
-                )
-
-                # Ajouter le résultat de l'action à la conversation
-                if action_result:
-                    action_msg = f"\n\n[Action exécutée : {result['action']['action']}]"
-                    if action_result.get('success'):
-                        action_msg += f"\n✓ {action_result.get('message', 'Succès')}"
-                    else:
-                        action_msg += f"\n✗ Erreur : {action_result.get('error', 'Erreur inconnue')}"
-
-                    ai_msg.content += action_msg
-                    ai_msg.save()
             
             # Mettre à jour la conversation
             conversation.last_message_at = timezone.now()

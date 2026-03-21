@@ -18,6 +18,7 @@ import AuthLayout from './layouts/AuthLayout';
 // Pages
 import Login from './pages/auth/Login';
 import CustomizableDashboard from './pages/CustomizableDashboard';
+import DashboardEnhanced from './pages/DashboardEnhanced';
 import OldDashboard from './pages/Dashboard';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
@@ -699,7 +700,8 @@ function App() {
                         <Route element={<PrivateRoute />}>
                           <Route element={<MainLayout />}>
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<CustomizableDashboard />} />
+                            <Route path="/dashboard" element={<DashboardEnhanced />} />
+                            <Route path="/dashboard-custom" element={<CustomizableDashboard />} />
                             <Route path="/dashboard-old" element={<OldDashboard />} />
 
                             {/* Suppliers */}

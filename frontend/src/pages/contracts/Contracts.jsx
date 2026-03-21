@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
   FormControl, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
-  CircularProgress, useMediaQuery, useTheme,
+  CircularProgress, useMediaQuery, useTheme, Tabs, Tab,
 } from '@mui/material';
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
@@ -15,6 +15,7 @@ import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import ContractTemplatesTab from '../../components/ContractTemplatesTab';
 
 function Contracts() {
   const { t } = useTranslation(['contracts', 'common']);
@@ -24,6 +25,7 @@ function Contracts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState(0); // 0: Contrats, 1: Modèles
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -184,8 +186,19 @@ function Contracts() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Grid container spacing={isMobile ? 1 : 2}>
+      <Tabs 
+        value={activeTab} 
+        onChange={(e, val) => setActiveTab(val)} 
+        sx={{ mb: 3 }}
+      >
+        <Tab label="Contrats" />
+        <Tab label="Modèles" />
+      </Tabs>
+
+      {activeTab === 0 && (
+        <Box>
+          <Box sx={{ mb: 3 }}>
+            <Grid container spacing={isMobile ? 1 : 2}>
           <Grid item xs={6} sm={3}>
             <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
               <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
@@ -343,6 +356,14 @@ function Contracts() {
             </Grid>
           ))}
         </Grid>
+      )}
+      </Box>
+      )}
+
+      {activeTab === 1 && (
+        <Box>
+          <ContractTemplatesTab />
+        </Box>
       )}
     </Box>
   );

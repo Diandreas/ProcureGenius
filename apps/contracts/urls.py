@@ -4,14 +4,16 @@ from .views import (
     ContractViewSet,
     ContractClauseViewSet,
     ContractMilestoneViewSet,
-    ContractDocumentViewSet
+    ContractDocumentViewSet,
+    ContractTemplateViewSet
 )
 
 router = DefaultRouter()
-router.register(r'', ContractViewSet, basename='contract')
 router.register(r'clauses', ContractClauseViewSet, basename='contract-clause')
 router.register(r'milestones', ContractMilestoneViewSet, basename='contract-milestone')
 router.register(r'documents', ContractDocumentViewSet, basename='contract-document')
+router.register(r'templates', ContractTemplateViewSet, basename='contract-template')
+router.register(r'', ContractViewSet, basename='contract')
 
 urlpatterns = [
     path('', include(router.urls)),

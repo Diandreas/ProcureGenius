@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contract, ContractClause, ContractMilestone, ContractDocument
+from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractTemplate
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -173,3 +173,22 @@ class ContractRenewalSerializer(serializers.Serializer):
     new_end_date = serializers.DateField(required=True)
     new_total_value = serializers.DecimalField(max_digits=14, decimal_places=2, required=False)
     notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class ContractTemplateSerializer(serializers.ModelSerializer):
+    """Serializer pour les modèles de contrat"""
+    
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = ContractTemplate
+        fields = [
+            'id', 'name', 'template_type', 'description', 'content', 'ai_prompt_instructions', 
+            'is_active', 'created_at', 'updated_at', 'created_by', 'created_by_name'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        template = ContractTemplate.objects.create(created_by=user, **validated_data)
+        return template

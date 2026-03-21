@@ -51,6 +51,7 @@ import {
   Print,
   Download,
   Receipt,
+  AutoAwesome,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -447,14 +448,33 @@ function Products() {
           </Stack>
 
           {/* Footer */}
-          <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
             <Chip
               label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
               size="small"
               color={product.is_active ? 'success' : 'default'}
               sx={{ fontSize: '0.7rem', height: 20 }}
             />
-            {product.total_invoices > 0 && (
+            
+            {/* AI Insights Chips */}
+            {(product.ai_insights || []).map((insight, idx) => (
+              <Chip
+                key={idx}
+                icon={<AutoAwesome sx={{ fontSize: '12px !important' }} />}
+                label={insight.label}
+                size="small"
+                color={insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')}
+                variant="outlined"
+                sx={{ 
+                  fontSize: '0.65rem', 
+                  height: 20,
+                  borderColor: theme => alpha(theme.palette[insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')].main, 0.5),
+                  bgcolor: theme => alpha(theme.palette[insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')].main, 0.05),
+                }}
+              />
+            ))}
+
+            {product.total_invoices > 0 && !product.ai_insights?.length && (
               <Chip
                 icon={<TrendingUp sx={{ fontSize: 14 }} />}
                 label={product.total_invoices}

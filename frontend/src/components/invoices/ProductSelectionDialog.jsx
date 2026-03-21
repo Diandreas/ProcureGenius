@@ -74,7 +74,7 @@ function ProductSelectionDialog({
   const handleProductSelect = (product) => {
     if (product) {
       // Vérifier la disponibilité
-      const { canAdd, reason } = canAddProductToInvoice(product, newItem.quantity || 1);
+      const { canAdd, reason } = canAddProductToInvoice(product, newItem.quantity || 1, newItem.batch || null);
       if (!canAdd) {
         setStockError(reason);
       } else {
@@ -87,6 +87,8 @@ function ProductSelectionDialog({
         description: product.name,
         unit_price: product.price || 0,
         product_reference: product.reference || '',
+        batch: null,
+        batch_number: ''
       }));
     } else {
       setStockError('');
@@ -98,7 +100,7 @@ function ProductSelectionDialog({
 
     // Re-vérifier le stock si un produit est sélectionné
     if (newItem.product) {
-      const { canAdd, reason } = canAddProductToInvoice(newItem.product, quantity);
+      const { canAdd, reason } = canAddProductToInvoice(newItem.product, quantity, newItem.batch || null);
       setStockError(canAdd ? '' : reason);
     }
   };
@@ -236,6 +238,34 @@ function ProductSelectionDialog({
               {stockError && (
                 <Grid item xs={12}>
                   <Alert severity="error">{stockError}</Alert>
+                </Grid>
+              )}
+
+              {newItem.product?.product_type === 'physical' && newItem.product?.batches?.length > 0 && (
+                <Grid item xs={12}>
+                  <Autocomplete
+                    options={newItem.product.batches}
+                    getOptionLabel={(option) => option ? `${option.batch_number} (Exp: ${option.expiration_date ? new Date(option.expiration_date).toLocaleDateString() : 'N/A'}, Qté: ${option.current_quantity})` : ''}
+                    value={newItem.batch || null}
+                    onChange={(event, newValue) => {
+                      setNewItem({ ...newItem, batch: newValue, batch_number: newValue ? newValue.batch_number : '' });
+                      // Re-check stock based on batch
+                      if (newValue) {
+                        const { canAdd, reason } = canAddProductToInvoice(newItem.product, newItem.quantity, newValue);
+                        setStockError(canAdd ? '' : reason);
+                      } else {
+                        const { canAdd, reason } = canAddProductToInvoice(newItem.product, newItem.quantity, null);
+                        setStockError(canAdd ? '' : reason);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={t('invoices:labels.selectBatchOptional', "Sélectionner un lot (optionnel)")}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    )}
+                  />
                 </Grid>
               )}
 

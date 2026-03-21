@@ -1,0 +1,123 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Contrat de Paiement {{ contract.contract_number }}{% endblock %}
+
+{% block report_title %}CONTRAT DE PAIEMENT{% endblock %}
+{% block report_subtitle %}Réf : {{ contract.contract_number }} | Date : {% now "d/m/Y" %}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .contract-meta {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid #e2e8f0;
+    }
+    .payment-body {
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #334155;
+    }
+    .payment-body h2 {
+        color: #0f172a;
+        font-size: 14pt;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .amount-display {
+        background: #e0f2fe;
+        color: #0369a1;
+        font-size: 16pt;
+        font-weight: bold;
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 2px dashed #7dd3fc;
+    }
+    .signatures {
+        margin-top: 60px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .signature-box {
+        width: 45%;
+        border-top: 1px solid #94a3b8;
+        padding-top: 10px;
+    }
+    .signature-box p {
+        margin: 5px 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contract-meta">
+    <div class="info-grid">
+        <div class="info-box">
+            <h3>Partie Débitrice</h3>
+            <div class="content">
+                <strong>{% if organization %}{{ organization.name }}{% else %}Organisation{% endif %}</strong>
+                {% if organization.address %}
+                <span class="label">Adresse:</span> <span class="value">{{ organization.address|striptags }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-box">
+            <h3>Partie Créancière</h3>
+            <div class="content">
+                <strong>{{ contract.supplier.name }}</strong>
+                <span class="label">Contact:</span> <span class="value">{{ contract.supplier.contact_email|default:contract.supplier.email }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="payment-body">
+    <h2>1. Engagement de Paiement</h2>
+    <p>Il est convenu par le présent document que la Partie Débitrice s'engage formellement et irrévocablement à payer à la Partie Créancière la somme stipulée ci-dessous au titre de : <strong>{{ contract.title }}</strong>.</p>
+    
+    <div class="amount-display">
+        MONTANT : {{ contract.total_value }} {{ contract.currency }}
+    </div>
+
+    <h2>2. Échéances et Modalités</h2>
+    <p>{{ contract.payment_terms|default:"Au comptant à réception de la facture."|linebreaksbr }}</p>
+
+    <h2>3. Description du Bien/Service</h2>
+    <p>{{ contract.description|linebreaksbr }}</p>
+
+    {% if generated_content %}
+    <h2>4. Clauses Spécifiques</h2>
+    <div>
+        {{ generated_content|safe }}
+    </div>
+    {% endif %}
+
+    {% if contract.terms_and_conditions %}
+    <h2>5. Conditions Générales</h2>
+    <div style="font-size: 10pt; color: #475569;">
+        {{ contract.terms_and_conditions|safe }}
+    </div>
+    {% endif %}
+</div>
+
+<div class="signatures">
+    <div class="signature-box">
+        <p>La Partie Débitrice</p>
+        <p style="font-size: 9pt; font-weight: normal;">Pour : {% if organization %}{{ organization.name }}{% endif %}</p>
+        <p style="height: 60px;"></p>
+        <p style="font-size: 8pt; font-style: italic;">Lu et approuvé</p>
+    </div>
+    <div class="signature-box">
+        <p>La Partie Créancière</p>
+        <p style="font-size: 9pt; font-weight: normal;">Pour : {{ contract.supplier.name }}</p>
+        <p style="height: 60px;"></p>
+        <p style="font-size: 8pt; font-style: italic;">Lu et approuvé</p>
+    </div>
+</div>
+{% endblock %}

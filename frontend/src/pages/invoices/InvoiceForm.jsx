@@ -44,10 +44,11 @@ import {
   AttachMoney,
   Receipt,
   Send,
+  Description,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
+import { invoicesAPI, clientsAPI, productsAPI, contractsAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -65,15 +66,18 @@ function InvoiceForm() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isEdit = Boolean(id);
   const clientIdFromUrl = searchParams.get('clientId');
+  const contractIdFromUrl = searchParams.get('contractId');
 
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
+  const [contracts, setContracts] = useState([]);
   const [items, setItems] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     client: null,
+    contract: null,
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
@@ -87,7 +91,9 @@ function InvoiceForm() {
     quantity: 1,
     unit_price: 0,
     product_reference: '',
-    product: null
+    product: null,
+    batch: null,
+    batch_number: ''
   });
 
   // Quick Create states
@@ -97,6 +103,7 @@ function InvoiceForm() {
   useEffect(() => {
     fetchClients();
     fetchProducts();
+    fetchContracts();
   }, []);
 
   useEffect(() => {
@@ -116,6 +123,17 @@ function InvoiceForm() {
     }
   }, [clientIdFromUrl, clients, formData.client, isEdit]);
 
+  // Pre-select contract from URL
+  useEffect(() => {
+    if (contractIdFromUrl && contracts.length > 0 && !formData.contract && !isEdit) {
+      const contract = contracts.find(c => String(c.id) === String(contractIdFromUrl));
+      if (contract) {
+        setFormData(prev => ({ ...prev, contract }));
+        enqueueSnackbar(t('invoices:messages.contractPreselected', { title: contract.title }), { variant: 'info' });
+      }
+    }
+  }, [contractIdFromUrl, contracts, formData.contract, isEdit]);
+
   const fetchClients = async () => {
     try {
       const response = await clientsAPI.list();
@@ -134,6 +152,15 @@ function InvoiceForm() {
     }
   };
 
+  const fetchContracts = async () => {
+    try {
+      const response = await contractsAPI.list();
+      setContracts(response.data.results || []);
+    } catch (error) {
+      console.error('Error loading contracts:', error);
+    }
+  };
+
   const fetchInvoice = async () => {
     setLoading(true);
     try {
@@ -143,6 +170,7 @@ function InvoiceForm() {
         title: invoice.title || '',
         description: invoice.description || '',
         client: invoice.client,
+        contract: invoice.contract,
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate || 20,
@@ -221,13 +249,23 @@ function InvoiceForm() {
       setItems(prev => [...prev, item]);
     }
 
-    setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
+    setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
     setItemDialogOpen(false);
   };
 
   const handleEditItem = (index) => {
-    const item = items[index];
-    setNewItem(item);
+    // S'assurer de récupérer l'objet produit complet pour l'Autocomplete si possible
+    const fullProduct = typeof item.product === 'string' || typeof item.product === 'number' 
+      ? products.find(p => p.id === item.product) 
+      : item.product;
+      
+    setNewItem({
+      ...item,
+      product: fullProduct || item.product,
+      batch: typeof item.batch === 'string' || typeof item.batch === 'number' && fullProduct?.batches 
+        ? fullProduct.batches.find(b => b.id === item.batch) 
+        : item.batch
+    });
     setEditingItemIndex(index);
     setItemDialogOpen(true);
   };
@@ -270,7 +308,10 @@ function InvoiceForm() {
       const payload = {
         ...formData,
         client: formData.client ? formData.client.id : null,
+        contract: formData.contract ? formData.contract.id : null,
         items: items.map(item => ({
+          product: (item.product && item.product.id) ? item.product.id : item.product,
+          batch: (item.batch && item.batch.id) ? item.batch.id : item.batch,
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -576,6 +617,29 @@ function InvoiceForm() {
                     />
                   )}
                 />
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                    {t('invoices:labels.contract')}
+                  </Typography>
+                  <Autocomplete
+                    options={contracts}
+                    getOptionLabel={(option) => option.contract_number || option.title || ''}
+                    value={formData.contract}
+                    onChange={(event, newValue) => {
+                      setFormData({ ...formData, contract: newValue });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Lier à un contrat"
+                        size="small"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    )}
+                  />
+                </Box>
+
                 {formData.client && (
                   <Box sx={{ mt: 1.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
                     <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
@@ -600,7 +664,7 @@ function InvoiceForm() {
                     variant="contained"
                     startIcon={<Add />}
                     onClick={() => {
-                      setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
+                      setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
                       setEditingItemIndex(-1);
                       setItemDialogOpen(true);
                     }}
@@ -765,7 +829,7 @@ function InvoiceForm() {
                       variant="contained"
                       startIcon={<Add />}
                       onClick={() => {
-                        setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null });
+                        setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
                         setEditingItemIndex(-1);
                         setItemDialogOpen(true);
                       }}
@@ -945,6 +1009,49 @@ function InvoiceForm() {
                       );
                     }}
                   />
+
+                  <Box sx={{ mt: 3, mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                      {t('invoices:labels.contract')}
+                    </Typography>
+                    <Autocomplete
+                      options={contracts}
+                      getOptionLabel={(option) => {
+                        const num = option.contract_number ? `(${option.contract_number}) ` : '';
+                        return `${num}${option.title || ''}`;
+                      }}
+                      value={formData.contract}
+                      onChange={(event, newValue) => {
+                        setFormData({ ...formData, contract: newValue });
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Sélectionner un contrat"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: <Description sx={{ mr: 1, color: 'action.active' }} />,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => {
+                        const { key, ...otherProps } = props;
+                        return (
+                          <Box component="li" key={key} {...otherProps}>
+                            <Description sx={{ mr: 2, color: 'action.active' }} />
+                            <Box>
+                              <Typography variant="body1">{option.title}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {option.contract_number} | {option.status}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        );
+                      }}
+                    />
+                  </Box>
+
                   {formData.client && (
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                       <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>

@@ -1,0 +1,138 @@
+{% extends "reports/pdf/base_report.html" %}
+
+{% block title %}Devis pour {{ contract.title }}{% endblock %}
+
+{% block report_title %}DEVIS N° {{ contract.contract_number }}{% endblock %}
+{% block report_subtitle %}Valable 30 jours | Date : {% now "d/m/Y" %}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .quote-meta {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid #e2e8f0;
+    }
+    .quote-party {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+    .quote-party h3 {
+        color: #1e293b;
+        font-size: 14pt;
+        margin-bottom: 10px;
+    }
+    .quote-body {
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #334155;
+    }
+    .quote-amount {
+        text-align: right;
+        font-size: 14pt;
+        margin-top: 15px;
+        font-weight: bold;
+        color: #2563eb;
+    }
+    .signatures {
+        margin-top: 60px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .signature-box {
+        width: 45%;
+        border-top: 1px solid #94a3b8;
+        padding-top: 10px;
+    }
+    .signature-box p {
+        margin: 5px 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quote-meta">
+    <div class="info-grid">
+        <div class="info-box" style="border-left-color: #10b981;">
+            <h3>De : Fournisseur</h3>
+            <div class="content">
+                <strong>{{ contract.supplier.name }}</strong>
+                <span class="label">Adresse:</span> <span class="value">{{ contract.supplier.address|default:"Non spécifiée" }}</span><br>
+                <span class="label">Contact:</span> <span class="value">{{ contract.supplier.contact_email|default:contract.supplier.email }}</span>
+            </div>
+        </div>
+        <div class="info-box">
+            <h3>À : Client</h3>
+            <div class="content">
+                <strong>{% if organization %}{{ organization.name }}{% else %}Organisation{% endif %}</strong>
+                {% if organization.address %}
+                <span class="label">Adresse:</span> <span class="value">{{ organization.address|striptags }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="quote-body">
+    <p>Nous vous remercions de votre intérêt pout nos services. Veuillez trouver ci-dessous notre proposition chiffrée relative à : <strong>{{ contract.title }}</strong>.</p>
+    
+    <p style="margin-top: 15px;">{{ contract.description|linebreaksbr }}</p>
+
+    {% if contract.items.exists %}
+    <h2 style="font-size: 14pt; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">Produits / Prestations Estimés</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Désignation</th>
+                <th class="text-right">Quantité</th>
+                <th class="text-right">Prix Unitaire</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in contract.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td class="text-right">{{ item.min_quantity }}</td>
+                <td class="text-right">{{ item.contracted_price }} {{ contract.currency }}</td>
+                <td class="text-right">{% widthratio item.contracted_price 1 item.min_quantity %} {{ contract.currency }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <div class="quote-amount">
+        Total Estimé : {{ contract.total_value }} {{ contract.currency }}
+    </div>
+
+    {% if generated_content %}
+    <div style="margin-top: 30px; padding: 15px; border: 1px dashed #cbd5e1; background: #fafafa;">
+        {{ generated_content|safe }}
+    </div>
+    {% endif %}
+
+    {% if contract.payment_terms %}
+    <div style="margin-top: 20px;">
+        <h3 style="font-size: 11pt;">Modalités de paiement :</h3>
+        <p>{{ contract.payment_terms }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="signatures">
+    <div class="signature-box">
+        <p>Bon pour Accord (Le Client)</p>
+        <p style="font-size: 9pt; font-weight: normal;">Date et Signature :</p>
+        <p style="height: 60px;"></p>
+    </div>
+    <div class="signature-box">
+        <p>Le Fournisseur</p>
+        <p style="font-size: 9pt; font-weight: normal;">{{ contract.supplier.name }}</p>
+        <p style="height: 60px;"></p>
+    </div>
+</div>
+{% endblock %}

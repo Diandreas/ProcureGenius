@@ -56,6 +56,7 @@ import ErrorState from '../../components/ErrorState';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
+import ProductBatchesTab from '../../components/ProductBatchesTab';
 import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 
 // Configuration des types de produits (harmonisé avec ProductCard)
@@ -390,7 +391,14 @@ function ProductDetail() {
           label={t('products:tabs.clients')}
           iconPosition="start"
         />
-        {/* Afficher l'onglet Stock uniquement pour les produits physiques */}
+        {/* Afficher l'onglet Stock et Lots uniquement pour les produits physiques */}
+        {product?.product_type === 'physical' && (
+          <Tab
+            icon={<Warehouse sx={{ fontSize: isMobile ? 18 : 20 }} />}
+            label="Lots"
+            iconPosition="start"
+          />
+        )}
         {product?.product_type === 'physical' && (
           <Tab
             icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
@@ -1181,8 +1189,15 @@ function ProductDetail() {
         </Box>
       )}
 
-      {/* Tab: Mouvements de Stock - Affiché uniquement pour les produits physiques */}
+      {/* Tab: Lots - Affiché uniquement pour les produits physiques (Index 3 si type physical) */}
       {product?.product_type === 'physical' && activeTab === 3 && (
+        <Box>
+          <ProductBatchesTab productId={id} />
+        </Box>
+      )}
+
+      {/* Tab: Mouvements de Stock - Affiché uniquement pour les produits physiques (Index 4 maintenant car on a ajouté Lots) */}
+      {product?.product_type === 'physical' && activeTab === 4 && (
         <Box>
           <StockMovementsTab productId={id} productType={product?.product_type} />
         </Box>

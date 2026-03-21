@@ -130,6 +130,15 @@ export const productsAPI = {
   quickCreate: (data) => api.post('/quick-create/product/', data),
 };
 
+// Product Batches API
+export const productBatchesAPI = {
+  list: (params) => api.get('/product-batches/', { params }),
+  get: (id) => api.get(`/product-batches/${id}/`),
+  create: (data) => api.post('/product-batches/', data),
+  update: (id, data) => api.patch(`/product-batches/${id}/`, data),
+  delete: (id) => api.delete(`/product-batches/${id}/`),
+};
+
 // Product Categories API
 export const productCategoriesAPI = {
   list: (params) => api.get('/product-categories/', { params }),
@@ -209,6 +218,8 @@ export const contractsAPI = {
   activate: (id) => api.post(`/contracts/${id}/activate/`),
   terminate: (id) => api.post(`/contracts/${id}/terminate/`),
   renew: (id, data) => api.post(`/contracts/${id}/renew/`, data),
+  exportPDF: (id, data) => api.post(`/contracts/${id}/pdf-report/`, data, { responseType: 'blob' }),
+  exportWord: (id, data) => api.post(`/contracts/${id}/word-report/`, data, { responseType: 'blob' }),
   extractClauses: (id, contractText, language = 'fr') =>
     api.post(`/contracts/${id}/extract_clauses/`, {
       contract_text: contractText,
@@ -252,6 +263,16 @@ export const contractsAPI = {
       });
     },
     delete: (id) => api.delete(`/contracts/documents/${id}/`),
+  },
+
+  // Templates
+  templates: {
+    list: (params) => api.get('/contracts/templates/', { params }),
+    get: (id) => api.get(`/contracts/templates/${id}/`),
+    create: (data) => api.post('/contracts/templates/', data),
+    update: (id, data) => api.patch(`/contracts/templates/${id}/`, data),
+    delete: (id) => api.delete(`/contracts/templates/${id}/`),
+    generateDocument: (id, data) => api.post(`/contracts/templates/${id}/generate_document/`, data),
   },
 };
 

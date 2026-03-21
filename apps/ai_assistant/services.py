@@ -261,12 +261,26 @@ Réponds toujours en français de manière naturelle et engageante."""
             {
                 "type": "function",
                 "function": {
+                    "name": "list_suppliers",
+                    "description": "Liste tous les fournisseurs de l'entreprise",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
+                        },
+                        "required": []
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "search_supplier",
                     "description": "Recherche des fournisseurs par nom, contact ou email",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "query": {"type": "string", "description": "Terme de recherche"},
+                            "query": {"type": "string", "description": "Terme de recherche (optionnel)"},
                             "status": {
                                 "type": "string",
                                 "enum": ["active", "pending", "inactive"],
@@ -274,7 +288,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                             },
                             "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 5)"}
                         },
-                        "required": ["query"]
+                        "required": []
                     }
                 }
             },
@@ -369,10 +383,10 @@ Réponds toujours en français de manière naturelle et engageante."""
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "query": {"type": "string", "description": "Terme de recherche"},
+                            "query": {"type": "string", "description": "Terme de recherche (optionnel)"},
                             "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 5)"}
                         },
-                        "required": ["query"]
+                        "required": []
                     }
                 }
             },
@@ -684,7 +698,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "query": {"type": "string", "description": "Terme de recherche (nom, référence, code-barres)"},
+                            "query": {"type": "string", "description": "Terme de recherche (nom, référence, code-barres) (optionnel)"},
                             "product_type": {
                                 "type": "string",
                                 "enum": ["service", "physical"],
@@ -692,7 +706,7 @@ Réponds toujours en français de manière naturelle et engageante."""
                             },
                             "limit": {"type": "integer", "description": "Nombre maximum de résultats (défaut: 10)"}
                         },
-                        "required": ["query"]
+                        "required": []
                     }
                 }
             },
@@ -1721,6 +1735,7 @@ class ActionExecutor:
         self.actions = {
             'create_supplier': self.create_supplier,
             'search_supplier': self.search_supplier,
+            'list_suppliers': self.list_suppliers,
             'create_invoice': self.create_invoice,
             'search_invoice': self.search_invoice,
             'create_purchase_order': self.create_purchase_order,
@@ -1790,11 +1805,20 @@ class ActionExecutor:
 
         user_context = user
 
+        # SANITIZE ACTION NAME
+        original_action = action
+        if action not in self.actions:
+            for valid_action in self.actions.keys():
+                if valid_action in action:
+                    action = valid_action
+                    logger.warning(f"Sanitized action name in execute: '{original_action}' -> '{action}'")
+                    break
+
         # Vérifier d'abord si l'action existe dans les handlers
         if action not in self.actions:
             return {
                 'success': False,
-                'error': f"Action '{action}' non reconnue. Actions disponibles: {', '.join(sorted(self.actions.keys()))}"
+                'error': f"Action '{original_action}' non reconnue. Actions disponibles: {', '.join(sorted(self.actions.keys()))}"
             }
         
         # Valider l'action et ses paramètres (mais ne pas bloquer si la config n'existe pas)
@@ -1957,6 +1981,9 @@ class ActionExecutor:
         Recherche des fournisseurs avec fuzzy matching ultra-robuste.
         Gère les fautes d'orthographe et variations automatiquement.
         """
+        if not params.get('query'):
+            return await self.list_suppliers(params, user_context)
+
         from .entity_matcher import entity_matcher
         from asgiref.sync import sync_to_async
 
@@ -2013,6 +2040,48 @@ class ActionExecutor:
             },
             'count': len(results),
             'message': message
+        }
+    
+    async def list_suppliers(self, params: Dict, user_context: Dict) -> Dict:
+        """Liste tous les fournisseurs de l'entreprise"""
+        from apps.suppliers.models import Supplier
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def list_suppliers_sync():
+            limit = params.get('limit', 10)
+            organization = user_context.get('organization')
+
+            # Récupérer tous les fournisseurs de l'organisation
+            suppliers_qs = Supplier.objects.all()
+
+            if organization:
+                suppliers_qs = suppliers_qs.filter(organization=organization)
+            elif not user_context.get('is_superuser', False):
+                suppliers_qs = suppliers_qs.none()
+
+            suppliers = suppliers_qs.order_by('-created_at')[:limit]
+
+            return [{
+                'id': str(s.id),
+                'name': s.name,
+                'contact': s.contact_person or '',
+                'email': s.email or '',
+                'phone': s.phone or '',
+                'status': s.status,
+                'url': f'/suppliers/{s.id}'
+            } for s in suppliers]
+
+        results = await list_suppliers_sync()
+
+        return {
+            'success': True,
+            'data': {
+                'items': results,
+                'entity_type': 'supplier'
+            },
+            'count': len(results),
+            'message': f"Voici les {len(results)} dernier(s) fournisseur(s)" if results else "Aucun fournisseur trouvé"
         }
     
     async def create_invoice(self, params: Dict, user_context: Dict) -> Dict:
@@ -3530,6 +3599,9 @@ Donne un conseil professionnel pour optimiser cette relation fournisseur. Sois s
         Recherche des clients avec fuzzy matching ultra-robuste.
         Gère les fautes d'orthographe et variations automatiquement.
         """
+        if not params.get('query'):
+            return await self.list_clients(params, user_context)
+
         from .entity_matcher import entity_matcher
         from asgiref.sync import sync_to_async
 
@@ -4985,11 +5057,28 @@ ProcureGenius
             # Toujours retourner les 3 plus similaires, peu importe le score
             min_score = params.get('min_score', 0.10)  # Très bas pour toujours trouver
             product_type = params.get('product_type')
-            limit = params.get('limit', 3)  # Par défaut 3 résultats
+            limit = params.get('limit', 5)  # Par défaut augmenter la limite à 5
             organization = user_context.get('organization')
 
             if not query:
-                return []
+                # Retourner les derniers produits
+                from apps.invoicing.models import Product
+                qs = Product.objects.all()
+                if organization:
+                    qs = qs.filter(organization=organization)
+                elif not user_context.get('is_superuser', False):
+                    qs = qs.none()
+                products = qs.order_by('-created_at')[:limit]
+                return [
+                    {
+                        'id': str(p.id),
+                        'name': p.name,
+                        'reference': p.reference or '',
+                        'product_type': p.product_type,
+                        'price': float(p.price) if p.price else 0,
+                        'url': f'/products/{p.id}'
+                    } for p in products
+                ]
 
             # Utiliser le fuzzy matching avec recherche multi-champs
             matches = entity_matcher.find_similar_products(

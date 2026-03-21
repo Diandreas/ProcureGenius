@@ -21,10 +21,13 @@ export const analyticsAPI = {
   getConfig: () => api.get('/analytics/config/'),
   updateConfig: (data) => api.put('/analytics/config/', data),
 
-  // Vues sauvegard\u00e9es
+  // Vues sauvegardées
   getSavedViews: () => api.get('/analytics/saved-views/'),
   createSavedView: (data) => api.post('/analytics/saved-views/', data),
   deleteSavedView: (id) => api.delete(`/analytics/saved-views/${id}/`),
-};
+
+  // AI Greeting
+  getAiGreeting: () => api.get('/analytics/ai-greeting/'),
+  };
 
 export default analyticsAPI;

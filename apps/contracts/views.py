@@ -3,12 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q, Count, Sum
-from .models import Contract, ContractClause, ContractMilestone, ContractDocument
+from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractTemplate
 from .serializers import (
     ContractListSerializer, ContractDetailSerializer, ContractCreateSerializer,
     ContractClauseSerializer, ContractMilestoneSerializer, ContractDocumentSerializer,
     ClauseExtractionRequestSerializer, ClauseExtractionResponseSerializer,
-    ContractApprovalSerializer, ContractRenewalSerializer
+    ContractApprovalSerializer, ContractRenewalSerializer, ContractTemplateSerializer
 )
 from .ai_service import ContractAIService
 import logging
@@ -250,7 +250,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 
         return Response(stats)
     
-    @action(detail=True, methods=['get'], url_path='pdf-report')
+    @action(detail=True, methods=['get', 'post'], url_path='pdf-report')
     def generate_pdf_report(self, request, pk=None):
         """Générer un rapport PDF pour un contrat"""
         from django.http import HttpResponse
@@ -258,9 +258,12 @@ class ContractViewSet(viewsets.ModelViewSet):
         try:
             contract = self.get_object()
             
+            template_type = request.data.get('template_type', request.query_params.get('template_type', 'contract'))
+            generated_content = request.data.get('generated_content', '')
+            
             # Générer le PDF avec WeasyPrint
             from apps.api.services.report_generator_weasy import generate_contract_report_pdf
-            pdf_buffer = generate_contract_report_pdf(contract, request.user)
+            pdf_buffer = generate_contract_report_pdf(contract, request.user, template_type, generated_content)
             
             # Créer la réponse HTTP
             response = HttpResponse(
@@ -268,7 +271,7 @@ class ContractViewSet(viewsets.ModelViewSet):
                 content_type='application/pdf'
             )
             
-            filename = f"rapport-contrat-{contract.id}.pdf"
+            filename = f"rapport-{template_type}-{contract.id}.pdf"
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             response['Content-Length'] = len(response.content)
             
@@ -284,6 +287,52 @@ class ContractViewSet(viewsets.ModelViewSet):
                 {'error': f'Erreur lors de la génération du PDF: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['get', 'post'], url_path='word-report')
+    def generate_word_report(self, request, pk=None):
+        """Exporter un rapport au format MS Word (HTML as .doc)"""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        from datetime import datetime
+        
+        try:
+            contract = self.get_object()
+            
+            template_type = request.data.get('template_type', request.query_params.get('template_type', 'contract'))
+            generated_content = request.data.get('generated_content', '')
+            
+            context = {
+                'contract': contract,
+                'generated_content': generated_content,
+                'generated_at': datetime.now(),
+            }
+            
+            templates_map = {
+                'contract': 'reports/pdf/contract_report.html',
+                'payment': 'reports/pdf/contract_payment.html',
+                'receipt': 'reports/pdf/contract_receipt.html',
+                'quote': 'reports/pdf/contract_quote.html',
+            }
+            template_name = templates_map.get(template_type, 'reports/pdf/contract_report.html')
+            
+            html_string = render_to_string(template_name, context)
+            
+            response = HttpResponse(
+                html_string,
+                content_type='application/msword'
+            )
+            
+            filename = f"rapport-{template_type}-{contract.id}.doc"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            return response
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur lors de la génération du Word: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 
 class ContractClauseViewSet(viewsets.ModelViewSet):
@@ -440,3 +489,88 @@ class ContractDocumentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
+
+
+class ContractTemplateViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les modèles de contrat"""
+
+    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    serializer_class = ContractTemplateSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['created_at', 'name']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = ContractTemplate.objects.all()
+
+        # Filtrer par type de template
+        template_type = self.request.query_params.get('template_type')
+        if template_type:
+            queryset = queryset.filter(template_type=template_type)
+
+        # Filtrer les actifs seulement
+        is_active = self.request.query_params.get('is_active')
+        if is_active == 'true':
+            queryset = queryset.filter(is_active=True)
+        elif is_active == 'false':
+            queryset = queryset.filter(is_active=False)
+
+        return queryset.select_related('created_by')
+
+    @action(detail=True, methods=['post'])
+    def generate_document(self, request, pk=None):
+        """Génère un document à partir du modèle et des données fournies (via IA)"""
+        template = self.get_object()
+        
+        # Données nécessaires: contract_id (ou data brute)
+        contract_id = request.data.get('contract_id')
+        
+        try:
+            ai_service = ContractAIService()
+            context_data = request.data.get('context_data', {})
+            
+            # Si un contrat est fourni, on le récupère
+            contract_data = {}
+            if contract_id:
+                try:
+                    contract = Contract.objects.get(id=contract_id)
+                    # On pourrait sérialiser le contrat pour l'utiliser comme contexte
+                    # Pour simplifier, on envoie un set de données de base
+                    contract_data = {
+                        'contract_number': contract.contract_number,
+                        'title': contract.title,
+                        'supplier_name': contract.supplier.name,
+                        'start_date': str(contract.start_date),
+                        'end_date': str(contract.end_date),
+                        'total_value': float(contract.total_value),
+                        'currency': contract.currency,
+                        'description': contract.description
+                    }
+                except Contract.DoesNotExist:
+                    pass
+            
+            # Fusionner les données du contrat avec le contexte supplémentaire
+            final_context = {**contract_data, **context_data}
+            
+            result = ai_service.generate_from_template(
+                template.content,
+                template.ai_prompt_instructions,
+                final_context
+            )
+            
+            return Response({
+                'status': 'success',
+                'message': 'Document généré avec succès',
+                'data': {
+                    'generated_content': result.get('generated_content', '')
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération du document: {str(e)}")
+            return Response({
+                'status': 'error',
+                'message': f'Erreur lors de la génération: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

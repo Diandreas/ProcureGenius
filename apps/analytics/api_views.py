@@ -114,6 +114,63 @@ class EnhancedDashboardStatsView(APIView):
         return filtered
 
 
+class AIDashboardGreetingView(APIView):
+    """Génère un message de bienvenue personnalisé par l'IA basé sur les stats réelles"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            from apps.ai_assistant.services import mistral_service
+            # Récupérer quelques stats clés pour le prompt
+            stats_service = DashboardStatsService(
+                user=request.user,
+                start_date=timezone.now() - timedelta(days=30),
+                end_date=timezone.now()
+            )
+            stats = stats_service.get_comprehensive_stats()
+            
+            # Extraire les données pertinentes
+            financials = stats.get('financials', {})
+            revenue = financials.get('total_revenue', 0)
+            revenue_change = financials.get('revenue_change_pct', 0)
+            
+            invoices = stats.get('invoices', {})
+            pending_invoices = invoices.get('pending_count', 0)
+            
+            products = stats.get('products', {})
+            low_stock = products.get('low_stock_count', 0)
+            
+            user_name = request.user.first_name or request.user.username
+            
+            # Construire le prompt pour Mistral
+            prompt = f"""Génère un message de bienvenue court et motivant pour un entrepreneur nommé {user_name}.
+            Voici ses stats des 30 derniers jours :
+            - CA : {revenue}€ ({'+' if revenue_change > 0 else ''}{revenue_change}% par rapport au mois dernier)
+            - Factures en attente : {pending_invoices}
+            - Produits en rupture de stock : {low_stock}
+            
+            Le ton doit être professionnel, encourageant et très bref (max 2 phrases). 
+            Réponds uniquement avec le message."""
+
+            greeting = mistral_service.generate_response(prompt)
+            
+            return Response({
+                'success': True,
+                'greeting': greeting,
+                'stats_summary': {
+                    'revenue_trend': 'up' if revenue_change > 0 else 'down',
+                    'has_alerts': low_stock > 0 or pending_invoices > 5
+                }
+            })
+        except Exception as e:
+            logger.error(f"Error generating AI greeting: {e}")
+            user_name = request.user.first_name or request.user.username
+            return Response({
+                'success': False,
+                'greeting': f"Ravi de vous revoir, {user_name} ! Prêt à gérer votre business ?"
+            })
+
+
 class DashboardExportView(APIView):
     """Vue pour exporter le dashboard en PDF ou Excel"""
     permission_classes = [IsAuthenticated]

@@ -292,3 +292,55 @@ Respond in JSON with this structure:
                 'recommendations': 'Veuillez réessayer',
                 'red_flags': []
             }
+
+    def generate_from_template(self, template_content: str, prompt_instructions: str, context_data: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Génère un document final en fusionnant un modèle avec des données de contexte via l'IA
+        """
+        try:
+            # Préparation du contexte en JSON lisible
+            context_json = json.dumps(context_data, indent=2, ensure_ascii=False)
+            
+            # Prompt de base pour la génération
+            system_prompt = """Tu es un assistant juridique expert en rédaction de contrats. 
+Ta tâche est de générer un document contractuel final à partir d'un modèle (template) et de données de contexte.
+Tu dois insérer les données du contexte dans le modèle de manière naturelle et professionnelle.
+Si des clauses ou sections sont mentionnées dans les instructions additionnelles, intègre-les de manière cohérente."""
+            
+            user_prompt = f"""Voici le modèle de base du document:
+{template_content}
+
+Voici les données de contexte à intégrer:
+{context_json}
+
+{f'Instructions additionnelles (TRÈS IMPORTANT): {prompt_instructions}' if prompt_instructions else ''}
+
+IMPORTANT: Formatte impérativement le document final généré en HTML Sémantique valide (utilise <h1>, <h2>, <strong>, <ul>, <p>, <br>, etc.) afin qu'il puisse être édité dans un Rich Text Editor. Ne renvoie JAMAIS de Markdown.
+De plus, tu DOIS toujours inclure un espace clair pour les signatures à la fin du document (ex: <br><br><p><strong>Signature et Cachet :</strong> _________________</p>).
+Ne renvoie QUE le code HTML du document généré, sans les balises ```html et sans aucun commentaire introductif ou conclusif."""
+
+            response = self.client.chat.complete(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    }
+                ],
+                temperature=0.4,
+                max_tokens=4000
+            )
+
+            generated_content = response.choices[0].message.content.strip()
+
+            return {
+                'generated_content': generated_content
+            }
+
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération depuis le modèle: {str(e)}")
+            raise

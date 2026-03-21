@@ -18,8 +18,22 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
-import { Save, Cancel, ArrowBack } from '@mui/icons-material';
+import {
+  Save,
+  Cancel,
+  ArrowBack,
+  AutoAwesome,
+  AutoFixHigh,
+  RateReview,
+  Send
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +43,9 @@ import {
   updateContract,
 } from '../../store/slices/contractsSlice';
 import { fetchSuppliers } from '../../store/slices/suppliersSlice';
+import { aiChatAPI } from '../../services/api';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function ContractForm() {
   const { t } = useTranslation(['contracts', 'common']);
@@ -36,13 +53,15 @@ function ContractForm() {
   const dispatch = useDispatch();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
   const { suppliers } = useSelector((state) => state.suppliers);
 
   const isEditMode = Boolean(id);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [formData, setFormData] = useState({
     title: '',
@@ -90,6 +109,127 @@ function ContractForm() {
       });
     }
   }, [currentContract, isEditMode, suppliers]);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiMessages, setAiMessages] = useState([]);
+  const [aiInput, setAiInput] = useState('');
+  const aiMessagesEndRef = React.useRef(null);
+
+  useEffect(() => {
+    if (aiMessagesEndRef.current) {
+      aiMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [aiMessages]);
+
+  const startAIAssistant = () => {
+    setAiMessages([{
+      role: 'assistant',
+      content: t('contracts:aiAssistant.welcome', "Bonjour ! Je suis votre assistant juridique IA. Pour commencer la création de votre contrat, quel en est l'objet principal ?")
+    }]);
+    setAiAssistantOpen(true);
+  };
+
+  const parseJsonResponse = (text, defaultText) => {
+    try {
+      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch) {
+         return JSON.parse(jsonMatch[1]);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleSendAIAssistant = async () => {
+    if (!aiInput.trim()) return;
+    
+    // Ajout du message utilisateur
+    const newMessages = [...aiMessages, { role: 'user', content: aiInput }];
+    setAiMessages(newMessages);
+    setAiInput('');
+    setIsGenerating(true);
+
+    try {
+      // Construction du prompt complet avec l'historique
+      let prompt = "Tu es un assistant juridique IA. Ton but est d'aider l'utilisateur à créer un contrat étape par étape en posant une question à la fois (titre, description, montant, fournisseur, type, dates). ";
+      prompt += "L'utilisateur te répond. Quand tu estimes avoir suffisamment d'informations, au lieu de poser une nouvelle question, tu vas générer le JSON complet avec les données et le texte du contrat. Le texte du contrat DOIT toujours inclure un espace 'Signature et Cachet' à la fin. ";
+      prompt += "IMPORTANT: Le texte contenu dans 'terms_and_conditions' et 'payment_terms' DOIT être généré au format HTML sémantique (utilise <strong>, <br>, <ul>, <li>, <h3>, etc.) adapté à un éditeur de texte enrichi (Rich Text). N'utilise pas de markdown pour ces champs de texte, unqiement du HTML valide. ";
+      prompt += "Ta réponse finale contenant le JSON DOIT OBLIGATOIREMENT être formattée entre des balises ```json et ```. Voici le format JSON attendu : { \"title\": \"...\", \"contract_type\": \"...\", \"description\": \"...\", \"start_date\": \"YYYY-MM-DD\", \"end_date\": \"YYYY-MM-DD\", \"total_value\": 1000, \"currency\": \"CAD\", \"terms_and_conditions\": \"<h1>Titre du contrat</h1><p>Texte avec <strong>gras</strong>...</p><br><br><p>Signature et Cachet : _________________</p>\", \"payment_terms\": \"...\" }.\n\nHistorique de la conversation :\n";
+      
+      newMessages.forEach(msg => {
+        prompt += `${msg.role === 'user' ? 'Utilisateur' : 'Assistant'} : ${msg.content}\n`;
+      });
+
+      const response = await aiChatAPI.sendMessage({
+        message: prompt,
+        stream: false
+      });
+
+      const assistantReply = response.data.message.content;
+      setAiMessages(prev => [...prev, { role: 'assistant', content: assistantReply }]);
+
+      // Vérifier si la réponse contient du JSON
+      const extractedData = parseJsonResponse(assistantReply);
+      if (extractedData) {
+        // Remplir le formulaire avec les données
+        setFormData(prev => ({
+          ...prev,
+          title: extractedData.title || prev.title,
+          contract_type: extractedData.contract_type || prev.contract_type,
+          description: extractedData.description || prev.description,
+          start_date: extractedData.start_date || prev.start_date,
+          end_date: extractedData.end_date || prev.end_date,
+          total_value: extractedData.total_value || prev.total_value,
+          currency: extractedData.currency || prev.currency,
+          terms_and_conditions: extractedData.terms_and_conditions || prev.terms_and_conditions,
+          payment_terms: extractedData.payment_terms || prev.payment_terms,
+        }));
+        
+        enqueueSnackbar('Les informations ont été transférées vers le formulaire ! Vous pouvez maintenant vérifier avant de confirmer.', { variant: 'success', autoHideDuration: 6000 });
+        setAiAssistantOpen(false); // Fermer le dialog pour révéler la vue avant confirmation
+      }
+
+    } catch (error) {
+      console.error('AI Assistant error:', error);
+      enqueueSnackbar("Erreur de communication avec l'IA", { variant: 'error' });
+      setAiMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur technique est survenue. Veuillez réessayer."}]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateAI = async (field) => {
+    if (!formData.title || !formData.description) {
+      enqueueSnackbar('Veuillez remplir le titre et la description pour aider l\'IA', { variant: 'warning' });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const prompt = `Génère un texte professionnel pour le champ "${field === 'terms_and_conditions' ? 'Conditions Générales' : 'Conditions de Paiement'}" d'un contrat nommé "${formData.title}". 
+      Description du projet: ${formData.description}. 
+      Montant: ${formData.total_value} ${formData.currency}.
+      Type de contrat: ${formData.contract_type}.
+      Réponds directement avec le texte juridique sans introduction. IMPORTANT: Tu DOIS formater ton texte en HTML sémantique valide (utilise <strong>, <ul>, <li>, <p>, <br>). N'utilise SURTOUT PAS de Markdown (**gras**). Il est impératif de toujours ajouter un espace clair pour les signatures au format HTML (ex: '<br><br><p><strong>Signature et Cachet du Client / Fournisseur :</strong> _________________</p>') à la fin du document si applicable.`;
+
+      const response = await aiChatAPI.sendMessage({
+        message: prompt,
+        stream: false
+      });
+
+      const generatedText = response.data.message.content;
+      setFormData(prev => ({
+        ...prev,
+        [field]: generatedText
+      }));
+      enqueueSnackbar('Contenu généré avec succès par l\'IA !', { variant: 'success' });
+    } catch (error) {
+      console.error('AI Generation error:', error);
+      enqueueSnackbar('Erreur lors de la génération par l\'IA', { variant: 'error' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -172,9 +312,21 @@ function ContractForm() {
       <Box sx={{ px: isMobile ? 2 : 0 }}>
       <Card>
         <CardContent>
-          <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
-            {isEditMode ? t('contracts:form.title.edit') : t('contracts:form.title.new')}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
+              {isEditMode ? t('contracts:form.title.edit') : t('contracts:form.title.new')}
+            </Typography>
+            {!isEditMode && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<AutoAwesome />}
+                onClick={startAIAssistant}
+              >
+                Créer avec l'Assistant IA
+              </Button>
+            )}
+          </Box>
 
           <Divider sx={{ my: 3 }} />
 
@@ -301,33 +453,73 @@ function ContractForm() {
               {/* Termes */}
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  {t('contracts:form.fields.termsSection')}
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="h6">
+                    {t('contracts:form.fields.termsSection')}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={isGenerating ? <CircularProgress size={16} /> : <AutoFixHigh />}
+                    onClick={() => handleGenerateAI('terms_and_conditions')}
+                    disabled={isGenerating}
+                    sx={{ borderRadius: 2, textTransform: 'none' }}
+                  >
+                    Rédiger avec l'IA
+                  </Button>
+                </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label={t('contracts:form.fields.terms')}
-                  name="terms_and_conditions"
-                  value={formData.terms_and_conditions}
-                  onChange={handleChange}
-                  placeholder={t('contracts:form.fields.termsPlaceholder')}
-                />
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    {t('contracts:form.fields.terms')}
+                  </Typography>
+                </Box>
+                <Box sx={{ 
+                  '.ql-editor': { minHeight: 300, fontSize: '1rem', fontFamily: 'inherit' },
+                  '.ql-container': { borderRadius: '0 0 8px 8px', borderColor: 'divider' },
+                  '.ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: 'divider' }
+                }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.terms_and_conditions}
+                    onChange={(val) => setFormData(prev => ({ ...prev, terms_and_conditions: val }))}
+                    placeholder={t('contracts:form.fields.termsPlaceholder')}
+                  />
+                </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label={t('contracts:form.fields.paymentTerms')}
-                  name="payment_terms"
-                  value={formData.payment_terms}
-                  onChange={handleChange}
-                  placeholder={t('contracts:form.fields.paymentTermsPlaceholder')}
-                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, mt: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="600">
+                    {t('contracts:form.fields.paymentTerms')}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="secondary"
+                    startIcon={isGenerating ? <CircularProgress size={16} /> : <RateReview />}
+                    onClick={() => handleGenerateAI('payment_terms')}
+                    disabled={isGenerating}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Générer clauses de paiement
+                  </Button>
+                </Box>
+                <Box sx={{ 
+                  '.ql-editor': { minHeight: 150, fontSize: '1rem', fontFamily: 'inherit' },
+                  '.ql-container': { borderRadius: '0 0 8px 8px', borderColor: 'divider' },
+                  '.ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: 'divider' }
+                }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.payment_terms}
+                    onChange={(val) => setFormData(prev => ({ ...prev, payment_terms: val }))}
+                    placeholder={t('contracts:form.fields.paymentTermsPlaceholder')}
+                  />
+                </Box>
               </Grid>
 
               {/* Options de renouvellement */}
@@ -415,6 +607,82 @@ function ContractForm() {
         </CardContent>
       </Card>
       </Box>
+
+      {/* Dialog Assistant IA */}
+      <Dialog
+        open={aiAssistantOpen}
+        onClose={() => !isGenerating && setAiAssistantOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AutoAwesome color="secondary" />
+            Assistant de Création de Contrat
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', height: '400px', p: 2, bgcolor: '#f8fafc' }}>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, pb: 2 }}>
+            {aiMessages.filter(msg => msg.role !== 'system').map((msg, idx) => (
+              <Box 
+                key={idx} 
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' 
+                }}
+              >
+                <Box sx={{ 
+                  maxWidth: '80%', 
+                  p: 2, 
+                  borderRadius: 2, 
+                  bgcolor: msg.role === 'user' ? 'primary.main' : 'white',
+                  color: msg.role === 'user' ? 'white' : 'text.primary',
+                  boxShadow: 1
+                }}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{msg.content}</Typography>
+                </Box>
+              </Box>
+            ))}
+            {isGenerating && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <Box sx={{ maxWidth: '80%', p: 2, borderRadius: 2, bgcolor: 'white', boxShadow: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2" color="text.secondary">L'IA réfléchit...</Typography>
+                </Box>
+              </Box>
+            )}
+            <div ref={aiMessagesEndRef} />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, bgcolor: 'white' }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Tapez votre réponse ici..."
+            value={aiInput}
+            onChange={(e) => setAiInput(e.target.value)}
+            disabled={isGenerating}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendAIAssistant();
+              }
+            }}
+            InputProps={{
+              sx: { borderRadius: 3, bgcolor: '#f1f5f9' },
+            }}
+          />
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSendAIAssistant}
+            disabled={isGenerating || !aiInput.trim()}
+            sx={{ borderRadius: 3, minWidth: '40px', p: '8px' }}
+          >
+            <Send />
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

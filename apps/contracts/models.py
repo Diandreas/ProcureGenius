@@ -377,3 +377,41 @@ class ContractItem(models.Model):
     
     def __str__(self):
         return f"{self.contract.contract_number} - {self.product.name}"
+
+
+class ContractTemplate(models.Model):
+    """Modèle de document contractuel (contrat, paiement, devis, reçu) remplissable par IA"""
+
+    TEMPLATE_TYPE_CHOICES = [
+        ('contract', _('Contrat standard')),
+        ('payment', _('Contrat de paiement')),
+        ('receipt', _('Reçu de paiement')),
+        ('quote', _('Devis')),
+        ('other', _('Autre')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, verbose_name=_("Nom du modèle"))
+    template_type = models.CharField(max_length=20, choices=TEMPLATE_TYPE_CHOICES, verbose_name=_("Type de document"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    
+    # Structure HTML/Markdown du document avec variables
+    content = models.TextField(verbose_name=_("Contenu du modèle (HTML/Texte)"))
+    
+    # Prompt optionnel pour guider l'IA sur la génération
+    ai_prompt_instructions = models.TextField(blank=True, verbose_name=_("Instructions pour l'IA"))
+
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_contract_templates', verbose_name=_("Créé par"))
+
+    class Meta:
+        verbose_name = _("Modèle de contrat")
+        verbose_name_plural = _("Modèles de contrats")
+        ordering = ['template_type', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_template_type_display()})"
+

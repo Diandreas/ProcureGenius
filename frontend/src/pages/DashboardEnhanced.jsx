@@ -26,6 +26,8 @@ import {
   TextField,
   Stack,
   CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -80,14 +82,36 @@ const PERIOD_OPTIONS = [
   { value: 'this_year', label: 'Cette année' },
 ];
 
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`dashboard-tabpanel-${index}`}
+      aria-labelledby={`dashboard-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
 function DashboardEnhanced() {
   const { format: formatCurrency } = useCurrency();
+  const [currentTab, setCurrentTab] = useState(0);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [period, setPeriod] = useState('last_30_days');
   const [compare, setCompare] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [aiGreeting, setAiGreeting] = useState(null);
   const [customDateDialog, setCustomDateDialog] = useState(false);
   const [customDates, setCustomDates] = useState({
     start_date: '',
@@ -97,7 +121,7 @@ function DashboardEnhanced() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const getWelcomeMessage = () => {
+  const getFallbackWelcome = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
       return { greeting: 'Bonjour', message: 'Excellente journée à vous !', pose: 'excited' };
@@ -110,11 +134,24 @@ function DashboardEnhanced() {
     }
   };
 
-  const welcome = getWelcomeMessage();
+  const welcome = getFallbackWelcome();
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAiGreeting();
   }, [period, compare]);
+
+  const fetchAiGreeting = async () => {
+    try {
+      // On utilise api.get car analyticsAPI n'a peut-être pas encore cette méthode
+      const response = await analyticsAPI.getAiGreeting();
+      if (response.data && response.data.success) {
+        setAiGreeting(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching AI greeting:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -291,13 +328,28 @@ function DashboardEnhanced() {
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {!isMobile && <Box sx={{ mr: 3 }}><Mascot pose={welcome.pose} animation="wave" size={80} /></Box>}
+                {!isMobile && <Box sx={{ mr: 3 }}><Mascot pose={aiGreeting ? 'excited' : welcome.pose} animation="wave" size={80} /></Box>}
                 <Box>
-                  <Typography variant={isMobile ? 'h5' : 'h4'} sx={{ fontWeight: 700, mb: 0.5 }}>
-                    {welcome.greeting} ! 👋
-                  </Typography>
-                  <Typography variant="body1" sx={{ opacity: 0.95 }}>
-                    {welcome.message} Voici un aperçu de votre activité.
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'} sx={{ fontWeight: 700 }}>
+                      {welcome.greeting} ! 👋
+                    </Typography>
+                    {aiGreeting && (
+                      <Chip 
+                        label="IA" 
+                        size="small" 
+                        sx={{ 
+                          bgcolor: 'rgba(255,255,255,0.2)', 
+                          color: 'white', 
+                          fontWeight: 'bold',
+                          fontSize: '0.65rem',
+                          height: 20
+                        }} 
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="body1" sx={{ opacity: 0.95, fontStyle: aiGreeting ? 'italic' : 'normal' }}>
+                    {aiGreeting ? aiGreeting.greeting : `${welcome.message} Voici un aperçu de votre activité.`}
                   </Typography>
                 </Box>
               </Box>
@@ -362,121 +414,159 @@ function DashboardEnhanced() {
         </MenuItem>
       </Menu>
 
-      {/* Stats Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        {statsCards.map((stat, index) => {
-          const numericValue = typeof stat.value === 'string'
-            ? parseFloat(stat.value.replace(/[^0-9.-]/g, '') || 0)
-            : stat.value;
-          const comparison = stat.previous !== undefined ? formatComparison(numericValue, stat.previous) : null;
+      {/* Tabs Navigation */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
+        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)} aria-label="dashboard tabs">
+          <Tab label="Aperçu Général" />
+          <Tab label="Facturation" />
+          <Tab label="Performances" />
+        </Tabs>
+      </Box>
 
-          return (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
-                <CardContent sx={{ p: 2.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                    <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 48, height: 48, borderRadius: 1 }}>
-                      {stat.icon}
-                    </Avatar>
-                    <Box sx={{ ml: 1.5, flexGrow: 1 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
-                        {stat.title}
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                        {stat.value}
-                      </Typography>
-                      {stat.total !== undefined && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                          sur {stat.total} total
+      {/* Tab 0: Aperçu Général */}
+      <TabPanel value={currentTab} index={0}>
+        {/* Stats Cards */}
+        <Grid container spacing={2.5} sx={{ mb: 3 }}>
+          {statsCards.map((stat, index) => {
+            const numericValue = typeof stat.value === 'string'
+              ? parseFloat(stat.value.replace(/[^0-9.-]/g, '') || 0)
+              : stat.value;
+            const comparison = stat.previous !== undefined ? formatComparison(numericValue, stat.previous) : null;
+
+            return (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                      <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 48, height: 48, borderRadius: 1 }}>
+                        {stat.icon}
+                      </Avatar>
+                      <Box sx={{ ml: 1.5, flexGrow: 1 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                          {stat.title}
                         </Typography>
-                      )}
+                        <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                          {stat.value}
+                        </Typography>
+                        {stat.total !== undefined && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                            sur {stat.total} total
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                  {comparison && compare && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                      <Chip
-                        icon={comparison.icon}
-                        label={`${comparison.value}%`}
-                        size="small"
-                        sx={{ bgcolor: `${comparison.color}15`, color: comparison.color, fontWeight: 600, fontSize: '0.7rem', height: 24 }}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.7rem' }}>
-                        vs période précédente
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+                    {comparison && compare && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                        <Chip
+                          icon={comparison.icon}
+                          label={`${comparison.value}%`}
+                          size="small"
+                          sx={{ bgcolor: `${comparison.color}15`, color: comparison.color, fontWeight: 600, fontSize: '0.7rem', height: 24 }}
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.7rem' }}>
+                          vs période précédente
+                        </Typography>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
 
-      {/* Charts */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
-            <Line data={lineChartData} options={{ responsive: true, plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true } } }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>État des factures</Typography>
-            <Doughnut data={donutData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
+          <Line data={lineChartData} options={{ responsive: true, plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true } } }} />
+        </Paper>
+      </TabPanel>
 
-      {/* Top Lists */}
-      <Grid container spacing={2.5}>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Clients</Typography>
-            <List disablePadding>
-              {(stats.top_clients || []).map((client, index) => (
-                <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1 }}>
-                      <People />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={client.name} secondary={`${client.invoice_count} facture(s)`} primaryTypographyProps={{ fontWeight: 500 }} />
-                  <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(client.total_revenue)}
-                  </Typography>
+      {/* Tab 1: Facturation */}
+      <TabPanel value={currentTab} index={1}>
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>État des factures</Typography>
+              <Doughnut data={donutData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Résumé Facturation</Typography>
+              <List disablePadding>
+                <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItemText primary="Total Factures" secondary="Période sélectionnée" />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>{invoiceStats.total_count || 0}</Typography>
                 </ListItem>
-              ))}
-              {(!stats.top_clients || stats.top_clients.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun client trouvé</Typography>
-              )}
-            </List>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Fournisseurs</Typography>
-            <List disablePadding>
-              {(stats.top_suppliers || []).map((supplier, index) => (
-                <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', borderRadius: 1 }}>
-                      <Business />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={supplier.name} secondary={`${supplier.purchase_order_count} BC`} primaryTypographyProps={{ fontWeight: 500 }} />
-                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(supplier.total_spent)}
-                  </Typography>
+                <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItemText primary="Factures Payées" />
+                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>{invoiceStats.paid_count || 0}</Typography>
                 </ListItem>
-              ))}
-              {(!stats.top_suppliers || stats.top_suppliers.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun fournisseur trouvé</Typography>
-              )}
-            </List>
-          </Paper>
+                <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItemText primary="Factures en Attente" />
+                  <Typography variant="h6" color="warning.main" sx={{ fontWeight: 600 }}>{invoiceStats.pending_count || 0}</Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <ListItemText primary="Factures en Retard" />
+                  <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>{invoiceStats.overdue_count || 0}</Typography>
+                </ListItem>
+              </List>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </TabPanel>
+
+      {/* Tab 2: Performances */}
+      <TabPanel value={currentTab} index={2}>
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Clients</Typography>
+              <List disablePadding>
+                {(stats.top_clients || []).map((client, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1 }}>
+                        <People />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={client.name} secondary={`${client.invoice_count} facture(s)`} primaryTypographyProps={{ fontWeight: 500 }} />
+                    <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(client.total_revenue)}
+                    </Typography>
+                  </ListItem>
+                ))}
+                {(!stats.top_clients || stats.top_clients.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun client trouvé</Typography>
+                )}
+              </List>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Fournisseurs</Typography>
+              <List disablePadding>
+                {(stats.top_suppliers || []).map((supplier, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', borderRadius: 1 }}>
+                        <Business />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={supplier.name} secondary={`${supplier.purchase_order_count} BC`} primaryTypographyProps={{ fontWeight: 500 }} />
+                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(supplier.total_spent)}
+                    </Typography>
+                  </ListItem>
+                ))}
+                {(!stats.top_suppliers || stats.top_suppliers.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun fournisseur trouvé</Typography>
+                )}
+              </List>
+            </Paper>
+          </Grid>
+        </Grid>
+      </TabPanel>
 
       {/* Dialog */}
       <Dialog open={customDateDialog} onClose={() => setCustomDateDialog(false)}>

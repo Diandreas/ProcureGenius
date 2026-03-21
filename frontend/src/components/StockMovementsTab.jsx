@@ -26,6 +26,12 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Add,
@@ -35,7 +41,7 @@ import {
   Edit as EditIcon,
   SwapVert,
 } from '@mui/icons-material';
-import { productsAPI } from '../services/api';
+import { productsAPI, productBatchesAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
 
@@ -49,13 +55,28 @@ function StockMovementsTab({ productId, productType }) {
   const [adjustQuantity, setAdjustQuantity] = useState('');
   const [adjustNotes, setAdjustNotes] = useState('');
   const [movementType, setMovementType] = useState('add'); // 'add' or 'remove'
+  const [batches, setBatches] = useState([]);
+  const [adjustBatchId, setAdjustBatchId] = useState('');
+  const [isNewBatch, setIsNewBatch] = useState(false);
+  const [newBatchNumber, setNewBatchNumber] = useState('');
+  const [newBatchExpiration, setNewBatchExpiration] = useState('');
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (productType === 'physical') {
       fetchMovements();
+      fetchBatches();
     }
   }, [productId, productType]);
+
+  const fetchBatches = async () => {
+    try {
+      const response = await productBatchesAPI.list({ product: productId, is_active: true });
+      setBatches(response.data.results || response.data);
+    } catch (err) {
+      console.error('Error fetching stock batches:', err);
+    }
+  };
 
   const fetchMovements = async () => {
     try {
@@ -88,18 +109,41 @@ function StockMovementsTab({ productId, productType }) {
       // Appliquer le signe selon le type de mouvement
       const finalQuantity = movementType === 'remove' ? -Math.abs(quantity) : Math.abs(quantity);
 
-      await productsAPI.adjustStock(productId, {
+      const payload = {
         quantity: finalQuantity,
         notes: adjustNotes,
-      });
+      };
+
+      if (isNewBatch && newBatchNumber) {
+        // Obtenir la quantité pour le lot
+        const batchQuantity = Math.max(0, finalQuantity);
+        const batchPayload = {
+          product: productId,
+          batch_number: newBatchNumber,
+          expiration_date: newBatchExpiration || null,
+          initial_quantity: batchQuantity,
+          current_quantity: batchQuantity // Sera mis à jour
+        };
+        const batchRes = await productBatchesAPI.create(batchPayload);
+        payload.batch_id = batchRes.data.id;
+      } else if (adjustBatchId) {
+        payload.batch_id = adjustBatchId;
+      }
+
+      await productsAPI.adjustStock(productId, payload);
 
       const action = movementType === 'add' ? 'ajouté au' : 'retiré du';
       enqueueSnackbar(`Stock ${action} stock avec succès`, { variant: 'success' });
       setAdjustDialogOpen(false);
       setAdjustQuantity('');
       setAdjustNotes('');
+      setAdjustBatchId('');
+      setIsNewBatch(false);
+      setNewBatchNumber('');
+      setNewBatchExpiration('');
       setMovementType('add');
       fetchMovements();
+      fetchBatches();
     } catch (err) {
       enqueueSnackbar('Erreur lors de l\'ajustement du stock', { variant: 'error' });
     }
@@ -245,6 +289,11 @@ function StockMovementsTab({ productId, productType }) {
                             </Typography>
                           </Box>
                         )}
+                        {movement.batch_number && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                            Lot: {movement.batch_number}
+                          </Typography>
+                        )}
                         {movement.created_by_name && (
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
                             Par: {movement.created_by_name}
@@ -323,6 +372,9 @@ function StockMovementsTab({ productId, productType }) {
                         )}
                       </Box>
                     )}
+                    {movement.batch_number && (
+                      <Chip size="small" label={`Lot: ${movement.batch_number}`} variant="outlined" sx={{ mt: 0.5 }} />
+                    )}
                   </TableCell>
                   <TableCell>
                     {movement.created_by_name || '-'}
@@ -350,6 +402,7 @@ function StockMovementsTab({ productId, productType }) {
           setAdjustDialogOpen(false);
           setAdjustQuantity('');
           setAdjustNotes('');
+          setAdjustBatchId('');
           setMovementType('add');
         }}
         maxWidth="sm"
@@ -406,6 +459,62 @@ function StockMovementsTab({ productId, productType }) {
               helperText={movementType === 'add' ? 'Quantité à ajouter' : 'Quantité à retirer'}
             />
 
+            {/* Gestion des lots */}
+            <Box sx={{ mt: 2, mb: 1 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isNewBatch}
+                    onChange={(e) => setIsNewBatch(e.target.checked)}
+                    disabled={movementType === 'remove'}
+                  />
+                }
+                label="Créer un nouveau lot"
+              />
+              
+              {isNewBatch ? (
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                  <TextField
+                    label="Numéro de lot"
+                    value={newBatchNumber}
+                    onChange={(e) => setNewBatchNumber(e.target.value)}
+                    fullWidth
+                    required={isNewBatch}
+                    placeholder="Ex: LOT-2026-001"
+                  />
+                  <TextField
+                    label="Date de péremption (optionnel)"
+                    type="date"
+                    value={newBatchExpiration}
+                    onChange={(e) => setNewBatchExpiration(e.target.value)}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Stack>
+              ) : (
+                batches.length > 0 && (
+                  <FormControl fullWidth sx={{ mt: 1 }}>
+                    <InputLabel id="batch-select-label">Lot existant (optionnel)</InputLabel>
+                    <Select
+                      labelId="batch-select-label"
+                      value={adjustBatchId}
+                      label="Lot existant (optionnel)"
+                      onChange={(e) => setAdjustBatchId(e.target.value)}
+                    >
+                      <MenuItem value="">
+                        <em>Aucun lot spécifié</em>
+                      </MenuItem>
+                      {batches.map((b) => (
+                        <MenuItem key={b.id} value={b.id}>
+                          {b.batch_number} (Stock: {b.current_quantity}) - {b.expiration_date ? `Exp: ${formatDate(b.expiration_date)}` : 'Pas d\'expiration'}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )
+              )}
+            </Box>
+
             {/* Justification */}
             <TextField
               label="Justification"
@@ -426,6 +535,10 @@ function StockMovementsTab({ productId, productType }) {
               setAdjustDialogOpen(false);
               setAdjustQuantity('');
               setAdjustNotes('');
+              setAdjustBatchId('');
+              setIsNewBatch(false);
+              setNewBatchNumber('');
+              setNewBatchExpiration('');
               setMovementType('add');
             }}
           >

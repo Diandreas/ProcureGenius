@@ -551,7 +551,7 @@ class ReportPDFGenerator:
             raise
 
     # ===== CONTRACT REPORT =====
-    def generate_contract_report(self, contract, user=None):
+    def generate_contract_report(self, contract, user=None, template_type='contract', generated_content=None):
         """Générer un rapport PDF pour un contrat"""
         if not self.weasyprint_available:
             raise ImportError("WeasyPrint n'est pas disponible")
@@ -559,7 +559,7 @@ class ReportPDFGenerator:
         org_data = self._get_organization_data(user)
         
         # QR Code
-        qr_data = f"Contract: {contract.title} | ID: {contract.id}"
+        qr_data = f"Contract: {contract.contract_number} | ID: {contract.id}"
         qr_code = self._generate_qr_code(qr_data)
         
         context = {
@@ -567,10 +567,19 @@ class ReportPDFGenerator:
             'organization': org_data,
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
+            'generated_content': generated_content,
             'generated_at': datetime.now(),
         }
         
-        template_name = 'reports/pdf/contract_report.html'
+        # Select the right template based on type
+        templates_map = {
+            'contract': 'reports/pdf/contract_report.html',
+            'payment': 'reports/pdf/contract_payment.html',
+            'receipt': 'reports/pdf/contract_receipt.html',
+            'quote': 'reports/pdf/contract_quote.html',
+        }
+        template_name = templates_map.get(template_type, 'reports/pdf/contract_report.html')
+        
         html_string = render_to_string(template_name, context)
         html = self.HTML(string=html_string, base_url=settings.BASE_DIR)
         pdf_bytes = html.write_pdf()
@@ -1427,8 +1436,8 @@ def generate_product_report_pdf(product, user=None):
     return report_generator.generate_product_report(product, user)
 
 
-def generate_contract_report_pdf(contract, user=None):
-    return report_generator.generate_contract_report(contract, user)
+def generate_contract_report_pdf(contract, user=None, template_type='contract', generated_content=None):
+    return report_generator.generate_contract_report(contract, user, template_type, generated_content)
 
 
 def generate_sourcing_event_report_pdf(event, user=None):

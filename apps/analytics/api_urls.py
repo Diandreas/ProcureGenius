@@ -5,7 +5,8 @@ from .api_views import (
     EnhancedDashboardStatsView,
     DashboardExportView,
     DashboardConfigView,
-    SavedDashboardViewsView
+    SavedDashboardViewsView,
+    AIDashboardGreetingView
 )
 from .widget_views import (
     WidgetListView,
@@ -22,6 +23,7 @@ router.register(r'layouts', DashboardLayoutViewSet, basename='layout')
 urlpatterns = [
     # Dashboard stats avec personnalisation
     path('stats/', EnhancedDashboardStatsView.as_view(), name='enhanced_dashboard_stats'),
+    path('ai-greeting/', AIDashboardGreetingView.as_view(), name='ai_dashboard_greeting'),
 
     # Export dashboard (PDF/Excel)
     path('export/', DashboardExportView.as_view(), name='dashboard_export'),
