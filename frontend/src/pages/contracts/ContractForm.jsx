@@ -175,35 +175,37 @@ function AIDescriptionStep({ onDataGenerated, formData, isEditMode }) {
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
 
     try {
-      const prompt = `Tu es un assistant juridique IA spécialisé en droit des affaires québécois/canadien. L'utilisateur veut créer un contrat. Génère immédiatement le JSON complet du contrat sans poser de questions supplémentaires. Utilise des valeurs sensées par défaut pour les informations manquantes.
+      const prompt = `Tu es un assistant juridique IA. Génère un JSON pour décrire un contrat. Réponds UNIQUEMENT avec le bloc JSON, rien d'autre.
 
-DESCRIPTION DU CONTRAT: ${userMsg}
+DESCRIPTION: ${userMsg}
 
-Génère le JSON entre \`\`\`json et \`\`\` avec EXACTEMENT ce format:
+Format EXACT (JSON valide uniquement, pas de HTML, pas d'explication):
+\`\`\`json
 {
-  "title": "Titre court et professionnel du contrat",
-  "contract_type": "purchase|service|maintenance|lease|nda|partnership|other",
-  "description": "Description de 2-3 phrases de l'objet du contrat",
-  "start_date": "YYYY-MM-DD",
-  "end_date": "YYYY-MM-DD",
+  "title": "Titre professionnel du contrat",
+  "contract_type": "service",
+  "description": "Description courte de 1-2 phrases",
+  "start_date": "2026-04-01",
+  "end_date": "2027-03-31",
   "total_value": 5000,
   "currency": "CAD",
-  "terms_and_conditions": "<h2>CONDITIONS GÉNÉRALES</h2><h3>Article 1 — Objet</h3><p>...</p><h3>Article 2 — Durée</h3><p>...</p><h3>Article 3 — Obligations des parties</h3><p>...</p><h3>Article 4 — Confidentialité</h3><p>...</p><h3>Article 5 — Résiliation</h3><p>...</p><h3>Article 6 — Règlement des différends</h3><p>...</p><br><h3>Signatures</h3><table style='width:100%;border-collapse:collapse'><tr><td style='width:50%;padding:20px;border:1px solid #ccc'><p><strong>Pour [Partie A]</strong></p><br><br><p>Signature: ___________________________</p><p>Nom: ___________________________</p><p>Titre: ___________________________</p><p>Date: ___________________________</p></td><td style='width:50%;padding:20px;border:1px solid #ccc'><p><strong>Pour [Partie B]</strong></p><br><br><p>Signature: ___________________________</p><p>Nom: ___________________________</p><p>Titre: ___________________________</p><p>Date: ___________________________</p></td></tr></table>",
-  "payment_terms": "<p><strong>Modalités de paiement:</strong></p><ul><li>...</li></ul>",
   "renewal_notice_days": 30,
   "alert_days_before_expiry": 30
-}`;
+}
+\`\`\`
 
-      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
-      const reply = response.data.message.content;
+Pour contract_type utilise: purchase, service, maintenance, lease, nda, partnership, ou other.`;
 
-      const jsonMatch = reply.match(/```json\n([\s\S]*?)\n```/);
+      const response = await aiChatAPI.generateText(prompt, 800);
+      const reply = response.data.content;
+
+      const jsonMatch = reply.match(/```json[\r\n]+([\s\S]*?)[\r\n]+```/);
       if (jsonMatch) {
         const data = JSON.parse(jsonMatch[1]);
         onDataGenerated(data);
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: '✅ Contrat généré ! J\'ai pré-rempli toutes les sections. Vérifiez et complétez les informations aux étapes suivantes.',
+          content: '✅ Informations pré-remplies ! Cliquez sur Suivant pour compléter le contrat. Les clauses seront générées à l\'étape 3.',
         }]);
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
@@ -683,8 +685,8 @@ Montant: ${formData.total_value} ${formData.currency}. Durée: ${formData.start_
 IMPORTANT: Format HTML sémantique uniquement (utilise <h3>, <p>, <strong>, <ul>, <li>, <br>). Pas de markdown.
 ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confidentialité, résiliation, règlement des litiges, et un tableau de signatures à la fin.' : 'Inclure: montant, échéances, mode de paiement, pénalités de retard.'}`;
 
-      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
-      setFormData(prev => ({ ...prev, [field]: response.data.message.content }));
+      const response = await aiChatAPI.generateText(prompt, 3000);
+      setFormData(prev => ({ ...prev, [field]: response.data.content }));
       enqueueSnackbar('Section générée avec succès', { variant: 'success' });
     } catch (err) {
       enqueueSnackbar('Erreur lors de la génération', { variant: 'error' });

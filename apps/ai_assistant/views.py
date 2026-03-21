@@ -301,6 +301,7 @@ class ChatView(APIView):
             
             # Exécuter les tool_calls si présents AVANT de sauvegarder la réponse
             action_results = []
+            action_result = None
             final_response = result['response']
 
             if result.get('tool_calls'):
@@ -2056,3 +2057,42 @@ class ImportReviewRejectView(APIView):
             return Response({
                 'error': 'Import review not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class GenerateTextView(APIView):
+    """Endpoint for direct text/JSON generation without tool calling (used by contract form, etc.)"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        prompt = request.data.get('prompt', '')
+        max_tokens = min(int(request.data.get('max_tokens', 4000)), 8000)
+
+        if not prompt:
+            return Response({'error': 'prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            import os
+            from mistralai import Mistral
+
+            api_key = os.getenv('MISTRAL_API_KEY')
+            if not api_key:
+                from django.conf import settings
+                api_key = getattr(settings, 'MISTRAL_API_KEY', None)
+
+            if not api_key:
+                return Response({'error': 'MISTRAL_API_KEY not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            client = Mistral(api_key=api_key)
+            response = client.chat.complete(
+                model='mistral-large-latest',
+                messages=[{'role': 'user', 'content': prompt}],
+                temperature=0.7,
+                max_tokens=max_tokens,
+            )
+
+            content = response.choices[0].message.content
+            return Response({'content': content})
+
+        except Exception as e:
+            logger.error(f"GenerateTextView error: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -178,6 +178,7 @@ export const dashboardAPI = {
 // AI Chat API
 export const aiChatAPI = {
   sendMessage: (data) => api.post('/ai/chat/', data),
+  generateText: (prompt, maxTokens = 4000) => api.post('/ai/generate/', { prompt, max_tokens: maxTokens }),
   getHistory: () => api.get('/ai/conversations/'),
   getConversation: (id) => api.get(`/ai/conversations/${id}/`),
   deleteConversation: (id) => api.delete(`/ai/conversations/${id}/`),

@@ -40,6 +40,9 @@ urlpatterns = [
     path('proactive-conversations/<uuid:conversation_id>/accept/', views.ProactiveConversationAcceptView.as_view(), name='proactive_conversation_accept'),
     path('proactive-conversations/<uuid:conversation_id>/dismiss/', views.ProactiveConversationDismissView.as_view(), name='proactive_conversation_dismiss'),
 
+    # Direct text/JSON generation (no tool calling, high max_tokens)
+    path('generate/', views.GenerateTextView.as_view(), name='generate_text'),
+
     # AI Usage Monitoring
     path('', views.AIUsageViewSet.as_view({'get': 'list'}), name='ai-usage-list'),
     path('usage/', views.AIUsageViewSet.as_view({'get': 'list'}), name='ai-usage-list'),
