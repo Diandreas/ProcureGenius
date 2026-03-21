@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=saas_procurement.settings_production
 
 # Set work directory
 WORKDIR /app
@@ -14,11 +15,19 @@ RUN apt-get update \
         build-essential \
         libpq-dev \
         gettext \
+        curl \
+        libcairo2 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libgdk-pixbuf2.0-0 \
+        libffi-dev \
+        shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY . /app/
@@ -26,14 +35,26 @@ COPY . /app/
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/media /app/logs
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --settings=saas_procurement.settings
+# Compile translations (ne nécessite pas de DB)
+RUN python manage.py compilemessages || true
 
-# Compile translations
-RUN python manage.py compilemessages
+# Collect static files (utilise settings_production sans DB call)
+RUN SECRET_KEY=build-time-only python manage.py collectstatic --noinput || true
 
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "saas_procurement.wsgi:application"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/admin/login/ || exit 1
+
+# Run the application with gunicorn
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "3", \
+     "--timeout", "120", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--access-logfile", "/app/logs/gunicorn-access.log", \
+     "--error-logfile", "/app/logs/gunicorn-error.log", \
+     "saas_procurement.wsgi:application"]
